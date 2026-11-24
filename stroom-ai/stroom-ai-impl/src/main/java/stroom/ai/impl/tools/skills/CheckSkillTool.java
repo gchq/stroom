@@ -123,7 +123,8 @@ public class CheckSkillTool extends AbstractBuiltInTool {
         final StringBuilder sb = new StringBuilder("Skills doc in folder ").append(read.folderPath()).append(":\n");
         for (final Skill skill : read.parsed().skills()) {
             sb.append("\nSkill '").append(skill.name()).append("':\n").append(SkillChecks.describe(
-                    SkillChecks.check(skill, read.parsed(), facts.forSkill(skill, read.doc(), true)))).append('\n');
+                    SkillChecks.check(skill, read.parsed(), facts.forSkill(skill, read.doc(), true,
+                            context.session())))).append('\n');
         }
         if (read.parsed().skills().isEmpty()) {
             sb.append("It has no skills (a '# Name' heading each).");
@@ -140,7 +141,8 @@ public class CheckSkillTool extends AbstractBuiltInTool {
                 return ToolResult.text("Error: give one skill, from its '# Name' heading.");
             }
             final Skill skill = skills.getFirst();
-            final List<Finding> findings = SkillChecks.check(skill, null, facts.forSkill(skill, null, false));
+            final List<Finding> findings = SkillChecks.check(skill, null, facts.forSkill(skill, null, false,
+                    context.session()));
             return ToolResult.text("Draft skill '" + skill.name() + "':\n" + SkillChecks.describe(findings));
         }
         final String docArg = NullSafe.trim(stringArg(request, DOC_ARG));
@@ -178,7 +180,7 @@ public class CheckSkillTool extends AbstractBuiltInTool {
                     "Propose any change to it with propose_skill, which writes the front matter afresh."));
         }
         findings.addAll(SkillChecks.check(listed.skill(), doc, facts.forSkill(listed.skill(), listed.doc(),
-                true)));
+                true, context.session())));
         return ToolResult.text("Skill '" + listed.skill().name() + "' (folder " + listed.folderPath() + "):\n"
                                + SkillChecks.describe(List.copyOf(findings)));
     }

@@ -1,0 +1,379 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl.tools.timeline;
+
+import stroom.ai.impl.tools.generation.XmlElement;
+import stroom.ai.impl.tools.generation.XmlParser;
+import stroom.ai.impl.tools.timeline.TimelineSessions.Role;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+/// What an event means to an activity timeline, from its event-logging Events XML (or, where the XML is gone, from
+/// the element and Action an index holds): the EventDetail element and its Action give its role, the objects it
+/// names its label, and the values under the element the keys pairs are matched by. Only the schema's own names are
+/// known here (its EventDetail elements and the Actions of `Authenticate` and `Process`); nothing of any source.
+///
+/// | Element and Action | Role |
+/// | --- | --- |
+/// | Authenticate Logon, ScreenUnlock, Connect, Reconnect | active from here (`idle_end`) |
+/// | Authenticate Logoff, ScreenLock, Disconnect | idle from here (`idle_start`) |
+/// | Process Execute, Startup | opened (`open`) |
+/// | Process Terminate, Shutdown | closed (`close`) |
+/// | any other (View, Create, Send, Network...) | an action of that kind |
+///
+/// The user and the time are never read from the XML: an indexing pipeline may normalise them (lowercased, a domain
+/// stripped), so the index's are the timeline's.
+final class EventXmlClassifier {
+
+    /// EventDetail's children that aren't the action element.
+    static final Set<String> NOT_ACTIONS = Set.of("TypeId", "Description", "Classification", "Purpose");
+    /// The EventDetail elements of the event-logging schema.
+    static final Set<String> ELEMENTS = Set.of("Authenticate", "Authorise", "Process", "Create", "View", "Update",
+            "Delete", "Copy", "Move", "Send", "Receive", "Print", "Export", "Import", "Search", "Network", "Install",
+            "Uninstall", "Approval", "Alert", "Unknown");
+    /// The schema's Authenticate Actions after which the user is active.
+    static final Set<String> ACTIVE_FROM = Set.of("Logon", "ScreenUnlock", "Connect", "Reconnect");
+    /// The schema's Authenticate Actions after which the user is idle.
+    static final Set<String> IDLE_FROM = Set.of("Logoff", "ScreenLock", "Disconnect");
+    /// The schema's Process Actions that start a process.
+    static final Set<String> STARTS = Set.of("Execute", "Startup");
+    /// The schema's Process Actions that end a process.
+    static final Set<String> ENDS = Set.of("Terminate", "Shutdown");
+    /// The schema's leaves that name what an event touched, the most telling first.
+    static final List<String> OBJECTS = List.of("Title", "Subject", "URL", "Path", "Name");
+    /// The longest value kept as a key.
+    static final int MAX_KEY_CHARS = 200;
+    private static final String AUTHENTICATE = "Authenticate";
+    private static final String PROCESS = "Process";
+
+    private EventXmlClassifier() {
+        // Static only.
+    }
+
+    /// @param xml One event's Events XML: an `Events` document holding it, or the `Event` element alone.
+    /// @return What it means, or empty if it isn't an event with an EventDetail (or doesn't parse).
+    static Optional<Classified> classify(final String xml) {
+        if (xml == null || xml.isBlank()) {
+            return Optional.empty();
+        }
+        final XmlElement root;
+        try {
+            root = XmlParser.parse(xml, true, true);
+        } catch (final RuntimeException e) {
+            return Optional.empty();
+        }
+        final XmlElement event = "Event".equals(root.localName())
+                ? root
+                : root.iterElements().stream()
+                        .filter(element -> "Event".equals(element.localName()))
+                        .findFirst()
+                        .orElse(null);
+        final XmlElement detail = child(event, "EventDetail");
+        if (detail == null) {
+            return Optional.empty();
+        }
+        final XmlElement action = detail.childElements().stream()
+                .filter(element -> !NOT_ACTIONS.contains(element.localName()))
+                .findFirst()
+                .orElse(null);
+        if (action == null) {
+            return Optional.empty();
+        }
+        final String element = action.localName();
+        final String actionName = text(child(action, "Action"));
+        final String typeId = text(child(detail, "TypeId"));
+        final Map<String, String> keys = new LinkedHashMap<>();
+        leaves(action, "", keys);
+        keys.remove("Action");
+        final XmlElement device = child(child(event, "EventSource"), "Device");
+        final String host = firstNonBlank(text(child(device, "HostName")), text(child(device, "Name")));
+        final String application = PROCESS.equals(element)
+                ? baseName(keys.get("Command"))
+                : null;
+        return Optional.of(of(element, actionName, typeId, application, object(action), host, keys,
+                Route.XML));
+    }
+
+    /// @param element  The EventDetail element, e.g. `Authenticate`.
+    /// @param action   Its Action, or null.
+    /// @param typeId   The event's TypeId, or null.
+    /// @param application The application, or null.
+    /// @param object   What the event touched, or null.
+    /// @param host     The host, or null.
+    /// @param keys     The values under the element by their paths below it.
+    /// @param route    How it was classified.
+    /// @return It classified by the schema's element and Action.
+    static Classified of(final String element,
+                         final String action,
+                         final String typeId,
+                         final String application,
+                         final String object,
+                         final String host,
+                         final Map<String, String> keys,
+                         final Route route) {
+        final String spelt = spelt(element);
+        final Role role = role(spelt, action);
+        return new Classified(spelt, blankToNull(action), blankToNull(typeId), role, kind(spelt, action),
+                application, object, host, keys, route);
+    }
+
+    /// @param element An EventDetail element, as an index may hold it (any case).
+    /// @return It as the schema spells it, or as given if the schema has no such element.
+    static String spelt(final String element) {
+        if (element == null) {
+            return null;
+        }
+        final String given = element.strip();
+        return ELEMENTS.stream().filter(known -> known.equalsIgnoreCase(given)).findFirst().orElse(given);
+    }
+
+    /// @param value A value.
+    /// @return True if it names one of the schema's EventDetail elements, in any case.
+    static boolean isElement(final String value) {
+        return value != null && ELEMENTS.stream().anyMatch(known -> known.equalsIgnoreCase(value.strip()));
+    }
+
+    /// @param element The EventDetail element, as the schema spells it.
+    /// @param action  Its Action, or null.
+    /// @return Its role, by the schema's table.
+    static Role role(final String element, final String action) {
+        final String spelt = action == null
+                ? null
+                : action.strip();
+        if (AUTHENTICATE.equals(element) && spelt != null) {
+            if (ACTIVE_FROM.stream().anyMatch(spelt::equalsIgnoreCase)) {
+                return Role.IDLE_END;
+            }
+            if (IDLE_FROM.stream().anyMatch(spelt::equalsIgnoreCase)) {
+                return Role.IDLE_START;
+            }
+        }
+        if (PROCESS.equals(element) && spelt != null) {
+            if (STARTS.stream().anyMatch(spelt::equalsIgnoreCase)) {
+                return Role.OPEN;
+            }
+            if (ENDS.stream().anyMatch(spelt::equalsIgnoreCase)) {
+                return Role.CLOSE;
+            }
+        }
+        return Role.ACTION;
+    }
+
+    // An action's kind: the element, and its Action where it has one, e.g. 'view', 'authenticate other'.
+    private static String kind(final String element, final String action) {
+        final String base = element == null
+                ? "event"
+                : element.toLowerCase(Locale.ROOT);
+        return action == null || action.isBlank()
+                ? base
+                : base + " " + action.strip().toLowerCase(Locale.ROOT);
+    }
+
+    // What the event touched: the most telling of the schema's object leaves under the action element.
+    private static String object(final XmlElement action) {
+        for (final String name : OBJECTS) {
+            for (final XmlElement element : action.iterElements()) {
+                if (name.equals(element.localName()) && element.childElements().isEmpty()) {
+                    final String text = text(element);
+                    if (text != null) {
+                        return text;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    // Every leaf below the element, by its path below it (the first of a path kept).
+    private static void leaves(final XmlElement element, final String path, final Map<String, String> out) {
+        for (final XmlElement child : element.childElements()) {
+            final String childPath = path.isEmpty()
+                    ? child.localName()
+                    : path + "/" + child.localName();
+            if (child.childElements().isEmpty()) {
+                final String text = text(child);
+                if (text != null && text.length() <= MAX_KEY_CHARS) {
+                    out.putIfAbsent(childPath, text);
+                }
+            } else {
+                leaves(child, childPath, out);
+            }
+        }
+    }
+
+    private static XmlElement child(final XmlElement parent, final String name) {
+        if (parent == null) {
+            return null;
+        }
+        return parent.childElements().stream()
+                .filter(element -> name.equals(element.localName()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private static String text(final XmlElement element) {
+        if (element == null) {
+            return null;
+        }
+        return blankToNull(element.text());
+    }
+
+    private static String blankToNull(final String text) {
+        if (text == null) {
+            return null;
+        }
+        final String stripped = text.strip();
+        return stripped.isEmpty()
+                ? null
+                : stripped;
+    }
+
+    private static String firstNonBlank(final String a, final String b) {
+        return a != null
+                ? a
+                : b;
+    }
+
+    /// @param path A path or command, e.g. `C:\Program Files\Office\WINWORD.EXE /n`.
+    /// @return Its last part, without arguments, e.g. `WINWORD.EXE`; null for null.
+    static String baseName(final String path) {
+        if (path == null || path.isBlank()) {
+            return null;
+        }
+        String command = path.strip();
+        if (command.startsWith("\"") && command.indexOf('"', 1) > 0) {
+            command = command.substring(1, command.indexOf('"', 1));
+        } else {
+            // Its arguments, where they start as arguments do (` /n`, ` -x`), aren't its name.
+            for (final String argument : new String[]{" /", " -"}) {
+                final int at = command.indexOf(argument);
+                if (at > 0) {
+                    command = command.substring(0, at);
+                }
+            }
+        }
+        final int slash = Math.max(command.lastIndexOf('/'), command.lastIndexOf('\\'));
+        String name = command.substring(slash + 1);
+        final int space = name.indexOf(' ');
+        if (space > 0 && slash < 0) {
+            name = name.substring(0, space);
+        }
+        return name.isBlank()
+                ? null
+                : name;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// How an event's role was found.
+    enum Route {
+        /// From its Events XML.
+        XML("Events XML"),
+        /// From the element and Action the index holds.
+        INDEX_FIELDS("index fields"),
+        /// From the source's own event code, classified once and confirmed.
+        EVENT_CODE("event code"),
+        /// By the call's (or skill's) roles.
+        ROLES("roles given"),
+        /// Not classified: an action of the source.
+        NONE("not classified");
+
+        private final String description;
+
+        Route(final String description) {
+            this.description = description;
+        }
+
+        /// @return Its name in the result.
+        String description() {
+            return description;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// An event as classified.
+    ///
+    /// @param element     The EventDetail element, e.g. `Authenticate`, or null.
+    /// @param action      Its Action, e.g. `Logon`, or null.
+    /// @param typeId      The event's TypeId (the source's own name for its type), or null.
+    /// @param role        Its role.
+    /// @param kind        An action's kind, e.g. `view`.
+    /// @param application The application, or null.
+    /// @param object      What it touched (a title, subject, URL, path or name), or null.
+    /// @param host        The host the XML names, or null.
+    /// @param keys        The values under the element, by their paths below it (e.g. `ProcessId`).
+    /// @param route       How it was classified.
+    record Classified(String element,
+                      String action,
+                      String typeId,
+                      Role role,
+                      String kind,
+                      String application,
+                      String object,
+                      String host,
+                      Map<String, String> keys,
+                      Route route) {
+
+        /// Copies the map.
+        Classified {
+            keys = keys == null
+                    ? Map.of()
+                    : Map.copyOf(keys);
+        }
+
+        /// @return Its type by the schema: its element and Action, e.g. `Authenticate/Logon`.
+        String schemaType() {
+            if (element == null) {
+                return null;
+            }
+            return action == null
+                    ? element
+                    : element + "/" + action;
+        }
+
+        /// @return Its type, as pairs are found by: its TypeId where it has one (the source's own), else its
+        /// schema type.
+        String type() {
+            return typeId != null
+                    ? typeId
+                    : schemaType();
+        }
+
+        /// @param type A type, by TypeId or by element and Action.
+        /// @return True if it is this event's.
+        boolean isType(final String type) {
+            return type != null && (type.equalsIgnoreCase(String.valueOf(typeId))
+                                    || type.equalsIgnoreCase(String.valueOf(schemaType())));
+        }
+
+        /// @param role A role in its place.
+        /// @return It with that role (an override).
+        Classified withRole(final Role role) {
+            return new Classified(element, action, typeId, role, kind, application, object, host, keys, route);
+        }
+    }
+}

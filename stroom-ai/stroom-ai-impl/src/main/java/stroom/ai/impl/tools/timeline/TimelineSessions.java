@@ -444,7 +444,11 @@ final class TimelineSessions {
         /// It names the session's process.
         PROCESS,
         /// It fell in the session's time.
-        TIME;
+        TIME,
+        /// It is one of an activity period's actions (an action in no focus session).
+        ACTIVITY,
+        /// It fell in a pair's span and has its label.
+        PAIR;
 
         @Override
         public String toString() {
@@ -473,7 +477,10 @@ final class TimelineSessions {
         OUT_OF_ORDER("out_of_order", "events out of time order in their stream beyond a minute"),
         FUTURE_DATED("future_dated", "events dated after the timeline was made"),
         CLOCK_DISAGREEMENT("clock_disagreement", "two sources disagreeing on a host's clock"),
-        TWO_FOCUSED("two_focused", "two applications focused at once on one host (a missing focus-out)");
+        TWO_FOCUSED("two_focused", "two applications focused at once on one host (a missing focus-out)"),
+        UNPAIRED_START("unpaired_start", "a pair's starts (e.g. a process started) with no end seen, so their "
+                                         + "span runs until the lane goes idle or the period ends"),
+        UNPAIRED_END("unpaired_end", "a pair's ends (e.g. a process ended) with no start seen");
 
         private final String key;
         private final String description;

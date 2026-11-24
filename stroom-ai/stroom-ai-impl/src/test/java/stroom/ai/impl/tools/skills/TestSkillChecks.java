@@ -26,6 +26,7 @@ import stroom.ai.impl.tools.skills.SkillChecks.Finding;
 import stroom.ai.impl.tools.skills.SkillChecks.Kind;
 import stroom.ai.impl.tools.skills.SkillChecks.OtherSkill;
 import stroom.ai.impl.tools.skills.SkillDoc.Skill;
+import stroom.ai.impl.tools.timeline.EventChains;
 
 import org.junit.jupiter.api.Test;
 
@@ -71,6 +72,53 @@ class TestSkillChecks {
 
     private final List<OtherSkill> others = new ArrayList<>();
     private final Map<String, SkillUsage.Counts> usage = new LinkedHashMap<>();
+
+    @Test
+    void aTimelineSkillsEventChainsAreCheckedLineIndexAndRecentData() {
+        final Skill skill = SkillDoc.parse("""
+                # User activity timeline
+
+                Builds a timeline of one user's activity.
+
+                ## Steps
+
+                1. Build it.
+
+                ## Event chains
+
+                - Proxy: pair Tun-Ascend -> Tun-Recede by Tunnel/Id
+                - Gone: Lock-Workstation is idle
+                - Proxy: tunnels come and go
+                """).skills().getFirst();
+        final List<List<String>> checked = new ArrayList<>();
+        final SkillChecks.Facts permissive = SkillTestFacts.permissive();
+        final SkillChecks.Facts facts = new DelegatingFacts(permissive) {
+            @Override
+            public DataSource dataSource(final String dataSource) {
+                return new DataSource("Proxy".equals(dataSource), null);
+            }
+
+            @Override
+            public List<String> eventChains(final List<EventChains.Entry> entries) {
+                checked.add(entries.stream().map(EventChains.Entry::line).toList());
+                return List.of("'Proxy: pair Tun-Ascend -> Tun-Recede by Tunnel/Id' no longer alternates: 40% of 5 "
+                               + "key(s) in the last 7 days.");
+            }
+        };
+
+        final List<Finding> findings = SkillChecks.check(skill, null, facts).stream()
+                .filter(finding -> "event_chains".equals(finding.rule()))
+                .toList();
+
+        assertThat(findings).extracting(Finding::message).containsExactlyInAnyOrder(
+                "Event chains line '- Proxy: tunnels come and go' isn't an entry, so the timeline leaves it out.",
+                "Event chains name 'Gone', which isn't a data source you can use.",
+                "'Proxy: pair Tun-Ascend -> Tun-Recede by Tunnel/Id' no longer alternates: 40% of 5 key(s) in the "
+                + "last 7 days.");
+        assertThat(findings).allSatisfy(finding -> assertThat(finding.kind()).isEqualTo(Kind.PROBLEM));
+        // Only the usable source's entries are checked against its data.
+        assertThat(checked).containsExactly(List.of("- Proxy: pair Tun-Ascend -> Tun-Recede by Tunnel/Id"));
+    }
 
     @Test
     void aGoodSkillHasNoProblemsOrSuggestions() {
@@ -319,5 +367,54 @@ class TestSkillChecks {
                 return usage.get(skill.toLowerCase(Locale.ROOT));
             }
         };
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // Facts that ask another for everything, for a test to change one answer.
+    private static class DelegatingFacts implements SkillChecks.Facts {
+
+        private final SkillChecks.Facts delegate;
+
+        DelegatingFacts(final SkillChecks.Facts delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public Optional<ToolDefinition> tool(final String name) {
+            return delegate.tool(name);
+        }
+
+        @Override
+        public Set<String> toolNames() {
+            return delegate.toolNames();
+        }
+
+        @Override
+        public boolean allowed(final String name) {
+            return delegate.allowed(name);
+        }
+
+        @Override
+        public DataSource dataSource(final String dataSource) {
+            return delegate.dataSource(dataSource);
+        }
+
+        @Override
+        public Optional<String> closestByPurpose(final Set<String> words) {
+            return delegate.closestByPurpose(words);
+        }
+
+        @Override
+        public List<OtherSkill> otherSkills() {
+            return delegate.otherSkills();
+        }
+
+        @Override
+        public SkillUsage.Counts usage(final String skill) {
+            return delegate.usage(skill);
+        }
     }
 }

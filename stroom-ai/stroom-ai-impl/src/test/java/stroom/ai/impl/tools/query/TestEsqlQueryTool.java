@@ -40,6 +40,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -100,6 +102,20 @@ class TestEsqlQueryTool {
             assertThat(request.timeRange().getFrom()).isEqualTo(
                     LocalDate.now(ZoneOffset.UTC).minusDays(7) + "T00:00:00Z");
             assertThat(request.timeRange().getTo()).matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z");
+        }
+    }
+
+    @Test
+    void anIso8601DurationIsThatLongBeforeNow() {
+        // Seen in chat 190: timeFrom P30D, which Elasticsearch refused.
+        try (BuiltInToolWorld world = BuiltInToolWorld.withEverything(tempDir)) {
+            final long before = System.currentTimeMillis();
+            world.run(EsqlQueryTool.NAME, BuiltInToolWorld.json(Map.of(
+                    "index", "elastic-index-uuid", "pipeline", GROUPED, "timeFrom", "P30D")));
+
+            final Instant from = Instant.parse(request(world).timeRange().getFrom());
+            assertThat(from).isBetween(Instant.ofEpochMilli(before).minus(Duration.ofDays(30)).minusSeconds(1),
+                    Instant.now().minus(Duration.ofDays(30)).plusSeconds(1));
         }
     }
 

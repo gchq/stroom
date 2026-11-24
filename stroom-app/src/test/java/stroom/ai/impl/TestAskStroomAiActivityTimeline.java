@@ -119,7 +119,7 @@ class TestAskStroomAiActivityTimeline extends AbstractAiIntegrationTest {
                 .callTool("activate_dashboards", "{}")
                 .callTool("gantt_chart", JsonUtil.writeValueAsString(Map.of(
                         "path", "/outputs/timelines/jsmith/activities.csv", "start", "start", "end", "end",
-                        "label", "process", "lane", "activity_label", "title", "What jsmith was working on",
+                        "label", "activity_label", "lane", "activity_label", "title", "What jsmith was working on",
                         "timeZone", "UTC"), false))
                 .answer("Here is what jsmith was working on.");
 

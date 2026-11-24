@@ -28,6 +28,7 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema;
 import stroom.ai.impl.tools.ToolSchema.IntegerSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.streams.EventSegments;
 import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.EventsFile;
@@ -43,7 +44,6 @@ import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiToolCategory;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
-import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.meta.shared.Meta;
@@ -634,9 +634,7 @@ public class FetchEventsTool extends AbstractWorkspaceTool {
     }
 
     private static long segmentCount(final InputStreamProvider provider) throws IOException {
-        try (final SegmentInputStream in = provider.get()) {
-            return in.count();
-        }
+        return EventSegments.count(provider);
     }
 
     // True if the user may view data, as the Data screen needs; false if they may not, or if checking fails (failing
@@ -654,13 +652,7 @@ public class FetchEventsTool extends AbstractWorkspaceTool {
     private static String readSegment(final InputStreamProvider provider,
                                       final long segment,
                                       final int maxBytes) throws IOException {
-        try (final SegmentInputStream in = provider.get()) {
-            in.include(segment);
-            final byte[] bytes = in.readNBytes(maxBytes + 1);
-            return bytes.length > maxBytes
-                    ? null
-                    : new String(bytes, StandardCharsets.UTF_8);
-        }
+        return EventSegments.read(provider, segment, maxBytes);
     }
 
     /// @return The stream and event ids of the table's rows, in order, without repeats, up to the limit.

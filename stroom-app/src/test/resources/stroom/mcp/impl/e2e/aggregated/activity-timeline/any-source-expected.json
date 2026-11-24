@@ -1,0 +1,70 @@
+{
+ "time_from": "2026-11-16T00:00:00.000Z",
+ "time_to": "2026-11-18T00:00:00.000Z",
+ "proxy_only_user": "pnguyen",
+ "mixed_user": "mlee",
+ "proxy_only_periods": [
+  [
+   "lt-pnguyen",
+   "research.example.org",
+   "2026-11-16T09:00:00.000Z",
+   "2026-11-16T09:13:00.000Z"
+  ],
+  [
+   "lt-pnguyen",
+   "news.example.com",
+   "2026-11-16T10:30:00.000Z",
+   "2026-11-16T10:49:00.000Z"
+  ],
+  [
+   "lt-pnguyen",
+   "supplier.example.net",
+   "2026-11-16T13:00:00.000Z",
+   "2026-11-16T13:16:00.000Z"
+  ],
+  [
+   "lt-pnguyen",
+   "intranet.example.local",
+   "2026-11-16T15:10:00.000Z",
+   "2026-11-16T15:39:00.000Z"
+  ],
+  [
+   "lt-pnguyen",
+   "news.example.com",
+   "2026-11-17T09:00:00.000Z",
+   "2026-11-17T09:13:00.000Z"
+  ],
+  [
+   "lt-pnguyen",
+   "supplier.example.net",
+   "2026-11-17T10:30:00.000Z",
+   "2026-11-17T10:58:00.000Z"
+  ],
+  [
+   "lt-pnguyen",
+   "intranet.example.local",
+   "2026-11-17T13:00:00.000Z",
+   "2026-11-17T13:27:00.000Z"
+  ],
+  [
+   "lt-pnguyen",
+   "research.example.org",
+   "2026-11-17T15:10:00.000Z",
+   "2026-11-17T15:36:00.000Z"
+  ]
+ ],
+ "mixed": {
+  "locked": 2,
+  "processes": 4,
+  "tunnels": 8,
+  "inferred_pair": [
+   "Tun-Ascend",
+   "Tun-Recede",
+   "Tunnel/Id"
+  ]
+ },
+ "events": {
+  "pnguyen": 38,
+  "mlee": 54
+ }
+}

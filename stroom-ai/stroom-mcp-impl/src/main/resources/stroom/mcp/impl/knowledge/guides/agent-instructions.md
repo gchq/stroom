@@ -60,6 +60,13 @@ compact`, or `by event type`, the default; `one table` and `single table` mean c
 says wins, and the result notes it. A layout the user asks for goes in `field_mapping_layout` (`by_event_type` or
 `compact`) and wins over the doc.
 
+Lines of a `## Fields` section of the form `- user: Initiator.Id, user.name` name the fields that hold a thing in
+the data sources where the doc applies: `user`, `host`, `application`, `object`, `element` (the EventDetail
+element), `action` (its Action) and `event type` (the source's own code). `activity_timeline` reads them itself, the
+first field an index has used, the most specific doc winning, after the call's own and before the field conventions;
+`propose_instructions` points out a line naming no field the data sources there have. Prose bullets in the section
+(no `key:`) are left to the agent.
+
 An XSLT style section is applied through the translation mapping's `style` (naming, and when to use variables and
 xsl:maps; see the XSLT guide), and the same `style` of an index plan and of a CEF plan (`draft_cef_mapping style=`),
 so every generated XSLT follows it without hand edits.

@@ -54,7 +54,7 @@ mentioned.
 | chord | **source**, **target**, weight, level3 to level6 | Who links to whom round a circle; reads better than a network graph for a few dozen nodes |
 | sunburst | **name**, level2 to level6, value | A whole split by levels, as rings, e.g. events by region, then host, then process; a click selects a segment's path (its name and each level out to it) |
 | gauge | **value**, name | A value against its range, e.g. the latest or the maximum; a gauge per name when a name column is mapped, else the first row's value |
-| timeline | **start**, **end**, **label**, lane, colour | Spans of time, e.g. `activity_timeline`'s sessions (start, end, label process, lane host); start and end Date Time |
+| timeline | **start**, **end**, **label**, lane, colour | Spans of time, e.g. `activity_timeline`'s spans.csv (start, end, label, lane, colour activity_label); start and end Date Time |
 
 A histogram counts rows itself, so its table should have one row per event (not grouped), and clicking its bars
 selects nothing (they are ranges). A Sankey diagram's or chord diagram's links are added up per pair.

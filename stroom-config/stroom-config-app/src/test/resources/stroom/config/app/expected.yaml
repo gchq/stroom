@@ -150,6 +150,7 @@ appConfig:
       queryTimeLimit: "PT2M"
       timelineIdleCap: "PT30M"
       timelineMaxEvents: 200000
+      timelineMaxXmlEvents: 50000
       toolTimeLimit: "PT30S"
     workspaceFileRetention: "P7D"
   analytics:

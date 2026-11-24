@@ -23,7 +23,6 @@ import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.tools.AbstractWorkspaceTool;
-import stroom.ai.impl.tools.ModelSideCalls;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
@@ -33,43 +32,61 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
-import stroom.ai.impl.tools.ToolTables;
 import stroom.ai.impl.tools.UserQuestions;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.instructions.AgentInstructions;
+import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.query.EsqlQueryTool;
 import stroom.ai.impl.tools.query.StroomQlDatePoints;
-import stroom.ai.impl.tools.sequence.EqlQueryWriter;
 import stroom.ai.impl.tools.sequence.EqlQueryWriter.Filter;
 import stroom.ai.impl.tools.sequence.EqlSequenceResults;
 import stroom.ai.impl.tools.sequence.JoinBudget;
 import stroom.ai.impl.tools.sequence.JoinKeys;
-import stroom.ai.impl.tools.sequence.KeyGroupSource;
 import stroom.ai.impl.tools.sequence.SequenceQueryTool;
 import stroom.ai.impl.tools.sequence.SequenceSteps;
 import stroom.ai.impl.tools.sequence.StreamFilters;
+import stroom.ai.impl.tools.skills.SkillCatalogue;
+import stroom.ai.impl.tools.skills.SkillCatalogue.Listed;
+import stroom.ai.impl.tools.skills.SkillDoc;
 import stroom.ai.impl.tools.time.ToolTimeZone;
 import stroom.ai.impl.tools.time.UserTimeZones;
-import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Activity;
 import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Characterised;
-import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Placement;
+import stroom.ai.impl.tools.timeline.EventChains.Entry;
+import stroom.ai.impl.tools.timeline.EventCodes.CodeRole;
+import stroom.ai.impl.tools.timeline.EventXmlClassifier.Classified;
+import stroom.ai.impl.tools.timeline.PairInference.Candidate;
+import stroom.ai.impl.tools.timeline.PairInference.Inferred;
+import stroom.ai.impl.tools.timeline.PairInference.Typed;
+import stroom.ai.impl.tools.timeline.PairRule.Origin;
+import stroom.ai.impl.tools.timeline.TimelineClassification.Fields;
+import stroom.ai.impl.tools.timeline.TimelineClassification.RoleOverride;
+import stroom.ai.impl.tools.timeline.TimelineFields.Found;
+import stroom.ai.impl.tools.timeline.TimelineLearning.CreateIn;
+import stroom.ai.impl.tools.timeline.TimelineLearning.Learned;
+import stroom.ai.impl.tools.timeline.TimelineLearning.NamedCandidate;
+import stroom.ai.impl.tools.timeline.TimelineLearning.SkillInUse;
 import stroom.ai.impl.tools.timeline.TimelineReader.Read;
 import stroom.ai.impl.tools.timeline.TimelineReader.RoleRead;
 import stroom.ai.impl.tools.timeline.TimelineReader.Source;
-import stroom.ai.impl.tools.timeline.TimelineSessions.Action;
-import stroom.ai.impl.tools.timeline.TimelineSessions.Daily;
+import stroom.ai.impl.tools.timeline.TimelineRun.Period;
+import stroom.ai.impl.tools.timeline.TimelineRun.SourceNote;
+import stroom.ai.impl.tools.timeline.TimelineRun.View;
+import stroom.ai.impl.tools.timeline.TimelineRun.XmlRead;
 import stroom.ai.impl.tools.timeline.TimelineSessions.Event;
-import stroom.ai.impl.tools.timeline.TimelineSessions.Flag;
 import stroom.ai.impl.tools.timeline.TimelineSessions.Options;
 import stroom.ai.impl.tools.timeline.TimelineSessions.Role;
-import stroom.ai.impl.tools.timeline.TimelineSessions.Session;
 import stroom.ai.impl.tools.timeline.TimelineSessions.Timeline;
-import stroom.ai.impl.tools.timeline.TimelineSessions.Window;
+import stroom.ai.impl.tools.timeline.TimelineSpans.Built;
+import stroom.ai.impl.tools.timeline.TimelineTables.Files;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
+import stroom.documentation.shared.DocumentationDoc;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
@@ -91,9 +108,9 @@ import jakarta.inject.Provider;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -103,21 +120,29 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 
-/// `activity_timeline`: one user's (or entity's) activity over a period from several sources, worked out in code
-/// ([TimelineSessions]), never by the model: sessions of active use of each application on each host, the actions
-/// taken in each, each day's active time by application, the window lifetimes, the actions in no session, the raw
-/// events by their stream and event ids, and the data-quality flags (missing events, never smoothed over). Each
-/// source names the fields holding the user, host, application, window title, window, object and text, and its
-/// roles as conditions (as `sequence_query`'s steps take them): what a focus, an open, a close, an idle start or
-/// end, and each kind of action look like in that source. The events are read with the streaming join's machinery
-/// ([TimelineReader]: Elastic Indexes, a terms condition for the one user), and the sessions are written as a
-/// workspace table `gantt_chart` draws as it is.
+/// `activity_timeline`: one user's (or entity's) activity over a period from any sources, worked out in code
+/// ([TimelineSessions], [TimelineSpans]), never by the model. Two levels: the detail spans (focus sessions of an
+/// application on a host where a source records window focus; pairs, from a start to its end, such as a process's
+/// start and end; and activity periods, the actions in neither, close in time) and the activities rolled up from
+/// them, what the user was working on ([ActivityCharacterisation]); three views of them (activities, detail, both),
+/// each a table `gantt_chart` draws as it is.
 ///
-/// With `characterise`, the activities the sessions make up, what the user was working on
-/// ([ActivityCharacterisation]): anchors from the sessions' graph (Leiden, as the chart analytics' clusters), loose
-/// items classified by the model in side calls ([ModelSideCalls]: the chat's model; over `/mcp` the client's, by
-/// sampling, else skipped, saying so), so the chat's model sees only the outcome. The analyst's corrections are kept
-/// with the investigation (the chat's workspace, beside the results), so a re-run keeps them.
+/// - **Sources**: given by the call (or a skill); else asked in a chat's form ([TimelineSourceChoice]); over MCP,
+///   every Elastic Index the user can use. A source with roles is read by them, as before (the override, e.g. for a
+///   source of window focus); one without has its events classified: from their Events XML, read by StreamId and
+///   EventId ([TimelineEventXml], [EventXmlClassifier]), else the index's element field, else the source's own event
+///   codes classified once ([EventCodes]) ([TimelineClassification]). The user and the time come from the index.
+/// - **The user field** of each index ([TimelineFields]): the call's (or skill's), the AGENTS doc's `## Fields`, a
+///   field convention's, the index's documentation, else asked.
+/// - **Pairs** ([PairRule]): the skill's Event chains, the call's, the schema's, and those inferred from the user's
+///   own events ([PairInference]); borderline ones listed, not used.
+/// - **Learning** ([TimelineLearning]): what was inferred, or corrected by the call, is offered for the timeline
+///   skill's Event chains, where the user may change it.
+///
+/// The events are read with the streaming join's machinery ([TimelineReader]: Elastic Indexes, a terms condition
+/// for the one user). With `characterise` (or the activities view), the activities: anchors from the spans' graph,
+/// loose items classified by the model in side calls ([stroom.ai.impl.tools.ModelSideCalls]), so the chat's model
+/// sees only the outcome. The analyst's corrections are kept with the investigation, so a re-run keeps them.
 public class ActivityTimelineTool extends AbstractWorkspaceTool {
 
     static final String NAME = "activity_timeline";
@@ -129,6 +154,10 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     static final String CHARACTERISE_ARG = "characterise";
     static final String CORRECTIONS_ARG = "corrections";
     static final String RUN_ANYWAY_ARG = "runAnyway";
+    static final String USER_FIELD_ARG = "userField";
+    static final String VIEW_ARG = "view";
+    static final String LANES_ARG = "lanes";
+    static final String SKILL_ARG = "skill";
     static final String INDEX_KEY = "index";
     static final String NAME_KEY = "name";
     static final String USER_KEY = "user";
@@ -142,14 +171,28 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     static final String ROLES_KEY = "roles";
     static final String ACTIONS_KEY = "actions";
     static final String KIND_KEY = "kind";
+    static final String PAIRS_KEY = "pairs";
+    static final String TYPE_ROLES_KEY = "typeRoles";
+    static final String ELEMENT_FIELD_KEY = "elementField";
+    static final String ACTION_FIELD_KEY = "actionField";
+    static final String EVENT_TYPE_FIELD_KEY = "eventTypeField";
+    static final String START_KEY = "start";
+    static final String END_KEY = "end";
+    static final String BY_KEY = "by";
+    static final String LABEL_KEY = "label";
     static final String WHERE_KEY = SequenceQueryTool.WHERE_KEY;
     static final String ANY_OF_KEY = SequenceQueryTool.ANY_OF_KEY;
+    /// The sources argument for every Elastic Index the user can use.
+    static final String ALL_SOURCES = "all";
+    /// The sources argument to ask the user which (as none does).
+    static final String ASK_SOURCES = "ask";
     /// The period when the call gives none.
     static final String DEFAULT_FROM = "now()-7d";
     static final String DEFAULT_TO = "now()";
     /// The folder each user's timeline is written to, beside its corrections.
     static final String FOLDER = "/outputs/timelines/";
     static final String SESSIONS_FILE = "sessions.csv";
+    static final String SPANS_FILE = "spans.csv";
     static final String ACTIONS_FILE = "actions.csv";
     static final String EVENTS_FILE = "events.csv";
     static final String DAILY_FILE = "daily.csv";
@@ -159,44 +202,85 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     static final String ITEMS_FILE = "items.csv";
     static final String CORRECTIONS_FILE = "corrections.json";
     static final String CACHE_FILE = "characterisation-cache.json";
-    /// The sessions and activities shown in the result; the rest are in the tables.
-    static final int SHOWN = 15;
     /// The form's key for classifying past the budget.
     static final String BEYOND_FORM = "classify";
     static final String CLASSIFY_ALL = "Classify them all";
     static final String CLASSIFY_BUDGET = "Classify up to the budget";
+    /// The form's key for the user fields no way found.
+    static final String USER_FIELDS_FORM = "timeline-user-fields";
+    static final String LEAVE_OUT = "Leave it out";
+    /// The form's key for confirming an index's event codes' classification.
+    static final String CODES_FORM = "timeline-event-codes";
+    static final String USE_CODES = "Use it";
+    static final String DONT_USE_CODES = "Don't use it";
+    /// The events of an automatic source probed first: whether the user has any there, and which of its fields
+    /// holds the EventDetail element.
+    static final int PROBE_EVENTS = 200;
+    /// The most fields fetched by the probe.
+    static final int PROBE_FIELDS = 100;
+    /// The share of an index field's values in the probe that are EventDetail elements, for it to be taken as the
+    /// element field.
+    static final double ELEMENT_SHARE = 0.9;
+    /// The most event codes listed in the confirming form.
+    static final int CODES_SHOWN = 15;
     /// What every result says of the events.
     static final String CAVEAT = "The events come straight from Elasticsearch, as sequence_query's do: they may "
                                  + "include events of streams the user can't see or that have been deleted.";
-    /// What every result says the sessions are.
-    static final String DERIVED = "Sessions are worked out in code from the roles given: an interval on an "
-                                  + "application starts at a focus on it and ends at the next focus, an idle start, "
-                                  + "or the idle cap (marked uncertain). Missing events are flagged, never "
+    /// What every result says the spans are.
+    static final String DERIVED = "Spans are worked out in code: a focus session on an application starts at a "
+                                  + "focus on it and ends at the next focus, an idle start, or the idle cap (marked "
+                                  + "uncertain); a pair's span runs from a start to its end; an activity period "
+                                  + "holds actions in neither, close in time. Missing events are flagged, never "
                                   + "smoothed over.";
     private static final List<String> ROLE_NAMES = List.of(Role.FOCUS.argName(), Role.OPEN.argName(),
             Role.CLOSE.argName(), Role.IDLE_START.argName(), Role.IDLE_END.argName());
+    private static final Set<String> KEYWORD_TYPES = Set.of("keyword", "constant_keyword", "wildcard");
 
     private final Provider<ElasticKeyStreams> keyStreamsProvider;
     private final DataSourceAccess dataSourceAccess;
     private final Provider<QueryService> queryServiceProvider;
     private final AiAuditLog auditLog;
+    private final TimelineEventXml eventXml;
+    private final TimelineFields timelineFields;
+    private final TimelineSourceChoice sourceChoice;
+    private final Provider<SkillCatalogue> skillCatalogueProvider;
+    private final DocumentAccess documentAccess;
+    private final AgentInstructions agentInstructions;
 
-    /// @param workspace            The chats' workspaces.
-    /// @param keyStreamsProvider   Reads each source's events for the entity, in time order.
-    /// @param dataSourceAccess     Finds the sources' indexes the user can use.
-    /// @param queryServiceProvider Gives each index's fields and their types.
-    /// @param auditLog             Audits what each index was searched for.
+    /// @param workspace              The chats' workspaces.
+    /// @param keyStreamsProvider     Reads each source's events for the entity, in time order.
+    /// @param dataSourceAccess       Finds the sources' indexes the user can use.
+    /// @param queryServiceProvider   Gives each index's fields and their types.
+    /// @param auditLog               Audits what each index was searched for.
+    /// @param eventXml               Reads the events' Events XML.
+    /// @param timelineFields         Finds each index's user field (and host, element, Action and code fields).
+    /// @param sourceChoice           Asks which sources to read, where neither the call nor a skill says.
+    /// @param skillCatalogueProvider Finds the skill in use, for its Event chains.
+    /// @param documentAccess         Checks the user may change the skill's doc, or create one.
+    /// @param agentInstructions      Gives the folder an index is in.
     @Inject
     ActivityTimelineTool(final ChatWorkspace workspace,
                          final Provider<ElasticKeyStreams> keyStreamsProvider,
                          final DataSourceAccess dataSourceAccess,
                          final Provider<QueryService> queryServiceProvider,
-                         final AiAuditLog auditLog) {
+                         final AiAuditLog auditLog,
+                         final TimelineEventXml eventXml,
+                         final TimelineFields timelineFields,
+                         final TimelineSourceChoice sourceChoice,
+                         final Provider<SkillCatalogue> skillCatalogueProvider,
+                         final DocumentAccess documentAccess,
+                         final AgentInstructions agentInstructions) {
         super(workspace);
         this.keyStreamsProvider = keyStreamsProvider;
         this.dataSourceAccess = dataSourceAccess;
         this.queryServiceProvider = queryServiceProvider;
         this.auditLog = auditLog;
+        this.eventXml = eventXml;
+        this.timelineFields = timelineFields;
+        this.sourceChoice = sourceChoice;
+        this.skillCatalogueProvider = skillCatalogueProvider;
+        this.documentAccess = documentAccess;
+        this.agentInstructions = agentInstructions;
     }
 
     @Override
@@ -204,8 +288,11 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         return ToolPermissions.builder()
                 .checksDocuments(DocumentPermission.USE)
                 .note("Use on every source's Elastic Index is checked, as for any search, again by Stroom's "
-                      + "Elasticsearch module as each is read. No permission of its own: the tool policies decide "
-                      + "who may build a timeline.")
+                      + "Elasticsearch module as each is read. The events' Events XML is read as the data viewer "
+                      + "reads it (View Data, and the stream store's check on each stream's feed); without View "
+                      + "Data the index's fields classify them. No permission of its own: the tool policies decide "
+                      + "who may build a timeline. Recording what was learned in a skill is offered only to a user "
+                      + "with Edit on its skills doc (or Create in a folder, for a new one).")
                 .build();
     }
 
@@ -258,7 +345,9 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 .required(KIND_KEY)
                 .build();
         final ObjectSchema roles = ObjectSchema.builder()
-                .description("The source's roles: each optional, given only where the source holds such events.")
+                .description("Optional: the source's roles, which override classifying its events (e.g. for "
+                             + "window focus, which the schema has no element for); each given only where the "
+                             + "source holds such events.")
                 .addProperty(Role.FOCUS.argName(), conditions)
                 .addProperty(Role.OPEN.argName(), conditions)
                 .addProperty(Role.CLOSE.argName(), conditions)
@@ -267,19 +356,29 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 .addProperty(ACTIONS_KEY, ArraySchema.builder().items(action)
                         .description("The kinds of action it holds.").build())
                 .build();
+        final ObjectSchema pair = ObjectSchema.builder()
+                .description("Two event types bounding spans: an end closes the latest open start of the same key.")
+                .addStringProperty(START_KEY, "The start's type: a TypeId, or an element and Action, e.g. "
+                                              + "Process/Execute.")
+                .addStringProperty(END_KEY, "The end's type.")
+                .addStringProperty(BY_KEY, "Optional: the key path under the element both hold, e.g. ProcessId "
+                                           + "(default the host alone).")
+                .addStringProperty(LABEL_KEY, "Optional: the key path whose value labels the span.")
+                .required(START_KEY, END_KEY)
+                .build();
         final ObjectSchema source = ObjectSchema.builder()
-                .description("One source: an Elastic Index, the fields that hold each thing, and its roles.")
+                .description("One source: an Elastic Index, and optionally the fields that hold each thing and its "
+                             + "roles.")
                 .addStringProperty(INDEX_KEY, "The Elastic Index doc's uuid or name.")
                 .addStringProperty(NAME_KEY, "A short name for it in the result (default the index's).")
-                .addStringProperty(USER_KEY, "The field holding the user (or entity).")
+                .addStringProperty(USER_KEY, "The field holding the user (default: found, see userField).")
                 .addProperty(TRANSFORM_KEY, ArraySchema.builder()
                         .items(new ToolSchema.EnumSchema(null, SequenceQueryTool.TRANSFORMS))
                         .description("Optional: what is done to the user field's values and the entity before they "
                                      + "are compared, where sources write users differently (strip_domain, "
                                      + "lowercase).")
                         .build())
-                .addStringProperty(HOST_KEY, "The field holding the host (optional: an action with no host goes "
-                                             + "in the session active at its time).")
+                .addStringProperty(HOST_KEY, "The field holding the host (optional).")
                 .addStringProperty(PROCESS_KEY, "The field holding the application (process).")
                 .addStringProperty(TITLE_KEY, "The field holding the window title.")
                 .addStringProperty(WINDOW_KEY, "The field holding a window's id, pairing its open and close "
@@ -288,43 +387,70 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                                + "subject.")
                 .addStringProperty(TEXT_KEY, "The field holding free text (a message, an AI chat prompt), for "
                                              + "characterise.")
+                .addStringProperty(ELEMENT_FIELD_KEY, "Optional: the field holding the EventDetail element, for "
+                                                      + "events whose Events XML is gone (default: found).")
+                .addStringProperty(ACTION_FIELD_KEY, "Optional: the field holding the element's Action.")
+                .addStringProperty(EVENT_TYPE_FIELD_KEY, "Optional: the field holding the source's own event code.")
                 .addProperty(ROLES_KEY, roles)
-                .required(INDEX_KEY, USER_KEY, ROLES_KEY)
+                .addProperty(PAIRS_KEY, ArraySchema.builder().items(pair)
+                        .description("Optional: the source's own pairs (e.g. one the user confirmed).").build())
+                .addProperty(TYPE_ROLES_KEY, ObjectSchema.builder()
+                        .description("Optional: the user's corrections, an event type's role: {\"<type>\": "
+                                     + "\"active|idle|open|close|action|ignore\"}.")
+                        .build())
+                .required(INDEX_KEY)
                 .build();
         return ToolDefinition.builder()
                 .name(NAME)
                 .description(ToolDescription.builder()
-                        .general("Builds one user's (or entity's) activity timeline for a period from several "
-                                 + "sources, in code: sessions of active use of each application on each host "
-                                 + "(from a focus to the next focus, an idle start, or the idle cap), the actions "
-                                 + "in each, active time per day by application, and data-quality flags for "
-                                 + "missing events (unpaired opens and closes, idle starts with no end, a source "
-                                 + "falling silent while another shows the user active, clocks that disagree). "
-                                 + "Each source gives its fields and its roles as conditions ({field, condition, "
-                                 + "value}, as a sequence's steps take them): what a focus, open, close, idle start "
-                                 + "(lock, sleep, logoff), "
-                                 + "idle end (unlock, wake, logon) and each kind of action look like there; a "
-                                 + "skill, or the source's documentation, may hold them. Elastic Indexes only. "
-                                 + "With characterise=true, also what the user was working on: activities "
-                                 + "tying sessions together by the documents, pages and terms they share, loose "
-                                 + "items (messages, prompts) classified by a model outside this conversation.")
-                        .chatOnly(" The sessions table draws as a timeline with gantt_chart (dashboards group) "
-                                  + "as it is.")
+                        .general("Builds one user's (or entity's) activity timeline for a period from any Elastic "
+                                 + "Index sources, in code. Two levels: detail spans (focus sessions where a source "
+                                 + "records window focus; pairs from a start to its end, e.g. a process's start "
+                                 + "and end, the schema's, a skill's, or inferred from the user's own events; "
+                                 + "activity periods, the actions in neither close in time, by host or source) and "
+                                 + "activities rolled up from them (what the user was working on). Events without "
+                                 + "roles are classified from their Events XML (the EventDetail element and "
+                                 + "Action), else the index's fields; the user and time always come from the "
+                                 + "index. Each index's user field: userField, the AGENTS doc's ## Fields, a field "
+                                 + "convention, the index's documentation, else asked. Data-quality flags for "
+                                 + "missing events. Omit sources to ask the user which (or read all you can use).")
+                        .chatOnly(" Its tables draw as timelines with gantt_chart (dashboards group) as they are; "
+                                  + "the result gives the arguments for the view.")
                         .build())
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(ENTITY_ARG, "The user (or entity), as the sources hold it, e.g. "
                                                        + "jsmith.")
                         .addProperty(SOURCES_ARG, ArraySchema.builder().items(source)
-                                .description("The sources, at least one.").build())
+                                .description("Optional: the sources (index names alone will do), \"all\", or "
+                                             + "\"ask\" (as omitted: the user is asked which).").build())
+                        .addStringProperty(USER_FIELD_ARG, "Optional: the field holding the user in every source "
+                                                           + "that has it (a skill's), before the other ways.")
                         .addStringProperty(TIME_FROM_ARG, "The period's start: ISO 8601 or a date expression "
                                                           + "(default " + DEFAULT_FROM + ").")
                         .addStringProperty(TIME_TO_ARG, "The period's end (default " + DEFAULT_TO + ").")
                         .addStringProperty(IDLE_CAP_ARG, "How long with no event on a host ends an interval, "
                                                          + "e.g. 30m (default the setting, 30 minutes).")
+                        .addEnumProperty(VIEW_ARG, List.of(View.ACTIVITIES.argName(), View.DETAIL.argName(),
+                                View.BOTH.argName()), "Which level to draw: activities (what the user was working "
+                                                      + "on; turns characterise on), detail (the spans), or both "
+                                                      + "(default detail).")
+                        .addEnumProperty(LANES_ARG, List.of("day", "activity", "host", "source"), "Optional: "
+                                                                                                  + "the lanes: "
+                                                                                                  + "activities "
+                                                                                                  + "by day "
+                                                                                                  + "(default) or "
+                                                                                                  + "activity; "
+                                                                                                  + "detail by "
+                                                                                                  + "host "
+                                                                                                  + "(default) or "
+                                                                                                  + "source.")
+                        .addStringProperty(SKILL_ARG, "Optional: the name of the skill being run, whose Event "
+                                                      + "chains are applied and to which what is learned is "
+                                                      + "offered.")
                         .addBooleanProperty(CHARACTERISE_ARG, "True to find what the user was working on: the "
-                                                              + "activities the sessions make up.")
+                                                              + "activities the spans make up.")
                         .addProperty(CORRECTIONS_ARG, ArraySchema.builder().items(ObjectSchema.builder()
-                                        .description("{move: <session or item id>, to: <activity id, not_work or "
+                                        .description("{move: <span or item id>, to: <activity id, not_work or "
                                                      + "unclear>}, {merge: [<activity id>, ...]} (into the "
                                                      + "first), or {rename: <activity id>, label: <name>}.")
                                         .build())
@@ -334,7 +460,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                         .addBooleanProperty(RUN_ANYWAY_ARG, "True to classify loose items past the budget, as "
                                                             + "the user agrees.")
                         .addStringProperty(UserTimeZones.ARG, UserTimeZones.DESCRIPTION)
-                        .required(ENTITY_ARG, SOURCES_ARG)
+                        .required(ENTITY_ARG)
                         .build())
                 .build();
     }
@@ -356,8 +482,12 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final long now = System.currentTimeMillis();
         final Period period = period(request, zone, now);
         final long capMs = idleCap(request, config);
-        final List<Source> sources = sources(request);
+        final View view = view(request);
+        final String lanes = lanes(request);
         final Instant deadline = Instant.now().plus(timeLimit(context));
+        final SkillInUse skill = skillInUse(request, context);
+        final Plan plan = plan(request, context, entity, period, deadline, skill);
+        final List<Source> sources = plan.sources();
         final JoinBudget budget = new JoinBudget(config.getTimelineMaxEvents(), Long.MAX_VALUE, deadline,
                 context.stopped());
         context.progress().report("Reading " + entity + "'s events from " + sources.size() + " source(s)");
@@ -369,6 +499,12 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         }
         audit(context, sources, read, entity, period);
 
+        final XmlOutcome xml = readXml(context, config, sources, read);
+        final Map<Integer, Map<String, CodeRole>> codes = codes(request, context, sources, read, plan.fields(),
+                xml.xml());
+        final TimelineClassification.Result classification = TimelineClassification.classify(read.events(),
+                sources, read.extras(), plan.fields(), xml.xml(), codes, plan.overrides());
+
         final Set<Integer> withOpen = new LinkedHashSet<>();
         for (int i = 0; i < sources.size(); i++) {
             if (sources.get(i).opens()) {
@@ -376,26 +512,710 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             }
         }
         final List<String> names = sources.stream().map(Source::name).toList();
-        final Timeline timeline = TimelineSessions.build(read.events(), new Options(capMs, period.toMs(), now,
-                zone.zone(), names, withOpen));
+        final Options options = new Options(capMs, period.toMs(), now, zone.zone(), names, withOpen);
+        final Timeline timeline = TimelineSessions.build(classification.events(), options);
         final Map<String, Event> byId = new LinkedHashMap<>();
-        read.events().forEach(event -> byId.put(event.id(), event));
+        classification.events().forEach(event -> byId.put(event.id(), event));
+
+        final List<PairRule> pairs = new ArrayList<>(plan.pairs());
+        pairs.addAll(PairRule.SCHEMA);
+        final Inferred inferred = PairInference.infer(typed(classification, byId, options), pairs);
+        for (final Candidate candidate : inferred.clear()) {
+            pairs.add(new PairRule(candidate.source(), candidate.start(), candidate.end(), candidate.by(), null,
+                    Origin.INFERRED, candidate.share()));
+        }
+        final Built built = TimelineSpans.build(timeline, classification.events(), classification.byId(), pairs,
+                options);
 
         final String folder = FOLDER + safe(entity) + "/";
-        final Characterised characterised = booleanArg(request, CHARACTERISE_ARG, false)
-                ? characterise(request, context, workspace, config, timeline, byId, names, folder, zone)
+        final Characterised characterised = booleanArg(request, CHARACTERISE_ARG, false) || view != View.DETAIL
+                ? characterise(request, context, workspace, config, built.combined(), byId, names, folder, zone)
                 : null;
-        final Files files = write(workspace, folder, timeline, byId, names, characterised, sources);
-        final Map<String, Object> structured = structured(entity, period, capMs, sources, read, timeline,
-                characterised, files, zone);
+        final Learned learned = TimelineLearning.learn(learnedEntries(request, sources, inferred, plan),
+                inferred.borderline().stream()
+                        .map(candidate -> new NamedCandidate(sources.get(candidate.source()).doc().getName(),
+                                candidate))
+                        .toList(), skill, skill == null || skill.listed() == null
+                        ? createIn(context, sources)
+                        : null, workspace, folder);
+        final TimelineRun run = new TimelineRun(entity, period, capMs, sources, plan.notes(), plan.chosen(), read,
+                classification, xml.summary(), timeline, built, byId, inferred.borderline(), characterised, view,
+                lanes, learned, zone);
+        final Files files = TimelineTables.write(workspace, folder, run);
+        final Map<String, Object> structured = TimelineResult.structured(run, files);
         return context.session().isChat()
-                ? ToolResult.text(markdown(entity, period, capMs, sources, read, timeline, characterised, files,
-                        zone)).withStructuredContent(structured)
+                ? ToolResult.text(TimelineResult.markdown(run, files)).withStructuredContent(structured)
                 : ToolResult.text(JsonUtil.writeValueAsString(structured, false)).withStructuredContent(structured);
     }
 
     // ------------------------------------------------------------------------------------------------
+    // The sources
+
+    // The sources, each checked against its index: given by the call (roles or not), or chosen; each index's user
+    // field found; an automatic source probed for the user's events (leaving it out, listed, if it has none where
+    // every source was taken) and for an element field.
+    private Plan plan(final ToolCall request,
+                      final ToolCallContext context,
+                      final String entity,
+                      final Period period,
+                      final Instant deadline,
+                      final SkillInUse skill) {
+        final Object given = argsMap(request).get(SOURCES_ARG);
+        final List<Map<?, ?>> specs = new ArrayList<>();
+        final String chosen;
+        boolean all = false;
+        final boolean ask = given == null || (given instanceof final String text && (text.isBlank()
+                                                                                    || ASK_SOURCES.equalsIgnoreCase(
+                text.strip())));
+        if (ask || (given instanceof final String text && ALL_SOURCES.equalsIgnoreCase(text.strip()))) {
+            final TimelineSourceChoice.Chosen choice = ask
+                    ? sourceChoice.choose(request, context, NAME)
+                    : new TimelineSourceChoice.Chosen(sourceChoice.supported(), true, "all supported data sources, "
+                                                                                     + "as the call asked");
+            if (choice.indexes().isEmpty()) {
+                throw new WorkspaceException("You can't use any Elastic Index, so there is nothing to build a "
+                                             + "timeline from.");
+            }
+            choice.indexes().forEach(doc -> specs.add(Map.of(INDEX_KEY, doc.getUuid())));
+            chosen = choice.how();
+            all = choice.all();
+        } else {
+            final List<?> list = given instanceof final List<?> items
+                    ? items
+                    : given instanceof final String text
+                            ? text.strip().startsWith("[")
+                                    ? parsedList(text)
+                                    : List.of(text.split(","))
+                            : List.of();
+            if (list.isEmpty()) {
+                throw new WorkspaceException("Give " + SOURCES_ARG + ": at least one source (an index's name will "
+                                             + "do), \"all\", or none to ask the user.");
+            }
+            for (int i = 0; i < list.size(); i++) {
+                final Object item = list.get(i);
+                if (item instanceof final Map<?, ?> map) {
+                    specs.add(map);
+                } else if (item instanceof final String name && !name.isBlank()) {
+                    specs.add(Map.of(INDEX_KEY, name.strip()));
+                } else {
+                    throw new WorkspaceException("Source " + (i + 1) + " isn't an index's name or an object {index, "
+                                                 + "...}.");
+                }
+            }
+            chosen = skill != null && skill.listed() != null
+                    ? "the call's, from the skill '" + skill.listed().skill().name() + "'"
+                    : "the call's";
+        }
+        final List<String> userFields = stringListArg(request, USER_FIELD_ARG);
+        final List<Source> sources = new ArrayList<>();
+        final List<SourceNote> notes = new ArrayList<>();
+        final List<Map<?, ?>> automaticSpecs = new ArrayList<>();
+        final List<Prepared> prepared = new ArrayList<>();
+        for (int i = 0; i < specs.size(); i++) {
+            final Map<?, ?> spec = specs.get(i);
+            final String what = "Source " + (i + 1);
+            if (spec.get(ROLES_KEY) != null) {
+                prepared.add(new Prepared(spec, source(spec, what), null));
+            } else {
+                automaticSpecs.add(spec);
+                prepared.add(prepare(context, spec, what, userFields));
+            }
+        }
+        askUserFields(request, context, prepared);
+        final Map<Integer, Fields> fields = new LinkedHashMap<>();
+        final List<Map<?, ?>> kept = new ArrayList<>();
+        for (final Prepared one : prepared) {
+            if (one.source() != null) {
+                sources.add(one.source());
+                kept.add(one.spec());
+                notes.add(new SourceNote(one.source().name(), one.source().doc().getName(), one.source().userField(),
+                        "the call (roles given)", null, null));
+                continue;
+            }
+            final Automatic automatic = one.automatic();
+            if (automatic.user() == null) {
+                notes.add(new SourceNote(automatic.name(), automatic.doc().getName(), null, null, null,
+                        "no field holding the user was found (give sources [{index, user}], or a ## Fields line in "
+                        + "the AGENTS doc where it is)"));
+                continue;
+            }
+            final Probed probed = probe(context, automatic, entity, period, deadline);
+            if (probed == null) {
+                if (all || specs.size() > 1) {
+                    notes.add(new SourceNote(automatic.name(), automatic.doc().getName(), automatic.user().field(),
+                            automatic.user().from(), null, "no events of " + entity + " in the period"));
+                    continue;
+                }
+                sources.add(automatic.source(automatic.transforms(), List.of()));
+                kept.add(one.spec());
+                notes.add(new SourceNote(automatic.name(), automatic.doc().getName(), automatic.user().field(),
+                        automatic.user().from(), null, null));
+                fields.put(sources.size() - 1, automatic.fields(null));
+                continue;
+            }
+            final Fields found = automatic.fields(probed.element());
+            final List<String> extra = new ArrayList<>();
+            for (final String field : new String[]{found.element(), found.action(), found.eventType()}) {
+                if (field != null && !extra.contains(field)) {
+                    extra.add(field);
+                }
+            }
+            sources.add(automatic.source(probed.transforms(), extra));
+            kept.add(one.spec());
+            fields.put(sources.size() - 1, found);
+            notes.add(new SourceNote(automatic.name(), automatic.doc().getName(), automatic.user().field(),
+                    automatic.user().from(), probed.transforms().isEmpty()
+                            ? null
+                            : String.join(", ", probed.transforms().stream()
+                                    .map(transform -> transform.name().toLowerCase(Locale.ROOT)).toList())
+                              + " (the user wasn't found as given)", null));
+        }
+        if (sources.isEmpty()) {
+            final StringBuilder sb = new StringBuilder("No source holds ").append(entity)
+                    .append("'s events in the period with a field holding the user:");
+            notes.forEach(note -> sb.append("\n- ").append(note.index()).append(": ").append(note.leftOut()));
+            throw new WorkspaceException(sb.toString());
+        }
+        return new Plan(sources, notes, chosen, fields, pairsOf(kept, sources, skill), overridesOf(kept, sources,
+                skill));
+    }
+
+    // An automatic source's index, its fields, and its user field found (or not yet).
+    private Prepared prepare(final ToolCallContext context,
+                             final Map<?, ?> spec,
+                             final String what,
+                             final List<String> userFields) {
+        final String index = text(spec.get(INDEX_KEY));
+        if (index == null) {
+            throw new WorkspaceException(what + " has no " + INDEX_KEY + ": give its Elastic Index's uuid or name.");
+        }
+        final DocRef doc = dataSource(index);
+        if (!ElasticIndexDoc.TYPE.equals(doc.getType())) {
+            throw new WorkspaceException(what + ": " + DataSourceAccess.describe(doc) + " isn't an Elastic Index: "
+                                         + "a timeline reads Elastic Indexes only.");
+        }
+        final String name = NullSafe.nonBlankStringElse(text(spec.get(NAME_KEY)), doc.getName());
+        final ElasticKeyStreams.Doc target = target(doc, what);
+        if (target.timeField() == null) {
+            throw new WorkspaceException(what + ": Elastic Index '" + doc.getName() + "' has no time field, so its "
+                                         + "events can't be put in time order.");
+        }
+        final Map<String, ElasticEql.Field> mapping = target.fields();
+        final Map<String, FieldType> types = new LinkedHashMap<>();
+        for (final QueryField field : EsqlQueryTool.fields(queryServiceProvider.get(), doc)) {
+            types.put(field.getFldName(), field.getFldType());
+        }
+        final List<String> givenUser = new ArrayList<>();
+        NullSafe.consume(text(spec.get(USER_KEY)), givenUser::add);
+        givenUser.addAll(userFields);
+        final Found user = timelineFields.find(context.session(), doc, InstructionRules.USER_FIELD, givenUser,
+                field -> userKey(field, mapping) != null).orElse(null);
+        final Automatic automatic = new Automatic(name, doc, mapping, types, user == null
+                ? null
+                : new Found(userKey(user.field(), mapping), user.origin(), user.detail()),
+                found(context, doc, InstructionRules.HOST_FIELD, spec.get(HOST_KEY), mapping, types),
+                found(context, doc, InstructionRules.ELEMENT_FIELD, spec.get(ELEMENT_FIELD_KEY), mapping, types),
+                found(context, doc, InstructionRules.ACTION_FIELD, spec.get(ACTION_FIELD_KEY), mapping, types),
+                found(context, doc, InstructionRules.EVENT_TYPE_FIELD, spec.get(EVENT_TYPE_FIELD_KEY), mapping,
+                        types), checked(spec.get(OBJECT_KEY), mapping, types, what, doc), transforms(spec.get(
+                TRANSFORM_KEY), what));
+        return new Prepared(spec, null, automatic);
+    }
+
+    private String found(final ToolCallContext context,
+                         final DocRef doc,
+                         final String what,
+                         final Object given,
+                         final Map<String, ElasticEql.Field> mapping,
+                         final Map<String, FieldType> types) {
+        final List<String> list = new ArrayList<>();
+        NullSafe.consume(text(given), list::add);
+        return timelineFields.find(context.session(), doc, what, list, field -> has(field, mapping, types))
+                .map(Found::field)
+                .orElse(null);
+    }
+
+    private static String checked(final Object given,
+                                  final Map<String, ElasticEql.Field> mapping,
+                                  final Map<String, FieldType> types,
+                                  final String what,
+                                  final DocRef doc) {
+        final String field = text(given);
+        if (field != null) {
+            checkField(field, mapping, types, what, doc);
+        }
+        return field;
+    }
+
+    private static boolean has(final String field,
+                               final Map<String, ElasticEql.Field> mapping,
+                               final Map<String, FieldType> types) {
+        return mapping.isEmpty()
+                ? types.containsKey(field)
+                : mapping.containsKey(field) || types.containsKey(field);
+    }
+
+    // The field as a key the user can be matched on (a text field's keyword subfield), or null if it can't be one.
+    private static String userKey(final String field, final Map<String, ElasticEql.Field> mapping) {
+        final ElasticEql.Field mapped = mapping.get(field);
+        if (mapped == null) {
+            return null;
+        }
+        if (Set.of("text", "match_only_text").contains(mapped.nativeType())) {
+            return mapping.values().stream()
+                    .filter(other -> field.equals(other.multiFieldParent()) && "keyword".equals(other.nativeType()))
+                    .map(ElasticEql.Field::name)
+                    .findFirst()
+                    .orElse(null);
+        }
+        return JoinKeys.kind(mapped.nativeType()) == null
+                ? null
+                : field;
+    }
+
+    // Asks, in one form, for the user field of each automatic source none was found for; over MCP they are left out.
+    private void askUserFields(final ToolCall request, final ToolCallContext context, final List<Prepared> prepared) {
+        final List<Integer> missing = new ArrayList<>();
+        for (int i = 0; i < prepared.size(); i++) {
+            if (prepared.get(i).automatic() != null && prepared.get(i).automatic().user() == null) {
+                missing.add(i);
+            }
+        }
+        if (missing.isEmpty() || !context.session().isChat() || !context.userQuestions().canAsk()) {
+            return;
+        }
+        final Map<String, Object> properties = new LinkedHashMap<>();
+        final Map<String, Integer> byKey = new LinkedHashMap<>();
+        for (final int i : missing) {
+            final Automatic automatic = prepared.get(i).automatic();
+            final List<String> choices = new ArrayList<>(automatic.mapping().values().stream()
+                    .filter(field -> KEYWORD_TYPES.contains(field.nativeType()))
+                    .map(ElasticEql.Field::name)
+                    .sorted()
+                    .limit(PROBE_FIELDS)
+                    .toList());
+            choices.add(LEAVE_OUT);
+            final String key = "index_" + (i + 1);
+            byKey.put(key, i);
+            properties.put(key, Map.of("type", "string", "title", automatic.doc().getName() + ": the field holding "
+                                                                  + "the user", "enum", choices, "default",
+                    LEAVE_OUT));
+        }
+        final ElicitResult answer = context.userQuestions().ask(NAME, UserQuestions.formCallId(request.id(),
+                USER_FIELDS_FORM), "No field holding the user was found in these indexes (from the call, an AGENTS "
+                                   + "doc's ## Fields, a field convention or the index's documentation). Which is "
+                                   + "it?", Map.of("type", "object", "properties", properties));
+        if (answer.action() != ElicitResult.Action.ACCEPT) {
+            return;
+        }
+        final Map<String, Object> content = NullSafe.map(answer.content());
+        byKey.forEach((key, i) -> {
+            final String field = content.get(key) == null
+                    ? null
+                    : String.valueOf(content.get(key));
+            final Automatic automatic = prepared.get(i).automatic();
+            if (field != null && !LEAVE_OUT.equals(field) && userKey(field, automatic.mapping()) != null) {
+                prepared.set(i, new Prepared(prepared.get(i).spec(), null, automatic.withUser(new Found(
+                        userKey(field, automatic.mapping()), TimelineFields.Origin.ASKED, null))));
+            }
+        });
+    }
+
+    // The first of the user's events in an automatic source, with its keyword fields: whether there are any (with
+    // the source's transforms, else, for text, without the domain and in lower case), and which field holds the
+    // EventDetail element where none was named. Null if the user has none there.
+    private Probed probe(final ToolCallContext context,
+                         final Automatic automatic,
+                         final String entity,
+                         final Period period,
+                         final Instant deadline) {
+        final List<String> fields = new ArrayList<>(automatic.mapping().values().stream()
+                .filter(field -> KEYWORD_TYPES.contains(field.nativeType()))
+                .map(ElasticEql.Field::name)
+                .filter(name -> !name.equals(automatic.user().field()))
+                .sorted()
+                .limit(PROBE_FIELDS)
+                .toList());
+        final List<List<Transform>> tries = new ArrayList<>();
+        tries.add(automatic.transforms());
+        final JoinKeys.Kind kind = JoinKeys.kind(automatic.mapping().get(automatic.user().field()).nativeType());
+        if (automatic.transforms().isEmpty() && kind == JoinKeys.Kind.TEXT) {
+            tries.add(List.of(Transform.STRIP_DOMAIN, Transform.LOWERCASE));
+        }
+        for (final List<Transform> transforms : tries) {
+            final Source source = automatic.source(transforms, List.of());
+            final List<Map<String, String>> rows;
+            try {
+                rows = TimelineReader.sample(keyStreamsProvider.get(), source, entity, period.timeRange(), fields,
+                        PROBE_EVENTS, deadline, context.stopped());
+            } catch (final PermissionException e) {
+                throw new WorkspaceException("You can't use Elastic Index '" + automatic.doc().getName() + "'.");
+            }
+            if (!rows.isEmpty()) {
+                return new Probed(transforms, automatic.element() != null
+                        ? automatic.element()
+                        : elementField(rows, fields));
+            }
+        }
+        return null;
+    }
+
+    // The field whose values are nearly all EventDetail elements, if one is.
+    private static String elementField(final List<Map<String, String>> rows, final List<String> fields) {
+        for (final String field : fields) {
+            int values = 0;
+            int elements = 0;
+            for (final Map<String, String> row : rows) {
+                final String value = row.get(field);
+                if (value != null) {
+                    values++;
+                    if (EventXmlClassifier.isElement(value)) {
+                        elements++;
+                    }
+                }
+            }
+            if (values >= 3 && elements >= ELEMENT_SHARE * values) {
+                return field;
+            }
+        }
+        return null;
+    }
+
+    // Each source's pairs: the skill's Event chains first, then the call's.
+    private static List<PairRule> pairsOf(final List<Map<?, ?>> specs,
+                                          final List<Source> sources,
+                                          final SkillInUse skill) {
+        final List<PairRule> pairs = new ArrayList<>();
+        if (skill != null) {
+            for (final Entry entry : skill.chains().entries()) {
+                if (entry.isPair()) {
+                    for (int i = 0; i < sources.size(); i++) {
+                        if (entry.appliesTo(sources.get(i).name()) || entry.appliesTo(sources.get(i).doc()
+                                .getName())) {
+                            pairs.add(new PairRule(i, entry.start(), entry.end(), entry.by(), entry.label(),
+                                    Origin.SKILL, 1));
+                        }
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < specs.size(); i++) {
+            if (specs.get(i).get(PAIRS_KEY) instanceof final List<?> list) {
+                for (final Object item : list) {
+                    if (!(item instanceof final Map<?, ?> pair) || text(pair.get(START_KEY)) == null
+                        || text(pair.get(END_KEY)) == null) {
+                        throw new WorkspaceException("Source " + (i + 1) + "'s " + PAIRS_KEY + " is a list of "
+                                                     + "{start, end, by, label}.");
+                    }
+                    pairs.add(new PairRule(i, text(pair.get(START_KEY)), text(pair.get(END_KEY)),
+                            text(pair.get(BY_KEY)), text(pair.get(LABEL_KEY)), Origin.CALL, 1));
+                }
+            }
+        }
+        return pairs;
+    }
+
+    // Each source's types given a role: the skill's Event chains, then the call's typeRoles (the user's own).
+    private static Map<Integer, Map<String, RoleOverride>> overridesOf(final List<Map<?, ?>> specs,
+                                                                       final List<Source> sources,
+                                                                       final SkillInUse skill) {
+        final Map<Integer, Map<String, RoleOverride>> out = new LinkedHashMap<>();
+        if (skill != null) {
+            for (final Entry entry : skill.chains().entries()) {
+                if (!entry.isPair()) {
+                    for (int i = 0; i < sources.size(); i++) {
+                        if (entry.appliesTo(sources.get(i).name()) || entry.appliesTo(sources.get(i).doc()
+                                .getName())) {
+                            out.computeIfAbsent(i, k -> new LinkedHashMap<>()).put(entry.type(), new RoleOverride(
+                                    EventCodes.role(entry.role()), "skill"));
+                        }
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < specs.size(); i++) {
+            for (final Map.Entry<String, String> typeRole : typeRoles(specs.get(i), i).entrySet()) {
+                out.computeIfAbsent(i, k -> new LinkedHashMap<>()).put(typeRole.getKey(), new RoleOverride(
+                        EventCodes.role(typeRole.getValue()), "call"));
+            }
+        }
+        return out;
+    }
+
+    private static Map<String, String> typeRoles(final Map<?, ?> spec, final int i) {
+        final Object given = spec.get(TYPE_ROLES_KEY);
+        final Map<String, String> out = new LinkedHashMap<>();
+        if (given == null) {
+            return out;
+        }
+        if (!(given instanceof final Map<?, ?> map)) {
+            throw new WorkspaceException("Source " + (i + 1) + "'s " + TYPE_ROLES_KEY + " is {\"<type>\": \"<role>\"}, "
+                                         + "each role one of " + String.join(", ", EventChains.ROLES) + ".");
+        }
+        map.forEach((type, role) -> {
+            final String name = String.valueOf(role).strip().toLowerCase(Locale.ROOT);
+            if (!EventChains.ROLES.contains(name)) {
+                throw new WorkspaceException("Source " + (i + 1) + ": '" + role + "' isn't a role: give one of "
+                                             + String.join(", ", EventChains.ROLES) + ".");
+            }
+            out.put(String.valueOf(type).strip(), name);
+        });
+        return out;
+    }
+
+    // ------------------------------------------------------------------------------------------------
+    // Classifying
+
+    // The automatic sources' events' Events XML, read by StreamId and EventId in time order up to the cap.
+    private XmlOutcome readXml(final ToolCallContext context,
+                               final AiWorkspaceConfig config,
+                               final List<Source> sources,
+                               final Read read) {
+        final List<Event> wanted = read.events().stream()
+                .filter(event -> sources.get(event.source()).automatic() && event.streamId() != null
+                                 && event.eventId() != null && number(event.streamId()) != null
+                                 && number(event.eventId()) != null)
+                .sorted(Comparator.comparingLong(Event::time))
+                .toList();
+        if (wanted.isEmpty()) {
+            return new XmlOutcome(Map.of(), XmlRead.NONE);
+        }
+        final int cap = Math.max(0, config.getTimelineMaxXmlEvents());
+        final Map<Long, List<Long>> ids = new TreeMap<>();
+        final Set<String> seen = new LinkedHashSet<>();
+        for (final Event event : wanted) {
+            if (seen.size() >= cap) {
+                break;
+            }
+            if (seen.add(event.streamId() + ":" + event.eventId())) {
+                ids.computeIfAbsent(number(event.streamId()), k -> new ArrayList<>()).add(number(event.eventId()));
+            }
+        }
+        final int pastCap = (int) wanted.stream()
+                .map(event -> event.streamId() + ":" + event.eventId())
+                .distinct()
+                .count() - seen.size();
+        context.progress().report("Reading the Events XML of " + seen.size() + " event(s)");
+        final TimelineEventXml.Read xml = eventXml.read(context.session(), ids, config.getMaxEventBytes(),
+                context.stopped(), count -> context.progress().report("Read the Events XML of " + count + " of "
+                                                                      + seen.size() + " event(s)"));
+        return new XmlOutcome(xml.xml(), new XmlRead(seen.size() + pastCap, xml.xml().size(), xml.missing(),
+                xml.unreadable(), pastCap, xml.notAllowed(), cap));
+    }
+
+    // The event codes of each automatic source whose events neither XML nor an element field classify: kept from an
+    // earlier run, else asked of the model once and confirmed by the user (a chat's form; over MCP used unconfirmed
+    // and not kept).
+    private Map<Integer, Map<String, CodeRole>> codes(final ToolCall request,
+                                                      final ToolCallContext context,
+                                                      final List<Source> sources,
+                                                      final Read read,
+                                                      final Map<Integer, Fields> fields,
+                                                      final Map<String, String> xml) {
+        final Map<Integer, Map<String, CodeRole>> out = new LinkedHashMap<>();
+        final Map<Integer, Map<String, Integer>> counts = new LinkedHashMap<>();
+        for (final Event event : read.events()) {
+            final Fields found = fields.get(event.source());
+            if (found == null || found.eventType() == null || xml.containsKey(event.streamId() + ":"
+                                                                               + event.eventId())) {
+                continue;
+            }
+            final Map<String, String> extra = read.extras().getOrDefault(event.id(), Map.of());
+            if (found.element() != null && EventXmlClassifier.isElement(extra.get(found.element()))) {
+                continue;
+            }
+            final String code = extra.get(found.eventType());
+            if (code != null) {
+                counts.computeIfAbsent(event.source(), s -> new LinkedHashMap<>()).merge(code, 1, Integer::sum);
+            }
+        }
+        final SessionWorkspace keptIn = context.userWorkspace().orElse(sessionWorkspace(context));
+        for (final Map.Entry<Integer, Map<String, Integer>> source : counts.entrySet()) {
+            final DocRef doc = sources.get(source.getKey()).doc();
+            final Map<String, CodeRole> kept = new LinkedHashMap<>(EventCodes.kept(keptIn, doc.getUuid()));
+            final Map<String, Integer> unknown = new LinkedHashMap<>();
+            source.getValue().entrySet().stream()
+                    .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
+                    .filter(entry -> !kept.containsKey(entry.getKey()))
+                    .forEach(entry -> unknown.put(entry.getKey(), entry.getValue()));
+            if (!unknown.isEmpty()) {
+                EventCodes.ask(context.sideCalls(), doc.getName(), unknown).ifPresent(asked -> {
+                    final Boolean confirmed = confirmCodes(request, context, doc, asked);
+                    if (confirmed == null) {
+                        // No form: used, but not kept, as the user hasn't confirmed it.
+                        kept.putAll(asked);
+                    } else if (confirmed) {
+                        asked.forEach((code, role) -> kept.put(code, new CodeRole(role.role(), role.kind(), true)));
+                        EventCodes.keep(keptIn, doc.getUuid(), kept);
+                    }
+                });
+            }
+            out.put(source.getKey(), kept);
+        }
+        return out;
+    }
+
+    // True if the user confirms the codes' classification, false if not, null if they can't be asked.
+    private Boolean confirmCodes(final ToolCall request,
+                                 final ToolCallContext context,
+                                 final DocRef doc,
+                                 final Map<String, CodeRole> asked) {
+        if (!context.session().isChat() || !context.userQuestions().canAsk()) {
+            return null;
+        }
+        final Map<String, Object> field = Map.of("type", "string", "title", "Use this classification?", "enum",
+                List.of(USE_CODES, DONT_USE_CODES), "default", USE_CODES);
+        final List<String> lines = EventCodes.lines(asked, CODES_SHOWN);
+        final ElicitResult answer = context.userQuestions().ask(NAME, UserQuestions.formCallId(request.id(),
+                CODES_FORM + "-" + doc.getUuid().substring(0, Math.min(8, doc.getUuid().length()))), "The events of "
+                + doc.getName() + " have no Events XML to go by, so the model classified their event codes "
+                + "(kept for this index once you confirm):\n" + String.join("\n", lines) + (asked.size() > lines.size()
+                ? "\nand " + (asked.size() - lines.size()) + " more"
+                : ""), Map.of("type", "object", "properties", Map.of("use", field), "required", List.of("use")));
+        return answer.action() == ElicitResult.Action.ACCEPT
+               && USE_CODES.equals(String.valueOf(NullSafe.map(answer.content()).get("use")));
+    }
+
+    // The automatic sources' classified events as pairs are inferred by.
+    private static List<Typed> typed(final TimelineClassification.Result classification,
+                                     final Map<String, Event> byId,
+                                     final Options options) {
+        final List<Typed> out = new ArrayList<>();
+        classification.byId().forEach((id, c) -> {
+            final Event event = byId.get(id);
+            if (event != null && c.type() != null) {
+                out.add(new Typed(id, event.source(), event.time(), TimelineSpans.lane(event, options), c.type(),
+                        c.schemaType(), c.keys()));
+            }
+        });
+        return out;
+    }
+
+    private static Long number(final String value) {
+        try {
+            return value == null
+                    ? null
+                    : Long.parseLong(value.strip());
+        } catch (final NumberFormatException e) {
+            return null;
+        }
+    }
+
+    // ------------------------------------------------------------------------------------------------
+    // The skill
+
+    // The skill being run, its Event chains, and whether the user may change its doc.
+    private SkillInUse skillInUse(final ToolCall request, final ToolCallContext context) {
+        final String name = stringArg(request, SKILL_ARG);
+        if (name == null) {
+            return null;
+        }
+        final SkillCatalogue catalogue = skillCatalogueProvider.get();
+        final List<DocRef> folders = context.session().chatId().isPresent()
+                ? catalogue.contextFolders(context.session().chatId().getAsInt())
+                : List.of();
+        final Listed listed = catalogue.readable(folders).stream()
+                .filter(skill -> skill.skill().name().equalsIgnoreCase(name)
+                                 || SkillDoc.slug(skill.skill().name()).equals(SkillDoc.slug(name)))
+                .min(Comparator.comparingInt(skill -> skill.near() < 0
+                        ? Integer.MAX_VALUE
+                        : skill.near()))
+                .orElse(null);
+        if (listed == null) {
+            return new SkillInUse(name, null, EventChains.parse(""), false);
+        }
+        return new SkillInUse(name, listed, EventChains.parse(listed.skill().sections().get(EventChains.SECTION)),
+                documentAccess.canEdit(listed.doc()));
+    }
+
+    // A folder the user may create a skills doc in: the chat's context folders', else a source index's folder.
+    private CreateIn createIn(final ToolCallContext context, final List<Source> sources) {
+        final List<DocRef> folders = new ArrayList<>();
+        if (context.session().chatId().isPresent()) {
+            folders.addAll(skillCatalogueProvider.get().contextFolders(context.session().chatId().getAsInt()));
+        }
+        for (final Source source : sources) {
+            documentAccess.parent(source.doc()).ifPresent(folders::add);
+        }
+        for (final DocRef folder : folders) {
+            if (documentAccess.canCreate(folder, DocumentationDoc.TYPE)) {
+                return new CreateIn(folder, ExplorerConstants.SYSTEM_DOC_REF.equals(folder)
+                        ? "/"
+                        : agentInstructions.folderPath(folder));
+            }
+        }
+        return null;
+    }
+
+    // What this run learned that a skill could hold: the pairs inferred and used, and the call's own pairs and type
+    // roles (the user's corrections).
+    private static List<Entry> learnedEntries(final ToolCall request,
+                                              final List<Source> sources,
+                                              final Inferred inferred,
+                                              final Plan plan) {
+        final List<Entry> entries = new ArrayList<>();
+        for (final Candidate candidate : inferred.clear()) {
+            entries.add(Entry.pair(sources.get(candidate.source()).doc().getName(), candidate.start(),
+                    candidate.end(), candidate.by(), null));
+        }
+        for (final PairRule rule : plan.pairs()) {
+            if (rule.origin() == Origin.CALL) {
+                entries.add(Entry.pair(sources.get(rule.source()).doc().getName(), rule.start(), rule.end(),
+                        rule.by(), rule.label()));
+            }
+        }
+        plan.overrides().forEach((source, types) -> types.forEach((type, override) -> {
+            if ("call".equals(override.from())) {
+                entries.add(Entry.role(sources.get(source).doc().getName(), type, roleName(override.role())));
+            }
+        }));
+        return entries;
+    }
+
+    private static String roleName(final Role role) {
+        if (role == null) {
+            return "ignore";
+        }
+        return switch (role) {
+            case IDLE_END -> "active";
+            case IDLE_START -> "idle";
+            case OPEN -> "open";
+            case CLOSE -> "close";
+            default -> "action";
+        };
+    }
+
+    // ------------------------------------------------------------------------------------------------
     // The call
+
+    private static View view(final ToolCall request) {
+        final Object given = argsMap(request).get(VIEW_ARG);
+        if (given == null || String.valueOf(given).isBlank()) {
+            return View.DETAIL;
+        }
+        for (final View view : View.values()) {
+            if (view.argName().equalsIgnoreCase(String.valueOf(given).strip())) {
+                return view;
+            }
+        }
+        throw new WorkspaceException(VIEW_ARG + " is one of activities, detail or both.");
+    }
+
+    private static String lanes(final ToolCall request) {
+        final Object given = argsMap(request).get(LANES_ARG);
+        if (given == null || String.valueOf(given).isBlank()) {
+            return null;
+        }
+        final String lanes = String.valueOf(given).strip().toLowerCase(Locale.ROOT);
+        if (!List.of("day", "activity", "host", "source").contains(lanes)) {
+            throw new WorkspaceException(LANES_ARG + " is one of day or activity (the activities view), host or "
+                                         + "source (the detail view).");
+        }
+        return lanes;
+    }
+
+    // ------------------------------------------------------------------------------------------------
+    // Helpers
 
     // The period, its date expressions and times without an offset in the call's zone, as instants.
     private Period period(final ToolCall request, final ToolTimeZone zone, final long now) {
@@ -440,28 +1260,6 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             throw new WorkspaceException(IDLE_CAP_ARG + " must be from 1 minute to 24 hours.");
         }
         return cap.toMillis();
-    }
-
-    // The sources, each checked against its index: Elastic, usable, its fields there, its roles as expressions.
-    private List<Source> sources(final ToolCall request) {
-        final Object given = argsMap(request).get(SOURCES_ARG);
-        final List<?> list = given instanceof final List<?> items
-                ? items
-                : given instanceof final String text && !text.isBlank()
-                        ? parsedList(text)
-                        : List.of();
-        if (list.isEmpty()) {
-            throw new WorkspaceException("Give " + SOURCES_ARG + ": at least one source, each {index, user, roles} "
-                                         + "and the fields it holds.");
-        }
-        final List<Source> sources = new ArrayList<>();
-        for (int i = 0; i < list.size(); i++) {
-            if (!(list.get(i) instanceof final Map<?, ?> map)) {
-                throw new WorkspaceException("Source " + (i + 1) + " isn't an object {index, user, roles, ...}.");
-            }
-            sources.add(source(map, "Source " + (i + 1)));
-        }
-        return sources;
     }
 
     private static List<?> parsedList(final String text) {
@@ -520,7 +1318,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                             && mapping.containsKey(EqlSequenceResults.EVENT_ID);
         return new Source(name, doc, user, kind, transforms, fields.get(HOST_KEY), fields.get(PROCESS_KEY),
                 fields.get(TITLE_KEY), fields.get(WINDOW_KEY), fields.get(OBJECT_KEY), fields.get(TEXT_KEY), ids,
-                roles);
+                roles, false, List.of());
     }
 
     // The user field as a key: a text field's keyword subfield in its place.
@@ -832,170 +1630,6 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         }
     }
 
-    // ------------------------------------------------------------------------------------------------
-    // The tables
-
-    private static Files write(final SessionWorkspace workspace,
-                               final String folder,
-                               final Timeline timeline,
-                               final Map<String, Event> byId,
-                               final List<String> names,
-                               final Characterised characterised,
-                               final List<Source> sources) {
-        final String sourceDoc = sources.size() == 1
-                ? sources.getFirst().doc().getUuid()
-                : null;
-        final Map<Integer, String> activityOf = new LinkedHashMap<>();
-        final Map<String, String> labels = new LinkedHashMap<>();
-        if (characterised != null) {
-            characterised.activities().forEach(activity -> labels.put(activity.id(), activity.label()));
-            for (final Session session : timeline.sessions()) {
-                final Placement placement = characterised.sessions().get(session.id());
-                if (placement != null) {
-                    activityOf.put(session.number(), placement.activity());
-                }
-            }
-        }
-        final List<List<String>> sessionRows = new ArrayList<>();
-        for (final Session session : timeline.sessions()) {
-            final String activity = activityOf.get(session.number());
-            sessionRows.add(List.of(session.id(), NullSafe.string(session.host()), NullSafe.string(session.process()),
-                    iso(session.start()), iso(session.end()), minutes(session.activeMs()),
-                    String.join("; ", session.titles().stream().limit(3).toList()), kinds(session.actionsByKind()),
-                    NullSafe.string(session.startMark()), NullSafe.string(session.endMark()), session.endReason(),
-                    activity == null
-                            ? ""
-                            : activity, activity == null
-                            ? ""
-                            : labels.getOrDefault(activity, activity)));
-        }
-        final WorkspacePath sessionsPath = WorkspacePath.parse(folder + SESSIONS_FILE);
-        ToolTables.write(workspace, sessionsPath, List.of("session", "host", "process", "start", "end",
-                "active_minutes", "titles", "actions", "start_mark", "end_mark", "ended_by", "activity",
-                "activity_label"), sessionRows, sourceDoc);
-
-        final List<List<String>> actionRows = new ArrayList<>();
-        for (final Action action : timeline.actions()) {
-            final Event event = action.event();
-            actionRows.add(List.of(iso(event.time()), NullSafe.string(event.host()), NullSafe.string(event.process()),
-                    NullSafe.string(event.kind()), NullSafe.string(event.object()), action.session() == 0
-                            ? ""
-                            : "s" + action.session(), action.by() == null
-                            ? ""
-                            : action.by().toString(), names.get(event.source()), NullSafe.string(event.streamId()),
-                    NullSafe.string(event.eventId())));
-        }
-        final WorkspacePath actionsPath = WorkspacePath.parse(folder + ACTIONS_FILE);
-        ToolTables.write(workspace, actionsPath, List.of("time", "host", "process", "kind", "object", "session", "by",
-                "source", "StreamId", "EventId"), actionRows, sourceDoc);
-
-        final List<List<String>> eventRows = new ArrayList<>();
-        for (final Event event : byId.values().stream()
-                .sorted((a, b) -> Long.compare(a.time(), b.time()))
-                .toList()) {
-            eventRows.add(List.of(iso(event.time()), names.get(event.source()), event.role().argName(),
-                    NullSafe.string(event.kind()), NullSafe.string(event.host()), NullSafe.string(event.process()),
-                    NullSafe.string(event.title()), NullSafe.string(event.object()),
-                    NullSafe.string(event.streamId()), NullSafe.string(event.eventId())));
-        }
-        final WorkspacePath eventsPath = WorkspacePath.parse(folder + EVENTS_FILE);
-        ToolTables.write(workspace, eventsPath, List.of("time", "source", "role", "kind", "host", "process", "title",
-                "object", "StreamId", "EventId"), eventRows, sourceDoc);
-
-        final List<List<String>> dailyRows = new ArrayList<>();
-        for (final Daily daily : timeline.daily()) {
-            dailyRows.add(List.of(daily.day().toString(), daily.host(), NullSafe.string(daily.process()),
-                    minutes(daily.activeMs()), String.valueOf(daily.sessions())));
-        }
-        final WorkspacePath dailyPath = WorkspacePath.parse(folder + DAILY_FILE);
-        ToolTables.write(workspace, dailyPath, List.of("day", "host", "process", "active_minutes", "sessions"),
-                dailyRows, sourceDoc);
-
-        final List<List<String>> windowRows = new ArrayList<>();
-        for (final Window window : timeline.windows()) {
-            windowRows.add(List.of(window.host(), NullSafe.string(window.process()), NullSafe.string(window.window()),
-                    window.opened() == null
-                            ? ""
-                            : iso(window.opened()), window.closed() == null
-                            ? ""
-                            : iso(window.closed())));
-        }
-        final WorkspacePath windowsPath = WorkspacePath.parse(folder + WINDOWS_FILE);
-        ToolTables.write(workspace, windowsPath, List.of("host", "process", "window", "opened", "closed"), windowRows,
-                sourceDoc);
-
-        final List<List<String>> qualityRows = new ArrayList<>();
-        for (final Flag flag : timeline.flags()) {
-            qualityRows.add(List.of(flag.name().key(), String.valueOf(flag.count()), flag.name().description(),
-                    String.join(" | ", flag.examples())));
-        }
-        final WorkspacePath qualityPath = WorkspacePath.parse(folder + QUALITY_FILE);
-        ToolTables.write(workspace, qualityPath, List.of("flag", "count", "what", "examples"), qualityRows,
-                sourceDoc);
-
-        WorkspacePath activitiesPath = null;
-        WorkspacePath itemsPath = null;
-        if (characterised != null) {
-            final List<List<String>> activityRows = new ArrayList<>();
-            for (final Session session : timeline.sessions()) {
-                final Placement placement = characterised.sessions().get(session.id());
-                final String activity = placement == null
-                        ? ""
-                        : placement.activity();
-                activityRows.add(List.of(activity, activity.isEmpty()
-                                ? "No activity"
-                                : labels.getOrDefault(activity, activity), session.id(), iso(session.start()),
-                        iso(session.end()), NullSafe.string(session.host()), NullSafe.string(session.process()),
-                        placement == null
-                                ? ""
-                                : placement.how()));
-            }
-            activitiesPath = WorkspacePath.parse(folder + ACTIVITIES_FILE);
-            ToolTables.write(workspace, activitiesPath, List.of("activity", "activity_label", "session", "start",
-                    "end", "host", "process", "how"), activityRows, sourceDoc);
-            final List<List<String>> itemRows = new ArrayList<>();
-            for (final ActivityCharacterisation.Item item : characterised.allItems()) {
-                final Placement placement = item.id().startsWith("s") && characterised.sessions()
-                        .containsKey(item.id())
-                        ? characterised.sessions().get(item.id())
-                        : characterised.items().get(item.id());
-                itemRows.add(List.of(item.id(), iso(item.time()), item.source(), NullSafe.string(item.host()),
-                        item.session() == null
-                                ? ""
-                                : item.session().id(), placement == null
-                                ? ""
-                                : placement.activity(), placement == null
-                                ? "not classified"
-                                : NullSafe.string(placement.how()), placement == null
-                                ? ""
-                                : NullSafe.string(placement.confidence()), placement == null
-                                ? ""
-                                : NullSafe.string(placement.reason())));
-            }
-            itemsPath = WorkspacePath.parse(folder + ITEMS_FILE);
-            ToolTables.write(workspace, itemsPath, List.of("item", "time", "source", "host", "session", "activity",
-                    "how", "confidence", "reason"), itemRows, sourceDoc);
-        }
-        return new Files(sessionsPath, actionsPath, eventsPath, dailyPath, windowsPath, qualityPath, activitiesPath,
-                itemsPath);
-    }
-
-    /// @param ms Epoch milliseconds.
-    /// @return It as an ISO 8601 instant, in UTC, as gantt_chart reads it.
-    static String iso(final long ms) {
-        return Instant.ofEpochMilli(ms).toString();
-    }
-
-    private static String minutes(final long ms) {
-        return String.valueOf(Math.round(ms / 6_000.0) / 10.0);
-    }
-
-    private static String kinds(final Map<String, Integer> byKind) {
-        final List<String> parts = new ArrayList<>();
-        byKind.forEach((kind, count) -> parts.add(kind + ": " + count));
-        return String.join("; ", parts);
-    }
-
     /// @param entity A user.
     /// @return A folder name for them.
     static String safe(final String entity) {
@@ -1005,251 +1639,25 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 : safe;
     }
 
-    // ------------------------------------------------------------------------------------------------
-    // The result
-
-    private static Map<String, Object> structured(final String entity,
-                                                  final Period period,
-                                                  final long capMs,
-                                                  final List<Source> sources,
-                                                  final Read read,
-                                                  final Timeline timeline,
-                                                  final Characterised characterised,
-                                                  final Files files,
-                                                  final ToolTimeZone zone) {
-        final Map<String, Object> map = new LinkedHashMap<>();
-        map.put("entity", entity);
-        map.put("time", Map.of("from", iso(period.fromMs()), "to", iso(period.toMs())));
-        map.put("idle_cap_minutes", capMs / 60_000);
-        final List<Map<String, Object>> sourceCounts = new ArrayList<>();
-        for (int i = 0; i < sources.size(); i++) {
-            sourceCounts.add(Map.of("name", sources.get(i).name(), "index", sources.get(i).doc().getName(),
-                    "events", i < read.counts().size()
-                            ? read.counts().get(i)
-                            : 0L));
-        }
-        map.put("sources", sourceCounts);
-        map.put("events_read", read.events().size());
-        map.put("ended_early", endedEarly(read));
-        map.put("session_count", timeline.sessions().size());
-        map.put("hosts", timeline.sessions().stream().map(Session::host).distinct().toList());
-        map.put("uncertain_sessions", timeline.sessions().stream().filter(Session::uncertain).count());
-        map.put("actions", timeline.actions().size());
-        map.put("unattached_actions", timeline.unattached().size());
-        // Active time by host and application over the period, the most first: the answer's rows.
-        map.put("columns", List.of("host", "process", "sessions", "active_minutes"));
-        map.put("rows", byApplication(timeline).stream()
-                .map(row -> List.<Object>of(row.host(), row.process(), row.sessions(),
-                        Math.round(row.activeMs() / 6_000.0) / 10.0))
-                .toList());
-        final Map<String, Object> quality = new LinkedHashMap<>();
-        for (final Flag flag : timeline.flags()) {
-            quality.put(flag.name().key(), Map.of("count", flag.count(), "what", flag.name().description(),
-                    "examples", flag.examples()));
-        }
-        map.put("data_quality", quality);
-        final Map<String, Object> written = new LinkedHashMap<>();
-        written.put("sessions", files.sessions().toString());
-        written.put("actions", files.actions().toString());
-        written.put("events", files.events().toString());
-        written.put("daily", files.daily().toString());
-        written.put("windows", files.windows().toString());
-        written.put("data_quality", files.quality().toString());
-        if (files.activities() != null) {
-            written.put("activities", files.activities().toString());
-            written.put("items", files.items().toString());
-        }
-        map.put("files", written);
-        map.put("gantt", Map.of("path", files.sessions().toString(), "start", "start", "end", "end", "label",
-                "process", "lane", "host"));
-        if (characterised != null) {
-            map.put("characterisation", characterisation(characterised, files, timeline.sessions().size()));
-        }
-        map.put("time_zone", zone.zone().getId());
-        map.put("derived", DERIVED);
-        map.put("caveat", CAVEAT);
-        return map;
-    }
-
-    private static Map<String, Object> characterisation(final Characterised characterised,
-                                                        final Files files,
-                                                        final int sessions) {
-        final Map<String, Object> map = new LinkedHashMap<>();
-        final List<Map<String, Object>> activities = new ArrayList<>();
-        for (final Activity activity : characterised.activities()) {
-            final Map<String, Object> one = new LinkedHashMap<>();
-            one.put("id", activity.id());
-            one.put("label", activity.label());
-            one.put("label_is", ActivityCharacterisation.INFERRED);
-            one.put("found_by", activity.fromModel()
-                    ? "the model (a theme several items share)"
-                    : "the sessions' graph (Leiden clusters)");
-            one.put("sessions", activity.sessionCount());
-            one.put("items", activity.items());
-            one.put("active_minutes", Math.round(activity.activeMs() / 6_000.0) / 10.0);
-            one.put("applications", activity.applications());
-            one.put("artifacts", activity.artifacts());
-            one.put("terms", activity.terms());
-            activities.add(one);
-        }
-        map.put("activities", activities);
-        map.put("sessions_in_no_activity", sessions - (int) characterised.sessions().values().stream()
-                .filter(placement -> placement.activity().startsWith("a"))
-                .count());
-        final Map<String, Long> placed = new TreeMap<>();
-        characterised.items().values().forEach(placement -> placed.merge(placement.activity().startsWith("a")
-                ? "in_an_activity"
-                : placement.activity(), 1L, Long::sum));
-        map.put("items", characterised.allItems().size());
-        map.put("items_placed", placed);
-        map.put("model_calls", characterised.calls());
-        map.put("items_asked", characterised.asked());
-        map.put("items_not_classified", characterised.skipped());
-        final List<Map<String, Object>> unclear = new ArrayList<>();
-        characterised.items().values().stream()
-                .filter(placement -> ActivityCharacterisation.UNCLEAR.equals(placement.activity()))
-                .limit(ActivityCharacterisation.UNCLEAR_SHOWN)
-                .forEach(placement -> unclear.add(Map.of("item", placement.id(), "reason",
-                        NullSafe.string(placement.reason()))));
-        map.put("unclear", unclear);
-        map.put("modularity", Math.round(characterised.modularity() * 100) / 100.0);
-        map.put("notes", characterised.notes());
-        map.put("gantt", Map.of("path", files.activities().toString(), "start", "start", "end", "end", "label",
-                "process", "lane", "activity_label"));
-        return map;
-    }
-
-    private static String endedEarly(final Read read) {
-        if (read.reached() == null) {
-            return read.cut()
-                    ? "A role of a source had more than " + KeyGroupSource.MAX_KEY_ROWS + " events: the rest were "
-                      + "counted, not kept. Narrow the period."
-                    : null;
-        }
-        return switch (read.reached()) {
-            case ROWS -> "Reading stopped at the events cap (stroom.ai.workspace.timelineMaxEvents): narrow the "
-                         + "period.";
-            case TIME -> "Reading stopped at the time limit: narrow the period, or the sources' roles.";
-            default -> "Reading stopped early.";
-        };
-    }
-
-    // Each host's applications, the most active time first.
-    private static List<ByApplication> byApplication(final Timeline timeline) {
-        final Map<String, long[]> totals = new LinkedHashMap<>();
-        for (final Session session : timeline.sessions()) {
-            final long[] total = totals.computeIfAbsent(session.host() + "\u0000" + NullSafe.string(
-                    session.process()), key -> new long[2]);
-            total[0] += session.activeMs();
-            total[1]++;
-        }
-        final List<ByApplication> rows = new ArrayList<>();
-        totals.forEach((key, total) -> {
-            final String[] parts = key.split("\u0000", -1);
-            rows.add(new ByApplication(parts[0], parts[1], (int) total[1], total[0]));
-        });
-        rows.sort((a, b) -> a.activeMs() == b.activeMs()
-                ? (a.host() + a.process()).compareTo(b.host() + b.process())
-                : Long.compare(b.activeMs(), a.activeMs()));
-        return rows;
-    }
-
-    private static String markdown(final String entity,
-                                   final Period period,
-                                   final long capMs,
-                                   final List<Source> sources,
-                                   final Read read,
-                                   final Timeline timeline,
-                                   final Characterised characterised,
-                                   final Files files,
-                                   final ToolTimeZone zone) {
-        final ZoneId zoneId = zone.zone();
-        final StringBuilder sb = new StringBuilder("Activity timeline of ").append(entity).append(", ")
-                .append(local(period.fromMs(), zoneId)).append(" to ").append(local(period.toMs(), zoneId))
-                .append(": ").append(timeline.sessions().size()).append(" session(s) on ")
-                .append(timeline.sessions().stream().map(Session::host).distinct().count()).append(" host(s), ")
-                .append(timeline.actions().size()).append(" action(s) (").append(timeline.unattached().size())
-                .append(" in no session), from ").append(read.events().size()).append(" event(s): ");
-        final List<String> counts = new ArrayList<>();
-        for (int i = 0; i < sources.size(); i++) {
-            counts.add(sources.get(i).name() + " " + (i < read.counts().size()
-                    ? read.counts().get(i)
-                    : 0));
-        }
-        sb.append(String.join(", ", counts)).append(". Idle cap ").append(capMs / 60_000).append(" minutes.\n");
-        final String early = endedEarly(read);
-        if (early != null) {
-            sb.append("\n").append(early).append("\n");
-        }
-        sb.append("\nActive time by host and application:\n\n| host | process | sessions | active minutes |\n"
-                  + "| --- | --- | --- | --- |\n");
-        byApplication(timeline).stream().limit(SHOWN).forEach(row -> sb.append("| ").append(row.host())
-                .append(" | ").append(row.process()).append(" | ").append(row.sessions()).append(" | ")
-                .append(Math.round(row.activeMs() / 6_000.0) / 10.0).append(" |\n"));
-        sb.append("\nData quality (missing events are flagged, never smoothed over):");
-        if (timeline.flags().isEmpty()) {
-            sb.append(" nothing flagged.\n");
-        } else {
-            sb.append('\n');
-            for (final Flag flag : timeline.flags()) {
-                sb.append("- ").append(flag.name().key()).append(": ").append(flag.count()).append(" ")
-                        .append(flag.name().description()).append(", e.g. ")
-                        .append(String.join("; ", flag.examples())).append('\n');
-            }
-        }
-        if (characterised != null) {
-            sb.append("\nWhat ").append(entity).append(" was working on (labels are inferences from the evidence):\n");
-            for (final Activity activity : characterised.activities().stream().limit(SHOWN).toList()) {
-                sb.append("- ").append(activity.id()).append(" \"").append(activity.label()).append("\": ")
-                        .append(activity.sessionCount()).append(" session(s), ")
-                        .append(Math.round(activity.activeMs() / 6_000.0) / 10.0).append(" active minutes, ")
-                        .append(activity.items()).append(" item(s); ").append(String.join(", ",
-                                activity.applications())).append(activity.artifacts().isEmpty()
-                                ? ""
-                                : "; artifacts: " + String.join(", ", activity.artifacts()))
-                        .append(activity.fromModel()
-                                ? " (a theme the model found in several items)"
-                                : "").append('\n');
-            }
-            final long unclear = characterised.items().values().stream()
-                    .filter(placement -> ActivityCharacterisation.UNCLEAR.equals(placement.activity()))
-                    .count();
-            sb.append(characterised.allItems().size()).append(" item(s) (messages, prompts, sessions the graph "
-                                                              + "left out): ").append(characterised.asked())
-                    .append(" classified by the model in ").append(characterised.calls())
-                    .append(" call(s) outside this conversation, ").append(unclear).append(" unclear (")
-                    .append(files.items()).append(" has each with its reason).\n");
-            characterised.notes().forEach(note -> sb.append("- ").append(note).append('\n'));
-            sb.append("Activities by session: ").append(files.activities()).append(" (gantt_chart with lane "
-                                                                                  + "activity_label draws a section "
-                                                                                  + "per activity).\n");
-        }
-        sb.append("\nTables: ").append(files.sessions()).append(" (sessions), ").append(files.actions())
-                .append(" (actions, with where each was attached), ").append(files.daily()).append(" (per day), ")
-                .append(files.windows()).append(" (window lifetimes), ").append(files.events())
-                .append(" (the events, with their StreamId and EventId), ").append(files.quality())
-                .append(" (data quality).\n");
-        sb.append("To draw it in the chat: gantt_chart with path ").append(files.sessions())
-                .append(", start start, end end, label process, lane host.\n\n");
-        sb.append(zone.stated()).append(" The tables' times are UTC.\n\n").append(DERIVED).append(' ')
-                .append(CAVEAT);
-        return sb.toString();
-    }
-
-    private static String local(final long ms, final ZoneId zone) {
-        return Instant.ofEpochMilli(ms).atZone(zone).toLocalDateTime().toString().replace('T', ' ');
-    }
-
 
     // --------------------------------------------------------------------------------
 
 
-    /// The period read.
+    /// The sources planned: each to read, each index's note, how they were chosen, the automatic sources'
+    /// classifying fields, and the pairs and type roles given (by a skill or the call).
     ///
-    /// @param fromMs    Its start.
-    /// @param toMs      Its end.
-    /// @param timeRange It as a time range of instants.
-    record Period(long fromMs, long toMs, TimeRange timeRange) {
+    /// @param sources   The sources.
+    /// @param notes     Each index considered.
+    /// @param chosen    How they were chosen.
+    /// @param fields    The automatic sources' classifying fields, by place.
+    /// @param pairs     The pairs given, in the order they are applied.
+    /// @param overrides The types given a role, by source.
+    private record Plan(List<Source> sources,
+                        List<SourceNote> notes,
+                        String chosen,
+                        Map<Integer, Fields> fields,
+                        List<PairRule> pairs,
+                        Map<Integer, Map<String, RoleOverride>> overrides) {
 
     }
 
@@ -1257,24 +1665,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     // --------------------------------------------------------------------------------
 
 
-    /// The tables written.
-    ///
-    /// @param sessions   The sessions.
-    /// @param actions    The actions.
-    /// @param events     The events.
-    /// @param daily      The daily totals.
-    /// @param windows    The window lifetimes.
-    /// @param quality    The data-quality flags.
-    /// @param activities The sessions by activity, or null.
-    /// @param items      The items and where each went, or null.
-    record Files(WorkspacePath sessions,
-                 WorkspacePath actions,
-                 WorkspacePath events,
-                 WorkspacePath daily,
-                 WorkspacePath windows,
-                 WorkspacePath quality,
-                 WorkspacePath activities,
-                 WorkspacePath items) {
+    // A source as given: read by its roles (source), or classified (automatic).
+    private record Prepared(Map<?, ?> spec, Source source, Automatic automatic) {
 
     }
 
@@ -1282,8 +1674,54 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     // --------------------------------------------------------------------------------
 
 
-    // A host's application over the period.
-    private record ByApplication(String host, String process, int sessions, long activeMs) {
+    // An automatic source's index and the fields found in it.
+    private record Automatic(String name,
+                             DocRef doc,
+                             Map<String, ElasticEql.Field> mapping,
+                             Map<String, FieldType> types,
+                             Found user,
+                             String host,
+                             String element,
+                             String action,
+                             String eventType,
+                             String object,
+                             List<Transform> transforms) {
+
+        Automatic withUser(final Found found) {
+            return new Automatic(name, doc, mapping, types, found, host, element, action, eventType, object,
+                    transforms);
+        }
+
+        Source source(final List<Transform> sourceTransforms, final List<String> extraFields) {
+            final boolean ids = mapping.containsKey(EqlSequenceResults.STREAM_ID)
+                                && mapping.containsKey(EqlSequenceResults.EVENT_ID);
+            return new Source(name, doc, user.field(), JoinKeys.kind(mapping.get(user.field()).nativeType()),
+                    sourceTransforms, host, null, null, null, object, null, ids, List.of(new RoleRead(Role.ACTION,
+                    null, null)), true, extraFields);
+        }
+
+        Fields fields(final String detectedElement) {
+            return new Fields(element != null
+                    ? element
+                    : detectedElement, action, eventType);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // What a probe found: the transforms the user was found with, and the element field.
+    private record Probed(List<Transform> transforms, String element) {
+
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // The Events XML read, and its summary.
+    private record XmlOutcome(Map<String, String> xml, XmlRead summary) {
 
     }
 }

@@ -110,7 +110,7 @@ class TestEvalSamples {
 
     @Test
     void theCasesAreAllThere() {
-        assertThat(EvalCases.IDS).hasSize(77).doesNotHaveDuplicates();
+        assertThat(EvalCases.IDS).hasSize(78).doesNotHaveDuplicates();
         assertThat(EvalCases.load("35_xml_fragments_secretserver_messages"))
                 .containsEntry("id", "35_xml_fragments_secretserver_messages")
                 .containsKeys("request", "expected", "reference", "sample");

@@ -1235,7 +1235,7 @@ data and, when a question or a skill asks, the backing Event XML.
   not offered, no model), `TestChatModelSideCalls`, `TestMcpSampling`; e2e as part 2's, the characterisation by a
   stand-in for the client's model over MCP sampling and by the fake chat model in the chat.
 
-#### 2c. Timelines from any source (proposed 2026-11-24)
+#### 2c. Timelines from any source (built 2026-11-24)
 
 Seen in chat 190: a user seen only in web proxy logs (Netskope) got 0 sessions, as sessions began only at a focus
 event, which only endpoint logs have; 4,606 actions in no session, empty tables, nothing to chart. Decided with the
@@ -1298,6 +1298,83 @@ schema, and what it can't is captured iteratively in the site's skill.
   for one chart (a week's detail) is said, with a day or one activity suggested.
 * **Skill template**: parameters for sources (default: ask), the user field, the level of detail (activities,
   detail, both) and an Event chains section.
+
+**As built** (2026-11-24; TOOLS.md "`activity_timeline`"):
+
+* **Sources** (`TimelineSourceChoice`): `sources` is optional: objects (with roles, as before; without, classified),
+  index names, `all`, or `ask` (as omitted). Asked in a chat's form as decided; the user's words are matched to each
+  supported index's name and documentation, a word that more than half the indexes have (e.g. "events") listing but
+  not choosing them, and the matches are shown to confirm as a multi-choice. Over MCP with no form, all supported,
+  said in `sources_chosen`. "One count per index" is a probe, not a count: the first 200 of the user's events in each
+  automatic source (which also finds the element field, below); a text user field with none is tried again without
+  its domain and in lower case, said as the source's `user_transform`; with still none, or with no user field, the
+  index is listed in `left_out` with why (where more than one source was asked for).
+* **The user field** (`TimelineFields`): the source's `user`, then `userField` (the skill's), then the AGENTS docs'
+  `## Fields` (`InstructionRules.fields`: `user`, `host`, `application`/`process`, `object`, `element`/`event
+  detail`, `action`, `event type`/`event code`; several fields a line, the first an index has used; the most
+  specific doc winning), then the bundled conventions' `field_map` (`EventSource/User/Id`; `EventSource/Device/
+  HostName` for the host, `EventDetail/*/Action`, `EventDetail/TypeId`), then the first of the index's fields its
+  documentation names on a line about the user, then asked (one chat form for every index left, each a choice of its
+  keyword fields or leaving it out). Each source's field and where it came from are in the result.
+  `propose_instructions` points out a `## Fields` line with an unknown key, or naming no field of the data sources in
+  the folder the user can Use (`IndexFieldNames`; so it now declares Use).
+* **Classification** (`TimelineClassification`): a source with roles is read by them alone, as before (the
+  override); one without is read whole for the user and classified per event: its Events XML (`TimelineEventXml`, the
+  segment reading `fetch_events` does, factored into `EventSegments`; View Data checked, read audited as streams
+  viewed), up to `timelineMaxXmlEvents` (50,000) in time order, the rest by the index's fields with a narrower
+  period asked for; `EventXmlClassifier` takes the EventDetail element (its first child that isn't TypeId,
+  Description, Classification or Purpose), its Action, the TypeId, every leaf under the element as a key by its path,
+  the object (Title, Subject, URL, Path, Name, the first found), the application (a Process's Command's last part)
+  and the host (the index's, else the XML's). Where the XML is gone or there is none: the index's element field
+  (given, AGENTS, else the probe's keyword field of which 90% of values are EventDetail elements) with its Action
+  field (given, AGENTS, convention); else the source's own codes (`EventCodes`: given, AGENTS, convention field; up to
+  100 codes in one side call, roles active, idle, open, close, action or ignore checked in code; confirmed in a chat
+  form and kept per index in the user's workspace, else the chat's; over MCP used unconfirmed and not kept; with no
+  model, actions named by their code). A skill's Event chains roles and the call's `typeRoles` override a type's
+  role, `ignore` leaving its events out (counted). The catalogue route (a build record's event types) is not built:
+  an index's build record isn't reachable from `stroom-ai-impl`; the side call stands in for it.
+* **Spans** (`TimelineSpans`): pairs in order (the skill's, the call's `pairs`, the schema's, those inferred), each
+  event used by the first that takes it; the schema's: Process Execute and Startup to Terminate and Shutdown by
+  ProcessId (else Command), Authenticate Logon to Logoff ("logged on") and ScreenLock to ScreenUnlock ("locked") by
+  the host; a start with no end runs to the lane's first gap past the cap (or an idle start, or the period's end),
+  marked; `unpaired_start` and `unpaired_end` flagged only for a pair of actions (opens, closes and idle bounds are
+  flagged by the sessions already). A pair's start and end, and actions in its span with its label, are the pair's.
+  Activity periods as decided, a period ending at the next action where the label changes, at its last action past
+  the cap, or at an idle start on its host; a lone action is a marker. The daily totals and the result's active time
+  include activity periods (not pairs, which overlap the rest).
+* **Inference** (`PairInference`), per source: the 40 commonest types with 2 or more events, each pair of them over
+  the key paths 80% of both hold, and the lane alone; a key alternates if its events run A, B, A, B... from an A, each
+  B within 24 hours; clear at 90% of keys, counts within 0.8 of each other, and 3 keys (or 3 spans of one key);
+  borderline at 50% and 2 keys, or clear but lopsided; a type in one pair at most, the best first; types already in a
+  pair (by TypeId, or element and Action) left out.
+* **Views**: `view` (default `detail`) and `lanes` (`day` or `activity`; `host` or `source`); `spans.csv` (span,
+  start, end, label, lane, kind, activity, activity_label, host, source, events, how, uncertain) and `activities.csv`
+  (activity, activity_label, day, start, end, active_minutes, spans, lanes, evidence; an activity's spans within the
+  idle cap merged, split at midnight in the user's zone; header only when not characterised) written every run;
+  `activities.csv` was each session's activity, now `spans.csv`'s activity column. The result's `view` gives the
+  gantt_chart arguments of each chart and `too_dense` past gantt_chart's 200 bars or 20 lanes, with a day or one
+  activity suggested. `sessions.csv` is unchanged; `actions.csv`'s session names a span too (by `activity` or
+  `pair`); `events.csv` adds `type` and `classified_by`.
+* **Learning** (`TimelineLearning`, `EventChains`): `skill` names the skill in use (the readable one nearest the
+  chat's context); its `## Event chains` lines (`- <index>: pair <start> -> <end> by <key> label <path>`, `-
+  <index>: <type> is <role>`) are applied. Learned: the clear inferred pairs, the call's pairs and `typeRoles` the
+  skill lacks. With Edit on its doc, the skill with the lines added is written as a draft and `propose_skill
+  action=propose doc=... draft=...` offered; with no skill, a new one from the template where the user can create a
+  Documentation doc in a context folder or a source index's folder; otherwise kept for the chat (`event-chains.md`)
+  and the result says someone with Edit on the doc (its owner, or an administrator) could record it (names aren't
+  looked up). Borderline pairs listed to confirm, never recorded unasked. `check_skill` checks each line is an entry
+  of a usable index and, by `TimelineChainCheck`, against the index's last 7 days (any user, 5,000 events, their XML):
+  types seen, the key held, still alternating (90%) per user and host.
+* **Also**: the template has `sources` (default ask), `user_field`, `detail` (default both) and an Event chains
+  section; `esql_query`'s (every tool's) `timeFrom`/`timeTo` take an ISO 8601 duration as that long before now
+  (`StroomQlDatePoints.timeInZone`).
+* **Tests**: JUnit `TestEventXmlClassifier`, `TestPairInference`, `TestTimelineSpans`, `TestEventChains`,
+  `TestEventCodes`, `TestTimelineFields`, `TestTimelineSourceChoice`, `TestActivityTimelineAnySource` (XML
+  classification, the user and time the index's, the fallbacks, inferred pairs, the skill offer with and without
+  Edit, the views, the forms, the transforms tried), fail-first `TestActivityTimelineTool`'s proxy-only user (chat
+  190) and the duration in `TestStroomQlDatePoints`/`TestEsqlQueryTool`; `TestInstructionRules`, `TestSkillChecks`;
+  e2e `TestE2eActivityTimelineAnySource` on the generator's `any-source.csv` written as an Events stream and an
+  index; eval case 78 (the proxy-only user's activity periods, by the index's element field).
 
 #### 3. Charts of derived results: in the chat, or a dashboard (the user's choice)
 
@@ -5366,6 +5443,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-24 | Timelines from any source built (part 2c): sources optional (asked in a form, all supported over MCP, probed and left out, listed, without the user's events); each index's user field from the call, the AGENTS doc's `## Fields` (applied by the tools, checked by `propose_instructions`), a field convention, the index's documentation, else asked; events without roles classified from their Events XML (capped by `timelineMaxXmlEvents` 50,000), else the index's element field, else the source's codes classified once by a side call and confirmed; the user and time the index's; pairs from a skill's Event chains, the call, the schema and alternation in the user's own events (90% of keys, counts about equal; borderline listed); activity periods for the actions in no focus session or pair; `spans.csv` and `activities.csv` every run, views `activities`, `detail`, `both`; what was learned offered for the skill's Event chains only with Edit on its doc (or Create for a new one), else kept for the chat; `check_skill` checks Event chains against recent data; ISO 8601 durations as times before now. Not built: the build record catalogue's route for event codes; naming who has Edit on a skills doc | Activity timelines, streaming joins and skills (2c., as built); TOOLS.md (activity_timeline) |
 | 2026-11-24 | An aggregated feed's shared modules edited by hand (the user's decisions): before a build writes its common module or helpers (in the build, or a promoted one's new version), an edit made in Stroom since the tools saved it is told (`ModuleEdits`: the version history tells an edit from an older generator's code; a common module's constants read back from its code, proven by generating it from them, are an edit whatever the history says; helpers of the generator's own version other than its code are one); nothing is written until the user chooses, in a form before the sample check, keep the edit (recommended: read into the module's kept mapping, what the build adds beside it; helpers left as edited), discard it (the generated code) or stop, an edit that can't be kept offering discard or stop with why, and without a form the save is refused saying the choices (`hand_edit_choices` by the module's name); a common module's values as edited are what later groups are split and documented from, and a hand-replaced Generator placeholder is no placeholder; every gate (the modules', then the group's own hand edit) is decided before anything is written; promotion's checks say an imported module edited by hand, once, as a warning (`GeneratedDrift.moduleEdits`) | Aggregated feeds: source types and source type groups; TOOLS.md (build_translation_xslt, build_status) |
 | 2026-11-24 | A `timeline` chart kind for dashboards (the user's decisions, 2026-11-23): columns start and end (Date Time, required), label (required), lane and colour (optional; colour defaults to label), taking `activity_timeline`'s and `gantt_chart`'s tables as they are; ECharts draws a `custom` series per colour (`renderItem` a rectangle a row), D3 the same by hand; lanes on a category y axis, a time x axis with `dataZoom` (inside and a slider, on by default, `weakFilter`) and the range tool; tooltips with label, lane, start, end and duration; bars overlapping in a lane packed into rows by time, as the chat's Gantt chart packs them by pixels (`TimelineRows`, `timelinePack` in both adapters: first row whose last bar ends before it starts, or as it starts where neither is a marker); a row ending as it starts drawn as a diamond marker, a bar at least 2 px wide; colours by most time up to `maxCategories`, the rest grey; a click selects label, lane, start and end with from and to the bar's span, so a date term keeps a field within it (`SELECTED_ROLES`, `selectionKeys` adds range); ChartCheck: start and end dates, rows ending before they start or without a label left out and counted (all of them a problem), stats bars, markers, lanes, mostRowsInALane, endBeforeStart; a content pack's own timeline or Gantt visualisation is left out of `list_visualisations` and never offered | Activity timelines, streaming joins and skills (3. Charts); TOOLS.md (list_visualisations, propose_visualisation) |
 | 2026-11-23 | Chat Gantt charts zoom and maximise: a drag across the plot or axis zooms to that span (bars cut to it, tasks outside left out, ticks for the span), nested; Reset zoom (only when zoomed) and double-click show the whole period; Maximise opens a resizable Stroom dialog drawn at its width with the same zoom; handlers delegated from the conversation and dialog, state as the chart element's attributes; chat client only (tool, block and parser unchanged); a wider scrolling chart with pinned labels not built (Maximise instead) | Activity timelines, streaming joins and skills (3. Charts) |

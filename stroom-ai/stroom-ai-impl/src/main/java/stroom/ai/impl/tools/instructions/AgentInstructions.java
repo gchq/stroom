@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.instructions.InstructionRules.ComponentRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldMappingLayout;
+import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.ai.impl.tools.instructions.InstructionRules.RequiredImport;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
@@ -235,6 +236,19 @@ public class AgentInstructions {
         } catch (final RuntimeException e) {
             LOGGER.debug("Unable to read the documentation layout rule for {}", docRef, e);
             return Optional.empty();
+        }
+    }
+
+    /// @param session    The session, e.g. the chat.
+    /// @param dataSource A data source, e.g. an Elastic Index.
+    /// @return The `## Fields` lines of the AGENTS docs that apply where it is, by field (see
+    /// [InstructionRules#fields]); none if none say, or they can't be read.
+    public Map<String, FieldRule> fieldsRuled(final ToolSession session, final DocRef dataSource) {
+        try {
+            return InstructionRules.fields(applyingWhere(session, dataSource, "the fields"));
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Unable to read the field rules for {}", dataSource, e);
+            return Map.of();
         }
     }
 

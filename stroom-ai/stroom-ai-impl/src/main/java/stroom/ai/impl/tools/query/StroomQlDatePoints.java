@@ -25,7 +25,9 @@ import stroom.query.common.v2.DateExpressionParser.DatePoint;
 import stroom.query.language.token.Tokeniser;
 
 import java.time.DayOfWeek;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.Period;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -69,6 +71,9 @@ public final class StroomQlDatePoints {
             "week", DatePoint.WEEK,
             "month", DatePoint.MONTH,
             "year", DatePoint.YEAR);
+    // An ISO 8601 duration, e.g. P30D, PT12H or P1DT2H30M: that long before now.
+    private static final Pattern ISO_DURATION = Pattern.compile(
+            "P(?=\\d|T\\d)((?:\\d+[YMWD])*)(?:T((?:\\d+(?:\\.\\d+)?[HMS])+))?", Pattern.CASE_INSENSITIVE);
 
     private StroomQlDatePoints() {
         // Static methods only.
@@ -160,6 +165,8 @@ public final class StroomQlDatePoints {
     /// @param value         The time as given, or null.
     /// @param zone          The call's zone.
     /// @param referenceTime What now is, in epoch milliseconds.
+    /// An ISO 8601 duration (e.g. `P30D`, seen given as esql_query's timeFrom in chat 190) is that long before now.
+    ///
     /// @return The time in the zone, in UTC too, so the result can say the time it stood for (e.g. `day()` as
     /// `2026-11-21T00:00:00Z`); the value as given if it has an offset already (e.g. `2026-11-21T02:00:00Z`) or
     /// can't be read (whatever reads it next then refuses it).
@@ -168,6 +175,10 @@ public final class StroomQlDatePoints {
             return value;
         }
         final ZonedDateTime now = Instant.ofEpochMilli(referenceTime).atZone(zone.zone());
+        final ZonedDateTime beforeNow = beforeNow(value.strip(), now);
+        if (beforeNow != null) {
+            return zone.format(beforeNow.toInstant());
+        }
         final Matcher matcher = DATE_POINT.matcher(value);
         final StringBuilder sb = new StringBuilder();
         while (matcher.find()) {
@@ -184,6 +195,28 @@ public final class StroomQlDatePoints {
                     .orElse(value);
         } catch (final RuntimeException e) {
             return value;
+        }
+    }
+
+    // An ISO 8601 duration before now, in the zone (its days calendar days there), or null if it isn't one.
+    private static ZonedDateTime beforeNow(final String value, final ZonedDateTime now) {
+        final Matcher matcher = ISO_DURATION.matcher(value);
+        if (!matcher.matches()) {
+            return null;
+        }
+        try {
+            final String datePart = matcher.group(1);
+            final String timePart = matcher.group(2);
+            ZonedDateTime time = now;
+            if (datePart != null && !datePart.isEmpty()) {
+                time = time.minus(Period.parse("P" + datePart.toUpperCase(Locale.ROOT)));
+            }
+            if (timePart != null && !timePart.isEmpty()) {
+                time = time.minus(Duration.parse("PT" + timePart.toUpperCase(Locale.ROOT)));
+            }
+            return time;
+        } catch (final DateTimeParseException | ArithmeticException e) {
+            return null;
         }
     }
 

@@ -272,6 +272,22 @@ public class DocumentAccess {
         }
     }
 
+    /// @param folder A folder (or the System root).
+    /// @param type   A document type, e.g. `Documentation`.
+    /// @return True if the user can create a document of the type in the folder. False if they can't, or if checking
+    /// fails (failing closed).
+    public boolean canCreate(final DocRef folder, final String type) {
+        if (folder == null || folder.getUuid() == null || type == null) {
+            return false;
+        }
+        try {
+            return securityContext.hasDocumentCreatePermission(folder, type);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to check Create of " + type + " in " + folder, e);
+            return false;
+        }
+    }
+
     /// @param docRef A document the user can view.
     /// @return The node for it in the Explorer tree, if it is in the tree.
     public Optional<ExplorerNode> node(final DocRef docRef) {

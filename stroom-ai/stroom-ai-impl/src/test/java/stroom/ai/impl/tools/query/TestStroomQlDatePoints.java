@@ -108,6 +108,20 @@ class TestStroomQlDatePoints {
     }
 
     @Test
+    void anIso8601DurationIsThatLongBeforeNow() {
+        // Seen in chat 190: esql_query's timeFrom given as P30D.
+        assertThat(StroomQlDatePoints.timeInZone("P30D", CANBERRA, NOW))
+                .isEqualTo("2026-10-22T10:42:00+11:00");
+        assertThat(StroomQlDatePoints.timeInZone("PT12H", ToolTimeZone.UTC, NOW))
+                .isEqualTo("2026-11-20T11:42:00Z");
+        assertThat(StroomQlDatePoints.timeInZone("p1dt2h30m", ToolTimeZone.UTC, NOW))
+                .isEqualTo("2026-11-19T21:12:00Z");
+        // Not a duration: left as given, for whatever reads it next to refuse.
+        assertThat(StroomQlDatePoints.timeInZone("P", ToolTimeZone.UTC, NOW)).isEqualTo("P");
+        assertThat(StroomQlDatePoints.timeInZone("Pricing", ToolTimeZone.UTC, NOW)).isEqualTo("Pricing");
+    }
+
+    @Test
     void aToolsTimeArgumentWithAnOffsetIsLeftAsGiven() {
         assertThat(StroomQlDatePoints.timeInZone("2026-11-21T02:00:00Z", CANBERRA, NOW))
                 .isEqualTo("2026-11-21T02:00:00Z");

@@ -145,7 +145,7 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 
 | Tool | What it does | Category | Read-only | Group | Requires | Unlocked by | Documents | Flags |
 |------|--------------|----------|-----------|-------|----------|-------------|-----------|-------|
-| `activity_timeline` | One user's (or entity's) activity timeline from several Elastic Index sources, worked out in code: sessions of active use of each application on each host (focus, idle roles, the idle cap), the actions in each, daily totals, missing events flagged; with `characterise`, the activities they make up (Leiden anchors, loose items classified by the model in side calls) | search | yes | timelines | | | Use | slot |
+| `activity_timeline` | One user's (or entity's) activity timeline from any Elastic Index sources (asked, or all, where not given), worked out in code: detail spans (focus sessions where a source records window focus; pairs from a start to its end, the schema's, a skill's or inferred; activity periods), events without roles classified from their Events XML (else the index's fields or codes), each index's user field found, daily totals, missing events flagged; activities rolled up (`characterise`, or `view` activities); what was learned offered for the skill's Event chains | search | yes | timelines | | | Use | slot |
 | `ask_user` | Asks the user questions in a form, with options to pick, and waits for the answers | core | yes | | | | | trusted |
 | `check_skill` | A skill's problems and suggestions, each with a fix: structure, parameters, example calls against the tools' schemas and policies, data sources and fields, hand edits, vague steps, values that should be parameters, charts, near-duplicates, use | core | yes | skills | | | View, Use | |
 | `config_properties` | Searches, gets and lists system properties, with overrides and their sources; secrets masked | administration | yes | administration | Manage Properties | | | |
@@ -169,7 +169,7 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 | `get_current_time` | The current time of day in UTC | core | yes | | | | | trusted |
 | `get_instructions` | The AGENTS docs that apply to folders or documents, or a bundled working guide | core | yes | | | | View | |
 | `instruction_evidence` | What the user's own recent chats say about how they want things done: repeated and mixed form answers, and their messages | core | yes | build | | | | chat |
-| `propose_instructions` | Offers standing instructions (an AGENTS doc) for a folder as a diff: applied to the doc's editor, or created and saved | content | yes | build | | | View | chat |
+| `propose_instructions` | Offers standing instructions (an AGENTS doc) for a folder as a diff: applied to the doc's editor, or created and saved | content | yes | build | | | View, Use | chat |
 | `propose_skill` | Drafts (from the chat or a description, a form for what only the author knows), offers templates, trial-runs and proposes skills for a SKILLS doc as a diff: applied to its editor, or created and saved; remove, undo, record a hand edit | content | yes | skills | | | View | chat |
 | `get_utc_time_offset` | A time zone's offset from UTC | core | yes | | | | | trusted |
 | `grep` | Finds lines of a workspace file containing some text | core | yes | | | | | |
@@ -644,8 +644,8 @@ to 400 characters.
 
 ### `propose_instructions`
 
-Content · read-only (it only offers a button) · chat only · build group · checks View · Classes:
-`ProposeInstructionsTool`, `InstructionRules.problems`, `UserActions` (`apply_documentation_change`,
+Content · read-only (it only offers a button) · chat only · build group · checks View, and Use on the data sources
+whose fields a `## Fields` line is checked against · Classes: `ProposeInstructionsTool`, `InstructionRules.problems`, `UserActions` (`apply_documentation_change`,
 `create_instructions`), `UserActionService.createInstructions`, `UserActionLookupImpl.createInstructions`; in the
 UI `AiDocumentationChanges`, `DocumentationPresenter.documentationTab()`
 
@@ -664,9 +664,11 @@ applies it from the chat's 'Review and apply' button, as with `propose_documenta
   deleted again), then opens it. Refused if the folder has an AGENTS doc by then.
 
 Lines of the sections the tools apply themselves (`## Required imports`, `## Component templates`,
-`## Documentation`) that name nothing the tools know are pointed out in the result (`InstructionRules.problems`):
-the tools leave such lines out without a word, which is right for a note but not for a slip, so the agent can
-propose the corrected text again.
+`## Documentation`, `## Fields`) that name nothing the tools know are pointed out in the result
+(`InstructionRules.problems`): the tools leave such lines out without a word, which is right for a note but not for
+a slip, so the agent can propose the corrected text again. So are `## Fields` lines (`- user: Initiator.Id`, read by
+`activity_timeline`) naming no field of the data sources in the folder (and below) the user can Use
+(`InstructionRules.fieldProblems`, `IndexFieldNames`).
 
 * **Arguments**: `folder` (UUID or Explorer path), `markdown` (the whole text) or `edits` (`oldText`/`newText`
   against the existing doc; a new doc needs `markdown`), `summary` (shown with the diff).
@@ -717,7 +719,10 @@ YAML text: no change to the shared Markdown rendering. The model follows the ste
   name offered) or the user's tool policies don't allow; an example call off the tool's schema (unknown or
   missing arguments, wrong types, enum values; `"{name}"` and `[[...]]` fit any type); a data source (`index`,
   `data_source`, a StroomQL `from`) that doesn't exist or the user can't Use; a field (`fields`, `by`, `field`,
-  `where[].field`) the data source doesn't have; a hand edit since the latest history entry (fix:
+  `where[].field`) the data source doesn't have; a timeline skill's `## Event chains` line that isn't an entry or
+  names an index the user can't Use, or that recent data contradicts (`TimelineChainCheck`: the index's last 7
+  days, its types not seen, a pair's key not held, a pair no longer alternating for 90% of keys); a hand edit since
+  the latest history entry (fix:
   `record`); front matter that can't be read. Suggestions: a vague step (no tool named and no call; the tool whose
   description shares most of its words proposed, with its required arguments); a date or time written in, or a
   value the "When to use" phrasings ask about, that should be a parameter; a chart in the chat other than a
@@ -1180,7 +1185,9 @@ Every result with times says the zone: "Times are in Australia/Canberra (+11:00)
 for, as the Stroom UI works `day()` out in UTC and the agent's "today" may cover other hours: `run_stroomql` adds
 "In its conditions day() = 2026-11-21T00:00:00+11:00." (each date point in `where`, `filter` and `having`, once,
 `StroomQlDatePoints.used`), and `sequence_query` and `esql_query` give `timeFrom`/`timeTo` resolved to ISO times
-(in UTC too, e.g. `day() - 7d` as `2026-11-14T00:00:00Z`).
+(in UTC too, e.g. `day() - 7d` as `2026-11-14T00:00:00Z`). A tool's time given as an ISO 8601 duration (e.g. `P30D`,
+`PT12H`, seen given to `esql_query` in chat 190) is that long before now, in the zone
+(`StroomQlDatePoints.timeInZone`).
 
 How the zone is applied, with no change to Stroom's core (as the user decided, 2026-11-21):
 
@@ -1679,79 +1686,154 @@ by the same user on the same host", "20 failed logons then a success". Structure
 
 ### `activity_timeline`
 
-One user's (or entity's) activity timeline for a period from several sources (`ActivityTimelineTool`): sessions of
-active use of each application on each host, the actions in each, each day's active time by application, the window
-lifetimes, the actions in no session, the events by their stream and event ids, and data-quality flags; with
-`characterise`, the activities the sessions make up, what the user was working on (part 2 and 2b of DESIGN.md's
-"Activity timelines, streaming joins and skills"). Group `timelines`; offered to a user who can use an Elastic Index.
+One user's (or entity's) activity timeline for a period from any sources (`ActivityTimelineTool`): two levels, the
+detail spans (focus sessions of an application on a host where a source records window focus; pairs, from a start to
+its end; activity periods, the actions in neither) and the activities rolled up from them (what the user was working
+on), each a table `gantt_chart` draws as it is; the actions with where each was attached, each day's active time, the
+window lifetimes, the events by their stream and event ids and how each was classified, and data-quality flags (parts
+2, 2b and 2c of DESIGN.md's "Activity timelines, streaming joins and skills"). Group `timelines`; offered to a user who
+can use an Elastic Index.
 
-* **Reading** (`TimelineReader`, the streaming join's machinery): each role of each source is an
-  `ElasticKeyStreams.Side` of its Elastic Index (the role's conditions a Stroom expression, `StreamFilters`, as
-  `sequence_query`'s steps' are), restricted to the one entity by a terms condition on the source's user field
-  (`transform` applied to it and the entity, so `CORP\jsmith` and `jsmith` are one), read in time order by a
-  point-in-time scan through `KeyGroupSource` (one key), within a `JoinBudget`: `timelineMaxEvents` (200,000), the
-  query time limit and the user's stop. Each source audited as a search. Elastic Indexes only, each with a time
-  field.
-* **Sessions** (`TimelineSessions`, in code): per host, an interval on a process starts at a `focus` on it and ends
-  at the next focus (any process), an `idle_start`, or the idle cap (no event of any source on the host for
+* **Sources** (`TimelineSourceChoice`): `sources` as objects (`index` and, optionally, the fields and `roles`), index
+  names, `all`, or `ask`/omitted. Omitted in a chat, a form asks: with a dashboard attached, only its data source,
+  all supported, or the user's own words; without, all supported (the default) or their own words. Their words are
+  matched to each Elastic Index's name and documentation (a word more than half the indexes have lists them but
+  doesn't choose them) and shown to confirm as a multi-choice. Over MCP, all supported, said in `sources_chosen`.
+  Supported: every Elastic Index the user can use.
+* **Automatic sources** (no `roles`): each index's user field is the source's `user`, else `userField`, else the
+  AGENTS doc's `## Fields` (`- user: Initiator.Id, user.name`, read by the tool itself, `InstructionRules.fields`),
+  else the bundled field conventions' (`user.name`, `UserId`), else a field its documentation names on a line about
+  the user, else asked in a chat form; the host, element, Action and event code fields the same way (`host`,
+  `elementField`, `actionField`, `eventTypeField`; `## Fields` keys `host`, `element`, `action`, `event type`).
+  Each is probed first (its first 200 events of the user): none, also without the domain and in lower case for a
+  text field (said as `user_transform`), and it is listed in `left_out` and left out (where more than one source
+  was asked for); the probe's keyword fields also find an element field (90% of its values EventDetail elements).
+* **Classification** (`TimelineClassification`, `EventXmlClassifier`): an automatic source's events by their Events
+  XML (`TimelineEventXml`: by StreamId and EventId, as `fetch_events` reads them; View Data checked; audited as
+  streams viewed; at most `timelineMaxXmlEvents`, 50,000, in time order): Authenticate Logon, ScreenUnlock, Connect,
+  Reconnect make the user active (`idle_end`); Logoff, ScreenLock, Disconnect idle (`idle_start`); Process
+  Execute and Startup open, Terminate and Shutdown close; any other element an action of that kind. The type is the
+  TypeId, else the element and Action; keys are the leaves under the element by path; the label the application
+  (a Process's Command), else the object (Title, Subject, URL, Path, Name). The user and time always come from the
+  index. Where the XML is gone or there is none: the element and Action fields; else the event codes, asked of the
+  model once (`EventCodes`, a side call of up to 100 codes, roles checked in code), confirmed in a chat form and
+  kept per index (`/outputs/timelines/event-codes/<uuid>.json`, the user's workspace where there is one); over MCP
+  used unconfirmed, not kept; with no model, actions named by their code. A skill's Event chains roles and a
+  source's `typeRoles` override a type's role; `ignore` leaves its events out. The result counts each source's
+  events by route (`classified_by`) and `events_xml` (read, gone, past the cap with a narrower period asked for).
+* **Reading** (`TimelineReader`, the streaming join's machinery): each role of a source with roles, or the whole of
+  an automatic source, is an `ElasticKeyStreams.Side` of its Elastic Index (a role's conditions a Stroom
+  expression, `StreamFilters`, as `sequence_query`'s steps' are), restricted to the one entity by a terms condition
+  on the source's user field (`transform` applied to it and the entity, so `CORP\jsmith` and `jsmith` are one), read
+  in time order by a point-in-time scan through `KeyGroupSource` (one key), within a `JoinBudget`:
+  `timelineMaxEvents` (200,000), the query time limit and the user's stop. Each source audited as a search. Elastic
+  Indexes only, each with a time field.
+* **Focus sessions** (`TimelineSessions`, in code): per host, an interval on a process starts at a `focus` on it and
+  ends at the next focus (any process), an `idle_start`, or the idle cap (no event of any source on the host for
   `idleCap`, default `timelineIdleCap`, 30 minutes), marked `end_mark` ("ended by the idle cap") and `ended_by cap`;
   an `idle_end` resumes the process focused before (`start_mark` "resumed after idle"); an action on a process with
   no interval running starts one (`start_mark` "no focus event seen"); one still running at the period's end ends
   there, marked. Window lifetimes from `open` to `close`, paired by the `window` field, else the process.
-* **Actions attached**: an action on a host to the interval it falls in, `by process` where it names that
-  interval's process, else `by time`; an action naming no host to the interval of any host active then (the latest
-  started), `by time`; any other is in no session.
-* **Data-quality flags** (counted, three examples each; the intervals are still made): `open_without_close`,
+* **Pairs** (`TimelineSpans`, `PairRule`), applied in order, each event used by the first that takes it: a skill's
+  Event chains, a source's `pairs` (`{start, end, by, label}`), the schema's (Process Execute to Terminate and Startup
+  to Shutdown by ProcessId, else Command; Authenticate Logon to Logoff, "logged on", and ScreenLock to ScreenUnlock,
+  "locked", by the host), and those inferred (`PairInference`): per source, two of its 40 commonest types that, for
+  the same key value (a path 80% of both hold, or the host alone), run A, B, A, B from an A, each B within 24 hours,
+  for 90% of keys, the counts within 0.8 of each other, over 3 keys (or 3 spans of one key); borderline (50% and 2
+  keys, or clear but lopsided) listed with their figures in `borderline_pairs`, not used; a type in one pair at
+  most. An end closes the latest open start of its key; a start with no end runs to the lane's first gap past the
+  cap, an idle start or the period's end, marked; `unpaired_start` and `unpaired_end` flagged for a pair of actions.
+  A pair's start and end, and an action in its span with its label (`by pair`), are the pair's. Each pair's origin,
+  alternation, spans and unpaired starts and ends are in `pairs`.
+* **Activity periods**: the actions in no focus session or pair, in a lane (the host, else the source's name),
+  labelled by the application, else the object's place (a URL's host, a path's last part), else the action's kind;
+  one ends at the next action where the label changes, at its last action where the next is past the idle cap, or at
+  an idle start on its host; a lone action is a marker. They show when the user was active in a source, not what had
+  focus (`activity_periods_show`). Their actions are attached `by activity`; they count in the daily totals and the
+  active time (`rows`), pairs don't.
+* **Actions attached**: an action on a host to the focus session it falls in, `by process` where it names that
+  session's process, else `by time`; an action naming no host to the session of any host active then (the latest
+  started), `by time`; else to a pair or an activity period, as above.
+* **Data-quality flags** (counted, three examples each; the spans are still made): `open_without_close`,
   `close_without_open`, `idle_start_without_end` (activity after an idle start with no idle end), `idle_end_without_start`
   (after activity; one before any activity is the period's start), `focus_without_open` (a source with `open` only),
   `ended_by_cap`, `source_silence` (a source of window focus with no events on a host for longer than the cap, less
   the host's idle periods, while 3 or more events of other sources show the user active there), `out_of_order`
   (more than a minute before an earlier event id of its stream), `future_dated` (over 5 minutes after now),
   `clock_disagreement` (two sources' events naming the same object on a host within 10 minutes, the middle of 3 or
-  more differences past 2 minutes), `two_focused` (two focuses on a host within a second).
-* **Characterisation** (`ActivityCharacterisation`, with `characterise=true`): pass 1 in code, a graph of the
-  sessions linked by an artifact they share (a title's parts, its application's suffix such as " - Word" dropped
-  where every title of the application has it; a file's name; a URL's domain and first path segment; normalised so
-  "Report v2.docx" and "Report.docx" are one), by significant terms they share (in 2 or more sessions and at most
-  half), and by being close in time (2 minutes, each next session to start); its clusters by `Leiden` (the chart
-  analytics' algorithm, ported from the generic visualisations, deterministic) of 2 or more sessions with an
-  artifact or term link are the anchor activities, with a profile (top artifacts, key terms, applications) and a
-  label from it. Pass 2, the model: free-text items (an action's `text`) and sessions the graph left out with words,
-  unless they name an anchor's artifact or two of its terms (placed in code), go in batches of
-  `characteriseBatchItems` (50), each item's text cut to `characteriseExcerptChars` (500), with its time, host,
-  source, session and the one before, and the activities' profiles; the answer, a JSON list of `{item, activity,
-  name, confidence, reason}`, is checked in code (an activity not offered, a missing item or a confidence that isn't
-  high, medium or low is `unclear`; low is `unclear` with its reason; `new` makes an activity where two or more items
-  share its name); a batch that can't be read is asked once more. Batches run in parallel up to `joinWorkers`; at
-  most `characteriseMaxItems` (1,000) a run unless the user agrees (a form in the chat, `runAnyway` over MCP). One
-  more call names the activities from their evidence. Answers and names are cached in the workspace by item text and
-  profiles (`characterisation-cache.json`), so a re-run asks only for new items.
+  more differences past 2 minutes), `two_focused` (two focuses on a host within a second), `unpaired_start`,
+  `unpaired_end`.
+* **Characterisation** (`ActivityCharacterisation`, with `characterise=true` or `view` activities or both), over the
+  focus sessions and activity periods: pass 1 in code, a graph of the spans linked by an artifact they share (a
+  title's parts, its application's suffix such as " - Word" dropped where every title of the application has it; a
+  file's name; a URL's domain and first path segment; normalised so "Report v2.docx" and "Report.docx" are one), by
+  significant terms they share (in 2 or more spans and at most half), and by being close in time (2 minutes, each
+  next span to start); its clusters by `Leiden` (the chart analytics' algorithm, ported from the generic
+  visualisations, deterministic) of 2 or more spans with an artifact or term link are the anchor activities, with a
+  profile (top artifacts, key terms, applications) and a label from it. Pass 2, the model: free-text items (an
+  action's `text`) and spans the graph left out with words, unless they name an anchor's artifact or two of its
+  terms (placed in code), go in batches of `characteriseBatchItems` (50), each item's text cut to
+  `characteriseExcerptChars` (500), with its time, host, source, span and the one before, and the activities'
+  profiles; the answer, a JSON list of `{item, activity, name, confidence, reason}`, is checked in code (an activity
+  not offered, a missing item or a confidence that isn't high, medium or low is `unclear`; low is `unclear` with its
+  reason; `new` makes an activity where two or more items share its name); a batch that can't be read is asked once
+  more. Batches run in parallel up to `joinWorkers`; at most `characteriseMaxItems` (1,000) a run unless the user
+  agrees (a form in the chat, `runAnyway` over MCP). One more call names the activities from their evidence. Answers
+  and names are cached in the workspace by item text and profiles (`characterisation-cache.json`), so a re-run asks
+  only for new items. The activities roll up from their spans: an activity's spans within the idle cap of each other,
+  across sources and hosts, merge into one interval, split at midnight in the user's zone.
 * **Side calls** (`ModelSideCalls`, from the call's context): in a chat, the run's model through
   `ChatModelSideCalls` (`ModelStreamer.callUnseen`, as step and compaction summaries; tokens added to the run's
   usage; stopped with the run); over `/mcp`, the client's model by MCP sampling (`McpSampling`, where the client says
   it can; the wait not counted against the call's time limit, at most the form timeout); otherwise none, and the
-  loose items are left unclassified, the result saying so. The chat's model sees only the outcome.
+  loose items are left unclassified (and event codes unasked), the result saying so. The chat's model sees only the
+  outcome.
 * **Corrections**: `{move, to}`, `{merge: [...]}`, `{rename, label}`, applied last and kept in the workspace
   (`corrections.json` beside the tables), so a re-run keeps them; one naming what isn't there is said and left out.
+* **Views**: `view` `detail` (the default: `spans.csv`, label `label`, lane `lane`, or `source` with `lanes`
+  source), `activities` (`activities.csv`, label `activity_label`, lane `day`, or `activity_label` with `lanes`
+  activity), `both`. The result's `view` gives each chart's gantt_chart arguments, `too_dense` where a view has more
+  than 200 bars or 20 lanes (draw one day, or one activity by filtering the table), and the dashboard `timeline`
+  kind's columns.
+* **Learning** (`TimelineLearning`, `EventChains`): `skill` names the skill being run (the readable one nearest the
+  chat's context); its `## Event chains` lines (`- <index>: pair <start> -> <end> by <key> label <path>`, `-
+  <index>: <type> is active|idle|open|close|action|ignore`, `any` for every source) are applied first. What was
+  learned (the clear inferred pairs, and the source's own `pairs` and `typeRoles`) that the skill lacks is in
+  `learned`: with Edit on the skill's doc, the skill with the lines added is written
+  (`skill-event-chains.md`) and the agent offers `propose_skill action=propose doc=<uuid> draft=<path>`; with no
+  skill, where the user can create a Documentation doc in a context folder or a source index's folder, a new skill
+  from the template with these lines; otherwise kept for the chat (`event-chains.md`), the result saying who could
+  record them. Borderline pairs are listed for the user to confirm. `check_skill` checks the lines (an entry each, a
+  usable index) and, by `TimelineChainCheck`, against the index's last 7 days (any user, 5,000 events and their
+  XML): types seen, the key held, still alternating (90%) per user and host.
 * **Arguments**: `entity`, `sources` (each `index`, `name`, `user`, `transform`, `host`, `process`, `title`,
-  `window`, `object`, `text`, `roles` with `focus`, `open`, `close`, `idle_start`, `idle_end` as `{where, any_of}`
-  and `actions` as `[{kind, where, any_of}]`), `timeFrom` (default `now()-7d`), `timeTo` (default `now()`),
-  `idleCap`, `characterise`, `corrections`, `runAnyway`, `timeZone`.
-* **Returns**: in a chat, Markdown (active time by host and application, the flags with examples, the activities
-  with their evidence, the tables, the gantt_chart call that draws the sessions); over MCP, JSON (also structured
-  content): `entity`, `time`, `idle_cap_minutes`, `sources` (events each), `events_read`, `ended_early`,
-  `session_count`, `hosts`, `uncertain_sessions`, `actions`, `unattached_actions`, `columns`/`rows` (host, process,
-  sessions, active minutes, the most first), `data_quality`, `files`, `gantt`, `characterisation` (`activities`
-  each with `label_is: inferred` and `found_by`, `sessions_in_no_activity`, `items`, `items_placed`, `model_calls`,
-  `items_asked`, `items_not_classified`, `unclear` with reasons, `modularity`, `notes`, `gantt`), `time_zone`,
-  `derived`, `caveat`. Tables under `/outputs/timelines/<entity>/`: `sessions.csv` (`gantt_chart` with start, end,
-  label `process`, lane `host` draws it as it is), `actions.csv`, `events.csv`, `daily.csv`, `windows.csv`,
-  `quality.csv`, and with `characterise` `activities.csv` (lane `activity_label`: a section an activity) and
-  `items.csv`. Times in the tables are UTC.
-* **Refuses**: no `entity` or `sources`; a source that isn't an Elastic Index, or whose index has no time field; a
-  field the index doesn't have; a user field that can't be one key (a text field with no keyword subfield, a
-  transform on a number); a role that isn't one, or with no conditions; a bad period or `idleCap` (1 minute to 24
-  hours).
+  `window`, `object`, `text`, `elementField`, `actionField`, `eventTypeField`, `roles` with `focus`, `open`,
+  `close`, `idle_start`, `idle_end` as `{where, any_of}` and `actions` as `[{kind, where, any_of}]`, `pairs`,
+  `typeRoles`), `userField`, `timeFrom` (default `now()-7d`), `timeTo` (default `now()`), `idleCap`, `view`,
+  `lanes`, `skill`, `characterise`, `corrections`, `runAnyway`, `timeZone`.
+* **Returns**: in a chat, Markdown (the sources with their user fields and how their events were classified, the
+  spans by kind, the pairs and borderline pairs, active time by host or source and application or place, the flags
+  with examples, the activities with their evidence, the tables, the view's gantt_chart calls, what was learned);
+  over MCP, JSON (also structured content): `entity`, `time`, `idle_cap_minutes`, `sources_chosen`, `sources`
+  (events, `user_field`, `user_field_from`, `user_transform`, `classified_by` each), `left_out`, `events_read`,
+  `events_ignored`, `events_xml`, `ended_early`, `session_count` (focus sessions), `hosts`, `uncertain_sessions`,
+  `actions`, `unattached_actions` (in no session or span), `spans` (by kind), `activity_periods_show`, `pairs`,
+  `borderline_pairs`, `columns`/`rows` (host, process, sessions, active minutes, the most first, of focus sessions
+  and activity periods), `data_quality`, `files`, `gantt` (the sessions table), `view`, `characterisation`
+  (`activities` each with `label_is: inferred` and `found_by`, `sessions_in_no_activity`, `items`, `items_placed`,
+  `model_calls`, `items_asked`, `items_not_classified`, `unclear` with reasons, `modularity`, `notes`, `gantt`),
+  `learned` (`event_chains`, `borderline_to_confirm`, `can_record`, `file`, `offer`), `time_zone`, `derived`,
+  `caveat`. Tables under `/outputs/timelines/<entity>/`, every run: `spans.csv` (span, start, end, label, lane, kind
+  focus/pair/activity, activity, activity_label, host, source, events, how, uncertain), `activities.csv` (activity,
+  activity_label, day, start, end, active_minutes, spans, lanes, evidence; header only when not characterised),
+  `sessions.csv` (the focus sessions; `gantt_chart` with start, end, label `process`, lane `host` draws it as it
+  is), `actions.csv`, `events.csv` (with `type` and `classified_by`), `daily.csv`, `windows.csv`, `quality.csv`,
+  and with characterisation `items.csv`. Times in the tables are UTC.
+* **Refuses**: no `entity`; no source with the user's events and a user field (each left out is said); a source
+  that isn't an Elastic Index, or whose index has no time field; a field the index doesn't have; a user field that
+  can't be one key (a text field with no keyword subfield, a transform on a number); a role that isn't one, or with
+  no conditions; a `typeRoles` role that isn't one; a bad period, `idleCap` (1 minute to 24 hours), `view` or
+  `lanes`; the user declining the sources form.
 
 ### `current_results`
 

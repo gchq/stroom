@@ -55,6 +55,14 @@ import java.util.regex.Pattern;
 ///   - field mapping: compact
 ///   ```
 ///
+/// - `## Fields`: the fields that hold what the tools look for in the data sources where the doc applies, a field
+///   (or several, the first an index has used) a line, e.g. for activity timelines (`activity_timeline`):
+///   ```markdown
+///   ## Fields
+///   - user: Initiator.Id, user.name
+///   - host: HostName
+///   ```
+///
 /// The docs are given most general first, as [AgentInstructions.Standing#applyingTo] gives them.
 public final class InstructionRules {
 
@@ -72,6 +80,20 @@ public final class InstructionRules {
     public static final String BY_EVENT_TYPE = "by_event_type";
     /// A Field mapping laid out as one table.
     public static final String COMPACT = "compact";
+    /// The field holding the user (or entity) an event is of.
+    public static final String USER_FIELD = "user";
+    /// The field holding the host an event happened on.
+    public static final String HOST_FIELD = "host";
+    /// The field holding the application.
+    public static final String APPLICATION_FIELD = "application";
+    /// The field holding what an event touched (a file, a URL, a subject).
+    public static final String OBJECT_FIELD = "object";
+    /// The field holding the event-logging EventDetail element an event was written as (e.g. `Authenticate`).
+    public static final String ELEMENT_FIELD = "element";
+    /// The field holding the event's Action (e.g. `Logon`).
+    public static final String ACTION_FIELD = "action";
+    /// The field holding the source's own code for the type of event (e.g. a vendor's event id).
+    public static final String EVENT_TYPE_FIELD = "event type";
 
     /// What each stage may be called in a doc.
     static final Map<String, String> STAGES = Map.ofEntries(
@@ -108,6 +130,20 @@ public final class InstructionRules {
             "one table", COMPACT,
             "single table", COMPACT);
 
+    /// What each field may be called in a doc's `## Fields` section.
+    static final Map<String, String> FIELDS = Map.ofEntries(
+            Map.entry("user", USER_FIELD),
+            Map.entry("host", HOST_FIELD),
+            Map.entry("application", APPLICATION_FIELD),
+            Map.entry("process", APPLICATION_FIELD),
+            Map.entry("object", OBJECT_FIELD),
+            Map.entry("element", ELEMENT_FIELD),
+            Map.entry("event detail", ELEMENT_FIELD),
+            Map.entry("action", ACTION_FIELD),
+            Map.entry("event type", EVENT_TYPE_FIELD),
+            Map.entry("event code", EVENT_TYPE_FIELD));
+    private static final Pattern FIELDS_HEADING = Pattern.compile("^#{1,6}\\s*fields\\s*$",
+            Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
     private static final Pattern REQUIRED_HEADING = Pattern.compile("^#{1,6}\\s*required imports\\s*$",
             Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
     private static final Pattern COMPONENTS_HEADING = Pattern.compile("^#{1,6}\\s*component templates\\s*$",
@@ -207,6 +243,66 @@ public final class InstructionRules {
         return Optional.ofNullable(found);
     }
 
+    /// The fields the applicable AGENTS docs' `## Fields` sections name: the most specific doc's line for each.
+    ///
+    /// @param applying The docs that apply, most general first.
+    /// @return For each field (e.g. [#USER_FIELD]), the fields named (the first an index has is used) and the
+    /// folder of the doc that names them.
+    public static Map<String, FieldRule> fields(final List<InstructionDoc> applying) {
+        final Map<String, FieldRule> out = new LinkedHashMap<>();
+        for (final InstructionDoc doc : NullSafe.list(applying)) {
+            fieldLines(doc.text()).forEach((key, names) -> out.put(key, new FieldRule(names, doc.folder())));
+        }
+        return out;
+    }
+
+    /// @param text A doc's text.
+    /// @return Its `## Fields` lines the tools know, by field, each with the fields it names in order.
+    static Map<String, List<String>> fieldLines(final String text) {
+        final Map<String, List<String>> out = new LinkedHashMap<>();
+        for (final String line : section(text, FIELDS_HEADING).orElse("").split("\\R")) {
+            final Matcher bullet = BULLET.matcher(line);
+            final String key = bullet.matches()
+                    ? FIELDS.get(stripChars(bullet.group(1).strip(), "`*").toLowerCase(Locale.ROOT))
+                    : null;
+            if (key == null) {
+                continue;
+            }
+            final List<String> names = new ArrayList<>();
+            for (final String item : bullet.group(2).split(",")) {
+                final String name = stripChars(item.strip(), "`*.").strip();
+                if (!name.isEmpty()) {
+                    names.add(name);
+                }
+            }
+            if (!names.isEmpty()) {
+                out.put(key, List.copyOf(names));
+            }
+        }
+        return out;
+    }
+
+    /// The `## Fields` lines of a doc that name no field any of the data sources where it applies has: a slip (e.g.
+    /// `Initiator.ID`) the tools would pass over, falling back to the next way of finding the field.
+    ///
+    /// @param text   A doc's text.
+    /// @param fields The fields of the data sources where it applies; empty when none are known, and nothing is said.
+    /// @return A problem for each such line.
+    public static List<String> fieldProblems(final String text, final Set<String> fields) {
+        final List<String> out = new ArrayList<>();
+        if (NullSafe.isEmptyCollection(fields)) {
+            return out;
+        }
+        fieldLines(text).forEach((key, names) -> {
+            final List<String> missing = names.stream().filter(name -> !fields.contains(name)).toList();
+            if (missing.size() == names.size()) {
+                out.add("'## Fields' line for " + key + " names no field the data sources where the doc applies have ("
+                        + String.join(", ", missing) + ")");
+            }
+        });
+        return out;
+    }
+
     /// What in a doc's sections the tools apply themselves they couldn't apply: a bullet naming no stage, rule or
     /// layout they know, which they leave out without saying. Fine for a note; a slip (e.g. 'indexng') would be a
     /// rule that does nothing, so a proposed doc's are pointed out.
@@ -217,6 +313,7 @@ public final class InstructionRules {
         final List<String> out = new ArrayList<>();
         keyProblems(out, text, REQUIRED_HEADING, "Required imports", STAGES.keySet(), BULLET);
         keyProblems(out, text, COMPONENTS_HEADING, "Component templates", COMPONENT_RULES.keySet(), BULLET);
+        keyProblems(out, text, FIELDS_HEADING, "Fields", FIELDS.keySet(), BULLET);
         for (final String line : section(text, DOCUMENTATION_HEADING).orElse("").split("\\R")) {
             final Matcher bullet = LAYOUT_BULLET.matcher(line);
             if (bullet.matches()
@@ -306,6 +403,22 @@ public final class InstructionRules {
     /// @param exclude Those they never compose.
     public record ComponentRules(List<ComponentRule> include, List<ComponentRule> exclude) {
 
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The fields an AGENTS doc's `## Fields` line names for one thing.
+    ///
+    /// @param fields The fields, in order: the first a data source has is used.
+    /// @param from   The folder of the AGENTS doc that names them.
+    public record FieldRule(List<String> fields, String from) {
+
+        /// Copies the list.
+        public FieldRule {
+            fields = List.copyOf(fields);
+        }
     }
 
 

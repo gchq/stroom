@@ -21,6 +21,7 @@ import stroom.ai.shared.AiToolAccess;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.OutputStreamProvider;
+import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
@@ -981,6 +982,39 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
                             AttributeMapUtil.write(attributes, meta);
                         }
                     }
+                }
+                return target.getMeta().getId();
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
+    }
+
+    /// An Events stream stored in a feed, segmented as a pipeline writes one: its header, then an event a segment, then
+    /// its footer, so each event's EventId is its segment (its place in the list, from 1).
+    ///
+    /// @param feed   The feed.
+    /// @param events Each event's `<Event>` element.
+    /// @return The Events stream's id.
+    long storeEvents(final String feed, final List<String> events) {
+        return securityContext.asProcessingUserResult(() -> {
+            final MetaProperties properties = MetaProperties.builder()
+                    .feedName(feed)
+                    .typeName(StreamTypeNames.EVENTS)
+                    .createMs(System.currentTimeMillis())
+                    .build();
+            try (final Target target = store.openTarget(properties)) {
+                try (final OutputStreamProvider provider = target.next();
+                        final SegmentOutputStream out = provider.get()) {
+                    out.write(("<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n<Events xmlns=\"event-logging:3\" "
+                               + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" Version=\"4.1.0\">\n")
+                            .getBytes(StandardCharsets.UTF_8));
+                    for (final String event : events) {
+                        out.addSegment();
+                        out.write((event + "\n").getBytes(StandardCharsets.UTF_8));
+                    }
+                    out.addSegment();
+                    out.write("</Events>\n".getBytes(StandardCharsets.UTF_8));
                 }
                 return target.getMeta().getId();
             } catch (final IOException e) {

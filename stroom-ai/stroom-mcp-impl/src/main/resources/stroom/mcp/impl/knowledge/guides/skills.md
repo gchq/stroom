@@ -52,6 +52,11 @@ A table in the chat, in time order.
   dashboard's.
 - The steps are guidance the agent follows, not replayed exactly; the user's request comes first.
 - `[[...]]` in a template is a placeholder for what a site supplies (an index, its role conditions), to fill.
+- A timeline skill's `## Event chains`: what its sources' events mean beyond the schema, a line each:
+  `- <index>: pair <start type> -> <end type> by <key path>` or
+  `- <index>: <type> is active|idle|open|close|action|ignore`.
+  activity_timeline (with `skill`) applies them first and offers to add what it learns; check_skill checks them
+  against the index's recent events.
 
 ## The tools
 

@@ -28,6 +28,7 @@ import stroom.ai.impl.tools.skills.SkillDoc.ExampleCall;
 import stroom.ai.impl.tools.skills.SkillDoc.Parameter;
 import stroom.ai.impl.tools.skills.SkillDoc.Skill;
 import stroom.ai.impl.tools.skills.SkillDoc.Step;
+import stroom.ai.impl.tools.timeline.EventChains;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
@@ -99,8 +100,39 @@ final class SkillChecks {
         whenToUse(skill, findings);
         nearDuplicates(skill, facts, findings);
         usage(skill, facts, findings);
+        eventChains(skill, facts, findings);
         findings.sort(Comparator.comparing(Finding::kind));
         return List.copyOf(findings);
+    }
+
+    // A timeline skill's Event chains: each line an entry, each source an index the reader can use, and the entries
+    // still true of recent data (their types seen, a pair's key held and alternating).
+    private static void eventChains(final Skill skill, final Facts facts, final List<Finding> findings) {
+        final String section = skill.sections().get(EventChains.SECTION);
+        if (section == null) {
+            return;
+        }
+        final EventChains.Parsed parsed = EventChains.parse(section);
+        for (final String line : parsed.unread()) {
+            findings.add(Finding.problem("event_chains", "Event chains line '" + line + "' isn't an entry, so the "
+                                                         + "timeline leaves it out.",
+                    "Write it as '- <index>: pair <start type> -> <end type> by <key path>' or '- <index>: <type> "
+                    + "is active|idle|open|close|action|ignore'."));
+        }
+        final List<EventChains.Entry> usable = new ArrayList<>();
+        for (final Map.Entry<String, List<EventChains.Entry>> source : parsed.bySource().entrySet()) {
+            if (EventChains.ANY.equalsIgnoreCase(source.getKey()) || facts.dataSource(source.getKey()).usable()) {
+                usable.addAll(source.getValue());
+            } else {
+                findings.add(Finding.problem("event_chains", "Event chains name '" + source.getKey() + "', which "
+                                                             + "isn't a data source you can use.",
+                        "Name the index as list_data_sources gives it."));
+            }
+        }
+        for (final String problem : facts.eventChains(usable)) {
+            findings.add(Finding.problem("event_chains", problem, "Correct the entry, or remove it so the timeline "
+                                                                  + "infers the pair again."));
+        }
     }
 
     /// @param findings Findings.
@@ -603,6 +635,13 @@ final class SkillChecks {
         /// @param skill A skill's name.
         /// @return How it was used in the reader's chats, or null if that isn't known.
         SkillUsage.Counts usage(String skill);
+
+        /// @param entries A timeline skill's Event chains entries, of data sources the reader can use.
+        /// @return What recent data says is wrong with them (types not seen, a key not held, a pair no longer
+        /// alternating); none by default.
+        default List<String> eventChains(final List<EventChains.Entry> entries) {
+            return List.of();
+        }
     }
 
     /// A data source an example call names.

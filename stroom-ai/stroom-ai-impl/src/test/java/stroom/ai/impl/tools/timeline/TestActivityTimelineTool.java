@@ -20,6 +20,7 @@ import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.FakeTabWorkspace;
+import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.tools.ModelSideCalls;
 import stroom.ai.impl.tools.SessionLimits;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -27,8 +28,11 @@ import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.ToolCalls;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
+import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.sequence.InMemoryKeyStreams;
+import stroom.ai.impl.tools.skills.SkillCatalogue;
 import stroom.ai.impl.tools.workspace.GanttChartTool;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
@@ -54,6 +58,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -80,6 +85,11 @@ class TestActivityTimelineTool {
     private final DataSourceAccess dataSourceAccess = Mockito.mock(DataSourceAccess.class);
     private final QueryService queryService = Mockito.mock(QueryService.class);
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
+    private final TimelineEventXml eventXml = Mockito.mock(TimelineEventXml.class);
+    private final AgentInstructions agentInstructions = Mockito.mock(AgentInstructions.class);
+    private final TabSnapshots tabSnapshots = Mockito.mock(TabSnapshots.class);
+    private final SkillCatalogue skillCatalogue = Mockito.mock(SkillCatalogue.class);
+    private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
     private FakeTabWorkspace files;
     private ActivityTimelineTool tool;
     private List<Map<String, Object>> endpoint;
@@ -127,7 +137,9 @@ class TestActivityTimelineTool {
         windows = streams.add(WINDOWS, "@timestamp", windowsMapping);
         proxy = streams.add(PROXY, "@timestamp", proxyMapping);
         tool = new ActivityTimelineTool(files.workspace(), () -> streams, dataSourceAccess, () -> queryService,
-                auditLog);
+                auditLog, eventXml, new TimelineFields(agentInstructions, dataSourceAccess, Optional.empty()),
+                new TimelineSourceChoice(dataSourceAccess, () -> tabSnapshots), () -> skillCatalogue, documentAccess,
+                agentInstructions);
 
         windows("08:30", "4800");
         windows("08:58", "4801");
@@ -214,13 +226,38 @@ class TestActivityTimelineTool {
                 arguments(Map.of("timeZone", "UTC")), false)), ToolCalls.inChat(CHAT, files.workspace())).text();
 
         assertThat(text).startsWith("Activity timeline of jsmith, 2026-11-10 00:00 to 2026-11-10 12:00: 4 session(s) "
-                                    + "on 1 host(s), 4 action(s) (0 in no session), from 14 event(s): Endpoint 8, "
-                                    + "Windows 4, Proxy 2.")
+                                    + "on 1 host(s), 4 action(s) (0 in no session or span), from 14 event(s): "
+                                    + "Endpoint 8, Windows 4, Proxy 2.")
                 .contains("| ws-01 | WINWORD.EXE | 2 | 45.0 |")
                 .contains("- idle_start_without_end: 1 idle starts")
-                .contains("gantt_chart with path " + FOLDER + "sessions.csv, start start, end end, label process, "
-                          + "lane host")
+                .contains("draw it in the chat with gantt_chart: path " + FOLDER + "spans.csv, start start, end "
+                          + "end, label label, lane lane.")
                 .contains(ActivityTimelineTool.CAVEAT);
+    }
+
+    @Test
+    void aUserSeenOnlyInProxyEventsGetsActivityPeriodsNotNothing() {
+        // Chat 190: a user seen only in web proxy logs got 0 sessions (sessions began only at a focus event), every
+        // action in no session, and nothing to chart. Their actions close in time now make activity periods.
+        proxyOf("pat", "09:00", "ws-09", "https://research.example.org/pricing");
+        proxyOf("pat", "09:05", "ws-09", "https://research.example.org/pricing/saas");
+        proxyOf("pat", "09:12", "ws-09", "https://research.example.org/benchmarks");
+        proxyOf("pat", "09:20", "ws-09", "https://news.example.com/local");
+        proxyOf("pat", "11:00", "ws-09", "https://research.example.org/pricing");
+        final Map<String, Object> arguments = arguments(Map.of());
+        arguments.put("entity", "pat");
+        arguments.put("sources", List.of(Map.of("index", "Proxy", "user", "user", "host", "client_host", "object",
+                "url", "roles", Map.of("actions", List.of(Map.of("kind", "web access", "where", List.of(Map.of(
+                        "field", "url", "condition", "IS_NOT_NULL"))))))));
+
+        final Map<String, Object> result = json(mcp(), arguments);
+
+        assertThat(result).containsEntry("session_count", 0L).containsEntry("actions", 5L);
+        assertThat((Map<String, Object>) result.get("spans")).containsEntry("activity", 3L);
+        final String spans = files.content("/outputs/timelines/pat/spans.csv").orElseThrow();
+        assertThat(spans).contains("2026-11-10T09:00:00Z,2026-11-10T09:20:00Z,research.example.org,ws-09,activity")
+                .contains("2026-11-10T09:20:00Z,2026-11-10T09:20:00Z,news.example.com,ws-09,activity")
+                .contains("2026-11-10T11:00:00Z,2026-11-10T11:00:00Z,research.example.org,ws-09,activity");
     }
 
     @Test
@@ -410,6 +447,11 @@ class TestActivityTimelineTool {
             event.put("client_host", host);
         }
         proxy.add(event);
+    }
+
+    private void proxyOf(final String user, final String time, final String host, final String url) {
+        proxy.add(new LinkedHashMap<>(Map.of("@timestamp", at(time), "user", user, "client_host", host, "url",
+                url)));
     }
 
     private ToolCallContext mcp() {

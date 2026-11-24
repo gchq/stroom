@@ -102,21 +102,36 @@ sequence_query finds ordered events by the same entity within a time span, in on
 
 ## A user's activity over time (activity_timeline)
 
-activity_timeline builds one user's (or entity's) timeline for a period from several Elastic Index sources, each
-read for that user alone as the streaming join reads a side, and worked out in code.
+activity_timeline builds one user's (or entity's) timeline for a period from any Elastic Index sources, each read
+for that user alone as the streaming join reads a side, and worked out in code.
 
-- Each source gives the fields that hold the user, host, application, window title, window, object and text, and
-  its roles as conditions (as sequence_query's steps take them): `focus`, `open`, `close`, `idle_start` (lock,
-  sleep, logoff), `idle_end` (unlock, wake, logon) and `actions`, each with its `kind`. Which conditions mean which
-  role is the site's: a skill, an AGENTS doc or the source's documentation holds them.
-- A session runs from a focus to the next focus, an idle start, or the idle cap (no event for 30 minutes by default,
-  `idleCap`), marked uncertain then. Hosts are separate lanes. An action with no host is attached by time.
-- Missing events are flagged with counts and examples (unpaired opens and closes, idle starts with no end, a source
+- Sources: given (index names will do), `all`, or omitted: the user is asked in a form (with a dashboard attached,
+  its data source, all supported, or their own words matched to indexes and confirmed); over MCP with no form, every
+  Elastic Index the user can use, those without the user's events listed and left out.
+- Each index's user field: the call's (`userField`, a source's `user`), else the AGENTS doc's `## Fields`
+  (`- user: ...`), else a field convention's (`user.name`, `UserId`), else the index's documentation, else asked.
+  The result says each index's field and where it came from. The user and time always come from the index.
+- A source without roles has its events classified from their Events XML (read by StreamId and EventId, capped by
+  `timelineMaxXmlEvents`): Authenticate Logon, ScreenUnlock, Connect and Reconnect make the user active; Logoff,
+  ScreenLock and Disconnect idle; Process Execute and Terminate open and close; other elements are actions of that
+  kind. Where the XML is gone, the index's element field (with its Action field) classifies them, else the source's
+  own codes, classified once by the model and confirmed by the user. Roles (`focus`, `open`, `close`, `idle_start`,
+  `idle_end`, `actions`, as conditions) override this, e.g. for window focus, which the schema has no element for.
+- Spans: a focus session runs from a focus to the next focus, an idle start, or the idle cap (30 minutes by
+  default, `idleCap`). A pair (`Process/Execute` to `Process/Terminate` by ProcessId, a lock to its unlock, a skill's
+  Event chains, a source's `pairs`, or two types inferred from the user's own events: alternating for 90% of keys,
+  counts about equal) runs from a start to its end of the same key. Actions in neither, close in time, are activity
+  periods by host (else source) and application, else the object's place (a URL's domain), split where it changes:
+  they show when the user was active there, not what had focus. Borderline pairs are listed, not used.
+- Missing events are flagged with counts and examples (unpaired starts and ends, idle starts with no end, a source
   silent while another shows the user active, clocks that disagree), never smoothed over.
-- Its sessions table is drawn by gantt_chart as it is. With `characterise`: activities, sessions tied by the
-  documents, pages and terms they share (Leiden clusters), and loose items (messages, prompts) classified by a
-  model outside the conversation, low confidence left unclear. Labels are inferences. Corrections (`move`,
-  `merge`, `rename`) are kept with the chat, so a re-run keeps them.
+- Two levels, three views (`view`): `detail` (spans.csv, lanes by host or source), `activities` (activities.csv, a
+  lane a day or an activity; turns `characterise` on), `both`. The result gives gantt_chart's arguments for each and
+  says when one is too dense for one chart. With `characterise`: activities, spans tied by the documents, pages and
+  terms they share (Leiden clusters), and loose items classified by a model outside the conversation. Labels are
+  inferences. Corrections (`move`, `merge`, `rename`) are kept with the chat.
+- With `skill`, the skill's Event chains are applied first, and what was learned (pairs inferred, the source's own
+  `pairs` and `typeRoles`) is offered for them through propose_skill where the user may edit the skills doc.
 
 ## The table tool's join
 

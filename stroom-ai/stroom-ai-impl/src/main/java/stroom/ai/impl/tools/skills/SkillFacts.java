@@ -27,10 +27,13 @@ import stroom.ai.impl.tools.StroomTool;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.skills.SkillChecks.DataSource;
 import stroom.ai.impl.tools.skills.SkillChecks.OtherSkill;
 import stroom.ai.impl.tools.skills.SkillDoc.Skill;
+import stroom.ai.impl.tools.timeline.EventChains;
+import stroom.ai.impl.tools.timeline.TimelineChainCheck;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
@@ -71,6 +74,8 @@ class SkillFacts {
     private final Provider<BuiltInTools> builtInToolsProvider;
     // What the user's tool policies grant; unbound where there are none (e.g. a test's wiring): every tool allowed.
     private CurrentToolGrants currentToolGrants;
+    // Checks a timeline skill's Event chains against recent data; unbound in a test's wiring.
+    private TimelineChainCheck timelineChainCheck;
     private final DataSourceAccess dataSourceAccess;
     private final Provider<QueryService> queryServiceProvider;
     private final SkillCatalogue catalogue;
@@ -98,11 +103,28 @@ class SkillFacts {
         this.currentToolGrants = currentToolGrants;
     }
 
+    /// @param timelineChainCheck Checks a timeline skill's Event chains against recent data.
+    @com.google.inject.Inject(optional = true)
+    void setTimelineChainCheck(final TimelineChainCheck timelineChainCheck) {
+        this.timelineChainCheck = timelineChainCheck;
+    }
+
     /// @param skill     The skill being checked.
     /// @param doc       Its doc, or null for a draft.
     /// @param withUsage True to read the user's chats for how skills were used (only `check_skill` does).
     /// @return The facts for checking it.
     SkillChecks.Facts forSkill(final Skill skill, final DocRef doc, final boolean withUsage) {
+        return forSkill(skill, doc, withUsage, null);
+    }
+
+    /// @param skill     The skill being checked.
+    /// @param doc       Its doc, or null for a draft.
+    /// @param withUsage True to read the user's chats for how skills were used (only `check_skill` does).
+    /// @param session   The reader's session, to check a timeline skill's Event chains against recent data; null
+    ///                  not to.
+    /// @return The facts for checking it.
+    SkillChecks.Facts forSkill(final Skill skill, final DocRef doc, final boolean withUsage,
+                               final ToolSession session) {
         final ToolGrants grants = grants();
         final Map<String, SkillUsage.Counts> usage = withUsage
                 ? usage(skill.name())
@@ -149,6 +171,13 @@ class SkillFacts {
             @Override
             public SkillUsage.Counts usage(final String name) {
                 return usage.get(name.toLowerCase(Locale.ROOT));
+            }
+
+            @Override
+            public List<String> eventChains(final List<EventChains.Entry> entries) {
+                return timelineChainCheck == null || session == null || entries.isEmpty()
+                        ? List.of()
+                        : timelineChainCheck.check(session, entries);
             }
         };
     }

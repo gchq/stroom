@@ -20,12 +20,14 @@ import stroom.ai.impl.tools.instructions.AgentInstructions.InstructionDoc;
 import stroom.ai.impl.tools.instructions.InstructionRules.ComponentRule;
 import stroom.ai.impl.tools.instructions.InstructionRules.ComponentRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldMappingLayout;
+import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.ai.impl.tools.instructions.InstructionRules.RequiredImport;
 
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -117,6 +119,36 @@ class TestInstructionRules {
                 "'## Documentation' line '- field mapping: sideways' names no layout the tools know (by event type, "
                 + "by_event_type, compact, one table, per event type, single table)");
         assertThat(InstructionRules.problems("## Required imports\n- `Translation`: Stream-Meta-V1\n")).isEmpty();
+    }
+
+    @Test
+    void theFieldsSectionNamesEachThingsFieldsTheMostSpecificDocWinning() {
+        // A site standard (the root's), and an index folder that writes its user differently.
+        final Map<String, FieldRule> fields = InstructionRules.fields(List.of(
+                doc("/", "## Fields\n- user: Initiator.Id, user.name\n- host: HostName\n- Host names are lower "
+                         + "case.\n"),
+                doc("/Indexes/Proxy", "## Fields\n- `User`: SrcUser\n- event type: `Vendor.EventId`\n")));
+
+        assertThat(fields).containsOnlyKeys(InstructionRules.USER_FIELD, InstructionRules.HOST_FIELD,
+                InstructionRules.EVENT_TYPE_FIELD);
+        assertThat(fields.get(InstructionRules.USER_FIELD)).isEqualTo(new FieldRule(List.of("SrcUser"),
+                "/Indexes/Proxy"));
+        assertThat(fields.get(InstructionRules.HOST_FIELD)).isEqualTo(new FieldRule(List.of("HostName"), "/"));
+        assertThat(fields.get(InstructionRules.EVENT_TYPE_FIELD).fields()).containsExactly("Vendor.EventId");
+    }
+
+    @Test
+    void aFieldsLineNamingNothingKnownOrNoFieldTheIndexesHaveIsPointedOut() {
+        final String text = "## Fields\n- user: Initiator.ID\n- host: HostName, host.name\n- colour: Red\n";
+
+        assertThat(InstructionRules.problems(text)).singleElement().asString()
+                .startsWith("'## Fields' line '- colour: Red' names none the tools know (action, application, "
+                            + "element, event code, event detail, event type, host, object, process, user)");
+        assertThat(InstructionRules.fieldProblems(text, Set.of("Initiator.Id", "HostName")))
+                .containsExactly("'## Fields' line for user names no field the data sources where the doc applies "
+                                 + "have (Initiator.ID)");
+        // No fields known: nothing is said.
+        assertThat(InstructionRules.fieldProblems(text, Set.of())).isEmpty();
     }
 
     private static InstructionDoc doc(final String folder, final String text) {

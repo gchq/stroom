@@ -37,13 +37,17 @@ import stroom.docref.DocRef;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.TimeRange;
 import stroom.task.api.TaskTerminatedException;
+import stroom.util.shared.NullSafe;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 /// Reads one user's (or entity's) events of a timeline's sources, with the streaming join's machinery (part 1): each
@@ -78,6 +82,7 @@ final class TimelineReader {
                      final JoinBudget budget) {
         final List<Event> events = new ArrayList<>();
         final List<Long> counts = new ArrayList<>();
+        final Map<String, Map<String, String>> extras = new LinkedHashMap<>();
         long cut = 0;
         for (int s = 0; s < sources.size(); s++) {
             final Source source = sources.get(s);
@@ -91,7 +96,15 @@ final class TimelineReader {
                     final KeyGroup group = refused(scan::next);
                     if (group != null) {
                         for (final Row row : group.rows()) {
-                            events.add(event(s, source, role, row));
+                            final Event event = event(s, source, role, row);
+                            events.add(event);
+                            if (!source.extraFields().isEmpty()) {
+                                final Map<String, String> values = new LinkedHashMap<>();
+                                for (final String field : source.extraFields()) {
+                                    NullSafe.consume(first(row.fields(), field), value -> values.put(field, value));
+                                }
+                                extras.put(event.id(), values);
+                            }
                         }
                         count += group.rows().size();
                     }
@@ -109,7 +122,50 @@ final class TimelineReader {
                 break;
             }
         }
-        return new Read(events, counts, budget.reached(), cut > 0);
+        return new Read(events, counts, budget.reached(), cut > 0, extras);
+    }
+
+    /// The first events of one source for the user, with the fields asked for: to tell which of an index's fields
+    /// holds what (e.g. the EventDetail element), by their values.
+    ///
+    /// @param streams   The key streams.
+    /// @param source    The source.
+    /// @param entity    The user.
+    /// @param timeRange The period.
+    /// @param fields    The fields to fetch.
+    /// @param count     The most events.
+    /// @param deadline  When to stop.
+    /// @param stopped   True once the user has stopped the call.
+    /// @return Each event's values by field.
+    static List<Map<String, String>> sample(final ElasticKeyStreams streams,
+                                            final Source source,
+                                            final String entity,
+                                            final TimeRange timeRange,
+                                            final List<String> fields,
+                                            final int count,
+                                            final Instant deadline,
+                                            final BooleanSupplier stopped) {
+        final Side side = new Side(source.doc(), List.of(new KeyField(source.userField(), source.transforms())),
+                null, timeRange, KeyRange.ALL, List.of(List.of(source.term(entity))));
+        final JoinBudget budget = new JoinBudget(count, Long.MAX_VALUE, deadline, stopped);
+        final List<Map<String, String>> out = new ArrayList<>();
+        try (final KeyGroupSource scan = KeyGroupSource.scan(streams, List.of(side), fields, PAGE_SIZE,
+                JoinKeys.comparator(List.of(source.kind())), budget)) {
+            final KeyGroup group = refused(scan::next);
+            if (group != null) {
+                for (final Row row : group.rows()) {
+                    final Map<String, String> values = new LinkedHashMap<>();
+                    for (final String field : fields) {
+                        NullSafe.consume(first(row.fields(), field), value -> values.put(field, value));
+                    }
+                    out.add(values);
+                    if (out.size() >= count) {
+                        break;
+                    }
+                }
+            }
+        }
+        return out;
     }
 
     private static Event event(final int s, final Source source, final RoleRead role, final Row row) {
@@ -169,6 +225,8 @@ final class TimelineReader {
     /// @param textField    The field holding free text (a message, an AI chat prompt), or null.
     /// @param hasStreamIds True if the index has StreamId and EventId fields.
     /// @param roles        Its roles, each with its conditions.
+    /// @param automatic    True if its events are classified (from their Events XML and so on), not by roles.
+    /// @param extraFields  More fields fetched, for classifying its events (e.g. the element, the event code).
     record Source(String name,
                   DocRef doc,
                   String userField,
@@ -181,12 +239,22 @@ final class TimelineReader {
                   String objectField,
                   String textField,
                   boolean hasStreamIds,
-                  List<RoleRead> roles) {
+                  List<RoleRead> roles,
+                  boolean automatic,
+                  List<String> extraFields) {
 
         /// Copies the lists.
         Source {
             transforms = List.copyOf(transforms);
             roles = List.copyOf(roles);
+            extraFields = List.copyOf(extraFields);
+        }
+
+        /// @param newTransforms What is done to the user's value before it is compared.
+        /// @return It with them.
+        Source withTransforms(final List<Transform> newTransforms) {
+            return new Source(name, doc, userField, kind, newTransforms, hostField, processField, titleField,
+                    windowField, objectField, textField, hasStreamIds, roles, automatic, extraFields);
         }
 
         /// @return The fields a scan fetches.
@@ -202,6 +270,7 @@ final class TimelineReader {
                 fields.add(EqlSequenceResults.STREAM_ID);
                 fields.add(EqlSequenceResults.EVENT_ID);
             }
+            fields.addAll(extraFields);
             return List.copyOf(fields);
         }
 
@@ -254,7 +323,12 @@ final class TimelineReader {
     /// @param counts  How many events each source gave.
     /// @param reached Why reading ended early, or null if it didn't.
     /// @param cut     True if a role of a source had more events than one scan keeps.
-    record Read(List<Event> events, List<Long> counts, JoinBudget.Limit reached, boolean cut) {
+    /// @param extras  The more fields' values of the automatic sources' events, by event id.
+    record Read(List<Event> events,
+                List<Long> counts,
+                JoinBudget.Limit reached,
+                boolean cut,
+                Map<String, Map<String, String>> extras) {
 
     }
 }

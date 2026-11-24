@@ -164,20 +164,20 @@ offered in modes:
 
 ### Description
 
-Builds one user's (or entity's) activity timeline for a period from several sources, in code: sessions of active use of each application on each host (from a focus to the next focus, an idle start, or the idle cap), the actions in each, active time per day by application, and data-quality flags for missing events (unpaired opens and closes, idle starts with no end, a source falling silent while another shows the user active, clocks that disagree). Each source gives its fields and its roles as conditions ({field, condition, value}, as a sequence's steps take them): what a focus, open, close, idle start (lock, sleep, logoff), idle end (unlock, wake, logon) and each kind of action look like there; a skill, or the source's documentation, may hold them. Elastic Indexes only. With characterise=true, also what the user was working on: activities tying sessions together by the documents, pages and terms they share, loose items (messages, prompts) classified by a model outside this conversation. The sessions table draws as a timeline with gantt_chart (dashboards group) as it is.
+Builds one user's (or entity's) activity timeline for a period from any Elastic Index sources, in code. Two levels: detail spans (focus sessions where a source records window focus; pairs from a start to its end, e.g. a process's start and end, the schema's, a skill's, or inferred from the user's own events; activity periods, the actions in neither close in time, by host or source) and activities rolled up from them (what the user was working on). Events without roles are classified from their Events XML (the EventDetail element and Action), else the index's fields; the user and time always come from the index. Each index's user field: userField, the AGENTS doc's ## Fields, a field convention, the index's documentation, else asked. Data-quality flags for missing events. Omit sources to ask the user which (or read all you can use). Its tables draw as timelines with gantt_chart (dashboards group) as they are; the result gives the arguments for the view.
 
 ### Parameters
 
 {
   "properties" : {
     "characterise" : {
-      "description" : "True to find what the user was working on: the activities the sessions make up.",
+      "description" : "True to find what the user was working on: the activities the spans make up.",
       "type" : "boolean"
     },
     "corrections" : {
       "description" : "Optional: the analyst's corrections to the activities, kept with this investigation so a re-run keeps them.",
       "items" : {
-        "description" : "{move: <session or item id>, to: <activity id, not_work or unclear>}, {merge: [<activity id>, ...]} (into the first), or {rename: <activity id>, label: <name>}.",
+        "description" : "{move: <span or item id>, to: <activity id, not_work or unclear>}, {merge: [<activity id>, ...]} (into the first), or {rename: <activity id>, label: <name>}.",
         "properties" : { },
         "required" : [ ],
         "type" : "object"
@@ -192,17 +192,38 @@ Builds one user's (or entity's) activity timeline for a period from several sour
       "description" : "How long with no event on a host ends an interval, e.g. 30m (default the setting, 30 minutes).",
       "type" : "string"
     },
+    "lanes" : {
+      "description" : "Optional: the lanes: activities by day (default) or activity; detail by host (default) or source.",
+      "enum" : [ "day", "activity", "host", "source" ],
+      "type" : "string"
+    },
     "runAnyway" : {
       "description" : "True to classify loose items past the budget, as the user agrees.",
       "type" : "boolean"
     },
+    "skill" : {
+      "description" : "Optional: the name of the skill being run, whose Event chains are applied and to which what is learned is offered.",
+      "type" : "string"
+    },
     "sources" : {
-      "description" : "The sources, at least one.",
+      "description" : "Optional: the sources (index names alone will do), \"all\", or \"ask\" (as omitted: the user is asked which).",
       "items" : {
-        "description" : "One source: an Elastic Index, the fields that hold each thing, and its roles.",
+        "description" : "One source: an Elastic Index, and optionally the fields that hold each thing and its roles.",
         "properties" : {
+          "actionField" : {
+            "description" : "Optional: the field holding the element's Action.",
+            "type" : "string"
+          },
+          "elementField" : {
+            "description" : "Optional: the field holding the EventDetail element, for events whose Events XML is gone (default: found).",
+            "type" : "string"
+          },
+          "eventTypeField" : {
+            "description" : "Optional: the field holding the source's own event code.",
+            "type" : "string"
+          },
           "host" : {
-            "description" : "The field holding the host (optional: an action with no host goes in the session active at its time).",
+            "description" : "The field holding the host (optional).",
             "type" : "string"
           },
           "index" : {
@@ -217,12 +238,39 @@ Builds one user's (or entity's) activity timeline for a period from several sour
             "description" : "The field holding what an event touched: a file, a URL, a subject.",
             "type" : "string"
           },
+          "pairs" : {
+            "description" : "Optional: the source's own pairs (e.g. one the user confirmed).",
+            "items" : {
+              "description" : "Two event types bounding spans: an end closes the latest open start of the same key.",
+              "properties" : {
+                "by" : {
+                  "description" : "Optional: the key path under the element both hold, e.g. ProcessId (default the host alone).",
+                  "type" : "string"
+                },
+                "end" : {
+                  "description" : "The end's type.",
+                  "type" : "string"
+                },
+                "label" : {
+                  "description" : "Optional: the key path whose value labels the span.",
+                  "type" : "string"
+                },
+                "start" : {
+                  "description" : "The start's type: a TypeId, or an element and Action, e.g. Process/Execute.",
+                  "type" : "string"
+                }
+              },
+              "required" : [ "start", "end" ],
+              "type" : "object"
+            },
+            "type" : "array"
+          },
           "process" : {
             "description" : "The field holding the application (process).",
             "type" : "string"
           },
           "roles" : {
-            "description" : "The source's roles: each optional, given only where the source holds such events.",
+            "description" : "Optional: the source's roles, which override classifying its events (e.g. for window focus, which the schema has no element for); each given only where the source holds such events.",
             "properties" : {
               "actions" : {
                 "description" : "The kinds of action it holds.",
@@ -630,8 +678,14 @@ Builds one user's (or entity's) activity timeline for a period from several sour
             },
             "type" : "array"
           },
+          "typeRoles" : {
+            "description" : "Optional: the user's corrections, an event type's role: {\"<type>\": \"active|idle|open|close|action|ignore\"}.",
+            "properties" : { },
+            "required" : [ ],
+            "type" : "object"
+          },
           "user" : {
-            "description" : "The field holding the user (or entity).",
+            "description" : "The field holding the user (default: found, see userField).",
             "type" : "string"
           },
           "window" : {
@@ -639,7 +693,7 @@ Builds one user's (or entity's) activity timeline for a period from several sour
             "type" : "string"
           }
         },
-        "required" : [ "index", "user", "roles" ],
+        "required" : [ "index" ],
         "type" : "object"
       },
       "type" : "array"
@@ -655,9 +709,18 @@ Builds one user's (or entity's) activity timeline for a period from several sour
     "timeZone" : {
       "description" : "Time zone for the times and results: local, UTC, a zone id or an offset; default the user's.",
       "type" : "string"
+    },
+    "userField" : {
+      "description" : "Optional: the field holding the user in every source that has it (a skill's), before the other ways.",
+      "type" : "string"
+    },
+    "view" : {
+      "description" : "Which level to draw: activities (what the user was working on; turns characterise on), detail (the spans), or both (default detail).",
+      "enum" : [ "activities", "detail", "both" ],
+      "type" : "string"
     }
   },
-  "required" : [ "entity", "sources" ],
+  "required" : [ "entity" ],
   "type" : "object"
 }
 
@@ -2530,7 +2593,7 @@ offered in modes: AGENT, ASK, PLAN
 
 ### Description
 
-Proposes standing instructions for a folder: the text of its AGENTS doc, which applies to the folder and everything below it. The user is shown a diff with a 'Review and apply' button; nothing changes until they apply it (to the doc's editor, unsaved, for them to save; or, for a folder with no AGENTS doc, by creating and saving one). Keep what the doc says already. Short, concrete rules, one per bullet; the sections the tools apply themselves are '## Required imports', '## Component templates' and '## Documentation'. Draft rules from instruction_evidence's repeated choices or from what the user said they always want, and read get_instructions for the folder first (its guide='agent-instructions' says how the sections are written).
+Proposes standing instructions for a folder: the text of its AGENTS doc, which applies to the folder and everything below it. The user is shown a diff with a 'Review and apply' button; nothing changes until they apply it (to the doc's editor, unsaved, for them to save; or, for a folder with no AGENTS doc, by creating and saving one). Keep what the doc says already. Short, concrete rules, one per bullet; the sections the tools apply themselves are '## Required imports', '## Component templates', '## Documentation' and '## Fields'. Draft rules from instruction_evidence's repeated choices or from what the user said they always want, and read get_instructions for the folder first (its guide='agent-instructions' says how the sections are written).
 
 ### Parameters
 

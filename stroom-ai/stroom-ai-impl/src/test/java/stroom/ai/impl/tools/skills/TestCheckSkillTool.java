@@ -58,6 +58,8 @@ class TestCheckSkillTool {
         Mockito.when(documentAccess.findDocRef("other")).thenReturn(Optional.of(OTHER));
         Mockito.when(facts.forSkill(Mockito.any(), Mockito.any(), Mockito.anyBoolean()))
                 .thenReturn(SkillTestFacts.permissive());
+        Mockito.when(facts.forSkill(Mockito.any(), Mockito.any(), Mockito.anyBoolean(), Mockito.any()))
+                .thenReturn(SkillTestFacts.permissive());
         tool = new CheckSkillTool(catalogue, facts, documentAccess);
     }
 

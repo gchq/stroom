@@ -30,6 +30,7 @@ import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolUserAction;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.instructions.AgentInstructions;
+import stroom.ai.impl.tools.instructions.IndexFieldNames;
 import stroom.ai.impl.tools.instructions.InstructionEvidenceTool;
 import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.workspace.ChatWorkspace;
@@ -46,6 +47,7 @@ import stroom.util.shared.diff.LineDiffResult;
 
 import jakarta.inject.Inject;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +76,8 @@ public class ProposeInstructionsTool extends AbstractWorkspaceTool {
     private static final AtomicInteger SEQUENCE = new AtomicInteger();
 
     private final DocumentAccess documentAccess;
+    // The fields of the data sources a doc applies to, for its '## Fields' lines; unbound in a test's wiring.
+    private IndexFieldNames indexFieldNames;
 
     @Inject
     ProposeInstructionsTool(final ChatWorkspace workspace, final DocumentAccess documentAccess) {
@@ -81,12 +85,19 @@ public class ProposeInstructionsTool extends AbstractWorkspaceTool {
         this.documentAccess = documentAccess;
     }
 
+    /// @param indexFieldNames Gives the fields of the data sources a doc applies to.
+    @com.google.inject.Inject(optional = true)
+    void setIndexFieldNames(final IndexFieldNames indexFieldNames) {
+        this.indexFieldNames = indexFieldNames;
+    }
+
     @Override
     public ToolPermissions permissions() {
         return ToolPermissions.builder()
-                .checksDocuments(DocumentPermission.VIEW)
+                .checksDocuments(DocumentPermission.VIEW, DocumentPermission.USE)
                 .note("Applying an existing doc's change needs Edit on it; creating a doc needs Create in the "
-                      + "folder. Both are checked when the user applies it.")
+                      + "folder. Both are checked when the user applies it. A doc's ## Fields lines are checked "
+                      + "against the fields of the data sources in the folder the user can Use.")
                 .build();
     }
 
@@ -119,7 +130,7 @@ public class ProposeInstructionsTool extends AbstractWorkspaceTool {
                                  + "or, for a folder with no " + AgentInstructions.DOC_NAME + " doc, by creating "
                                  + "and saving one). Keep what the doc says already. Short, concrete rules, one "
                                  + "per bullet; the sections the tools apply themselves are '## Required "
-                                 + "imports', '## Component templates' and '## Documentation'.")
+                                 + "imports', '## Component templates', '## Documentation' and '## Fields'.")
                         .chatOnly(" Draft rules from instruction_evidence's repeated choices or from what the "
                                   + "user said they always want, and read get_instructions for the folder first "
                                   + "(its guide='agent-instructions' says how the sections are written).")
@@ -198,7 +209,10 @@ public class ProposeInstructionsTool extends AbstractWorkspaceTool {
         if (text.length() > UserActions.MAX_CODE_CHARS) {
             throw new WorkspaceException("The doc may be at most " + UserActions.MAX_CODE_CHARS + " characters.");
         }
-        final List<String> problems = InstructionRules.problems(text);
+        final List<String> problems = new ArrayList<>(InstructionRules.problems(text));
+        if (indexFieldNames != null) {
+            problems.addAll(InstructionRules.fieldProblems(text, indexFieldNames.under(folder)));
+        }
         final LineDiffResult diff = LineDiff.diff(base, text);
         if (diff.isIdentical()) {
             return ToolResult.text("The proposed text is the same as the " + AgentInstructions.DOC_NAME + " doc in "

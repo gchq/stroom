@@ -55,6 +55,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
     static final int DEFAULT_CHARACTERISE_EXCERPT_CHARS = 500;
     static final int DEFAULT_CHARACTERISE_BATCH_ITEMS = 50;
     static final int DEFAULT_CHARACTERISE_MAX_ITEMS = 1_000;
+    static final int DEFAULT_TIMELINE_MAX_XML_EVENTS = 50_000;
 
     private final long maxFileBytes;
     private final long maxChatBytes;
@@ -80,6 +81,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
     private final int characteriseExcerptChars;
     private final int characteriseBatchItems;
     private final int characteriseMaxItems;
+    private final int timelineMaxXmlEvents;
 
     public AiWorkspaceConfig() {
         maxFileBytes = DEFAULT_MAX_FILE_BYTES;
@@ -106,6 +108,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         characteriseExcerptChars = DEFAULT_CHARACTERISE_EXCERPT_CHARS;
         characteriseBatchItems = DEFAULT_CHARACTERISE_BATCH_ITEMS;
         characteriseMaxItems = DEFAULT_CHARACTERISE_MAX_ITEMS;
+        timelineMaxXmlEvents = DEFAULT_TIMELINE_MAX_XML_EVENTS;
     }
 
     /// The limits, with the default EQL sequence window.
@@ -294,6 +297,70 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
     ///                                 default.
     /// @param characteriseMaxItems     The most items a characterisation sends the model in one run without the
     ///                                 user agreeing, or null for the default.
+    public AiWorkspaceConfig(final Long maxFileBytes,
+                             final Long maxChatBytes,
+                             final Long maxUserBytes,
+                             final Integer maxLinesPerRead,
+                             final Integer maxCharsPerRead,
+                             final StroomDuration toolTimeLimit,
+                             final StroomDuration queryTimeLimit,
+                             final Integer maxQueryLength,
+                             final Integer maxEventsPerFetch,
+                             final Integer maxEventBytes,
+                             final Integer maxStreamStoreReads,
+                             final Integer maxQueryRows,
+                             final Long maxToolArgumentBytes,
+                             final StroomDuration eqlDefaultMaxspan,
+                             final Integer joinWorkers,
+                             final Integer joinPushDownKeys,
+                             final Long joinMaxKeys,
+                             final Long joinMaxRows,
+                             final StroomDuration joinTimeLimit,
+                             final StroomDuration timelineIdleCap,
+                             final Integer timelineMaxEvents,
+                             final Integer characteriseExcerptChars,
+                             final Integer characteriseBatchItems,
+                             final Integer characteriseMaxItems) {
+        this(maxFileBytes, maxChatBytes, maxUserBytes, maxLinesPerRead, maxCharsPerRead, toolTimeLimit,
+                queryTimeLimit, maxQueryLength, maxEventsPerFetch, maxEventBytes, maxStreamStoreReads, maxQueryRows,
+                maxToolArgumentBytes, eqlDefaultMaxspan, joinWorkers, joinPushDownKeys, joinMaxKeys, joinMaxRows,
+                joinTimeLimit, timelineIdleCap, timelineMaxEvents, characteriseExcerptChars, characteriseBatchItems,
+                characteriseMaxItems, null);
+    }
+
+    /// @param maxFileBytes             The largest a workspace file may be, or null for the default.
+    /// @param maxChatBytes             The most a chat's workspace files may hold, or null for the default.
+    /// @param maxUserBytes             The most a user's chat workspaces may hold, or null for the default.
+    /// @param maxLinesPerRead          The most lines a tool returns in one call, or null for the default.
+    /// @param maxCharsPerRead          The most characters a tool returns in one call, or null for the default.
+    /// @param toolTimeLimit            The longest a workspace tool call may run, or null for the default.
+    /// @param queryTimeLimit           The longest a query run by the agent may take, or null for the default.
+    /// @param maxQueryLength           The longest a query run by the agent may be, or null for the default.
+    /// @param maxEventsPerFetch        The most source events fetched in one call, or null for the default.
+    /// @param maxEventBytes            The largest source event fetched, or null for the default.
+    /// @param maxStreamStoreReads      The most streams read from the stream store in one call, or null for the
+    ///                                 default.
+    /// @param maxQueryRows             The most rows a query run by the agent may return, or null for the default.
+    /// @param maxToolArgumentBytes     The largest a tool call's arguments may be, or null for the default.
+    /// @param eqlDefaultMaxspan        The window a sequence suggests, or null for the default.
+    /// @param joinWorkers              The workers a streaming join uses, or null for the default.
+    /// @param joinPushDownKeys         The most keys a side pushed down as a filter may have, or null for the
+    ///                                 default.
+    /// @param joinMaxKeys              The most keys a streaming join merges, or null for the default.
+    /// @param joinMaxRows              The most rows a streaming join reads, or null for the default.
+    /// @param joinTimeLimit            The longest a streaming join may run when the user agrees, or null for the
+    ///                                 default.
+    /// @param timelineIdleCap          How long with no event ends an activity timeline's interval, or null for the
+    ///                                 default.
+    /// @param timelineMaxEvents        The most events an activity timeline reads, or null for the default.
+    /// @param characteriseExcerptChars The most characters of an item's text a characterisation sends to the
+    ///                                 model, or null for the default.
+    /// @param characteriseBatchItems   The items a characterisation sends the model in one call, or null for the
+    ///                                 default.
+    /// @param characteriseMaxItems     The most items a characterisation sends the model in one run without the
+    ///                                 user agreeing, or null for the default.
+    /// @param timelineMaxXmlEvents     The most events whose Events XML an activity timeline reads, or null for the
+    ///                                 default.
     @JsonCreator
     public AiWorkspaceConfig(@JsonProperty("maxFileBytes") final Long maxFileBytes,
                              @JsonProperty("maxChatBytes") final Long maxChatBytes,
@@ -318,7 +385,8 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
                              @JsonProperty("timelineMaxEvents") final Integer timelineMaxEvents,
                              @JsonProperty("characteriseExcerptChars") final Integer characteriseExcerptChars,
                              @JsonProperty("characteriseBatchItems") final Integer characteriseBatchItems,
-                             @JsonProperty("characteriseMaxItems") final Integer characteriseMaxItems) {
+                             @JsonProperty("characteriseMaxItems") final Integer characteriseMaxItems,
+                             @JsonProperty("timelineMaxXmlEvents") final Integer timelineMaxXmlEvents) {
         this.maxFileBytes = Objects.requireNonNullElse(maxFileBytes, DEFAULT_MAX_FILE_BYTES);
         this.maxChatBytes = Objects.requireNonNullElse(maxChatBytes, DEFAULT_MAX_CHAT_BYTES);
         this.maxUserBytes = Objects.requireNonNullElse(maxUserBytes, DEFAULT_MAX_USER_BYTES);
@@ -346,6 +414,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         this.characteriseBatchItems = Objects.requireNonNullElse(characteriseBatchItems,
                 DEFAULT_CHARACTERISE_BATCH_ITEMS);
         this.characteriseMaxItems = Objects.requireNonNullElse(characteriseMaxItems, DEFAULT_CHARACTERISE_MAX_ITEMS);
+        this.timelineMaxXmlEvents = Objects.requireNonNullElse(timelineMaxXmlEvents, DEFAULT_TIMELINE_MAX_XML_EVENTS);
     }
 
     @JsonPropertyDescription("The largest a single workspace file may be, in bytes.")
@@ -522,6 +591,14 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         return characteriseMaxItems;
     }
 
+    @JsonPropertyDescription("The most events whose Events XML an activity timeline (activity_timeline) reads to "
+                             + "classify them, in time order; past it, the rest are classified by the index's "
+                             + "fields and the result asks for a narrower period.")
+    @JsonProperty("timelineMaxXmlEvents")
+    public int getTimelineMaxXmlEvents() {
+        return timelineMaxXmlEvents;
+    }
+
     @Override
     public String toString() {
         return "AiWorkspaceConfig{" +
@@ -549,6 +626,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
                ", characteriseExcerptChars=" + characteriseExcerptChars +
                ", characteriseBatchItems=" + characteriseBatchItems +
                ", characteriseMaxItems=" + characteriseMaxItems +
+               ", timelineMaxXmlEvents=" + timelineMaxXmlEvents +
                '}';
     }
 }

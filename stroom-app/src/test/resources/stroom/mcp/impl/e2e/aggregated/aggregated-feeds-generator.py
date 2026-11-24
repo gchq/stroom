@@ -3,13 +3,18 @@
 # Workload, collector records chosen by LogFilePath, and Entra ID directory audit records as Microsoft Graph writes
 # them (targets each with the properties changed, old and new values as JSON text; eval case 76); and a user's week
 # of activity across sources for the activity timeline (endpoint window focus, open and close, clipboard and file
-# copies, removable media; logon, lock and unlock; proxy, AI chat and messages; eval case 77, TestE2eActivityTimeline).
+# copies, removable media; logon, lock and unlock; proxy, AI chat and messages; eval case 77, TestE2eActivityTimeline);
+# and timelines from any source (part 2c): a user seen only in web proxy events, a user with endpoint, proxy and VPN
+# events, the VPN's tunnels up and down under names of its own, written as Events (eval case 78,
+# TestE2eActivityTimelineAnySource).
 #
 # Usage: python3 aggregated-feeds-generator.py <dir>
 # Writes <dir>/{pega,azure-audit,collector-paths,entra-audit}/<name>-{1,2}.json. Each file is the first lines of a
 # fixed, seeded run (the full run is made so the slices don't change with the number of lines kept). Also writes
 # <dir>/activity-timeline/activity-timeline.csv (a question's records: no quoted values, so no commas in them) and
-# activity-timeline-expected.json (the sessions planted, and the data-quality gaps planted).
+# activity-timeline-expected.json (the sessions planted, and the data-quality gaps planted); and
+# activity-timeline/any-source.csv (each event as the index holds it, and as its Events XML holds it) and
+# any-source-expected.json (the activity periods and pairs planted).
 import json, random, sys, datetime as dt, uuid
 out = sys.argv[1]
 r = random.Random(6061)
@@ -583,6 +588,81 @@ def activity_week():
         lines.append(",".join([ts(r[0])] + [str(v) for v in r[1:]]))
     return lines, expected
 
+# ----------------------------------------------------------------------------------------------------------------
+# Timelines from any source (part 2c). Its own seeded generator, so the other files stay the same. Each row is an
+# event as the index holds it (the user normalised: lower case, no domain) and as its Events XML holds it (the user as
+# the source wrote it, the EventDetail element, its Action, the source's own TypeId, a key under the element and what
+# the event touched). The XML's user is never the timeline's: the index's is.
+rs = random.Random(6065)
+ANY_DAYS = [dt.datetime(2026, 11, 16), dt.datetime(2026, 11, 17)]
+PROXY_SITES = ["research.example.org", "news.example.com", "supplier.example.net", "intranet.example.local"]
+
+def proxy_blocks(day, starts):
+    # Browsing blocks: one site each, a request every 3 to 8 minutes for 15 to 40 minutes, the next block at least
+    # 45 minutes later (past the 30-minute idle cap), so each is one activity period from its first request to its
+    # last.
+    blocks = []
+    for n, start in enumerate(starts):
+        site = PROXY_SITES[(n + day.day) % len(PROXY_SITES)]
+        t = at(day, start)
+        end = t + dt.timedelta(minutes=rs.randint(15, 40))
+        times = []
+        while t <= end:
+            times.append(t)
+            t += dt.timedelta(minutes=rs.randint(3, 8))
+        blocks.append((site, times))
+    return blocks
+
+def any_source():
+    rows = []
+    periods = []
+    for day in ANY_DAYS:
+        # The proxy-only user (chat 190): web requests, nothing else; the index holds "pnguyen", the XML
+        # "CORP\PNGUYEN".
+        for site, times in proxy_blocks(day, ["09:00", "10:30", "13:00", "15:10"]):
+            for t in times:
+                rows.append((t, "proxy", "pnguyen", "CORP\\PNGUYEN", "lt-pnguyen", "View", "", "web-get",
+                             "Resource/URL", "https://" + site + "/p" + str(rs.randint(1, 50))))
+            periods.append(["pnguyen", "lt-pnguyen", site, ts(times[0]), ts(times[-1])])
+        # The mixed user: a logon, a lock over lunch and its unlock, a logoff; two processes run; web requests; and
+        # the VPN's tunnels up and down, under names of its own, keyed by the tunnel's id.
+        host = "ws-mlee"
+        for hhmm, action in [("08:30", "Logon"), ("12:30", "ScreenLock"), ("13:15", "ScreenUnlock"),
+                             ("17:30", "Logoff")]:
+            rows.append((at(day, hhmm), "endpoint", "mlee", "CORP\\MLee", host, "Authenticate", action,
+                         "logon-" + action.lower(), "", ""))
+        for n, (start, end, command) in enumerate([("09:05", "11:40", "C:\\Windows\\notepad.exe"),
+                                                   ("14:00", "16:20", "C:\\Tools\\putty.exe")]):
+            pid = str(4000 + day.day * 10 + n)
+            rows.append((at(day, start), "endpoint", "mlee", "CORP\\MLee", host, "Process", "Execute", "proc-start",
+                         "ProcessId", pid + "|" + command))
+            rows.append((at(day, end), "endpoint", "mlee", "CORP\\MLee", host, "Process", "Terminate", "proc-end",
+                         "ProcessId", pid + "|" + command))
+        for site, times in proxy_blocks(day, ["10:00", "14:30"]):
+            for t in times:
+                rows.append((t, "proxy", "mlee", "CORP\\MLee", host, "View", "", "web-get", "Resource/URL",
+                             "https://" + site + "/m" + str(rs.randint(1, 50))))
+        for n, start in enumerate(["08:40", "11:00", "13:20", "15:45"]):
+            tunnel = "t" + str(day.day) + str(n)
+            up = at(day, start)
+            down = up + dt.timedelta(minutes=rs.randint(30, 70))
+            rows.append((up, "vpn", "mlee", "CORP\\MLee", host, "Network", "", "Tun-Ascend", "Tunnel/Id", tunnel))
+            rows.append((down, "vpn", "mlee", "CORP\\MLee", host, "Network", "", "Tun-Recede", "Tunnel/Id",
+                         tunnel))
+    rows.sort(key=lambda r: (r[0], r[2], r[1], r[7]))
+    expected = {"time_from": "2026-11-16T00:00:00.000Z", "time_to": "2026-11-18T00:00:00.000Z",
+                "proxy_only_user": "pnguyen", "mixed_user": "mlee",
+                "proxy_only_periods": [p[1:] for p in periods],
+                "mixed": {"locked": len(ANY_DAYS), "processes": 2 * len(ANY_DAYS), "tunnels": 4 * len(ANY_DAYS),
+                          "inferred_pair": ["Tun-Ascend", "Tun-Recede", "Tunnel/Id"]},
+                "events": {"pnguyen": sum(1 for r in rows if r[2] == "pnguyen"),
+                           "mlee": sum(1 for r in rows if r[2] == "mlee")}}
+    lines = ["EventTime,Source,UserName,XmlUser,Host,Element,Action,TypeId,KeyPath,KeyValue"]
+    for r in rows:
+        assert not any("," in str(v) for v in r[1:]), r
+        lines.append(",".join([ts(r[0])] + [str(v) for v in r[1:]]))
+    return lines, expected
+
 import os
 
 # The lines the tests read of each file.
@@ -601,4 +681,9 @@ lines, expected = activity_week()
 with open(f"{out}/activity-timeline/activity-timeline.csv", "w") as f:
     f.write("\n".join(lines) + "\n")
 with open(f"{out}/activity-timeline/activity-timeline-expected.json", "w") as f:
+    f.write(json.dumps(expected, indent=1) + "\n")
+lines, expected = any_source()
+with open(f"{out}/activity-timeline/any-source.csv", "w") as f:
+    f.write("\n".join(lines) + "\n")
+with open(f"{out}/activity-timeline/any-source-expected.json", "w") as f:
     f.write(json.dumps(expected, indent=1) + "\n")

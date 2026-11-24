@@ -178,7 +178,7 @@ class TestE2eActivityTimeline extends AbstractE2eTest {
                 .anyMatch(artifact -> artifact.startsWith("Supplier Contract 2026")));
         assertThat(activities).allSatisfy(activity -> assertThat(activity).containsEntry("label_is", "inferred"));
         assertThat(read(plainClient, FOLDER + "activities.csv").lines().findFirst().orElseThrow())
-                .isEqualTo("activity,activity_label,session,start,end,host,process,how");
+                .isEqualTo("activity,activity_label,day,start,end,active_minutes,spans,lanes,evidence");
     }
 
     @Test
