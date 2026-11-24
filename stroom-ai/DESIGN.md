@@ -1614,6 +1614,31 @@ it again with new parameters. AGENTS docs hold rules, guides facts, skills proce
   anyone who may write the doc saves a skill, through "Review and apply" (a diff, as for AGENTS docs).
 * **First skill**: the user activity timeline, its role conditions for the site's endpoint products held in it.
 
+##### Skills run by analytic rules (future, 2026-11-24)
+
+Not planned now (user, 2026-11-24): skills serve chat questions first; running them from analytic rules, unattended,
+is a later extension. Recorded so the skills format can grow into it without a break.
+
+* **Why**: a skill is a procedure the site trusts (a triage, a hunt, a timeline), so an analytic rule could run one
+  on its own: per detection (enrichment or triage, the skill's parameters bound from the detection's fields) or on
+  the rule's schedule (a hunt, with fixed parameters). Which of the two, or both, is to decide then.
+* **Structured input**: `## Parameters` gains types (text, number, duration, time range, user, document, list) and
+  a binding from the trigger (e.g. `user` from the detection's `UserId`). In a chat the model fills them in; under
+  a rule they are mapped, and a required one neither mapped nor defaulted fails the run with the reason, never
+  waits.
+* **Structured output**: `## Output` gains a declared shape (typed fields, or a JSON schema), the run's result
+  checked against it, so the rule can act on it reliably: detections by the rule's usual route, the triggering
+  detection enriched (verdict, severity, summary, evidence), annotations, or a CSV Data Connection for a dashboard.
+  Which of these is to decide then.
+* **Tools**: steps already call tools. An unattended run is bound by the tool policy of the identity it runs as,
+  not a list in the skill. Some tools need a person (`ask_user`, the `propose_*` buttons, `gantt_chart`):
+  `check_skill` would flag them in a skill marked runnable by a rule.
+* **Unattended behaviour**: questions take their defaults (e.g. a budget's), never wait; learning (a pair into
+  Event chains) becomes a recorded proposal for someone to review, not an edit, even where the run-as identity may
+  edit the doc; the run's trace is kept with its result.
+* **Format now**: nothing in today's SKILLS format stands in the way: types, bindings and an output shape are
+  additions to sections that exist (`## Parameters`, `## Output`), and a skill without them stays a chat skill.
+
 #### Open questions
 
 To settle with the product owner before building; listed in [Open questions](#open-questions) as they are answered.
@@ -5844,3 +5869,4 @@ behaviour; the settled ones are listed here with the section that records them.
 | The AI end-to-end suite runs in every `./gradlew build` | Open | Recommended: tag it out of the default build, and split the reference evaluation across forks. |
 | An Elasticsearch TLS node in CI | Open | The TLS tests skip without one. |
 | HTML bodies to plain text (`html_text` transform) | Future (2026-11-23) | See [HTML bodies to plain text](#html-bodies-to-plain-text-future-2026-11-23). |
+| Skills run by analytic rules (per detection or scheduled; typed parameters, declared output) | Future (2026-11-24) | See [Skills run by analytic rules](#skills-run-by-analytic-rules-future-2026-11-24). |
