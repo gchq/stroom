@@ -1235,10 +1235,8 @@ final class EvalScore {
     ///   `source_wide: true`, against its source-wide lines; with `done_to_them: true`, against the findings of what
     ///   was done to the person, its `done_to_them.findings`); `answer_must_not_say` (none of these words in the
     ///   reply) and `answer_must_say_one_of` (at least one), checked only when the reply is given; and
-    ///   `answer_must_say_all_of` (each item a word, or a list of words any one of which will do), checked against
-    ///   the reply, or, in a reference run (no reply), against the accepted tool calls' results. The wording is
-    ///   checked with or without `expected.answer`, so a question answerable by more than one tool is scored by what
-    ///   the answer says.
+    ///   `answer_must_say_all_of` (each a word or a list of alternatives), in the reply, else (a reference run) the
+    ///   accepted calls' results. Wording is checked with or without `expected.answer` (an answer, whatever tool).
     ///
     /// @param evalCase The case.
     /// @param calls    The tool calls made, in order.
@@ -1378,25 +1376,15 @@ final class EvalScore {
 
     // The reply's wording; what it must say all of, in a reference run (no reply) against the tool results.
     private void scoreWording(final Map<String, Object> expected, final List<ToolUse> calls, final String reply) {
-        final List<List<String>> allOf = listOf(expected.get("answer_must_say_all_of")).stream()
-                .map(item -> item instanceof final List<?> words
-                        ? words.stream().map(String::valueOf).toList()
-                        : List.of(String.valueOf(item)))
-                .toList();
-        if (!allOf.isEmpty()) {
-            final String said = (reply != null
-                    ? reply
-                    : String.join("\n", calls.stream().filter(call -> !call.refused()).map(ToolUse::text).toList()))
-                    .toLowerCase(Locale.ROOT);
-            if (reply == null) {
-                note("no reply: what the answer must say was looked for in the tool results");
-            }
-            for (final List<String> words : allOf) {
-                questionCheck("says one of " + words, words.stream().anyMatch(word -> said.contains(
-                        word.toLowerCase(Locale.ROOT))), (reply == null
-                        ? "no tool result says any of "
-                        : "the reply says none of ") + words);
-            }
+        final String text = reply != null
+                ? reply
+                : String.join("\n", calls.stream().filter(call -> !call.refused()).map(ToolUse::text).toList());
+        for (final Object item : listOf(expected.get("answer_must_say_all_of"))) {
+            final List<String> words = strings(item instanceof List<?> ? item : List.of(item));
+            questionCheck("says one of " + words, words.stream().anyMatch(word -> text.toLowerCase(Locale.ROOT)
+                    .contains(word.toLowerCase(Locale.ROOT))), (reply == null
+                    ? "no reply: no tool result says any of "
+                    : "the reply says none of ") + words);
         }
         final List<String> mustNot = strings(expected.get("answer_must_not_say"));
         final List<String> oneOf = strings(expected.get("answer_must_say_one_of"));

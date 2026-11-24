@@ -156,7 +156,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     static final String PEERS_FORM = "compare-peers";
     private static final Pattern DATE = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
     private static final Pattern RANGE = Pattern.compile("\\s*(\\d{4}-\\d{2}-\\d{2})\\s*(?:(?:\\.\\.|/|\\s+to\\s+|"
-                                                         + "\\s+[-\u2013]\\s+)\\s*(\\d{4}-\\d{2}-\\d{2}))?\\s*");
+                                                         + "\\s+-\\s+)\\s*(\\d{4}-\\d{2}-\\d{2}))?\\s*");
     private static final Pattern UNSAFE = Pattern.compile("[^A-Za-z0-9._-]+");
     private static final String READ_FIRST = "Read the groups of the first " + MAX_PEOPLE;
     private static final String NO_PEERS = "Compare without peers";

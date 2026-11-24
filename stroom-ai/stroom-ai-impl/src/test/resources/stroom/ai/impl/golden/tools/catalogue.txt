@@ -865,7 +865,7 @@ offered in modes:
 
 ### Description
 
-Compares one person's activity in a window with their own baseline and their peers' (the same UserDetails Organisation, read from one event each), from index aggregates only, never the events: volume (events, active hours, sums), rhythm (first and last of the day, hour of the week), breadth (distinct values) and novelty (values first seen). Scored in code: robust z-scores, change points with their date, drifts, values started and stopped; coverage gaps, leave and source-wide shifts are checked first. Gives at most 20 ranked findings, each an indicator with its evidence and an alternative explanation (never a conclusion about the person: say so), a line a month, and CSV files of the daily profile and monthly rollup. Give person (the person id) or logonIds where there is none. includeTargets scores what was done to the person apart (a group granted, a reset, MFA changed, failed logons against them; about 2 more queries a month per source). Drill into flagged days with activity_timeline.
+Compares one person's activity in a window with their own baseline and their peers' (the same UserDetails Organisation, read from one event each), from index aggregates only, never the events: volume (events, active hours, sums), rhythm (first and last of the day, hour of the week), breadth (distinct values) and novelty (values first seen). Scored in code: robust z-scores, change points with their date, drifts, values started and stopped; coverage gaps, leave and source-wide shifts are checked first. Gives at most 20 ranked findings, each an indicator with its evidence and an alternative explanation (never a conclusion about the person: say so), a line a month, and CSV files of the daily profile and monthly rollup. Give person (the person id) or logonIds where there is none. includeTargets scores what was done to the person apart (a group granted, a reset, MFA changed, failed logons against them; about 2 more queries a month per source). Categories and location are on by default where a source has a category or country field (about 1 more query a month each per source); peers and accessField are asked for. A date alone is a whole day in timeZone: windowFrom 2026-06-01 and windowTo 2026-06-30 are all of June. Drill into flagged days with activity_timeline.
 
 ### Parameters
 
@@ -876,11 +876,11 @@ Compares one person's activity in a window with their own baseline and their pee
       "type" : "string"
     },
     "baselineFrom" : {
-      "description" : "The baseline's start (default 180 days before baselineTo).",
+      "description" : "The baseline's first day, likewise (default 180 days before baselineTo).",
       "type" : "string"
     },
     "baselineTo" : {
-      "description" : "The baseline's end, exclusive (default windowFrom).",
+      "description" : "The baseline's last day, as windowTo (default the day before windowFrom; windowFrom's own date is read as ending there).",
       "type" : "string"
     },
     "breadthFields" : {
@@ -891,7 +891,7 @@ Compares one person's activity in a window with their own baseline and their pee
       "type" : "array"
     },
     "categories" : {
-      "description" : "Add events a day by category (personal cloud storage, webmail, job search...) of the first breadth field's values: from categoryField where the index has one, else classified by the model (marked inferred). Default false.",
+      "description" : "Add events a day by category (personal cloud storage, webmail, job search...): from the index's category field (categoryField, AGENTS 'category:', Category or *.category), on by default where it has one. true with no such field: the first breadth field's values classified by the model (marked inferred; model calls). false: off.",
       "type" : "boolean"
     },
     "categoryCorrections" : {
@@ -902,7 +902,7 @@ Compares one person's activity in a window with their own baseline and their pee
       "type" : "array"
     },
     "categoryField" : {
-      "description" : "Optional: the index's own category field, e.g. a proxy's URL category.",
+      "description" : "Optional: the index's own category field, e.g. a proxy's URL category, where it isn't found.",
       "type" : "string"
     },
     "categoryList" : {
@@ -913,7 +913,7 @@ Compares one person's activity in a window with their own baseline and their pee
       "type" : "array"
     },
     "countryField" : {
-      "description" : "Optional: the country field, where it isn't a *.geo.country_iso_code field.",
+      "description" : "Optional: the country field, where it isn't found.",
       "type" : "string"
     },
     "exceptions" : {
@@ -935,7 +935,7 @@ Compares one person's activity in a window with their own baseline and their pee
       "type" : "array"
     },
     "location" : {
-      "description" : "Look for new countries, impossible travel and activity abroad on leave, from the index's geo fields (default true where it has them).",
+      "description" : "Look for new countries, impossible travel and activity abroad on leave, from the index's country field (countryField, AGENTS 'country:', *.geo.country_iso_code or Country): on by default where it has one; false: off.",
       "type" : "boolean"
     },
     "logonIds" : {
@@ -998,11 +998,11 @@ Compares one person's activity in a window with their own baseline and their pee
       "type" : "string"
     },
     "windowFrom" : {
-      "description" : "The window's start: a date (yyyy-MM-dd) or Stroom's now()-30d (default 30 days before windowTo).",
+      "description" : "The window's first day: a date (yyyy-MM-dd, from the start of that day), an ISO 8601 time or Stroom's now()-30d (default 30 days before windowTo).",
       "type" : "string"
     },
     "windowTo" : {
-      "description" : "The window's end, exclusive (default now()).",
+      "description" : "The window's last day: a date (yyyy-MM-dd) is included, to the end of that day; a time or expression is the exclusive end (default now()).",
       "type" : "string"
     }
   },

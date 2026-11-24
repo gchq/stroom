@@ -1560,13 +1560,11 @@ class TestEvalScore {
         final EvalScore reference = new EvalScore("q");
         reference.scoreQuestion(question, search);
         assertThat(reference.passed()).as(reference.summary()).isTrue();
-        assertThat(reference.summary()).contains("no reply: what the answer must say was looked for in the tool "
-                                                 + "results");
         final EvalScore refused = new EvalScore("q");
         refused.scoreQuestion(question, List.of(new EvalScore.ToolUse("esql_query", true, Map.of(),
                 "Error: no Finance Data Admins for P20002")));
         assertThat(refused.passed()).isFalse();
-        assertThat(refused.summary()).contains("no tool result says any of [Finance Data Admins]");
+        assertThat(refused.summary()).contains("no reply: no tool result says any of [Finance Data Admins]");
     }
 
     @Test

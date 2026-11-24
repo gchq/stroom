@@ -366,7 +366,7 @@ class TestCompareActivityTool {
                                                                                             + "2026-04-22")))
                 .extracting(range -> range[0] + ".." + range[1])
                 .containsExactly("2026-04-06..2026-04-17", "2026-04-20..2026-04-20", "2026-04-21..2026-04-22");
-        assertThat(CompareActivityTool.exceptions(List.of("2026-05-11 \u2013 2026-05-15: approved migration")))
+        assertThat(CompareActivityTool.exceptions(List.of("2026-05-11 - 2026-05-15: approved migration")))
                 .singleElement().satisfies(excepted -> assertThat(excepted.from() + ".." + excepted.to())
                         .isEqualTo("2026-05-11..2026-05-15"));
     }
