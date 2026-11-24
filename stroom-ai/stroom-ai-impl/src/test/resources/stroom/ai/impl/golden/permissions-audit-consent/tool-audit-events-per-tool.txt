@@ -7,6 +7,28 @@
 ## ask_user {"intro":"Which feed?","questions":[{"id":"feed","question":"Feed?","type":"text"}]}
 (nothing recorded)
 
+## check_instructions {"folder":"/Test"}
+- audit: documentsViewed(1, [DocRef{type='Documentation', uuid='agents-uuid', name='AGENTS'}], "Standing instructions checked by the check_instructions tool")
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed 1 document(s) in chat 1"
+  ViewEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "Standing instructions checked by the check_instructions tool"
+    } ],
+    "objects" : [ {
+      "id" : "agents-uuid",
+      "name" : "AGENTS",
+      "type" : "Documentation"
+    } ],
+    "outcome" : {
+      "description" : "Standing instructions checked by the check_instructions tool",
+      "success" : true
+    }
+  }
+
 ## check_skill {"name":"Test skill"}
 - audit: documentViewed(1, DocRef{type='Documentation', uuid='skills-uuid', name='SKILLS'}, "Skill 'Test skill' checked by the check_skill tool")
 - event: AskStroomAi.viewDocument "Ask Stroom AI viewed Documentation 'SKILLS' in chat 1"
@@ -609,7 +631,27 @@
 (nothing recorded)
 
 ## propose_instructions {"folder":"/Test","markdown":"# Standing instructions\n\n- Times are UTC.","summary":"Times as chosen in two chats."}
+- audit: documentsViewed(1, [DocRef{type='Documentation', uuid='agents-uuid', name='AGENTS'}], "Standing instructions read to check a proposal of the propose_instructions tool")
 - audit: documentViewed(1, DocRef{type='Documentation', uuid='agents-uuid', name='AGENTS'}, "Proposed standing instructions with the propose_instructions tool")
+- event: AskStroomAi.viewDocument "Ask Stroom AI viewed 1 document(s) in chat 1"
+  ViewEventAction {
+    "data" : [ {
+      "name" : "ChatId",
+      "value" : "1"
+    }, {
+      "name" : "Purpose",
+      "value" : "Standing instructions read to check a proposal of the propose_instructions tool"
+    } ],
+    "objects" : [ {
+      "id" : "agents-uuid",
+      "name" : "AGENTS",
+      "type" : "Documentation"
+    } ],
+    "outcome" : {
+      "description" : "Standing instructions read to check a proposal of the propose_instructions tool",
+      "success" : true
+    }
+  }
 - event: AskStroomAi.viewDocument "Ask Stroom AI viewed Documentation 'AGENTS' in chat 1"
   ViewEventAction {
     "objects" : [ {

@@ -834,7 +834,7 @@ offered in modes: AGENT, ASK, PLAN
 
 ### Description
 
-Checks standing instructions (AGENTS docs): those that apply in a folder, or a draft of a folder's doc. Gives problems (a line of '## Fields', '## Required imports', '## Component templates' or '## Documentation' the tools can't apply as written: an unknown key, a field no index there has, field lines under another heading, a near-miss heading) and suggestions (a line the same as a more general doc's, a field the index plan maps otherwise), each with a fix to propose with propose_instructions. Other text only guides you and is never a problem.
+Checks standing instructions (AGENTS docs): those that apply in a folder, or a draft of a folder's doc. Gives problems (a line of '## Fields', '## Required imports', '## Component templates' or '## Documentation' the tools can't apply as written: an unknown key, a field no index there has, field lines under another heading, a near-miss heading) and suggestions (a line the same as a more general doc's, a field the index plan maps otherwise), each with a fix. Other text only guides you and is never a problem. Offer a fix with propose_instructions; ask the user before following a suggestion.
 
 ### Parameters
 
