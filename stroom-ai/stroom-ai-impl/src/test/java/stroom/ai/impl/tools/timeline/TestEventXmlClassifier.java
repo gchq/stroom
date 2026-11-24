@@ -137,6 +137,38 @@ class TestEventXmlClassifier {
     }
 
     @Test
+    void theKeysAreEveryLeafOfTheEventButItsTimeUserAndTypeDataByItsName() {
+        final Classified classified = EventXmlClassifier.classify("""
+                <Event><EventTime><TimeCreated>2026-09-15T10:00:00.000Z</TimeCreated></EventTime>
+                  <EventSource><System><Name>NetScaler</Name></System><Device><HostName>ns-gw01</HostName></Device>
+                    <Client><IPAddress>198.51.100.10</IPAddress></Client>
+                    <User><Id>dana.whitfield</Id><UserDetails><Id>P10001</Id></UserDetails></User>
+                  </EventSource>
+                  <EventDetail><TypeId>vpn.login</TypeId><Description>A login</Description>
+                    <Authenticate><Action>Connect</Action><User><Id>dana.whitfield</Id></User>
+                      <Data Name="SessionId" Value="8614"/><Data Name="Country" Value="AU"/></Authenticate>
+                  </EventDetail></Event>""").orElseThrow();
+        final Classified web = EventXmlClassifier.classify("""
+                <Event><EventDetail><Network><Open>
+                  <Destination><Device><HostName>a.example</HostName></Device></Destination>
+                  <Data Name="Category" Value="Webmail"/>
+                </Open></Network></EventDetail></Event>""").orElseThrow();
+
+        assertThat(classified.keys()).containsEntry("Data[SessionId]", "8614").containsEntry("Data[Country]", "AU")
+                .containsEntry("EventSource/Client/IPAddress", "198.51.100.10")
+                .containsEntry("EventSource/System/Name", "NetScaler")
+                .containsEntry("EventSource/Device/HostName", "ns-gw01")
+                .doesNotContainKeys("User/Id", "Action", "EventSource/User/Id", "EventSource/User/UserDetails/Id",
+                        "EventDetail/TypeId", "EventDetail/Description", "EventTime/TimeCreated");
+        assertThat(classified.keys().values()).doesNotContain("dana.whitfield", "P10001");
+        assertThat(web.keys()).containsEntry("Open/Data[Category]", "Webmail")
+                .containsEntry("Open/Destination/Device/HostName", "a.example");
+        // The index's fields, merged in by name where the XML has none by it.
+        assertThat(classified.withKeys(Map.of("session.id", "8614", "Data[Country]", "NZ")).keys())
+                .containsEntry("session.id", "8614").containsEntry("Data[Country]", "AU");
+    }
+
+    @Test
     void whatIsntAnEventWithAnEventDetailIsNotClassified() {
         assertThat(EventXmlClassifier.classify("<Events><Event><EventTime/></Event></Events>")).isEmpty();
         assertThat(EventXmlClassifier.classify("not xml")).isEmpty();

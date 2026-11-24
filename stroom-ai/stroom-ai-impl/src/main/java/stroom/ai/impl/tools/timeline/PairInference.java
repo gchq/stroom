@@ -16,9 +16,12 @@
 
 package stroom.ai.impl.tools.timeline;
 
+import stroom.util.shared.NullSafe;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -152,6 +155,8 @@ final class PairInference {
                 final String y = types.get(j);
                 final List<String> shared = new ArrayList<>(paths.get(x));
                 shared.retainAll(paths.get(y));
+                // A key ties the two only where they share its values, and says more than the lane does.
+                shared.removeIf(path -> !informative(path, byType.get(x), byType.get(y)));
                 // The lane alone is a key too, for pairs such as a lock and an unlock of one host.
                 shared.add(null);
                 Candidate best = null;
@@ -187,6 +192,40 @@ final class PairInference {
         }
         // A key path over the lane alone: it says more.
         return a.by() != null && b.by() == null;
+    }
+
+    /// A key path the two types' events are worth matching by: some value is held by both (a key whose values
+    /// never repeat across them, e.g. an event's own id, can't pair them), and it isn't fixed by the lane (a host's
+    /// own name, a source's constant), which the lane alone already matches by.
+    ///
+    /// @param path The key path.
+    /// @param a    One type's events.
+    /// @param b    The other's.
+    /// @return True if it is.
+    static boolean informative(final String path, final List<Typed> a, final List<Typed> b) {
+        final Set<String> inA = new HashSet<>();
+        a.forEach(event -> NullSafe.consume(event.keys().get(path), inA::add));
+        boolean shared = false;
+        for (final Typed event : b) {
+            if (inA.contains(event.keys().get(path))) {
+                shared = true;
+                break;
+            }
+        }
+        if (!shared) {
+            return false;
+        }
+        final Map<String, Set<String>> byLane = new HashMap<>();
+        for (final List<Typed> events : List.of(a, b)) {
+            for (final Typed event : events) {
+                final String value = event.keys().get(path);
+                if (value != null) {
+                    byLane.computeIfAbsent(Objects.requireNonNullElse(event.lane(), ""), lane -> new HashSet<>())
+                            .add(value);
+                }
+            }
+        }
+        return byLane.values().stream().anyMatch(values -> values.size() > 1);
     }
 
     // The key paths most of a type's events hold.

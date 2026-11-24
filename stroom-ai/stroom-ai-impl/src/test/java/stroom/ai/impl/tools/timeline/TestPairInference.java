@@ -63,6 +63,30 @@ class TestPairInference {
     }
 
     @Test
+    void aPairKeyedOnlyByASessionIdIsFoundAmongWiderKeysThatSayNothing() {
+        // A privileged session's start and end, a session id in Data the only key they share; beside it, the
+        // EventSource's constant (the same on every event) and an id of each event's own (never shared).
+        for (int session = 1; session <= 5; session++) {
+            final long t = session * 100 * MINUTE;
+            events.add(typed("pam-open", t, Map.of("Data[SessionId]", "70" + session, "EventSource/System/Name",
+                    "Vault", "Data[RecordId]", "r" + ids)));
+            events.add(typed("pam-close", t + 30 * MINUTE, Map.of("Data[SessionId]", "70" + session,
+                    "EventSource/System/Name", "Vault", "Data[RecordId]", "r" + ids)));
+        }
+
+        final Inferred inferred = PairInference.infer(events, List.of());
+
+        assertThat(inferred.clear()).singleElement().satisfies(pair -> {
+            assertThat(pair.by()).isEqualTo("Data[SessionId]");
+            assertThat(pair.keys()).isEqualTo(5);
+        });
+        assertThat(PairInference.informative("EventSource/System/Name", events, events)).isFalse();
+        assertThat(PairInference.informative("Data[RecordId]", events.subList(0, 1), events.subList(1, 2)))
+                .isFalse();
+        assertThat(PairInference.informative("Data[SessionId]", events, events)).isTrue();
+    }
+
+    @Test
     void aPairAlternatingForAboutHalfTheKeysIsListedNotUsed() {
         for (int key = 1; key <= 4; key++) {
             final long t = key * 100 * MINUTE;
@@ -174,6 +198,10 @@ class TestPairInference {
 
         assertThat(PairInference.evaluate(events, "Tun-Ascend", "Tun-Recede", "Tunnel/Id").share()).isEqualTo(1.0);
         assertThat(PairInference.evaluate(events, "Nothing", "Else", null)).isNull();
+    }
+
+    private Typed typed(final String type, final long time, final Map<String, String> keys) {
+        return new Typed("e" + ++ids, 0, time, "host-1", type, null, keys);
     }
 
     private void add(final String type, final long time, final String path, final String value) {

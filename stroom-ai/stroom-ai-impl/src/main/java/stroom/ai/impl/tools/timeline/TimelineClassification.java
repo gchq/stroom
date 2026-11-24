@@ -25,10 +25,12 @@ import stroom.ai.impl.tools.timeline.TimelineSessions.Role;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /// The automatic sources' events classified, each by the first way that tells (counted per source): its Events XML
 /// ([EventXmlClassifier], read by StreamId and EventId); else the element (and Action) fields the index holds; else
@@ -71,9 +73,10 @@ final class TimelineClassification {
                 out.add(event);
                 continue;
             }
-            Classified classified = classifyOne(event, extras.getOrDefault(event.id(), Map.of()),
-                    fields.getOrDefault(event.source(), Fields.NONE), xml, codes.getOrDefault(event.source(),
-                            Map.of()));
+            final Fields sourceFields = fields.getOrDefault(event.source(), Fields.NONE);
+            final Map<String, String> extra = extras.getOrDefault(event.id(), Map.of());
+            Classified classified = classifyOne(event, extra, sourceFields, xml, codes.getOrDefault(event.source(),
+                    Map.of())).withKeys(indexKeys(source, sourceFields, event, extra));
             routes.computeIfAbsent(event.source(), s -> new EnumMap<>(Route.class)).merge(classified.route(), 1,
                     Integer::sum);
             final RoleOverride override = overrideOf(classified, overrides.getOrDefault(event.source(), Map.of()));
@@ -126,6 +129,39 @@ final class TimelineClassification {
         }
         return new Classified(null, null, code, Role.ACTION, Objects.requireNonNullElse(code, "event"), null,
                 event.object(), null, Map.of(), Route.NONE);
+    }
+
+    // The index's fields returned with an event, by their names, as correlation keys beside its XML's: what it
+    // touched, its window, its application, its other fields; never its user, its host (the lane already) or the
+    // fields that say its type.
+    private static Map<String, String> indexKeys(final Source source,
+                                                 final Fields fields,
+                                                 final Event event,
+                                                 final Map<String, String> extra) {
+        final Map<String, String> keys = new LinkedHashMap<>();
+        putKey(keys, source.objectField(), event.object());
+        putKey(keys, source.windowField(), event.window());
+        putKey(keys, source.processField(), event.process());
+        putKey(keys, source.titleField(), event.title());
+        final Set<String> typeFields = new HashSet<>();
+        for (final String field : new String[]{fields.element(), fields.action(), fields.eventType(),
+                source.userField(), source.hostField()}) {
+            if (field != null) {
+                typeFields.add(field);
+            }
+        }
+        extra.forEach((field, value) -> {
+            if (!typeFields.contains(field)) {
+                putKey(keys, field, value);
+            }
+        });
+        return keys;
+    }
+
+    private static void putKey(final Map<String, String> keys, final String field, final String value) {
+        if (field != null && value != null && !value.isBlank() && value.length() <= EventXmlClassifier.MAX_KEY_CHARS) {
+            keys.putIfAbsent(field, value);
+        }
     }
 
     private static RoleOverride overrideOf(final Classified classified, final Map<String, RoleOverride> overrides) {

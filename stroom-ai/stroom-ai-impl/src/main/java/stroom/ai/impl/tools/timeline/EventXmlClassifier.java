@@ -69,6 +69,8 @@ final class EventXmlClassifier {
     /// The longest value kept as a key.
     static final int MAX_KEY_CHARS = 200;
     private static final String AUTHENTICATE = "Authenticate";
+    private static final String USER = "User";
+    private static final String DATA = "Data";
     private static final String PROCESS = "Process";
 
     private EventXmlClassifier() {
@@ -110,7 +112,24 @@ final class EventXmlClassifier {
         final Map<String, String> keys = new LinkedHashMap<>();
         leaves(action, "", keys);
         keys.remove("Action");
-        final XmlElement device = child(child(event, "EventSource"), "Device");
+        // The element's own user (an Authenticate's) is the user's, as the EventSource's is: not a key.
+        keys.keySet().removeIf(path -> path.startsWith(USER + "/"));
+        // Every other leaf of the event but its time, its user and its type: the EventSource's (a client, a
+        // session's Data), and EventDetail's beside the element, by their whole paths.
+        final XmlElement source = child(event, "EventSource");
+        if (source != null) {
+            for (final XmlElement part : source.childElements()) {
+                if (!USER.equals(part.localName())) {
+                    leaf(part, "EventSource", keys);
+                }
+            }
+        }
+        for (final XmlElement part : detail.childElements()) {
+            if (part != action && !"TypeId".equals(part.localName()) && !"Description".equals(part.localName())) {
+                leaf(part, "EventDetail", keys);
+            }
+        }
+        final XmlElement device = child(source, "Device");
         final String host = firstNonBlank(text(child(device, "HostName")), text(child(device, "Name")));
         final String application = PROCESS.equals(element)
                 ? baseName(keys.get("Command"))
@@ -258,20 +277,30 @@ final class EventXmlClassifier {
         return null;
     }
 
-    // Every leaf below the element, by its path below it (the first of a path kept).
+    // Every leaf below the element, by its path below it (the first of a path kept); a Data entry by its Name, as
+    // `Data[SessionId]`.
     private static void leaves(final XmlElement element, final String path, final Map<String, String> out) {
         for (final XmlElement child : element.childElements()) {
-            final String childPath = path.isEmpty()
-                    ? child.localName()
-                    : path + "/" + child.localName();
-            if (child.childElements().isEmpty()) {
-                final String text = text(child);
-                if (text != null && text.length() <= MAX_KEY_CHARS) {
-                    out.putIfAbsent(childPath, text);
-                }
-            } else {
-                leaves(child, childPath, out);
+            leaf(child, path, out);
+        }
+    }
+
+    private static void leaf(final XmlElement child, final String path, final Map<String, String> out) {
+        final String name = DATA.equals(child.localName()) && blankToNull(child.get("Name")) != null
+                ? DATA + "[" + child.get("Name").strip() + "]"
+                : child.localName();
+        final String childPath = path.isEmpty()
+                ? name
+                : path + "/" + name;
+        if (child.childElements().isEmpty()) {
+            final String text = DATA.equals(child.localName())
+                    ? blankToNull(child.get("Value"))
+                    : text(child);
+            if (text != null && text.length() <= MAX_KEY_CHARS) {
+                out.putIfAbsent(childPath, text);
             }
+        } else {
+            leaves(child, childPath, out);
         }
     }
 
@@ -380,7 +409,10 @@ final class EventXmlClassifier {
     /// @param application The application, or null.
     /// @param object      What it touched (a title, subject, URL, path or name), or null.
     /// @param host        The host the XML names, or null.
-    /// @param keys        The values under the element, by their paths below it (e.g. `ProcessId`).
+    /// @param keys        The event's correlation keys: the values under the element by their paths below it (e.g.
+    ///                    `ProcessId`, `Data[SessionId]`), the EventSource's and EventDetail's other leaves by their
+    ///                    whole paths (e.g. `EventSource/Client/IPAddress`), never its time, user or type; and, from
+    ///                    [TimelineClassification], the index's fields returned with the event, by their names.
     /// @param route       How it was classified.
     record Classified(String element,
                       String action,
@@ -423,6 +455,17 @@ final class EventXmlClassifier {
         boolean isType(final String type) {
             return type != null && (type.equalsIgnoreCase(String.valueOf(typeId))
                                     || type.equalsIgnoreCase(String.valueOf(schemaType())));
+        }
+
+        /// @param more More keys (an index's fields), each kept only where it has no value by that name.
+        /// @return It with them.
+        Classified withKeys(final Map<String, String> more) {
+            if (more == null || more.isEmpty()) {
+                return this;
+            }
+            final Map<String, String> merged = new LinkedHashMap<>(keys);
+            more.forEach(merged::putIfAbsent);
+            return new Classified(element, action, typeId, role, kind, application, object, host, merged, route);
         }
 
         /// @param role A role in its place.
