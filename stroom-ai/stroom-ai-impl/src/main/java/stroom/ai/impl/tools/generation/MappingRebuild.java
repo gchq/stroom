@@ -247,7 +247,19 @@ final class MappingRebuild {
         if (old != null) {
             old.reading().leaves().forEach(leaf -> oldLeaves.put(leaf.key(), leaf));
         }
+        final boolean byHand = reading.notes().stream().anyMatch(note -> note.startsWith(HandLayouts.HAND));
         for (final LeafReading leaf : rule.leaves()) {
+            if (byHand && HandLayouts.conditionalGuard(leaf.guard(), leaf.expr())) {
+                // Written by hand only when a test holds that isn't its value being there: no entry says that, so
+                // the regenerated XSLT would write it whenever it has a value (seen in the reader's hand-written
+                // fixtures: a user written only when not '-').
+                final String said = which + leaf.path() + (XsltReader.truthy(leaf.dataName())
+                        ? " Data " + leaf.dataName()
+                        : "") + " is written only when " + XsltReader.head(leaf.guard(), 120) + " (an xsl:if), "
+                                    + "which no mapping entry says";
+                out.notes().add(said);
+                out.lost().add(said);
+            }
             final LeafReading previous = oldLeaves.get(leaf.key());
             final List<Object> form = leaf.form(reading.parser());
             final FieldMapping same = previous != null && previous.form(baseParser).equals(form)

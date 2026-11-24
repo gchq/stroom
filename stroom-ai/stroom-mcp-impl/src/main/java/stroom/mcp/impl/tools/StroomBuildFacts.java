@@ -102,6 +102,7 @@ class StroomBuildFacts implements BuildFacts {
     private static final String TRANSLATION = "translation";
 
     private Provider<SourceTypeRegistries> registriesProvider;
+    private Provider<ExistingTranslations> existingProvider;
     private final WriteGuard guard;
     private final BuildRecords buildRecords;
     private final DocumentAccess documentAccess;
@@ -152,6 +153,33 @@ class StroomBuildFacts implements BuildFacts {
     @Inject
     void setRegistries(final Provider<SourceTypeRegistries> registries) {
         this.registriesProvider = registries;
+    }
+
+    /// Where the pipelines already translating a build's feed or source type group are found (set by injection;
+    /// none in tests that make the facts themselves, where there are none).
+    ///
+    /// @param existing The existing translations.
+    @Inject
+    void setExistingTranslations(final Provider<ExistingTranslations> existing) {
+        this.existingProvider = existing;
+    }
+
+    @Override
+    public Optional<Map<String, Object>> existingTranslation(final String build, final List<String> sources) {
+        return existingProvider == null
+                ? Optional.empty()
+                : existingProvider.get().find(build, sources, this::translating);
+    }
+
+    @Override
+    public Optional<Map<String, Object>> startFrom(final String build) {
+        try {
+            return buildRecords.startFrom(build);
+        } catch (final RuntimeException e) {
+            // Advice: an unreadable record leaves the plan as if the user weren't asked yet.
+            LOGGER.debug("Unable to read how build {} starts", build, e);
+            return Optional.empty();
+        }
     }
 
     @Override

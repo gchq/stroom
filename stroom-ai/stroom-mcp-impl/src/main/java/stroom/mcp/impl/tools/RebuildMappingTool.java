@@ -54,6 +54,7 @@ import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -62,6 +63,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
 /// `rebuild_mapping` - rebuilds the mapping kept with a translation XSLT from the XSLT itself, when it was lost (its
 /// Documentation tab cleared) or no longer matches the XSLT (changed by hand in Stroom). The mapping is read back from
@@ -73,6 +75,8 @@ class RebuildMappingTool extends AbstractBuiltInTool {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RebuildMappingTool.class);
 
     static final String NAME = "rebuild_mapping";
+    // An Unknown action element in an event's output, with or without a prefix.
+    private static final Pattern UNKNOWN = Pattern.compile("<(?:[\\w.-]+:)?Unknown[\\s>/]");
     static final String UUID_ARG = "uuid";
     static final String STREAM_IDS_ARG = "stream_ids";
     static final String PIPELINE_UUID_ARG = "pipeline_uuid";
@@ -95,6 +99,9 @@ class RebuildMappingTool extends AbstractBuiltInTool {
     private final DocumentAccess documentAccess;
     // The build's catalogue of event types; none in tests that make the tool themselves.
     private Provider<CatalogueNotes> catalogueNotesProvider;
+    // The build records: whether a build started from an existing pipeline; none in tests that make the tool
+    // themselves.
+    private Provider<BuildRecords> buildRecordsProvider;
 
     @Inject
     RebuildMappingTool(final TranslationDocs translationDocs,
@@ -126,6 +133,16 @@ class RebuildMappingTool extends AbstractBuiltInTool {
     @Inject
     void setCatalogueNotes(final Provider<CatalogueNotes> catalogueNotes) {
         this.catalogueNotesProvider = catalogueNotes;
+    }
+
+    /// The build records (set by injection; none in tests that make the tool themselves): a build that started from an
+    /// existing pipeline is told how that pipeline ran over the sample, and its catalogue read back is put to the user
+    /// to confirm.
+    ///
+    /// @param buildRecords The build records.
+    @Inject
+    void setBuildRecords(final Provider<BuildRecords> buildRecords) {
+        this.buildRecordsProvider = buildRecords;
     }
 
     @Override
@@ -312,6 +329,9 @@ class RebuildMappingTool extends AbstractBuiltInTool {
         proven.put("streams", ids);
         proven.put("which", samples);
         result.put("proven_on", proven);
+        if (inducting(ref)) {
+            result.put("existing_run", proof.existingRun());
+        }
         if (proof.records() == 0) {
             result.put("saved", null);
             result.put("hint", "Stepping gave no records: check stream_ids are the pipeline's raw streams.");
@@ -400,8 +420,23 @@ class RebuildMappingTool extends AbstractBuiltInTool {
             return Optional.empty();
         }
         final Catalogue before = catalogueNotesProvider.get().catalogue(build.get()).orElse(null);
-        return Optional.of(new CatalogueReadBack(build.get(), before, CatalogueFromMapping.read(
-                rebuild.rebuilt().mapping(), before)));
+        final CatalogueFromMapping.FromMapping read = CatalogueFromMapping.read(rebuild.rebuilt().mapping(), before);
+        if (!inducting(rebuild.ref())) {
+            return Optional.of(new CatalogueReadBack(build.get(), before, read));
+        }
+        // A build starting from an existing pipeline: the event types read back from its XSLT are proposed, put to
+        // the user by catalogue_event_types with its check against the sample (decided by the user, 2026-11-24).
+        final Set<String> known = new HashSet<>();
+        if (before != null) {
+            before.eventTypes().stream().filter(EventType::confirmed).map(EventType::typeId).forEach(known::add);
+        }
+        final List<EventType> types = read.catalogue().eventTypes().stream()
+                .map(type -> known.contains(type.typeId())
+                        ? type
+                        : type.readBack())
+                .toList();
+        return Optional.of(new CatalogueReadBack(build.get(), before, new CatalogueFromMapping.FromMapping(
+                read.catalogue().withEventTypes(types), read.said(), read.notRead())));
     }
 
     // The catalogue read back written into the build's source notes (when it changed), and what it says.
@@ -469,7 +504,61 @@ class RebuildMappingTool extends AbstractBuiltInTool {
         });
         final List<Map<String, Object>> sorted = new ArrayList<>(differences.values());
         sorted.sort(Comparator.comparingInt((Map<String, Object> d) -> -(Integer) d.get("records")));
-        return new Proof(before.outputs().size(), sorted);
+        return new Proof(before.outputs().size(), sorted, existingRun(before.outputs()));
+    }
+
+    /// How the XSLT as it is (an existing pipeline's, a build starting from it) ran over the sample: the records
+    /// stepped, the Events written, and the records that wrote no Event (dropped by a rule, or failing: step_records
+    /// says which) and those kept as Unknown, each with up to 10 of them.
+    ///
+    /// @param outputs Each record's output of the XSLT as it is, by record key.
+    /// @return `records`, `events`, `no_event` (and `no_event_records`), `unknown` (and `unknown_records`) and
+    /// `note`.
+    static Map<String, Object> existingRun(final Map<String, String> outputs) {
+        final List<String> none = new ArrayList<>();
+        final List<String> unknown = new ArrayList<>();
+        int events = 0;
+        for (final Map.Entry<String, String> entry : outputs.entrySet()) {
+            final String output = NullSafe.string(entry.getValue());
+            final int count = EventXml.countEvents(output);
+            events += count;
+            if (count == 0) {
+                none.add(entry.getKey());
+            } else if (UNKNOWN.matcher(output).find()) {
+                unknown.add(entry.getKey());
+            }
+        }
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("records", outputs.size());
+        out.put("events", events);
+        out.put("no_event", none.size());
+        if (!none.isEmpty()) {
+            out.put("no_event_records", first(none, 10));
+        }
+        out.put("unknown", unknown.size());
+        if (!unknown.isEmpty()) {
+            out.put("unknown_records", first(unknown, 10));
+        }
+        out.put("note", "How the existing XSLT translates the sample now: records writing no Event were dropped by "
+                        + "a rule or failed (step_records over them says which), Unknown ones are kept as Unknown. "
+                        + "Event types the sample lacks are in " + CatalogueEventTypesTool.NAME + "'s check.");
+        return out;
+    }
+
+    // Whether the XSLT is in a build that started from an existing pipeline (decided by the user, 2026-11-24).
+    private boolean inducting(final DocRef ref) {
+        if (buildRecordsProvider == null) {
+            return false;
+        }
+        try {
+            return guard.buildOf(ref)
+                    .flatMap(build -> buildRecordsProvider.get().startFrom(build))
+                    .map(startFrom -> ExistingTranslations.EXISTING.equals(startFrom.get("choice")))
+                    .orElse(false);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("How the build of {} starts wasn't read: {}", ref, e.getMessage()));
+            return false;
+        }
     }
 
     // The pipeline that runs the XSLT as its own (not through a template), and the element it is set on.
@@ -564,8 +653,8 @@ class RebuildMappingTool extends AbstractBuiltInTool {
 
     }
 
-    // The records stepped, and the output paths that differ.
-    private record Proof(int records, List<Map<String, Object>> differences) {
+    // The records stepped, the output paths that differ, and how the XSLT as it is ran over them.
+    private record Proof(int records, List<Map<String, Object>> differences, Map<String, Object> existingRun) {
 
     }
 

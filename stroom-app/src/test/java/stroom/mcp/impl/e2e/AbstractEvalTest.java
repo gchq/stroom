@@ -820,10 +820,18 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         }
         // Listed first, as an agent starts: a next version's build starts from the promoted catalogue (eval case
         // 70), whose event types are kept as they are, only the reference's others added.
-        final Map<String, Object> listed = json(CatalogueSteps.CATALOGUE, args("build", build, "stream_ids", raws,
-                "reading", reading.isEmpty()
-                        ? null
-                        : reading));
+        // A build on a feed a pipeline translates already is asked first how it starts (decided by the user,
+        // 2026-11-24): the reference is the case's whole mapping, so a new translation is drafted.
+        client.answeringWith(choosing("Draft a new translation"));
+        final Map<String, Object> listed;
+        try {
+            listed = json(CatalogueSteps.CATALOGUE, args("build", build, "stream_ids", raws, "reading",
+                    reading.isEmpty()
+                            ? null
+                            : reading));
+        } finally {
+            client.answeringWith(McpTestClient::agree);
+        }
         final Set<Object> kept = new HashSet<>();
         list(map(listed, "catalogue"), "event_types").forEach(type -> kept.add(type.get("type_id")));
         final List<Map<String, Object>> proposals = new ArrayList<>();

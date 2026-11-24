@@ -98,8 +98,8 @@ public final class RebuiltMapping {
     }
 
     /// @return What the rebuild found, as rebuild_mapping reports it: entries_kept, then
-    /// entries_new, entries_removed, kept_as_xpath, calls_imported_functions, not_read and problems where they
-    /// aren't empty.
+    /// entries_new, entries_removed, kept_as_xpath, calls_imported_functions, written_by_hand (how a hand-written
+    /// layout was read), not_read and problems where they aren't empty.
     public Map<String, Object> summary() {
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("entries_kept", reused);
@@ -107,7 +107,12 @@ public final class RebuiltMapping {
         putIfAny(out, "entries_removed", removed);
         putIfAny(out, "kept_as_xpath", raw);
         putIfAny(out, "calls_imported_functions", importedCalls);
-        putIfAny(out, "not_read", notes);
+        // How a translation written by hand was read (HandLayouts), apart from what wasn't read.
+        putIfAny(out, "written_by_hand", notes.stream()
+                .filter(note -> note.startsWith(HandLayouts.HAND))
+                .map(note -> note.substring(HandLayouts.HAND.length()))
+                .toList());
+        putIfAny(out, "not_read", notes.stream().filter(note -> !note.startsWith(HandLayouts.HAND)).toList());
         putIfAny(out, "problems", problems);
         return out;
     }

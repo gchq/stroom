@@ -4409,7 +4409,25 @@ before either, by catalogue_event_types itself from the promoted notes beside th
 `CatalogueNotes.carryBesideFeeds`, said as `carried`), and every result says in words the event types added, changed
 and removed since (`CatalogueDiff`).
 
+**Starting from an existing pipeline** (decided by the user, 2026-11-24; `ExistingTranslations`): when a pipeline
+already translates the build's feed (its processor filter reads the raw data) or the build's source type group (the
+registry's rows of its scope name it, by UUID, else by name; on an aggregated feed only that, never another group's pipeline reading the same streams), whoever wrote it, and the build holds no XSLT or
+pipeline yet and hasn't been asked (`BuildPlan.existingToOffer`), the first call (no proposals, no confirm) asks the
+user in a form, after the survey: "An existing pipeline already translates these source types: 'X' translates A and
+B (built by Stroom AI; 7 event types, e.g. ...) / (not built by Stroom AI: its XSLT was written by hand, last changed
+<date> by <user>; ...). How should this build start?", **Start from the existing pipeline (recommended)** or **Draft a
+new translation**. The event types are read from its XSLT (`XsltReader.read`), the rest from its XSLT doc and tags.
+The answer is kept in the build record (`start_from`: `choice`, `pipeline`, `at`, `BuildRecords.rememberStartFrom`);
+starting from it, the result is `status: start_from_existing` with the plan's `next` (`copy_pipeline`), else the
+evidence is listed as usual. Without a form: `status: needs_choice`, `existing` and `routes` naming both, for the
+agent to ask in the chat, the answer passed back as `start_from=existing|draft` (taken only where no form can ask,
+`Consent.takesChatAnswer`; anything else refused). Seen in chat 192: an existing promoted pipeline translated the
+build's source types, the plan routed to drafting from scratch, and the agent spent about ten calls copying the old
+catalogue by hand. Once started from it, every set's summary (and the listing's `origin`) begins "N event types from
+'X', the existing pipeline this build started from (read back from its XSLT)."
+
 * **Arguments**: `build` (required); `source` (the notes' source, else the build's name); `stream_ids`; `splitter`;
+  `start_from` (`existing` or `draft`: the user's answer in the chat, only where no form could ask it);
   `reading` (a mapping's reading keys only: `input`, `root`, `record`, `xml_namespace`, `json_layout`,
   `json_fields`, `xml_fields`, `pairs`, `extract`, `nil_values`, `for_each` (each item a record); any other key, or a
   reading that doesn't parse, refused: how a source with no mapping yet is read);
@@ -4417,6 +4435,7 @@ and removed since (`CatalogueDiff`).
   confirm; `{translation: {type_id, event_detail, action, description}}`, what the uncatalogued records become in the
   user's words); `reviewed` (with confirm, for a client without forms).
 * **Returns**: `status` (`listed`, `checked`, `needs_showing`, `needs_confirmation`, `needs_review`,
+  `needs_choice` and `start_from_existing` (with `existing`, the pipeline described, and `routes` or `next`),
   `needs_placements` (2026-11-21: a set confirmed, the next one leaving an element the schema requires empty, with
   `unplaced`), `confirmed`);
   `catalogue`; listing: `evidence` (`fields`, `shapes`, `examples`, `seed`), and with a catalogue `check` and
@@ -6306,6 +6325,24 @@ written by hand) is read back as a `repeat: true` entry where the schema lets th
 (`EventSchema.repeatsInPlace`, e.g. `EventSource/System/Tags/Tag`; rebuild_mapping passes the kept schema), else it
 stays a problem, saying the schema allows one there.
 
+**XSLTs written by hand** (`HandLayouts`, 2026-11-24): before reading, a translation not laid out as the generator
+writes one (its start template applies templates with no mode) is laid out as it does, changing what is read, never
+what the XSLT does: a template per event (`match="map[string[@key='action'] = 'login']"`), each a rule, its pattern's
+predicates its condition, in the order XSLT picks them (priority, then the last first), an empty one with a pattern a
+drop rule; one template per record; an `xsl:choose` inside the Event (on an event id, inside EventDetail), a rule per
+branch with the branch in the choose's place, a choose inside a branch taken in turn with the tests joined; a chain of
+`xsl:if` each writing an Event, a rule each in turn; JSON keys read by type (`string[@key='x']`) read as any key. Each
+rule is named by its constant TypeId, else `rule-N`, `other` for the last with no test. Named templates of the XSLT's
+own are followed with their parameters bound (an `xsl:param` is no longer said not to be read), imported helpers as
+before. In such an XSLT a test no field reads is an xpath condition (`{xpath: "@severity", equals: "high"}`, else
+`{xpath: "string(boolean(...))", equals: "true"}`: a `present` test of the record read its text, and a records:2
+record or an XML element of attributes has none), and an element written only under an `xsl:if` testing more than
+its value being there (`$user != '-'`; `x != ''`, `normalize-space(x)`, `exists(x)` are presence) is listed as not
+read and in `unread` (no entry says it). The summary's `written_by_hand` says how the layout was read, apart from
+`not_read`. The reader's hand-written fixtures (`TestHandWrittenTranslations`, `generation/hand-written/`: a choose
+on an event id, a template per event, named templates, an imported library, a TypeId from `concat()`, variables and
+`xsl:if` chains, priorities and an empty template) pin what each reads and every output path that differs.
+
 The XSLT regenerated from the rebuilt mapping is then stepped beside the XSLT over the sample (up to 200 records
 each way, `PROVE_RECORDS`) and the outputs compared path by path (`EventXml.fieldValues`). Only when every record's
 output is the same (or the user accepts the differences) and the user confirms in a form are the mapping and the
@@ -6321,6 +6358,14 @@ into the source notes (`CatalogueNotes.write`, the JSON block and the "Event typ
 it. What the catalogue can't express (a rule writing its TypeId from a field, a drop rule of no event type) is named
 (`not_read`), the catalogue's entry left as it was: the XSLT keeps it, and a draft from the catalogue would lose it.
 
+**A build started from an existing pipeline** (its record's `start_from` is `existing`, see `catalogue_event_types`):
+the result's `existing_run` says how the XSLT as it is ran over the records stepped (`records`, `events`, `no_event`
+and `no_event_records`: dropped by a rule or failing, `unknown` and `unknown_records`, up to 10 each), and the event
+types read back that the catalogue didn't hold confirmed are saved as proposed with basis `existing_pipeline`
+(`EventType.readBack`: their TypeIds kept as the pipeline writes them, Verb-Object or not, `TypeIds.keptProblem`), so
+`catalogue_event_types` checks them against the sample (uncatalogued records, event types the sample lacks, overlaps)
+and puts them to the user.
+
 * **Arguments**: `uuid` (required); `stream_ids` (else `SampleStreams`: the stream ids of the sample processor
   filters the tools made, those still there, else the feed's newest raw streams; the reply says which);
   `pipeline_uuid` (else the one pipeline whose own layer runs the XSLT); `change`; `accept_differences`;
@@ -6328,7 +6373,8 @@ it. What the catalogue can't express (a rule writing its TypeId from a field, a 
 * **Returns**: `xslt`; `status: in_step` when the XSLT is already what its kept mapping generates; else `mode`
   (`written by an earlier generator`, `out of step with the kept mapping`, `mapping lost`), `rebuilt` (the summary:
   kept, new, removed, kept as xpath, calling imported functions), `proven_on` (`records`, `streams`, `which`),
-  `differences` (at most 20 paths, most records first, each with an example record), `unread`, `problems`, `saved`,
+  `differences` (at most 20 paths, most records first, each with an example record), `existing_run` (a build started
+  from an existing pipeline), `unread`, `problems`, `saved`,
   `catalogue` (`written`, `event_types`, `changes`, `not_read` and `note`) and `next`.
 * **Refuses**: no `uuid`; an XSLT that isn't the tools' own; one keeping a CEF or index plan (rebuild is for
   translations); no pipeline found or several (`pipeline_uuid` needed); a `pipeline_uuid` that doesn't run the
@@ -7727,6 +7773,14 @@ the user is away from (nothing needing agreement is done unattended).
   a discovery, reference-only or CEF build, its survey, its sample's format (from the newest raw sample's head, else
   the survey; a converter isn't needed once the events pipeline reads the data with a JSON or XML parser).
   `plannedSteps(build)` leaves out what the build's kind doesn't need; `next.progress` doesn't count those.
+* **Starting from an existing pipeline** (2026-11-24): on existing data, before the build holds a translation, the
+  `catalogue` step's call (`catalogue:offer`) says catalogue_event_types first asks the user how the build starts
+  (`BuildFacts.existingTranslation`, `ExistingTranslations`). Once they choose the existing pipeline (the record's
+  `start_from`), `catalogue` stays to do though the build holds its copy's translation, and its call follows the
+  work: `copy_pipeline source_uuid=<it>` (`catalogue:existing_copy`), then `rebuild_mapping uuid=<the copy's XSLT,
+  keeping no mapping> pipeline_uuid=<the copy>` (`catalogue:existing_rebuild`), then catalogue_event_types to check
+  and confirm the catalogue read back (`catalogue:existing_confirm`); then stepping, as any new version. Drafting
+  instead leaves the plan as before.
 * A build on existing data does the events stage once it has the work for it: a translation pipeline, a survey, or a
   translation XSLT saved from its mapping. So with such an XSLT saved, with or without a survey first, the
   translation step is `done` and `next` is the pipeline (seen in an end-to-end run: the XSLT was saved, the plan still
@@ -8272,7 +8326,7 @@ gives `mapping` (null if it doesn't validate), `reused`, `added`, `removed`, `ra
 `notes` and `lost`: what inside an event wasn't read (an `xsl:iterate`, or a variable built from its content rather
 than a `select`), which rebuild_mapping and the hand-edit gate act on. The record-number read and `stroom:log`
 calls are known and not reported as unread. An XSLT with no template matching its input is refused ("there is
-nothing to read"). The reader also knows the time conversions earlier generators wrote (a seconds' fraction
+nothing to read"). One written by hand is laid out as the generator's first (`HandLayouts`, see rebuild_mapping). The reader also knows the time conversions earlier generators wrote (a seconds' fraction
 truncated; before 2026-10-24, digits finer than a millisecond rounded rather than cut), so an XSLT saved then still
 reads as its format. A reading's maps (`XsltReading`, `RuleReading`, `LeafReading`, `SharedCall`) and the entries
 `ReadIdioms` builds have their keys in a fixed order, which the reader fixtures digest (`TestXsltReaderCases`).

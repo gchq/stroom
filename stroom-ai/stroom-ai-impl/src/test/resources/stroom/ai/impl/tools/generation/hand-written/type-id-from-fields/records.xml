@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<array xmlns="http://www.w3.org/2013/XSL/json">
+  <map>
+    <string key="eventTime">2026-11-06T10:00:00.000Z</string>
+    <string key="service">storage</string>
+    <string key="operation">GetObject</string>
+    <map key="actor">
+      <string key="name">jbloggs</string>
+      <string key="ip">203.0.113.5</string>
+    </map>
+    <string key="resource">reports/q3.pdf</string>
+  </map>
+  <map>
+    <string key="eventTime">2026-11-06T10:05:00.000Z</string>
+    <string key="service">storage</string>
+    <string key="operation">DeleteObject</string>
+    <map key="actor">
+      <string key="name">asmith</string>
+      <string key="ip">203.0.113.6</string>
+    </map>
+    <string key="resource">reports/old.pdf</string>
+  </map>
+  <map>
+    <string key="eventTime">2026-11-06T10:10:00.000Z</string>
+    <string key="service">identity</string>
+    <string key="operation">CreateUser</string>
+    <map key="actor">
+      <string key="name">admin</string>
+      <string key="ip">203.0.113.1</string>
+    </map>
+    <string key="resource">newstarter</string>
+  </map>
+</array>

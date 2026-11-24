@@ -1,0 +1,22 @@
+{
+ "rules": [
+  "vpn-config-change",
+  "vpn-logout",
+  "vpn-login-failed",
+  "vpn-login"
+ ],
+ "counts": {
+  "read": 44,
+  "kept_as_xpath": 0,
+  "calls_imported_functions": 0,
+  "not_read": 0
+ },
+ "kept_as_xpath": [],
+ "calls_imported_functions": [],
+ "written_by_hand": [
+  "JSON keys read by type (string[@key='x']) read as any key (*[@key='x'])",
+  "a template per event (match patterns), read as one rule each in the order XSLT chooses them"
+ ],
+ "not_read": [],
+ "differences": []
+}

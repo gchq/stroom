@@ -74,8 +74,12 @@ public record EventType(String typeId,
     public static final String DOCUMENTATION = "documentation";
     /// The user's: confirmed (or amended, or dropped) in the user's form.
     public static final String USER_CONFIRMED = "user_confirmed";
+    /// Read back from the XSLT of an existing pipeline a build started from (2026-11-24): its TypeId kept as that
+    /// pipeline writes it, Verb-Object or not, so the new version's Events keep it.
+    public static final String EXISTING_PIPELINE = "existing_pipeline";
     /// The bases an event type may have.
-    public static final List<String> BASES = List.of(DRAFT, AGENT_KNOWLEDGE, DOCUMENTATION, USER_CONFIRMED);
+    public static final List<String> BASES = List.of(DRAFT, AGENT_KNOWLEDGE, DOCUMENTATION, USER_CONFIRMED,
+            EXISTING_PIPELINE);
     /// The confidences an event type may have.
     public static final List<String> CONFIDENCES = List.of("high", "medium", "low");
     /// Proposed, not yet confirmed.
@@ -258,6 +262,13 @@ public record EventType(String typeId,
     /// @return It confirmed.
     public boolean confirmed() {
         return CONFIRMED.equals(status);
+    }
+
+    /// @return It read back from an existing pipeline a build starts from, proposed for the user to confirm as any
+    /// proposal is, its TypeId kept as the pipeline writes it (decided by the user, 2026-11-24).
+    public EventType readBack() {
+        return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
+                recognisedBy, drop, EXISTING_PIPELINE, confidence, oneTypeBecause, PROPOSED, doubt, placements);
     }
 
     /// @param typeId Its new TypeId.

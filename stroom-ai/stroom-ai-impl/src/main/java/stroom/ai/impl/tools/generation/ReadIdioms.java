@@ -641,10 +641,21 @@ final class ReadIdioms {
                     found.put("present", negated == null);
                 }
             }
-            if (found == null || found.isEmpty()) {
+            if ((found == null || found.isEmpty()) && byHand()) {
+                // Written by hand: kept as written, as a test of its truth. A present test of the record
+                // (self::*[...]) is false for a record of no text of its own (records:2's, an XML element of
+                // attributes), the generator's present test reading its text (found reading XSLTs written by hand,
+                // 2026-11-24).
+                found = new LinkedHashMap<>();
+                found.put("xpath", "string(boolean(" + portable(part.text()) + "))");
+                found.put("equals", "true");
+                raw = true;
+            } else if (found == null || found.isEmpty()) {
                 found = new LinkedHashMap<>();
                 found.put("xpath", "self::*[" + portable(part.text()) + "]");
                 found.put("present", true);
+                raw = true;
+            } else if (found.containsKey("xpath")) {
                 raw = true;
             }
             out.add(found);
@@ -666,6 +677,9 @@ final class ReadIdioms {
             if (match != null && XsltReader.truthy(fieldOf(match.expr(1)))) {
                 return entry("field", fieldOf(match.expr(1)), test.getValue(), match.string(1));
             }
+            if (match != null && byHand() && subject(match.expr(1)) != null) {
+                return entry("xpath", subject(match.expr(1)), test.getValue(), match.string(1));
+            }
         }
         // equalsText and oneOfText differ only by the brackets around the values: told apart as written.
         final XPathNode written = XPathTrees.unbracketed(node);
@@ -677,11 +691,32 @@ final class ReadIdioms {
         if (match != null && XsltReader.truthy(fieldOf(match.expr(1)))) {
             return entry("field", fieldOf(match.expr(1)), "equals", match.string(1));
         }
+        if (match != null && byHand() && subject(match.expr(1)) != null) {
+            // Written by hand: a value no field reads (an attribute of plain XML, say, or a call), compared as written.
+            return entry("xpath", subject(match.expr(1)), "equals", match.string(1));
+        }
         final KeysListed keys = keysListed(node);
         if (keys != null && XsltReader.truthy(fieldOf(keys.input()))) {
             return entry("field", fieldOf(keys.input()), "one_of", keys.listed());
         }
         return null;
+    }
+
+    // Whether the XSLT was written by hand (HandLayouts laid it out): its tests are read as the generator would write
+    // them, the generator's own XSLTs read as before.
+    private boolean byHand() {
+        return reading.notes().stream().anyMatch(note -> note.startsWith(HandLayouts.HAND));
+    }
+
+    // What a test compares, as an xpath condition's input: a path of the record (or a call of one), never a
+    // variable left unresolved or a literal; null when it is neither.
+    private String subject(final XPathNode node) {
+        final String text = node.text();
+        if (text == null || text.isBlank() || text.contains("$") || text.startsWith("'") || text.startsWith("\"")
+            || text.startsWith("/")) {
+            return null;
+        }
+        return portable(text);
     }
 
     // name(x): x as written, when node is a call of one of these functions with one argument.

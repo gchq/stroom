@@ -10,6 +10,11 @@ What a translation mapping (the input to `build_translation_xslt`) may hold, in 
   an aggregated feed), catalogue the source's event types with `catalogue_event_types` (the plan's `catalogue` step;
   see Event type catalogue below). The draft then follows the catalogue: a rule a way of recognising each event type,
   then the catch-all.
+- When a pipeline already translates the build's feed or source type group (promoted, written by hand or a content
+  pack's), that first `catalogue_event_types` call asks the user how the build starts: from it (`copy_pipeline` makes
+  a new version, `rebuild_mapping` reads its XSLT back into a mapping and the catalogue, then the catalogue is checked
+  against the sample and confirmed; the original isn't touched) or with a new translation drafted. Without a form,
+  ask in the chat and give `catalogue_event_types` the user's answer (existing or draft).
 - Never write a translation XSLT by hand, and never send the field inventory as the mapping: draft it, edit what the
   draft gets wrong, and give `build_translation_xslt` the edited mapping with the draft's `schema_version`, the sample
   (and the Data Splitter's spec as `splitter`), so fields no record has and times their format doesn't fit are caught
@@ -67,7 +72,7 @@ reading keys: `input`, `json_fields`, `xml_fields`, `extract`, `pairs`, `for_eac
 - **An event type**: `type_id` Verb-Object (`Update-Password`; the vendor's code is written as Data, so keep it out
   of the TypeId), `title`, `description` (fixed text, no record values: the record's own message is used where it
   has one), `event_detail` (`Authenticate`, `Update`, `Network/Permit`...), `action`, `success`, `actor` (a
-  field), `placements`, `basis` (`agent_knowledge`, `documentation`, or `draft` for the seed's), `confidence`
+  field), `placements`, `basis` (`agent_knowledge`, `documentation`, `draft` for the seed's, or `existing_pipeline` for those read back from a pipeline the build started from, whose TypeIds are kept as it writes them), `confidence`
   (high, medium, low), optionally `doubt` (why you are unsure of it).
 - **Placements**: where the event type's fields go in the schema, from what you know of the source: each a mapping
   fields entry (An entry, below) whose `path` is below `event_detail` (`Email/Subject`, `After/Object/Name`,

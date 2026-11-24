@@ -329,4 +329,8 @@ result and steps both over the pipeline's original sample streams (`stream_ids` 
 written even when its value is empty) shows as a difference: nothing is saved unless the user accepts it
 (`accept_differences=true`). It refuses while anything inside an event couldn't be read back (listed as `unread`:
 an `xsl:iterate` added by hand, say, which stepping misses when no sample record reaches it), unless the user accepts
-losing it (`accept_unread=true`). Small changes can still be made by hand in the mapping with `changes=`.
+losing it (`accept_unread=true`). Small changes can still be made by hand in the mapping with `changes=`. It reads
+XSLTs written by hand too: a template per event (match patterns, in the order XSLT picks them), an `xsl:choose` (on
+an event id, say) or a chain of `xsl:if` choosing the event, named templates with parameters, imported helpers, JSON
+keys read by type (`string[@key='x']`); a test it can't read stays an xpath condition, and an element written only
+under a test of more than its value (an `xsl:if` on `$user != '-'`) is listed as not read.

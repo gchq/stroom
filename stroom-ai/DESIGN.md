@@ -501,6 +501,45 @@ flowchart TD
   `<workspace>/backups/` (`<name> backup <yyyyMMddHHmmss>`); if the original changed since the copy was taken, the
   user chooses first (see [Promotion](#promotion-built)). Reprocessing production data is the user's.
 
+### Start from an existing pipeline (built 2026-11-24)
+
+Asked for by the user: a build whose source a pipeline already translates starts from that pipeline rather than from
+scratch, whoever wrote it. Seen in chat 192: an existing promoted pipeline translated the build's source types, the
+plan routed to drafting, and the agent spent about ten calls copying the old catalogue by hand.
+
+* **Found** (`ExistingTranslations`): for a build scoped to some of an aggregated feed's source types, the pipeline
+  the registry's rows of those source types name (by UUID, else by name, as a group's version is found); else the
+  pipeline at the translation stage whose processor filter reads the feed's raw data (`StroomBuildFacts.translating`).
+  Never one of the build's own, and on an aggregated feed never another group's (each group's pipeline reads every
+  stream of the feed; found in an e2e walk, a new group was offered the first group's).
+* **Offered** after the survey (the survey always runs first), in catalogue_event_types' first call, while the build
+  holds no XSLT or pipeline: "An existing pipeline already translates these source types: 'X' translates A and B
+  (promoted, built by Stroom AI; 7 event types, e.g. ...) / (not built by Stroom AI: its XSLT was written by hand,
+  last changed <date> by <user>). How should this build start?" with **Start from the existing pipeline
+  (recommended)** (copied as a new version, its XSLT read back into a mapping and catalogue; what the tools can't read
+  stays as XSLT; the original isn't touched) or **Draft a new translation**. The choice is the build record's
+  `start_from`. Over `/mcp` without a form the reply (`needs_choice`) names both routes for the agent to ask in the
+  chat, and `start_from=existing|draft` carries the answer.
+* **Routed through `next`**, one call at a time (copy_pipeline, then rebuild_mapping on the copy's XSLT, then
+  catalogue_event_types to check and confirm the catalogue read back), the `catalogue` step kept to do throughout.
+  Not one tool doing both: each step has its own form the user answers in turn (the new version's names; the
+  rebuild's proof, its differences and what wasn't read), and each can be refused or redone on its own.
+* **Read back** (`HandLayouts`, then the reader as before): a template per event (match patterns, in XSLT's order),
+  one template per record, an `xsl:choose` inside the Event (a rule per branch), a chain of `xsl:if` each writing an
+  Event, named templates with parameters, imported helpers, JSON keys read by type. What isn't one of the generator's
+  idioms stays an xpath entry or condition; an element written under a test of more than its value being there is
+  listed as not read, so nothing is saved without the user accepting its loss. The regenerated XSLT is proven against
+  the original on the sample, path by path, as for any rebuild.
+* **Checked**: rebuild_mapping lists the existing version's run over the sample (`existing_run`: records writing no
+  Event, dropped or failing, and those kept as Unknown); the event types read back are proposed, so
+  catalogue_event_types' check against the sample shows what's worth a look (uncatalogued records, event types the
+  sample lacks, overlaps) and the user confirms them, each set's summary starting "N event types from 'X'".
+* **Coverage**: the reader's hand-written fixtures (`TestHandWrittenTranslations`) pin, per style, what is read, kept
+  as xpath and not read, and every output path that differs from the original; `TestE2eStartFromExistingPipeline`
+  runs it on a real Stroom (a hand-written pipeline the tools never built, the offer, copy, rebuild with proof, the
+  catalogue confirmed, a field added, promotion as V1.1 with the original untouched); eval case 78 (`e2e/eval-pending/`, kept
+  out of the reference runner until it can set up a hand-written pipeline) scores inducting over drafting.
+
 ### Fix a reported issue
 
 A user reports an event that came out wrong, with the Stream ID and Event ID a dashboard shows, or a description.
@@ -5443,6 +5482,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-24 | A build whose feed or source type group a pipeline already translates (the registry's rows of its scope, by UUID else by name, or the pipeline its processor filter reads the raw data for; promoted, hand-written or a content pack's) is offered, after the survey, in catalogue_event_types' first call's form: start from the existing pipeline (recommended: copy_pipeline makes a new version, rebuild_mapping reads its XSLT back into a mapping and catalogue, the original untouched) or draft a new translation; without a form the reply names both routes for the chat (`start_from=`). The plan routes through `next` (copy, rebuild, catalogue check and confirmation, the `catalogue` step kept to do), not one tool doing both, as each step has its own form (names, the rebuild's proof) the user answers in turn. The reader lays hand-written XSLTs out as the generator's first (a template per event, a choose on an event id, xsl:if chains, named templates, JSON keys by type); conditions it can't read stay xpath conditions, guards testing more than presence are not read. The existing version's run over the sample (records writing no Event, Unknown) is listed; event types read back are proposed and confirmed, the summary naming their origin | [Start from an existing pipeline](#start-from-an-existing-pipeline-built-2026-11-24) |
 | 2026-11-24 | Timelines from any source built (part 2c): sources optional (asked in a form, all supported over MCP, probed and left out, listed, without the user's events); each index's user field from the call, the AGENTS doc's `## Fields` (applied by the tools, checked by `propose_instructions`), a field convention, the index's documentation, else asked; events without roles classified from their Events XML (capped by `timelineMaxXmlEvents` 50,000), else the index's element field, else the source's codes classified once by a side call and confirmed; the user and time the index's; pairs from a skill's Event chains, the call, the schema and alternation in the user's own events (90% of keys, counts about equal; borderline listed); activity periods for the actions in no focus session or pair; `spans.csv` and `activities.csv` every run, views `activities`, `detail`, `both`; what was learned offered for the skill's Event chains only with Edit on its doc (or Create for a new one), else kept for the chat; `check_skill` checks Event chains against recent data; ISO 8601 durations as times before now. Not built: the build record catalogue's route for event codes; naming who has Edit on a skills doc | Activity timelines, streaming joins and skills (2c., as built); TOOLS.md (activity_timeline) |
 | 2026-11-24 | An aggregated feed's shared modules edited by hand (the user's decisions): before a build writes its common module or helpers (in the build, or a promoted one's new version), an edit made in Stroom since the tools saved it is told (`ModuleEdits`: the version history tells an edit from an older generator's code; a common module's constants read back from its code, proven by generating it from them, are an edit whatever the history says; helpers of the generator's own version other than its code are one); nothing is written until the user chooses, in a form before the sample check, keep the edit (recommended: read into the module's kept mapping, what the build adds beside it; helpers left as edited), discard it (the generated code) or stop, an edit that can't be kept offering discard or stop with why, and without a form the save is refused saying the choices (`hand_edit_choices` by the module's name); a common module's values as edited are what later groups are split and documented from, and a hand-replaced Generator placeholder is no placeholder; every gate (the modules', then the group's own hand edit) is decided before anything is written; promotion's checks say an imported module edited by hand, once, as a warning (`GeneratedDrift.moduleEdits`) | Aggregated feeds: source types and source type groups; TOOLS.md (build_translation_xslt, build_status) |
 | 2026-11-24 | A `timeline` chart kind for dashboards (the user's decisions, 2026-11-23): columns start and end (Date Time, required), label (required), lane and colour (optional; colour defaults to label), taking `activity_timeline`'s and `gantt_chart`'s tables as they are; ECharts draws a `custom` series per colour (`renderItem` a rectangle a row), D3 the same by hand; lanes on a category y axis, a time x axis with `dataZoom` (inside and a slider, on by default, `weakFilter`) and the range tool; tooltips with label, lane, start, end and duration; bars overlapping in a lane packed into rows by time, as the chat's Gantt chart packs them by pixels (`TimelineRows`, `timelinePack` in both adapters: first row whose last bar ends before it starts, or as it starts where neither is a marker); a row ending as it starts drawn as a diamond marker, a bar at least 2 px wide; colours by most time up to `maxCategories`, the rest grey; a click selects label, lane, start and end with from and to the bar's span, so a date term keeps a field within it (`SELECTED_ROLES`, `selectionKeys` adds range); ChartCheck: start and end dates, rows ending before they start or without a label left out and counted (all of them a problem), stats bars, markers, lanes, mostRowsInALane, endBeforeStart; a content pack's own timeline or Gantt visualisation is left out of `list_visualisations` and never offered | Activity timelines, streaming joins and skills (3. Charts); TOOLS.md (list_visualisations, propose_visualisation) |

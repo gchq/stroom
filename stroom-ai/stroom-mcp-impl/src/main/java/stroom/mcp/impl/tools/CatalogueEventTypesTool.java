@@ -147,6 +147,13 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     private static final String REVIEWED_ARG = "reviewed";
     private static final String EXPLAIN_ARG = "explain";
     private static final String ANSWERED_ARG = "answered";
+    private static final String START_FROM_ARG = "start_from";
+    /// The question put to the user when a pipeline already translates what the build is to.
+    static final String START_QUESTION = "How should this build start?";
+    /// The choice of starting from the existing pipeline.
+    static final String START_EXISTING = "Start from the existing pipeline (recommended)";
+    /// The choice of drafting a new translation.
+    static final String START_DRAFT = "Draft a new translation";
     // The catch-all, as explain= names it.
     private static final List<String> CATCH_ALL_NAMES = List.of("unknown", "uncatalogued records",
             "uncatalogued");
@@ -198,6 +205,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     private final LongSupplier clock;
     private final Provider<BuildRecords> buildRecords;
     private Provider<CatalogueNotes> catalogueNotesProvider;
+    private Provider<ExistingTranslations> existingProvider;
 
     @Inject
     CatalogueEventTypesTool(final RecordSourceNotesTool notes,
@@ -242,6 +250,15 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     @Inject
     void setCatalogueNotes(final Provider<CatalogueNotes> catalogueNotes) {
         this.catalogueNotesProvider = catalogueNotes;
+    }
+
+    /// Where the pipeline already translating what a build is to is described (set by injection; none in tests that
+    /// make the tool themselves): the user is asked whether the build starts from it.
+    ///
+    /// @param existing The existing translations.
+    @Inject
+    void setExistingTranslations(final Provider<ExistingTranslations> existing) {
+        this.existingProvider = existing;
     }
 
     @Override
@@ -339,6 +356,9 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                                              + "in the chat. Changes nothing.")
                                 .items(StringSchema.builder().build())
                                 .build())
+                        .addStringProperty(START_FROM_ARG, "Only where no form could ask it: the user's answer "
+                                                           + "in the chat to how the build starts, existing or "
+                                                           + "draft.")
                         .addBooleanProperty(ANSWERED_ARG, "With confirm, after the user wrote a question in the "
                                                           + "form instead of amendments: true once you've "
                                                           + "answered it; the set is put to them again as it is.")
@@ -381,6 +401,12 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             throw new ToolRefusal(EXPLAIN_ARG + "= changes nothing, so it is given alone, without proposals or "
                                   + "confirm: explain first, answer the user in the chat, then call again.");
         }
+        if (explain.isEmpty() && proposals.isEmpty() && !isTrue(argsMap(call).get(CONFIRM_ARG))) {
+            final Optional<Map<String, Object>> asked = startChoice(calling);
+            if (asked.isPresent()) {
+                return asked.get();
+            }
+        }
         final Map<String, Object> result = !explain.isEmpty()
                 ? explained(calling, explain)
                 : !proposals.isEmpty()
@@ -392,6 +418,99 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         carried.ifPresent(said -> result.put("carried", said));
         sincePromoted(build).ifPresent(said -> result.put("since_promoted", said));
         return result;
+    }
+
+    // A pipeline already translates what the build is to, and the user hasn't chosen how the build starts: asked in a
+    // form (decided by the user, 2026-11-24; seen in chat 192: the plan routed to drafting from scratch, and the
+    // agent spent some ten calls copying the old catalogue by hand). Empty where nothing is asked, or the user chose
+    // to draft (the listing goes on).
+    private Optional<Map<String, Object>> startChoice(final Calling calling) {
+        if (existingProvider == null) {
+            return Optional.empty();
+        }
+        final Optional<Map<String, Object>> found = plan.existingToOffer(calling.build());
+        if (found.isEmpty()) {
+            return Optional.empty();
+        }
+        final Map<String, Object> described = existingProvider.get().describe(found.get());
+        final String said = ExistingTranslations.said(described);
+        final String message = "An existing pipeline already translates " + (JsonValues.strings(
+                described.get("source_types")).isEmpty()
+                ? "this feed"
+                : "these source types") + ": " + said + ". " + START_QUESTION + " " + START_EXISTING + ": it is "
+                               + "copied as a new version and its XSLT read back into a mapping and a catalogue of "
+                               + "event types; what the tools can't read stays as XSLT; the original isn't "
+                               + "touched. Or " + START_DRAFT.toLowerCase(Locale.ROOT) + " from the sample.";
+        final ToolCall call = calling.call();
+        final ToolCallContext context = calling.context();
+        final String given = stringArg(call, START_FROM_ARG);
+        final Optional<String> chosen;
+        if (given != null && consent.takesChatAnswer(context, NAME, START_QUESTION)) {
+            final String answer = given.strip().toLowerCase(Locale.ROOT);
+            if (!ExistingTranslations.EXISTING.equals(answer) && !ExistingTranslations.DRAFT.equals(answer)) {
+                throw new ToolRefusal(START_FROM_ARG + " is the user's answer: existing or draft, not '" + given
+                                      + "'.");
+            }
+            chosen = Optional.of(ExistingTranslations.EXISTING.equals(answer)
+                    ? START_EXISTING
+                    : START_DRAFT);
+        } else {
+            chosen = consent.choose(call, context, NAME, message, List.of(START_EXISTING, START_DRAFT),
+                    START_QUESTION);
+        }
+        final Map<String, Object> result = new LinkedHashMap<>();
+        if (chosen.isEmpty()) {
+            consent.askInChat(context, NAME, START_QUESTION);
+            result.put(STATUS, "needs_choice");
+            result.put("existing", described);
+            final Map<String, Object> routes = new LinkedHashMap<>();
+            routes.put(ExistingTranslations.EXISTING, START_EXISTING + ": copied as a new version (copy_pipeline), "
+                                                      + "its XSLT read back into a mapping and catalogue "
+                                                      + "(rebuild_mapping); the original isn't touched");
+            routes.put(ExistingTranslations.DRAFT, START_DRAFT + " from the sample, the event types catalogued "
+                                                   + "here");
+            result.put("routes", routes);
+            result.put(HINT, consent.whyInChat(context, NAME, START_QUESTION) + ": ask the user in the chat. "
+                             + message + " Then call again with " + START_FROM_ARG + "=existing or "
+                             + START_FROM_ARG + "=draft, as they answer.");
+            return Optional.of(result);
+        }
+        final boolean existing = START_EXISTING.equals(chosen.get());
+        final Map<String, Object> startFrom = new LinkedHashMap<>();
+        startFrom.put("choice", existing
+                ? ExistingTranslations.EXISTING
+                : ExistingTranslations.DRAFT);
+        final Map<String, Object> pipeline = new LinkedHashMap<>();
+        pipeline.put("name", described.get("name"));
+        pipeline.put("uuid", described.get("uuid"));
+        startFrom.put("pipeline", pipeline);
+        startFrom.put(AT, clock.getAsLong());
+        buildRecords.get().rememberStartFrom(calling.build(), startFrom);
+        if (!existing) {
+            return Optional.empty();
+        }
+        result.put(STATUS, "start_from_existing");
+        result.put("existing", described);
+        result.put(HINT, "The user chose to start from " + said + ". Next: copy it as a new version (the user "
+                         + "confirms its names), then rebuild_mapping reads the copy's XSLT back into a mapping and "
+                         + "this catalogue; then " + NAME + " build=" + calling.build() + " checks the catalogue "
+                         + "against the sample and puts it to the user.");
+        plan.nextStep(calling.build(), null).ifPresent(next -> result.put("next", next));
+        return Optional.of(result);
+    }
+
+    // The words a set's summary starts with when the build started from an existing pipeline: where its event types
+    // came from (decided by the user, 2026-11-24); empty otherwise.
+    private Optional<String> origin(final Calling calling) {
+        final Map<String, Object> startFrom = plan.startFrom(calling.build()).orElse(Map.of());
+        if (!ExistingTranslations.EXISTING.equals(startFrom.get("choice"))) {
+            return Optional.empty();
+        }
+        final int count = calling.catalogue().eventTypes().size();
+        return Optional.of(count + " event type" + (count == 1
+                ? ""
+                : "s") + " from '" + ToolText.str(JsonValues.mapOrEmpty(startFrom.get("pipeline")).get("name"))
+                           + "', the existing pipeline this build started from (read back from its XSLT).");
     }
 
     // A next version's build starts from the promoted catalogue beside the feed it works from, whether or not
@@ -505,6 +624,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             saved(calling, calling.catalogue(), check).ifPresent(path -> result.put("listing", path));
         }
         result.put("catalogue", compact(calling.catalogue()));
+        origin(calling).ifPresent(said -> result.put("origin", said));
         result.put(HINT, "Propose the source's event types (proposals=[{op: add, type_id, title, description, "
                          + "event_detail, action, actor, recognised_by, placements, basis, confidence}]) from this "
                          + "evidence and what you know of the product: a type is what happened, recognised by "
@@ -1284,8 +1404,11 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                             final CatalogueCheckResult check,
                             final Map<String, Object> confirming) {
         final String notesDoc = notesLink(calling);
-        return CatalogueSummary.summary(set, check, notesDoc, CatalogueSummary.Amendments.fromJson(
+        final String summary = CatalogueSummary.summary(set, check, notesDoc, CatalogueSummary.Amendments.fromJson(
                 JsonValues.map(confirming.get(CHANGES))));
+        return origin(calling)
+                .map(said -> said + "\n\n" + summary)
+                .orElse(summary);
     }
 
     // The source notes doc, where every row is: linked as the caller opens documents (Stroom AI's chat, or Stroom's

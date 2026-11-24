@@ -68,7 +68,10 @@ public final class CatalogueValidation {
         final boolean sole = catalogue.eventTypes().size() == 1;
         for (final EventType type : catalogue.eventTypes()) {
             final String id = type.typeId();
-            final String idProblem = TypeIds.problem(id);
+            // An existing pipeline's TypeId is kept as it writes it: changing it would change its Events.
+            final String idProblem = EventType.EXISTING_PIPELINE.equals(type.basis())
+                    ? TypeIds.keptProblem(id)
+                    : TypeIds.problem(id);
             if (idProblem != null) {
                 problems.add(new Problem(id, -1, idProblem));
             } else if (typeIds.merge(id, 1, Integer::sum) == 2) {

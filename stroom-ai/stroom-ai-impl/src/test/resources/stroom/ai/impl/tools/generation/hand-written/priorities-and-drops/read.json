@@ -1,0 +1,36 @@
+{
+ "rules": [
+  "kiosk-alert",
+  "kiosk-login",
+  "dropped (drop)",
+  "other"
+ ],
+ "counts": {
+  "read": 10,
+  "kept_as_xpath": 14,
+  "calls_imported_functions": 0,
+  "not_read": 0
+ },
+ "kept_as_xpath": [
+  "rule kiosk-alert: its condition",
+  "rule kiosk-alert: EventTime/TimeCreated",
+  "rule kiosk-alert: EventSource/Device/HostName",
+  "rule kiosk-alert: EventDetail/Alert/Description",
+  "rule kiosk-login: its condition",
+  "rule kiosk-login: EventTime/TimeCreated",
+  "rule kiosk-login: EventSource/Device/HostName",
+  "rule kiosk-login: EventSource/User/Id",
+  "rule kiosk-login: EventDetail/Authenticate/User/Id",
+  "rule dropped: its condition",
+  "rule other: EventTime/TimeCreated",
+  "rule other: EventSource/Device/HostName",
+  "rule other: EventDetail/TypeId",
+  "rule other: EventDetail/Unknown/Data Data user"
+ ],
+ "calls_imported_functions": [],
+ "written_by_hand": [
+  "a template per event (match patterns), read as one rule each in the order XSLT chooses them"
+ ],
+ "not_read": [],
+ "differences": []
+}

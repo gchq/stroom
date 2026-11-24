@@ -110,6 +110,9 @@ public class BuildRecords {
     /// The record's key for the kind of work the build was started as, when it was named: `events`, `discovery`,
     /// `reference` or `assessment` (a feed surveyed and its source types registered, nothing onboarded).
     public static final String KIND = "kind";
+    /// The build-level key of how the build starts when a pipeline already translates what it is to (decided by the
+    /// user, 2026-11-24): `choice` (`existing` or `draft`), `pipeline` (`name`, `uuid`) and `at`.
+    public static final String START_FROM = "start_from";
     /// The record's key for the feeds whose survey for the build read nothing, each with why
     /// (catalogue_event_types then goes on without the survey, saying so).
     public static final String UNREADABLE_SURVEYS = "unreadable_surveys";
@@ -490,6 +493,26 @@ public class BuildRecords {
     public Map<String, Object> rememberKind(final String build, final String kind) {
         final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
         return save(build, found.orElse(null), state -> state.put(KIND, kind));
+    }
+
+    /// @param build A build's name.
+    /// @return How the user chose to start the build, a pipeline already translating what it is to (`choice`,
+    /// `pipeline`), or empty when they haven't been asked.
+    public Optional<Map<String, Object>> startFrom(final String build) {
+        return load(build).get(START_FROM) instanceof final Map<?, ?> kept
+                ? Optional.of(JsonValues.mapOrEmpty(kept))
+                : Optional.empty();
+    }
+
+    /// Records how the user chose to start the build: from the pipeline already translating what it is to, or with a
+    /// new translation drafted.
+    ///
+    /// @param build    A build's name.
+    /// @param startFrom `choice` (`existing` or `draft`), `pipeline` (`name`, `uuid`) and `at`.
+    /// @return The record as saved.
+    public Map<String, Object> rememberStartFrom(final String build, final Map<String, Object> startFrom) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> state.put(START_FROM, new LinkedHashMap<>(startFrom)));
     }
 
     /// @param build A build's name, or null.

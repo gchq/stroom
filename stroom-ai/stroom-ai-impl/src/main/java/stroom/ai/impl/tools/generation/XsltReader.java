@@ -185,6 +185,8 @@ public final class XsltReader {
         // An environment's fork of the event-logging schema is read as event-logging:3: the mapping is the same.
         final XmlElement root = XmlParser.parse(XsltVersionHistory.strip(ForkedEvents.asStandard(code)), true,
                 false);
+        // A translation written by hand, laid out as the generator's (HandLayouts): read the same way.
+        final List<String> laidOut = HandLayouts.layOut(root);
         final XPathTreeParser parser = XPathTreeParser.parserFor(root.namespaces());
         final String namespace = Objects.requireNonNullElse(root.get("xpath-default-namespace"), "");
         final Map<String, XmlElement> templates = new LinkedHashMap<>();
@@ -229,7 +231,7 @@ public final class XsltReader {
         XmlElement record = recordMode == null
                 ? null
                 : templates.get(recordMode);
-        final List<String> notes = new ArrayList<>();
+        final List<String> notes = new ArrayList<>(laidOut);
         if ("event".equals(recordMode) && record != null && record.childElements(XSL, "apply-templates").stream()
                 .anyMatch(child -> "item".equals(child.get("mode")))) {
             record = templates.get("item");
@@ -512,6 +514,9 @@ public final class XsltReader {
                 }
             }
             rule.leaves().add(leaf);
+        } else if (child.is(XSL, "param")) {
+            // A template's parameter, followed in place: bound to what its call passes (params).
+            return;
         } else if (!child.is(XSL, "variable")) {
             rule.lose(at + ": " + child.localName() + " not read");
         } else if (!truthy(child.get("select"))) {

@@ -250,11 +250,12 @@ class TestRebuildMappingTool {
     @Test
     void anXsltRewrittenOutsideTheGeneratorsLayoutSaysToCarryTheEditWithChanges() {
         // Seen: TWITTER's XSLT, rewritten by hand with a plain template per record, read back as nothing; the agent
-        // took that for an empty kept mapping and the edit for one no mapping can express.
+        // took that for an empty kept mapping and the edit for one no mapping can express. A template per record is
+        // read now (HandLayouts, 2026-11-24); a loop over the records in the start template still isn't.
         world.editByHand(uuid, code -> "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
                                        + "xmlns=\"event-logging:3\" version=\"3.0\"><xsl:template match=\"records\">"
-                                       + "<Events><xsl:apply-templates select=\"record\"/></Events></xsl:template>"
-                                       + "<xsl:template match=\"record\"><Event/></xsl:template></xsl:stylesheet>");
+                                       + "<Events><xsl:for-each select=\"record\"><Event/></xsl:for-each></Events>"
+                                       + "</xsl:template></xsl:stylesheet>");
 
         final Map<String, Object> result = call(Map.of());
 

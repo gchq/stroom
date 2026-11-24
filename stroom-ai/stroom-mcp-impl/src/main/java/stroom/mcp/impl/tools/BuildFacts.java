@@ -165,6 +165,21 @@ interface BuildFacts {
         return false;
     }
 
+    /// @param build   A build.
+    /// @param sources The existing feeds it works from.
+    /// @return The pipeline already translating what the build is to ([ExistingTranslations#find]): `name`, `uuid`,
+    /// and `source_types` for a source type group's; empty when there is none.
+    default Optional<Map<String, Object>> existingTranslation(final String build, final List<String> sources) {
+        return Optional.empty();
+    }
+
+    /// @param build A build.
+    /// @return How the user chose to start it, a pipeline already translating what it is to
+    /// ([BuildRecords#startFrom]): `choice` (`existing` or `draft`) and `pipeline`; empty when not asked yet.
+    default Optional<Map<String, Object>> startFrom(final String build) {
+        return Optional.empty();
+    }
+
     /// @param pipelineUuid A pipeline.
     /// @return Its processor filters, as processing_status gives them (each with `enabled` and `finished`).
     List<Map<String, Object>> processingFilters(String pipelineUuid);

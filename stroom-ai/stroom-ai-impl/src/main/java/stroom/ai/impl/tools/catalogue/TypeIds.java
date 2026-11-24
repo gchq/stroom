@@ -63,6 +63,15 @@ public final class TypeIds {
         return null;
     }
 
+    /// @param typeId A TypeId an existing pipeline writes, kept as it is (any form).
+    /// @return Why it can't be kept (none, or too long), or null when it can.
+    public static String keptProblem(final String typeId) {
+        final String problem = problem(typeId);
+        return problem != null && typeId != null && !typeId.isBlank() && typeId.length() <= MAX_LENGTH
+                ? null
+                : problem;
+    }
+
     /// The TypeId suggested for an event type that gives none: its event detail element as the verb, and as the
     /// object what it acts on (`affected_as`), else the last segment of its first `equals` value as it is, else its
     /// title's first word; e.g. `Process-SOAPService`. A candidate that can't be an object (`4624`, all digits) is

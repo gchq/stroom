@@ -1,0 +1,25 @@
+{
+ "rules": [
+  "type-1001",
+  "type-1002",
+  "type-1003",
+  "type-2001",
+  "other"
+ ],
+ "counts": {
+  "read": 58,
+  "kept_as_xpath": 0,
+  "calls_imported_functions": 0,
+  "not_read": 0
+ },
+ "kept_as_xpath": [],
+ "calls_imported_functions": [],
+ "written_by_hand": [
+  "the records' template (applied with no mode) read as the record template",
+  "an xsl:choose inside the event, read as one rule per branch"
+ ],
+ "not_read": [],
+ "differences": [
+  "record 5: Event/EventSource/User/Id: [] -> null"
+ ]
+}

@@ -219,7 +219,8 @@ public class BuildPlan {
             "processed:running", "index_template:unstepped", "indexed:disabled", "indexed:unstepped",
             "indexed:running", "indexed:no_index", "indexed:finished", "documented:edited", "feed:reference",
             "samples:reference", "reference_processed:disabled", "reference_processed:running",
-            "stepped:no_reference", "index:discovery");
+            "stepped:no_reference", "index:discovery", CATALOGUE + ":offer", CATALOGUE + ":existing_copy",
+            CATALOGUE + ":existing_rebuild", CATALOGUE + ":existing_confirm");
     // The steps before the translation, which a reference-only build keeps.
     private static final Set<String> SOURCE_STEPS = Set.of("feed", "samples", "converter");
 
@@ -597,6 +598,46 @@ public class BuildPlan {
         }
     }
 
+    /// The pipeline already translating what the build is to, for the user to choose whether the build starts from it
+    /// (decided by the user, 2026-11-24): offered once, before the build holds any XSLT or pipeline of its own.
+    ///
+    /// @param build A build.
+    /// @return The pipeline (`name`, `uuid`, and `source_types` for a source type group's), or empty when there is
+    /// none, the user has chosen already, or the build has a translation of its own (advice: never a failure).
+    public Optional<Map<String, Object>> existingToOffer(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        try {
+            if (facts.startFrom(build).isPresent()) {
+                return Optional.empty();
+            }
+            final List<Map<String, Object>> docs = facts.buildDocs(build);
+            if (docs.stream().anyMatch(doc -> PipelineDoc.TYPE.equals(doc.get("type"))
+                                              || XsltDoc.TYPE.equals(doc.get("type")))) {
+                return Optional.empty();
+            }
+            return facts.existingTranslation(build, facts.sourceFeeds(build, docs));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No existing translation offered for build {}: {}", build,
+                    e.getMessage()), e);
+            return Optional.empty();
+        }
+    }
+
+    /// @param build A build.
+    /// @return How the user chose to start it ([BuildFacts#startFrom]), or empty when not asked yet.
+    public Optional<Map<String, Object>> startFrom(final String build) {
+        try {
+            return NullSafe.isBlankString(build)
+                    ? Optional.empty()
+                    : facts.startFrom(build);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("How build {} starts wasn't read: {}", build, e.getMessage()), e);
+            return Optional.empty();
+        }
+    }
+
     /// @param build The build, or null.
     /// @param made  A document the calling tool has just created, which counts whether or not the build's listing
     ///              shows it yet, or null.
@@ -859,11 +900,24 @@ public class BuildPlan {
                         : Boolean.FALSE);
         done.put(SOURCE_TYPES, sourceTypesDone(build, surveyState, of(byType, DocumentationDoc.TYPE), sources,
                 assessment));
-        done.put(CATALOGUE, facts.catalogued(docs)
-                ? Boolean.TRUE
-                : hasMapping(xslts, "translation") || !translation.isEmpty()
-                        ? null
-                        : Boolean.FALSE);
+        // How the user chose to start, where a pipeline already translates what the build is to (decided by the user,
+        // 2026-11-24): from it, the catalogue is to do (read back from its XSLT, then confirmed) though the build
+        // holds its copy's translation.
+        final Map<String, Object> startFrom = facts.startFrom(build).orElse(null);
+        final boolean inducting = startFrom != null
+                                  && ExistingTranslations.EXISTING.equals(startFrom.get("choice"));
+        // Until the copy is made and its XSLT read back, whatever catalogue the build holds already (one carried in
+        // from the promoted notes beside the feed, confirmed) is no reason to skip them.
+        final boolean readBack = !translation.isEmpty() && xslts.stream().noneMatch(x -> x.get("mapping") == null);
+        done.put(CATALOGUE, inducting && !readBack
+                ? Boolean.FALSE
+                : facts.catalogued(docs)
+                        ? Boolean.TRUE
+                        : inducting
+                                ? Boolean.FALSE
+                                : hasMapping(xslts, "translation") || !translation.isEmpty()
+                                        ? null
+                                        : Boolean.FALSE);
         done.put("translation", hasMapping(xslts, "translation")
                                 || (existing && !translation.isEmpty()
                                     && xslts.stream().anyMatch(x -> !"index".equals(x.get("mapping")))));
@@ -1021,6 +1075,29 @@ public class BuildPlan {
             // plan says (seen in Ask Stroom AI: 66 locations, and create_pipeline's next said step_records with a
             // placeholder).
             processing = "surveyed";
+        }
+        if (CATALOGUE.equals(nextStep) && inducting) {
+            // Starting from the existing pipeline: its copy, then its XSLT read back, then the catalogue confirmed.
+            final String unread = xslts.stream()
+                    .filter(x -> x.get("mapping") == null)
+                    .map(BuildPlan::uuid)
+                    .findFirst()
+                    .orElse(null);
+            version = JsonValues.mapOrEmpty(startFrom.get("pipeline"));
+            processing = translation.isEmpty()
+                    ? "existing_copy"
+                    : unread != null
+                            ? "existing_rebuild"
+                            : "existing_confirm";
+            edited = unread;
+        } else if (CATALOGUE.equals(nextStep) && startFrom == null && translation.isEmpty() && existing
+                   && !hasMapping(xslts, "translation")) {
+            // Not asked yet: the catalogue's first call asks the user how to start.
+            final Optional<Map<String, Object>> found = facts.existingTranslation(build, sources);
+            if (found.isPresent()) {
+                processing = "offer";
+                version = found.get();
+            }
         }
         Map<String, Object> referenceArgs = null;
         if (reference) {
@@ -1192,6 +1269,34 @@ public class BuildPlan {
             case CATALOGUE -> call(CatalogueEventTypesTool.NAME, args("build", build, "stream_ids", raw),
                     "lists the evidence; propose the event types (proposals=), each checked against the records, "
                     + "then confirm=true puts them to the user a set at a time");
+            // A pipeline already translates what the build is to (decided by the user, 2026-11-24): the user chooses
+            // how to start, in the catalogue's first call's form.
+            case CATALOGUE + ":offer" -> call(CatalogueEventTypesTool.NAME, args("build", build, "stream_ids", raw),
+                    "it first asks the user (in a form) how the build starts: from the existing pipeline '"
+                    + ToolText.str(NullSafe.map(args.version()).get("name")) + "' (copied as a new version, its "
+                    + "XSLT read back into a mapping and catalogue; the original isn't touched), or with a new "
+                    + "translation drafted; then follow its next");
+            case CATALOGUE + ":existing_copy" -> {
+                final Map<String, Object> version = NullSafe.map(args.version());
+                final String name = ToolText.str(version.get("name"));
+                yield call("copy_pipeline", args("build", build, "source_uuid", version.get("uuid"), "new_name",
+                                "<the new version's name ('" + name + "' with its next version)>"),
+                        "the user confirms the new version's names in its form; then rebuild_mapping reads its "
+                        + "XSLT back (next says so). The original isn't touched");
+            }
+            case CATALOGUE + ":existing_rebuild" -> call("rebuild_mapping", args("uuid", NullSafe.nonBlankStringElse(
+                            args.editedXslt(), "<the copy's XSLT uuid>"), "pipeline_uuid", tr),
+                    "it reads the XSLT back into a mapping (what it can't read is kept as XSLT expressions, or "
+                    + "listed as not read), steps both over the sample and saves once the user confirms (differences "
+                    + "or unread parts shown to them first: accept_differences=, accept_unread= only on their "
+                    + "word); the catalogue is read back with it, and the existing version's run over the sample "
+                    + "is listed (existing_run)");
+            case CATALOGUE + ":existing_confirm" -> call(CatalogueEventTypesTool.NAME, args("build", build,
+                            "stream_ids", raw),
+                    "lists the catalogue read back from '" + ToolText.str(NullSafe.map(args.version()).get("name"))
+                    + "' with its check against the sample (uncatalogued records, event types the sample lacks, "
+                    + "overlaps): propose changes only for what is worth a look, then confirm=true puts it to the "
+                    + "user");
             // A build with a scope over an aggregated feed's source types drafts through it: the build says which.
             case "translation" -> call("draft_translation_mapping", args.scope() == null
                             ? args("stream_ids", raw)

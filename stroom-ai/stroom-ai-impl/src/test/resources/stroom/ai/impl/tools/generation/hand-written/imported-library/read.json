@@ -1,0 +1,25 @@
+{
+ "rules": [
+  "db-select",
+  "db-delete",
+  "other"
+ ],
+ "counts": {
+  "read": 14,
+  "kept_as_xpath": 1,
+  "calls_imported_functions": 1,
+  "not_read": 0
+ },
+ "kept_as_xpath": [
+  "rule other: EventDetail/TypeId"
+ ],
+ "calls_imported_functions": [
+  "rule other: EventDetail/Unknown/Data Data object"
+ ],
+ "written_by_hand": [
+  "the records' template (applied with no mode) read as the record template",
+  "an xsl:choose inside the event, read as one rule per branch"
+ ],
+ "not_read": [],
+ "differences": []
+}

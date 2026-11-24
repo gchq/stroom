@@ -66,6 +66,9 @@ final class FakeBuildFacts implements BuildFacts {
     String agreementProblem;
     Map<String, String> names = new LinkedHashMap<>();
     List<Map<String, Object>> translating = List.of();
+    // The pipeline already translating what the build is to, and how the user chose to start (none by default).
+    Map<String, Object> existing;
+    Map<String, Object> startFrom;
     final List<String> columns = List.of();
     Function<String, Map<String, Object>> profiler = text -> profileOf("json lines");
     RuntimeException docsFail;
@@ -278,5 +281,15 @@ final class FakeBuildFacts implements BuildFacts {
     @Override
     public List<String> referencedFeeds(final String pipelineUuid) {
         return referencedFeeds.getOrDefault(pipelineUuid, List.of());
+    }
+
+    @Override
+    public Optional<Map<String, Object>> existingTranslation(final String build, final List<String> sources) {
+        return Optional.ofNullable(existing);
+    }
+
+    @Override
+    public Optional<Map<String, Object>> startFrom(final String build) {
+        return Optional.ofNullable(startFrom);
     }
 }
