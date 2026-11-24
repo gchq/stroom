@@ -1,12 +1,13 @@
-name: The user activity timeline skill, from its template, tried and saved, on the generated data
+name: The user activity timeline skill, tried and saved, on the generated data (its template one route)
 kind: skill
 capabilities: [skills, templates, trial_run, timeline]
-# From the built-in "user-activity-timeline" template, filled with the generated endpoint, Windows and proxy data's
-# index (aggregated/activity-timeline, eval case 77's week, moved to end yesterday) and its role conditions, tried on
-# one user for the last 2 days, then saved in /Investigations. Scored on: the template read, the trial run with the
-# user's values and the timeline built by following its steps (activity_timeline for jsmith), the proposal holding
-# the skill with its placeholders filled from the user's index (check_skill finds no problems, none left unfilled),
-# its steps calling activity_timeline on "User activity". Skipped without an Elasticsearch node.
+# The reference route: from the built-in "user-activity-timeline" template, filled with the generated endpoint,
+# Windows and proxy data's index (aggregated/activity-timeline, eval case 77's week, moved to end yesterday) and its
+# role conditions, tried on one user for the last 2 days, then saved in /Investigations. Scored on the outcome
+# (2026-11-25): the timeline built for jsmith (activity_timeline), and the proposal holding the skill, its steps
+# calling activity_timeline on "User activity", which check_skill finds no problems in (none left unfilled). The
+# template's use isn't required: drafting the skill from the chat is as good a route. Skipped without an
+# Elasticsearch node.
 elastic_index:
   name: User activity
   events: aggregated/activity-timeline/activity-timeline.csv
@@ -26,8 +27,6 @@ user_knows: >
 expected:
   tools_used: [propose_skill, activity_timeline]
   calls_with:
-    - {tool: propose_skill, contains: [template, user-activity-timeline]}
-    - {tool: propose_skill, contains: [trial, jsmith]}
     - {tool: activity_timeline, contains: [jsmith, User activity]}
   proposal:
     folder: /Investigations

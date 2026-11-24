@@ -2,9 +2,11 @@ name: A skill broken since it was written is reported before it runs, with the f
 kind: skill
 capabilities: [skills, find_skills, check_skill]
 # The skill's example call reads the index "Logons", renamed to "Logons-V2" since. find_skills, reading it by name,
-# reports the missing data source before the steps run. Scored on: the skill read by name, the agent telling the
-# user it can't run as written and naming the fix (the index's new name, Logons-V2, or the skill's change), and the
-# steps not run against the missing index (no run_stroomql call reading "Logons" alone).
+# says to stop (2026-11-25: a broken skill is never run, nor against a stand-in such as Logons-V2), what is broken
+# and the likely replacement, and, as the user can edit the skills doc, offers the fix (propose_skill with the
+# corrected skill) or the skill's removal. Scored on: the skill read by name with that result, the agent telling the
+# user it can't run as written, naming Logons-V2 and offering the fix, no query run at all, and nothing proposed (the
+# user asked for no change now).
 lucene_index:
   name: Logons-V2
   events: questions/skill-logons.csv
@@ -39,8 +41,15 @@ user_knows: >
   The Logons index was renamed Logons-V2 last month. Don't change the skill now; just tell me what's wrong with it.
 expected:
   tools_used: [find_skills]
+  tools_not_used: [run_stroomql]
+  no_proposal: true
   find_skills: {name: Failed logons by host}
-  answer_must_say_all_of: [Logons-V2]
+  calls_with:
+    - tool: find_skills
+      contains: [jsmith]
+      result_contains: ["Stop: don't run this skill", "Likely replacement: 'Logons-V2'",
+                        "The user can edit its skills doc", propose_skill]
+  answer_must_say_all_of: [Logons-V2, [fix, correct, propose, update the skill, change the skill, edit the skill]]
   answer_must_say_one_of: [missing, doesn't exist, does not exist, no longer, not found, renamed, isn't, can't find, cannot find, couldn't find, could not find]
   answer_must_not_say: [ws-01]
 reference:
@@ -51,5 +60,5 @@ reference:
     - {tool: list_data_sources, arguments: {}}
   answer: >-
     The skill "Failed logons by host" can't run as written: its step reads the index Logons, which doesn't exist any
-    more. There is an index Logons-V2 with the same fields; the skill's query needs "from Logons-V2" (check_skill
-    reports it as a missing data source). I haven't run it.
+    more. There is an index Logons-V2 with the same fields; the skill's query needs "from Logons-V2". I haven't run
+    it. When you want, I can propose the fix (the skill itself corrected to Logons-V2) for you to review and apply.

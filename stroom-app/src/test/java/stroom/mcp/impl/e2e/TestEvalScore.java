@@ -1053,6 +1053,71 @@ class TestEvalScore {
     }
 
     @Test
+    void case90PassesAStopWithTheFixOfferedAndFailsARunAgainstTheRenamedIndex() {
+        final Map<String, Object> evalCase = EvalCases.load("90_skill_broken_reported_before_running");
+        final String stopped = "Skill 'Failed logons by host' (folder /Hunts, doc d).\n\nStop: don't run this "
+                               + "skill, nor its steps against anything in place of what is broken.\n- Problem "
+                               + "(missing_data_source): Step 1's example call's query is from 'Logons'. Fix: "
+                               + "Likely replacement: 'Logons-V2'.\n\nThe user can edit its skills doc, so offer "
+                               + "them the fix: the skill itself corrected, as propose_skill {...}";
+        final Map<String, Object> arguments = Map.of("name", "failed-logons-by-host", "arguments",
+                Map.of("user", "jsmith"));
+        final EvalScore offered = new EvalScore("90");
+        final EvalScore substituted = new EvalScore("90");
+
+        offered.scoreSkill(evalCase, new EvalScore.SkillRun(List.of(new EvalScore.SkillCall("find_skills",
+                arguments, false, stopped)), "It can't run: the index Logons doesn't exist; Logons-V2 looks like "
+                                             + "it. I can propose the fix to the skill when you want.", List.of(),
+                List.of()));
+        substituted.scoreSkill(evalCase, new EvalScore.SkillRun(List.of(new EvalScore.SkillCall("find_skills",
+                arguments, false, stopped), new EvalScore.SkillCall("run_stroomql", Map.of("query",
+                "from Logons-V2 where UserId = 'jsmith'"), false, "3 on ws-02")), "Logons is missing, so I ran it "
+                                                                                  + "on Logons-V2: 3 on ws-02.",
+                List.of(), List.of()));
+
+        assertThat(offered.passed()).as(offered.summary()).isTrue();
+        assertThat(substituted.summary()).contains("run_stroomql was used",
+                "the reply says none of [fix, correct, propose");
+    }
+
+    @Test
+    void case91ScoresTheOutcomeNotTheTemplatesUse() {
+        final Map<String, Object> evalCase = EvalCases.load("91_skill_timeline_from_template");
+        final String skill = """
+                # User activity timeline
+
+                Builds a timeline of one user's activity over a period from the User activity index.
+
+                ## Parameters
+                - user (required): the user's account name.
+                - days (default 7): how many days back.
+
+                ## Steps
+                1. Build it:
+                   ```json
+                   {"tool": "activity_timeline", "arguments": {"entity": "{user}", "timeFrom": "now()-{days}d", \
+                "sources": [{"index": "User activity"}]}}
+                   ```
+                """;
+        final List<EvalScore.SkillCall> calls = List.of(new EvalScore.SkillCall("activity_timeline", Map.of(
+                "entity", "jsmith", "sources", List.of(Map.of("index", "User activity"))), false, "Spans: 12"),
+                new EvalScore.SkillCall("propose_skill", Map.of("folder", "/Investigations", "markdown", skill),
+                        false, "Proposed."));
+        final EvalScore drafted = new EvalScore("91");
+        final EvalScore problems = new EvalScore("91");
+
+        drafted.scoreSkill(evalCase, new EvalScore.SkillRun(calls, "Proposed.", List.of(proposal("Investigations",
+                "", skillDoc(skill), "Draft skill 'User activity timeline':\n- Suggestion (thin_when_to_use): ...")),
+                List.of()));
+        problems.scoreSkill(evalCase, new EvalScore.SkillRun(calls, "Proposed.", List.of(proposal(
+                "Investigations", "", skillDoc(skill), "- Problem (missing_data_source): ...")), List.of()));
+
+        // Drafted from the chat with no template and no trial: as good a route.
+        assertThat(drafted.passed()).as(drafted.summary()).isTrue();
+        assertThat(problems.summary()).contains("check_skill found 1 problem(s), expected 0");
+    }
+
+    @Test
     void aHandWrittenCasesRouteCopyAndOriginalAreScored() {
         final Map<String, Object> evalCase = Map.of("expected", Map.of(
                 "route", Map.of("calls_in_order", List.of("survey_feed", "copy_pipeline", "promote_build"),
