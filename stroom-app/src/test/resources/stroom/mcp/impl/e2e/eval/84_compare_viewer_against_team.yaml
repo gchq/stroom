@@ -53,5 +53,6 @@ reference:
     windowTo: '2026-06-26'
     baselineFrom: '2026-02-02'
     unit: week
+    peers: true
     location: false
     timeZone: Australia/Sydney

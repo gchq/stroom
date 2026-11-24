@@ -24,7 +24,7 @@ conclusion about the person.
 
 1. Compare the review period with the person's own baseline and their peers, by week:
    ```json
-   {"tool": "compare_activity", "arguments": {"person": "{person}", "logonIds": "{logon_ids}", "windowFrom": "now()-{days}d", "windowTo": "now()", "baselineFrom": "now()-{baseline_days}d", "unit": "week", "sources": "[[the privileged session, authentication and endpoint indexes, by name]]", "breadthFields": "[[fields for breadth and new values: hosts reached, processes or administration tools run]]", "includeTargets": true}}
+   {"tool": "compare_activity", "arguments": {"person": "{person}", "logonIds": "{logon_ids}", "windowFrom": "now()-{days}d", "windowTo": "now()", "baselineFrom": "now()-{baseline_days}d", "unit": "week", "sources": "[[the privileged session, authentication and endpoint indexes, by name]]", "breadthFields": "[[fields for breadth and new values: hosts reached, processes or administration tools run]]", "peers": true, "includeTargets": true}}
    ```
 2. Look for a privileged logon followed by a control weakened, by the person's field:
    ```json

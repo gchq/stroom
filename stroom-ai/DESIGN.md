@@ -1898,7 +1898,7 @@ order, the timeline package first, then the comparison package; the record per p
   from zero not sized; the hour-of-week rhythm only with 5 baseline months; at most 20 ranked findings and a line a
   month, the rest in files (`profile.csv`, `monthly.csv`, `findings.csv`, `values.csv` under
   `/outputs/compare/<person>/`), and up to 5 flagged days for `activity_timeline`.
-* **Peers**: `Organisation` by default (`Unit`, `Group`, `Role` allowed; `Nationality` and the like refused), read
+* **Peers**: opt-in (user, 2026-11-24: the main use is the person against their own baseline; `peers: true`, on in the leaver and privileged user review templates, off in alert triage and the activity comparison); `Organisation` by default (`Unit`, `Group`, `Role` allowed; `Nationality` and the like refused), read
   from one event each (`TimelineEventXml`), capped at 200 people a call: asked past it in a chat, the first 200
   read and said over MCP; the map cached in `/outputs/compare/peer-groups.json`; fewer than 5 peers not compared.
 * **Categories**: an index's category field first (`categoryField`, the AGENTS doc's `## Fields` `category:`, the

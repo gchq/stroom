@@ -1,7 +1,6 @@
 # Alert triage
 
-Triages an alert about a person: how the day of the alert compares with the person's own same weekdays and their
-peers, what they did in the hours around it, and, apart, what was done to their account (a reset, MFA changed,
+Triages an alert about a person: how the day of the alert compares with the person's own same weekdays, what they did in the hours around it, and, apart, what was done to their account (a reset, MFA changed,
 failed logons against it, access granted), so an analyst can weigh whether it is unusual for them or their account
 was acted on. The comparison gives indicators with evidence, never a verdict on the alert or the person.
 
@@ -22,7 +21,7 @@ was acted on. The comparison gives indicators with evidence, never a verdict on 
 
 ## Steps
 
-1. Compare the alert's day with the same weekdays before it and with the person's peers:
+1. Compare the alert's day with the same weekdays before it:
    ```json
    {"tool": "compare_activity", "arguments": {"person": "{person}", "logonIds": "{logon_ids}", "windowFrom": "{alert_day}", "windowTo": "{alert_day}", "baselineFrom": "{baseline_start}", "unit": "day", "sources": "[[the indexes the alert's activity would show in, by name]]", "breadthFields": "[[fields for breadth and new values: hosts, destinations, applications]]", "includeTargets": true}}
    ```
@@ -36,6 +35,6 @@ was acted on. The comparison gives indicators with evidence, never a verdict on 
 
 ## Output
 
-A short triage note in the chat: the day against the person's baseline and peers, the timeline around the alert,
+A short triage note in the chat: the day against the person's baseline, the timeline around the alert,
 what was done to their account, and the gaps; never a verdict, only what the evidence shows and its other
 explanations.

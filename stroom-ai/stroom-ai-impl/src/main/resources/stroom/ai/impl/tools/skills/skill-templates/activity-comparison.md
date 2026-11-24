@@ -1,6 +1,6 @@
 # Activity comparison
 
-Compares one person's recent activity with their own past and with their peers', from the indexes' aggregates:
+Compares one person's recent activity with their own past, from the indexes' aggregates:
 volume, hours, breadth and new values, with change points and drifts. A general starting point for "is this person
 unusual"; the findings are indicators with evidence, never a conclusion about the person.
 
@@ -21,7 +21,7 @@ unusual"; the findings are indicators with evidence, never a conclusion about th
 
 ## Steps
 
-1. Compare the window with the person's baseline and peers:
+1. Compare the window with the person's baseline:
    ```json
    {"tool": "compare_activity", "arguments": {"person": "{person}", "logonIds": "{logon_ids}", "windowFrom": "now()-{window_days}d", "windowTo": "now()", "baselineFrom": "now()-{baseline_days}d", "unit": "{unit}", "sources": "[[the indexes to compare, by name, or leave out for every one with a person field]]", "breadthFields": "[[fields for breadth and new values, or leave out for the host, application and object fields found]]", "leave": "{leave}"}}
    ```

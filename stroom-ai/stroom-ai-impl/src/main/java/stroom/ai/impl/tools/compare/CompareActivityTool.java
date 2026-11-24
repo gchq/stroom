@@ -87,7 +87,8 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/// `compare_activity` - compares one person's activity in a window with their own baseline and their peers', from
+/// `compare_activity` - compares one person's activity in a window with their own baseline (and, when asked, with
+/// their peers'), from
 /// index aggregates only (ES|QL on Elastic Indexes, StroomQL on others, in monthly slices in parallel), never the
 /// events themselves: 12 months is a few thousand numbers. The features, checks and scoring are
 /// [ActivityProfiles] and [ActivityScoring]; the peers' groups are read from one event each ([PeerGroups]). The
@@ -253,8 +254,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         return ToolDefinition.builder()
                 .name(NAME)
                 .description(ToolDescription.builder()
-                        .general("Compares one person's activity in a window with their own baseline and their "
-                                 + "peers' (the same UserDetails Organisation, read from one event each), from "
+                        .general("Compares one person's activity in a window with their own baseline, from "
                                  + "index aggregates only, never the events: volume (events, active hours, sums), "
                                  + "rhythm (first and last of the day, hour of the week), breadth (distinct "
                                  + "values) and novelty (values first seen). Scored in code: robust z-scores, "
@@ -267,8 +267,10 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                  + "done to the person apart (a group granted, a reset, MFA changed, failed "
                                  + "logons against them; about 2 more queries a month per source). Categories and "
                                  + "location are on by default where a source has a category or country field "
-                                 + "(about 1 more query a month each per source); peers and accessField are "
-                                 + "asked for. A date alone is a whole day in timeZone: windowFrom 2026-06-01 "
+                                 + "(about 1 more query a month each per source). peers (only when the question "
+                                 + "compares them with their team or organisation) also compares them with the "
+                                 + "others of their UserDetails Organisation, read from one event each (about 1 "
+                                 + "more query a month per source); accessField is asked for too. A date alone is a whole day in timeZone: windowFrom 2026-06-01 "
                                  + "and windowTo 2026-06-30 are all of June.")
                         .chatOnly(" Drill into flagged days with activity_timeline.")
                         .build())
@@ -311,7 +313,8 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                                                        + "yyyy-MM-dd..yyyy-MM-dd: reason (e.g. an "
                                                                        + "approved migration), from the question, "
                                                                        + "skill or AGENTS doc: not scored."))
-                        .addBooleanProperty(PEERS_ARG, "Compare with peers (default true).")
+                        .addBooleanProperty(PEERS_ARG, "Also compare with peers, the others of their Organisation "
+                                + "(default false).")
                         .addBooleanProperty(CATEGORIES_ARG, "Add events a day by category (personal cloud "
                                                             + "storage, webmail, job search...): from the index's "
                                                             + "category field (categoryField, AGENTS 'category:', "
@@ -381,7 +384,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         final Spec spec = new Spec(periods.baselineFrom(), periods.baselineTo(), periods.windowFrom(),
                 periods.windowTo(), unit, leave, zone.zone(), exceptions(stringListArg(request, EXCEPTIONS_ARG)));
         final String element = peerElement(stringArg(request, PEER_ELEMENT_ARG));
-        final boolean peers = booleanArg(request, PEERS_ARG, true);
+        final boolean peers = booleanArg(request, PEERS_ARG, false);
         // Categories and location: as asked, else on where the source has the field (said in the notes); the model
         // classifies values only when categories are asked for.
         final Boolean categoriesAsked = optionalBooleanArg(request, CATEGORIES_ARG);
@@ -392,6 +395,9 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                 CATEGORY_CORRECTIONS_ARG);
 
         final List<String> notes = new ArrayList<>(periods.notes());
+        if (!peers) {
+            notes.add("Peers not compared: peers: true compares them with the others of their " + element + ".");
+        }
         final List<Planned> planned = plan(request, context, person, logonIds, targets, categoriesAsked,
                 locationAsked);
         planned.stream().filter(Planned::usable).forEach(source -> notes.addAll(source.defaults()));

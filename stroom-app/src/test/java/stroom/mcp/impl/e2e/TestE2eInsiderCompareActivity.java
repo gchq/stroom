@@ -108,7 +108,7 @@ class TestE2eInsiderCompareActivity extends AbstractInsiderE2eTest {
 
         // The curious viewer, above their Finance peers (Organisation read from one event each).
         final Map<String, Object> viewer = compare(loaded, InsiderDataset.VIEWER, "2026-06-01", "2026-06-26", "week",
-                List.of(Source.CLOUD), List.of(), List.of(), Map.of());
+                List.of(Source.CLOUD), List.of(), List.of(), Map.of("peers", true));
         dump("viewer", viewer);
         assertThat((List<Map<String, Object>>) viewer.get("findings")).anySatisfy(finding -> {
             assertThat(finding).containsEntry("kind", "peers");

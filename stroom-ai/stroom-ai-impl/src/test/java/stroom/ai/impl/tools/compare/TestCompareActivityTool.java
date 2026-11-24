@@ -416,7 +416,9 @@ class TestCompareActivityTool {
     void peersWithoutViewData() {
         Mockito.when(eventXml.read(Mockito.any(), Mockito.any(), Mockito.anyInt(), Mockito.any(), Mockito.any(),
                 Mockito.anyString())).thenReturn(new TimelineEventXml.Read(Map.of(), 0, 0, 12, false));
-        final Map<String, Object> json = json(mcp(), arguments());
+        final Map<String, Object> arguments = arguments();
+        arguments.put(CompareActivityTool.PEERS_ARG, true);
+        final Map<String, Object> json = json(mcp(), arguments);
 
         assertThat(String.valueOf(json.get("notes"))).contains("You may not view data");
         assertThat(list(json, "findings")).noneSatisfy(finding -> assertThat(finding)
