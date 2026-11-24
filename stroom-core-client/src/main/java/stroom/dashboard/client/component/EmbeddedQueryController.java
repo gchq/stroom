@@ -786,7 +786,8 @@ public class EmbeddedQueryController
 
     @Override
     public List<ColumnRef> getColumnRefs() {
-        if (currentVisController != null) {
+        // The keys of what is shown, as its selection has
+        if (isShowingVis()) {
             return currentVisController.getColumnRefs();
         } else if (currentTableController != null) {
             return currentTableController.getColumnRefs();

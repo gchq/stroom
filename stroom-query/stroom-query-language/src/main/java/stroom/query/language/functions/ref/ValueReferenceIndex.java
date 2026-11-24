@@ -22,12 +22,53 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class ValueReferenceIndex {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ValueReferenceIndex.class);
 
     private final List<ValueReference<?>> list = new ArrayList<>();
+    private final SortedSet<Integer> windowShifts = new TreeSet<>();
+    private boolean usesWindows;
+    private final WindowRange windowRange = new WindowRange();
+
+    /// Gets the range of time windows that hold real rows, which the functions that read other
+    /// windows are given and a result store sets.
+    ///
+    /// @return The range, which is shared by everything compiled with this index.
+    public WindowRange getWindowRange() {
+        return windowRange;
+    }
+
+    /// Records that a function reads the values of another time window, so that rows are copied
+    /// to the window that reads them.
+    ///
+    /// @param windowShift How many windows after its own a row is copied to, which is less than zero
+    ///                    for a window before.
+    public void addWindowShift(final int windowShift) {
+        windowShifts.add(windowShift);
+    }
+
+    /// Gets the distances that rows must be copied for the functions that read other time windows.
+    ///
+    /// @return The distinct distances, in windows, none of them zero.
+    public int[] getWindowShifts() {
+        return windowShifts.stream().mapToInt(Integer::intValue).toArray();
+    }
+
+    /// Records that a function works with the time windows of a query.
+    public void setUsesWindows() {
+        usesWindows = true;
+    }
+
+    /// Gets whether any function works with the time windows of a query.
+    ///
+    /// @return True if one does.
+    public boolean usesWindows() {
+        return usesWindows;
+    }
 
     public CountReference addCount(final String name) {
         return add(new CountReference(list.size(), name));

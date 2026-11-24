@@ -19,6 +19,8 @@ package stroom.index.client.component;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.FakeRestFactory;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolume.VolumeType;
+import stroom.index.shared.IndexVolumeResource;
 import stroom.index.shared.ValidationResult;
 import stroom.node.client.NodeClient;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -30,6 +32,7 @@ import com.google.web.bindery.event.shared.SimpleEventBus;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
@@ -87,11 +90,56 @@ class TestIndexVolumeEditorController {
         Mockito.verify(okPressed, Mockito.never()).reset();
     }
 
+    @Test
+    void aSharedVolumeIsSavedWithNoNode() {
+        // The node box is only hidden, so it can still hold the node chosen before the type changed
+        final IndexVolume validated = validatedVolume(VolumeType.SHARED, "node1a");
+
+        assertThat(validated.getVolumeType())
+                .isEqualTo(VolumeType.SHARED);
+        assertThat(validated.getNodeName())
+                .isNull();
+    }
+
+    @Test
+    void aLocalVolumeIsSavedWithItsNode() {
+        final IndexVolume validated = validatedVolume(VolumeType.LOCAL, "node1a");
+
+        assertThat(validated.getVolumeType())
+                .isEqualTo(VolumeType.LOCAL);
+        assertThat(validated.getNodeName())
+                .isEqualTo("node1a");
+    }
+
+    // Presses OK with the form showing a type and node, and returns the volume sent to be validated.
+    private IndexVolume validatedVolume(final VolumeType volumeType, final String nodeName) {
+        final IndexVolumeEditor view = mockView();
+        Mockito.when(view.getVolumeType()).thenReturn(volumeType);
+        Mockito.when(view.getNodeName()).thenReturn(nodeName);
+        pressOk(view);
+
+        final IndexVolumeResource resource = Mockito.mock(IndexVolumeResource.class);
+        restFactory.getLastRequest().callOn(resource);
+        final ArgumentCaptor<IndexVolume> captor = ArgumentCaptor.forClass(IndexVolume.class);
+        Mockito.verify(resource).validate(captor.capture());
+        return captor.getValue();
+    }
+
     // Presses OK in the dialog for a new volume.
     private HidePopupRequestEvent showAndPressOk() {
+        return pressOk(mockView());
+    }
+
+    // A form holding a new volume's path and no byte limit.
+    private IndexVolumeEditor mockView() {
         final IndexVolumeEditor view = Mockito.mock(IndexVolumeEditor.class);
         Mockito.when(view.getByteLimit()).thenReturn("");
         Mockito.when(view.getPath()).thenReturn("/newvol");
+        return view;
+    }
+
+    // Presses OK in the dialog for a new volume, with the given form.
+    private HidePopupRequestEvent pressOk(final IndexVolumeEditor view) {
         final IndexVolumeEditorController controller = new IndexVolumeEditorController(
                 eventBus, view, restFactory, Mockito.mock(NodeClient.class));
 

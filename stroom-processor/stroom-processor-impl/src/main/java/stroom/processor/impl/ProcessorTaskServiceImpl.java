@@ -24,7 +24,10 @@ import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
+import stroom.processor.shared.TaskStatus;
 import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
@@ -43,6 +46,7 @@ import jakarta.inject.Singleton;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Singleton
 class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
@@ -90,6 +94,37 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
     public ResultPage<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
         return securityContext.secureResult(PERMISSION, () ->
                 processorTaskDao.findSummary(criteria));
+    }
+
+    @Override
+    public Optional<ProcessorTask> fetch(final long taskId) {
+        return securityContext.secureResult(PERMISSION, () -> {
+            final ExpressionOperator expression = ExpressionOperator.builder()
+                    .addIdTerm(ProcessorTaskFields.TASK_ID, Condition.EQUALS, taskId)
+                    .build();
+            return processorTaskDao.find(new ExpressionCriteria(expression))
+                    .getValues()
+                    .stream()
+                    .findFirst();
+        });
+    }
+
+    @Override
+    public boolean returnToCreated(final long taskId) {
+        return securityContext.secureResult(PERMISSION, () ->
+                processorTaskDao.changeTaskStatus(
+                        taskId,
+                        Set.of(TaskStatus.COMPLETE, TaskStatus.FAILED),
+                        TaskStatus.CREATED));
+    }
+
+    @Override
+    public boolean markFailed(final long taskId) {
+        return securityContext.secureResult(PERMISSION, () ->
+                processorTaskDao.changeTaskStatus(
+                        taskId,
+                        Set.of(TaskStatus.CREATED, TaskStatus.QUEUED, TaskStatus.ASSIGNED, TaskStatus.COMPLETE),
+                        TaskStatus.FAILED));
     }
 
     @Override

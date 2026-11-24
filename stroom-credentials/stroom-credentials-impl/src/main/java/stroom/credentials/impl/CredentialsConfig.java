@@ -27,6 +27,7 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserType;
+import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -43,6 +44,7 @@ public class CredentialsConfig extends AbstractConfig implements IsStroomConfig,
     public static final String DEFAULT_KEY_STORE_CACHE_PATH = "${stroom.home}/keystores";
     public static final String DEFAULT_KEY_STORE_FILES_OWNER_SUBJECT_ID = User.ADMINISTRATORS_GROUP_SUBJECT_ID;
     public static final UserType DEFAULT_KEY_STORE_FILES_OWNER_TYPE = UserType.GROUP;
+    public static final StroomDuration DEFAULT_EXPIRY_WARNING_PERIOD = StroomDuration.ofDays(14);
 
     /**
      * Database config
@@ -53,6 +55,8 @@ public class CredentialsConfig extends AbstractConfig implements IsStroomConfig,
     private final List<KeyStoreFileCredentialConfig> keyStoreFiles;
     private final String keyStoreFilesOwnerSubjectId;
     private final UserType keyStoreFilesOwnerType;
+    private final boolean refuseExpiredCredentials;
+    private final StroomDuration expiryWarningPeriod;
 
     /**
      * Default constructor. Configuration created with default values.
@@ -64,6 +68,8 @@ public class CredentialsConfig extends AbstractConfig implements IsStroomConfig,
         keyStoreFiles = List.of();
         keyStoreFilesOwnerSubjectId = DEFAULT_KEY_STORE_FILES_OWNER_SUBJECT_ID;
         keyStoreFilesOwnerType = DEFAULT_KEY_STORE_FILES_OWNER_TYPE;
+        refuseExpiredCredentials = false;
+        expiryWarningPeriod = DEFAULT_EXPIRY_WARNING_PERIOD;
     }
 
     /**
@@ -77,7 +83,9 @@ public class CredentialsConfig extends AbstractConfig implements IsStroomConfig,
                              @JsonProperty("allowedKeyStoreFileDirs") final List<String> allowedKeyStoreFileDirs,
                              @JsonProperty("keyStoreFiles") final List<KeyStoreFileCredentialConfig> keyStoreFiles,
                              @JsonProperty("keyStoreFilesOwnerSubjectId") final String keyStoreFilesOwnerSubjectId,
-                             @JsonProperty("keyStoreFilesOwnerType") final UserType keyStoreFilesOwnerType) {
+                             @JsonProperty("keyStoreFilesOwnerType") final UserType keyStoreFilesOwnerType,
+                             @JsonProperty("refuseExpiredCredentials") final Boolean refuseExpiredCredentials,
+                             @JsonProperty("expiryWarningPeriod") final StroomDuration expiryWarningPeriod) {
         this.dbConfig = dbConfig;
         this.keyStoreCachePath = keyStoreCachePath;
         this.allowedKeyStoreFileDirs = NullSafe.stream(allowedKeyStoreFileDirs)
@@ -90,6 +98,9 @@ public class CredentialsConfig extends AbstractConfig implements IsStroomConfig,
                 keyStoreFilesOwnerSubjectId, DEFAULT_KEY_STORE_FILES_OWNER_SUBJECT_ID);
         this.keyStoreFilesOwnerType = Objects.requireNonNullElse(
                 keyStoreFilesOwnerType, DEFAULT_KEY_STORE_FILES_OWNER_TYPE);
+        this.refuseExpiredCredentials = Objects.requireNonNullElse(refuseExpiredCredentials, false);
+        this.expiryWarningPeriod = Objects.requireNonNullElse(
+                expiryWarningPeriod, DEFAULT_EXPIRY_WARNING_PERIOD);
     }
 
     @Override
@@ -163,6 +174,30 @@ public class CredentialsConfig extends AbstractConfig implements IsStroomConfig,
         return keyStoreFilesOwnerType;
     }
 
+    /// @return Whether a credential that has expired is refused when its secret is retrieved,
+    /// rather than used with a warning in the log.
+    @JsonProperty
+    @JsonPropertyDescription("If true, a credential that has expired can't be used, and anything that tries "
+                             + "to use it fails with an error. If false (the default), it is still used and a "
+                             + "warning is logged. A credential expires at its expiry date or, for a key store, "
+                             + "when its certificates expire if that is sooner. For a key store holding keys "
+                             + "that is when the first certificate in a key's chain expires, and for one "
+                             + "holding only trusted certificates when the last of them expires.")
+    public boolean isRefuseExpiredCredentials() {
+        return refuseExpiredCredentials;
+    }
+
+    /// @return How long before a credential's expiry date to start logging warnings when it is used.
+    @JsonProperty
+    @JsonPropertyDescription("How long before a credential expires (see 'refuseExpiredCredentials') to start "
+                             + "logging a warning when it is used, so it can be replaced in time, and to show "
+                             + "it as expiring in the credentials list. Warnings are logged at most once an "
+                             + "hour for each credential. Set to zero to only warn once a credential has "
+                             + "expired. Default is 14 days.")
+    public StroomDuration getExpiryWarningPeriod() {
+        return expiryWarningPeriod;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) {
@@ -174,7 +209,9 @@ public class CredentialsConfig extends AbstractConfig implements IsStroomConfig,
                && Objects.equals(allowedKeyStoreFileDirs, that.allowedKeyStoreFileDirs)
                && Objects.equals(keyStoreFiles, that.keyStoreFiles)
                && Objects.equals(keyStoreFilesOwnerSubjectId, that.keyStoreFilesOwnerSubjectId)
-               && keyStoreFilesOwnerType == that.keyStoreFilesOwnerType;
+               && keyStoreFilesOwnerType == that.keyStoreFilesOwnerType
+               && refuseExpiredCredentials == that.refuseExpiredCredentials
+               && Objects.equals(expiryWarningPeriod, that.expiryWarningPeriod);
     }
 
     @Override
@@ -184,7 +221,9 @@ public class CredentialsConfig extends AbstractConfig implements IsStroomConfig,
                 allowedKeyStoreFileDirs,
                 keyStoreFiles,
                 keyStoreFilesOwnerSubjectId,
-                keyStoreFilesOwnerType);
+                keyStoreFilesOwnerType,
+                refuseExpiredCredentials,
+                expiryWarningPeriod);
     }
 
     @Override
@@ -196,6 +235,8 @@ public class CredentialsConfig extends AbstractConfig implements IsStroomConfig,
                ", keyStoreFiles=" + keyStoreFiles +
                ", keyStoreFilesOwnerSubjectId='" + keyStoreFilesOwnerSubjectId + '\'' +
                ", keyStoreFilesOwnerType=" + keyStoreFilesOwnerType +
+               ", refuseExpiredCredentials=" + refuseExpiredCredentials +
+               ", expiryWarningPeriod=" + expiryWarningPeriod +
                '}';
     }
 }

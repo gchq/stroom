@@ -223,13 +223,15 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
                             if (volumeConfig.getDefaultIndexVolumeGroupPaths() != null) {
                                 final String nodeName = nodeInfo.getThisNodeName();
 
-                                // See if we have already created a volume for this node.
+                                // See if we have already created a volume for this node. A shared volume
+                                // has no node and serves every node, so this node needs no volume of its
+                                // own if the group has one.
                                 final List<IndexVolume> existingVolumesInGroup =
                                         indexVolumeDao.getVolumesInGroup(groupName);
                                 final boolean exists = existingVolumesInGroup
                                         .stream()
-                                        .map(IndexVolume::getNodeName)
-                                        .anyMatch(name -> name.equals(nodeName));
+                                        .anyMatch(indexVolume -> indexVolume.isShared()
+                                                                 || nodeName.equals(indexVolume.getNodeName()));
                                 if (!exists) {
                                     final List<String> paths = volumeConfig.getDefaultIndexVolumeGroupPaths();
                                     for (final String path : paths) {

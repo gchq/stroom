@@ -18,6 +18,7 @@ package stroom.index.impl.dao;
 
 import stroom.index.impl.IndexFieldDao;
 import stroom.index.impl.IndexShardDao;
+import stroom.index.impl.IndexShardPendingStreamDao;
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeGroupDao;
 
@@ -31,6 +32,7 @@ public class IndexDaoModule extends AbstractModule {
 
         bind(IndexFieldDao.class).to(IndexFieldDaoImpl.class);
         bind(IndexShardDao.class).to(IndexShardDaoImpl.class);
+        bind(IndexShardPendingStreamDao.class).to(IndexShardPendingStreamDaoImpl.class);
         bind(IndexVolumeDao.class).to(IndexVolumeDaoImpl.class);
         bind(IndexVolumeGroupDao.class).to(IndexVolumeGroupDaoImpl.class);
     }

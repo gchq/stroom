@@ -1,0 +1,8 @@
+/* An index volume group (IndexVolumeGroupEditor): its name, above its volumes. */
+
+/* Shown above the volumes when the group holds both shared and local volumes */
+.index-volume-group-editor__mixed-warning {
+    margin-bottom: 0.5rem;
+    padding: 0.4rem 0.6rem;
+    border-left: 3px solid var(--warn);
+}

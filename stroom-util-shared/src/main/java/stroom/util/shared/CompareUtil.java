@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 import java.util.function.ToLongFunction;
 
@@ -422,7 +423,7 @@ public final class CompareUtil {
              * <ul>
              * <li>{@link Builder#addIntComparator(String, ToIntFunction)}</li>
              * <li>{@link Builder#addLongComparator(String, ToLongFunction)}</li>
-             * <li>{@link Builder#addBooleanComparator(String, ToBooleanFunction)}</li>
+             * <li>{@link Builder#addBooleanComparator(String, Predicate)}</li>
              * </ul>
              */
             public <R extends Comparable<R>> Builder<T> addCaseLessComparator(final String fieldId,
@@ -465,7 +466,7 @@ public final class CompareUtil {
              * Adds a single comparator for fieldId, using extractor to provide the primitive boolean value.
              */
             public Builder<T> addBooleanComparator(final String fieldId,
-                                                   final ToBooleanFunction<T> extractor) {
+                                                   final Predicate<T> extractor) {
                 Objects.requireNonNull(fieldId);
                 Objects.requireNonNull(extractor);
                 // Primitive boolean so no need to worry about nulls
@@ -473,8 +474,8 @@ public final class CompareUtil {
                         fieldId,
                         new CaseAgnosticComparator<>(Comparator.nullsFirst((o1, o2) ->
                                 Boolean.compare(
-                                        extractor.applyAsBoolean(o1),
-                                        extractor.applyAsBoolean(o2)))));
+                                        extractor.test(o1),
+                                        extractor.test(o2)))));
                 return this;
             }
 

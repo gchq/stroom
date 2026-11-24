@@ -45,6 +45,18 @@ class RemoteSearchResults {
                         v.destroy());
     }
 
+    /// Makes the key under which a node holds the results of one task of a search.
+    ///
+    /// @param queryKey   The key of the search.
+    /// @param dispatchId The id of the task among those sent to this node for the search, or null if the
+    ///                   node is only sent one, in which case the key of the search is the key.
+    /// @return The key.
+    static String createKey(final String queryKey, final String dispatchId) {
+        return dispatchId == null || dispatchId.isBlank()
+                ? queryKey
+                : queryKey + ":" + dispatchId;
+    }
+
     public Optional<RemoteSearchResultFactory> get(final String key) {
         LOGGER.trace(() -> "get() " + key);
         return cache.getIfPresent(key);

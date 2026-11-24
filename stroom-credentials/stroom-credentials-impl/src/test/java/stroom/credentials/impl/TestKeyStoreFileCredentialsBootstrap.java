@@ -375,7 +375,7 @@ class TestKeyStoreFileCredentialsBootstrap {
     private static CredentialsConfig config(final List<KeyStoreFileCredentialConfig> keyStoreFiles,
                                             final String ownerSubjectId,
                                             final UserType ownerType) {
-        return new CredentialsConfig(null, null, null, keyStoreFiles, ownerSubjectId, ownerType);
+        return new CredentialsConfig(null, null, null, keyStoreFiles, ownerSubjectId, ownerType, null, null);
     }
 
     private static Credential keyStoreFileCredential(final String name,

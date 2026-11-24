@@ -214,6 +214,62 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> {
         return (Long) get(13);
     }
 
+    /**
+     * Setter for <code>stroom.index_shard.lease_instance_id</code>.
+     */
+    public void setLeaseInstanceId(String value) {
+        set(14, value);
+    }
+
+    /**
+     * Getter for <code>stroom.index_shard.lease_instance_id</code>.
+     */
+    public String getLeaseInstanceId() {
+        return (String) get(14);
+    }
+
+    /**
+     * Setter for <code>stroom.index_shard.lease_expiry_ms</code>.
+     */
+    public void setLeaseExpiryMs(Long value) {
+        set(15, value);
+    }
+
+    /**
+     * Getter for <code>stroom.index_shard.lease_expiry_ms</code>.
+     */
+    public Long getLeaseExpiryMs() {
+        return (Long) get(15);
+    }
+
+    /**
+     * Setter for <code>stroom.index_shard.prune_commits_after_ms</code>.
+     */
+    public void setPruneCommitsAfterMs(Long value) {
+        set(16, value);
+    }
+
+    /**
+     * Getter for <code>stroom.index_shard.prune_commits_after_ms</code>.
+     */
+    public Long getPruneCommitsAfterMs() {
+        return (Long) get(16);
+    }
+
+    /**
+     * Setter for <code>stroom.index_shard.recover_pending_streams</code>.
+     */
+    public void setRecoverPendingStreams(Byte value) {
+        set(17, value);
+    }
+
+    /**
+     * Getter for <code>stroom.index_shard.recover_pending_streams</code>.
+     */
+    public Byte getRecoverPendingStreams() {
+        return (Byte) get(17);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -237,7 +293,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> {
     /**
      * Create a detached, initialised IndexShardRecord
      */
-    public IndexShardRecord(Long id, String nodeName, Integer fkVolumeId, String indexUuid, Integer commitDocumentCount, Long commitDurationMs, Long commitMs, Integer documentCount, Long fileSize, Byte status, String indexVersion, String partitionName, Long partitionFromMs, Long partitionToMs) {
+    public IndexShardRecord(Long id, String nodeName, Integer fkVolumeId, String indexUuid, Integer commitDocumentCount, Long commitDurationMs, Long commitMs, Integer documentCount, Long fileSize, Byte status, String indexVersion, String partitionName, Long partitionFromMs, Long partitionToMs, String leaseInstanceId, Long leaseExpiryMs, Long pruneCommitsAfterMs, Byte recoverPendingStreams) {
         super(IndexShard.INDEX_SHARD);
 
         setId(id);
@@ -254,6 +310,10 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> {
         setPartitionName(partitionName);
         setPartitionFromMs(partitionFromMs);
         setPartitionToMs(partitionToMs);
+        setLeaseInstanceId(leaseInstanceId);
+        setLeaseExpiryMs(leaseExpiryMs);
+        setPruneCommitsAfterMs(pruneCommitsAfterMs);
+        setRecoverPendingStreams(recoverPendingStreams);
         resetTouchedOnNotNull();
     }
 }

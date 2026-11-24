@@ -527,7 +527,18 @@ with the `+`).
 
 ### A visualisation's selection offers only Name and Value to selection handlers
 
-**Tracked** in GitHub issue #6059 (19 November 2026), for discussion.
+**Fixed (gchq/stroom#6059, 19 to 23 November 2026).** A visualisation's settings can now declare its keys in a `selection` section
+(`[{"key": "series", "label": "Series", "type": "TEXT"}, ...]`, read into `VisSelectionKey`), and
+`VisSelectionModel` offers those, or `name` and `value` if it has no `selection` section (an empty
+one, `[]`, says that nothing can be selected in it, so it offers none). The selection handler
+editor's current selection lists every pane's keys, without values, while nothing is selected in it
+(stories `SelectionHandlerOffersVisKeys`, `SelectionHandlerOffersUndeclaredVisKeys`,
+`SelectionHandlerOffersNoVisKeys` and `SelectionHandlerFollowsVisSettings`). A dashboard visualisation pane's keys are set as soon as
+its settings are read or changed, from the one fetch of its visualisation that drawing it shares
+(`VisFunction` holds the fetched document); an Embedded Query's only once its query has run, as the
+query names its visualisation. An Embedded Query showing its table offers the table's columns, as
+its selection is the table's. Every visualisation in stroom-visualisations-dev declares its keys
+(checked by its tests against what it sends), from release v8.0-beta.7, which `content-packs.json` names.
 
 **Re-checked** (6 November 2026, against the code): still open (`VisSelectionModel.java:44-46`, now in `stroom-core-client/.../query/client/result/vis/`).
 
@@ -542,9 +553,26 @@ its inputs are) and offer those.
 * `stroom-core-client/src/main/java/stroom/dashboard/client/vis/VisSelectionModel.java`
 * `stroom-core-client/src/main/java/stroom/query/client/VisComponentSelection.java`
 
+### A visualisation pane switched back to an earlier visualisation keeps the later one's settings
+
+**Fixed** (23 November 2026, with gchq/stroom#6059): each `VisFunction` now keeps its fetched
+visualisation, and a pane switching to one already loaded takes that one's settings
+(`applyVisualisationDoc` in both controllers).
+
+**Reported** (19 November 2026, from the code, while fixing #6059). Each visualisation pane keeps a
+cache of the visualisations it has loaded (`VisFunctionCache`, one per `VisController`). Only a
+visualisation not in the cache is fetched, and only that fetch sets the pane's `possibleSettings`
+(the settings' defaults, combined with the pane's own). So a pane switched from A to B and back to
+A keeps B's settings until it is reopened. The same holds for `QueryResultVisController`. A fix would keep each cached visualisation's settings
+with it (e.g. on `VisFunction`) and set them whenever the pane switches to it.
+
+* `stroom-core-client/src/main/java/stroom/dashboard/client/component/VisController.java`
+  (`setDataInternal`, `loadVisualisation`)
+* `stroom-core-client/src/main/java/stroom/visualisation/client/VisFunctionCache.java`
+
 ### GeoMap's map tiles are blocked in an asset-based visualisation
 
-**Tracked** in GitHub issue #6060 (19 November 2026).
+**Fixed** (#6060, 19 November 2026): the new property `stroom.documentAsset.allowedImageOrigins` lists origins added to the asset policy's `img-src` (`DocumentAssetServlet.assetContentSecurityPolicy`, `TestDocumentAssetServlet`). It is empty by default, so an admin adds the tile server, e.g. `https://*.tile.osm.org`. Each entry must be an `http`/`https` source with a host; a bare `*` or a scheme alone (`https:`) is refused, as it would allow any host. Only `img-src` changes; `connect-src` stays `'self'`. Not yet seen on a running Stroom.
 
 **Re-checked** (6 November 2026, against the code): still open in the code: `DocumentAssetServlet.java:212-219` still has `img-src 'self' data:`, with no setting for other origins; a blank map needs a running Stroom to see.
 

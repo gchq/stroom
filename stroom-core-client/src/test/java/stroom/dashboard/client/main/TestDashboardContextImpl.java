@@ -16,12 +16,16 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.query.api.ColumnRef;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.Param;
 import stroom.query.api.TimeRange;
 import stroom.query.client.component.QueryToolbarController;
+import stroom.query.client.result.table.ComponentSelection;
+import stroom.query.client.result.table.HasComponentSelection;
 
 import com.google.gwt.junit.GWTMockUtilities;
 import com.google.web.bindery.event.shared.SimpleEventBus;
@@ -30,6 +34,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -99,5 +104,74 @@ class TestDashboardContextImpl {
 
         assertThat(replaced.getChildren())
                 .containsExactly(term);
+    }
+
+    @Test
+    void getKeysWithoutSelection_nothingSelected() {
+        // Regression test (#6059): a pane's selection keys can be inserted before anything is
+        // selected, whatever they are, not just name and value
+        final DashboardContextImpl context = contextWith(selectingPane("vis1", "Map", List.of(
+                new ColumnRef("lat", "lat"),
+                new ColumnRef("lon", "lon"),
+                new ColumnRef("floor", "floor"),
+                new ColumnRef("lat", "lat")), List.of()));
+
+        assertThat(context.getKeysWithoutSelection()).containsExactly(
+                "component.vis1.selection.lat",
+                "component.vis1.selection.lon",
+                "component.vis1.selection.floor");
+    }
+
+    @Test
+    void getKeysWithoutSelection_somethingSelected() {
+        // With something selected, the selection's own keys and values are shown instead
+        final ComponentSelection selection = Mockito.mock(ComponentSelection.class);
+        Mockito.when(selection.getParams()).thenReturn(List.of(new Param("lat", "51.5")));
+        final DashboardContextImpl context = contextWith(selectingPane("vis1", "Map", List.of(
+                new ColumnRef("lat", "lat"),
+                new ColumnRef("lon", "lon")), List.of(selection)));
+
+        assertThat(context.getKeysWithoutSelection()).isEmpty();
+    }
+
+    @Test
+    void getKeysWithoutSelection_noKeys() {
+        final DashboardContextImpl context = contextWith(selectingPane("vis1", "Map", null, List.of()));
+
+        assertThat(context.getKeysWithoutSelection()).isEmpty();
+    }
+
+    @Test
+    void getKeysWithoutSelection_blankKeysLeftOut() {
+        final DashboardContextImpl context = contextWith(selectingPane("vis1", "Map", Arrays.asList(
+                new ColumnRef("x", null),
+                new ColumnRef("y", " "),
+                null,
+                new ColumnRef("series", "series")), List.of()));
+
+        assertThat(context.getKeysWithoutSelection()).containsExactly("component.vis1.selection.series");
+    }
+
+    private DashboardContextImpl contextWith(final DashboardPane pane) {
+        final QueryToolbarController queryToolbar = Mockito.mock(QueryToolbarController.class);
+        Mockito.when(queryToolbar.getTimeRange()).thenReturn(new TimeRange("All", null, null));
+        final Panes components = Mockito.mock(Panes.class);
+        Mockito.when(components.getComponents()).thenReturn(List.of(pane));
+        return new DashboardContextImpl(new SimpleEventBus(), components, queryToolbar);
+    }
+
+    // A pane whose selections have the given keys, with the given selection
+    private DashboardPane selectingPane(final String id,
+                                        final String name,
+                                        final List<ColumnRef> keys,
+                                        final List<ComponentSelection> selection) {
+        final DashboardPane pane = Mockito.mock(DashboardPane.class,
+                Mockito.withSettings().extraInterfaces(HasComponentSelection.class));
+        Mockito.when(pane.getId()).thenReturn(id);
+        Mockito.when(pane.getDisplayValue()).thenReturn(name);
+        final HasComponentSelection hasComponentSelection = (HasComponentSelection) pane;
+        Mockito.when(hasComponentSelection.getColumnRefs()).thenReturn(keys);
+        Mockito.when(hasComponentSelection.getSelection()).thenReturn(selection);
+        return pane;
     }
 }

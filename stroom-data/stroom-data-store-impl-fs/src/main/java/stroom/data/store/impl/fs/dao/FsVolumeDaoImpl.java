@@ -39,6 +39,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
+import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.Result;
 import org.jooq.TableField;
@@ -153,15 +154,21 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
 
     @Override
     public FsVolume fetch(final int id) {
-        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
-                        .select()
-                        .from(FS_VOLUME)
-                        .join(FS_VOLUME_STATE).on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
-                        .join(FS_VOLUME_GROUP).on(FS_VOLUME_GROUP.ID.eq(FS_VOLUME.FK_FS_VOLUME_GROUP_ID))
-                        .where(FS_VOLUME.ID.eq(id))
-                        .fetchOptional())
+        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context ->
+                fetch(context, id));
+    }
+
+    public FsVolume fetch(final DSLContext context, final int id) {
+        final FsVolume fsVolume = context.select()
+                .from(FS_VOLUME)
+                .join(FS_VOLUME_STATE).on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
+                .join(FS_VOLUME_GROUP).on(FS_VOLUME_GROUP.ID.eq(FS_VOLUME.FK_FS_VOLUME_GROUP_ID))
+                .where(FS_VOLUME.ID.eq(id))
+                .fetchOptional()
                 .map(this::recordToVolume)
                 .orElse(null);
+        LOGGER.debug("fetch() - id: {}, fsVolume: {}", id, fsVolume);
+        return fsVolume;
     }
 
     @Override
