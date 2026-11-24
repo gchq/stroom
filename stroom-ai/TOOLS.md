@@ -1771,10 +1771,15 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
   and Receive keep a more telling leaf (a subject, a URL) first, then the destination (`TO_DESTINATION`); a Source or
   Destination device's name is never otherwise the object. The user and time always come from the
   index. Where the XML is gone or there is none: the element and Action fields; else the event codes, asked of the
-  model once (`EventCodes`, a side call of up to 100 codes, roles checked in code), confirmed in a chat form and
+  model once (`EventCodes`, a side call of up to 100 codes, roles checked in code: active, idle, focus (a window or
+  application came to the front; its loss is ignore), open, close, action, ignore), confirmed in a chat form and
   kept per index (`/outputs/timelines/event-codes/<uuid>.json`, the user's workspace where there is one); over MCP
   used unconfirmed, not kept; with no model, actions named by their code. A skill's Event chains roles and a
-  source's `typeRoles` override a type's role; `ignore` leaves its events out. The result counts each source's
+  source's `typeRoles` override a type's role (`focus` among them, since eval case 77); `ignore` leaves its events
+  out. An automatic source keeps the fields the call names for its events' application (`process`), window title,
+  window and text (checked against the index): a code or index field says what an event was, not these, and without
+  them focus sessions had no application (eval case 77 with no roles: 55 sessions, not 63). The result counts each
+  source's
   events by route (`classified_by`) and `events_xml` (read, gone, past the cap with a narrower period asked for).
 * **Reading** (`TimelineReader`, the streaming join's machinery): each role of a source with roles, or the whole of
   an automatic source, is an `ElasticKeyStreams.Side` of its Elastic Index (a role's conditions a Stroom
@@ -1797,7 +1802,7 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
   by both types and not fixed by the lane; or the host alone), run A, B, A, B from an A, each B within 24 hours,
   for 90% of keys, the counts within 0.8 of each other, over 3 keys (or 3 spans of one key); borderline (50% and 2
   keys, or clear but lopsided) listed with their figures in `borderline_pairs`, not used; a type in one pair at
-  most. An end closes the latest open start of its key; a start with no end runs to the lane's first gap past the
+  most; never a focus (the focus sessions' events), nor a span bounded by a key from one. An end closes the latest open start of its key; a start with no end runs to the lane's first gap past the
   cap, an idle start or the period's end, marked; `unpaired_start` and `unpaired_end` flagged for a pair of actions.
   A pair's start and end, and an action in its span with its label (`by pair`), are the pair's. Each pair's origin,
   alternation, spans and unpaired starts and ends are in `pairs`.
@@ -1852,7 +1857,9 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
   across sources and hosts, merge into one interval, split at midnight in the user's zone.
 * **Side calls** (`ModelSideCalls`, from the call's context): in a chat, the run's model through
   `ChatModelSideCalls` (`ModelStreamer.callUnseen`, as step and compaction summaries; tokens added to the run's
-  usage; stopped with the run); over `/mcp`, the client's model by MCP sampling (`McpSampling`, where the client says
+  usage; stopped with the run; each call made as the run's user, captured on the tool's thread, so batches run in
+  parallel on worker threads can read the model's API key: chat 195's failed every batch with "Attempt to elevate
+  permissions without a current user"); over `/mcp`, the client's model by MCP sampling (`McpSampling`, where the client says
   it can; the wait not counted against the call's time limit, at most the form timeout); otherwise none, and the
   loose items are left unclassified (and event codes unasked), the result saying so. The chat's model sees only the
   outcome.
@@ -1860,12 +1867,29 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
   (`corrections.json` beside the tables), so a re-run keeps them; one naming what isn't there is said and left out.
 * **Views**: `view` `detail` (the default: `spans.csv`, label `label`, lane `lane`, or `source` with `lanes`
   source), `activities` (`activities.csv`, label `activity_label`, lane `day`, or `activity_label` with `lanes`
-  activity), `both`. The result's `view` gives each chart's gantt_chart arguments, `too_dense` where a view has more
+  activity), `both`. The result's `view` gives each chart's gantt_chart arguments (with a `title` saying what the
+  lanes are, as a gantt has no lane axis: `<entity>: spans by <lane title>`), `too_dense` where a view has more
   than 200 bars or 20 lanes (draw one day, or one activity by filtering the table), and the dashboard `timeline`
   kind's columns.
+* **Lane titles** (`TimelineLaneTitles`, since chat 195): what the lanes are, rather than "lane": for the spans by
+  host, each source's host field described as `describe_data_source` describes it (the index's documentation's
+  Description column, else the index plan's description; `DataSourceDocumentation`), e.g. `Device host name
+  (host.name)`, else the field's name, `/` between sources' fields and ` (else source)` where a source has none
+  (`Host (else source)` where none has one); `Source` for lanes by source; `Day (<zone>)` for the activities by
+  day; `Activity` by activity. In the gantt calls' titles, `timeline.json` (`laneTitles`), and the dashboard (the
+  chart's lane axis, `yAxisName`, its tooltip's lane line and the table's lane column header).
+* **What happened** (since chat 195): each span says it in `spans.csv`'s `action`, and its label leads with it
+  (`<lead> · <what it touched>`, a colon or comma being taken out of a chat's gantt): a pair's two types read as
+  one action (the events' own type names, their TypeIds, where the source has them, e.g. `Focus-Window to
+  Unfocus-Window`; else the schema's element and Action, `Process Execute to Terminate`; `(no end seen)` for a start
+  alone), led by the start's type (not for a pair labelled by text, e.g. `logged on`); an activity period's (and a
+  key span's) event types with counts, the most first (`Read-File ×3, Write-File ×1`; a key span adds `(sharing
+  <path>)`), led by at most two (`Read-File/Write-File`, `/…` past two), not led where its label is the kind
+  already; a focus session's `focus: <kinds with counts>`, its label unchanged. `activities.csv`'s `actions` sums
+  its spans' types. Matching and characterisation use the label without the lead.
 * **Learning** (`TimelineLearning`, `EventChains`): `skill` names the skill being run (the readable one nearest the
   chat's context); its `## Event chains` lines (`- <index>: pair <start> -> <end> by <key> label <path>`, `-
-  <index>: <type> is active|idle|open|close|action|ignore`, `any` for every source) are applied first. What was
+  <index>: <type> is active|idle|focus|open|close|action|ignore`, `any` for every source) are applied first. What was
   learned (the clear inferred pairs, and the source's own `pairs` and `typeRoles`) that the skill lacks is in
   `learned`: with Edit on the skill's doc, the skill with the lines added is written
   (`skill-event-chains.md`) and the agent offers `propose_skill action=propose doc=<uuid> draft=<path>`; with no
@@ -1890,23 +1914,30 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
   close variants of the logon ids found), `events_read`, `none_in_period` (where no source had the user's events in
   the period: each source's `events`, `first` and `last` overall, from one ES|QL `MIN`/`MAX`/`COUNT` each, or
   `not_known` with why; also in the refusal's text, so the agent can move the window),
-  `events_ignored`, `events_xml`, `ended_early`, `session_count` (focus sessions), `hosts`, `uncertain_sessions`,
+  `events_ignored`, `events_xml`, `ended_early`, `span_count` (spans of every kind) and `span_hosts`,
+  `session_count` (focus sessions), `hosts` (theirs), `uncertain_sessions`,
   `actions`, `unattached_actions` (in no session or span), `spans` (by kind), `activity_periods_show`, `pairs`,
   `borderline_pairs`, `columns`/`rows` (host, process, sessions, active minutes, the most first, of focus sessions
   and activity periods), `data_quality`, `files`, `gantt` (the sessions table), `view`, `characterisation`
   (`activities` each with `label_is: inferred` and `found_by`, `sessions_in_no_activity`, `items`, `items_placed`,
-  `model_calls`, `items_asked`, `items_not_classified`, `unclear` with reasons, `modularity`, `notes`, `gantt`),
+  `model_calls`, `items_linked_in_code`, `items_reused`, `items_asked` (sent to the model), `items_classified`,
+  `items_failed` (sent, but their calls failed) with `failed_why`, `items_not_classified` (not sent: no model, or
+  past the budget), `items_unclear`, `unclear` with reasons, `modularity`, `notes`, `gantt`; the Markdown's line
+  says the same: placed in code, reused, sent in N calls (classified, and not as the calls failed, with why), not
+  sent, unclear in all),
   `learned` (`event_chains`, `borderline_to_confirm`, `can_record`, `file`, `offer`), `done_to_them` (with
   `includeTargets`: `events`, `note`, `sources` each with `by`, `events`, `kinds` and `done_by`, `left_out`,
   `ended_early`, `listed`: the first 20 with time, type, by, host, object and ids; in a chat a "Done to them"
   section), `time_zone`, `derived`, `caveat`. Tables under `/outputs/timelines/<entity>/`, every run: `spans.csv`
-  (span, start, end, label, lane, kind focus/pair/key/activity/target, activity, activity_label, host, source,
-  events, how, uncertain, role), `activities.csv` (activity,
-  activity_label, day, start, end, active_minutes, spans, lanes, evidence; header only when not characterised),
+  (span, start, end, label, action, lane, kind focus/pair/key/activity/target, activity, activity_label, host,
+  source, events, how, uncertain, role), `activities.csv` (activity,
+  activity_label, day, start, end, active_minutes, spans, actions, lanes, evidence; header only when not
+  characterised),
   `sessions.csv` (the focus sessions; `gantt_chart` with start, end, label `process`, lane `host` draws it as it
   is), `actions.csv`, `events.csv` (with `type` and `classified_by`), `daily.csv`, `windows.csv`, `quality.csv`,
   and with characterisation `items.csv`. Times in the tables are UTC. `timeline.json` (`TimelineSnapshot`: entity,
-  period, zone, view, lanes, sources, whether characterised, when built) is written beside them, for
+  period, zone, view, lanes, sources, whether characterised, when built, each table's lane title) is written beside
+  them, for
   `propose_timeline_dashboard`.
 * **Refuses**: none of `entity`, `person` or `logonIds`; no source with the user's events and a user field ("No
   source holds ...": each left out is said, with each source's first and last events and count); a source with
@@ -1946,9 +1977,15 @@ the workspace.
   timeline's period (the dashboard's time range); the timeline chart of the table: start, end, and for the spans
   label `label`, lane `lane` (host; `source` if the run's lanes were by source), colour `activity_label` where the
   run found activities, else `kind`; for the activities label `activity_label`, lane `day` (`activity_label` if by
-  activity), colour `activity_label`; and the table, each column formatted as typed (Date Time, Number, Text), in
-  `start` order, with a table selection filter on the chart: a click on a bar keeps the rows starting within its
-  interval (`start` between the selection's `from` and `to`), every row while nothing is selected.
+  activity), colour `activity_label`; `detail` (the tooltip: for a span its action and events, `concat(${action},
+  ' · ', ${events}, ' event(s)')`; for an activity its actions and active minutes), the lane axis titled by the
+  run's lane title (`yAxisName`); and the table, each column formatted as typed (Date Time, Number, Text), in
+  `start` order, its lane column headed by the lane title, with a table selection filter on the chart: a click on a
+  bar keeps the rows starting within its interval (`start` between the selection's `from` and `to`), every row while
+  nothing is selected. The chart draws from a table of its own (`table-2`: the same query, the chart's columns and
+  `detail`, no selection filter) in a hidden tab behind it (`TabConfig` visible false): drawn from the filtered
+  table, a click narrowed the chart's own data and axis to the bar, with no way back (chat 195). A click on the
+  selected bar, or on the chart's background, clears the selection (both adapters already did).
 * **Permissions and privacy**: offered only if the user may create a Data Connection and a Visualisation in the
   folder, and edit a Data Connection it replaces; the result says when they can't create a dashboard there (they
   choose another folder in the dialog). The Data Connection holds the user's activity with the folder's
@@ -1983,7 +2020,9 @@ of its own: the tool policies decide who may compare a person's activity.
 * **Whose events** (`PersonScope`, as `activity_timeline`'s): `person` (the person id) by each index's person field
   (`personField`, the AGENTS doc's `## Fields` `person:`, the ECS convention `user.id`), else `logonIds` by its user
   field (`userField`, likewise); each source says by which, with its field and where it came from. One of `person`
-  or `logonIds` is needed.
+  or `logonIds` is needed. A `person` alone where an index has no person field but has a user field is refused
+  saying to call again with `logonIds: ["<person>"]` if the value is a logon id: a person id is never taken as a
+  logon id unasked (chat 195).
 * **Periods**: `windowFrom`/`windowTo` (a date, ISO 8601 time or date expression such as `now()-30d`; default today
   included; `windowFrom` default 30 days before), `baselineFrom`/`baselineTo` (default the 180 days before the
   window's start). A date alone (`yyyy-MM-dd`) is a whole day in `timeZone`: a start from the start of that day, an
