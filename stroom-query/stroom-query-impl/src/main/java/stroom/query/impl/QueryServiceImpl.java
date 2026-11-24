@@ -65,6 +65,7 @@ import stroom.query.common.v2.TableResultCreator;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
+import stroom.query.language.functions.UserTimeZoneUtil;
 import stroom.query.language.token.Tokeniser;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryColumnValuesRequest;
@@ -105,7 +106,6 @@ import java.nio.file.Path;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -638,9 +638,12 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
 
     @Override
     public List<String> fetchTimeZones() {
-        final List<String> ids = new ArrayList<>(ZoneId.getAvailableZoneIds());
-        ids.sort(Comparator.naturalOrder());
-        return ids;
+        // Short names such as EST and CET mean different things to different people, so are not offered.
+        return ZoneId.getAvailableZoneIds()
+                .stream()
+                .filter(UserTimeZoneUtil::isRegion)
+                .sorted()
+                .toList();
     }
 
     @Override

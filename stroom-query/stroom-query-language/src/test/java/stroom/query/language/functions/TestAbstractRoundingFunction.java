@@ -66,7 +66,7 @@ class TestAbstractRoundingFunction {
             // Time zones.
             "floor(2024-05-15T10:20:00Z, 1d, null(), 'America/New_York')|2024-05-15T04:00:00Z",
             "floor(2024-05-15T10:20:00Z, 1d, null(), '+0530')|2024-05-14T18:30:00Z",
-            "floor(2024-05-15T10:20:00Z, 1d, null(), 'EST')|2024-05-15T05:00:00Z",
+            "floor(2024-05-15T10:20:00Z, 1d, null(), 'GMT-5')|2024-05-15T05:00:00Z",
             // Text with no offset is in the zone of the call.
             "floor(2024-05-15T10:20:00Z, 1y, '2024-04-01T00:00:00', 'America/New_York')|2024-04-01T04:00:00Z",
             "floor('2024-05-15T10:20:00', 1h, null(), 'America/New_York')|2024-05-15T14:00:00Z",
@@ -148,6 +148,7 @@ class TestAbstractRoundingFunction {
             "floor(${field}, 1d, 5m)|Invalid origin: 5m - it must be a date",
             "floor(${field}, 1d, 'soon')|Invalid origin",
             "floor(${field}, 1d, null(), 'Mars/Base')|Unknown time zone 'Mars/Base'",
+            "floor(${field}, 1d, null(), 'BST')|Unknown time zone 'BST'. Use a name such as Europe/London",
             "floor(${field}, 1d, null(), '')|There is no time zone"})
     void mistakesThatAreReportedWhenTheExpressionIsParsed(final String expression, final String message) {
         assertThatThrownBy(() -> eval(expression, Map.of(), ValDate.create(0)))

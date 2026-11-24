@@ -106,9 +106,9 @@ public final class DateUtil {
 
         if (!NullSafe.isBlankString(timeZone)) {
             try {
-                dateTimeZone = ZoneId.of(timeZone);
+                dateTimeZone = UserTimeZoneUtil.getZoneId(timeZone);
             } catch (final DateTimeException | IllegalArgumentException e) {
-                throw new ParseException("Time Zone '" + timeZone + "' is not recognised", 0);
+                throw new ParseException(e.getMessage(), 0);
             }
         } else {
             dateTimeZone = ZoneOffset.UTC;

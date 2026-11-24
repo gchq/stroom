@@ -99,7 +99,13 @@ public final class MomentJs {
        return $wnd.moment.duration(ms).humanize(withSuffix);
     }-*/;
 
+    /// Gets the names of the time zones that can be chosen, which all have a region, such as `Europe/London`. Short
+    /// names such as EST and CET mean different things to different people, so are left out.
+    ///
+    /// @return The names.
     public static native String[] getTimeZoneIds()/*-{
-        return $wnd.moment.tz.names();
+        return $wnd.moment.tz.names().filter(function (name) {
+            return name.indexOf('/') !== -1;
+        });
     }-*/;
 }

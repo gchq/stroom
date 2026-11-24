@@ -306,21 +306,15 @@ class TestDateExpressionParser {
     }
 
     @Test
-    void testZoneNames() {
-        final DateTimeSettings est = DateTimeSettings.builder()
-                .referenceTime(Instant.parse("2024-07-01T03:00:00Z").toEpochMilli())
-                .timeZone(UserTimeZone.builder().use(Use.ID).id("EST").build())
-                .build();
-        assertInstant("day()", est, "2024-06-30T05:00:00Z");
-
+    void testUnknownZone() {
         final DateTimeSettings unknown = DateTimeSettings.builder()
                 .referenceTime(nowEpochMilli)
                 .timeZone(UserTimeZone.builder().use(Use.ID).id("Mars/Base").build())
                 .build();
         assertThatThrownBy(() -> DateExpressionParser.getMs("EventTime", "now()-1d", unknown))
-                .hasMessageEndingWith("Unknown time zone 'Mars/Base'");
+                .hasMessageEndingWith("Unknown time zone 'Mars/Base'. Use a name such as Europe/London");
         assertThatThrownBy(() -> DateExpressionParser.getMs("EventTime", "2024-07-01T00:00:00", unknown))
-                .hasMessageEndingWith("Unknown time zone 'Mars/Base'");
+                .hasMessageEndingWith("Unknown time zone 'Mars/Base'. Use a name such as Europe/London");
         assertThat(DateExpressionParser.getMs("EventTime", "2024-07-01T00:00:00Z", unknown))
                 .isEqualTo(Instant.parse("2024-07-01T00:00:00Z").toEpochMilli());
     }

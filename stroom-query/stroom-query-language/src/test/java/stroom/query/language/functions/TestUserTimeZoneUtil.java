@@ -24,37 +24,91 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
+import java.text.ParseException;
 import java.time.DateTimeException;
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestUserTimeZoneUtil {
 
-    // The names that the preferences offer and ZoneId.of(String) refuses.
     @ParameterizedTest
     @CsvSource({
-            "EST,-05:00",
-            "MST,-07:00",
-            "HST,-10:00",
-            "ROC,+08:00",
-            "Europe/London,+01:00"})
-    void preferenceNamesAreKnown(final String id, final String expectedOffset) {
-        final ZoneId zoneId = UserTimeZoneUtil.getZoneId(zone(id), null);
-
-        assertThat(zoneId.getRules().getOffset(Instant.parse("2024-07-01T00:00:00Z")))
+            "Europe/London,+01:00",
+            "America/New_York,-04:00",
+            "Etc/GMT+5,-05:00",
+            "UTC,Z",
+            "GMT,Z",
+            "Z,Z",
+            "+0530,+05:30",
+            "-05:00,-05:00",
+            "+02,+02:00",
+            "GMT+2,+02:00",
+            "UTC-03:00,-03:00",
+            "' Europe/London ',+01:00"})
+    void namesThatAFunctionCanBeGiven(final String name, final String expectedOffset) {
+        assertThat(UserTimeZoneUtil.getZoneId(ValString.create(name))
+                .getRules()
+                .getOffset(Instant.parse("2024-07-01T00:00:00Z")))
                 .isEqualTo(ZoneOffset.of(expectedOffset));
+    }
+
+    // Short names, whether or not Java knows them, as they mean different things to different people.
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "BST", "AST", "IST", "PST", "CST", "EST", "MST", "HST", "ROC", "CET", "EET", "MET", "WET", "EST5EDT", "GB",
+            "NZ", "Japan", "Cuba", "Zulu", "Universal", "GMT0", "utc", "Mars", "Mars/Base", "+25:00", "GMT+99"})
+    void namesThatAFunctionCantBeGiven(final String name) {
+        assertThatThrownBy(() -> UserTimeZoneUtil.getZoneId(ValString.create(name)))
+                .isInstanceOf(DateTimeException.class)
+                .hasMessage("Unknown time zone '" + name + "'. Use a name such as Europe/London");
+        assertThatThrownBy(() -> DateUtil.getTimeZone(name))
+                .isInstanceOf(ParseException.class)
+                .hasMessage("Unknown time zone '" + name + "'. Use a name such as Europe/London");
+    }
+
+    @Test
+    void noName() throws ParseException {
+        for (final Val val : List.of(ValNull.INSTANCE, ValString.create(""), ValString.create(" "))) {
+            assertThatThrownBy(() -> UserTimeZoneUtil.getZoneId(val))
+                    .isInstanceOf(DateTimeException.class)
+                    .hasMessage("There is no time zone");
+        }
+        // As parseDate and formatDate have always had it.
+        assertThat(DateUtil.getTimeZone("")).isEqualTo(ZoneOffset.UTC);
+    }
+
+    // These could be chosen from the lists before.
+    @ParameterizedTest
+    @CsvSource({
+            "CET,+02:00",
+            "GB,+01:00",
+            "Europe/London,+01:00"})
+    void namesThatWereChosenBeforeAreKept(final String id, final String expectedOffset) {
+        assertThat(UserTimeZoneUtil.getZoneId(zone(id), null)
+                .getRules()
+                .getOffset(Instant.parse("2024-07-01T00:00:00Z")))
+                .isEqualTo(ZoneOffset.of(expectedOffset));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"EST", "BST", "ROC"})
+    void namesThatJavaDoesNotKnowAreNot(final String id) {
+        assertThatThrownBy(() -> UserTimeZoneUtil.getZoneId(zone(id), null))
+                .isInstanceOf(DateTimeException.class)
+                .hasMessage("Unknown time zone '" + id + "'. Use a name such as Europe/London");
     }
 
     @Test
     void unknownNameIsReported() {
         assertThatThrownBy(() -> UserTimeZoneUtil.getZoneId(zone("Mars/Base"), null))
                 .isInstanceOf(DateTimeException.class)
-                .hasMessage("Unknown time zone 'Mars/Base'");
+                .hasMessage("Unknown time zone 'Mars/Base'. Use a name such as Europe/London");
     }
 
     @ParameterizedTest
