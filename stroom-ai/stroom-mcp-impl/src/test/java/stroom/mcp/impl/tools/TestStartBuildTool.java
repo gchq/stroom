@@ -63,6 +63,31 @@ class TestStartBuildTool {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    void startBuildOnATranslatedFeedAdvisesTheSurveyNotACopy() {
+        // Seen in eval case 97 (2026-11-25, Haiku and Sonnet): a feed translated by a hand-written pipeline, asked to
+        // add a field; start_build's advice offered copy_pipeline, so both copied it at once and the survey and the
+        // catalogue's offer to start from that pipeline (and its confirmation) were skipped. Decided by the user:
+        // every existing translation goes through the survey first.
+        Mockito.when(agentInstructions.applicableInstructions(any(), anyString(), any()))
+                .thenReturn(Map.of("instructions", List.of()));
+        feeds.feedAt("System/Feeds/ACME", "ACME", "prod");
+        feeds.facts.sources = List.of("ACME");
+        feeds.facts.translating = List.of(Map.of("name", "ACME-Events", "uuid", "prod-ev"));
+
+        final Map<String, Object> started = json(tool.execute(BuildToolCalls.call(StartBuildTool.NAME,
+                "{\"build\": \"bb\", \"feeds\": [\"ACME\"], \"carry_on\": true}"), BuildToolCalls.context()));
+
+        final Map<String, Object> next = (Map<String, Object>) started.get("next");
+        assertThat(String.valueOf(next.get("then")))
+                .contains("ACME is translated now by 'ACME-Events' (prod-ev)")
+                .contains("survey_feed build=bb feed=ACME first")
+                .contains("catalogue_event_types")
+                .contains("copy_pipeline of that indexing pipeline only")
+                .doesNotContain("copy_pipeline source_uuid", "rebuild_mapping");
+    }
+
+    @Test
     void theBuildStartedIsTheOneLaterCallsNamingNoneWorkOn() {
         // Found reviewing the tools: start_onboarding remembered its build, start_build didn't, so a later call
         // naming no build was refused rather than taking it.

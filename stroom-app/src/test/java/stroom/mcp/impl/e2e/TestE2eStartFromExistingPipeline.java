@@ -71,7 +71,14 @@ class TestE2eStartFromExistingPipeline extends AbstractE2eTest {
 
         // 1. The build works from the feed; the survey comes first, then the plan says the catalogue's first call
         // asks how the build starts.
-        json("start_build", args("build", BUILD, "feeds", List.of(FEED)));
+        // start_build's advice is the survey, never a copy (eval case 97, 2026-11-25: both models copied the
+        // hand-written pipeline straight from it, skipping the survey and the catalogue's offer).
+        final Map<String, Object> started = json("start_build", args("build", BUILD, "feeds", List.of(FEED)));
+        dump("start_build", started.get("next"));
+        assertThat(String.valueOf(map(started, "next").get("then")))
+                .contains("is translated now by '" + ORIGINAL + "'", "survey_feed build=" + BUILD + " feed=" + FEED
+                                                                     + " first", "catalogue_event_types")
+                .doesNotContain("copy_pipeline source_uuid", "rebuild_mapping");
         final Map<String, Object> survey = json("survey_feed", args("feed", FEED, "build", BUILD));
         dump("survey_feed", survey);
         final Map<String, Object> status = json("build_status", args("build", BUILD));

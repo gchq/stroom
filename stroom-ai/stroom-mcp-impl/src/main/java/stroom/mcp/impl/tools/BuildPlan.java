@@ -1174,7 +1174,7 @@ public class BuildPlan {
         // On existing data, before any pipeline: which stage comes next is the work's (a survey, a copy, an index).
         final boolean onlyExistingData = existing && !stage1 && !stage2 && !cefBuild && !reference && !assessment;
         final Map<String, Object> start = onlyExistingData
-                ? existingDataStart(sources, named)
+                ? existingDataStart(build, sources, named)
                 : null;
 
         final Map<String, Object> result = new LinkedHashMap<>();
@@ -1677,38 +1677,42 @@ public class BuildPlan {
         return pipelines;
     }
 
-    private Map<String, Object> existingDataStart(final List<String> sources, final String named) {
+    private Map<String, Object> existingDataStart(final String build,
+                                                  final List<String> sources,
+                                                  final String named) {
+        final String feed = sources.isEmpty()
+                ? "<the feed>"
+                : sources.getFirst();
         final Map<String, Object> call = new LinkedHashMap<>();
         call.put("tool", "stream_meta");
-        call.put("arguments", args("feeds", List.of(sources.isEmpty()
-                ? "<the feed>"
-                : sources.getFirst())));
+        call.put("arguments", args("feeds", List.of(feed)));
+        final List<Map<String, Object>> current = facts.translating(sources);
+        // A translation's new version is offered after the survey, never copied from here.
+        final String otherVersion = current.isEmpty()
+                ? "another production pipeline's new version (an indexing one, say), copy_pipeline"
+                : "an indexing pipeline's new version, copy_pipeline of that indexing pipeline only";
         String then = "this build works from data already in Stroom: create no feed and upload nothing. Then, for "
                       + "what the user asked: an events pipeline for the feed, survey_feed build=... (its kinds of "
-                      + "event); a production pipeline's new version, copy_pipeline; indexing its "
-                      + "Events, get_field_conventions and the index; sending its Events on as CEF, "
-                      + "draft_cef_mapping; indexing its raw data as it is, for exploration (a discovery index), "
-                      + "start_build kind=discovery for this build; loading it as a table to look values up in "
-                      + "(reference data), start_build kind=reference";
-        final List<Map<String, Object>> current = facts.translating(sources);
+                      + "event); " + otherVersion + "; indexing its Events, get_field_conventions and the index; "
+                      + "sending its Events on as CEF, draft_cef_mapping; indexing its raw data as it is, for "
+                      + "exploration (a discovery index), start_build kind=discovery for this build; loading it as a "
+                      + "table to look values up in (reference data), start_build kind=reference";
         if (!current.isEmpty()) {
-            // Seen in testing: asked to onboard a feed "using the current pipeline as a reference", the agent
-            // surveyed and drafted anew, lost the current XSLT's lookups, and had a 50 KB mapping to send in one
-            // call.
+            // Every existing translation, hand-written or built by Stroom AI, goes through the survey first (decided
+            // by the user, 2026-11-25): seen in eval case 97, this advice offered copy_pipeline, both models copied a
+            // hand-written pipeline at once, and the survey and the catalogue's offer to start from it (and its
+            // confirmation) were skipped. The copy is offered after the survey, by catalogue_event_types.
             final String shown = current.stream()
                     .map(p -> "'" + p.get("name") + "' (" + p.get("uuid") + ")")
                     .collect(Collectors.joining(", "));
-            then = sources.getFirst() + " is translated now by " + shown + ". For its next version (V1.2 to V1.3, "
-                   + "say), or a change to it: copy_pipeline source_uuid=<it> rename={'V1.2': 'V1.3'} (always a "
-                   + "new version, never a change in place: the user confirms the names it proposes, an "
-                   + "Elasticsearch index's among them), then build_translation_xslt uuid=<the copy's XSLT> "
-                   + "changes= only what changes (rebuild_mapping uuid=<it> first, if its XSLT keeps no mapping): "
-                   + "what it does, its lookups and all, comes with the copy. Or, its translation written anew (a "
-                   + "new schema version, say): survey_feed, draft_translation_mapping (its notes say what the "
-                   + "current XSLT looks up, to keep if the user wants), build_translation_xslt build= name=, then "
-                   + "create_pipeline version_of=<it>: a child of the same template with the new XSLT, and its "
-                   + "reference data if the user keeps them. Ask the user which. "
-                   + Character.toUpperCase(then.charAt(0)) + then.substring(1);
+            then = feed + " is translated now by " + shown + ". For any change to its translation (its next "
+                   + "version, a field added, a fix), whoever wrote it: survey_feed build=" + build + " feed=" + feed
+                   + " first, and copy nothing before it. After the survey, catalogue_event_types' first call asks "
+                   + "the user how the build starts: from the existing pipeline (recommended: copied as a new "
+                   + "version, its XSLT read back into a mapping and catalogue, its lookups and all; the original "
+                   + "isn't touched) or a translation drafted anew (a new schema version, say: a child of the same "
+                   + "template with the new XSLT, and its reference data if the user keeps them); next leads "
+                   + "through either. " + Character.toUpperCase(then.charAt(0)) + then.substring(1);
         }
         final Map<String, Object> start = new LinkedHashMap<>();
         start.put("step", "existing data");

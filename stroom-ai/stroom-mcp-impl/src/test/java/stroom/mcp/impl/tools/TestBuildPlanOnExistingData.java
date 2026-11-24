@@ -602,19 +602,34 @@ class TestBuildPlanOnExistingData {
     }
 
     @Test
-    void anExistingFeedsCurrentTranslationIsWhereItsNextVersionStarts() {
-        // Seen in testing: asked to onboard a feed "using the current pipeline as a reference", the agent surveyed
-        // and drafted anew, losing the current XSLT's lookups, with a 50 KB mapping to send in one call.
+    void anExistingFeedsCurrentTranslationIsSurveyedBeforeAnyCopy() {
+        // Seen in eval case 97 (2026-11-25, Haiku and Sonnet): a feed translated by a hand-written pipeline, asked to
+        // add a field; this advice offered copy_pipeline, both models copied at once, and the survey and the
+        // catalogue's offer to start from that pipeline (and its confirmation) were skipped. Decided by the user:
+        // every existing translation, hand-written or built by Stroom AI, goes through the survey first.
         facts.sources = List.of("FG");
         facts.translating = List.of(Map.of("name", "FG-V1.2-Events", "uuid", "prod-ev"));
         Map<String, Object> result = status();
         assertThat(next(result).get("translated_by")).isEqualTo(List.of(Map.of("name", "FG-V1.2-Events", "uuid",
                 "prod-ev")));
         final String then = String.valueOf(next(result).get("then"));
-        assertThat(then).startsWith("FG is translated now by 'FG-V1.2-Events' (prod-ev). For its next version")
-                .contains("copy_pipeline source_uuid=<it> rename={'V1.2': 'V1.3'}")
-                .contains("build_translation_xslt uuid=<the copy's XSLT> changes= only what changes")
-                .contains("create no feed and upload nothing");
+        assertThat(then).startsWith("FG is translated now by 'FG-V1.2-Events' (prod-ev). For any change to its "
+                                    + "translation")
+                .contains("survey_feed build=b feed=FG first")
+                .contains("catalogue_event_types' first call asks the user how the build starts")
+                .contains("create no feed and upload nothing")
+                .doesNotContain("rebuild_mapping", "build_translation_xslt", "copy_pipeline source_uuid");
+        // copy_pipeline only for an indexing pipeline's new version, never the translation's.
+        assertThat(then.split("copy_pipeline", -1)).hasSize(2);
+        assertThat(then).contains("an indexing pipeline's new version, copy_pipeline of that indexing pipeline only");
+        // Once surveyed, the catalogue's first call makes the offer.
+        facts.docs = List.of(FakeBuildFacts.doc("Documentation", "s", "FG - Survey"));
+        facts.catalogued = false;
+        facts.existing = Map.of("name", "FG-V1.2-Events", "uuid", "prod-ev");
+        assertThat(next(status()).get("step")).isEqualTo(BuildPlan.CATALOGUE);
+        assertThat(String.valueOf(next(status()).get("then"))).contains("how the build starts");
+        facts.docs = List.of();
+        facts.existing = null;
         // A feed nothing translates yet: the plan as it was.
         facts.translating = List.of();
         result = status();
@@ -672,17 +687,18 @@ class TestBuildPlanOnExistingData {
     }
 
     @Test
-    void theExistingDataAdviceGivesBothRoutesToANextVersion() {
+    void theExistingDataAdviceSaysBothRoutesToANextVersionComeAfterTheSurvey() {
         // Seen in testing: the copy for a change of parts, the next version written anew through create_pipeline
-        // version_of=, and the user asked which.
+        // version_of=, and the user asked which. Both are offered after the survey, by the catalogue (decided by the
+        // user, 2026-11-25).
         facts.sources = List.of("FG");
         facts.translating = List.of(Map.of("name", "FG-V1.2-Events", "uuid", "prod-ev"));
         assertThat(String.valueOf(next(status()).get("then")))
-                .contains("Or, its translation written anew (a new schema version, say): survey_feed, "
-                          + "draft_translation_mapping (its notes say what the current XSLT looks up")
-                .contains("then create_pipeline version_of=<it>: a child of the same template with the new XSLT, "
-                          + "and its reference data if the user keeps them. Ask the user which. This build works "
-                          + "from data already in Stroom")
+                .contains("from the existing pipeline (recommended: copied as a new version, its XSLT read back into "
+                          + "a mapping and catalogue, its lookups and all; the original isn't touched)")
+                .contains("or a translation drafted anew (a new schema version, say: a child of the same template "
+                          + "with the new XSLT, and its reference data if the user keeps them)")
+                .contains("This build works from data already in Stroom")
                 .doesNotContain("are for an events pipeline written anew");
     }
 
