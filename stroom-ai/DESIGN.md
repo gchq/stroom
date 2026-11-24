@@ -1901,17 +1901,24 @@ order, the timeline package first, then the comparison package; the record per p
 * **Peers**: `Organisation` by default (`Unit`, `Group`, `Role` allowed; `Nationality` and the like refused), read
   from one event each (`TimelineEventXml`), capped at 200 people a call: asked past it in a chat, the first 200
   read and said over MCP; the map cached in `/outputs/compare/peer-groups.json`; fewer than 5 peers not compared.
-* **Categories**: an index's category field first; else model side calls (batches of 100, at most 1,000 values a
-  call, answers checked against a fixed category set, the values data), cached in `/outputs/compare/
-  categories.json` and marked inferred; the site's list (`categoryList`, from the AGENTS doc or skill) overrides
-  everything, then the analyst's corrections; per-source `<source>-categories.csv`.
+* **Categories**: an index's category field first (`categoryField`, the AGENTS doc's `## Fields` `category:`, the
+  flat `Category` or an ECS-style `*.category` but `event.category`), counted row by row; else, only when
+  `categories: true` is asked for, model side calls (batches of 100, at most 1,000 values a call, answers checked
+  against a fixed category set, the values data), cached in `/outputs/compare/categories.json` and marked inferred;
+  the site's list (`categoryList`, from the AGENTS doc or skill) overrides everything, then the analyst's
+  corrections; per-source `<source>-categories.csv`. On by default where the source has a category field (the user,
+  2026-11-24), never the model's classification by default; the notes say what was on by default and why.
 * **Access graph** (`accessField`): the baseline's people and resources clustered by `Leiden` (made public for
   it); findings for window access outside the person's cluster and resources no one in it reached before; the
   cluster's people noted as peers learned from access.
-* **Location**: `*.geo.country_iso_code` (or `countryField`), and on Elastic Indexes `*.geo.location` by ES|QL
-  `ST_CENTROID_AGG`: new countries, impossible travel (over 900 km/h and 500 km; with countries only, two
-  countries within 2 hours, said), activity abroad on leave; "location isn't available" without geo fields. No
-  reference data lookups (dropped by the user).
+* **Location**: `countryField`, the AGENTS doc's `## Fields` `country:`, `*.geo.country_iso_code`, else the flat
+  `Country`; and on Elastic Indexes `*.geo.location` by ES|QL `ST_CENTROID_AGG`: new countries, impossible travel
+  (over 900 km/h and 500 km; with countries only, two countries within 2 hours, said), activity abroad on leave.
+  On by default where the source has a country field, said in the notes; "location isn't available" when asked for
+  without one. No reference data lookups (dropped by the user).
+* **Times** (2026-11-24): a date alone is a whole day in the call's zone, an end date included (to the next day's
+  start), so a one-day window is the same date twice; a time or expression is an exclusive end. A `baselineTo` date
+  of the window's first day is read as the day before. Leave and exceptions also take `from - to`.
 * **Cost**: per source per person over N months about 3N queries, plus N each for peers, categories and location,
   1 for the people active (and up to 200 cached event reads), 2 for access, 1 a breadth field: 12 months of one
   source with 2 breadth fields and everything on is about 75 queries, 5 sources about 375; a re-run asks only the
@@ -1962,7 +1969,16 @@ order, the timeline package first, then the comparison package; the record per p
   P10006 was working on on 2026-09-16), 81 (the leaver's VPN session at night), 82 (an archive, then a personal
   cloud upload over 10 MB within an hour), all listed; 83 to 86 (`compare_activity`: the leaver before leaving, the
   curious viewer against the team, the compromised account in April, the decoys not flagged) are written but not yet
-  in `EvalCases.IDS`.
+  in `EvalCases.IDS`. Since 2026-11-24 (after the Haiku and Sonnet runs, every first `compare_activity` call refused
+  for the flat index's `PersonId`) each has the site's AGENTS doc beside its index (the case key `agents`, written as
+  a Documentation doc named AGENTS in the index's folder before the question, removed after,
+  `AbstractEvalTest.questionData`): `## Fields` `person: PersonId`, `user: UserName`, `host`, `action`, `category`,
+  `country` (and `target person`, `target user` for 87), so neither the user nor the references name the fields;
+  the flat field convention is unchanged. Case 83 no longer expects the access graph's `access:Site` (the question
+  doesn't ask for it). Case 87 is scored by what the answer says, not the tool (both models answered by a
+  `search_events` on `TargetPersonId`, a sound route): `answer_must_say_all_of` the group "Finance Data Admins" and
+  who granted it (P20002 or their account), in a reference run against the tool results; the flat records' Object
+  holds the group (it held nothing for the grant before, so no answer could name it).
 * **Not built**: the record per person (parked, below); a `check_skill` rule against stating intent or guilt (the
   tool's wording and the templates only, so far); the tools' own tool policy (the safeguard above); charts of
   `compare_activity`'s CSVs through `propose_timeline_dashboard` (it takes the timeline's tables only); speed from
@@ -5829,6 +5845,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-24 | compare_activity defaults and the insider evals' AGENTS doc (the user's decisions): categories and location on by default where a source has a category field (`categoryField`, AGENTS `## Fields` `category:` (new key), the flat `Category` or an ECS-style `*.category` but `event.category`) or a country field (`countryField`, AGENTS `country:` (new key), `*.geo.country_iso_code`, the flat `Country`), each turned off by `false` and said in the notes with the field and where it came from; the model classifies values only when `categories: true` is asked for with no category field; categories from the field counted row by row (a value of more than one category in each); peers and the access graph unchanged; a date alone a whole day, an end date included (a one-day window the same date twice; a `baselineTo` of the window's first day read as the day before), times exclusive ends; leave and exceptions take `from - to`. The insider eval cases 79 to 87 get the site's AGENTS doc beside their index (case key `agents`), not a flat convention change; case 83 drops `access:Site`; case 87 is scored by the answer (`answer_must_say_all_of`, the reply or a reference run's tool results), not by `tools_used`; `TestE2ePersonFieldFromAgents` covers the AGENTS person field in all three tools | [Insider risk](#insider-risk-patterns-anomalies-and-a-record-per-person-built-2026-11-24) (as built: Categories, Location, Times, Eval cases); TOOLS.md (compare_activity, propose_instructions) |
 | 2026-11-24 | What was done to the person built (the user's decisions): the actor stays `EventSource/User`; events where the person is the target (a group or access granted, a reset, MFA changed, failed logons against them) are read apart and opt-in, `includeTargets`, off by default in `activity_timeline` and `compare_activity`, on in the leaver, privileged user and alert triage templates, never in the person's activity, volume, rhythm, breadth, sessions, periods, pairs, characterisation or peers; target fields by the call, AGENTS `target person:` / `target user:`, then ECS `user.target.id` / `user.target.name` (the User objects of Authorise, Create, Delete, Update; Authenticate's User left out of the convention), by person id else logon id, the person's own acts on themselves left out; a "done to them" lane per source and a `role` column in the timeline's spans and actions; compare's own findings group (by type and new actors, rises only, leave scored, its own source-wide check on ES\|QL); `sequence_query` steps take `role: target`; the generator's target events a stream of their own; eval case 87 | [Insider risk](#insider-risk-patterns-anomalies-and-a-record-per-person-built-2026-11-24) (as built, Done to them); TOOLS.md (activity_timeline, compare_activity, sequence_query) |
 | 2026-11-24 | Insider risk comparison built: `compare_activity` (timelines group, search, Use; peers need View Data) compares a person's window (default 30 days, by the week) with their 180-day baseline and their peers' from index aggregates only (ES\|QL, else StroomQL, monthly slices in parallel, re-runs asking only the days since); coverage, leave, approved exceptions (`from..to: reason`, not scored, said) and source-wide shifts (listed apart as "Explained by the source", volume features only) checked first; robust z ≥ 3.5 and half the level (an hour for times), capped at 50; runs of window findings merged; change points by least absolute deviation on weekly means, dated to the first day at the new level; drifts over 4 months; rhythm with 5 baseline months; at most 20 findings worded as indicators, CSV files and flagged days for `activity_timeline`; peers by the Event XML's `Organisation` (Unit, Group, Role allowed, never Nationality) read from one event each, 200 a call, cached; categories from the index's field, else model side calls checked against a fixed set, the site's list then corrections overriding; an access graph by Leiden; location from geo fields (new countries, impossible travel, abroad on leave), no reference data lookups; four skill templates; the insider dataset generator with plants, decoys and a known answer; eval cases 79 to 86 (83 to 86 not yet listed). Not built: the record per person (parked), a `check_skill` rule against stating intent or guilt, a tool policy of its own, compare's CSVs to a dashboard, speed from numeric coordinates on non-Elastic indexes | [Insider risk](#insider-risk-patterns-anomalies-and-a-record-per-person-built-2026-11-24) (as built); TOOLS.md (compare_activity) |
 | 2026-11-24 | Timelines for insider risk: `activity_timeline` and `sequence_query` take `person` (a person id by each index's person field: the call, the AGENTS doc's `## Fields` `person:`, ECS `user.id`), `logonIds` and `personField`, the result saying by person id or by logon id with the accounts counted and that other accounts aren't included unless named; close variants of logon ids offered, never merged (the timeline only); the empty window's sources' first and last events (`none_in_period`); a Network event's object its destination; correlation keys widened to every leaf, `Data[...]` by name and index fields; spans bounded by a key, automatic only for session-like keys (others by `spanBy`, as automatic domain or application spans flooded the charts); pair and key spans placed in activities; `propose_instructions` names the folder itself | Activity timelines, streaming joins and skills (2c., added for insider risk); TOOLS.md (activity_timeline, sequence_query, propose_instructions) |

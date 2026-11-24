@@ -669,7 +669,8 @@ Lines of the sections the tools apply themselves (`## Required imports`, `## Com
 `## Documentation`, `## Fields`) that name nothing the tools know are pointed out in the result
 (`InstructionRules.problems`): the tools leave such lines out without a word, which is right for a note but not for
 a slip, so the agent can propose the corrected text again. So are `## Fields` lines (`- user: Initiator.Id`,
-`- person: user.id`, read by `activity_timeline`, `sequence_query` and `compare_activity`) naming no field of the
+`- person: user.id`, read by `activity_timeline`, `sequence_query` and `compare_activity`; `- category: Category` and
+`- country: Country`, read by `compare_activity` for its default categories and location) naming no field of the
 data sources in the folder (and below) the user can Use (`InstructionRules.fieldProblems`, `IndexFieldNames`).
 
 * **Arguments**: `folder` (UUID or Explorer path), `markdown` (the whole text) or `edits` (`oldText`/`newText`
@@ -1983,10 +1984,14 @@ of its own: the tool policies decide who may compare a person's activity.
   (`personField`, the AGENTS doc's `## Fields` `person:`, the ECS convention `user.id`), else `logonIds` by its user
   field (`userField`, likewise); each source says by which, with its field and where it came from. One of `person`
   or `logonIds` is needed.
-* **Periods**: `windowFrom`/`windowTo` (a date, ISO 8601 time or date expression such as `now()-30d`; `windowTo`
-  exclusive, default today included; `windowFrom` default 30 days before), `baselineFrom`/`baselineTo` (default the
-  180 days before the window's start); the baseline ends by the window's start, and the two together are at most
-  3 × 366 days. `unit` (`day`, `week`, the default, or `month`) is what the window is compared in. Days and hours
+* **Periods**: `windowFrom`/`windowTo` (a date, ISO 8601 time or date expression such as `now()-30d`; default today
+  included; `windowFrom` default 30 days before), `baselineFrom`/`baselineTo` (default the 180 days before the
+  window's start). A date alone (`yyyy-MM-dd`) is a whole day in `timeZone`: a start from the start of that day, an
+  end included, to the start of the next day, so `2026-06-01` to `2026-06-30` is all of June and a one-day window is
+  the same date twice; a time or expression is an exclusive end (since 2026-11-24, after Haiku's date-only calls:
+  before, an end date was exclusive). A `baselineTo` date of the window's first day is read as the baseline ending
+  the day before, said in the notes (models pass the window's start as the baseline's end). The baseline ends by the
+  window's start, and the two together are at most 3 × 366 days. `unit` (`day`, `week`, the default, or `month`) is what the window is compared in. Days and hours
   are in `timeZone` (the person's).
 * **Sources**: `sources` (names or uuids), default every Elastic and Lucene index the user can use; each one with no
   time field, or with no person or user field for the person, is listed as left out with why, and refused only if
@@ -2004,7 +2009,8 @@ of its own: the tool policies decide who may compare a person's activity.
   10,000 rows a query slice (`ActivityProfiles.MAX_ROWS`): one cut short is said and its figures are "approximate".
   Each source audited as a search, with its first aggregate and how many more.
 * **Cost**: per source over N months about 3N queries, plus 1 a breadth field, N with peers (plus 1 for the people
-  active, and up to 200 event reads, cached), N for categories, N for location and 2 for an access field. 12 months
+  active, and up to 200 event reads, cached), N for categories and N for location (each on by default where the
+  source has the field: the description says about 1 more query a month each), and 2 for an access field. 12 months
   of one source with 2 breadth fields, peers, categories and location is about 75 queries, in parallel up to
   `joinWorkers`; 5 sources about 375. The time limit is 4 times the query time limit.
 * **Re-runs** (`CachedAggregates`): the time-bucketed aggregates are kept in `/outputs/compare/<person>/
@@ -2051,10 +2057,17 @@ of its own: the tool policies decide who may compare a person's activity.
   the whole window's events a day are at least twice the peers' median and z ≥ 3.5 against their spread (a curious
   viewer's volume above the team's). Fewer than 5 peers
   with events: not compared, said. Needs View Data and StreamId and EventId fields; without either, no peers, said.
-* **Categories** (`categories`, default false; `ActivityCategories`): the first breadth field's values a day by
-  category (personal cloud storage, webmail, job search, anonymiser, archive or encryption tool, remote access,
-  file sharing, social media, else other): from the index's `categoryField` where given; else classified by the
-  model in side calls (`ModelSideCalls`, as `activity_timeline`'s; batches of 100, at most 1,000 values a call, the
+* **Categories** (`categories`; `ActivityCategories`): each category's events a day. On by default (since
+  2026-11-24, after models left `categoryField` out and missed the job-site and personal cloud signals) where the
+  source has a category field: `categoryField`, else the AGENTS doc's `## Fields` `category:`, else the flat
+  profile's `Category` or an ECS-style `*.category` field (not ECS's `event.category`, the event's own kind; neither
+  field convention maps a category, so these names are in `CompareActivityTool`); a countable field. The result's
+  notes say it was on by default, by which field and where it came from, and that `categories: false` turns it off.
+  From the field, events are counted row by row by the first breadth field's value and the field's category (a value
+  of more than one category counted in each; by the category field alone where there is no breadth field), the
+  site's list and corrections overriding a value's. `categories: true` on a source with no category field: the first
+  breadth field's values (personal cloud storage, webmail, job search, anonymiser, archive or encryption tool, remote
+  access, file sharing, social media, else other) classified by the model in side calls; never by default (`ModelSideCalls`, as `activity_timeline`'s; batches of 100, at most 1,000 values a call, the
   commonest first; answers checked against the fixed categories; values treated as data), cached in
   `/outputs/compare/categories.json` and marked inferred. `categoryList` (the site's own, `value=category`, from the
   AGENTS doc or a skill) overrides the rest, then `categoryCorrections` (kept for re-runs). Each value's category
@@ -2064,11 +2077,13 @@ of its own: the tool policies decide who may compare a person's activity.
   person's window access outside their cluster (at least 5 events and a tenth of the window's), and resources no
   one in their cluster reached before, are a finding naming up to 10; the people of the person's cluster are noted
   as peers learned from access.
-* **Location** (`location`, default true; `ActivityLocation`): from `countryField`, else a `*.geo.country_iso_code`
-  field (`source.*` first), and on an Elastic Index a `*.geo.location` point (ES|QL `ST_CENTROID_AGG`), in one
-  hourly aggregate by country: countries new in the window; impossible travel (over 900 km/h between two places at
-  least 500 km apart; with countries only, two countries within 2 hours, said as such); activity from abroad on
-  leave. An index with no geo fields: "location isn't available", said. No reference data lookups.
+* **Location** (`location`; `ActivityLocation`): on by default where the source has a country field, said in the
+  notes as categories are (`location: false` turns it off): `countryField`, else the AGENTS doc's `## Fields`
+  `country:`, else a `*.geo.country_iso_code` field (`source.*` first), else the flat profile's `Country`; and on an
+  Elastic Index a `*.geo.location` point (ES|QL `ST_CENTROID_AGG`), in one hourly aggregate by country: countries new
+  in the window; impossible travel (over 900 km/h between two places at least 500 km apart; with countries only, two
+  countries within 2 hours, said as such); activity from abroad on leave. `location: true` on a source with no
+  country field: "location isn't available", said. No reference data lookups.
 * **What was done to them** (`includeTargets`, default false; `TargetScoring`, built 2026-11-24): per source with a
   target field (found as `activity_timeline`'s: `targetPersonField`, `targetUserField`, AGENTS `target person:` /
   `target user:`, ECS `user.target.id` / `user.target.name`), the events done to the person by others (their own
