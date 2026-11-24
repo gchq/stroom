@@ -3076,8 +3076,8 @@ Moved here from the sections above (6 November 2026), as they are fixed, with th
   them; View as Hex lost by visiting Info; a failed child types request sent again for each tab; and
   an error on pressing a tab with no stream chosen.
 * The data retention rules were read from the database for each row of the stream lists, and twice for
-  Info (`addMatchingRetentionRuleInfo` called `getRules()`). Since `3bddd2d5e7`, so **7.13 and 7.14
-  need this fix too**.
+  Info (`addMatchingRetentionRuleInfo` called `getRules()`). Since `3bddd2d5e7`, so 7.13 and 7.14
+  have it too; it won't be fixed there (decided 24 November 2026).
 
 Going to Data Preview, from the click to the text being drawn (medians of a draft compile):
 192 ms before and 16 ms after, or 509 ms and 72 ms with the CPU slowed four times; to Info, 40 ms and
