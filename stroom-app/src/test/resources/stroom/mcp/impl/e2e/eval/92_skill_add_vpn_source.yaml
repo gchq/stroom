@@ -3,8 +3,9 @@ kind: skill
 capabilities: [skills, find_skills, propose_skill, check_skill]
 # The saved skill "Failed logons by host" reads the Logons index only. The user asks for the VPN index's failed
 # connections too. Scored on the diff: a change to the existing SKILLS doc in /Hunts, its Steps changed (a run_stroomql
-# step on the VPN index with ConnectFailed in it), its description and Output allowed to change, its parameters and
-# "When to use" as they were; and check_skill finding no problems in it.
+# step on the VPN index with ConnectFailed in it), what follows from the new source allowed to change (its
+# description, "When to use", the parameters' descriptions, Output), its parameters still user and days, every other
+# skill as it was; and check_skill finding no problems in it.
 lucene_index:
   - name: Logons
     events: questions/skill-logons.csv
@@ -50,7 +51,8 @@ expected:
     folder: /Hunts
     skill: Failed logons by host
     changed_sections: [steps]
-    may_change: [description, output, when to use]
+    # The parameters' descriptions may name the VPN index too; their names are checked below.
+    may_change: [description, output, when to use, parameters]
     steps_call: [run_stroomql]
     steps_contain: [VPN, ConnectFailed, Gateway]
     parameters: [user, days]
