@@ -59,6 +59,9 @@ class TestAbstractRoundingFunction {
             // Origins.
             "floor(2024-03-15T10:00:00Z, 1y, 2024-04-01T00:00:00Z)|2023-04-01T00:00:00Z",
             "floor(2024-03-15T10:00:00Z, 1y, '2024-04-01T00:00:00')|2023-03-31T23:00:00Z",
+            // Text with no offset is in the zone of the query.
+            "floorTime('2024-05-15T10:20:00', 1h)|2024-05-15T09:00:00Z",
+            "floorMonth('2024-05-15')|2024-04-30T23:00:00Z",
             // Spaces and fractions.
             "floor(2024-05-15T10:20:00Z, '1 M')|2024-04-30T23:00:00Z",
             "floor(2024-05-15T10:20:00Z, ' 1 h ')|2024-05-15T10:00:00Z",
@@ -113,6 +116,16 @@ class TestAbstractRoundingFunction {
         assertThat(eval(expression, Map.of(), ValNull.INSTANCE)).isEqualTo(ValDuration.create(expected));
     }
 
+    // So that a saved dashboard doesn't show errors, or group by them.
+    @ParameterizedTest
+    @ValueSource(strings = {"N/A", "06/07/2024", "2024-07-06 12:00:00", "-12345678901234567890", "true", " "})
+    void textThatIsNotADateIsNull(final String text) throws ParseException {
+        for (final String expression : new String[]{"floorDay(${field})", "ceilingMonth(${field})",
+                "roundHour(${field})", "floorTime(${field}, 1h)", "isWeekend(${field})"}) {
+            assertThat(eval(expression, Map.of(), ValString.create(text))).as(expression).isEqualTo(ValNull.INSTANCE);
+        }
+    }
+
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
             "floor(1.28, 1)|1.2",
@@ -160,6 +173,10 @@ class TestAbstractRoundingFunction {
             "floor(${field}, parseDuration('15mm'))|Text cannot be parsed to a Duration",
             "floorTime(${field}, parseDuration('soon'))|Text cannot be parsed to a Duration",
             "floor('1e300', 1d)|'1e300' is too large to be a date",
+            "floorTime(100m, 1h)|Use floor, ceiling or round to round a duration",
+            "floorDay('2h')|'2h' is not a date",
+            "roundYear(1d)|A period is not a date",
+            "ceilingMonth(isNull(1))|A boolean is not a date",
             "floorTime(${field}, 0h)|it must be at least one millisecond",
             "floorTime(${field}, 1M, 5m)|Invalid origin",
             "floorTime(${field}, 1M, 'soon')|Invalid origin"})

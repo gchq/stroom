@@ -60,7 +60,7 @@ abstract class AbstractCalendarFunction extends AbstractManyChildFunction {
                 if (params[i] instanceof final Val val) {
                     if (i == zonePos) {
                         UserTimeZoneUtil.getZoneId(val);
-                    } else if (!isBlank(val)) {
+                    } else if (!DateReader.isBlank(val)) {
                         checkConstant(i, val);
                     }
                 }
@@ -107,10 +107,6 @@ abstract class AbstractCalendarFunction extends AbstractManyChildFunction {
             resolved[last] = val;
         }
         return new Gen(this, childGenerators, getZonePos(resolved));
-    }
-
-    private static boolean isBlank(final Val val) {
-        return !val.type().isValue() || (val instanceof ValString && val.toString().isBlank());
     }
 
     /// Reads a value as a whole number.
@@ -161,7 +157,7 @@ abstract class AbstractCalendarFunction extends AbstractManyChildFunction {
                 if (val.type().isError()) {
                     return val;
                 }
-                hasNull |= i != zonePos && isBlank(val);
+                hasNull |= i != zonePos && DateReader.isBlank(val);
                 vals[i] = val;
             }
             if (hasNull) {

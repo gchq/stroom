@@ -122,7 +122,7 @@ class ParseDate extends AbstractFunction {
                 final Val val = parse((Val) param, formatter, hasPattern, zoneFunction == null
                         ? zone
                         : () -> ZoneOffset.UTC);
-                if (zoneFunction == null || !val.type().isValue()) {
+                if (zoneFunction == null) {
                     gen = new StaticValueFunction(val).createGenerator();
                 } else {
                     // The time zone may be different in each row.
@@ -200,7 +200,7 @@ class ParseDate extends AbstractFunction {
             final Val val = childGenerators[0].eval(storedValues, childDataSupplier);
             if (!val.type().isValue()) {
                 return val;
-            } else if (val instanceof ValString && val.toString().isBlank()) {
+            } else if (DateReader.isBlank(val)) {
                 return ValNull.INSTANCE;
             }
 

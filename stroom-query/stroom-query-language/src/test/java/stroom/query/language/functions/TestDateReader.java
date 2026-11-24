@@ -85,6 +85,20 @@ class TestDateReader {
     }
 
     @Test
+    void readIfDate() {
+        assertThat(DateReader.readIfDate(ValString.create("2024-07-01T09:00:00"), LONDON))
+                .isEqualTo(Instant.parse("2024-07-01T08:00:00Z").atZone(LONDON));
+        for (final Val val : List.of(ValNull.INSTANCE, ValErr.create("bad"), ValString.create(" "),
+                ValString.create("soon"), ValString.create("-12345678901234567890"))) {
+            assertThat(DateReader.readIfDate(val, LONDON)).as(val.toString()).isNull();
+        }
+        for (final Val val : List.of(ValString.create("2h"), ValDuration.create(5), ValBoolean.TRUE,
+                ValDouble.create(Double.NaN))) {
+            assertThatThrownBy(() -> DateReader.readIfDate(val, LONDON)).isInstanceOf(DateTimeException.class);
+        }
+    }
+
+    @Test
     void numberInTextThatIsTooLarge() {
         assertThatThrownBy(() -> DateReader.readMillis(ValString.create("12345678901234567890"), NOT_NEEDED))
                 .isInstanceOf(DateTimeException.class)

@@ -17,7 +17,7 @@
 package stroom.query.language.functions;
 
 import java.text.ParseException;
-import java.time.Instant;
+import java.time.DayOfWeek;
 import java.time.ZonedDateTime;
 
 @FunctionDef(
@@ -70,14 +70,15 @@ class IsWeekend extends AbstractDateTimeFunction {
     }
 
     public Val calc(final Val value) {
-        final Long val = value.toLong();
-        if (val == null) {
-            return ValNull.INSTANCE;
+        try {
+            final ZonedDateTime dateTime = DateReader.readIfDate(value, zoneId);
+            if (dateTime == null) {
+                return ValNull.INSTANCE;
+            }
+            final DayOfWeek dayOfWeek = dateTime.getDayOfWeek();
+            return ValBoolean.create(DayOfWeek.SATURDAY.equals(dayOfWeek) || DayOfWeek.SUNDAY.equals(dayOfWeek));
+        } catch (final RuntimeException e) {
+            return ValErr.create(e.getMessage());
         }
-
-        final ZonedDateTime zonedDateTime = Instant.ofEpochMilli(val).atZone(zoneId);
-        final int dayOfWeek = zonedDateTime.get(java.time.temporal.ChronoField.DAY_OF_WEEK);
-        final boolean isWeekend = (dayOfWeek == 6 || dayOfWeek == 7); // Saturday or Sunday
-        return ValBoolean.create(isWeekend);
     }
 }

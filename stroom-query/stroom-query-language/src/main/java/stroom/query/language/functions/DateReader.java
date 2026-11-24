@@ -75,6 +75,34 @@ final class DateReader {
                && isLong(val);
     }
 
+    /// Reads a value as a date in a time zone, for functions that have always given a null for text that is not a date.
+    ///
+    /// @param val  A date, a number of milliseconds since the epoch, or text of either.
+    /// @param zone The time zone of text that has no offset, and of the date that is returned.
+    /// @return The date, or `null` if the value is null, blank or text that is neither a date nor a number.
+    /// @throws DateTimeException If the value is anything else that is not a date, which includes text of a duration.
+    static ZonedDateTime readIfDate(final Val val, final ZoneId zone) {
+        if (isBlank(val)) {
+            return null;
+        }
+        try {
+            return read(val, zone);
+        } catch (final DateTimeException e) {
+            if (val instanceof ValString && val.toLong() == null) {
+                return null;
+            }
+            throw e;
+        }
+    }
+
+    /// Tells whether a value has nothing to read.
+    ///
+    /// @param val The value.
+    /// @return True if it is null, an error or blank text.
+    static boolean isBlank(final Val val) {
+        return !val.type().isValue() || (val instanceof ValString && val.toString().isBlank());
+    }
+
     /// Tells whether a number can be turned into a long. One that is too large, is infinite or is not a number would
     /// become a long that has nothing to do with it.
     ///

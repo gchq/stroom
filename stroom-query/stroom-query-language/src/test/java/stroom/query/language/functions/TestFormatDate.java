@@ -86,12 +86,33 @@ class TestFormatDate {
         for (final String zone : new String[]{"'UTC'", "${field}"}) {
             assertThatThrownBy(() -> evalInLondon("formatDate('abc', 'HH', " + zone + ")", ValString.create("UTC")))
                     .isInstanceOf(TokenException.class)
-                    .hasMessageContaining("Unable to convert first argument");
+                    .hasMessageContaining("'abc' is not a date");
         }
         assertThatThrownBy(() -> DateFunctionTestUtil.eval(
                 DateFunctionTestUtil.UNKNOWN_ZONE, "formatDate(${field})", ValDate.create(0)))
                 .isInstanceOf(TokenException.class)
                 .hasMessageContaining("Unknown time zone 'Mars/Base'");
+    }
+
+    @Test
+    void textWithNoOffset() throws ParseException {
+        for (final String date : new String[]{"'2024-07-01T09:00:00'", "${field}"}) {
+            final ValString field = ValString.create("2024-07-01T09:00:00");
+            // It is in the time zone that it is formatted in.
+            assertThat(evalInLondon("formatDate(" + date + ")", field))
+                    .isEqualTo(ValString.create("2024-07-01T09:00:00.000+0100"));
+            // Text that says it is in UTC is, but it is still read in the time zone of the query.
+            assertThat(evalInLondon("formatDate(" + date + ", \"HH:mm'Z'\")", field))
+                    .isEqualTo(ValString.create("08:00Z"));
+            assertThat(evalInLondon("formatDate(" + date + ", 'HH XX', 'America/New_York')", field))
+                    .isEqualTo(ValString.create("09 -0400"));
+        }
+        assertThat(evalInLondon("formatDate(${field})", ValString.create(" "))).isEqualTo(ValNull.INSTANCE);
+        // A blank is null whatever the time zone is.
+        assertThat(evalInLondon("formatDate(${field}, 'HH', ${field})", ValString.create(" ")))
+                .isEqualTo(ValNull.INSTANCE);
+        assertThat(evalInLondon("formatDate('', 'HH', ${field})", ValString.create("Mars/Base")))
+                .isEqualTo(ValNull.INSTANCE);
     }
 
     @Test

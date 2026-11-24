@@ -119,9 +119,12 @@ class TestDateFunctionInputs {
     private static final List<Argument> DATE_ARGUMENTS = Stream.concat(
                     Stream.of("getYear", "getQuarter", "getMonth", "getDayOfMonth", "getDayOfWeek", "getDayOfYear",
                                     "getWeekOfYear", "getWeekBasedYear", "getHour", "getMinute", "getSecond",
-                                    "getMillisecond", "timeOfDay", "toDate")
+                                    "getMillisecond", "timeOfDay", "toDate", "formatDate")
                             .map(name -> name + "({})"),
-                    Stream.of("datePart({}, 'year')",
+                    Stream.of("formatDate({}, 'yyyy HH')",
+                            "formatDate({}, 'yyyy HH', 'Europe/London')",
+                            "formatDate({}, \"yyyy HH'Z'\")",
+                            "datePart({}, 'year')",
                             "dateDiff('day', {}, " + LATER_DATE + ")",
                             "dateDiff('hour', " + LATER_DATE + ", {})",
                             "periodBetween({}, " + LATER_DATE + ")",
@@ -129,22 +132,24 @@ class TestDateFunctionInputs {
                             "toEpoch({}, 's')"))
             .map(Argument::new)
             .toList();
-    // These don't read dates as the others do.
+    // These give a null for text that is not a date, and an error in every row for a mistake in a constant, as they
+    // always have.
     private static final List<Argument> OLDER_DATE_ARGUMENTS = Stream.concat(
-                    Stream.of("isWeekend", "formatDate", "parseDate", "floorDay", "floorHour", "floorMinute",
-                                    "floorSecond", "floorWeek", "floorMonth", "floorYear", "ceilingDay", "ceilingHour",
-                                    "ceilingMinute", "ceilingSecond", "ceilingWeek", "ceilingMonth", "ceilingYear",
-                                    "roundDay", "roundHour", "roundMinute", "roundSecond", "roundWeek", "roundMonth",
-                                    "roundYear")
+                    Stream.of("isWeekend", "floorDay", "floorHour", "floorMinute", "floorSecond", "floorWeek",
+                                    "floorMonth", "floorYear", "ceilingDay", "ceilingHour", "ceilingMinute",
+                                    "ceilingSecond", "ceilingWeek", "ceilingMonth", "ceilingYear", "roundDay",
+                                    "roundHour", "roundMinute", "roundSecond", "roundWeek", "roundMonth", "roundYear")
                             .map(name -> name + "({})"),
-                    Stream.of("formatDate({}, 'yyyy HH')",
-                            "formatDate({}, 'yyyy HH', 'UTC')",
-                            "parseDate({}, 'yyyy-MM-dd')",
-                            "floorTime({}, 1h)",
+                    Stream.of("floorTime({}, 1h)",
                             "ceilingTime({}, 1M)",
                             "roundTime({}, 1d)"))
             .map(Argument::new)
             .toList();
+    // This only reads numbers if there is no pattern, and text must be in the pattern.
+    private static final List<Argument> PARSE_DATE_ARGUMENTS =
+            Stream.of("parseDate({})", "parseDate({}, 'yyyy-MM-dd')")
+                    .map(Argument::new)
+                    .toList();
     // These round a date or a duration.
     private static final List<Argument> DATE_OR_DURATION_ARGUMENTS =
             Stream.of("floor({}, 1d)", "ceiling({}, 1M)", "round({}, 1h)")
@@ -216,8 +221,8 @@ class TestDateFunctionInputs {
             "parseDate('2024-07-03 09', 'yyyy-MM-dd HH', {})");
 
     static Stream<Argument> allArguments() {
-        return Stream.of(DATE_ARGUMENTS, OLDER_DATE_ARGUMENTS, DATE_OR_DURATION_ARGUMENTS, OTHER_ARGUMENTS,
-                        CONSTANT_ARGUMENTS, VARIED_ARGUMENTS, NUMBER_ARGUMENTS)
+        return Stream.of(DATE_ARGUMENTS, OLDER_DATE_ARGUMENTS, PARSE_DATE_ARGUMENTS, DATE_OR_DURATION_ARGUMENTS,
+                        OTHER_ARGUMENTS, CONSTANT_ARGUMENTS, VARIED_ARGUMENTS, NUMBER_ARGUMENTS)
                 .flatMap(List::stream);
     }
 
@@ -229,12 +234,17 @@ class TestDateFunctionInputs {
         return DATE_ARGUMENTS.stream();
     }
 
+    static Stream<Argument> olderDateArguments() {
+        return OLDER_DATE_ARGUMENTS.stream();
+    }
+
     static Stream<Argument> dateOrDurationArguments() {
         return DATE_OR_DURATION_ARGUMENTS.stream();
     }
 
     static Stream<Argument> fieldArguments() {
-        return Stream.of(DATE_ARGUMENTS, OLDER_DATE_ARGUMENTS, DATE_OR_DURATION_ARGUMENTS, OTHER_ARGUMENTS)
+        return Stream.of(DATE_ARGUMENTS, OLDER_DATE_ARGUMENTS, PARSE_DATE_ARGUMENTS, DATE_OR_DURATION_ARGUMENTS,
+                        OTHER_ARGUMENTS)
                 .flatMap(List::stream);
     }
 
@@ -243,7 +253,7 @@ class TestDateFunctionInputs {
     }
 
     static Stream<Argument> argumentsCheckedWhenParsed() {
-        return Stream.of(DATE_ARGUMENTS, OTHER_ARGUMENTS).flatMap(List::stream);
+        return Stream.of(DATE_ARGUMENTS, PARSE_DATE_ARGUMENTS, OTHER_ARGUMENTS).flatMap(List::stream);
     }
 
     // Anything else would not be shown to the query's author as it should be, or would fail the whole search.
@@ -342,6 +352,24 @@ class TestDateFunctionInputs {
     @MethodSource("dateArguments")
     void datesAreReadTheSame(final Argument argument) {
         assertDates(argument, Stream.of(DURATIONS, PERIODS, ERRORS).flatMap(List::stream).toList());
+    }
+
+    @ParameterizedTest
+    @MethodSource("olderDateArguments")
+    void datesAreReadTheSameByOlderFunctions(final Argument argument) {
+        final List<Input> notDates = Stream.of(DURATIONS, PERIODS, ERRORS).flatMap(List::stream).toList();
+        assertDates(argument, notDates.stream()
+                .filter(input -> !isTextOfNothing(input))
+                .toList());
+
+        // They have always given a null for this, so saved dashboards may have it.
+        for (final Input input : notDates.stream().filter(TestDateFunctionInputs::isTextOfNothing).toList()) {
+            assertThat(argument.evalField(LONDON, input).getSummary()).as(input.name).isEqualTo(NO_VALUE);
+        }
+    }
+
+    private static boolean isTextOfNothing(final Input input) {
+        return input.val instanceof ValString && input.val.toLong() == null;
     }
 
     @ParameterizedTest

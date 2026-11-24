@@ -17,7 +17,6 @@
 package stroom.query.language.functions;
 
 import java.text.ParseException;
-import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
@@ -86,14 +85,14 @@ abstract class AbstractRoundDateTime extends AbstractDateTimeFunction {
         @Override
         public Val calc(final Val value) {
             try {
-                final Long val = value.toLong();
-                if (val == null) {
-                    return ValNull.INSTANCE;
+                if (value instanceof ValDuration) {
+                    return ValErr.create("A duration is not a date. Use floor, ceiling or round to round a duration");
                 }
 
-                ZonedDateTime dateTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(val), zoneId);
-                dateTime = adjuster.adjust(dateTime);
-                return ValDate.create(dateTime.toInstant().toEpochMilli());
+                final ZonedDateTime dateTime = DateReader.readIfDate(value, zoneId);
+                return dateTime == null
+                        ? ValNull.INSTANCE
+                        : ValDate.create(adjuster.adjust(dateTime).toInstant().toEpochMilli());
             } catch (final RuntimeException e) {
                 return ValErr.create(e.getMessage());
             }

@@ -79,6 +79,8 @@ class FormatDate extends AbstractFunction {
     private final ExpressionContext expressionContext;
     private DateTimeFormatter formatter = DateUtil.DEFAULT_FORMATTER;
     private ZoneId zoneId;
+    // The time zone of text that has no offset.
+    private Supplier<ZoneId> textZone = () -> zoneId;
     private Function zoneFunction;
 
     private Generator gen;
@@ -106,32 +108,38 @@ class FormatDate extends AbstractFunction {
             } else if (params.length == 2 && FormatterCache.isMarkedUtc(params[1].toString())) {
                 // The text says that it is in UTC, so the time must be.
                 zoneId = ZoneOffset.UTC;
+                textZone = new QueryZone(expressionContext);
             } else {
                 zoneId = UserTimeZoneUtil.getZoneId(expressionContext);
+            }
+
+            final Param param = params[0];
+            if (param instanceof Function) {
+                function = (Function) param;
+                hasAggregate = function.hasAggregate();
+            } else {
+                // Report a mistake now, rather than as an error in every row.
+                if (zoneFunction == null) {
+                    gen = new StaticValueFunction(format((Val) param, formatter, zoneId, textZone)).createGenerator();
+                } else {
+                    format((Val) param, formatter, ZoneOffset.UTC, () -> ZoneOffset.UTC);
+                    // The time zone may be different in each row.
+                    function = new StaticValueFunction((Val) param);
+                }
             }
         } catch (final DateTimeException | IllegalArgumentException | ArithmeticException e) {
             throw new ParseException(e.getMessage(), 0);
         }
+    }
 
-        final Param param = params[0];
-        if (param instanceof Function) {
-            function = (Function) param;
-            hasAggregate = function.hasAggregate();
-
-        } else {
-            final Long millis = ((Val) param).toLong();
-            if (millis == null) {
-                throw new ParseException("Unable to convert first argument of '" + name + "' function to long", 0);
-            }
-
-            if (zoneFunction != null) {
-                // The time zone may be different in each row.
-                function = new StaticValueFunction((Val) param);
-            } else {
-                final String string = DateUtil.format(millis, formatter, zoneId);
-                gen = new StaticValueFunction(ValString.create(string)).createGenerator();
-            }
-        }
+    private static Val format(final Val val,
+                              final DateTimeFormatter formatter,
+                              final ZoneId zoneId,
+                              final Supplier<ZoneId> textZone) {
+        return DateReader.isBlank(val)
+                ? ValNull.INSTANCE
+                : ValString.create(DateUtil.format(
+                        DateReader.readMillis(val, textZone), formatter, zoneId));
     }
 
     @Override
@@ -142,8 +150,8 @@ class FormatDate extends AbstractFunction {
 
         final Generator childGenerator = function.createGenerator();
         return zoneFunction == null
-                ? new Gen(new Generator[]{childGenerator}, formatter, zoneId)
-                : new Gen(new Generator[]{childGenerator, zoneFunction.createGenerator()}, formatter, null);
+                ? new Gen(new Generator[]{childGenerator}, formatter, zoneId, textZone)
+                : new Gen(new Generator[]{childGenerator, zoneFunction.createGenerator()}, formatter, null, null);
     }
 
     @Override
@@ -166,11 +174,16 @@ class FormatDate extends AbstractFunction {
 
         private final DateTimeFormatter formatter;
         private final ZoneId zoneId;
+        private final Supplier<ZoneId> textZone;
 
-        Gen(final Generator[] childGenerators, final DateTimeFormatter formatter, final ZoneId zoneId) {
+        Gen(final Generator[] childGenerators,
+            final DateTimeFormatter formatter,
+            final ZoneId zoneId,
+            final Supplier<ZoneId> textZone) {
             super(childGenerators);
             this.formatter = formatter;
             this.zoneId = zoneId;
+            this.textZone = textZone;
         }
 
         @Override
@@ -178,28 +191,20 @@ class FormatDate extends AbstractFunction {
             final Val val = childGenerators[0].eval(storedValues, childDataSupplier);
             if (!val.type().isValue()) {
                 return val;
+            } else if (DateReader.isBlank(val)) {
+                return ValNull.INSTANCE;
             }
 
-            ZoneId rowZoneId = zoneId;
-            if (childGenerators.length > 1) {
+            try {
+                if (childGenerators.length == 1) {
+                    return format(val, formatter, zoneId, textZone);
+                }
                 final Val zone = childGenerators[1].eval(storedValues, childDataSupplier);
                 if (zone.type().isError()) {
                     return zone;
                 }
-                try {
-                    rowZoneId = UserTimeZoneUtil.getZoneId(zone);
-                } catch (final DateTimeException e) {
-                    return ValErr.create(e.getMessage());
-                }
-            }
-            final Long millis = val.toLong();
-            if (millis == null) {
-                return ValErr.create("Unable to convert argument to long");
-            }
-
-            try {
-                return ValString.create(DateUtil.format(
-                        millis, formatter, rowZoneId));
+                final ZoneId rowZoneId = UserTimeZoneUtil.getZoneId(zone);
+                return format(val, formatter, rowZoneId, () -> rowZoneId);
             } catch (final RuntimeException e) {
                 return ValErr.create(e.getMessage());
             }
