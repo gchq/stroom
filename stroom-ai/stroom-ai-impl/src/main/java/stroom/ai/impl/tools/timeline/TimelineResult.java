@@ -194,7 +194,8 @@ final class TimelineResult {
         for (final EventRange range : ranges) {
             sb.append("\n- ").append(range.source()).append(": ");
             if (range.events() < 0) {
-                sb.append("not known (it couldn't be asked)");
+                sb.append("not known (").append(NullSafe.nonBlankStringElse(range.why(), "it couldn't be asked"))
+                        .append(')');
             } else if (range.events() == 0) {
                 sb.append("none");
             } else {
@@ -210,6 +211,8 @@ final class TimelineResult {
         map.put("source", range.source());
         if (range.events() >= 0) {
             map.put("events", range.events());
+        } else {
+            map.put("not_known", NullSafe.nonBlankStringElse(range.why(), "it couldn't be asked"));
         }
         NullSafe.consume(range.first(), first -> map.put("first", first));
         NullSafe.consume(range.last(), last -> map.put("last", last));

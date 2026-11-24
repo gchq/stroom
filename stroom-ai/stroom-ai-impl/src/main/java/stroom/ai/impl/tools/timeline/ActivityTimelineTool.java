@@ -957,10 +957,11 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         try {
             timeField = keyStreamsProvider.get().target(List.of(doc)).docs().getFirst().timeField();
         } catch (final RuntimeException e) {
-            return new EventRange(name, null, null, -1);
+            return new EventRange(name, null, null, -1, NullSafe.nonBlankStringElse(e.getMessage(), "its index "
+                                                                                                   + "can't be read"));
         }
         if (timeField == null || values.isEmpty()) {
-            return new EventRange(name, null, null, -1);
+            return new EventRange(name, null, null, -1, "it has no time field");
         }
         final String time = "`" + timeField.replace("`", "``") + "`";
         final ExpressionOperator filter = ExpressionOperator.builder()
@@ -970,12 +971,13 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         try {
             final Duration left = Duration.between(Instant.now(), deadline);
             final ElasticEsql.Result result = elasticEsqlProvider.get().query(new ElasticEsql.Request(doc,
-                    "| STATS first = MIN(" + time + "), last = MAX(" + time + "), events = COUNT(*)", filter, null, 1,
+                    "| STATS first_seen = MIN(" + time + "), last_seen = MAX(" + time + "), events = COUNT(*)",
+                    filter, null, 1,
                     left.isNegative()
                             ? Duration.ofSeconds(1)
                             : left, false, context.stopped()));
             if (result.rows().isEmpty()) {
-                return new EventRange(name, null, null, 0);
+                return new EventRange(name, null, null, 0, null);
             }
             final List<Object> row = result.rows().getFirst();
             final long events = row.size() > 2 && row.get(2) instanceof final Number number
@@ -985,14 +987,16 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                     ? null
                     : text(row.get(0)), events == 0
                     ? null
-                    : text(row.get(1)), events);
+                    : text(row.get(1)), events, null);
         } catch (final ElasticEsql.Refusal refusal) {
             if (refusal.reason() == ElasticEsql.Reason.STOPPED) {
                 throw new TaskTerminatedException();
             }
-            return new EventRange(name, null, null, -1);
+            return new EventRange(name, null, null, -1, NullSafe.nonBlankStringElse(refusal.getMessage(),
+                    refusal.reason().name()));
         } catch (final RuntimeException e) {
-            return new EventRange(name, null, null, -1);
+            return new EventRange(name, null, null, -1, NullSafe.nonBlankStringElse(e.getMessage(),
+                    e.getClass().getSimpleName()));
         }
     }
 

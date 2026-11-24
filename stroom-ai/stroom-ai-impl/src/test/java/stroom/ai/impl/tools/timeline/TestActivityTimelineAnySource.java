@@ -515,8 +515,9 @@ class TestActivityTimelineAnySource {
                         .containsEntry("last", "2026-11-10T10:30:00.000Z"));
         // One aggregate on the user's events, at any time.
         assertThat(asked).singleElement().satisfies(request -> {
-            assertThat(request.pipeline()).isEqualTo("| STATS first = MIN(`EventTime`), last = MAX(`EventTime`), "
-                                                     + "events = COUNT(*)");
+            // Not "first" or "last", which ES|QL keeps for itself.
+            assertThat(request.pipeline()).isEqualTo("| STATS first_seen = MIN(`EventTime`), last_seen = "
+                                                     + "MAX(`EventTime`), events = COUNT(*)");
             assertThat(request.timeRange()).isNull();
             assertThat(request.filter().toString()).contains("UserId").contains("pat");
         });

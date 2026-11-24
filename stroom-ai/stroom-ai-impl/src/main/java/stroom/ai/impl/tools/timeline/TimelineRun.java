@@ -163,8 +163,9 @@ record TimelineRun(String entity,
     /// @param source Its name.
     /// @param first  The first event's time, or null if there is none.
     /// @param last   The last event's time, or null.
-    /// @param events How many events there are.
-    record EventRange(String source, String first, String last, long events) {
+    /// @param events How many events there are, or -1 if that isn't known.
+    /// @param why    Why it isn't known, or null.
+    record EventRange(String source, String first, String last, long events, String why) {
 
     }
 }
