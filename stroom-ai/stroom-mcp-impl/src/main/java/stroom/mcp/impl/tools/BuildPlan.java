@@ -1455,10 +1455,14 @@ public class BuildPlan {
                         "backend", Objects.requireNonNullElse(index.get("backend"), "<lucene or elasticsearch>"),
                         "stream_ids", events,
                         "expected_documents", "<the Events records in those streams>",
+                        // Chat 194: the agent offered the user event.type (an ECS name the plan lacked; it had
+                        // event.code), not the names suggested here, and lost a dozen calls over it.
                         "fields", columns.isEmpty()
-                                ? "<the columns the user chose>"
+                                ? "<the columns the user chose, from the index's own fields (describe_data_source "
+                                  + "lists them): never a name it lacks>"
                                 : "<the columns the user chose; suggest " + String.join(", ", columns)
-                                  + " and confirm them>",
+                                  + " (the index's own fields for its time, user, host, address, event type and "
+                                  + "outcome, from its plan: offer these, never a name it lacks) and confirm them>",
                         "pipeline_uuid", ix), "the step is done once its searches pass");
             }
             case "index_documented" -> call("write_documentation", args("build", build, "pipeline_uuid", ix,

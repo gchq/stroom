@@ -232,9 +232,12 @@ class VerifyIndexTool extends AbstractBuiltInTool {
                                                                    + "chose: the index's field names (as the plan "
                                                                    + "named them, e.g. user.name), not the Events "
                                                                    + "paths they come from (EventSource/User/Id). "
-                                                                   + "Suggest the time field and the plan's key "
-                                                                   + "fields (user, host, address, event type, "
-                                                                   + "outcome) and confirm them with the user. "
+                                                                   + "Suggest the columns build_status's next "
+                                                                   + "names (the plan's fields for the time, user, "
+                                                                   + "host, address, event type and outcome) and "
+                                                                   + "confirm them with the user; never a name the "
+                                                                   + "index lacks, a convention's included "
+                                                                   + "(describe_data_source lists its fields). "
                                                                    + "StreamId and EventId are kept as hidden "
                                                                    + "columns, for the text pane and tracing hits."))
                         .addProperty(EXACT_ARG, ArraySchema.builder()

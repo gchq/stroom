@@ -261,6 +261,26 @@ class TestBuildPlan {
         assertThat(((Map<?, ?>) finished.get("call")).get("tool")).isEqualTo("verify_index");
     }
 
+    // Chat 194: the plan's ECS fields had event.code and no event.type; the agent offered the user event.type, a
+    // name of the convention the index lacked, and lost a dozen calls over it. The suggested columns are the index's
+    // own, and said to be.
+    @Test
+    void theSuggestedColumnsAreTheIndexsOwnFieldsAndSaidToBe() {
+        facts.columns = List.of("@timestamp", "user.name", "host.name", "event.code");
+        final Map<?, ?> finished = (Map<?, ?>) elasticStatus(false, true, List.of(selecting(true, 9L))).get("next");
+
+        final String fields = String.valueOf(((Map<?, ?>) ((Map<?, ?>) finished.get("call")).get("arguments"))
+                .get("fields"));
+
+        assertThat(fields).startsWith("<the columns the user chose; suggest @timestamp, user.name, host.name, "
+                                      + "event.code (the index's own fields")
+                .contains("never a name it lacks");
+        facts.columns = List.of();
+        final Map<?, ?> none = (Map<?, ?>) elasticStatus(false, true, List.of(selecting(true, 9L))).get("next");
+        assertThat(String.valueOf(((Map<?, ?>) ((Map<?, ?>) none.get("call")).get("arguments")).get("fields")))
+                .contains("from the index's own fields (describe_data_source lists them)");
+    }
+
     @Test
     void aVerificationRecordedBeforeItsStreamsWereKeptStillCounts() {
         // A build verified before the record kept the streams isn't sent back to index again.

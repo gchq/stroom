@@ -69,7 +69,7 @@ final class FakeBuildFacts implements BuildFacts {
     // The pipeline already translating what the build is to, and how the user chose to start (none by default).
     Map<String, Object> existing;
     Map<String, Object> startFrom;
-    final List<String> columns = List.of();
+    List<String> columns = List.of();
     Function<String, Map<String, Object>> profiler = text -> profileOf("json lines");
     RuntimeException docsFail;
     // Each feed whose survey read nothing, with why, as the build's record keeps them.
