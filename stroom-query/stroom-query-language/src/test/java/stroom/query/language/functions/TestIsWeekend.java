@@ -16,11 +16,20 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.language.functions.ref.StoredValues;
+import stroom.query.language.functions.ref.ValueReferenceIndex;
+
+import org.junit.jupiter.api.Test;
+
+import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TestIsWeekend extends AbstractFunctionTest<IsWeekend> {
 
@@ -149,5 +158,43 @@ class TestIsWeekend extends AbstractFunctionTest<IsWeekend> {
                         ValNull.INSTANCE,
                         ValNull.INSTANCE)
         );
+    }
+
+    @Test
+    void aggregateUsesTheValuesThatAreMerged() throws ParseException {
+        final FieldIndex fieldIndex = new FieldIndex();
+        fieldIndex.create("field");
+        final Expression expression = new ExpressionParser(new ParamFactory(Map.of()))
+                .parse(DateFunctionTestUtil.LONDON, fieldIndex, "isWeekend(max(${field}))");
+        final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
+        expression.addValueReferences(valueReferenceIndex);
+        final Generator generator = expression.createGenerator();
+        final StoredValues friday = valueReferenceIndex.createStoredValues();
+        final StoredValues saturday = valueReferenceIndex.createStoredValues();
+        generator.set(new Val[]{date("2024-07-05T12:00:00Z")}, friday);
+        generator.set(new Val[]{date("2024-07-06T12:00:00Z")}, saturday);
+
+        generator.merge(friday, saturday);
+
+        assertThat(generator.eval(friday, null)).isEqualTo(ValBoolean.TRUE);
+    }
+
+    @Test
+    void needsChildDataIfItsArgumentDoes() throws ParseException {
+        final FieldIndex fieldIndex = new FieldIndex();
+        fieldIndex.create("field");
+        final ExpressionParser parser = new ExpressionParser(new ParamFactory(Map.of()));
+
+        assertThat(parser.parse(DateFunctionTestUtil.LONDON, fieldIndex, "isWeekend(last(${field}))")
+                .requiresChildData())
+                .isEqualTo(parser.parse(DateFunctionTestUtil.LONDON, fieldIndex, "floorDay(last(${field}))")
+                        .requiresChildData())
+                .isTrue();
+        assertThat(parser.parse(DateFunctionTestUtil.LONDON, fieldIndex, "isWeekend(${field})").requiresChildData())
+                .isFalse();
+    }
+
+    private static Val date(final String text) {
+        return ValDate.create(Instant.parse(text).toEpochMilli());
     }
 }

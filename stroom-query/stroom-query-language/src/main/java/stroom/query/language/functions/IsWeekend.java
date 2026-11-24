@@ -16,12 +16,9 @@
 
 package stroom.query.language.functions;
 
-import stroom.query.language.functions.ref.StoredValues;
-
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.function.Supplier;
 
 @FunctionDef(
         name = IsWeekend.NAME,
@@ -59,30 +56,17 @@ class IsWeekend extends AbstractDateTimeFunction {
     @Override
     public Generator createGenerator() {
         final Generator childGenerator = function.createGenerator();
-        return new Generator() {
-            public Val eval(final StoredValues storedValues,
-                            final Supplier<ChildData> childDataSupplier) {
-                final Val value = childGenerator.eval(storedValues, childDataSupplier);
-                return value.type().isValue()
-                        ? calc(value)
-                        : value;
-            }
-
-            @Override
-            public void merge(final StoredValues existingValues, final StoredValues newValues) {
-
-            }
-
-            @Override
-            public void set(final Val[] values, final StoredValues storedValues) {
-                childGenerator.set(values, storedValues);
-            }
-        };
+        return new RoundGenerator(childGenerator, this::calc);
     }
 
     @Override
     public boolean hasAggregate() {
         return function.hasAggregate();
+    }
+
+    @Override
+    public boolean requiresChildData() {
+        return function.requiresChildData();
     }
 
     public Val calc(final Val value) {
