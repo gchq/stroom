@@ -1,8 +1,9 @@
 # Alert triage
 
 Triages an alert about a person: how the day of the alert compares with the person's own same weekdays and their
-peers, and what they did in the hours around it, so an analyst can weigh whether it is unusual for them. The
-comparison gives indicators with evidence, never a verdict on the alert or the person.
+peers, what they did in the hours around it, and, apart, what was done to their account (a reset, MFA changed,
+failed logons against it, access granted), so an analyst can weigh whether it is unusual for them or their account
+was acted on. The comparison gives indicators with evidence, never a verdict on the alert or the person.
 
 ## When to use
 
@@ -24,15 +25,18 @@ comparison gives indicators with evidence, never a verdict on the alert or the p
 
 1. Compare the alert's day with the same weekdays before it and with the person's peers:
    ```json
-   {"tool": "compare_activity", "arguments": {"person": "{person}", "logonIds": "{logon_ids}", "windowFrom": "{alert_day}", "windowTo": "{next_day}", "baselineFrom": "{baseline_start}", "unit": "day", "sources": "[[the indexes the alert's activity would show in, by name]]", "breadthFields": "[[fields for breadth and new values: hosts, destinations, applications]]"}}
+   {"tool": "compare_activity", "arguments": {"person": "{person}", "logonIds": "{logon_ids}", "windowFrom": "{alert_day}", "windowTo": "{next_day}", "baselineFrom": "{baseline_start}", "unit": "day", "sources": "[[the indexes the alert's activity would show in, by name]]", "breadthFields": "[[fields for breadth and new values: hosts, destinations, applications]]", "includeTargets": true}}
    ```
 2. Build the timeline of the hours around the alert with activity_timeline: entity the person's logon id, timeFrom
-   {timeline_from} and timeTo {timeline_to}.
+   {timeline_from}, timeTo {timeline_to} and includeTargets true.
 3. Say how the day compares (each finding as an indicator with its alternative explanation, or that nothing departed
-   from the baseline), what the timeline shows around the alert, and what can't be told (sources with gaps, or not
-   compared).
+   from the baseline), what the timeline shows around the alert, what was done to their account (the "done to them"
+   findings, apart, worded as done to the person or their account, by which account, never as their own acts:
+   someone else acting on an account is the other reading of an alert), and what can't be told (sources with gaps,
+   or not compared).
 
 ## Output
 
 A short triage note in the chat: the day against the person's baseline and peers, the timeline around the alert,
-and the gaps; never a verdict, only what the evidence shows and its other explanations.
+what was done to their account, and the gaps; never a verdict, only what the evidence shows and its other
+explanations.

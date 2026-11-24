@@ -48,6 +48,19 @@ class TestSkillTemplates {
     }
 
     @Test
+    void theInsiderReviewsIncludeWhatWasDoneToThePersonWordedAsDoneToThem() {
+        for (final String name : List.of("leaver-review", "privileged-user-review", "alert-triage")) {
+            final String text = SkillTemplates.find(name).orElseThrow().text();
+            assertThat(text).as(name).contains("\"includeTargets\": true")
+                    .contains("includeTargets true")
+                    .containsIgnoringCase("done to them")
+                    .contains("never as their own acts");
+        }
+        // Off elsewhere: the comparison template compares the person's own activity.
+        assertThat(SkillTemplates.find("activity-comparison").orElseThrow().text()).doesNotContain("includeTargets");
+    }
+
+    @Test
     void theTemplatesHoldNoProductSpecificContent() {
         for (final Template template : SkillTemplates.all()) {
             assertThat(template.text().toLowerCase(Locale.ROOT)).as(template.name())
