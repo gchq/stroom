@@ -97,7 +97,7 @@ public final class FakeModelServer implements AutoCloseable {
     ///
     /// @param answers Each request's answer, given its body; null for the short answer.
     /// @return This server.
-    FakeModelServer answeringSideRequests(final Function<Map<String, Object>, String> answers) {
+    public FakeModelServer answeringSideRequests(final Function<Map<String, Object>, String> answers) {
         this.sideAnswers = answers;
         return this;
     }
