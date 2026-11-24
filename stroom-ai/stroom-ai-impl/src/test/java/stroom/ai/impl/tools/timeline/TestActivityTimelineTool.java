@@ -140,7 +140,8 @@ class TestActivityTimelineTool {
         windows = streams.add(WINDOWS, "@timestamp", windowsMapping);
         proxy = streams.add(PROXY, "@timestamp", proxyMapping);
         tool = new ActivityTimelineTool(files.workspace(), () -> streams, dataSourceAccess, () -> queryService,
-                auditLog, eventXml, new TimelineFields(agentInstructions, dataSourceAccess, Optional.empty()),
+                auditLog, eventXml, new TimelineFields(agentInstructions, dataSourceAccess, Optional.empty(),
+                    () -> Mockito.mock(DataSourceDocumentation.class)),
                 new TimelineSourceChoice(dataSourceAccess, () -> tabSnapshots), () -> skillCatalogue, documentAccess,
                 agentInstructions, () -> Mockito.mock(ElasticEsql.class), () -> documentation);
 

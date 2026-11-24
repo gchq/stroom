@@ -116,7 +116,8 @@ class TestActivityTimelineTargets {
         cloud = streams.add(CLOUD, "@timestamp", cloudMapping);
         proxy = streams.add(PROXY, "@timestamp", proxyMapping);
         final TimelineFields timelineFields = new TimelineFields(agentInstructions, dataSourceAccess,
-                Optional.empty());
+                Optional.empty(),
+                () -> Mockito.mock(DataSourceDocumentation.class));
         final TimelineSourceChoice sourceChoice = new TimelineSourceChoice(dataSourceAccess,
                 () -> Mockito.mock(TabSnapshots.class));
         tool = new ActivityTimelineTool(files.workspace(), () -> streams, dataSourceAccess, () -> queryService,

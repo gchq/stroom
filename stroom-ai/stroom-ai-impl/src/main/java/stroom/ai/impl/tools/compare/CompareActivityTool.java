@@ -702,6 +702,8 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                     "category", CATEGORIES_ARG, defaults);
             final boolean location = onByDefault(locationAsked, country, doc.getName(), "location", "country",
                     LOCATION_ARG, defaults);
+            // A user (or person) field found by a guess: the ## Fields line that would make it the site's, to offer.
+            NullSafe.consume(scope.field().suggestion(), line -> defaults.add(doc.getName() + ": " + line));
             planned.add(new Planned(doc, source, new Scope(scope.field().field(), scope.values()),
                     new Fields(sumFields, breadthFields), scope.by().label() + " (" + scope.field().field() + " from "
                                                           + scope.field().from() + ")", hasIds, null,
@@ -1308,7 +1310,9 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     /// @param targeted      What was done to the person, how it is read (`includeTargets`); null if not asked.
     /// @param categories    True if its events are counted by category.
     /// @param location      True if its countries are looked at.
-    /// @param defaults      What was on by default, and why, as the notes say it.
+    /// @param defaults      What was on by default, and why, as the notes say it; and the `## Fields` line to offer
+    ///                      where its user (or person) field was found by a guess (a convention or the
+    ///                      documentation).
     record Planned(DocRef doc,
                    Source source,
                    Scope scope,

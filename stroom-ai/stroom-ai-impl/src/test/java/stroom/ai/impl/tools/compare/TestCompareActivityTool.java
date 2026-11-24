@@ -32,6 +32,7 @@ import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.ai.impl.tools.query.DataSourceAccess;
+import stroom.ai.impl.tools.query.DataSourceDocumentation;
 import stroom.ai.impl.tools.time.ToolTimeZone;
 import stroom.ai.impl.tools.timeline.PersonScope;
 import stroom.ai.impl.tools.timeline.TimelineEventXml;
@@ -108,7 +109,8 @@ class TestCompareActivityTool {
         Mockito.when(eventXml.read(Mockito.any(), Mockito.any(), Mockito.anyInt(), Mockito.any(), Mockito.any(),
                 Mockito.anyString())).thenReturn(new TimelineEventXml.Read(Map.of(), 0, 0, 0, true));
         tool = new CompareActivityTool(files.workspace(), dataSourceAccess, () -> queryService,
-                fixtures.aggregates(), new TimelineFields(agentInstructions, dataSourceAccess, Optional.empty()),
+                fixtures.aggregates(), new TimelineFields(agentInstructions, dataSourceAccess, Optional.empty(),
+                    () -> Mockito.mock(DataSourceDocumentation.class)),
                 new PeerGroups(eventXml), auditLog);
 
         for (int i = 0; i < 10; i++) {

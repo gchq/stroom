@@ -131,8 +131,11 @@ record TimelineRun(String entity,
     ///                  domain and case set aside): the forms the source's first events hold; empty otherwise.
     /// @param otherForms Where the one user was found as given: the other written forms the index also holds,
     ///                   offered but not read (another domain's account may be someone else's); empty otherwise.
+    /// @param suggestions The `## Fields` lines that would make the fields found for it by a guess (a convention or
+    ///                    the index's documentation) the site's ([TimelineFields.Found#suggestion]); empty for none.
     record SourceNote(String name, String index, String userField, String userFrom, String transform,
-                      String leftOut, PersonScope.By by, List<String> readAs, List<String> otherForms) {
+                      String leftOut, PersonScope.By by, List<String> readAs, List<String> otherForms,
+                      List<String> suggestions) {
 
     }
 

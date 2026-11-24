@@ -841,7 +841,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 sources.add(one.source());
                 kept.add(one.spec());
                 notes.add(new SourceNote(one.source().name(), one.source().doc().getName(), one.source().userField(),
-                        "the call (roles given)", null, null, one.source().by(), List.of(), List.of()));
+                        "the call (roles given)", null, null, one.source().by(), List.of(), List.of(), List.of()));
                 continue;
             }
             final Automatic automatic = one.automatic();
@@ -850,7 +850,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                         who.person() == null
                                 ? "no field holding the user was found (give sources [{index, user}], or a ## Fields "
                                   + "line in the AGENTS doc where it is)"
-                                : automatic.leftOut(), null, List.of(), List.of()));
+                                : automatic.leftOut(), null, List.of(), List.of(), List.of()));
                 continue;
             }
             final Probed probed = probe(context, automatic, who, period, deadline);
@@ -866,14 +866,15 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                     ? none
                                     : none + "; close variants in its index: " + String.join(", ", variants)
                                       + " (not merged: give them in " + LOGON_IDS_ARG + " if they are the same "
-                                      + "person's)", automatic.by(), List.of(), List.of()));
+                                      + "person's)", automatic.by(), List.of(), List.of(), List.of()));
                     noneOfTheirs.add(automatic);
                     continue;
                 }
                 sources.add(automatic.source(automatic.transforms(), spanFields(one.spec(), automatic.mapping())));
                 kept.add(one.spec());
                 notes.add(new SourceNote(automatic.name(), automatic.doc().getName(), automatic.user().field(),
-                        automatic.user().from(), null, null, automatic.by(), List.of(), List.of()));
+                        automatic.user().from(), null, null, automatic.by(), List.of(), List.of(),
+                        automatic.suggestions()));
                 fields.put(sources.size() - 1, automatic.fields(null));
                 continue;
             }
@@ -896,7 +897,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                     .map(transform -> transform.name().toLowerCase(Locale.ROOT)).toList())
                               + (probed.fallback()
                                     ? " (" + NO_EVENT_AS_GIVEN + ")"
-                                    : ""), null, automatic.by(), probed.readAs(), probed.otherForms()));
+                                    : ""), null, automatic.by(), probed.readAs(), probed.otherForms(),
+                    automatic.suggestions()));
         }
         if (sources.isEmpty()) {
             final StringBuilder sb = new StringBuilder("No source holds ").append(entity)
@@ -951,14 +953,21 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final Found user = scope.usable()
                 ? scope.field()
                 : null;
+        // The ## Fields lines that would make the fields found by a guess the site's.
+        final List<String> suggestions = new ArrayList<>();
+        if (user != null) {
+            NullSafe.consume(user.suggestion(), suggestions::add);
+        }
         final Automatic automatic = new Automatic(name, doc, mapping, types, user == null
                 ? null
-                : new Found(userKey(user.field(), mapping), user.origin(), user.detail()),
-                found(context, doc, InstructionRules.HOST_FIELD, spec.get(HOST_KEY), mapping, types),
-                found(context, doc, InstructionRules.ELEMENT_FIELD, spec.get(ELEMENT_FIELD_KEY), mapping, types),
-                found(context, doc, InstructionRules.ACTION_FIELD, spec.get(ACTION_FIELD_KEY), mapping, types),
+                : new Found(userKey(user.field(), mapping), user.origin(), user.detail(), user.suggestion()),
+                found(context, doc, InstructionRules.HOST_FIELD, spec.get(HOST_KEY), mapping, types, suggestions),
+                found(context, doc, InstructionRules.ELEMENT_FIELD, spec.get(ELEMENT_FIELD_KEY), mapping, types,
+                        suggestions),
+                found(context, doc, InstructionRules.ACTION_FIELD, spec.get(ACTION_FIELD_KEY), mapping, types,
+                        suggestions),
                 found(context, doc, InstructionRules.EVENT_TYPE_FIELD, spec.get(EVENT_TYPE_FIELD_KEY), mapping,
-                        types), checked(spec.get(OBJECT_KEY), mapping, types, what, doc),
+                        types, suggestions), checked(spec.get(OBJECT_KEY), mapping, types, what, doc),
                 new Described(checked(spec.get(PROCESS_KEY), mapping, types, what, doc), checked(spec.get(TITLE_KEY),
                         mapping, types, what, doc), checked(spec.get(WINDOW_KEY), mapping, types, what, doc),
                         checked(spec.get(TEXT_KEY), mapping, types, what, doc)), transforms(spec.get(
@@ -966,21 +975,36 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                         ? scope.by()
                         : PersonScope.By.LOGON, scope.usable()
                         ? scope.values()
-                        : who.logons(), scope.leftOut());
+                        : who.logons(), scope.leftOut(), List.copyOf(suggestions));
         return new Prepared(spec, null, automatic);
     }
 
+    // The field holding one thing, found by TimelineFields (for what was done to the person, whose fields aren't
+    // suggested for the AGENTS doc).
     private String found(final ToolCallContext context,
                          final DocRef doc,
                          final String what,
                          final Object given,
                          final Map<String, ElasticEql.Field> mapping,
                          final Map<String, FieldType> types) {
+        return found(context, doc, what, given, mapping, types, new ArrayList<>());
+    }
+
+    // The field holding one thing, found by TimelineFields; one found by a guess adds its ## Fields line to the
+    // suggestions.
+    private String found(final ToolCallContext context,
+                         final DocRef doc,
+                         final String what,
+                         final Object given,
+                         final Map<String, ElasticEql.Field> mapping,
+                         final Map<String, FieldType> types,
+                         final List<String> suggestions) {
         final List<String> list = new ArrayList<>();
         NullSafe.consume(text(given), list::add);
-        return timelineFields.find(context.session(), doc, what, list, field -> has(field, mapping, types))
-                .map(Found::field)
-                .orElse(null);
+        final Optional<Found> found = timelineFields.find(context.session(), doc, what, list,
+                field -> has(field, mapping, types));
+        found.map(Found::suggestion).ifPresent(suggestions::add);
+        return found.map(Found::field).orElse(null);
     }
 
     private static String checked(final Object given,
@@ -2166,11 +2190,12 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                              List<Transform> transforms,
                              PersonScope.By by,
                              List<String> values,
-                             String leftOut) {
+                             String leftOut,
+                             List<String> suggestions) {
 
         Automatic withUser(final Found found) {
             return new Automatic(name, doc, mapping, types, found, host, element, action, eventType, object,
-                    described, transforms, by, values, leftOut);
+                    described, transforms, by, values, leftOut, suggestions);
         }
 
         Source source(final List<Transform> sourceTransforms, final List<String> extraFields) {

@@ -32,6 +32,7 @@ import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.query.AgentSearches;
 import stroom.ai.impl.tools.query.DataSourceAccess;
+import stroom.ai.impl.tools.query.DataSourceDocumentation;
 import stroom.ai.impl.tools.timeline.TimelineFields;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
@@ -148,7 +149,8 @@ class TestKeyStreamSequence {
         tool = new SequenceQueryTool(chatWorkspace, () -> elasticEql, () -> elasticEsql, dataSourceAccess,
                 () -> queryService, auditLog, Mockito.mock(AgentSearches.class),
                 new KeyStreamSequence(() -> streams, () -> elasticEsql, securityContext, auditLog),
-                new TimelineFields(Mockito.mock(AgentInstructions.class), dataSourceAccess, Optional.empty()));
+                new TimelineFields(Mockito.mock(AgentInstructions.class), dataSourceAccess, Optional.empty(),
+                    () -> Mockito.mock(DataSourceDocumentation.class)));
     }
 
     @Test

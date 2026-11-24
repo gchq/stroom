@@ -109,6 +109,10 @@ final class TimelineResult {
             map.put("other_accounts", PersonScope.OTHER_ACCOUNTS);
         }
         NullSafe.consume(otherFormsText(run.entity(), run.notes()), text -> map.put("other_forms", text));
+        final List<String> suggested = suggestions(run.notes());
+        if (!suggested.isEmpty()) {
+            map.put("fields_lines_to_offer", suggested);
+        }
         final List<Map<String, Object>> leftOut = run.notes().stream()
                 .filter(note -> note.leftOut() != null)
                 .map(note -> Map.<String, Object>of("index", note.index(), "why", note.leftOut()))
@@ -465,6 +469,17 @@ final class TimelineResult {
     /// @param run   The run.
     /// @param files The tables written.
     // Each logon id's events, those with none included.
+    /// @param notes The sources' notes.
+    /// @return The `## Fields` lines that would make the fields found by a guess the site's, of the sources read,
+    ///         each once.
+    static List<String> suggestions(final List<SourceNote> notes) {
+        return NullSafe.list(notes).stream()
+                .filter(note -> note.leftOut() == null)
+                .flatMap(note -> NullSafe.list(note.suggestions()).stream())
+                .distinct()
+                .toList();
+    }
+
     /// Where a lone user was found as given in a source that also holds other written forms of them (the domain
     /// added or removed, another case), those forms, offered but not read: another domain's account may be someone
     /// else's, so only the user can say they are the same person's.
@@ -555,6 +570,11 @@ final class TimelineResult {
         }
         NullSafe.consume(readAsText(run), text -> sb.append(text).append('\n'));
         NullSafe.consume(otherFormsText(run.entity(), run.notes()), text -> sb.append(text).append('\n'));
+        final List<String> suggested = suggestions(run.notes());
+        if (!suggested.isEmpty()) {
+            sb.append("Fields found by a convention or the documentation (offer to make them the site's): ")
+                    .append(String.join(" ", suggested)).append('\n');
+        }
         run.notes().stream().filter(note -> note.leftOut() != null).forEach(note -> sb.append("- left out: ")
                 .append(note.index()).append(" (").append(note.leftOut()).append(")\n"));
         if (run.xml().pastCap() > 0) {

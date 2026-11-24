@@ -574,6 +574,12 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
                 step.fields(), step.keysOnly(), step.transforms());
     }
 
+    private static void addOnce(final List<String> list, final String value) {
+        if (!list.contains(value)) {
+            list.add(value);
+        }
+    }
+
     // The result, saying by what each doc was restricted to the person.
     private static ToolResult withScopes(final ToolResult result,
                                          final Map<String, Scope> scopes,
@@ -585,9 +591,11 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
         final StringBuilder sb = new StringBuilder(NullSafe.string(result.text())).append("\n\nRestricted to the "
                                                                                           + "person:");
         boolean byLogon = false;
+        final List<String> suggested = new ArrayList<>();
         for (final Map.Entry<String, Scope> entry : scopes.entrySet()) {
             final Scope scope = entry.getValue();
             byLogon |= scope.by() == PersonScope.By.LOGON;
+            NullSafe.consume(scope.field().suggestion(), line -> addOnce(suggested, line));
             listed.add(Map.of("index", entry.getKey(), "by", scope.by().label(), "field", scope.field().field(),
                     "field_from", scope.field().from(), "values", scope.values()));
             sb.append("\n- ").append(entry.getKey()).append(": ").append(scope.by().label()).append(", ")
@@ -596,6 +604,7 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
         }
         for (final Map.Entry<String, PersonScope.Target> entry : targets.entrySet()) {
             final PersonScope.Target target = entry.getValue();
+            NullSafe.consume(target.field().suggestion(), line -> addOnce(suggested, line));
             listed.add(Map.of("index", entry.getKey(), "role", TARGET_ROLE, "by", target.describe(), "field",
                     target.field().field(), "field_from", target.field().from(), "values", target.values()));
             sb.append("\n- ").append(entry.getKey()).append(" (").append(TARGET_ROLE).append(" steps): ")
@@ -605,8 +614,15 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
         if (byLogon) {
             sb.append("\n").append(PersonScope.OTHER_ACCOUNTS);
         }
+        if (!suggested.isEmpty()) {
+            sb.append("\nFields found by a convention or the documentation (offer to make them the site's): ")
+                    .append(String.join(" ", suggested));
+        }
         final Map<String, Object> structured = new LinkedHashMap<>(NullSafe.map(result.structuredContent()));
         structured.put("scope", listed);
+        if (!suggested.isEmpty()) {
+            structured.put("fields_lines_to_offer", suggested);
+        }
         if (byLogon) {
             structured.put("other_accounts", PersonScope.OTHER_ACCOUNTS);
         }

@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.instructions.AgentKnowledge;
 import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.ai.impl.tools.query.DataSourceAccess;
+import stroom.ai.impl.tools.query.DataSourceDocumentation;
 import stroom.ai.impl.tools.timeline.PersonScope.By;
 import stroom.ai.impl.tools.timeline.PersonScope.Scope;
 import stroom.ai.impl.tools.timeline.PersonScope.Target;
@@ -73,7 +74,8 @@ class TestPersonScope {
         }
     };
     private final TimelineFields fields = new TimelineFields(agentInstructions, dataSourceAccess,
-            Optional.of(knowledge));
+            Optional.of(knowledge),
+                () -> Mockito.mock(DataSourceDocumentation.class));
 
     @Test
     void thePersonFieldIsFoundByConvention() {

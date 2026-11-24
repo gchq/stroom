@@ -41,6 +41,7 @@ import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.ai.impl.tools.query.AgentSearches;
 import stroom.ai.impl.tools.query.DataSourceAccess;
+import stroom.ai.impl.tools.query.DataSourceDocumentation;
 import stroom.ai.impl.tools.sequence.EqlQueryWriter.Filter;
 import stroom.ai.impl.tools.sequence.EqlQueryWriter.Step;
 import stroom.ai.impl.tools.sequence.SequenceQueryTool.Preflight;
@@ -212,7 +213,8 @@ class TestSequenceQueryTool {
         tool = new SequenceQueryTool(chatWorkspace, () -> elasticEql, () -> elasticEsql, dataSourceAccess,
                 () -> queryService, auditLog, agentSearches, new KeyStreamSequence(() -> keyStreams,
                         () -> elasticEsql, Mockito.mock(SecurityContext.class), auditLog),
-                new TimelineFields(agentInstructions, dataSourceAccess, Optional.empty()));
+                new TimelineFields(agentInstructions, dataSourceAccess, Optional.empty(),
+                    () -> Mockito.mock(DataSourceDocumentation.class)));
     }
 
     @Test

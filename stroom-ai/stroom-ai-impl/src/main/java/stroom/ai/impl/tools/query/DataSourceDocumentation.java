@@ -90,6 +90,8 @@ public class DataSourceDocumentation {
     static final int MAX_FOLDER_DOCS = 50;
     /// The most docs in its folder given only because they mention it (not named after it or a pipeline).
     static final int MAX_MENTIONING_DOCS = 3;
+    // One step of a plain path: an element's name, with no predicate, axis or function.
+    private static final Pattern ELEMENT_NAME = Pattern.compile("[A-Za-z_][A-Za-z0-9_.\\-]*");
     // An HTML comment, which may span lines; an unclosed one runs to the end.
     private static final Pattern COMMENT = Pattern.compile("<!--.*?(-->|\\z)", Pattern.DOTALL);
 
@@ -170,20 +172,11 @@ public class DataSourceDocumentation {
     /// @return The field as planned, with the pipeline whose plan it is in; empty if no plan the user can read
     /// has it.
     public Optional<Planned> planned(final List<DocRef> pipelines, final String field) {
-        for (final DocRef pipeline : pipelines) {
-            final List<PipelineProperty> properties = documentAccess.read(pipeline, PipelineDoc.class)
-                    .map(PipelineDoc::getPipelineData)
-                    .map(PipelineData::getAddedProperties)
-                    .orElse(List.of());
-            for (final PipelineProperty property : NullSafe.list(properties)) {
-                final DocRef xslt = NullSafe.get(property.getValue(), PipelinePropertyValue::getEntity);
-                if (xslt == null || !XsltDoc.TYPE.equals(xslt.getType())) {
-                    continue;
-                }
-                final Optional<PlannedField> found = documentAccess.read(xslt, XsltDoc.class)
-                        .flatMap(doc -> KeptMapping.readMapping(doc.getDescription()))
-                        .filter(kept -> "index".equals(kept.kind()))
-                        .flatMap(kept -> leaf(kept.payload(), field));
+        for (final DocRef pipeline : NullSafe.list(pipelines)) {
+            for (final FieldPlan plan : plans(pipeline)) {
+                final Optional<PlannedField> found = plan.leafFields().stream()
+                        .filter(leaf -> leaf.name().equals(field))
+                        .findFirst();
                 if (found.isPresent()) {
                     return Optional.of(new Planned(found.get(), pipeline));
                 }
@@ -192,12 +185,92 @@ public class DataSourceDocumentation {
         return Optional.empty();
     }
 
-    // The plan's field of that name (an object's item as users.login), or empty; a plan that doesn't read is none.
-    private static Optional<PlannedField> leaf(final Map<String, Object> plan, final String field) {
+    /// The reverse of [#planned]: the fields of an index whose source, in the index plan kept with the indexing XSLT
+    /// of a pipeline feeding it, is an event-logging path, e.g. the field holding `EventSource/User/Id`. Only a
+    /// plain field whose source is the path itself is taken ([#sourceIs]): not one whose source is more than the
+    /// path (a union, `@StreamId`, a test), an item of an array of objects, a constant, nor one with a transform,
+    /// as none of those holds the path's value as it is. Plans the user can't view are never read.
+    ///
+    /// @param pipelines The pipelines feeding the index ([#feedingPipelines]).
+    /// @param path      The path from the Event element, e.g. `EventSource/User/Id`; a step `*` matches any one
+    ///                  element, e.g. `EventDetail/*/Action`.
+    /// @return Each such field with the pipeline whose plan it is in, in the pipelines' and plans' order; empty if
+    /// none.
+    public List<Planned> plannedFrom(final List<DocRef> pipelines, final String path) {
+        final List<Planned> out = new ArrayList<>();
+        if (NullSafe.isBlankString(path)) {
+            return out;
+        }
+        for (final DocRef pipeline : NullSafe.list(pipelines)) {
+            for (final FieldPlan plan : plans(pipeline)) {
+                for (final PlannedField field : NullSafe.list(plan.fields())) {
+                    if (field.items().isEmpty() && field.constant() == null && field.transform() == null
+                        && sourceIs(field.source(), path)) {
+                        out.add(new Planned(field, pipeline));
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    /// @param source A planned field's source, an XPath from the Event element.
+    /// @param path   An event-logging path, a step `*` matching any one element.
+    /// @return True if the source is that path, step for step (a leading `./` or `/` and spaces aside).
+    static boolean sourceIs(final String source, final String path) {
+        if (NullSafe.isBlankString(source) || NullSafe.isBlankString(path)) {
+            return false;
+        }
+        final String[] given = plainPath(source).split("/", -1);
+        final String[] wanted = plainPath(path).split("/", -1);
+        if (given.length != wanted.length) {
+            return false;
+        }
+        for (int i = 0; i < given.length; i++) {
+            if (!ELEMENT_NAME.matcher(given[i]).matches()
+                || !("*".equals(wanted[i]) || wanted[i].equals(given[i]))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // A path without spaces round it or a leading ./ or /.
+    private static String plainPath(final String path) {
+        String plain = path.strip();
+        if (plain.startsWith("./")) {
+            plain = plain.substring(2);
+        } else if (plain.startsWith("/")) {
+            plain = plain.substring(1);
+        }
+        return plain;
+    }
+
+    // The index plans kept with a pipeline's XSLTs, each the user can view; a plan that doesn't read is none.
+    private List<FieldPlan> plans(final DocRef pipeline) {
+        final List<FieldPlan> out = new ArrayList<>();
+        final List<PipelineProperty> properties = documentAccess.read(pipeline, PipelineDoc.class)
+                .map(PipelineDoc::getPipelineData)
+                .map(PipelineData::getAddedProperties)
+                .orElse(List.of());
+        for (final PipelineProperty property : NullSafe.list(properties)) {
+            final DocRef xslt = NullSafe.get(property.getValue(), PipelinePropertyValue::getEntity);
+            if (xslt == null || !XsltDoc.TYPE.equals(xslt.getType())) {
+                continue;
+            }
+            documentAccess.read(xslt, XsltDoc.class)
+                    .flatMap(doc -> KeptMapping.readMapping(doc.getDescription()))
+                    .filter(kept -> "index".equals(kept.kind()))
+                    .flatMap(kept -> plan(kept.payload()))
+                    .ifPresent(out::add);
+        }
+        return out;
+    }
+
+    // The plan, or empty where it doesn't read.
+    private static Optional<FieldPlan> plan(final Map<String, Object> payload) {
         try {
-            return FieldPlan.fromJson(plan).leafFields().stream()
-                    .filter(leaf -> leaf.name().equals(field))
-                    .findFirst();
+            return Optional.of(FieldPlan.fromJson(payload));
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> "Unable to read a kept index plan", e);
             return Optional.empty();

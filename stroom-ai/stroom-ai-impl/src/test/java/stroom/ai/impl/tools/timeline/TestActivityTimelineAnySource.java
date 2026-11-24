@@ -29,6 +29,7 @@ import stroom.ai.impl.tools.ToolCalls;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
@@ -92,6 +93,7 @@ class TestActivityTimelineAnySource {
     private final AgentInstructions agentInstructions = Mockito.mock(AgentInstructions.class);
     private final SkillCatalogue skillCatalogue = Mockito.mock(SkillCatalogue.class);
     private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
+    private final DataSourceDocumentation plans = Mockito.mock(DataSourceDocumentation.class);
     private final Map<String, String> xml = new LinkedHashMap<>();
     private FakeTabWorkspace files;
     private ActivityTimelineTool tool;
@@ -152,7 +154,8 @@ class TestActivityTimelineAnySource {
                 });
         tool = new ActivityTimelineTool(files.workspace(), () -> streams, dataSourceAccess, () -> queryService,
                 Mockito.mock(AiAuditLog.class), eventXml, new TimelineFields(agentInstructions, dataSourceAccess,
-                Optional.empty()), new TimelineSourceChoice(dataSourceAccess, () -> Mockito.mock(TabSnapshots.class)),
+                Optional.empty(), () -> plans),
+                new TimelineSourceChoice(dataSourceAccess, () -> Mockito.mock(TabSnapshots.class)),
                 () -> skillCatalogue, documentAccess, agentInstructions, () -> elasticEsql,
                 () -> Mockito.mock(DataSourceDocumentation.class));
     }
@@ -198,6 +201,42 @@ class TestActivityTimelineAnySource {
         // The XML of the user's events alone was read, by stream and event id.
         Mockito.verify(eventXml).read(Mockito.any(), Mockito.eq(Map.of(STREAM, List.of(1L, 2L, 3L, 4L, 5L, 6L, 7L,
                 8L, 9L, 10L, 11L))), Mockito.anyInt(), Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    void aUserFieldFromTheIndexPlanOfAFeedingPipelineIsSaidSoWithNothingToOffer() {
+        week();
+        final DocRef pipeline = new DocRef("Pipeline", "pipe-uuid", "Events indexing");
+        Mockito.when(plans.feedingPipelines(EVENTS)).thenReturn(List.of(pipeline));
+        Mockito.when(plans.plannedFrom(List.of(pipeline), "EventSource/User/Id")).thenReturn(List.of(
+                new DataSourceDocumentation.Planned(PlannedField.of("UserId", "keyword", "EventSource/User/Id"),
+                        pipeline)));
+        final Map<String, Object> arguments = arguments(Map.of());
+        arguments.remove("userField");
+
+        final Map<String, Object> result = json(mcp(), arguments);
+
+        assertThat(((List<Map<String, Object>>) result.get("sources")).getFirst())
+                .containsEntry("user_field", "UserId")
+                .containsEntry("user_field_from", "the index plan of 'Events indexing'");
+        assertThat(result).doesNotContainKey("fields_lines_to_offer");
+    }
+
+    @Test
+    void aUserFieldFoundByTheIndexsDocumentationComesWithTheFieldsLineToOffer() {
+        week();
+        Mockito.when(dataSourceAccess.documentation(EVENTS)).thenReturn(Optional.of("The user is in `UserId`."));
+        Mockito.when(agentInstructions.folderOf(EVENTS)).thenReturn("/Indexes");
+        final Map<String, Object> arguments = arguments(Map.of());
+        arguments.remove("userField");
+
+        final Map<String, Object> result = json(mcp(), arguments);
+
+        assertThat(((List<Map<String, Object>>) result.get("sources")).getFirst())
+                .containsEntry("user_field_from", "the index's documentation");
+        assertThat(result).containsEntry("fields_lines_to_offer", List.of("To make UserId the user field here, add "
+                                                                          + "`- user: UserId` under `## Fields` in "
+                                                                          + "an AGENTS doc in /Indexes."));
     }
 
     @Test
