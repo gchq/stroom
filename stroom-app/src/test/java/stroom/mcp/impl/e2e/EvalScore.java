@@ -18,6 +18,8 @@ package stroom.mcp.impl.e2e;
 
 import stroom.ai.impl.tools.catalogue.TypeIds;
 import stroom.ai.impl.tools.indexing.FeedIndexes;
+import stroom.ai.impl.tools.instructions.AgentInstructions;
+import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeRows;
 import stroom.ai.impl.tools.skills.SkillDoc;
@@ -46,6 +48,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -1441,6 +1444,11 @@ final class EvalScore {
     ///   `check_skill` finds in it; `changed_sections`, the sections (`description` for its first paragraph) that
     ///   must differ from the skill before it, with `may_change` those that may, every other section and every
     ///   other skill of the doc unchanged; `history_change_contains`, text in its latest history entry's change;
+    /// * `expected.instructions`: of the last AGENTS doc proposed (an instructions case's, `propose_instructions`'s
+    ///   button): `folder`, where it is or is to be made; `fields`, the fields its `## Fields` lines give each key,
+    ///   as the tools read them (a field, or the list in order); `keeps`, text of the doc before it that it still
+    ///   holds; `check_problems`, how many problems `check_instructions` finds in it; `check_without`, the checks
+    ///   (e.g. `plan_disagrees`) that find nothing in it;
     /// * `expected.no_proposal`: true when nothing may be proposed (e.g. a user who can't change the skills doc);
     /// * `expected.answer_must_say_all_of`, `answer_must_say_one_of` and `answer_must_not_say`: what the agent told
     ///   the user, as a question's are checked ([#scoreQuestion(Map, List)]).
@@ -1469,7 +1477,9 @@ final class EvalScore {
                     ? " (failed)"
                     : "") + ": " + firstWords(call.text()));
         }
-        run.proposals().forEach(proposal -> note("check_skill: " + firstWords(proposal.checked())));
+        run.proposals().forEach(proposal -> note((EvalCases.isInstructions(evalCase)
+                ? "check_instructions: "
+                : "check_skill: ") + firstWords(proposal.checked())));
         for (final String tool : strings(expected.get("tools_used"))) {
             questionCheck("used " + tool, called.contains(tool), tool + " was not used (used: " + called + ")");
         }
@@ -1494,6 +1504,14 @@ final class EvalScore {
         }
         if (Boolean.TRUE.equals(expected.get("no_proposal"))) {
             questionCheck("no proposal", run.proposals().isEmpty(), run.proposals().size() + " proposal(s) made");
+        }
+        final Map<String, Object> instructions = maps(expected.get("instructions"));
+        if (!instructions.isEmpty()) {
+            if (run.proposals().isEmpty()) {
+                questionCheck("proposal", false, "nothing was proposed");
+            } else {
+                scoreInstructions(instructions, run.proposals().getLast());
+            }
         }
         final Map<String, Object> proposal = maps(expected.get("proposal"));
         if (!proposal.isEmpty()) {
@@ -1544,6 +1562,46 @@ final class EvalScore {
             questionCheck("didn't read " + distractor, reads.stream()
                     .noneMatch(call -> sameSkill(distractor, String.valueOf(call.arguments().get("name")))),
                     "find_skills read '" + distractor + "'");
+        }
+    }
+
+    // The last AGENTS doc proposed against what the case expects of it: what the tools would read of it.
+    private void scoreInstructions(final Map<String, Object> expected, final SkillProposal proposal) {
+        if (expected.get("folder") instanceof final String folder) {
+            questionCheck("proposal folder", explorerPath(folder).equalsIgnoreCase(explorerPath(proposal.folder())),
+                    "the proposal is for folder " + proposal.folder() + ", expected " + folder);
+        }
+        final Map<String, InstructionRules.FieldRule> read = InstructionRules.fields(List.of(
+                new AgentInstructions.InstructionDoc(null, "/", proposal.after(), List.of())));
+        for (final Map.Entry<String, Object> entry : maps(expected.get("fields")).entrySet()) {
+            final List<String> wanted = entry.getValue() instanceof List<?>
+                    ? strings(entry.getValue())
+                    : List.of(String.valueOf(entry.getValue()));
+            final List<String> given = Optional.ofNullable(read.get(entry.getKey()))
+                    .map(InstructionRules.FieldRule::fields)
+                    .orElse(List.of());
+            questionCheck(entry.getKey() + " field " + wanted, wanted.size() == 1
+                    ? !given.isEmpty() && given.getFirst().equals(wanted.getFirst())
+                    : given.equals(wanted), "its '## Fields' gives " + entry.getKey() + " as " + given
+                                            + ", expected " + wanted);
+        }
+        for (final String text : strings(expected.get("keeps"))) {
+            questionCheck("keeps " + text, proposal.after().contains(text), "the doc no longer holds '" + text + "'");
+        }
+        if (expected.get("check_problems") instanceof final Number problems) {
+            final List<String> found = proposal.checked().lines()
+                    .filter(line -> line.contains(CHECK_PROBLEM))
+                    .map(String::strip)
+                    .toList();
+            questionCheck("check_instructions problems", found.size() == problems.intValue(), "check_instructions "
+                                                                                           + "found " + found.size()
+                                                                                           + " problem(s), "
+                                                                                           + "expected " + problems
+                                                                                           + ": " + found);
+        }
+        for (final String rule : strings(expected.get("check_without"))) {
+            questionCheck("check_instructions without " + rule, !proposal.checked().contains("(" + rule + ")"),
+                    "check_instructions found " + rule + ": " + firstWords(proposal.checked()));
         }
     }
 

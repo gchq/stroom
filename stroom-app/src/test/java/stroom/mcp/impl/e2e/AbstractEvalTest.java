@@ -20,7 +20,10 @@ import stroom.ai.impl.EvalChat;
 import stroom.ai.impl.FakeModelServer;
 import stroom.ai.impl.UserActionRecord;
 import stroom.ai.impl.UserActions;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.indexing.FeedIndexes;
+import stroom.ai.impl.tools.instructions.AgentInstructions;
+import stroom.ai.impl.tools.query.DataSourceDocumentation;
 import stroom.ai.impl.tools.sample.SourceTypeMeta;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
@@ -55,6 +58,8 @@ import stroom.mcp.impl.McpTestClient;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.query.api.datasource.AnalyzerType;
@@ -335,7 +340,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             }
         }
         for (final Map<String, Object> spec : EvalCases.luceneIndexes(evalCase)) {
-            sources.add(questionLuceneIndex(EvalCases.table(spec)));
+            sources.add(questionLuceneIndex(EvalCases.table(spec), spec.get("folder") instanceof final String in
+                    ? folder(explorerPath(in))
+                    : templateFolder()));
         }
         for (final Map<String, Object> spec : (List<Map<String, Object>>) evalCase.getOrDefault("data_connections",
                 List.of())) {
@@ -497,6 +504,16 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             skillsDocs.add(folder.getDocRef());
             skillsDocs.add(new DocRef(DocumentationDoc.TYPE, documentationDoc(folder, SkillDoc.DOC_NAME, text)));
         }
+        // An instructions case's AGENTS docs, and the index plans kept with pipelines feeding its indexes.
+        for (final Map<String, Object> spec : EvalCases.maps(evalCase.get("agents_docs"))) {
+            final ExplorerNode folder = folder(explorerPath((String) spec.get("folder")));
+            skillsDocs.add(folder.getDocRef());
+            skillsDocs.add(new DocRef(DocumentationDoc.TYPE, documentationDoc(folder, AgentInstructions.DOC_NAME,
+                    (String) spec.get("text"))));
+        }
+        for (final Map<String, Object> spec : EvalCases.maps(evalCase.get("index_plans"))) {
+            skillsDocs.addAll(indexPlan(spec, data));
+        }
         final UserRef user = skillUser(evalCase, data, skillsDocs);
         skillCatalogue.clearCache();
         final FakeModelServer scripted = startModelServer();
@@ -515,6 +532,45 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             }
         }
         return setup;
+    }
+
+    /// An index plan kept with the indexing XSLT of a pipeline feeding an index of the case (`index_plans`, each
+    /// the `index`'s name, the `pipeline`'s and the plan's `fields`, each a `name`, `type` and `source`), as the build
+    /// tools keep it, beside the index: so the tools find where each of its fields comes from.
+    ///
+    /// @param spec The plan.
+    /// @param data The case's data, the index among it.
+    /// @return The pipeline and its XSLT.
+    private List<DocRef> indexPlan(final Map<String, Object> spec, final QuestionData data) {
+        final String indexName = (String) spec.get("index");
+        final DocRef index = data.docs().stream()
+                .filter(doc -> indexName.equals(doc.getName()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No index " + indexName + " for its plan"));
+        final ExplorerNode folder = securityContext.asProcessingUserResult(() -> explorerNodeService.getParent(index)
+                .orElseThrow(() -> new AssertionError("No folder for " + index)));
+        final String pipelineName = (String) spec.get("pipeline");
+        final Map<String, Object> plan = new LinkedHashMap<>();
+        plan.put("backend", "lucene");
+        plan.put("index_name", indexName);
+        plan.put("time_field", "EventTime");
+        plan.put("fields", EvalCases.maps(spec.get("fields")));
+        final ExplorerNode xslt = create(XsltDoc.TYPE, pipelineName, folder);
+        editXslt(xslt.getUuid(), doc -> doc.copy()
+                .description(KeptMapping.withMapping(doc.getDescription(), "index", plan))
+                .build());
+        final String pipeline = childPipeline(folder, pipelineName, templateUuid("indexing", "Indexing"), List.of(
+                property("xsltFilter", "xslt", xslt.getDocRef()),
+                property("indexingFilter", "index", index)));
+        // The plan must read, and the pipeline be found feeding the index, or the case tests nothing.
+        final DataSourceDocumentation documentation = injector.getInstance(DataSourceDocumentation.class);
+        final List<DataSourceDocumentation.Planned> found = asUser(admin, () -> documentation.plannedFrom(
+                documentation.feedingPipelines(index), String.valueOf(EvalCases.maps(spec.get("fields")).getFirst()
+                        .get("source"))));
+        if (found.isEmpty()) {
+            throw new AssertionError("The index plan of " + pipelineName + " isn't found feeding " + indexName);
+        }
+        return List.of(new DocRef(PipelineDoc.TYPE, pipeline), xslt.getDocRef());
     }
 
     /// A skill case run with its reference solution: its setup ([#setUpSkill]), then the request asked in the chat,
@@ -551,8 +607,14 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             calls.add(new EvalScore.SkillCall(call.tool(), call.arguments(), call.error(), call.text()));
         }
         final List<EvalScore.SkillProposal> proposals = new ArrayList<>();
-        for (final EvalChat.Proposal proposal : EvalChat.proposals(messages)) {
-            proposals.add(skillProposal(proposal));
+        if (EvalCases.isInstructions(evalCase)) {
+            for (final EvalChat.Proposal proposal : EvalChat.proposals(messages, "propose_instructions")) {
+                proposals.add(instructionsProposal(proposal));
+            }
+        } else {
+            for (final EvalChat.Proposal proposal : EvalChat.proposals(messages)) {
+                proposals.add(skillProposal(proposal));
+            }
         }
         score.scoreSkill(evalCase, new EvalScore.SkillRun(calls, String.join("\n\n", EvalChat.replies(messages)),
                 proposals, EvalChat.errors(messages)));
@@ -746,6 +808,25 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             }
         }
         return new EvalScore.SkillProposal(action.action(), folder, before, after, String.join("\n\n", checked));
+    }
+
+    // An AGENTS doc's proposal as it is scored: where it goes, the doc's text before and after, and what
+    // check_instructions finds in the text after, where it would live.
+    private EvalScore.SkillProposal instructionsProposal(final EvalChat.Proposal proposal) {
+        final UserActionRecord action = proposal.action();
+        final boolean create = UserActions.CREATE_INSTRUCTIONS.equals(action.action());
+        final String folder = create
+                ? folderOf(action.doc().getUuid()) + "/" + nameOf(action.doc().getUuid())
+                : folderOf(action.doc().getUuid());
+        final String before = create
+                ? ""
+                : action.codeChange() != null && action.codeChange().baseCode() != null
+                        ? action.codeChange().baseCode()
+                        : documentation(action.doc().getUuid());
+        final String after = NullSafe.string(action.request());
+        final String checked = McpTestClient.text(client.call("check_instructions", args("folder", folder,
+                "markdown", after)));
+        return new EvalScore.SkillProposal(action.action(), folder, before, after, checked);
     }
 
     // A document's name, as the explorer has it.
@@ -1829,8 +1910,8 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
 
     // A question's records in a Lucene index of the table's name, a field a column (text as keywords), each record
     // an event of one stream, flushed so searches see them.
-    private DocRef questionLuceneIndex(final EvalCases.QuestionTable table) {
-        final ExplorerNode created = create(LuceneIndexDoc.TYPE, table.name(), templateFolder());
+    private DocRef questionLuceneIndex(final EvalCases.QuestionTable table, final ExplorerNode folder) {
+        final ExplorerNode created = create(LuceneIndexDoc.TYPE, table.name(), folder);
         final LuceneIndexField streamId = LuceneIndexField.createIdField(STREAM_ID);
         final LuceneIndexField eventId = LuceneIndexField.createIdField(EVENT_ID);
         final Map<String, LuceneIndexField> fields = new LinkedHashMap<>();

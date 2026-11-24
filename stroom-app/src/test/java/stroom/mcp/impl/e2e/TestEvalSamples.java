@@ -104,17 +104,17 @@ class TestEvalSamples {
         assertThat(EvalCases.files(evalCase)).isEmpty();
         assertThat(EvalCases.samples(evalCase)).isEqualTo(EvalCases.samples(setup));
         assertThat(EvalCases.setup(EvalCases.load("56_jsonl_azure_audit_aggregated"))).isNull();
-        assertThatThrownBy(() -> EvalCases.setup(Map.of("id", "x", "setup", Map.of("from_case", 98))))
-                .hasMessageContaining("No evaluation case 98 to start x from");
+        assertThatThrownBy(() -> EvalCases.setup(Map.of("id", "x", "setup", Map.of("from_case", 998))))
+                .hasMessageContaining("No evaluation case 998 to start x from");
     }
 
     @Test
     void theCasesAreAllThere() {
-        assertThat(EvalCases.IDS).hasSize(97).doesNotHaveDuplicates();
+        assertThat(EvalCases.IDS).hasSize(101).doesNotHaveDuplicates();
         assertThat(EvalCases.load("35_xml_fragments_secretserver_messages"))
                 .containsEntry("id", "35_xml_fragments_secretserver_messages")
                 .containsKeys("request", "expected", "reference", "sample");
-        assertThatThrownBy(() -> EvalCases.load("99_none")).hasMessageContaining("No evaluation case 99_none");
+        assertThatThrownBy(() -> EvalCases.load("999_none")).hasMessageContaining("No evaluation case 999_none");
     }
 
     @Test

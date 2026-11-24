@@ -943,6 +943,34 @@ class TestEvalScore {
     }
 
     @Test
+    void anAgentsDocProposalIsScoredByWhatTheToolsReadOfIt() {
+        final Map<String, Object> evalCase = Map.of("kind", "instructions", "expected", Map.of(
+                "tools_used", List.of("propose_instructions"),
+                "instructions", Map.of("folder", "/Endpoint", "fields", Map.of("user", "user.name", "host",
+                                List.of("host.name", "Host")), "keeps", List.of("Times are UTC."), "check_problems", 0,
+                        "check_without", List.of("plan_disagrees"))));
+        final String before = "Times are UTC.\n\n## Fields\n- user: actor.login\n";
+        final EvalScore good = new EvalScore("101");
+        final EvalScore bad = new EvalScore("101");
+
+        good.scoreSkill(evalCase, run(List.of(call("propose_instructions", Map.of("folder", "/Endpoint"), false)),
+                proposal("System/Endpoint", before, "Times are UTC.\n\n## Fields\n- user: user.name, actor.login\n"
+                                                    + "- host: host.name, Host\n", "Draft AGENTS doc for "
+                                                                                     + "/Endpoint:\nNo problems or "
+                                                                                     + "suggestions.")));
+        // A prose line the tools pass over, the other rule dropped, and the check's findings.
+        bad.scoreSkill(evalCase, run(List.of(), proposal("System/Endpoint", before, "## Notes\nThe user is "
+                                                                                    + "user.name.\n",
+                "- Problem (misplaced_fields): x\n- Suggestion (plan_disagrees): y")));
+
+        assertThat(good.passed()).as(good.summary()).isTrue();
+        assertThat(bad.passed()).isFalse();
+        assertThat(bad.summary()).contains("its '## Fields' gives user as [], expected [user.name]",
+                "the doc no longer holds 'Times are UTC.'", "check_instructions found 1 problem(s)",
+                "check_instructions found plan_disagrees");
+    }
+
+    @Test
     void aSkillProposalMissesWhatTheCaseExpectsOfIt() {
         final Map<String, Object> evalCase = skillCase(Map.of("proposal", Map.of("folder", "/Leavers",
                 "skill", "Failed logons by host", "parameters", List.of("host"), "not_parameters", List.of("days"),

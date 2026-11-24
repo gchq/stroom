@@ -216,9 +216,16 @@ public final class EvalChat {
     /// @param messages The messages.
     /// @return The proposals.
     public static List<Proposal> proposals(final List<AiChatMessage> messages) {
+        return proposals(messages, "propose_skill");
+    }
+
+    /// @param messages Some messages.
+    /// @param tool     The tool whose proposals are wanted, e.g. `propose_instructions`.
+    /// @return The proposals (the 'Review and apply' buttons) its calls offered, in order.
+    public static List<Proposal> proposals(final List<AiChatMessage> messages, final String tool) {
         final List<Proposal> proposals = new ArrayList<>();
         for (final Call call : calls(messages)) {
-            if ("propose_skill".equals(call.tool())) {
+            if (tool.equals(call.tool())) {
                 call.userActions().forEach(action -> proposals.add(new Proposal(call.messageId(), action)));
             }
         }

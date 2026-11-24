@@ -1,0 +1,51 @@
+name: An AGENTS doc's field line that disagrees with the index plan
+kind: instructions
+capabilities: [check_instructions, propose_instructions]
+# The AGENTS doc in /Endpoint gives the user as actor.login, but the index plan kept with the pipeline feeding the
+# Endpoint index maps EventSource/User/Id to user.name. The user asks for the doc to be checked; the check finds the
+# disagreement (a suggestion, never applied on its own), the user confirms user.name. Scored on the proposal: a change
+# to the doc in /Endpoint whose ## Fields gives the user as user.name first, and check_instructions finding no
+# problems and no disagreement with the plan in it.
+lucene_index:
+  name: Endpoint
+  folder: /Endpoint
+  events: questions/agents-endpoint.csv
+  recent: true
+  fields: {EventTime: date, actor.login: text, user.name: text, host.name: text, Action: text}
+index_plans:
+  - index: Endpoint
+    pipeline: Endpoint indexing
+    fields:
+      - {name: user.name, type: keyword, source: EventSource/User/Id}
+      - {name: EventTime, type: date, source: EventTime/TimeCreated}
+      - {name: host.name, type: keyword, source: EventSource/Device/HostName}
+agents_docs:
+  - folder: /Endpoint
+    text: |
+      # Standing instructions
+
+      ## Fields
+      - user: actor.login
+request: Check the standing instructions in /Endpoint and fix anything wrong.
+user_knows: >
+  If asked: user.name is right, as the index plan says; actor.login was the old field. Change the doc to use
+  user.name.
+expected:
+  tools_used: [check_instructions, propose_instructions]
+  instructions:
+    folder: /Endpoint
+    fields: {user: user.name}
+    check_problems: 0
+    check_without: [plan_disagrees]
+reference:
+  calls:
+    - {tool: check_instructions, arguments: {folder: /Endpoint}}
+    - tool: propose_instructions
+      arguments:
+        folder: /Endpoint
+        summary: The user is user.name, as the index plan of Endpoint indexing maps it and you confirmed.
+        edits:
+          - {oldText: "- user: actor.login", newText: "- user: user.name, actor.login"}
+  answer: >-
+    The doc gave the user as actor.login, but the index plan maps it to user.name; as you confirmed, I've proposed
+    user.name. Review and apply it.

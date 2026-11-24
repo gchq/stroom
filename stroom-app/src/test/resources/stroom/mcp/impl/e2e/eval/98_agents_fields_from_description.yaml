@@ -1,0 +1,39 @@
+name: Writing an AGENTS doc from what the user says ("the endpoint indexes keep the user in actor.login")
+kind: instructions
+capabilities: [propose_instructions, check_instructions]
+# /Endpoint holds the Endpoint index and no AGENTS doc. The user says which field holds the user there. Scored on the
+# proposal: a new AGENTS doc in /Endpoint whose ## Fields line gives the user as actor.login, as the tools read it
+# (not a prose sentence the tools pass over), and check_instructions finding no problems in it.
+lucene_index:
+  name: Endpoint
+  folder: /Endpoint
+  events: questions/agents-endpoint.csv
+  recent: true
+  fields: {EventTime: date, actor.login: text, user.name: text, host.name: text, Action: text}
+folders: [/Endpoint]
+request: >-
+  The endpoint indexes keep the user in actor.login. Make that a standing instruction for /Endpoint, so the tools
+  use it.
+user_knows: >
+  actor.login holds the user in every index under /Endpoint. The doc goes in /Endpoint. There is nothing else to add.
+expected:
+  tools_used: [propose_instructions]
+  instructions:
+    folder: /Endpoint
+    fields: {user: actor.login}
+    check_problems: 0
+reference:
+  calls:
+    - tool: propose_instructions
+      arguments: {folder: /Endpoint, action: draft, fields: ["user: actor.login"]}
+    - tool: propose_instructions
+      arguments:
+        folder: /Endpoint
+        summary: The user is in actor.login in the endpoint indexes, as you said.
+        markdown: |
+          # Standing instructions
+
+          ## Fields
+
+          - user: actor.login
+  answer: I've proposed a new AGENTS doc for /Endpoint giving the user as actor.login; review and apply it.

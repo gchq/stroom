@@ -1,0 +1,5 @@
+EventTime,actor.login,user.name,host.name,Action
+2026-11-17T08:01:12.000Z,jsmith,jsmith@corp.example,ws-01,Logon
+2026-11-17T08:40:03.000Z,jsmith,jsmith@corp.example,ws-01,FileOpen
+2026-11-17T09:12:44.000Z,akhan,akhan@corp.example,ws-07,Logon
+2026-11-17T09:30:19.000Z,akhan,akhan@corp.example,ws-07,Logoff

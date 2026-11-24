@@ -78,7 +78,9 @@ final class EvalCases {
             "89_skill_run_among_distractors", "90_skill_broken_reported_before_running",
             "91_skill_timeline_from_template", "92_skill_add_vpn_source", "93_skill_default_fourteen_days",
             "94_skill_timeline_learns_pair_editor", "95_skill_timeline_learns_pair_viewer",
-            "96_skill_undo_last_change", "97_json_hand_written_add_source_ip");
+            "96_skill_undo_last_change", "97_json_hand_written_add_source_ip", "98_agents_fields_from_description",
+            "99_agents_fields_under_wrong_heading", "100_agents_change_user_field",
+            "101_agents_fields_disagree_with_plan");
 
     // The types of a question's columns ([#table]).
     private static final List<String> QUESTION_TYPES = List.of("text", "long", "date");
@@ -119,15 +121,26 @@ final class EvalCases {
         return "question".equals(evalCase.get("kind"));
     }
 
-    /// Whether a case is a chat about skills (`kind: skill`): run in Stroom's own chat ([stroom.ai.impl.EvalChat]),
-    /// where `propose_skill` offers its 'Review and apply' button, after its setup ([AbstractEvalTest#setUpSkill]):
-    /// a question's data, the skills docs, the user who chats and the chat's earlier turns. Scored on the calls made,
+    /// Whether a case is a chat about skills (`kind: skill`, or standing instructions, `kind: instructions`): run in
+    /// Stroom's own chat ([stroom.ai.impl.EvalChat]), where `propose_skill` (or `propose_instructions`) offers its
+    /// 'Review and apply' button, after its setup ([AbstractEvalTest#setUpSkill]): a question's data, the skills docs
+    /// (or AGENTS docs and index plans), the user who chats and the chat's earlier turns. Scored on the calls made,
     /// the proposals and what the agent told the user ([EvalScore#scoreSkill]).
     ///
     /// @param evalCase The case.
     /// @return True for a skill case.
     static boolean isSkill(final Map<String, Object> evalCase) {
-        return "skill".equals(evalCase.get("kind"));
+        return "skill".equals(evalCase.get("kind")) || isInstructions(evalCase);
+    }
+
+    /// Whether a case is a chat about standing instructions (`kind: instructions`): run as a skill case is
+    /// ([#isSkill], so it counts as one), its proposals the AGENTS docs `propose_instructions` offers, scored by
+    /// what the tools would read of them and what `check_instructions` finds ([EvalScore#scoreSkill]).
+    ///
+    /// @param evalCase The case.
+    /// @return True if it is.
+    static boolean isInstructions(final Map<String, Object> evalCase) {
+        return "instructions".equals(evalCase.get("kind"));
     }
 
     /// Whether a case's reference drafts a translation from its sample: every case but a question, a skill case and
