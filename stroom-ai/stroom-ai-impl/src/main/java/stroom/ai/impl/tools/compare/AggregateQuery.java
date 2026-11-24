@@ -29,14 +29,19 @@ import java.util.Map;
 /// counts, sums, distinct counts, first and last times and one event's ids per group. Never the documents
 /// themselves.
 ///
-/// @param source  The index.
-/// @param filters Each field's values, a document matching one of them for every field; empty for all.
-/// @param from    The range's start (inclusive).
-/// @param to      The range's end (exclusive).
-/// @param bucket  The time bucket grouped by, if any.
-/// @param groups  The fields grouped by, besides the bucket: their columns are `g0`, `g1`, ...
-/// @param metrics What each group gives.
-/// @param limit   The most rows.
+/// @param source    The index.
+/// @param filters   Each field's values, a document matching one of them for every field; empty for all.
+/// @param from      The range's start (inclusive).
+/// @param to        The range's end (exclusive).
+/// @param bucket    The time bucket grouped by, if any.
+/// @param groups    The fields grouped by, besides the bucket: their columns are `g0`, `g1`, ...
+/// @param metrics   What each group gives.
+/// @param limit     The most rows.
+/// @param excludes  Each field's values a document must not hold (one without the field is kept), e.g. the
+///                  person's own acts on themselves left out of what was done to them; empty for none.
+/// @param differing Fields a document must hold a value of, each other than its paired field's (a document whose
+///                  paired field has no value is kept; a null pair, any value), e.g. events done to someone by
+///                  someone else; empty for none. ES|QL only: StroomQL can't compare two fields.
 record AggregateQuery(Source source,
                       Map<String, List<String>> filters,
                       Instant from,
@@ -44,7 +49,9 @@ record AggregateQuery(Source source,
                       Bucket bucket,
                       List<String> groups,
                       List<Metric> metrics,
-                      int limit) {
+                      int limit,
+                      Map<String, List<String>> excludes,
+                      Map<String, String> differing) {
 
     /// The bucket's column.
     static final String BUCKET_COLUMN = "b";
@@ -56,13 +63,36 @@ record AggregateQuery(Source source,
         filters = new LinkedHashMap<>(NullSafe.map(filters));
         groups = List.copyOf(NullSafe.list(groups));
         metrics = List.copyOf(NullSafe.list(metrics));
+        excludes = new LinkedHashMap<>(NullSafe.map(excludes));
+        differing = new LinkedHashMap<>(NullSafe.map(differing));
+    }
+
+    /// Without exclusions or differing fields.
+    ///
+    /// @param source  The index.
+    /// @param filters Each field's values, a document matching one of them for every field; empty for all.
+    /// @param from    The range's start (inclusive).
+    /// @param to      The range's end (exclusive).
+    /// @param bucket  The time bucket grouped by, if any.
+    /// @param groups  The fields grouped by, besides the bucket.
+    /// @param metrics What each group gives.
+    /// @param limit   The most rows.
+    AggregateQuery(final Source source,
+                   final Map<String, List<String>> filters,
+                   final Instant from,
+                   final Instant to,
+                   final Bucket bucket,
+                   final List<String> groups,
+                   final List<Metric> metrics,
+                   final int limit) {
+        this(source, filters, from, to, bucket, groups, metrics, limit, Map.of(), Map.of());
     }
 
     /// @param from The new start.
     /// @param to   The new end.
     /// @return The same query over another range, e.g. a month's slice.
     AggregateQuery between(final Instant from, final Instant to) {
-        return new AggregateQuery(source, filters, from, to, bucket, groups, metrics, limit);
+        return new AggregateQuery(source, filters, from, to, bucket, groups, metrics, limit, excludes, differing);
     }
 
     /// @param index A group field's place.

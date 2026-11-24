@@ -68,6 +68,21 @@ final class AggregateText {
                     .map(AggregateText::esqlString)
                     .toList()) + ")");
         }
+        for (final Map.Entry<String, List<String>> exclude : query.excludes().entrySet()) {
+            final String name = esqlName(exclude.getKey());
+            conditions.add("(" + name + " IS NULL OR " + name + " NOT IN (" + String.join(", ", exclude.getValue()
+                    .stream()
+                    .map(AggregateText::esqlString)
+                    .toList()) + "))");
+        }
+        for (final Map.Entry<String, String> differing : query.differing().entrySet()) {
+            final String name = esqlName(differing.getKey());
+            conditions.add(name + " IS NOT NULL");
+            if (differing.getValue() != null) {
+                final String other = esqlName(differing.getValue());
+                conditions.add("(" + other + " IS NULL OR " + other + " != " + name + ")");
+            }
+        }
         commands.add("WHERE " + String.join(" AND ", conditions));
         if (query.bucket() == Bucket.HOUR) {
             commands.add("EVAL " + AggregateQuery.BUCKET_COLUMN + " = DATE_TRUNC(1 hour, " + time + ")");
@@ -127,6 +142,15 @@ final class AggregateText {
             conditions.add(any.size() == 1
                     ? any.getFirst()
                     : "(" + String.join(" or ", any) + ")");
+        }
+        for (final Map.Entry<String, List<String>> exclude : query.excludes().entrySet()) {
+            final String name = stroomQlName(exclude.getKey());
+            conditions.add("not (" + String.join(" or ", exclude.getValue().stream()
+                    .map(value -> name + " = " + stroomQlString(value))
+                    .toList()) + ")");
+        }
+        if (!query.differing().isEmpty()) {
+            throw new IllegalArgumentException("Comparing two fields needs ES|QL: " + query.differing());
         }
         sb.append("\nwhere ").append(String.join("\n  and ", conditions));
         final List<String> grouped = new ArrayList<>();

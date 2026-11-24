@@ -336,9 +336,15 @@ final class ActivityScoring {
                 .orElse(false);
     }
 
-    // Two departures from their baselines (the person's, everyone else's) the same way, everyone else's past the
-    // threshold and at least half the person's relative to its level.
-    private static boolean sharedShift(final double value,
+    /// Two departures from their baselines (the person's, everyone else's) the same way, everyone else's past the
+    /// threshold and at least half the person's relative to its level.
+    ///
+    /// @param value  The person's value.
+    /// @param score  The person's score against their baseline.
+    /// @param others Everyone else's value.
+    /// @param theirs Everyone else's score against theirs.
+    /// @return True if everyone else moved as far the same way: a change in the source.
+    static boolean sharedShift(final double value,
                                        final Score score,
                                        final double others,
                                        final Score theirs) {
@@ -355,11 +361,15 @@ final class ActivityScoring {
                 : Math.abs(value - baseline) / Math.abs(baseline);
     }
 
-    private static double capped(final double z) {
+    /// @param z A robust z.
+    /// @return Its size, at most [#MAX_Z], for ranking.
+    static double capped(final double z) {
         return Math.min(Math.abs(z), MAX_Z);
     }
 
-    private static String robustZText(final double z) {
+    /// @param z A robust z.
+    /// @return It as the result says it: "over 50" past [#MAX_Z].
+    static String robustZText(final double z) {
         return Math.abs(z) > MAX_Z
                 ? (z > 0
                         ? "over "

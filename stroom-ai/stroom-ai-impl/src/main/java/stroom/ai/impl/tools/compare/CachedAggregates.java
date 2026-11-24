@@ -145,7 +145,10 @@ final class CachedAggregates implements AggregateRunner {
     /// @return What it asks, its time range aside.
     static String key(final AggregateQuery query) {
         return query.source().doc().getUuid() + "|" + query.source().timeField() + "|" + query.filters() + "|"
-               + query.bucket() + "|" + query.groups() + "|" + query.metrics() + "|" + query.limit();
+               + query.bucket() + "|" + query.groups() + "|" + query.metrics() + "|" + query.limit()
+               + (query.excludes().isEmpty() && query.differing().isEmpty()
+                ? ""
+                : "|" + query.excludes() + "|" + query.differing());
     }
 
     private static Instant dayStart(final Instant instant, final ZoneId zone) {

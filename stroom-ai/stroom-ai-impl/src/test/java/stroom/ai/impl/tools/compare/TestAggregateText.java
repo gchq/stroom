@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestAggregateText {
 
@@ -77,6 +78,47 @@ class TestAggregateText {
                            + "| EVAL one_event_key = CONCAT(TO_STRING(`StreamId`), \":\", TO_STRING(`EventId`))\n"
                            + "| STATS events = COUNT(*), one_event = MIN(one_event_key) BY g0 = `user.id`\n"
                            + "| LIMIT 500");
+    }
+
+    @Test
+    void esqlWhatWasDoneToThePersonLeavesOutTheirOwnActs() {
+        final ActivityProfiles.TargetScope target = new ActivityProfiles.TargetScope("user.target.id",
+                List.of("p-1001"), "user.id", List.of("p-1001"));
+
+        assertThat(AggregateText.esql(ActivityProfiles.targetDaily(ELASTIC, target, "event.action", FROM, TO), null))
+                .isEqualTo("| WHERE `@timestamp` >= TO_DATETIME(\"2026-01-01T00:00:00.000Z\") AND `@timestamp` < "
+                           + "TO_DATETIME(\"2026-02-01T00:00:00.000Z\") AND `user.target.id` IN (\"p-1001\") AND "
+                           + "(`user.id` IS NULL OR `user.id` NOT IN (\"p-1001\"))\n"
+                           + "| EVAL b = DATE_FORMAT(\"yyyy-MM-dd\", `@timestamp`)\n"
+                           + "| STATS events = COUNT(*) BY b, g0 = `event.action`\n"
+                           + "| LIMIT 10000");
+        // Everyone's, done by someone else: the target held, the actor none or another.
+        assertThat(AggregateText.esql(ActivityProfiles.targetPopulation(ELASTIC, "user.target.id", "user.id", FROM,
+                TO), null)).contains("AND `user.target.id` IS NOT NULL AND (`user.id` IS NULL OR `user.id` != "
+                                     + "`user.target.id`)\n")
+                .contains("| STATS events = COUNT(*), people = COUNT_DISTINCT(`user.target.id`) BY b");
+        assertThat(AggregateText.esql(ActivityProfiles.targetPopulation(ELASTIC, "user.target.id", null, FROM, TO),
+                null)).contains("AND `user.target.id` IS NOT NULL\n");
+        // A re-run's slice keeps them.
+        assertThat(ActivityProfiles.targetDaily(ELASTIC, target, null, FROM, TO).between(FROM, FROM.plusSeconds(1))
+                .excludes()).isEqualTo(Map.of("user.id", List.of("p-1001")));
+        assertThat(CachedAggregates.key(ActivityProfiles.targetDaily(ELASTIC, target, null, FROM, TO)))
+                .isNotEqualTo(CachedAggregates.key(ActivityProfiles.daily(ELASTIC, new Scope("user.target.id",
+                        List.of("p-1001")), new Fields(List.of(), List.of()), FROM, TO)));
+    }
+
+    @Test
+    void stroomQlLeavesOutTheirOwnActsButCantCompareTwoFields() {
+        final ActivityProfiles.TargetScope target = new ActivityProfiles.TargetScope("TargetUser", List.of("j"),
+                "UserId", List.of("j", "adm-j"));
+
+        assertThat(AggregateText.stroomQl(ActivityProfiles.targetDaily(LUCENE, target, null, FROM, TO),
+                ZoneOffset.UTC)).contains("  and TargetUser = \"j\"\n  and not (UserId = \"j\" or UserId = "
+                                          + "\"adm-j\")\n");
+        assertThatThrownBy(() -> AggregateText.stroomQl(
+                        ActivityProfiles.targetPopulation(LUCENE, "TargetUser", "UserId", FROM, TO), ZoneOffset.UTC))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("needs ES|QL");
     }
 
     @Test

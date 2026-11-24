@@ -133,8 +133,76 @@ final class ActivityProfiles {
                 List.of(new Metric(Kind.COUNT, null, EVENTS)), MAX_ROWS);
     }
 
+    /// The events done to the person by day (and by type, where the index has a type field): their target field
+    /// holding them, their own acts on themselves left out.
+    ///
+    /// @param source    The index.
+    /// @param target    Whom the events were done to, and the actor's own acts left out.
+    /// @param typeField The field holding the type (the Action, else the element or event code), or null.
+    /// @param from      The start.
+    /// @param to        The end.
+    /// @return The query.
+    static AggregateQuery targetDaily(final Source source,
+                                      final TargetScope target,
+                                      final String typeField,
+                                      final Instant from,
+                                      final Instant to) {
+        return new AggregateQuery(source, target.filter(), from, to, Bucket.DAY, typeField == null
+                ? List.of()
+                : List.of(typeField), List.of(new Metric(Kind.COUNT, null, EVENTS)), MAX_ROWS, target.excludes(),
+                Map.of());
+    }
+
+    /// @return Each account that acted on the person, with its first and last times: those acting on them for the
+    /// first time are found from it, as values first seen are.
+    static AggregateQuery targetActors(final Source source,
+                                       final TargetScope target,
+                                       final String actorField,
+                                       final Instant from,
+                                       final Instant to) {
+        return new AggregateQuery(source, target.filter(), from, to, Bucket.NONE, List.of(actorField), List.of(
+                new Metric(Kind.MIN_TIME, null, FIRST),
+                new Metric(Kind.MAX_TIME, null, LAST),
+                new Metric(Kind.COUNT, null, EVENTS)), MAX_ROWS, target.excludes(), Map.of());
+    }
+
+    /// @return Everyone's events done to them by someone else, and the people they were done to, by day: the
+    /// source-wide check of what was done to the person (ES|QL only, as it compares two fields).
+    static AggregateQuery targetPopulation(final Source source,
+                                           final String targetField,
+                                           final String actorField,
+                                           final Instant from,
+                                           final Instant to) {
+        final Map<String, String> differing = new LinkedHashMap<>();
+        differing.put(targetField, actorField);
+        return new AggregateQuery(source, Map.of(), from, to, Bucket.DAY, List.of(), List.of(
+                new Metric(Kind.COUNT, null, EVENTS),
+                new Metric(Kind.DISTINCT, targetField, PEOPLE)), MAX_ROWS, Map.of(), differing);
+    }
+
     // --------------------------------------------------------------------------------
     // Reading
+
+    /// Reads the events done to the person by day and type.
+    ///
+    /// @param daily The target daily aggregate's table.
+    /// @param typed True if it was grouped by a type field.
+    /// @return Each day's events by type ("" untyped).
+    static SortedMap<LocalDate, Map<String, Double>> targetDays(final Table daily, final boolean typed) {
+        final SortedMap<LocalDate, Map<String, Double>> days = new TreeMap<>();
+        for (final Map<String, String> row : daily.rows()) {
+            final LocalDate date = date(row.get(AggregateQuery.BUCKET_COLUMN));
+            if (date == null) {
+                continue;
+            }
+            final String type = typed
+                    ? NullSafe.nonBlankStringElse(row.get(AggregateQuery.groupColumn(0)), "")
+                    : "";
+            days.computeIfAbsent(date, k -> new LinkedHashMap<>()).merge(type, number(row.get(EVENTS)),
+                    Double::sum);
+        }
+        return days;
+    }
 
     /// Reads the person's days.
     ///
@@ -310,6 +378,37 @@ final class ActivityProfiles {
         /// @return The filter of the aggregates.
         Map<String, List<String>> filter() {
             return Map.of(field, values);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Whom an index's events were done to.
+    ///
+    /// @param field       The target field filtered on.
+    /// @param values      Its values (the person id, or the logon ids).
+    /// @param actorField  The field holding who acted, whose `actorValues` are left out; null for none.
+    /// @param actorValues The actor's values left out (the person's own acts on themselves).
+    record TargetScope(String field, List<String> values, String actorField, List<String> actorValues) {
+
+        /// Copies the lists.
+        TargetScope {
+            values = List.copyOf(values);
+            actorValues = List.copyOf(NullSafe.list(actorValues));
+        }
+
+        /// @return The filter of the aggregates.
+        Map<String, List<String>> filter() {
+            return Map.of(field, values);
+        }
+
+        /// @return What the aggregates leave out: the person's own acts.
+        Map<String, List<String>> excludes() {
+            return actorField == null || actorValues.isEmpty()
+                    ? Map.of()
+                    : Map.of(actorField, actorValues);
         }
     }
 

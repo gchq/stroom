@@ -53,6 +53,11 @@ final class CompareResult {
     static final String INDICATORS = "These are indicators with evidence for an analyst to weigh, each with "
                                      + "another explanation: they say nothing about intent, and are never a "
                                      + "conclusion about the person.";
+    /// What the result says of what was done to the person.
+    static final String DONE_TO_THEM = "things done to the person or their account by others (their target "
+                                       + "fields, their own acts on themselves left out): indicators of something "
+                                       + "done to them, not of anything they did, kept out of the findings above, "
+                                       + "their volume, rhythm, breadth and peers";
     /// The most flagged days named for activity_timeline.
     static final int FLAGGED_DAYS = 5;
     /// The most source-wide findings shown.
@@ -118,6 +123,7 @@ final class CompareResult {
 
         final List<Finding> all = new ArrayList<>(ranked(run));
         all.addAll(sourceWide(run));
+        all.addAll(doneToThem(run));
         final List<List<String>> findingRows = new ArrayList<>();
         for (int i = 0; i < all.size(); i++) {
             final Finding finding = all.get(i);
@@ -247,6 +253,9 @@ final class CompareResult {
                 .append(" findings), ").append(files.values().path()).append(" (values). ").append(run.queries())
                 .append(" aggregate queries run; a re-run asks only for the days since.");
         final List<String> flagged = flaggedDays(ranked);
+        if (run.targets() != null) {
+            sb.append("\n\n").append(doneToThemMarkdown(run));
+        }
         if (!flagged.isEmpty()) {
             sb.append("\n\nTo see what happened on the flagged days: activity_timeline on ")
                     .append(String.join(", ", flagged)).append('.');
@@ -316,8 +325,96 @@ final class CompareResult {
         result.put("files", List.of(files.profile().path(), files.monthly().path(), files.findings().path(),
                 files.values().path()));
         result.put("flagged_days", flaggedDays(ranked));
+        if (run.targets() != null) {
+            result.put("done_to_them", doneToThemStructured(run));
+        }
         result.put("queries", run.queries());
         return result;
+    }
+
+    /// @param run What was compared.
+    /// @return The findings of what was done to the person, the source's last, each group largest first.
+    static List<Finding> doneToThem(final Run run) {
+        final List<Finding> own = new ArrayList<>();
+        final List<Finding> shared = new ArrayList<>();
+        NullSafe.list(run.targets()).forEach(scored -> scored.findings().forEach(finding -> (finding.sourceWide()
+                ? shared
+                : own).add(finding)));
+        own.sort(Comparator.comparingDouble(Finding::score).reversed());
+        shared.sort(Comparator.comparingDouble(Finding::score).reversed());
+        own.addAll(shared);
+        return own;
+    }
+
+    // What was done to the person, in the chat: its own group, never ranked with the person's findings.
+    private static String doneToThemMarkdown(final Run run) {
+        final StringBuilder sb = new StringBuilder("**Done to them** (").append(DONE_TO_THEM).append(")\n");
+        for (final TargetScoring.Scored scored : run.targets()) {
+            sb.append("- [").append(scored.source()).append("] ").append(scored.label()).append(": in the window ")
+                    .append(scored.inWindow().isEmpty()
+                            ? "none"
+                            : String.join(", ", scored.inWindow().entrySet().stream()
+                                    .map(entry -> entry.getKey().isEmpty()
+                                            ? entry.getValue() + " event(s)"
+                                            : entry.getKey() + " " + entry.getValue())
+                                    .toList()));
+            if (!scored.newActors().isEmpty()) {
+                sb.append("; accounts acting on them for the first time: ").append(String.join(", ",
+                        scored.newActors()));
+            }
+            sb.append('\n');
+        }
+        final List<Finding> findings = doneToThem(run).stream().filter(finding -> !finding.sourceWide()).toList();
+        if (findings.isEmpty()) {
+            sb.append("No finding: nothing done to them in the window departs from the baseline past the "
+                      + "thresholds.\n");
+        }
+        for (int i = 0; i < Math.min(findings.size(), CompareActivityTool.MAX_FINDINGS); i++) {
+            final Finding finding = findings.get(i);
+            sb.append(i + 1).append(". [").append(finding.source()).append("] ").append(finding.evidence())
+                    .append(". Alternatively: ").append(finding.alternative()).append('\n');
+        }
+        doneToThem(run).stream().filter(Finding::sourceWide).limit(SOURCE_WIDE_SHOWN).forEach(finding ->
+                sb.append("- explained by the source: [").append(finding.source()).append("] ")
+                        .append(finding.evidence()).append('\n'));
+        run.targets().forEach(scored -> scored.notes().forEach(note -> sb.append("- ").append(scored.source())
+                .append(": ").append(note).append('\n')));
+        return sb.toString().stripTrailing();
+    }
+
+    // What was done to the person, over MCP.
+    private static Map<String, Object> doneToThemStructured(final Run run) {
+        final Map<String, Object> map = new LinkedHashMap<>();
+        map.put("note", DONE_TO_THEM);
+        map.put("sources", run.targets().stream().map(scored -> {
+            final Map<String, Object> source = new LinkedHashMap<>();
+            source.put("source", scored.source());
+            source.put("by", scored.label());
+            source.put("in_window", scored.inWindow());
+            source.put("new_actors", scored.newActors());
+            source.put("notes", scored.notes());
+            return source;
+        }).toList());
+        final List<Map<String, Object>> findings = new ArrayList<>();
+        for (final Finding finding : doneToThem(run).stream().filter(finding -> !finding.sourceWide())
+                .limit(CompareActivityTool.MAX_FINDINGS).toList()) {
+            final Map<String, Object> one = new LinkedHashMap<>();
+            one.put("source", finding.source());
+            one.put("kind", finding.kind().name().toLowerCase());
+            one.put("feature", finding.feature());
+            one.put("window", finding.window());
+            one.put("baseline", ActivityScoring.round(finding.baseline()));
+            one.put("value", ActivityScoring.round(finding.value()));
+            one.put("score", Math.round(finding.score() * 100) / 100.0);
+            one.put("evidence", finding.evidence());
+            one.put("alternative", finding.alternative());
+            findings.add(one);
+        }
+        map.put("findings", findings);
+        map.put("source_wide", doneToThem(run).stream().filter(Finding::sourceWide).limit(SOURCE_WIDE_SHOWN)
+                .map(finding -> "[" + finding.source() + "] " + finding.evidence())
+                .toList());
+        return map;
     }
 
     /// @param run What was compared.
@@ -426,6 +523,8 @@ final class CompareResult {
     /// @param queries  The aggregate queries run.
     /// @param folder   The workspace folder written to.
     /// @param element  The UserDetails element peers share.
+    /// @param targets  What was done to the person in each source, scored apart (`includeTargets`); null if not
+    ///                 asked.
     record Run(String person,
                List<String> logonIds,
                Periods periods,
@@ -436,7 +535,8 @@ final class CompareResult {
                List<String> notes,
                int queries,
                String folder,
-               String element) {
+               String element,
+               List<TargetScoring.Scored> targets) {
 
     }
 

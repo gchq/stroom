@@ -81,7 +81,14 @@ final class InMemoryAggregates implements AggregateRunner {
             }
             final boolean matches = query.filters().entrySet().stream()
                     .allMatch(filter -> filter.getValue().contains(String.valueOf(event.get(filter.getKey()))));
-            if (!matches) {
+            final boolean excluded = query.excludes().entrySet().stream()
+                    .anyMatch(exclude -> event.get(exclude.getKey()) != null
+                                         && exclude.getValue().contains(String.valueOf(event.get(exclude.getKey()))));
+            final boolean differs = query.differing().entrySet().stream()
+                    .allMatch(differing -> event.get(differing.getKey()) != null && (differing.getValue() == null
+                                                                                      || !Objects.equals(
+                            event.get(differing.getKey()), event.get(differing.getValue()))));
+            if (!matches || excluded || !differs) {
                 continue;
             }
             final List<String> key = new ArrayList<>();

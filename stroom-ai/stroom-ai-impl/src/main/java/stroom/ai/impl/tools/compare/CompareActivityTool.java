@@ -124,6 +124,9 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     /// The end of a geo point field, as the ECS geo fields are named (`source.geo.location`).
     static final String POINT_SUFFIX = ".geo.location";
     static final String PEER_ELEMENT_ARG = "peerElement";
+    static final String INCLUDE_TARGETS_ARG = "includeTargets";
+    static final String TARGET_PERSON_FIELD_ARG = "targetPersonField";
+    static final String TARGET_USER_FIELD_ARG = "targetUserField";
     /// The most findings the result gives; the rest are in the findings file.
     static final int MAX_FINDINGS = 20;
     /// The most people whose group is read from their events in a call.
@@ -250,7 +253,9 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                  + MAX_FINDINGS + " ranked findings, each an indicator with its evidence and an "
                                  + "alternative explanation (never a conclusion about the person: say so), a line "
                                  + "a month, and CSV files of the daily profile and monthly rollup. Give person "
-                                 + "(the person id) or logonIds where there is none.")
+                                 + "(the person id) or logonIds where there is none. includeTargets scores what was "
+                                 + "done to the person apart (a group granted, a reset, MFA changed, failed "
+                                 + "logons against them; about 2 more queries a month per source).")
                         .chatOnly(" Drill into flagged days with activity_timeline.")
                         .build())
                 .parameters(ObjectSchema.builder()
@@ -312,6 +317,16 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                                                                  + "inferred, each "
                                                                                  + "value=category: kept for "
                                                                                  + "re-runs."))
+                        .addBooleanProperty(INCLUDE_TARGETS_ARG, "Also score what was done to the person (their "
+                                                                 + "target fields), as its own findings group, "
+                                                                 + "never in their volume, rhythm, breadth or peers "
+                                                                 + "(default false).")
+                        .addStringProperty(TARGET_PERSON_FIELD_ARG, "Optional: the field holding the person an "
+                                                                    + "event was done to (AGENTS 'target person:', "
+                                                                    + "ECS user.target.id).")
+                        .addStringProperty(TARGET_USER_FIELD_ARG, "Optional: the field holding the account an "
+                                                                  + "event was done to (AGENTS 'target user:', ECS "
+                                                                  + "user.target.name).")
                         .addEnumProperty(PEER_ELEMENT_ARG, PeerGroups.ELEMENTS.stream().sorted().toList(),
                                 "The UserDetails element peers share (default Organisation).")
                         .addStringProperty(UserTimeZones.ARG, UserTimeZones.DESCRIPTION
@@ -347,11 +362,12 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         final boolean peers = booleanArg(request, PEERS_ARG, true);
         final boolean categories = booleanArg(request, CATEGORIES_ARG, false);
         final boolean location = booleanArg(request, LOCATION_ARG, true);
+        final boolean targets = booleanArg(request, INCLUDE_TARGETS_ARG, false);
         final Map<String, String> siteList = pairs(stringListArg(request, CATEGORY_LIST_ARG), CATEGORY_LIST_ARG);
         final Map<String, String> corrections = pairs(stringListArg(request, CATEGORY_CORRECTIONS_ARG),
                 CATEGORY_CORRECTIONS_ARG);
 
-        final List<Planned> planned = plan(request, context, person, logonIds);
+        final List<Planned> planned = plan(request, context, person, logonIds, targets);
         final String folder = FOLDER + safe(NullSafe.isBlankString(person)
                 ? String.join("_", logonIds)
                 : person) + "/";
@@ -390,6 +406,26 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                 offsets.put(LOCATION_ARG, queries.size() - start);
                 queries.add(ActivityLocation.hourly(source.source(), source.scope(), source.countryField(),
                         source.pointField(), from, to));
+            }
+            if (source.targeted() != null && source.targeted().usable()) {
+                // What was done to the person: by day (and type), the accounts acting on them, and everyone's
+                // (Elastic only), kept apart from every feature of their own.
+                final Targeted targeted = source.targeted();
+                offsets.put(INCLUDE_TARGETS_ARG, queries.size() - start);
+                queries.add(ActivityProfiles.targetDaily(source.source(), targeted.scope(), targeted.typeField(),
+                        from, to));
+                if (targeted.actorField() != null) {
+                    offsets.put(INCLUDE_TARGETS_ARG + ":actors", queries.size() - start);
+                    queries.add(ActivityProfiles.targetActors(source.source(), targeted.scope(),
+                            targeted.actorField(), from, to));
+                }
+                if (source.source().elastic()) {
+                    offsets.put(INCLUDE_TARGETS_ARG + ":population", queries.size() - start);
+                    queries.add(ActivityProfiles.targetPopulation(source.source(), targeted.scope().field(),
+                            targeted.sameKind()
+                                    ? targeted.scope().actorField()
+                                    : null, from, to));
+                }
             }
             offsetsBySource.add(offsets);
             final boolean peersHere = peers && source.hasEventIds();
@@ -498,6 +534,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
             }
         }
         final List<Scored> scored = new ArrayList<>();
+        final List<TargetScoring.Scored> doneToThem = new ArrayList<>();
         for (int i = 0; i < data.size(); i++) {
             final Scored one = ActivityScoring.score(spec, data.get(i));
             final List<ActivityScoring.Finding> more = new ArrayList<>(one.findings());
@@ -523,9 +560,33 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
             more.sort(Comparator.comparingDouble(ActivityScoring.Finding::score).reversed());
             scored.add(new Scored(one.source(), more, one.status(), one.features(), one.months(), one.notes(),
                     one.values()));
+            if (offsets.containsKey(INCLUDE_TARGETS_ARG)) {
+                final Table daily = own.get(offsets.get(INCLUDE_TARGETS_ARG));
+                final Integer actorsAt = offsets.get(INCLUDE_TARGETS_ARG + ":actors");
+                final Integer populationAt = offsets.get(INCLUDE_TARGETS_ARG + ":population");
+                if (daily.cutShort()) {
+                    notes.add(source.source().name() + ": what was done to them was cut short at "
+                              + ActivityProfiles.MAX_ROWS + " rows a month: approximate.");
+                }
+                doneToThem.add(TargetScoring.score(spec, new TargetScoring.TargetData(source.source().name(),
+                        source.targeted().label(), ActivityProfiles.targetDays(daily,
+                        source.targeted().typeField() != null), actorsAt == null
+                        ? null
+                        : ActivityProfiles.seen(own.get(actorsAt)), populationAt == null
+                        ? new TreeMap<>()
+                        : ActivityProfiles.population(own.get(populationAt)), data.get(i).population())));
+            }
+        }
+        if (targets) {
+            planned.stream()
+                    .filter(p -> p.usable() && p.targeted() != null && !p.targeted().usable())
+                    .forEach(p -> notes.add(p.doc().getName() + ": what was done to them isn't read: "
+                                            + p.targeted().leftOut() + "."));
         }
         final CompareResult.Run run = new CompareResult.Run(person, logonIds, periods, unit, zone, planned, scored,
-                notes, queriesRun, folder, element);
+                notes, queriesRun, folder, element, targets
+                        ? doneToThem
+                        : null);
         final CompareResult.Files files = CompareResult.write(workspace, run);
         final Map<String, Object> structured = CompareResult.structured(run, files);
         return context.session().isChat()
@@ -541,7 +602,8 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     private List<Planned> plan(final ToolCall request,
                                final ToolCallContext context,
                                final String person,
-                               final List<String> logonIds) {
+                               final List<String> logonIds,
+                               final boolean targets) {
         final List<String> given = NullSafe.list(stringListArg(request, SOURCES_ARG));
         final List<DocRef> docs = new ArrayList<>();
         if (given.isEmpty()) {
@@ -593,6 +655,9 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                     : breadth.stream().filter(fields::containsKey).toList();
             final boolean hasIds = fields.containsKey(EqlSequenceResults.STREAM_ID)
                                    && fields.containsKey(EqlSequenceResults.EVENT_ID);
+            final Targeted targeted = targets
+                    ? targeted(request, context, doc, person, logonIds, scope, fields)
+                    : null;
             planned.add(new Planned(doc, source, new Scope(scope.field().field(), scope.values()),
                     new Fields(sumFields, breadthFields), scope.by().label() + " (" + scope.field().field() + " from "
                                                           + scope.field().from() + ")", hasIds, null,
@@ -603,7 +668,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                             : null, countryField(countryField, fields), elastic
                             ? fields.keySet().stream().filter(name -> name.endsWith(POINT_SUFFIX)).sorted()
                                     .findFirst().orElse(null)
-                            : null));
+                            : null, targeted));
         }
         if (planned.stream().noneMatch(Planned::usable)) {
             throw new WorkspaceException("No source can be compared: " + String.join("; ", planned.stream()
@@ -611,6 +676,43 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                     .toList()) + ".");
         }
         return planned;
+    }
+
+    // How what was done to the person is read in one index: its target field (the call's, the AGENTS doc's ## Fields
+    // 'target person:' or 'target user:', the convention's), their own acts on themselves left out by the actor's
+    // field; the type by the Action, element or event code field; the actor's logon (else person) field for the
+    // accounts acting on them.
+    private Targeted targeted(final ToolCall request,
+                              final ToolCallContext context,
+                              final DocRef doc,
+                              final String person,
+                              final List<String> logonIds,
+                              final PersonScope.Scope scope,
+                              final Map<String, QueryField> fields) {
+        final PersonScope.Target target = PersonScope.target(timelineFields, context.session(), doc, person,
+                logonIds, optionalList(stringArg(request, TARGET_PERSON_FIELD_ARG)),
+                optionalList(stringArg(request, TARGET_USER_FIELD_ARG)), scope, fields::containsKey);
+        if (!target.usable()) {
+            return new Targeted(null, null, null, false, null, target.leftOut());
+        }
+        String type = null;
+        for (final String what : List.of(InstructionRules.ACTION_FIELD, InstructionRules.ELEMENT_FIELD,
+                InstructionRules.EVENT_TYPE_FIELD)) {
+            if (type == null) {
+                type = timelineFields.find(context.session(), doc, what, List.of(), fields::containsKey)
+                        .map(TimelineFields.Found::field)
+                        .orElse(null);
+            }
+        }
+        final String actor = timelineFields.find(context.session(), doc, InstructionRules.USER_FIELD, List.of(),
+                        fields::containsKey)
+                .or(() -> timelineFields.find(context.session(), doc, InstructionRules.PERSON_FIELD, List.of(),
+                        fields::containsKey))
+                .map(TimelineFields.Found::field)
+                .orElse(null);
+        return new Targeted(new ActivityProfiles.TargetScope(target.field().field(), target.values(),
+                target.actorField(), target.actorValues()), type, actor, target.by() == scope.by(),
+                target.describe(), null);
     }
 
     // The person's events by day and value of the first breadth field (and the index's category field, where it
@@ -1002,6 +1104,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     /// @param accessField   The field of the resources people reach, or null.
     /// @param countryField  The country field, or null.
     /// @param pointField    The geo point field (Elastic only), or null.
+    /// @param targeted      What was done to the person, how it is read (`includeTargets`); null if not asked.
     record Planned(DocRef doc,
                    Source source,
                    Scope scope,
@@ -1012,14 +1115,41 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                    String categoryField,
                    String accessField,
                    String countryField,
-                   String pointField) {
+                   String pointField,
+                   Targeted targeted) {
 
         /// @param doc The index.
         /// @param why Why it can't be read.
         /// @return It, left out.
         static Planned leftOut(final DocRef doc, final String why) {
-            return new Planned(doc, null, null, null, null, false, why, null, null, null, null);
+            return new Planned(doc, null, null, null, null, false, why, null, null, null, null, null);
         }
+
+        /// @return True if it can be read.
+        boolean usable() {
+            return leftOut == null;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// How what was done to the person is read in one index.
+    ///
+    /// @param scope     The target field and values, the actor's own acts left out; null if it can't be read.
+    /// @param typeField The field holding the type (the Action, else the element or event code), or null.
+    /// @param actorField The field holding who acted (their logon id, else person id), or null.
+    /// @param sameKind  True if the target and actor fields hold the same kind of id (both person ids or both
+    ///                  logon ids), so everyone's own acts on themselves can be left out of the source-wide check.
+    /// @param label     How the target field was found, as the result says it.
+    /// @param leftOut   Why it can't be read, or null.
+    record Targeted(ActivityProfiles.TargetScope scope,
+                    String typeField,
+                    String actorField,
+                    boolean sameKind,
+                    String label,
+                    String leftOut) {
 
         /// @return True if it can be read.
         boolean usable() {
