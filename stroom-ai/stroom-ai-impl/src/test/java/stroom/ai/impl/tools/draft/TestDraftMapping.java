@@ -1033,6 +1033,62 @@ class TestDraftMapping extends DraftFixtures {
                                                   && note.contains("Authenticate-Logoff: actor 'src' holds addresses"));
     }
 
+    // Chat 194, an endpoint log (`<time> <host> <program>[<pid>]: evt=... key=value`): 'app', the window a focus
+    // event names, was drafted as EventSource/Generator for every event type, though only the focus events hold it:
+    // the schema requires Generator, so every other event left it out.
+    @Test
+    void aGeneratorFieldEmptyInEveryRecordOfAnEventTypeIsNotDraftedAsTheGenerator() {
+        // The records as the build's Data Splitter reads the lines: time, prefix2 (the host), prefix3, then the pairs.
+        final List<String> lines = new ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            final String head = "{\"time\": \"2025-11-01T10:%02d:00.000+11:00\", \"prefix2\": \"ws-epillai\", "
+                                .formatted(i) + "\"prefix3\": \"deskwatch[1180]:\", ";
+            lines.add(head + switch (i % 3) {
+                case 0 -> "\"evt\": \"logon\", \"user\": \"epillai\"}";
+                case 1 -> "\"evt\": \"focus.in\", \"user\": \"epillai\", \"app\": \"Code.exe\", "
+                          + "\"hwnd\": \"0xe9c71e\"}";
+                default -> "\"evt\": \"proc.start\", \"user\": \"epillai\", \"pid\": \"2228%d\"}".formatted(i);
+            });
+        }
+        final Map<String, Object> notes = TestCatalogueTranslation.notes(List.of(
+                confirmed("Logon-User", "Authenticate", "Logon", "evt", "logon"),
+                confirmed("Focus-Window", "View", null, "evt", "focus.in"),
+                confirmed("Start-Process", "Process", "Execute", "evt", "proc.start")), true);
+
+        final Map<String, Object> draft = DraftMapping.draft(List.of(String.join("\n", lines) + "\n"),
+                "Endpoint logs", "deskwatch", "Test", notes, detail -> SourceNotes.detailProblem(SCHEMA, detail),
+                null);
+
+        // The draft's constant stands, and the note says why; 'app' stays with the rule whose records hold it.
+        assertThat(common(draft).get("EventSource/Generator")).containsEntry("value", "Endpoint logs")
+                .doesNotContainKey("field");
+        assertThat(notes(draft)).anyMatch(note -> note.startsWith("'app' would be EventSource/Generator by its "
+                                                                  + "name, but is empty in every sample record of 2 "
+                                                                  + "of the 3 event types (Logon-User, "
+                                                                  + "Start-Process)"));
+        assertThat(dataNames(rules(draft).get("focus_window"))).contains("app");
+        assertThat(dataNames(rules(draft).get("logon_user"))).doesNotContain("app");
+    }
+
+    @Test
+    void aGeneratorFieldFilledInEveryEventTypeIsStillDraftedAsTheGenerator() {
+        final List<String> lines = new ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            lines.add("ts=2026-11-06T09:%02d:00Z app=agent evt=%s user=user%d".formatted(i, i % 2 == 0
+                    ? "logon"
+                    : "logoff", i % 3));
+        }
+        final Map<String, Object> notes = TestCatalogueTranslation.notes(List.of(
+                confirmed("Logon-User", "Authenticate", "Logon", "evt", "logon"),
+                confirmed("Logoff-User", "Authenticate", "Logoff", "evt", "logoff")), true);
+
+        final Map<String, Object> draft = DraftMapping.draft(List.of(String.join("\n", lines) + "\n"), "App",
+                "App", "Test", notes, detail -> SourceNotes.detailProblem(SCHEMA, detail), null);
+
+        assertThat(common(draft).get("EventSource/Generator")).containsEntry("field", "app");
+        assertThat(notes(draft)).noneMatch(note -> note.contains("would be EventSource/Generator"));
+    }
+
     @Test
     void anAffectedObjectIsCheckedAgainstTheActionElement() {
         assertThatThrownBy(() -> SourceNotes.affectedPath(SCHEMA, "Network/Permit", "Destination"))

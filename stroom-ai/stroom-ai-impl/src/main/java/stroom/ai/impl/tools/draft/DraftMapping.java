@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.catalogue.CatalogueOrder;
+import stroom.ai.impl.tools.catalogue.EventType;
 import stroom.ai.impl.tools.generation.FieldHomes;
 import stroom.ai.impl.tools.generation.Pairs;
 import stroom.ai.impl.tools.generation.ZoneSource;
@@ -226,6 +227,7 @@ public final class DraftMapping {
     private static final String NAMES = "names";
     private static final String EXTRACT = "extract";
     private static final String DATA_NAME = "data_name";
+    private static final String GENERATOR = "EventSource/Generator";
     private static final String EVENTS = "events";
     // Said when the draft has no catalogue of event types to follow.
     private static final String UNCATALOGUED_NOTE = "No catalogue of event types yet: these rules are the draft's own "
@@ -2169,13 +2171,18 @@ public final class DraftMapping {
                         .filter(n -> !taken.contains(n) && fits.test(n))
                         .findFirst()
                         .orElse(null);
-                if (field != null) {
-                    common.add(readFrom(dict(PATH, home.path(), FIELD, field), covering(field, fits)));
+                if (field == null) {
+                    continue;
                 }
+                final List<String> fields = covering(field, fits);
+                if (GENERATOR.equals(home.path()) && unfilledIn(fields, home.path())) {
+                    continue;
+                }
+                common.add(readFrom(dict(PATH, home.path(), FIELD, field), fields));
             }
             descriptionNote();
-            if (common.stream().noneMatch(e -> "EventSource/Generator".equals(e.get(PATH)))) {
-                common.add(dict(PATH, "EventSource/Generator", VALUE, firstText(sourceName, null, "TODO generator")));
+            if (common.stream().noneMatch(e -> GENERATOR.equals(e.get(PATH)))) {
+                common.add(dict(PATH, GENERATOR, VALUE, firstText(sourceName, null, "TODO generator")));
             }
             if (common.stream().noneMatch(e -> ((String) e.get(PATH)).startsWith("EventSource/Device/"))) {
                 // Required by the schema (seen in chat 182: the agent offered the user "Leave it empty", which
@@ -2186,6 +2193,46 @@ public final class DraftMapping {
                           + "Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the "
                           + "sender's address, only when the record names none.");
             }
+        }
+
+        // Whether the fields are empty in every sample record of some event type of the catalogue: the schema
+        // requires Generator, and an entry reading them would leave it out of those events. Seen in chat 194: 'app'
+        // (the window an endpoint log's focus events name) drafted as the Generator of all 11 event types, filled
+        // in two of them; the draft's constant stands instead, and the note says why.
+        private boolean unfilledIn(final List<String> fields, final String path) {
+            final Function<Map<String, Object>, Object> typeOf = eventTypeOf();
+            if (typeOf == null) {
+                return false;
+            }
+            final Map<String, Boolean> filled = new LinkedHashMap<>();
+            for (final Map<String, Object> record : records) {
+                final Object type = typeOf.apply(record);
+                if (type instanceof final EventType eventType) {
+                    filled.merge(eventType.typeId(), fields.stream().anyMatch(f -> JsonValues.truthy(record.get(f))),
+                            Boolean::logicalOr);
+                }
+            }
+            final List<String> empty = filled.entrySet().stream()
+                    .filter(entry -> !entry.getValue())
+                    .map(Map.Entry::getKey)
+                    .toList();
+            if (empty.isEmpty()) {
+                return false;
+            }
+            notes.add(reprs(fields) + " would be " + path + " by " + (fields.size() == 1
+                    ? "its name"
+                    : "their names") + ", but " + (fields.size() == 1
+                    ? "is"
+                    : "are") + " empty in every sample record of " + empty.size() + " of the " + filled.size()
+                      + " event types (" + String.join(", ", empty.subList(0, Math.min(5, empty.size())))
+                      + (empty.size() > 5
+                    ? ", ..."
+                    : "") + "): the schema requires " + path + ", so it is a constant instead (ask the user what "
+                      + "writes these events, or keep the constant), and " + reprs(fields) + " is left for the "
+                      + "rules whose records hold " + (fields.size() == 1
+                    ? "it"
+                    : "them") + ".");
+            return true;
         }
 
         // Several user fields in a record (who acted, who it was done to): the actor's in EventSource/User where
