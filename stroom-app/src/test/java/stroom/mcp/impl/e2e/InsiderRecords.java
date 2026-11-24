@@ -21,6 +21,7 @@ import stroom.mcp.impl.e2e.InsiderDataset.Person;
 import stroom.mcp.impl.e2e.InsiderDataset.Source;
 import stroom.util.json.JsonUtil;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -29,9 +30,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -369,36 +372,46 @@ final class InsiderRecords {
     // ------------------------------------------------------------------------------------------------
     // The dev node's raw files
 
-    /// Writes the dev node's raw files, one folder per source, the reference data and the known answer.
+    /// Writes the dev node's raw files, one folder per source and a file per month, the reference data and the known
+    /// answer. Made a month at a time (each person-day has its own draw, so the months are the whole's), so the whole
+    /// year is never held at once; events are numbered on across the months.
     ///
-    /// @param dataset   The dataset.
-    /// @param dir       Where (made if missing).
-    /// @param netskope  The Netskope sample whose header the proxy's CSV takes.
+    /// @param options  What to make; its days are left out, every day of the year made.
+    /// @param dir      Where (made if missing).
+    /// @param netskope The Netskope sample whose header the proxy's CSV takes.
     /// @return Each file written, by its path, with its size in bytes and its events.
-    static Map<Path, long[]> writeDevFiles(final InsiderDataset dataset, final Path dir, final Path netskope) {
+    @SuppressWarnings("unchecked")
+    static Map<Path, long[]> writeDevFiles(final InsiderDataset.Options options, final Path dir, final Path netskope) {
         try {
             Files.createDirectories(dir);
             final Map<Path, long[]> written = new LinkedHashMap<>();
-            final List<String> header = List.of(Files.newBufferedReader(netskope, StandardCharsets.UTF_8).readLine()
-                    .split(","));
-            for (final Source source : Source.values()) {
-                final Path folder = dir.resolve(source.key());
-                Files.createDirectories(folder);
-                // A file per month, so each loads as a stream of its own.
-                final Map<String, List<Act>> byMonth = new LinkedHashMap<>();
-                for (final Act act : dataset.acts(source)) {
-                    byMonth.computeIfAbsent(InsiderDataset.iso(act.time()).substring(0, 7), month -> new ArrayList<>())
-                            .add(act);
-                }
-                final Map<String, Act> logins = new LinkedHashMap<>();
-                for (final Map.Entry<String, List<Act>> month : byMonth.entrySet()) {
-                    final Path path = folder.resolve(source.key() + "-" + month.getKey() + extension(source));
+            final List<String> header;
+            try (final BufferedReader in = Files.newBufferedReader(netskope, StandardCharsets.UTF_8)) {
+                header = List.of(in.readLine().split(","));
+            }
+            final Map<Source, Integer> offsets = new EnumMap<>(Source.class);
+            final Map<String, Act> logins = new LinkedHashMap<>();
+            Map<String, Object> answer = null;
+            InsiderDataset last = null;
+            for (LocalDate month = InsiderDataset.FIRST_DAY; month.isBefore(InsiderDataset.END_DAY);
+                    month = month.plusMonths(1)) {
+                final InsiderDataset dataset = InsiderDataset.generate(new InsiderDataset.Options(options.seed(),
+                        options.background(), options.scale(), List.of(new InsiderDataset.Period(month,
+                        month.plusMonths(1).minusDays(1)))));
+                for (final Source source : Source.values()) {
+                    final Path folder = dir.resolve(source.key());
+                    Files.createDirectories(folder);
+                    final Path path = folder.resolve(source.key() + "-" + month.toString().substring(0, 7)
+                                                     + extension(source));
+                    final int offset = offsets.getOrDefault(source, 0);
+                    final List<Act> acts = dataset.acts(source);
                     try (final BufferedWriter out = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
                         if (source == Source.PROXY) {
                             out.write(String.join(",", header));
                             out.write('\n');
                         }
-                        for (final Act act : month.getValue()) {
+                        for (final Act each : acts) {
+                            final Act act = each.numbered(offset + each.number());
                             out.write(switch (source) {
                                 case ENDPOINT -> endpointLine(act);
                                 case PROXY -> netskopeRow(act, header, dataset.person(act.personId()));
@@ -409,20 +422,45 @@ final class InsiderRecords {
                             out.write('\n');
                         }
                     }
-                    written.put(path, new long[]{Files.size(path), month.getValue().size()});
+                    offsets.put(source, offset + acts.size());
+                    written.put(path, new long[]{Files.size(path), acts.size()});
                 }
+                answer = merged(answer, dataset.knownAnswer());
+                last = dataset;
             }
             final Path reference = dir.resolve("reference-accounts.csv");
-            Files.write(reference, dataset.reference().stream().map(row -> String.join(",", row
+            Files.write(reference, last.reference().stream().map(row -> String.join(",", row
                     .stream().map(InsiderRecords::csv).toList())).toList(), StandardCharsets.UTF_8);
-            written.put(reference, new long[]{Files.size(reference), dataset.reference().size() - 1});
-            final Path answer = dir.resolve("known-answer.json");
-            Files.writeString(answer, JsonUtil.writeValueAsString(dataset.knownAnswer(), true));
-            written.put(answer, new long[]{Files.size(answer), 0});
+            written.put(reference, new long[]{Files.size(reference), last.reference().size() - 1});
+            final Path answerPath = dir.resolve("known-answer.json");
+            Files.writeString(answerPath, JsonUtil.writeValueAsString(answer, true));
+            written.put(answerPath, new long[]{Files.size(answerPath), 0});
             return written;
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    // One month's known answer merged into the months' before: the same people, plants and decoys; the tasks by day
+    // and the events' counts added.
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> merged(final Map<String, Object> before, final Map<String, Object> month) {
+        if (before == null) {
+            final Map<String, Object> first = new LinkedHashMap<>(month);
+            final Map<String, Object> tasks = new LinkedHashMap<>();
+            ((Map<String, Map<String, Object>>) month.get("tasks")).forEach((person, days) ->
+                    tasks.put(person, new LinkedHashMap<>(days)));
+            first.put("tasks", tasks);
+            first.put("events", new LinkedHashMap<>((Map<String, Object>) month.get("events")));
+            return first;
+        }
+        final Map<String, Object> tasks = (Map<String, Object>) before.get("tasks");
+        ((Map<String, Map<String, Object>>) month.get("tasks")).forEach((person, days) ->
+                ((Map<String, Object>) tasks.computeIfAbsent(person, p -> new LinkedHashMap<>())).putAll(days));
+        final Map<String, Object> events = (Map<String, Object>) before.get("events");
+        ((Map<String, Object>) month.get("events")).forEach((source, count) -> events.merge(source, count,
+                (a, b) -> ((Number) a).longValue() + ((Number) b).longValue()));
+        return before;
     }
 
     private static String extension(final Source source) {

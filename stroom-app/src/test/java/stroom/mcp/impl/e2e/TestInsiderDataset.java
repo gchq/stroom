@@ -24,7 +24,7 @@ import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.xml.sax.InputSource;
 
 import java.io.StringReader;
@@ -46,8 +46,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// form that is the full form on the days it keeps, and a known answer that matches what was planted, checked
 /// against the events themselves. Every day at a reduced scale is generated once for the plants' checks.
 ///
-/// With `-DinsiderDatasetDir=<dir>` (and `-DinsiderDatasetNetskope=<the Netskope sample>`), the full dataset's raw
-/// files are written there for the dev node (`writeTheDevNodesFiles`).
+/// With `INSIDER_DATASET_DIR=<dir>` (and `INSIDER_DATASET_NETSKOPE=<the Netskope sample>`) in the environment, the
+/// full dataset's raw files are written there for the dev node (`writeTheDevNodesFiles`).
 @SuppressWarnings("unchecked")
 class TestInsiderDataset {
 
@@ -232,13 +232,12 @@ class TestInsiderDataset {
                 InsiderDataset.DRIFT);
     }
 
-    // Writes the full dataset's raw files for the dev node: opt-in, as it takes a minute and writes a lot.
+    // Writes the full dataset's raw files for the dev node, a month at a time: opt-in, as it writes a lot.
     @Test
-    @EnabledIfSystemProperty(named = "insiderDatasetDir", matches = ".+")
+    @EnabledIfEnvironmentVariable(named = "INSIDER_DATASET_DIR", matches = ".+")
     void writeTheDevNodesFiles() {
-        final InsiderDataset full = InsiderDataset.generate(Options.full());
-        final Map<Path, long[]> written = InsiderRecords.writeDevFiles(full, Path.of(System.getProperty(
-                "insiderDatasetDir")), Path.of(System.getProperty("insiderDatasetNetskope")));
+        final Map<Path, long[]> written = InsiderRecords.writeDevFiles(Options.full(), Path.of(System.getenv(
+                "INSIDER_DATASET_DIR")), Path.of(System.getenv("INSIDER_DATASET_NETSKOPE")));
         final Map<String, long[]> bySource = new TreeMap<>();
         written.forEach((path, sizes) -> bySource.merge(path.getParent().getFileName().toString(),
                 sizes.clone(), (a, b) -> new long[]{a[0] + b[0], a[1] + b[1]}));
