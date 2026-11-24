@@ -1706,7 +1706,34 @@ class TestExpressionParser extends AbstractExpressionParserTest {
                         TestCase.of("(4+4)/2+2", ValDouble.create(6)),
                         TestCase.of("(4+4)/(2+2)", ValDouble.create(2)),
                         TestCase.of("4+4/2+2*3", ValDouble.create(12)),
-                        TestCase.of("8%3", ValDouble.create(2))
+                        TestCase.of("8%3", ValDouble.create(2)),
+                        // Addition and subtraction are worked out left to right.
+                        TestCase.of("10-3+2", ValDouble.create(9)),
+                        TestCase.of("10+3-2", ValDouble.create(11)),
+                        TestCase.of("10-3-2", ValDouble.create(5)),
+                        TestCase.of("100-10-5+3", ValDouble.create(88)),
+                        TestCase.of("10-3+2-4+1", ValDouble.create(6)),
+                        TestCase.of("10-(3+2)", ValDouble.create(5)),
+                        TestCase.of("10-2*3+4", ValDouble.create(8)),
+                        TestCase.of("10--3+2", ValDouble.create(15)),
+                        TestCase.of("-10-3+2", ValDouble.create(-11)),
+                        // Division, multiplication and modulus are worked out left to right.
+                        TestCase.of("8/4*2", ValDouble.create(4)),
+                        TestCase.of("8*4/2", ValDouble.create(16)),
+                        TestCase.of("10%4*3", ValDouble.create(6)),
+                        TestCase.of("10*4%3", ValDouble.create(1)),
+                        TestCase.of("10%6/2", ValDouble.create(2)),
+                        TestCase.of("20/6%2", ValDouble.create(20D / 6 % 2)),
+                        TestCase.of("10-7%4+2", ValDouble.create(9)),
+                        // Order comes before all of them and is worked out left to right.
+                        TestCase.of("2^3^2", ValDouble.create(64)),
+                        TestCase.of("20-2^3+1", ValDouble.create(13)),
+                        TestCase.of("2*3^2", ValDouble.create(18)),
+                        // The same with fields and functions.
+                        TestCase.of("${val1}-${val2}+${val3}",
+                                ValDouble.create(9), Val.of(10, 3, 2)),
+                        TestCase.of("max(${val1})-max(${val2})+max(${val3})",
+                                ValDouble.create(9), Val.of(10, 3, 2))
                 )
                 .map(testCase -> DynamicTest.dynamicTest(testCase.toString(), () ->
                         compute(testCase.expression,
