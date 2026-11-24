@@ -1439,6 +1439,90 @@ class TestEvalScore {
         assertThat(windowed.passed()).as(windowed.summary()).isTrue();
     }
 
+    @Test
+    void theFindingsTheCaseNamesMustBeThereAndTheOthersNot() {
+        final Map<String, Object> leaver = Map.of("kind", "question", "expected", Map.of("answer", Map.of("tool",
+                "compare_activity"), "findings", Map.of(
+                "must_include", List.of(
+                        ordered("kind", "change", "feature", "events", "near", "2026-07-01", "days", 3),
+                        ordered("feature", "category:Job Search"),
+                        ordered("source_wide", true, "near", "2026-06-15")),
+                "must_not_include", List.of(
+                        ordered("kind", "change", "feature", "events", "near", "2026-06-15", "days", 5),
+                        ordered("window_in", List.of("2026-05-11", "2026-05-15"))),
+                "answer_must_not_say", List.of("guilty"),
+                "answer_must_say_one_of", List.of("indicator", "evidence"))));
+        final Map<String, Object> found = Map.of(
+                "findings", List.of(
+                        finding("change", "events", "2026-07-02", "Events shifted from a median of 9 to 22 a day"),
+                        finding("week", "category:Job Search", "2026-06-27 to 2026-09-25", "Events in the category"),
+                        finding("week", "events", "2026-05-18 to 2026-05-24", "Events 30 a day")),
+                "source_wide", List.of("[Proxy] Events 21 a day in the week from 2026-06-15 against a median of 7"));
+
+        final EvalScore passed = new EvalScore("q");
+        passed.scoreQuestion(leaver, List.of(new EvalScore.ToolUse("compare_activity", false, found, "ok")),
+                "These are indicators, each with its evidence.");
+        assertThat(passed.passed()).as(passed.summary()).isTrue();
+
+        // Without the reply its wording isn't checked, and that is said.
+        final EvalScore noReply = new EvalScore("q");
+        noReply.scoreQuestion(leaver, List.of(new EvalScore.ToolUse("compare_activity", false, found, "ok")));
+        assertThat(noReply.passed()).as(noReply.summary()).isTrue();
+        assertThat(noReply.summary()).contains("the reply's wording wasn't checked: there is no reply");
+
+        // The change three days late is still near; four is not. A finding in the exception's days, and the
+        // pipeline's step as the person's, fail; so does the reply's wording.
+        final Map<String, Object> wrong = Map.of(
+                "findings", List.of(
+                        finding("change", "events", "2026-07-05", "late"),
+                        finding("change", "events", "2026-06-16", "the pipeline as the person's"),
+                        finding("day", "sum:bytes", "2026-05-13", "in the migration")),
+                "source_wide", List.of());
+        final EvalScore failed = new EvalScore("q");
+        failed.scoreQuestion(leaver, List.of(new EvalScore.ToolUse("compare_activity", false, wrong, "ok")),
+                "She is guilty.");
+        assertThat(failed.passed()).isFalse();
+        assertThat(failed.summary()).contains("no finding matched {kind=change, feature=events, near=2026-07-01, "
+                                              + "days=3}")
+                .contains("no finding matched {feature=category:Job Search}")
+                .contains("a finding matched {kind=change, feature=events, near=2026-06-15, days=5}")
+                .contains("a finding matched {window_in=[2026-05-11, 2026-05-15]}")
+                .contains("the reply says 'guilty'")
+                .contains("the reply says none of [indicator, evidence]");
+    }
+
+    @Test
+    void aFindingMatchesOnEachKeyGiven() {
+        final Map<String, Object> peers = finding("peers", "events_vs_peers", "2026-06-01 to 2026-06-26",
+                "46 events per day against a median of 2.7 for 5 peers in Organisation 'Finance'");
+        assertThat(EvalScore.findingMatches(Map.of("kind", "PEERS", "evidence_contains", "Organisation 'Finance'"),
+                peers)).isTrue();
+        assertThat(EvalScore.findingMatches(Map.of("evidence_contains", "Organisation 'Sales'"), peers)).isFalse();
+        assertThat(EvalScore.findingMatches(Map.of("window", "RO"), finding("location", "country:new", "RO", "x")))
+                .isTrue();
+        // A window with no date matches no date condition.
+        assertThat(EvalScore.findingMatches(Map.of("near", "2026-04-08"), finding("location", "country:new", "RO",
+                "x"))).isFalse();
+        assertThat(EvalScore.findingMatches(Map.of("window_in", List.of("2026-06-01", "2026-06-01")), peers))
+                .isTrue();
+    }
+
+    // A matcher in the order given, as a case's YAML reads.
+    private static Map<String, Object> ordered(final Object... pairs) {
+        final Map<String, Object> map = new LinkedHashMap<>();
+        for (int i = 0; i < pairs.length; i += 2) {
+            map.put(String.valueOf(pairs[i]), pairs[i + 1]);
+        }
+        return map;
+    }
+
+    private static Map<String, Object> finding(final String kind,
+                                               final String feature,
+                                               final String window,
+                                               final String evidence) {
+        return Map.of("kind", kind, "feature", feature, "window", window, "evidence", evidence);
+    }
+
     private static Map<String, Object> question(final boolean ordered) {
         return Map.of("kind", "question", "expected", Map.of("tools_used", List.of("esql_query"), "answer",
                 Map.of("ordered", ordered, "total_groups", 12, "rows", List.of(

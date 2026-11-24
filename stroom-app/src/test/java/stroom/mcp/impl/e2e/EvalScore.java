@@ -31,6 +31,8 @@ import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -43,6 +45,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -98,6 +101,8 @@ final class EvalScore {
     private static final Set<String> DETAIL_META = Set.of("TypeId", "Description", "Classification", "Purpose");
     // source_types.index.fields_added: scored only as the group's index recorded, fields being added when needed.
     private static final String WHEN_NEEDED = "when_needed";
+    // The first date in a finding's window or a source-wide line.
+    private static final Pattern FIRST_DATE = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
     private static final Pattern DAY = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
     // type_ids.pattern: Verb-Object, as the event type catalogue's TypeIds are (Authenticate-Logon,
     // Process-SOAPRequest); or any TypeId at all.
@@ -1198,11 +1203,25 @@ final class EvalScore {
     ///   (its result's `capped`), as rows a hand join reads are (how many accepted calls were is noted);
     /// * `expected.answer.query`: a regular expression (any case) found in the answer call's `query`, e.g. that it
     ///   joins in Stroom rather than naming values read by an earlier call, a join done by hand;
-    /// * `expected.answer.result`: values the answer call's result holds, by key, e.g. a sequence's `engine`.
+    /// * `expected.answer.result`: values the answer call's result holds, by key, e.g. a sequence's `engine`;
+    /// * `expected.findings`: of a tool whose result has `findings` (each a map with `kind`, `feature`, `window`,
+    ///   `evidence`) and `source_wide` (each a line), as compare_activity's: `must_include` and `must_not_include`,
+    ///   each a list of matchers ([#findingMatches]), each matched against the answer call's findings (with
+    ///   `source_wide: true`, against its source-wide lines); `answer_must_not_say` (none of these words in the
+    ///   reply) and `answer_must_say_one_of` (at least one), checked only when the reply is given.
     ///
     /// @param evalCase The case.
     /// @param calls    The tool calls made, in order.
     void scoreQuestion(final Map<String, Object> evalCase, final List<ToolUse> calls) {
+        scoreQuestion(evalCase, calls, null);
+    }
+
+    /// Scores a question's tool calls ([#scoreQuestion(Map, List)]) and the agent's reply.
+    ///
+    /// @param evalCase The case.
+    /// @param calls    The tool calls made, in order.
+    /// @param reply    The agent's reply, or null where there is none (a reference run): its wording isn't checked.
+    void scoreQuestion(final Map<String, Object> evalCase, final List<ToolUse> calls, final String reply) {
         question = true;
         final Map<String, Object> expected = maps(evalCase.get("expected"));
         final Set<String> called = new LinkedHashSet<>();
@@ -1294,6 +1313,118 @@ final class EvalScore {
             questionCheck("answer " + value.getKey(), String.valueOf(value.getValue()).equals(String.valueOf(given)),
                     "the answer's " + value.getKey() + " was " + given + ", expected " + value.getValue());
         }
+        scoreFindings(maps(expected.get("findings")), answerCall, reply);
+    }
+
+    // The answer call's findings against the case's matchers, and the reply's wording.
+    private void scoreFindings(final Map<String, Object> expected, final ToolUse call, final String reply) {
+        if (expected.isEmpty()) {
+            return;
+        }
+        final List<Map<String, Object>> findings = new ArrayList<>();
+        if (call.result().get("findings") instanceof final List<?> given) {
+            given.stream().filter(Map.class::isInstance).forEach(finding -> findings.add(maps(finding)));
+        }
+        final List<String> sourceWide = strings(call.result().get("source_wide"));
+        for (final Object matcher : listOf(expected.get("must_include"))) {
+            final Map<String, Object> wanted = maps(matcher);
+            questionCheck("finding " + wanted, anyFinding(wanted, findings, sourceWide), "no finding matched "
+                                                                                        + wanted);
+        }
+        for (final Object matcher : listOf(expected.get("must_not_include"))) {
+            final Map<String, Object> unwanted = maps(matcher);
+            questionCheck("no finding " + unwanted, !anyFinding(unwanted, findings, sourceWide), "a finding matched "
+                                                                                                + unwanted);
+        }
+        final List<String> mustNot = strings(expected.get("answer_must_not_say"));
+        final List<String> oneOf = strings(expected.get("answer_must_say_one_of"));
+        if (mustNot.isEmpty() && oneOf.isEmpty()) {
+            return;
+        }
+        if (reply == null) {
+            note("the reply's wording wasn't checked: there is no reply");
+            return;
+        }
+        final String said = reply.toLowerCase(Locale.ROOT);
+        for (final String word : mustNot) {
+            questionCheck("reply doesn't say " + word, !said.contains(word.toLowerCase(Locale.ROOT)),
+                    "the reply says '" + word + "'");
+        }
+        if (!oneOf.isEmpty()) {
+            questionCheck("reply says one of " + oneOf, oneOf.stream().anyMatch(word -> said.contains(
+                    word.toLowerCase(Locale.ROOT))), "the reply says none of " + oneOf);
+        }
+    }
+
+    private static boolean anyFinding(final Map<String, Object> matcher,
+                                      final List<Map<String, Object>> findings,
+                                      final List<String> sourceWide) {
+        if (Boolean.TRUE.equals(matcher.get("source_wide"))) {
+            return sourceWide.stream().anyMatch(line -> sourceWideMatches(matcher, line));
+        }
+        return findings.stream().anyMatch(finding -> findingMatches(matcher, finding));
+    }
+
+    /// Whether a finding matches: each of the matcher's keys given must hold. `kind`, `feature` and `window`: equal
+    /// (any case); `evidence_contains`: in its evidence; `near` (a date) and `days` (default 0): its window's first
+    /// date within that many days of it; `window_in` (two dates): its window's first date from the one to the other,
+    /// both included. `source_wide` chooses what is matched ([#scoreQuestion(Map, List)]).
+    ///
+    /// @param matcher The matcher.
+    /// @param finding The finding.
+    /// @return True if it matches.
+    static boolean findingMatches(final Map<String, Object> matcher, final Map<String, Object> finding) {
+        for (final String key : List.of("kind", "feature", "window")) {
+            if (matcher.containsKey(key) && !String.valueOf(matcher.get(key)).equalsIgnoreCase(String.valueOf(
+                    finding.get(key)))) {
+                return false;
+            }
+        }
+        if (matcher.get("evidence_contains") instanceof final String text
+            && !String.valueOf(finding.get("evidence")).contains(text)) {
+            return false;
+        }
+        return datesMatch(matcher, String.valueOf(finding.get("window")));
+    }
+
+    // A source-wide line matches on its words (evidence_contains) and the first date it holds (near, window_in).
+    private static boolean sourceWideMatches(final Map<String, Object> matcher, final String line) {
+        if (matcher.get("evidence_contains") instanceof final String text && !line.contains(text)) {
+            return false;
+        }
+        return datesMatch(matcher, line);
+    }
+
+    // Whether the first date in the text is within the matcher's near and days, and window_in.
+    private static boolean datesMatch(final Map<String, Object> matcher, final String text) {
+        if (!matcher.containsKey("near") && !matcher.containsKey("window_in")) {
+            return true;
+        }
+        final Matcher date = FIRST_DATE.matcher(text);
+        if (!date.find()) {
+            return false;
+        }
+        final LocalDate first = LocalDate.parse(date.group());
+        if (matcher.get("near") != null) {
+            final LocalDate near = LocalDate.parse(String.valueOf(matcher.get("near")));
+            final long days = matcher.get("days") instanceof final Number number
+                    ? number.longValue()
+                    : 0;
+            if (Math.abs(ChronoUnit.DAYS.between(near, first)) > days) {
+                return false;
+            }
+        }
+        if (matcher.get("window_in") instanceof final List<?> range && range.size() == 2) {
+            return !first.isBefore(LocalDate.parse(String.valueOf(range.get(0))))
+                   && !first.isAfter(LocalDate.parse(String.valueOf(range.get(1))));
+        }
+        return true;
+    }
+
+    private static List<?> listOf(final Object value) {
+        return value instanceof final List<?> given
+                ? given
+                : List.of();
     }
 
     // Whether a call's rows were cut at the most a query may return (its result's `capped`).
