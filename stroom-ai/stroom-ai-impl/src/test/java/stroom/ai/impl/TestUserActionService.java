@@ -22,6 +22,8 @@ import stroom.ai.impl.extraction.ExtractionActions;
 import stroom.ai.impl.extraction.ExtractionField;
 import stroom.ai.impl.extraction.ExtractionPlan;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.timeline.TimelineDashboardPlan;
+import stroom.ai.impl.tools.timeline.TimelineDashboards;
 import stroom.ai.impl.vis.VisualisationActions;
 import stroom.ai.shared.AiChangeExtraction;
 import stroom.ai.shared.AiChatMessage;
@@ -33,6 +35,7 @@ import stroom.ai.shared.AiWriteExtractionRequest;
 import stroom.ai.shared.AiWriteExtractionResult;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.ProcessorFilter;
@@ -77,8 +80,10 @@ class TestUserActionService {
     private final DashboardBuilder dashboardBuilder = Mockito.mock(DashboardBuilder.class);
     private final VisualisationActions visualisationActions = Mockito.mock(VisualisationActions.class);
     private final ExtractionActions extractionActions = Mockito.mock(ExtractionActions.class);
+    private final TimelineDashboards timelineDashboards = Mockito.mock(TimelineDashboards.class);
     private final UserActionService service = new UserActionService(aiService, aiDao, new UserActions(lookup),
-            lookup, processorFilterService, auditLog, dashboardBuilder, visualisationActions, extractionActions);
+            lookup, processorFilterService, auditLog, dashboardBuilder, visualisationActions, extractionActions,
+            timelineDashboards);
 
     @BeforeEach
     void setUp() {
@@ -276,6 +281,63 @@ class TestUserActionService {
         assertThat(result.isDone()).isFalse();
         assertThat(result.getMessage()).isEqualTo("The dashboard can no longer be built from the query: The query "
                                                   + "can't be read: bad field");
+    }
+
+    @Test
+    void aTimelineDashboardIsWrittenThenTheNewDashboardDialogOpensInItsFolder() {
+        final DocRef folder = new DocRef("Folder", "f", "Case 12");
+        final TimelineDashboardPlan plan = timelinePlan();
+        final DashboardConfig config = DashboardConfig.builder().build();
+        final ExplorerNode node = ExplorerNode.builder().docRef(folder).build();
+        Mockito.when(timelineDashboards.write(CHAT, folder, "Timeline jsmith (spans)", plan)).thenReturn(
+                new TimelineDashboards.Written(new DocRef("DataConnection", "dc", "Timeline jsmith (spans)"),
+                        new DocRef("Visualisation", "vis", "Timeline jsmith (spans)"), null, config, node));
+        storeResult(timelineDashboard(folder, plan));
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "t1");
+
+        assertThat(result.isDone()).isTrue();
+        assertThat(result.getCreateDashboardName()).isEqualTo("Timeline jsmith (spans)");
+        assertThat(result.getCreateDashboardConfig()).isSameAs(config);
+        assertThat(result.getCreateDashboardFolder()).isSameAs(node);
+        // The button can be used again (e.g. after the dialog was cancelled): it writes the same documents again.
+        Mockito.verify(aiDao, Mockito.never()).compareAndSetMessageText(Mockito.anyInt(), Mockito.anyString(),
+                Mockito.anyString());
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)),
+                Mockito.eq(new DocRef("DataConnection", "dc", "Timeline jsmith (spans)")),
+                Mockito.eq(UserActionService.WRITE_TIMELINE_COMMAND), Mockito.anyString(),
+                Mockito.startsWith("Created Data Connection 'Timeline jsmith (spans)'"), Mockito.eq(true));
+        Mockito.verify(aiService).storeMessage(Mockito.eq(CHAT), Mockito.eq(AiMessageType.STEER_MESSAGE),
+                Mockito.contains("I wrote the timeline to Folder 'Case 12'"));
+    }
+
+    @Test
+    void aTimelineDashboardThatCantBeWrittenSaysWhy() {
+        final DocRef folder = new DocRef("Folder", "f", "Case 12");
+        final TimelineDashboardPlan plan = timelinePlan();
+        Mockito.when(timelineDashboards.write(CHAT, folder, "Timeline jsmith (spans)", plan)).thenThrow(
+                new IllegalStateException("The timeline has been built again since this button was offered"));
+        storeResult(timelineDashboard(folder, plan));
+
+        final AiUserActionResult result = service.doUserAction(CHAT, MESSAGE, "t1");
+
+        assertThat(result.isDone()).isFalse();
+        assertThat(result.getMessage()).isEqualTo("The timeline has been built again since this button was offered");
+        assertThat(result.getCreateDashboardConfig()).isNull();
+        Mockito.verify(auditLog).processed(Mockito.eq(ToolSession.chat(CHAT)), Mockito.eq(folder),
+                Mockito.eq(UserActionService.WRITE_TIMELINE_COMMAND), Mockito.anyString(),
+                Mockito.contains("built again"), Mockito.eq(false));
+    }
+
+    private static TimelineDashboardPlan timelinePlan() {
+        return new TimelineDashboardPlan("jsmith", "spans", "/outputs/timelines/jsmith/spans.csv", "abc", 2, 0L, 1L,
+                "A snapshot.", Map.of("start", "start", "end", "end", "label", "label"), null);
+    }
+
+    private static UserActionRecord timelineDashboard(final DocRef folder, final TimelineDashboardPlan plan) {
+        return new UserActionRecord("t1", UserActions.CREATE_TIMELINE_DASHBOARD, "Write Data Connection", null,
+                null, null, folder, plan.toJson(), List.of(), Long.MAX_VALUE, Status.PENDING, null,
+                "Timeline jsmith (spans)");
     }
 
     @Test

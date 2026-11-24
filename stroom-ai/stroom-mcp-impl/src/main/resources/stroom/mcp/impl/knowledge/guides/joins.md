@@ -130,6 +130,10 @@ for that user alone as the streaming join reads a side, and worked out in code.
   says when one is too dense for one chart. With `characterise`: activities, spans tied by the documents, pages and
   terms they share (Leiden clusters), and loose items classified by a model outside the conversation. Labels are
   inferences. Corrections (`move`, `merge`, `rename`) are kept with the chat.
+- On a dashboard: a dashboard can't read the chat's workspace, so propose_timeline_dashboard writes spans.csv or
+  activities.csv, as it is, as a CSV Data Connection (typed, `start` its time field, a dated snapshot named for the
+  entity and period) with its timeline chart, in a folder the user chooses, then a dashboard of them. It holds the
+  user's activity with the folder's permissions; a re-run for the same entity replaces it.
 - With `skill`, the skill's Event chains are applied first, and what was learned (pairs inferred, the source's own
   `pairs` and `typeRoles`) is offered for them through propose_skill where the user may edit the skills doc.
 

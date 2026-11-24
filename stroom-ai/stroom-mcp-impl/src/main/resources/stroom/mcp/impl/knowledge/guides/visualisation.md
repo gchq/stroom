@@ -8,7 +8,8 @@ A timeline (bars from a table's start and end times, markers, a lane per host or
 the `timeline` kind, or, in Stroom AI's chat, drawn in the reply itself by `gantt_chart` (the only chart the chat
 draws), from the same columns. Which is the user's choice; any other chart is a dashboard's. A timeline is only
 ever the generated `timeline` kind: a content pack's own timeline or Gantt visualisation is never offered or
-mentioned.
+mentioned. An `activity_timeline` table goes on a dashboard through `propose_timeline_dashboard` (a CSV Data
+Connection and its chart), not `propose_visualisation`: a dashboard can't read the chat's workspace.
 
 ## Steps
 

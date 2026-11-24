@@ -25,6 +25,8 @@ import stroom.ai.impl.extraction.ExtractionField;
 import stroom.ai.impl.extraction.ExtractionPlan;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.skills.SkillDoc;
+import stroom.ai.impl.tools.timeline.TimelineDashboardPlan;
+import stroom.ai.impl.tools.timeline.TimelineDashboards;
 import stroom.ai.impl.vis.VisualisationActions;
 import stroom.ai.shared.AiChangeExtraction;
 import stroom.ai.shared.AiChatMessage;
@@ -82,6 +84,7 @@ public class UserActionService {
     static final String CREATED = "Created and saved";
     static final String UNDO_DOCUMENTATION_COMMAND = "Undo applied documentation change";
     static final String WRITE_EXTRACTION_COMMAND = "Write proposed search extraction";
+    static final String WRITE_TIMELINE_COMMAND = "Write a timeline as a Data Connection";
     /// What a written extraction's card says.
     static final String WROTE_EXTRACTION = "Written. The table now uses it, unsaved: save the dashboard to keep it.";
     // The outcome of an extraction button offered with another for the same extraction, once the other is used.
@@ -105,6 +108,7 @@ public class UserActionService {
     private final DashboardBuilder dashboardBuilder;
     private final VisualisationActions visualisationActions;
     private final ExtractionActions extractionActions;
+    private final TimelineDashboards timelineDashboards;
 
     @Inject
     UserActionService(final AiService aiService,
@@ -115,7 +119,8 @@ public class UserActionService {
                       final AiAuditLog auditLog,
                       final DashboardBuilder dashboardBuilder,
                       final VisualisationActions visualisationActions,
-                      final ExtractionActions extractionActions) {
+                      final ExtractionActions extractionActions,
+                      final TimelineDashboards timelineDashboards) {
         this.aiService = aiService;
         this.aiDao = aiDao;
         this.userActions = userActions;
@@ -125,6 +130,7 @@ public class UserActionService {
         this.dashboardBuilder = dashboardBuilder;
         this.visualisationActions = visualisationActions;
         this.extractionActions = extractionActions;
+        this.timelineDashboards = timelineDashboards;
     }
 
     /// Does a user action, if it can still be done.
@@ -189,6 +195,7 @@ public class UserActionService {
             case UserActions.CREATE_VISUALISATION -> createVisualisation(chatId, action);
             case UserActions.CREATE_VISUALISATIONS -> createVisualisations(chatId, action);
             case UserActions.CREATE_EXTRACTION_PIPELINE -> createExtraction(chatId, action);
+            case UserActions.CREATE_TIMELINE_DASHBOARD -> createTimelineDashboard(chatId, action);
             case UserActions.CHANGE_EXTRACTION_PIPELINE -> changeExtraction(chatId, action);
             case UserActions.APPLY_CODE_CHANGE, UserActions.APPLY_QUERY_CHANGE,
                  UserActions.APPLY_DOCUMENTATION_CHANGE -> applyCodeChange(chatId, message, result, action, rejected);
@@ -405,6 +412,37 @@ public class UserActionService {
         auditLog.userAction(ToolSession.chat(chatId), action.action(), action.label(),
                 "Opened the New Dashboard dialog", true);
         return AiUserActionResult.createDashboard(action.name(), built.config());
+    }
+
+    /// Writes the timeline a `create_timeline_dashboard` button offered as a CSV Data Connection, with its timeline
+    /// chart's Visualisation, in the folder the user chose, as the user (Stroom checks their permission to create, or
+    /// edit, each, and logs each as it logs any document written), then lets the browser open Stroom's New Dashboard
+    /// dialog in that folder with the settings of a dashboard of them. The button stays usable, as the user may
+    /// cancel the dialog: a second click rewrites the same documents.
+    private AiUserActionResult createTimelineDashboard(final int chatId, final UserActionRecord action) {
+        final String target = "the timeline in " + describeDoc(action);
+        final TimelineDashboards.Written written;
+        try {
+            written = timelineDashboards.write(chatId, action.doc(), action.name(),
+                    TimelineDashboardPlan.fromJson(action.request()));
+        } catch (final IllegalArgumentException | IllegalStateException e) {
+            auditLog.processed(ToolSession.chat(chatId), action.doc(), WRITE_TIMELINE_COMMAND, target,
+                    e.getMessage(), false);
+            return new AiUserActionResult(false, e.getMessage(), null);
+        }
+        final String wrote = (written.replaced() == null
+                ? "Created"
+                : "Replaced") + " Data Connection '" + written.dataConnection().getName() + "' ("
+                             + written.dataConnection().getUuid() + ") and its timeline chart, Visualisation '"
+                             + written.visualisation().getName() + "'";
+        auditLog.processed(ToolSession.chat(chatId), written.dataConnection(), WRITE_TIMELINE_COMMAND, target,
+                wrote, true);
+        // So the model knows on its next turn (or now, if it is working).
+        aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, "(With a button in the chat) I wrote the "
+                                                                     + "timeline to " + describeDoc(action)
+                                                                     + ": " + wrote + ". Stroom opened the New "
+                                                                     + "Dashboard dialog for a dashboard of them.");
+        return AiUserActionResult.createDashboard(action.name(), written.config(), written.folder());
     }
 
     /// Lets the browser open Stroom's New Visualisation dialog with the suggested name in the dashboard's (or

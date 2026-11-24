@@ -723,6 +723,9 @@
     }
   }
 
+## propose_timeline_dashboard {}
+(nothing recorded)
+
 ## propose_visualisation {"columns":{"x":"UserId","y":"UserId"},"kind":"bar","library":"echarts","name":"Users","summary":"Events by user.","table":"table-1"}
 (nothing recorded)
 

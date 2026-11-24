@@ -146,6 +146,8 @@ class TestAgentModeTools {
             Map.entry("sequence_query", false),
             // Saves its tables, and the analyst's corrections to the activities, to the workspace.
             Map.entry("activity_timeline", false),
+            // Only offers the user a button: the user's click writes the Data Connection and opens the dialog.
+            Map.entry("propose_timeline_dashboard", false),
             Map.entry("summarise_column", false),
             Map.entry("task_list", false),
             Map.entry("ask_user", false),

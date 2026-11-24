@@ -275,8 +275,10 @@ final class TimelineResult {
         if (run.view() != View.DETAIL && run.characterised() == null) {
             map.put("note", "activities.csv is empty: no activities were found.");
         }
-        map.put("dashboard", "The timeline chart kind (propose_visualisation) takes " + files.spans()
-                             + "'s columns as they are: start, end, label, lane, and colour activity_label.");
+        map.put("dashboard", "A dashboard can't read the workspace: " + ProposeTimelineDashboardTool.NAME
+                             + " writes " + files.spans() + " (table spans) or " + files.activities()
+                             + " (table activities) as a CSV Data Connection with its timeline chart, in a "
+                             + "folder the user chooses, then a dashboard of them.");
         return map;
     }
 
@@ -490,7 +492,8 @@ final class TimelineResult {
                     .append(args.get("label")).append(", lane ").append(args.get("lane")).append(';');
         }
         sb.setLength(sb.length() - 1);
-        sb.append(".\n");
+        sb.append(". On a dashboard instead: ").append(ProposeTimelineDashboardTool.NAME)
+                .append(" (entity, table spans or activities).\n");
         if (views.get("too_dense") instanceof final List<?> dense) {
             dense.forEach(line -> sb.append("Too dense for one chart: ").append(line).append(".\n"));
         }

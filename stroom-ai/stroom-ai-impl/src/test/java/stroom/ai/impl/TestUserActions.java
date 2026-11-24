@@ -19,6 +19,7 @@ package stroom.ai.impl;
 import stroom.ai.impl.UserActionRecord.Status;
 import stroom.ai.impl.extraction.ExtractionField;
 import stroom.ai.impl.extraction.ExtractionPlan;
+import stroom.ai.impl.tools.timeline.TimelineDashboardPlan;
 import stroom.ai.impl.vis.VisualisationPlan;
 import stroom.ai.impl.vis.VisualisationPlan.Replace;
 import stroom.docref.DocRef;
@@ -556,6 +557,61 @@ class TestUserActions {
         Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID)))
                 .thenReturn(Optional.of(new DocRef("Dashboard", OTHER_UUID, "Logons")));
         assertThat(userActions.check(null, List.of(notAFolder), NOW)).isEmpty();
+    }
+
+    @Test
+    void aTimelineDashboardButtonIsOfferedOnlyByStroomForAFolderTheUserCanSee() {
+        final DocRef folder = new DocRef("Folder", OTHER_UUID, "Case 12");
+        Mockito.when(lookup.find(new DocRef("Folder", OTHER_UUID))).thenReturn(Optional.of(folder));
+        final DocRef earlier = new DocRef("DataConnection", PIPELINE_UUID,
+                "Timeline jsmith 2026-10-01 to 2026-10-07 (spans)");
+        final Map<String, Object> create = new HashMap<>();
+        create.put("id", "create-timeline-dashboard-1");
+        create.put("action", "create_timeline_dashboard");
+        create.put("doc", doc("Folder", OTHER_UUID, "Something else"));
+        create.put("name", "Timeline jsmith 2026-11-09 to 2026-11-13 (spans)");
+        create.put("plan", timelinePlan(null).toJson());
+        create.put("summary", "2 spans of jsmith.");
+
+        // From an MCP server, it is dropped, as other writes of documents are.
+        assertThat(userActions.check(List.of(create), NOW)).isEmpty();
+
+        // From Stroom's own tool, it is offered, described by Stroom, with what it holds said.
+        assertThat(userActions.check(null, List.of(create), NOW)).singleElement().satisfies(action -> {
+            assertThat(action.action()).isEqualTo(UserActions.CREATE_TIMELINE_DASHBOARD);
+            assertThat(action.doc()).isEqualTo(folder);
+            assertThat(action.name()).isEqualTo("Timeline jsmith 2026-11-09 to 2026-11-13 (spans)");
+            assertThat(action.label()).isEqualTo("Write Data Connection 'Timeline jsmith 2026-11-09 to 2026-11-13 "
+                                                 + "(spans)' and its timeline chart in folder 'Case 12', then "
+                                                 + "create a dashboard of them");
+            assertThat(action.warning()).isEqualTo("It holds jsmith's activity: anyone who can view the folder can "
+                                                   + "read it.");
+            assertThat(action.details()).isEqualTo("2 spans of jsmith.");
+        });
+
+        // An earlier run's, replaced, by the name Stroom has for it.
+        Mockito.when(lookup.find(earlier)).thenReturn(Optional.of(earlier));
+        final Map<String, Object> replace = new HashMap<>(create);
+        replace.put("plan", timelinePlan(earlier).toJson());
+        assertThat(userActions.check(null, List.of(replace), NOW)).singleElement().satisfies(action ->
+                assertThat(action.label()).startsWith("Replace Data Connection 'Timeline jsmith 2026-10-01 to "
+                                                      + "2026-10-07 (spans)' with 'Timeline jsmith 2026-11-09 to "
+                                                      + "2026-11-13 (spans)'"));
+
+        // Not for a plan that can't be read, nor for a document that isn't a folder.
+        final Map<String, Object> badPlan = new HashMap<>(create);
+        badPlan.put("plan", "{\"entity\":\"jsmith\"}");
+        assertThat(userActions.check(null, List.of(badPlan), NOW)).isEmpty();
+        final Map<String, Object> notAFolder = new HashMap<>(create);
+        notAFolder.put("doc", doc("Dashboard", OTHER_UUID, "Logons"));
+        Mockito.when(lookup.find(new DocRef("Dashboard", OTHER_UUID)))
+                .thenReturn(Optional.of(new DocRef("Dashboard", OTHER_UUID, "Logons")));
+        assertThat(userActions.check(null, List.of(notAFolder), NOW)).isEmpty();
+    }
+
+    private static TimelineDashboardPlan timelinePlan(final DocRef replace) {
+        return new TimelineDashboardPlan("jsmith", "spans", "/outputs/timelines/jsmith/spans.csv", "abc", 2, 0L, 1L,
+                "A snapshot.", Map.of("start", "start", "end", "end", "label", "label"), replace);
     }
 
     @Test

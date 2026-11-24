@@ -22,6 +22,7 @@ import stroom.ai.impl.dao.AiDaoModule;
 import stroom.ai.impl.db.AiDbConnProvider;
 import stroom.ai.impl.db.AiDbModule;
 import stroom.ai.impl.extraction.ExtractionActions;
+import stroom.ai.impl.tools.timeline.TimelineDashboards;
 import stroom.ai.impl.vis.VisualisationActions;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
@@ -145,7 +146,7 @@ class TestAiConcurrency {
         final UserActionService service = new UserActionService(Mockito.mock(AiService.class), aiDao,
                 new UserActions(lookup), lookup, processorFilterService, Mockito.mock(AiAuditLog.class),
                 Mockito.mock(DashboardBuilder.class), Mockito.mock(VisualisationActions.class),
-                Mockito.mock(ExtractionActions.class));
+                Mockito.mock(ExtractionActions.class), Mockito.mock(TimelineDashboards.class));
 
         final List<AiUserActionResult> results = race(() ->
                 service.doUserAction(chat.getId(), message.getId(), "enable-31"));

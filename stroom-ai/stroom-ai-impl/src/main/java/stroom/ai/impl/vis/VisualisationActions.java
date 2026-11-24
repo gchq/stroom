@@ -297,7 +297,7 @@ public class VisualisationActions {
     /// @param kind     The chart kind.
     /// @param mappings The column mapped to each role, by role id.
     /// @return The settings JSON.
-    static String componentSettings(final ChartKind kind, final Map<String, String> mappings) {
+    public static String componentSettings(final ChartKind kind, final Map<String, String> mappings) {
         final Map<String, String> settings = new LinkedHashMap<>();
         for (final ChartRole role : kind.roles()) {
             final String column = NullSafe.get(mappings, map -> map.get(role.id()));

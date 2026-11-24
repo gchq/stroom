@@ -129,7 +129,7 @@ public class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
     private static final AtomicInteger SEQUENCE = new AtomicInteger();
     /// The selection key of a time range dragged on a time-series chart: its terms keep what is within the
     /// selection's from and to.
-    static final String RANGE_SELECTION = "range";
+    public static final String RANGE_SELECTION = "range";
     // The selection keys of a clicked link's two ends: its source and target, or two neighbouring levels of a flow
     // with more (a link selects only its own two ends, so the rest drop out).
     private static final Set<String> LINK_ENDS = Set.of("source", "target", "level3", "level4", "level5",
@@ -1129,10 +1129,16 @@ public class ProposeDashboardChangeTool extends AbstractWorkspaceTool {
         return keys;
     }
 
-    // The terms comparing a field (or column) with what a chart's selection holds: equal to it, or, for a time range
-    // (the selection's from and to), within it. Stroom ANDs the terms naming one selection, and leaves out each
-    // whose value isn't held, so a range's terms keep what is within it, and drop out while nothing is selected.
-    static List<ExpressionTerm> selectionTerms(final String field, final String key, final String chartId) {
+    /// The terms comparing a field (or column) with what a chart's selection holds: equal to it, or, for a time
+    /// range (the selection's from and to), within it. Stroom ANDs the terms naming one selection, and leaves out
+    /// each whose value isn't held, so a range's terms keep what is within it, and drop out while nothing is
+    /// selected.
+    ///
+    /// @param field   The field or column.
+    /// @param key     The selection's key, or [#RANGE_SELECTION] for its time range.
+    /// @param chartId The id of the chart whose selection it is.
+    /// @return The terms.
+    public static List<ExpressionTerm> selectionTerms(final String field, final String key, final String chartId) {
         final String selection = "${component." + chartId + ".selection.";
         if (RANGE_SELECTION.equals(key)) {
             return List.of(

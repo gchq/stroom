@@ -49,6 +49,9 @@ final class UserActionsUi {
     /// create, then adds to the dashboard (or the query's show clause), unsaved.
     static final String CREATE_VISUALISATION = "create_visualisation";
     static final String CREATE_VISUALISATIONS = "create_visualisations";
+    /// A timeline the chat built, which the button writes as a CSV Data Connection with its chart in the folder the
+    /// user chose, then opens Stroom's New Dashboard dialog there for a dashboard of them.
+    static final String CREATE_TIMELINE_DASHBOARD = "create_timeline_dashboard";
     /// A search extraction the agent proposed for a dashboard table, which the button shows (what would be written,
     /// with the name and folder the user chooses) for them to confirm, then writes and sets the table up to use.
     static final String CREATE_EXTRACTION_PIPELINE = "create_extraction_pipeline";
@@ -197,6 +200,8 @@ final class UserActionsUi {
             return "Create visualisation…";
         } else if (CREATE_VISUALISATIONS.equals(action)) {
             return "Create visualisations…";
+        } else if (CREATE_TIMELINE_DASHBOARD.equals(action)) {
+            return "Create Data Connection and dashboard…";
         } else if (CREATE_EXTRACTION_PIPELINE.equals(action)) {
             return "Create extraction pipeline…";
         } else if (CHANGE_EXTRACTION_PIPELINE.equals(action)) {

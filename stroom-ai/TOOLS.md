@@ -188,6 +188,7 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 | `propose_extraction_pipeline` | Offers a button to create, or change, the search extraction for the attached dashboard's table | content | yes | dashboards | | | View | chat |
 | `propose_query` | Offers a button to create a StroomQL Query document | content | yes | | | | Use | chat |
 | `propose_query_change` | Offers a button to change the query in the attached tab | content | yes | | | | View, Use | chat |
+| `propose_timeline_dashboard` | Offers one button that writes a timeline the chat built (its spans or activities) as a CSV Data Connection with its timeline chart in a folder the user chooses, then opens the New Dashboard dialog for a dashboard of them | content | yes | timelines | | | View | chat |
 | `propose_visualisation` | Plans a chart of the attached table, checks its rows can make it, and offers a button to create it | content | yes | dashboards | | | View, Use, Edit | chat |
 | `read_document` | A document's content; a pipeline as Stroom runs it, an XSLT's translation, an index's survey | core | yes | | | Manage Processors | View | |
 | `read_file` | Reads lines of a workspace file | core | yes | | | | | |
@@ -1828,12 +1829,63 @@ can use an Elastic Index.
   activity_label, day, start, end, active_minutes, spans, lanes, evidence; header only when not characterised),
   `sessions.csv` (the focus sessions; `gantt_chart` with start, end, label `process`, lane `host` draws it as it
   is), `actions.csv`, `events.csv` (with `type` and `classified_by`), `daily.csv`, `windows.csv`, `quality.csv`,
-  and with characterisation `items.csv`. Times in the tables are UTC.
+  and with characterisation `items.csv`. Times in the tables are UTC. `timeline.json` (`TimelineSnapshot`: entity,
+  period, zone, view, lanes, sources, whether characterised, when built) is written beside them, for
+  `propose_timeline_dashboard`.
 * **Refuses**: no `entity`; no source with the user's events and a user field (each left out is said); a source
   that isn't an Elastic Index, or whose index has no time field; a field the index doesn't have; a user field that
   can't be one key (a text field with no keyword subfield, a transform on a number); a role that isn't one, or with
   no conditions; a `typeRoles` role that isn't one; a bad period, `idleCap` (1 minute to 24 hours), `view` or
   `lanes`; the user declining the sources form.
+
+### `propose_timeline_dashboard`
+
+Content · read-only · chat only · timelines group · Classes: `ProposeTimelineDashboardTool`,
+`TimelineDataConnection`, `TimelineDashboardConfig`, `TimelineDashboardPlan`, `TimelineDashboards`, `UserActions`
+(`create_timeline_dashboard`)
+
+Puts a timeline the chat built on a dashboard, which can't read the chat's workspace: one "Create Data Connection
+and dashboard…" button. When the user clicks it, Stroom, as the user, writes the table as it is as a CSV Data
+Connection (stroom#6010) in the folder the user chose, and beside it the timeline chart as a Visualisation drawn
+with ECharts (the generated `timeline` kind, so `propose_visualisation` can later replace it); then it opens Stroom's
+New Dashboard dialog in that folder for a dashboard of them. Writing again (a second click, e.g. after the dialog was
+cancelled) rewrites the same documents, found by name in the folder.
+
+A tool of its own, in the timelines group: a new action of `activity_timeline` would run the whole timeline again
+(its searches and side calls) for what its tables already hold, and `propose_dashboard` reads data sources, never
+the workspace.
+
+* **The Data Connection** (`TimelineDataConnection`): the table's CSV held in the document, its header the
+  columns, typed: `start` and `end` Date (ISO 8601 instants, UTC), `events` Long (spans), `active_minutes` Double
+  (activities), the rest Text (`day` stays text, as it is a lane's name). Its time field is `start`, so a
+  dashboard's time range keeps the rows starting in it. Named `Timeline <entity> <first day> to <last day>
+  (<table>)` in the user's zone (a period ending at midnight ends the day before; one day named once; characters a
+  name can't hold made `_`), e.g. `Timeline sam.patel 2026-10-20 to 2026-10-26 (spans)`. Its description says it is
+  a dated snapshot: whose, which table, the period and zone, when it was built and from which sources, and that it
+  isn't updated. A Data Connection in the folder of an earlier run for the same entity and table (any period) is
+  replaced: rewritten and renamed, with its generated chart.
+* **The dashboard** (`TimelineDashboardConfig`): a query of the Data Connection (runs when opened) over the
+  timeline's period (the dashboard's time range); the timeline chart of the table: start, end, and for the spans
+  label `label`, lane `lane` (host; `source` if the run's lanes were by source), colour `activity_label` where the
+  run found activities, else `kind`; for the activities label `activity_label`, lane `day` (`activity_label` if by
+  activity), colour `activity_label`; and the table, each column formatted as typed (Date Time, Number, Text), in
+  `start` order, with a table selection filter on the chart: a click on a bar keeps the rows starting within its
+  interval (`start` between the selection's `from` and `to`), every row while nothing is selected.
+* **Permissions and privacy**: offered only if the user may create a Data Connection and a Visualisation in the
+  folder, and edit a Data Connection it replaces; the result says when they can't create a dashboard there (they
+  choose another folder in the dialog). The Data Connection holds the user's activity with the folder's
+  permissions: the result, and the button's warning, say anyone who can view the folder can read it.
+* **Arguments**: `entity` (as `activity_timeline` was given it), `table` (`spans` or `activities`), optional
+  `folder` (UUID or Explorer path; omitted, a form asks, the attached dashboard's folder suggested).
+* **Returns**: text saying what the button writes, where, the chart's columns and the privacy note, plus a
+  `create_timeline_dashboard` action holding the folder (`doc`), `name`, the `plan` (the table's workspace path and
+  SHA-256, its rows, the period, the description, the chart's columns, the Data Connection replaced) and a summary.
+  The click is refused if the table has changed since (the timeline was built again).
+* **Refuses**: outside a chat's run; no `timeline.json` for the entity (no timeline built in the chat, or one
+  built before it was written); no table, or one of other columns; no rows (activities: found only with view
+  activities, both, or characterise); more rows than a Data Connection reads (100,000); a folder the user can't
+  see, or declines to choose; no Create in the folder; no Edit on the Data Connection it would replace; ECharts not
+  installed, or no Use on it; a chart the table can't draw (`ChartCheck`).
 
 ### `current_results`
 

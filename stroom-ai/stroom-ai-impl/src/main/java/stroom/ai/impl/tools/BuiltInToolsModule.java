@@ -70,6 +70,7 @@ import stroom.ai.impl.tools.time.GetCurrentDateTool;
 import stroom.ai.impl.tools.time.GetCurrentTimeTool;
 import stroom.ai.impl.tools.time.GetUtcTimeOffsetTool;
 import stroom.ai.impl.tools.timeline.ActivityTimelineTool;
+import stroom.ai.impl.tools.timeline.ProposeTimelineDashboardTool;
 import stroom.ai.impl.tools.workspace.DeleteFileTool;
 import stroom.ai.impl.tools.workspace.GanttChartTool;
 import stroom.ai.impl.tools.workspace.GrepTool;
@@ -122,6 +123,7 @@ public class BuiltInToolsModule extends AbstractModule {
                 .addBinding(EsqlQueryTool.class)
                 .addBinding(SequenceQueryTool.class)
                 .addBinding(ActivityTimelineTool.class)
+                .addBinding(ProposeTimelineDashboardTool.class)
                 .addBinding(SummariseColumnTool.class)
                 .addBinding(DocumentInfoTool.class)
                 .addBinding(ReadDocumentTool.class)

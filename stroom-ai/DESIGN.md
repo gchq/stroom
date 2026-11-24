@@ -980,7 +980,7 @@ because each later part stands on the earlier:
    actions taken in each; and above it (2b) the activities they make up, what the user was working on.
 3. **Charts of derived results**: a small subset drawn in the chat (tool-written Mermaid, Stroom's own SVG renderer),
    or a dashboard over a CSV Data Connection (stroom#6010), at the user's choice. The chat's gantt is built
-   (2026-11-23); the dashboard route's CSV Data Connection is not.
+   (2026-11-23); the dashboard route's CSV Data Connection is built too (2026-11-24, `propose_timeline_dashboard`).
 4. **Skills**: saved, parameterised procedures (a hunt, a timeline) an analyst or the agent runs again.
 
 **Today** (what the agent does without these): `sequence_query` runs "X then Y by the same entity" as one EQL
@@ -1426,10 +1426,8 @@ have no time, so would otherwise always be "Other"); at most 20 lanes and 200 ba
 left out first, then the latest markers); the chat packs a section's tasks into as few rows as don't overlap (as
 Mermaid's compact display), where other apps give each task a row of its own; each bar has an SVG `title` tooltip
 (text only, so cheap now). The examples are checked by a port of Mermaid's gantt lexer rules, as there is no
-Mermaid offline. The dashboard route for derived rows (a CSV Data Connection) is not built: deferred by the user
-(2026-11-24), as the chat's timeline and the dashboard `timeline` kind over indexed data already work; when built,
-`activity_timeline` offers to write its sessions table as a CSV Data Connection and propose a dashboard with the
-`timeline` chart over it (its columns already fit the kind).
+Mermaid offline. The dashboard route for derived rows (a CSV Data Connection) was deferred by the user earlier on
+2026-11-24, then asked for and built the same day: see "The dashboard route, as built" below.
 
 Decided with the product owner (2026-11-23): a small set of charts drawn in the chat, from a workspace table, with
 nothing created beforehand; or a dashboard, for what the chat's charts can't show or when the user wants one. Which,
@@ -1490,6 +1488,31 @@ dashboard's time range filters), confirmed in a form as other documents are, the
 `propose_visualisation` unchanged: every chart kind Stroom's visualisations have. Limits: `maxStoredDataSize` (5 MB
 by default), so derived summaries, never raw events (which stay in their indexes, linked by Ids); a snapshot,
 re-derived for another user or period.
+
+**The dashboard route, as built** (2026-11-24; TOOLS.md "`propose_timeline_dashboard`"): a tool of its own in the
+timelines group, `propose_timeline_dashboard` (entity, table `spans` or `activities`, folder): not a new action of
+`activity_timeline`, which would run the whole timeline again (its searches and side calls) for what its tables
+already hold, nor of `propose_dashboard`, which reads data sources, never the workspace; offered only once the
+timelines group is on, so it adds nothing to other chats. `activity_timeline` writes `timeline.json` beside its
+tables (`TimelineSnapshot`: entity, period, zone, view, lanes, sources, characterised, when built), which it reads.
+One button ("Create Data Connection and dashboard…", `create_timeline_dashboard`), the user's consent as every
+button is: on the click, Stroom, as the user, writes the table as it is as a CSV Data Connection in the folder the
+user chose (asked in a form when not given, the attached dashboard's folder suggested), typed (`start`, `end` Date;
+`events` Long; `active_minutes` Double; the rest Text, `day` too as it is a lane's name), `start` its time field,
+named `Timeline <entity> <first day> to <last day> (<table>)` in the user's zone and described as the dated
+snapshot it is (whose, the period, when built, from which sources, not updated); beside it the `timeline` chart as a
+generated ECharts Visualisation; then Stroom's New Dashboard dialog opens in that folder (`AiUserActionResult`'s
+`createDashboardFolder`) with the dashboard's settings (`TimelineDashboardConfig`): a query of the Data Connection
+over the period (runs when opened), the chart (spans: label, lane host or source, colour activity where found, else
+kind; activities: label activity, lane day or activity, colour activity) and the table, typed, in `start` order,
+whose selection filter keeps the rows starting within a clicked bar's interval. One button, not two: the dialog is
+the existing mechanism, and writing the documents first, at the click, is what lets it hold the chart. The table's
+hash is kept in the button: a click after the timeline was built again is refused. A second click (e.g. after the
+dialog was cancelled) rewrites the same documents, found by name; a re-run for the same entity and table offers to
+replace the earlier run's Data Connection in the folder (and its chart), renamed for the new period. Permissions:
+offered only with Create (Data Connection and Visualisation) in the folder and Edit on one it replaces; the result
+and the button say the documents hold the user's activity with the folder's permissions (anyone who can view it can
+read it). Needs ECharts installed (and Use on it), as every generated chart does.
 
 **Later, in core**: a Data Connection type that derives at query time (its `Connector` running part 2 on each
 search, as the user), so a dashboard with a `user` parameter shows any user's timeline live, with no agent: for the
@@ -5482,6 +5505,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-24 | The dashboard route for derived timelines built (the user's decisions): `propose_timeline_dashboard`, a tool of its own in the timelines group (not an action of `activity_timeline`, which would run the timeline again, nor of `propose_dashboard`, which reads data sources), offers one button that, on the click, writes `spans.csv` or `activities.csv` as it is as a CSV Data Connection (typed, `start` its time field, named `Timeline <entity> <first day> to <last day> (<table>)`, described as a dated snapshot) with its generated ECharts `timeline` Visualisation, as the user, in the folder the user chose (a form, the attached dashboard's folder suggested), then opens the New Dashboard dialog there for a query of it over the period, the chart (lanes host or source, or day or activity; colour activity) and a typed table a bar's click filters to its interval; the table's hash kept in the button (refused once the timeline is built again); a second click rewrites the same documents; a re-run for the same entity and table replaces and renames the earlier run's; offered only with Create in the folder (and Edit on one it replaces); the result and the button say who can read it (the folder's permissions); `activity_timeline` writes `timeline.json` (`TimelineSnapshot`) for it | Activity timelines, streaming joins and skills (3. Charts: the dashboard route, as built); TOOLS.md (propose_timeline_dashboard, activity_timeline) |
 | 2026-11-24 | Chat 192 (an aggregated Microsoft 365 feed's Messaging group, its V1.0 promoted, rebuilt as V1.1) fixes: (1) a new version's build documents named for the previous version are renamed for the new one by `create_pipeline version_of=` (`VersionNames.retokened`, `WriteGuard.rename`), and promotion promotes a document named for another version than its pipeline's under the name for that version, said in the layout's warnings and renamed as it moves; (2) a group the registry places nowhere but whose promoted pipeline `<feed> <group>` (any version) reads the feed is placed from that pipeline (its XSLT, its output feed), recorded with the save and said, never asked as new (`SourceTypeGroups.recoveredPlacement`, `CurrentTranslations.groupPipeline`); (3) a catalogue description holding the event type's sample record count or the scope's (10 or more) is a check problem, and `description` is described as written into every event; (4) `promote_build` with `reviewed` left out takes the review last shown in the chat where nothing it showed has changed (layout and the rest), saying so, else shows the new one; (5) `write_documentation` refuses an events pipeline in a build that stepped clean before but whose latest saved XSLT hasn't (one never stepped clean is documented as before: that is how errors are accepted), and `build_status`'s stepping step says to update the documentation after it when the pipeline was documented before the save; (6) a constant naming one of the feed's source types outside the group is put to the user (change: not saved; keep: remembered for the chat), and the aggregated feeds guide says a group's events come only from its own source types; (7) a production version whose own XSLTs import a module that no longer exists is said by `build_status`/`promote_build` (`before_promotion`, never blocking), `create_pipeline version_of=`, `build_translation_xslt` and `review_coverage`'s follow-ons (`PipelineShapes.brokenImports`); (9) a new version's promoted filter reads what the user chooses at promotion: from now on (recommended, a minimum stream create time), everything (backfill) or from a date; without a form from now on, said; a first version's filter unchanged | TOOLS.md (build_translation_xslt, create_pipeline, catalogue_event_types, promote_build, write_documentation, build_status, review_coverage); guides/aggregated-feeds.md |
 | 2026-11-24 | A build whose feed or source type group a pipeline already translates (the registry's rows of its scope, by UUID else by name, or the pipeline its processor filter reads the raw data for; promoted, hand-written or a content pack's) is offered, after the survey, in catalogue_event_types' first call's form: start from the existing pipeline (recommended: copy_pipeline makes a new version, rebuild_mapping reads its XSLT back into a mapping and catalogue, the original untouched) or draft a new translation; without a form the reply names both routes for the chat (`start_from=`). The plan routes through `next` (copy, rebuild, catalogue check and confirmation, the `catalogue` step kept to do), not one tool doing both, as each step has its own form (names, the rebuild's proof) the user answers in turn. The reader lays hand-written XSLTs out as the generator's first (a template per event, a choose on an event id, xsl:if chains, named templates, JSON keys by type); conditions it can't read stay xpath conditions, guards testing more than presence are not read. The existing version's run over the sample (records writing no Event, Unknown) is listed; event types read back are proposed and confirmed, the summary naming their origin | [Start from an existing pipeline](#start-from-an-existing-pipeline-built-2026-11-24) |
 | 2026-11-24 | Timelines from any source built (part 2c): sources optional (asked in a form, all supported over MCP, probed and left out, listed, without the user's events); each index's user field from the call, the AGENTS doc's `## Fields` (applied by the tools, checked by `propose_instructions`), a field convention, the index's documentation, else asked; events without roles classified from their Events XML (capped by `timelineMaxXmlEvents` 50,000), else the index's element field, else the source's codes classified once by a side call and confirmed; the user and time the index's; pairs from a skill's Event chains, the call, the schema and alternation in the user's own events (90% of keys, counts about equal; borderline listed); activity periods for the actions in no focus session or pair; `spans.csv` and `activities.csv` every run, views `activities`, `detail`, `both`; what was learned offered for the skill's Event chains only with Edit on its doc (or Create for a new one), else kept for the chat; `check_skill` checks Event chains against recent data; ISO 8601 durations as times before now. Not built: the build record catalogue's route for event codes; naming who has Edit on a skills doc | Activity timelines, streaming joins and skills (2c., as built); TOOLS.md (activity_timeline) |

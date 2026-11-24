@@ -542,6 +542,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 classification, xml.summary(), timeline, built, byId, inferred.borderline(), characterised, view,
                 lanes, learned, zone);
         final Files files = TimelineTables.write(workspace, folder, run);
+        // So its tables can be written elsewhere later, as they are (propose_timeline_dashboard).
+        TimelineSnapshot.of(run, now).write(workspace, folder);
         final Map<String, Object> structured = TimelineResult.structured(run, files);
         return context.session().isChat()
                 ? ToolResult.text(TimelineResult.markdown(run, files)).withStructuredContent(structured)

@@ -18,6 +18,7 @@ package stroom.ai.shared;
 
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.docref.DocRef;
+import stroom.explorer.shared.ExplorerNode;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -55,6 +56,8 @@ public class AiUserActionResult {
     private final AiCreateExtraction createExtraction;
     @JsonProperty
     private final AiChangeExtraction changeExtraction;
+    @JsonProperty
+    private final ExplorerNode createDashboardFolder;
 
     /// @param done         True if the action was done.
     /// @param message      What happened, or why it was not done.
@@ -119,6 +122,37 @@ public class AiUserActionResult {
     ///                              confirm, or null.
     /// @param changeExtraction      For a change_extraction_pipeline action, the change that would be written, for
     ///                              the user to confirm, or null.
+    public AiUserActionResult(final Boolean done,
+                              final String message,
+                              final DocRef openDocument,
+                              final String createQueryName,
+                              final String createQueryText,
+                              final String createDashboardName,
+                              final DashboardConfig createDashboardConfig,
+                              final AiCreateVisualisation createVisualisation,
+                              final List<AiCreateVisualisation> createVisualisations,
+                              final AiCreateExtraction createExtraction,
+                              final AiChangeExtraction changeExtraction) {
+        this(done, message, openDocument, createQueryName, createQueryText, createDashboardName,
+                createDashboardConfig, createVisualisation, createVisualisations, createExtraction, changeExtraction,
+                null);
+    }
+
+    /// @param done                  True if the action was done.
+    /// @param message               What happened, or why it was not done.
+    /// @param openDocument          A document for the browser to open, or null.
+    /// @param createQueryName       For a create_query action, the name to suggest, or null.
+    /// @param createQueryText       For a create_query action, the StroomQL of the new query, or null.
+    /// @param createDashboardName   For a create_dashboard action, the name to suggest, or null.
+    /// @param createDashboardConfig For a create_dashboard action, the new dashboard's settings, or null.
+    /// @param createVisualisation   For a create_visualisation action, what to create, or null.
+    /// @param createVisualisations  For a create_visualisations action, each chart to create, or null.
+    /// @param createExtraction      For a create_extraction_pipeline action, what would be written, for the user to
+    ///                              confirm, or null.
+    /// @param changeExtraction      For a change_extraction_pipeline action, the change that would be written, for
+    ///                              the user to confirm, or null.
+    /// @param createDashboardFolder For a new dashboard, the folder to suggest in the New Dashboard dialog, or null
+    ///                              for the one selected in the Explorer tree.
     @JsonCreator
     public AiUserActionResult(@JsonProperty("done") final Boolean done,
                               @JsonProperty("message") final String message,
@@ -131,7 +165,8 @@ public class AiUserActionResult {
                               @JsonProperty("createVisualisations")
                               final List<AiCreateVisualisation> createVisualisations,
                               @JsonProperty("createExtraction") final AiCreateExtraction createExtraction,
-                              @JsonProperty("changeExtraction") final AiChangeExtraction changeExtraction) {
+                              @JsonProperty("changeExtraction") final AiChangeExtraction changeExtraction,
+                              @JsonProperty("createDashboardFolder") final ExplorerNode createDashboardFolder) {
         this.done = Objects.requireNonNullElse(done, false);
         this.message = message;
         this.openDocument = openDocument;
@@ -143,6 +178,7 @@ public class AiUserActionResult {
         this.createVisualisations = createVisualisations;
         this.createExtraction = createExtraction;
         this.changeExtraction = changeExtraction;
+        this.createDashboardFolder = createDashboardFolder;
     }
 
     /// @param name   The name to suggest in Stroom's New Dashboard dialog.
@@ -150,6 +186,16 @@ public class AiUserActionResult {
     /// @return The result of a create_dashboard action that can be done.
     public static AiUserActionResult createDashboard(final String name, final DashboardConfig config) {
         return new AiUserActionResult(true, null, null, null, null, name, config, null, null);
+    }
+
+    /// @param name   The name to suggest in Stroom's New Dashboard dialog.
+    /// @param config The settings to give the new dashboard once created.
+    /// @param folder The folder to suggest in the dialog.
+    /// @return The result of an action that makes a new dashboard, in a folder of its own choosing.
+    public static AiUserActionResult createDashboard(final String name,
+                                                     final DashboardConfig config,
+                                                     final ExplorerNode folder) {
+        return new AiUserActionResult(true, null, null, null, null, name, config, null, null, null, null, folder);
     }
 
     /// @param createVisualisation What to create and where to wire it up.
@@ -230,6 +276,12 @@ public class AiUserActionResult {
 
     /// @return For a change_extraction_pipeline action that can be done, the change that would be written, for the
     /// user to confirm; otherwise null.
+    /// @return For a new dashboard, the folder to suggest in the New Dashboard dialog, or null for the one selected
+    /// in the Explorer tree.
+    public ExplorerNode getCreateDashboardFolder() {
+        return createDashboardFolder;
+    }
+
     public AiChangeExtraction getChangeExtraction() {
         return changeExtraction;
     }

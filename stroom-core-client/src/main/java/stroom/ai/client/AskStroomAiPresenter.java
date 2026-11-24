@@ -3331,7 +3331,8 @@ public class AskStroomAiPresenter
             if (result.isDone() && result.getCreateDashboardConfig() != null) {
                 // The button can be used again, as the user may cancel the dialog.
                 button.removeAttribute("disabled");
-                createDashboard(result.getCreateDashboardName(), result.getCreateDashboardConfig());
+                createDashboard(result.getCreateDashboardName(), result.getCreateDashboardConfig(),
+                        result.getCreateDashboardFolder());
                 return;
             }
             if (result.isDone() && result.getCreateVisualisation() != null
@@ -3402,14 +3403,17 @@ public class AskStroomAiPresenter
                 });
     }
 
-    /// Opens Stroom's own New Dashboard dialog with the agent's suggested name, in the folder selected in the
-    /// Explorer tree. Once the user creates the dashboard, it is given the settings Stroom built from the agent's
-    /// query and opened. Nothing is saved unless the user creates it.
-    private void createDashboard(final String name, final DashboardConfig config) {
+    /// Opens Stroom's own New Dashboard dialog with the agent's suggested name, in the folder suggested (e.g. the one
+    /// a timeline's Data Connection was written to), else the one selected in the Explorer tree. Once the user
+    /// creates the dashboard, it is given the settings Stroom built and opened. Nothing is saved unless the user
+    /// creates it.
+    private void createDashboard(final String name, final DashboardConfig config, final ExplorerNode folder) {
         ShowCreateDocumentDialogEvent.fire(
                 this,
                 "New Dashboard",
-                selectedExplorerNode,
+                folder != null
+                        ? folder
+                        : selectedExplorerNode,
                 DashboardDoc.TYPE,
                 NullSafe.string(name),
                 true,

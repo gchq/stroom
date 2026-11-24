@@ -80,6 +80,8 @@ class TestUserActionsUi {
         assertThat(UserActionsUi.buttonText(UserActionsUi.CREATE_VISUALISATION,
                 "{\"kind\":\"bar\",\"replace\":{\"componentId\":\"vis-1\"}}")).isEqualTo("Update visualisation…");
         assertThat(UserActionsUi.buttonText(UserActionsUi.CREATE_DASHBOARD)).isEqualTo("Create dashboard…");
+        assertThat(UserActionsUi.buttonText(UserActionsUi.CREATE_TIMELINE_DASHBOARD))
+                .isEqualTo("Create Data Connection and dashboard…");
         assertThat(UserActionsUi.buttonText(UserActionsUi.APPLY_CODE_CHANGE)).isEqualTo("Review and apply…");
         assertThat(UserActionsUi.buttonText("something_else")).isEqualTo("Do it");
     }

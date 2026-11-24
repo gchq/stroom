@@ -1,6 +1,6 @@
 # The built-in tools the model is shown
 
-Built-in tools: 63
+Built-in tools: 64
 
 ## Offered in each mode (in a chat with no MCP servers)
 
@@ -2764,6 +2764,42 @@ Writes a skill (a saved, parameterised procedure: a hunt, a timeline) with the u
     }
   },
   "required" : [ ],
+  "type" : "object"
+}
+
+================================================================================
+## propose_timeline_dashboard
+
+isReadOnly: true
+readsUntrustedContent: true
+boundsItsOutput: true
+strict: null
+metadata: { }
+offered in modes: 
+
+### Description
+
+Puts an activity timeline built in this session on a dashboard, when the user wants it there rather than in the chat: offers one button that writes its spans (detail) or activities table, as it is, as a CSV Data Connection (a dated snapshot, named for the entity and period) with its timeline chart in the folder the user chooses, then opens the New Dashboard dialog for a dashboard of a query, the chart and a table a bar's click filters. A Data Connection of an earlier run for the same entity and table there is replaced. It holds the user's activity: anyone who can view the folder can read it. Omit folder to ask the user (the attached dashboard's folder suggested).
+
+### Parameters
+
+{
+  "properties" : {
+    "entity" : {
+      "description" : "The user (or entity), as the timeline was built for.",
+      "type" : "string"
+    },
+    "folder" : {
+      "description" : "Optional: the folder, by UUID or Explorer path, as the user chose it.",
+      "type" : "string"
+    },
+    "table" : {
+      "description" : "Which table: spans (the detail) or activities.",
+      "enum" : [ "spans", "activities" ],
+      "type" : "string"
+    }
+  },
+  "required" : [ "entity", "table" ],
   "type" : "object"
 }
 

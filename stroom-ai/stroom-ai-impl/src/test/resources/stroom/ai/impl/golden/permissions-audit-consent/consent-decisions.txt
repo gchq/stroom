@@ -46,6 +46,7 @@
 - propose_query (read-only, reads untrusted content): RUN in every situation
 - propose_query_change (read-only, reads untrusted content): RUN in every situation
 - propose_skill (read-only, reads untrusted content): RUN in every situation
+- propose_timeline_dashboard (read-only, reads untrusted content): RUN in every situation
 - propose_visualisation (read-only, reads untrusted content): RUN in every situation
 - read_document (read-only, reads untrusted content): RUN in every situation
 - read_file (read-only, reads untrusted content): RUN in every situation

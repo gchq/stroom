@@ -21,6 +21,7 @@ import stroom.ai.impl.extraction.ExtractionField;
 import stroom.ai.impl.extraction.ExtractionPlan;
 import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.skills.SkillDoc;
+import stroom.ai.impl.tools.timeline.TimelineDashboardPlan;
 import stroom.ai.impl.vis.VisualisationPlan;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
@@ -117,6 +118,11 @@ public class UserActions {
     public static final String CHANGE_EXTRACTION_PIPELINE = "change_extraction_pipeline";
     /// Creates several planned Visualisations in one folder the user picks, and adds them to a dashboard.
     public static final String CREATE_VISUALISATIONS = "create_visualisations";
+    /// Writes a timeline the chat built as a CSV Data Connection, with its timeline chart's Visualisation, in the
+    /// folder the user chose, as the user; then opens Stroom's New Dashboard dialog for a dashboard of them (only
+    /// from Stroom's own propose_timeline_dashboard tool). The record's `doc` is the folder, `name` the Data
+    /// Connection's name, `request` the plan ([TimelineDashboardPlan]) as JSON.
+    public static final String CREATE_TIMELINE_DASHBOARD = "create_timeline_dashboard";
     /// The most Visualisations one create_visualisations button creates.
     static final int MAX_VISUALISATIONS = 12;
     // The most charts a dashboard change gives their current settings: as many as it can add or change.
@@ -258,6 +264,9 @@ public class UserActions {
                         : Optional.empty();
                 case CREATE_VISUALISATION -> builtIn.contains(map)
                         ? createVisualisation(id, map, expiresMs)
+                        : Optional.empty();
+                case CREATE_TIMELINE_DASHBOARD -> builtIn.contains(map)
+                        ? timelineDashboard(id, map, expiresMs)
                         : Optional.empty();
                 case CREATE_EXTRACTION_PIPELINE, CHANGE_EXTRACTION_PIPELINE -> builtIn.contains(map)
                         ? extraction(id, action, map, expiresMs)
@@ -698,6 +707,46 @@ public class UserActions {
                 new UserActionRecord.CodeChange(null, null, base, baseHash.toLowerCase(Locale.ROOT),
                         string(map.get("snapshot_hash")), Objects.requireNonNullElse(added, 0),
                         Objects.requireNonNullElse(removed, 0))));
+    }
+
+    /// A button that writes a timeline the chat built as a CSV Data Connection, with its chart, in a folder the user
+    /// may view, then opens the New Dashboard dialog. The plan is kept as JSON in `request`, the folder in `doc` and
+    /// the Data Connection's name in `name`; the table is read and checked again when the button is clicked, and
+    /// writing it checks the user's permission to create (or edit) the documents.
+    private Optional<UserActionRecord> timelineDashboard(final String id, final Map<?, ?> map, final long expiresMs) {
+        final DocRef named = docRef(map.get("doc"));
+        final String name = NullSafe.get(string(map.get("name")), String::strip);
+        final String planJson = string(map.get("plan"));
+        if (named == null || name == null || name.isEmpty() || name.length() > MAX_NAME_CHARS
+            || hasControlCharacters(name) || planJson == null || planJson.length() > MAX_REQUEST_CHARS) {
+            return Optional.empty();
+        }
+        final TimelineDashboardPlan plan;
+        try {
+            plan = TimelineDashboardPlan.fromJson(planJson);
+        } catch (final IllegalArgumentException e) {
+            LOGGER.debug(() -> "Dropping a timeline dashboard that can't be read: " + e.getMessage());
+            return Optional.empty();
+        }
+        final DocRef folder = lookup.find(named).orElse(null);
+        if (folder == null || !ExplorerConstants.FOLDER_TYPE.equals(folder.getType())) {
+            return Optional.empty();
+        }
+        final DocRef replaced = plan.replace() == null
+                ? null
+                : lookup.find(plan.replace()).orElse(null);
+        final String label = (replaced == null
+                ? "Write Data Connection '" + name + "'"
+                : "Replace Data Connection '" + replaced.getName() + "' with '" + name + "'")
+                             + " and its timeline chart in folder '" + folder.getName()
+                             + "', then create a dashboard of them";
+        final String summary = NullSafe.get(string(map.get("summary")), String::strip);
+        return Optional.of(new UserActionRecord(id, CREATE_TIMELINE_DASHBOARD, label,
+                NullSafe.isBlankString(summary)
+                        ? null
+                        : truncate(summary, MAX_DETAILS_CHARS),
+                "It holds " + plan.entity() + "'s activity: anyone who can view the folder can read it.", null,
+                folder, plan.toJson(), List.of(), expiresMs, Status.PENDING, null, name));
     }
 
     /// A button that opens a review of a standing instructions doc proposed for a folder the user may view that has
