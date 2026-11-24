@@ -267,8 +267,9 @@ saying why. Stepping one record may number it otherwise than
 processing did (`stepped_event_id`); the document is then matched on the hit's other columns. A failed trace's `why`
 says what was compared: report that, not a guess at the cause.
 
-The dashboard is for the people who will search the index. Suggest its columns (the time field and the key fields:
-user, host, address, event type, outcome) and confirm them with the user; `verify_index` asks before making it.
+The dashboard is for the people who will search the index. Suggest the columns the build's next step names (the time
+field and the key fields the plan indexed: user, host, address, the field telling events apart, outcome, by the
+plan's own names) and confirm them with the user; `verify_index` asks before making it.
 Columns are the index's field names, as the plan named them (`user.name`), never the Events paths they come from
 (`EventSource.User.Id`): `verify_index` refuses a column the index lacks, naming the field the plan indexed its path as.
 StreamId and EventId are never shown: they are hidden columns, for the text pane and tracing hits. The query is the
