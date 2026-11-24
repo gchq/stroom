@@ -265,6 +265,67 @@ class TestMappingChanges {
                 .hasMessageContaining("are extracted by 2 entries");
     }
 
+    // Chat 194 (an endpoint log, `<time> <host> <program>[<pid>]: evt=... key=value`): the agent placed prefix2,
+    // the host, at EventSource/Device/HostName with a common change, and the draft's Data 'prefix2' stayed in all 12
+    // rules (a data list in some, fields entries in the catch-all), taking four more builds to remove.
+    @Test
+    void aFieldAChangePlacesTakesItsDataCopiesWithIt() {
+        final Map<String, Object> base = json("""
+                {"common": [{"path": "EventTime/TimeCreated", "field": "time"}],
+                 "events": [{"name": "logon_user", "when": [{"field": "evt", "equals": "logon"}],
+                             "fields": [{"path": "EventDetail/Authenticate/Action", "value": "Logon"}],
+                             "data": ["evt", "prefix2", "prefix3"]},
+                            {"name": "focus_window", "when": [{"field": "evt", "equals": "focus.in"}],
+                             "fields": [{"path": "EventDetail/View/Data", "data_name": "prefix2", "field": "prefix2"},
+                                        {"path": "EventDetail/View/Data", "data_name": "app", "field": "app"}]},
+                            {"name": "relayed", "when": [{"field": "evt", "equals": "relay"}],
+                             "fields": [{"path": "EventSource/Device/HostName", "field": "origin"},
+                                        {"path": "EventDetail/Unknown/Data", "data_name": "prefix2",
+                                         "field": "prefix2"}]},
+                            {"name": "uncatalogued", "catch_all": true,
+                             "fields": [{"path": "EventDetail/Unknown/Data", "data_name": "prefix2",
+                                         "field": "prefix2"},
+                                        {"path": "EventDetail/Unknown/Data", "data_name": "message",
+                                         "field": "message"}]}]}
+                """);
+
+        final MappingChanges.Applied applied = MappingChanges.applyChanges(base, json("""
+                {"common": [{"path": "EventSource/Device/HostName", "field": "prefix2"}]}"""));
+
+        final List<Map<String, Object>> rules = list(applied.merged().get("events"));
+        assertThat(rules.get(0).get("data")).isEqualTo(List.of("evt", "prefix3"));
+        assertThat(ToolJson.dumps(rules.get(1).get("fields"))).doesNotContain("prefix2").contains("\"app\"");
+        // A rule writing the element from another field keeps the Data: there it isn't a copy.
+        assertThat(ToolJson.dumps(rules.get(2).get("fields"))).contains("\"data_name\": \"prefix2\"");
+        assertThat(ToolJson.dumps(rules.get(3).get("fields"))).doesNotContain("prefix2").contains("message");
+        assertThat(applied.done()).containsExactly("common 'EventSource/Device/HostName' added",
+                "'prefix2' is written as EventSource/Device/HostName, so its Data entries were removed (rule "
+                + "logon_user, rule focus_window, rule uncatalogued): the element holds it. Send one back "
+                + "(changes=) only if it is kept on purpose.");
+    }
+
+    @Test
+    void aDataCopyGivenWithThePlacementOrAValueChangedOnTheWayIsKept() {
+        final Map<String, Object> base = json("""
+                {"common": [],
+                 "events": [{"name": "logon", "fields": [
+                     {"path": "EventDetail/Authenticate/Data", "data_name": "user", "field": "user"},
+                     {"path": "EventDetail/Authenticate/Data", "data_name": "host", "field": "host"}]}]}
+                """);
+
+        // The Data given in the same changes is kept on purpose; a user read through a regex changes the value,
+        // so the Data still holds what the element doesn't.
+        final MappingChanges.Applied applied = MappingChanges.applyChanges(base, json("""
+                {"events": [{"name": "logon", "fields": [
+                    {"path": "EventSource/Device/HostName", "field": "host"},
+                    {"path": "EventDetail/Authenticate/Data", "data_name": "host", "field": "host"},
+                    {"path": "EventSource/User/Id", "field": "user", "regex": "\\\\(.*)$"}]}]}"""));
+
+        final String fields = ToolJson.dumps(list(applied.merged().get("events")).getFirst());
+        assertThat(fields).contains("\"data_name\": \"host\"").contains("\"data_name\": \"user\"");
+        assertThat(applied.done()).noneMatch(done -> done.contains("were removed"));
+    }
+
     @ParameterizedTest
     @MethodSource("refused")
     void changesThatCannotApplyAreRefused(final String changes, final String message) {

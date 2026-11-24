@@ -56,7 +56,8 @@ public final class MappingChanges {
     ///                and its `fields` entries are each replaced, added or removed by path and Data name),
     ///                `common` (entries, each replacing the entry with its path and Data name, added, or removed),
     ///                `extract` (entries, each replacing the entry that extracts any of its names, added, or removed
-    ///                with `remove: true`), any other key replacing that key whole.
+    ///                with `remove: true`), any other key replacing that key whole. A field a change writes as
+    ///                it is to an element takes its Data copies with it ([PlacedCopies]).
     /// @return The mapping with the changes merged in, and what each change did.
     /// @throws ToolRefusal if a change can't apply (no name, no path, removing what isn't there).
     public static Applied applyChanges(final Map<String, Object> base, final Object changes) {
@@ -92,6 +93,8 @@ public final class MappingChanges {
                 }
             }
         }
+        // A field these changes place takes its Data copies with it (chat 194: four more builds to remove them).
+        done.addAll(PlacedCopies.afterChanges(merged, given));
         return new Applied(merged, done);
     }
 
