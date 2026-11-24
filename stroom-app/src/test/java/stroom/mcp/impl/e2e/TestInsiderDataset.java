@@ -77,6 +77,16 @@ class TestInsiderDataset {
                 .containsExactlyInAnyOrderElementsOf(first.people().stream().map(Person::id).toList());
     }
 
+    // The reduced dataset's events, pinned: the e2e tests' and eval cases' expectations were written for them. The
+    // draws are rejection-sampled (CPython's randbelow), so a changed range (randint(0, 30) for randint(0, 50), in
+    // 42731549b2) takes another number of draws and changes every event generated after it in a person-day: a
+    // change that is meant must re-run those expectations (TestE2eInsider*, TestEvalCases, the eval references 79
+    // on), then update this.
+    @Test
+    void theReducedDatasetsEventsAreThoseTheExpectationsWereWrittenFor() {
+        assertThat(fingerprint(InsiderDataset.generate(Options.reduced()).acts())).isEqualTo("de49b640/21100");
+    }
+
     @Test
     void everyEventRendersAsADocumentWellFormedXmlAndARawRecord() throws Exception {
         final InsiderDataset reduced = InsiderDataset.generate(Options.reduced());

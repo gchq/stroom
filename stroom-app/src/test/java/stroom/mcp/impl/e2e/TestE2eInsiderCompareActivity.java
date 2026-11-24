@@ -62,8 +62,16 @@ class TestE2eInsiderCompareActivity extends AbstractInsiderE2eTest {
         assertThat(String.valueOf(leaver.get("note"))).contains("never a conclusion about the person");
         assertThat(leaverFindings).contains(",category:" + InsiderDataset.JOB_CATEGORY + ",")
                 .contains(",access:cloud.site,");
+        // The job-site browsing from 1 July: her own (not the source's) category finding from the window's first
+        // week. Her proxy volume isn't asserted to have a change point near 1 July: it steps twice two weeks apart
+        // (everyone's pipeline change on 15 June, then her browsing), so its one change point falls on either by
+        // the data's noise, sized about the threshold (seen after 42731549b2 changed the generator's draws).
+        assertThat(rows(leaverFindings, "category:" + InsiderDataset.JOB_CATEGORY, false)).filteredOn(row ->
+                "week".equals(row[2])).anySatisfy(row -> assertThat(days(LocalDate.parse(row[4].split(" to ")[0]),
+                LocalDate.of(2026, 7, 1))).isLessThanOrEqualTo(4));
+        // The bulk downloads from 8 September: a change point of her own events.
         assertThat(changes(leaverFindings, "events", false)).anySatisfy(date -> assertThat(days(date,
-                LocalDate.of(2026, 7, 1))).isLessThanOrEqualTo(3));
+                LocalDate.of(2026, 9, 8))).isLessThanOrEqualTo(3));
         // The pipeline change (15 June) is the source's, never the leaver's own change.
         assertThat(changes(leaverFindings, "events", false)).noneSatisfy(date -> assertThat(days(date,
                 InsiderDataset.PIPELINE_CHANGE)).isLessThanOrEqualTo(5));
@@ -83,7 +91,11 @@ class TestE2eInsiderCompareActivity extends AbstractInsiderE2eTest {
             assertThat(finding.get("feature")).isEqualTo("events");
             assertThat(String.valueOf(finding.get("window"))).startsWith("2026-06-15");
         });
-        assertThat(String.valueOf(pipeline.get("source_wide"))).contains("2026-06-15");
+        // Told as the source's in the weeks from the change (its first week's own rise of about 8 events a day can
+        // fall under the 10 a finding needs, so which week first shows it is the data's noise).
+        assertThat((List<String>) pipeline.get("source_wide")).anySatisfy(line -> assertThat(LocalDate.parse(
+                line.replaceAll(".*the week from (\\d{4}-\\d{2}-\\d{2}).*", "$1"))).isBetween(
+                InsiderDataset.PIPELINE_CHANGE, LocalDate.of(2026, 7, 13)));
 
         // The approved migration, given as an exception: none of its days flagged.
         final Map<String, Object> migration = compare(loaded, "P20001", "2026-05-04", "2026-05-25", "day",
@@ -165,6 +177,18 @@ class TestE2eInsiderCompareActivity extends AbstractInsiderE2eTest {
             }
         }
         return dates;
+    }
+
+    // The rows of a feature's findings in a findings file, the source's own or the person's.
+    private static List<String[]> rows(final String findings, final String feature, final boolean sourceWide) {
+        final List<String[]> rows = new ArrayList<>();
+        for (final String line : findings.split("\n")) {
+            final String[] cells = line.split(",", -1);
+            if (cells.length > 5 && cells[3].equals(feature) && line.endsWith("," + sourceWide)) {
+                rows.add(cells);
+            }
+        }
+        return rows;
     }
 
     private static long days(final LocalDate a, final LocalDate b) {
