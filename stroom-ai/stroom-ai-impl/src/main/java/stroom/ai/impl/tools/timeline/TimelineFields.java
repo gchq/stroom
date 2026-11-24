@@ -46,16 +46,17 @@ import java.util.regex.Pattern;
 /// for all of a person's accounts) is found the same way, by the convention's `EventSource/User/UserDetails/Id`
 /// (ECS `user.id`); [PersonScope] chooses between it and the logon ids for each index. So are the fields of the
 /// person (or account) an event was done to ([InstructionRules#TARGET_PERSON_FIELD], `TARGET_USER_FIELD`): a User
-/// object of the action, the convention's `EventDetail/*/User/UserDetails/Id` and `EventDetail/*/User/Id` (ECS
-/// `user.target.id`, `user.target.name`).
+/// object of the action, by the convention's `EventDetail/Authorise/User/UserDetails/Id` and
+/// `EventDetail/Authorise/User/Id` (ECS `user.target.id`, `user.target.name`, as it maps the User objects of Create,
+/// Delete and Update too).
 public class TimelineFields {
 
     /// The event-logging paths of what is found, as the conventions map them.
     static final Map<String, String> CONVENTION_PATHS = Map.of(
             InstructionRules.USER_FIELD, "EventSource/User/Id",
             InstructionRules.PERSON_FIELD, "EventSource/User/UserDetails/Id",
-            InstructionRules.TARGET_USER_FIELD, "EventDetail/*/User/Id",
-            InstructionRules.TARGET_PERSON_FIELD, "EventDetail/*/User/UserDetails/Id",
+            InstructionRules.TARGET_USER_FIELD, "EventDetail/Authorise/User/Id",
+            InstructionRules.TARGET_PERSON_FIELD, "EventDetail/Authorise/User/UserDetails/Id",
             InstructionRules.HOST_FIELD, "EventSource/Device/HostName",
             InstructionRules.ACTION_FIELD, "EventDetail/*/Action",
             InstructionRules.EVENT_TYPE_FIELD, "EventDetail/TypeId");

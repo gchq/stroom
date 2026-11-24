@@ -67,8 +67,9 @@ class TestPersonScope {
         public Optional<String> convention(final String name) {
             return Optional.of("field_map:\n  EventSource/User/Id: {name: user.name, type: keyword}\n"
                                + "  EventSource/User/UserDetails/Id: {name: user.id, type: keyword}\n"
-                               + "  EventDetail/*/User/Id: {name: user.target.name, type: keyword}\n"
-                               + "  EventDetail/*/User/UserDetails/Id: {name: user.target.id, type: keyword}\n");
+                               + "  EventDetail/Authorise/User/Id: {name: user.target.name, type: keyword}\n"
+                               + "  EventDetail/Authorise/User/UserDetails/Id: {name: user.target.id, type: "
+                               + "keyword}\n");
         }
     };
     private final TimelineFields fields = new TimelineFields(agentInstructions, dataSourceAccess,

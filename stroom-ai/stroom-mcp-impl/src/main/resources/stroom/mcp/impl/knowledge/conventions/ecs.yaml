@@ -2,9 +2,8 @@
 # Every name here is an ECS field of the type given (tests/test_ecs.py checks them against conventions/ecs_fields.json,
 # the schema Elastic publishes, refreshed by dev/update_ecs.py), and every path is event-logging's; plans that follow
 # this profile are checked against the schema. Only where the meaning is the same: event-logging elements with no
-# clear ECS field (Alert's Severity, text where ECS has a number; LogonType) are left out. Authenticate's User is the
-# account authenticated, the user.target the other actions' User objects are (the same as the actor on a person's own
-# logon, so a tool reading what was done to a person leaves out their own acts).
+# clear ECS field (Alert's Severity, text where ECS has a number; Authenticate's User, the account authenticated, the
+# actor on a person's own logon and the target of a reset; LogonType) are left out.
 name: ecs
 description: Elastic Common Schema field names for the common event-logging paths; every plan checked against the full schema
 structure: nested
@@ -117,11 +116,15 @@ field_map:
   EventSource/User/UserDetails/Role: {name: user.roles, type: keyword}
   # The person, the same for all of their accounts (the user's id where processing decorates it).
   EventSource/User/UserDetails/Id: {name: user.id, type: keyword}
-  # The user an action was done to (a User object of Authorise, Create, Delete or Update, and Authenticate's User:
-  # access granted to them, an account created or changed, a password reset, a failed logon against the account),
-  # beside the user who acted; the person id where processing decorates it.
-  EventDetail/*/User/Id: {name: user.target.name, type: keyword}
-  EventDetail/*/User/UserDetails/Id: {name: user.target.id, type: keyword}
+  # The user an action was done to (a User object of Authorise, Create, Delete or Update: access or a group granted
+  # to them, an account created, removed or changed), beside the user who acted; the person id where processing
+  # decorates it.
+  EventDetail/Authorise/User/Id: {name: user.target.name, type: keyword}
+  EventDetail/Authorise/User/UserDetails/Id: {name: user.target.id, type: keyword}
+  EventDetail/Create/User/Id: {name: user.target.name, type: keyword}
+  EventDetail/Create/User/UserDetails/Id: {name: user.target.id, type: keyword}
+  EventDetail/Delete/User/Id: {name: user.target.name, type: keyword}
+  EventDetail/Delete/User/UserDetails/Id: {name: user.target.id, type: keyword}
   EventDetail/Update/After/User/Id: {name: user.target.name, type: keyword}
   EventDetail/Update/After/User/UserDetails/Id: {name: user.target.id, type: keyword}
   EventDetail/TypeId: {name: event.code, type: keyword}
