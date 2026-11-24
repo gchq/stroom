@@ -638,7 +638,7 @@ final class InsiderDataset {
             cloud(at, "signin", Map.of("country", "RO", "ip", ip, "app", "Office 365"));
             for (int i = 0; i < 20 + random.randint(0, 30); i++) {
                 cloud(at + (i + 2) * 40_000L, "download", Map.of("file", random.choice(List.of("Architecture.pptx",
-                        "Payments API keys.txt", "Roadmap 2027.docx", "Incident review.docx")) , "site",
+                        "Payments API keys.txt", "Roadmap 2027.docx", "Incident review.docx")), "site",
                         "sites/engineering", "size", String.valueOf(random.randint(100_000, 8_000_000))));
             }
             if (day.equals(LocalDate.of(2026, 4, 9))) {
