@@ -35,7 +35,11 @@ final class SkillTemplates {
     static final List<String> NAMES = List.of(
             "user-activity-timeline",
             "x-then-y-by-same-entity",
-            "who-of-group-did-x");
+            "who-of-group-did-x",
+            "activity-comparison",
+            "leaver-review",
+            "privileged-user-review",
+            "alert-triage");
     private static final String ROOT = "skill-templates/";
 
     private SkillTemplates() {
