@@ -18,6 +18,7 @@ package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
+import stroom.docref.DocRef;
 import stroom.lmdb.LmdbLibrary;
 import stroom.lmdb.LmdbLibraryConfig;
 import stroom.lmdb2.LmdbEnv;
@@ -54,6 +55,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SimpleMetrics;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.junit.jupiter.api.AfterEach;
@@ -61,6 +66,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -89,7 +97,6 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestLmdbDataStore.class);
 
-    private ErrorConsumerImpl lastErrorConsumer;
     private ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
 
     private Path tempDir;
@@ -146,7 +153,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 queryKey,
                 componentId,
                 tableSettings,
-                new ExpressionContext(),
+                expressionContext,
                 fieldIndex,
                 Collections.emptyMap(),
                 dataStoreSettings,
@@ -1194,6 +1201,104 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 // Rows here have no stream or event id.
                 DataStoreSettings.createAnalyticStoreSettings().copy().storeLatestEventReference(false).build(),
                 "rule"));
+    }
+
+    @Test
+    void countUniqueLimitTest() {
+        super.countUniqueLimitTest();
+    }
+
+    // The rows of each node are under the limit, but not once they are merged.
+    @Test
+    void countUniqueLimitOfMergedPayloads() throws InterruptedException {
+        expressionContext = ExpressionContext.builder().maxCountUniqueValues(500).build();
+        final TableSettings tableSettings = countUniqueTable();
+        final DataStoreSettings payloadSettings = DataStoreSettings.createPayloadProducerSearchResultStoreSettings();
+        final DataStore node1 = create(tableSettings, payloadSettings);
+        final DataStore node2 = create(tableSettings, payloadSettings);
+        final DataStore merged = createUnlimitedDataStore(tableSettings);
+        addCountUniqueRows(node1, 0, 400);
+        addCountUniqueRows(node2, 200, 600);
+        transferPayloads(node1, merged);
+        transferPayloads(node2, merged);
+
+        assertThat(countUniqueRows(merged, tableSettings)).containsExactlyInAnyOrder(
+                List.of("a", "600", "500", "1600"),
+                List.of("b", "1", "1", "800"));
+        assertThat(lastErrorConsumer.getErrorMessages()).hasSize(1);
+    }
+
+    // A rule's row that already has more values than the limit keeps them, and adds no more. Each opening of the store
+    // logs one warning, as its messages are not shown to anyone.
+    @Test
+    void countUniqueLimitOfARuleAfterReopening() throws InterruptedException {
+        final TableSettings tableSettings = ruleTable(countUniqueTable());
+        final QueryKey queryKey = new QueryKey("rule");
+        final LmdbDataStore first = createRuleStore(queryKey, tableSettings);
+        assertThat(captureWarnings(() -> {
+            addRuleRows(first, 0, 100);
+            first.sync();
+        })).isEmpty();
+        first.getCompletionState().signalComplete();
+        first.getCompletionState().awaitCompletion();
+        first.close();
+
+        expressionContext = ExpressionContext.builder().maxCountUniqueValues(50).build();
+        final LmdbDataStore second = createRuleStore(queryKey, tableSettings);
+        assertThat(captureWarnings(() -> {
+            addRuleRows(second, 90, 150);
+            second.sync();
+        })).singleElement().satisfies(message -> assertThat(message)
+                .contains("limit of 50 unique values", queryKey.toString()));
+        assertThat(getRowValues(second, tableSettings).stream().map(row -> row.subList(1, row.size())))
+                .containsExactlyInAnyOrder(
+                        List.of("a", "150", "100", "320"),
+                        List.of("b", "1", "1", "160"));
+    }
+
+    @ParameterizedTest
+    @EnumSource(SourceType.class)
+    void countUniqueLimitIsLoggedForRules(final SourceType sourceType) {
+        final DocRef owner = new DocRef("AnalyticRule", "rule-uuid", "My rule");
+        expressionContext = ExpressionContext.builder().maxCountUniqueValues(50).build();
+        final TableSettings tableSettings = ruleTable(countUniqueTable());
+        final LmdbDataStore dataStore = record((LmdbDataStore) create(
+                SearchRequestSource.builder().sourceType(sourceType).ownerDocRef(owner).build(),
+                new QueryKey("test"),
+                "0",
+                tableSettings,
+                createResultStoreConfig(),
+                // Rows here have no stream or event id.
+                DataStoreSettings.createAnalyticStoreSettings().copy().storeLatestEventReference(false).build(),
+                "test"));
+        final List<String> logged = captureWarnings(() -> {
+            addRuleRows(dataStore, 0, 100);
+            dataStore.sync();
+        });
+        final boolean rule = sourceType == SourceType.TABLE_BUILDER_ANALYTIC ||
+                             sourceType == SourceType.SCHEDULED_QUERY_ANALYTIC;
+        assertThat(logged).hasSize(rule
+                ? 1
+                : 0);
+        assertThat(logged).allSatisfy(message -> assertThat(message).contains("rule-uuid", "My rule"));
+        assertThat(lastErrorConsumer.getErrorMessages()).hasSize(1);
+    }
+
+    private static List<String> captureWarnings(final Runnable runnable) {
+        final Logger logger = (Logger) LoggerFactory.getLogger(LmdbDataStore.class);
+        final ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            runnable.run();
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+        return appender.list.stream()
+                .filter(event -> event.getLevel().isGreaterOrEqual(Level.WARN))
+                .map(ILoggingEvent::getFormattedMessage)
+                .toList();
     }
 
     @Test

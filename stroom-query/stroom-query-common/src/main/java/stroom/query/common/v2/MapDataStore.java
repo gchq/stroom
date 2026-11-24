@@ -103,6 +103,8 @@ public class MapDataStore implements DataStore {
                 : expressionContext.getDateTimeSettings();
         this.compiledColumns = CompiledColumns.create(expressionContext, columns, fieldIndex, paramMap);
         valueReferenceIndex = compiledColumns.getValueReferenceIndex();
+        valueReferenceIndex.getFunctionWarnings().setConsumer(message ->
+                errorConsumer.add(Severity.WARNING, () -> message));
         this.compiledColumnsArray = compiledColumns.getCompiledColumns();
         final CompiledDepths compiledDepths = new CompiledDepths(this.compiledColumnsArray, tableSettings.showDetail());
         this.compiledSorters = new CompiledSorters<>(compiledDepths, columns);

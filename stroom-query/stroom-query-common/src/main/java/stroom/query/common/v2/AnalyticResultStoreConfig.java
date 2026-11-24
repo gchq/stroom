@@ -39,6 +39,7 @@ public class AnalyticResultStoreConfig extends AbstractResultStoreConfig impleme
                 DEFAULT_MAX_STRING_FIELD_LENGTH,
                 DEFAULT_VALUE_QUEUE_SIZE,
                 DEFAULT_MAX_SORTED_ITEMS,
+                DEFAULT_MAX_COUNT_UNIQUE_VALUES,
                 DEFAULT_LMDB_CONFIG);
     }
 
@@ -50,6 +51,7 @@ public class AnalyticResultStoreConfig extends AbstractResultStoreConfig impleme
                                      @JsonProperty("maxStringFieldLength") final Integer maxStringFieldLength,
                                      @JsonProperty("valueQueueSize") final Integer valueQueueSize,
                                      @JsonProperty("maxSortedItems") final Integer maxSortedItems,
+                                     @JsonProperty("maxCountUniqueValues") final Integer maxCountUniqueValues,
                                      @JsonProperty("lmdb") final ResultStoreLmdbConfig lmdbConfig) {
         super(Objects.requireNonNullElse(maxPutsBeforeCommit, DEFAULT_MAX_PUTS_BEFORE_COMMIT),
                 Objects.requireNonNullElse(offHeapResults, DEFAULT_OFF_HEAP_RESULTS),
@@ -58,6 +60,7 @@ public class AnalyticResultStoreConfig extends AbstractResultStoreConfig impleme
                 Objects.requireNonNullElse(maxStringFieldLength, DEFAULT_MAX_STRING_FIELD_LENGTH),
                 Objects.requireNonNullElse(valueQueueSize, DEFAULT_VALUE_QUEUE_SIZE),
                 Objects.requireNonNullElse(maxSortedItems, DEFAULT_MAX_SORTED_ITEMS),
+                Objects.requireNonNullElse(maxCountUniqueValues, DEFAULT_MAX_COUNT_UNIQUE_VALUES),
                 Objects.requireNonNullElse(lmdbConfig, DEFAULT_LMDB_CONFIG));
     }
 }

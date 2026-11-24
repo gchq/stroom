@@ -16,6 +16,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.query.language.functions.ExpressionContext;
 import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
@@ -34,6 +35,7 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
     static final int DEFAULT_MAX_STRING_FIELD_LENGTH = 1000;
     static final int DEFAULT_VALUE_QUEUE_SIZE = 10_000;
     static final int DEFAULT_MAX_SORTED_ITEMS = 500_000;
+    static final int DEFAULT_MAX_COUNT_UNIQUE_VALUES = ExpressionContext.DEFAULT_MAX_COUNT_UNIQUE_VALUES;
 
     private final int maxPutsBeforeCommit;
     private final boolean offHeapResults;
@@ -42,6 +44,7 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
     private final ByteSize maxPayloadSize;
     private final int maxStringFieldLength;
     private final int maxSortedItems;
+    private final int maxCountUniqueValues;
 
     private final ResultStoreLmdbConfig lmdbConfig;
 
@@ -52,6 +55,7 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
                               final int maxStringFieldLength,
                               final int valueQueueSize,
                               final int maxSortedItems,
+                              final int maxCountUniqueValues,
                               final ResultStoreLmdbConfig lmdbConfig) {
         this.maxPutsBeforeCommit = maxPutsBeforeCommit;
         this.offHeapResults = offHeapResults;
@@ -60,6 +64,7 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
         this.maxStringFieldLength = maxStringFieldLength;
         this.valueQueueSize = valueQueueSize;
         this.maxSortedItems = maxSortedItems;
+        this.maxCountUniqueValues = maxCountUniqueValues;
         this.lmdbConfig = lmdbConfig;
     }
 
@@ -108,6 +113,20 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
         return maxSortedItems;
     }
 
+    /// Gets the most unique values that `countUnique()` counts for a row.
+    ///
+    /// @return The most unique values.
+    @Min(1)
+    @JsonPropertyDescription("The most unique values that countUnique() counts for each group. It stores every " +
+            "value that it counts, so a higher limit can make results much larger and slower to create. The count " +
+            "of a group that has more values stays at the limit, with a warning that suggests countUniqueApprox(). " +
+            "A rule that tests for a count above the limit will never match. A table builder rule keeps the limit " +
+            "that its store was opened with until the node is restarted.")
+    @JsonProperty("maxCountUniqueValues")
+    public int getMaxCountUniqueValues() {
+        return maxCountUniqueValues;
+    }
+
     @JsonProperty("lmdb")
     public ResultStoreLmdbConfig getLmdbConfig() {
         return lmdbConfig;
@@ -123,6 +142,7 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
                 ", maxPayloadSize=" + maxPayloadSize +
                 ", maxStringFieldLength=" + maxStringFieldLength +
                 ", maxSortedItems=" + maxSortedItems +
+                ", maxCountUniqueValues=" + maxCountUniqueValues +
                 ", lmdbConfig=" + lmdbConfig +
                 '}';
     }

@@ -33,6 +33,7 @@ public class ValueReferenceIndex {
     private final SortedSet<Integer> windowShifts = new TreeSet<>();
     private boolean usesWindows;
     private final WindowRange windowRange = new WindowRange();
+    private final FunctionWarnings functionWarnings = new FunctionWarnings();
 
     /// Gets the range of time windows that hold real rows, which the functions that read other
     /// windows are given and a result store sets.
@@ -40,6 +41,13 @@ public class ValueReferenceIndex {
     /// @return The range, which is shared by everything compiled with this index.
     public WindowRange getWindowRange() {
         return windowRange;
+    }
+
+    /// Gets the warnings that functions give as they work, which a result store says what to do with.
+    ///
+    /// @return The warnings, which are shared by everything compiled with this index.
+    public FunctionWarnings getFunctionWarnings() {
+        return functionWarnings;
     }
 
     /// Records that a function reads the values of another time window, so that rows are copied

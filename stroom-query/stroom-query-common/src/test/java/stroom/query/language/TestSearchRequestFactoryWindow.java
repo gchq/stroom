@@ -186,7 +186,7 @@ class TestSearchRequestFactoryWindow {
     @Test
     void mostCopiesOfEachEventIsConfigured() {
         final SearchResultStoreConfig config = new SearchResultStoreConfig(
-                null, null, null, null, null, null, null, null, null, null, null, 10);
+                null, null, null, null, null, null, null, null, null, null, null, 10, null);
         final SearchRequestFactory limited = new SearchRequestFactory(
                 (keywordGroup, parentTableSettings) -> null,
                 MockDataSourceResolver.getInstance(),

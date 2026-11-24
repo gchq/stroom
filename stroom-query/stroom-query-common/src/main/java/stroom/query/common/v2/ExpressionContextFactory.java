@@ -58,7 +58,7 @@ public class ExpressionContextFactory {
 
     public ExpressionContext createContext(final SearchRequestSource searchRequestSource,
                                            DateTimeSettings dateTimeSettings) {
-        final int maxStringLength = getMaxStringLength(searchRequestSource);
+        final AbstractResultStoreConfig resultStoreConfig = getResultStoreConfig(searchRequestSource);
 
         if (dateTimeSettings == null) {
             dateTimeSettings = DateTimeSettings.builder().build();
@@ -70,7 +70,8 @@ public class ExpressionContextFactory {
         }
 
         return ExpressionContext.builder()
-                .maxStringLength(maxStringLength)
+                .maxStringLength(resultStoreConfig.getMaxStringFieldLength())
+                .maxCountUniqueValues(resultStoreConfig.getMaxCountUniqueValues())
                 .dateTimeSettings(dateTimeSettings)
                 .stateProvider(stateProviderProvider.get())
                 .aiProvider(aiProviderProvider.get())
@@ -78,16 +79,20 @@ public class ExpressionContextFactory {
     }
 
     public int getMaxStringLength(final SearchRequestSource searchRequestSource) {
+        return getResultStoreConfig(searchRequestSource).getMaxStringFieldLength();
+    }
+
+    private AbstractResultStoreConfig getResultStoreConfig(final SearchRequestSource searchRequestSource) {
         if (searchRequestSource == null) {
-            return searchResultStoreConfigProvider.get().getMaxStringFieldLength();
+            return searchResultStoreConfigProvider.get();
         }
 
         switch (searchRequestSource.getSourceType()) {
             case SCHEDULED_QUERY_ANALYTIC, TABLE_BUILDER_ANALYTIC -> {
-                return analyticResultStoreConfigProvider.get().getMaxStringFieldLength();
+                return analyticResultStoreConfigProvider.get();
             }
             default -> {
-                return searchResultStoreConfigProvider.get().getMaxStringFieldLength();
+                return searchResultStoreConfigProvider.get();
             }
         }
     }

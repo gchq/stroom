@@ -28,6 +28,7 @@ import stroom.query.api.Sort;
 import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableSettings;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValString;
@@ -36,6 +37,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SimpleMetrics;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.Severity;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -55,6 +57,10 @@ abstract class AbstractDataStoreTest {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDataStoreTest.class);
 
     private final List<DataStore> createdStores = new CopyOnWriteArrayList<>();
+
+    // The context of stores that are created, and the messages of the last one that was.
+    ExpressionContext expressionContext = new ExpressionContext();
+    ErrorConsumerImpl lastErrorConsumer;
 
     @BeforeAll
     static void beforeAll() {
@@ -279,6 +285,21 @@ abstract class AbstractDataStoreTest {
         assertThat(countUniqueRows(dataStore, tableSettings)).containsExactlyInAnyOrder(
                 List.of("a", "500", "500", "1000"),
                 List.of("b", "1", "1", "500"));
+    }
+
+    /// Check that exact counts of unique values stop at their limit, with one warning.
+    void countUniqueLimitTest() {
+        expressionContext = ExpressionContext.builder().maxCountUniqueValues(100).build();
+        final TableSettings tableSettings = countUniqueTable();
+        final DataStore dataStore = createUnlimitedDataStore(tableSettings);
+        addCountUniqueRows(dataStore, 0, 500);
+        assertThat(countUniqueRows(dataStore, tableSettings)).containsExactlyInAnyOrder(
+                List.of("a", "500", "100", "1000"),
+                List.of("b", "1", "1", "500"));
+        assertThat(lastErrorConsumer.getErrorMessages()).singleElement().satisfies(message -> {
+            assertThat(message.getSeverity()).isEqualTo(Severity.WARNING);
+            assertThat(message.getMessage()).contains("limit of 100 unique values", "countUniqueApprox()");
+        });
     }
 
     /// Create a table of the unique values in each group, estimated and exact, and how many rows there are.

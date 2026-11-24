@@ -43,6 +43,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.Severity;
 
 import jakarta.inject.Provider;
 
@@ -95,6 +96,13 @@ public class FlatResultCreator implements ResultCreator {
         this.defaultMaxResultsSizes = defaultMaxResultsSizes;
         this.cacheLastResult = cacheLastResult;
         this.executorProvider = executorProvider;
+    }
+
+    // This is used again each time the result is asked for, so a warning must not stop later ones.
+    private boolean hasFailed() {
+        return errorConsumer.getErrorMessages()
+                .stream()
+                .anyMatch(message -> message.getSeverity().greaterThanOrEqual(Severity.ERROR));
     }
 
     private List<Object> toNodeKey(final Map<Integer, List<Column>> groupColumns, final Key key) {
@@ -161,7 +169,7 @@ public class FlatResultCreator implements ResultCreator {
                 .toList();
 
         final FlatResultBuilder resultBuilder = FlatResult.builder();
-        if (!errorConsumer.hasErrors()) {
+        if (!hasFailed()) {
             try {
                 // Map data.
                 DataStore mappedDataStore = dataStore;

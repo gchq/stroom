@@ -16,6 +16,7 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.language.functions.ref.FunctionWarnings;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValListReference;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
@@ -41,12 +42,22 @@ class CountUnique extends AbstractFunction implements AggregateFunction {
 
     static final String NAME = "countUnique";
 
+    private final int maxValues;
     private Generator gen;
     private Function function;
     private ValListReference valListReference;
+    private FunctionWarnings functionWarnings;
 
-    public CountUnique(final String name) {
+    /// Create the function.
+    ///
+    /// @param context Gives the most unique values to count, or null for the default.
+    /// @param name    The name the function was called by.
+    public CountUnique(final ExpressionContext context,
+                       final String name) {
         super(name, 1, 1);
+        maxValues = context == null
+                ? ExpressionContext.DEFAULT_MAX_COUNT_UNIQUE_VALUES
+                : context.getMaxCountUniqueValues();
     }
 
     @Override
@@ -73,6 +84,7 @@ class CountUnique extends AbstractFunction implements AggregateFunction {
     @Override
     public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
         valListReference = valueReferenceIndex.addValList(name);
+        functionWarnings = valueReferenceIndex.getFunctionWarnings();
         super.addValueReferences(valueReferenceIndex);
     }
 
@@ -83,7 +95,7 @@ class CountUnique extends AbstractFunction implements AggregateFunction {
         }
 
         final Generator childGenerator = function.createGenerator();
-        return new Gen(childGenerator, valListReference);
+        return new Gen(childGenerator, valListReference, maxValues, functionWarnings);
     }
 
     @Override
@@ -107,11 +119,21 @@ class CountUnique extends AbstractFunction implements AggregateFunction {
     private static final class Gen extends AbstractSingleChildGenerator {
 
         private final ValListReference valListReference;
+        private final int maxValues;
+        private final FunctionWarnings functionWarnings;
+        private final String limitMessage;
 
         Gen(final Generator childGenerator,
-            final ValListReference valListReference) {
+            final ValListReference valListReference,
+            final int maxValues,
+            final FunctionWarnings functionWarnings) {
             super(childGenerator);
             this.valListReference = valListReference;
+            this.maxValues = maxValues;
+            this.functionWarnings = functionWarnings;
+            this.limitMessage = NAME + "() stopped counting at its limit of " + maxValues +
+                                " unique values for one or more groups. Use " + CountUniqueApprox.NAME +
+                                "() to estimate higher counts.";
         }
 
         @Override
@@ -120,11 +142,21 @@ class CountUnique extends AbstractFunction implements AggregateFunction {
             final Val val = childGenerator.eval(storedValues, null);
             if (val.type().isValue()) {
                 final List<Val> list = valListReference.get(storedValues);
-                if (!list.contains(val)) {
+                if (!list.contains(val) && checkLimit(list)) {
                     list.add(val);
                     valListReference.set(storedValues, list);
                 }
             }
+        }
+
+        // Find out if there is room for another value, and warn if not. A row that was stored with a higher limit can
+        // already have more values than this one, which it keeps.
+        private boolean checkLimit(final List<Val> list) {
+            if (list.size() < maxValues) {
+                return true;
+            }
+            functionWarnings.warn(limitMessage);
+            return false;
         }
 
         @Override
@@ -140,6 +172,10 @@ class CountUnique extends AbstractFunction implements AggregateFunction {
             boolean changed = false;
             for (final Val value : newList) {
                 if (!existingList.contains(value)) {
+                    if (!checkLimit(existingList)) {
+                        // None of the other values can be added either.
+                        break;
+                    }
                     existingList.add(value);
                     changed = true;
                 }

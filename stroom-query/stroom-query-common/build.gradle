@@ -49,5 +49,6 @@ dependencies {
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.bundles.common.test.implementation
+    testImplementation libs.logback.classic
     testRuntimeOnly libs.bundles.common.test.runtime
 }
