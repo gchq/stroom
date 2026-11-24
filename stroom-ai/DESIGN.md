@@ -1734,7 +1734,8 @@ identities, and holds it as Stroom reference data)
 * Change points are read against these dates ("breadth up threefold from 12 April, 41 days before the leaving
   date").
 
-**The record per person**
+**The record per person** (parked for the future, user 2026-11-24: the ledger, the risk score over it, exceptions and
+verdicts, and cases in annotations; recorded here so it can be picked up as designed)
 
 * **Findings ledger, as events**: each finding (person, date, indicator, weight, evidence links to streams and events,
   the query and parameters that produced it, who or what raised it) is an Events XML record in a findings feed, a
@@ -1786,7 +1787,7 @@ threat-hunting evals are.
 
 **Proposed order**: the Network object fix and the empty-window hint; the dataset generator; wider correlation keys,
 spans bounded by a key, activities for pairs; the reference data lookup; `compare_activity` and its template skills;
-categories; the findings ledger, risk score and annotation cases; the access graph; location.
+categories; the access graph; location. Parked: the findings ledger, risk score, exceptions and annotation cases.
 
 ### Stop and Elasticsearch errors (built 2026-11-16)
 
@@ -5987,4 +5988,5 @@ behaviour; the settled ones are listed here with the section that records them.
 | An Elasticsearch TLS node in CI | Open | The TLS tests skip without one. |
 | HTML bodies to plain text (`html_text` transform) | Future (2026-11-23) | See [HTML bodies to plain text](#html-bodies-to-plain-text-future-2026-11-23). |
 | Skills run by analytic rules (per detection or scheduled; typed parameters, declared output) | Future (2026-11-24) | See [Skills run by analytic rules](#skills-run-by-analytic-rules-future-2026-11-24). |
-| Insider risk: comparison across windows, findings ledger, annotation cases | Proposed (2026-11-24) | See [Insider risk](#insider-risk-patterns-anomalies-and-a-record-per-person-proposed-2026-11-24). |
+| Insider risk: comparison across windows, reference data context | Proposed (2026-11-24) | See [Insider risk](#insider-risk-patterns-anomalies-and-a-record-per-person-proposed-2026-11-24). |
+| Insider risk: the record per person (findings ledger, risk score, exceptions and verdicts, annotation cases) | Parked (2026-11-24) | See [Insider risk](#insider-risk-patterns-anomalies-and-a-record-per-person-proposed-2026-11-24), "The record per person". |
