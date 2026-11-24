@@ -2823,12 +2823,17 @@ offered in modes: AGENT, ASK, PLAN
 
 ### Description
 
-Proposes standing instructions for a folder: the text of its AGENTS doc, which applies to the folder and everything below it. The user is shown a diff with a 'Review and apply' button; nothing changes until they apply it (to the doc's editor, unsaved, for them to save; or, for a folder with no AGENTS doc, by creating and saving one). Keep what the doc says already. Short, concrete rules, one per bullet; the sections the tools apply themselves are '## Required imports', '## Component templates', '## Documentation' and '## Fields'. Draft rules from instruction_evidence's repeated choices or from what the user said they always want, and read get_instructions for the folder first (its guide='agent-instructions' says how the sections are written).
+Proposes standing instructions for a folder: the text of its AGENTS doc, which applies to the folder and everything below it. The user is shown a diff with a 'Review and apply' button; nothing changes until they apply it (to the doc's editor, unsaved, for them to save; or, for a folder with no AGENTS doc, by creating and saving one). Keep what the doc says already. Short, concrete rules, one per bullet; the sections the tools apply themselves are '## Required imports', '## Component templates', '## Documentation' and '## Fields'. Draft rules from instruction_evidence's repeated choices or from what the user said they always want, and read get_instructions for the folder first (its guide='agent-instructions' says how the sections are written). The proposal is checked as check_instructions checks it. action=draft drafts the folder's '## Fields' lines from the indexes there and what the user said (fields), asking only what they alone know; then propose the draft.
 
 ### Parameters
 
 {
   "properties" : {
+    "action" : {
+      "description" : "propose (the default) or draft.",
+      "enum" : [ "propose", "draft" ],
+      "type" : "string"
+    },
     "edits" : {
       "description" : "Replacements made to the folder's existing doc, in order. Give this or markdown, not both.",
       "items" : {
@@ -2847,20 +2852,34 @@ Proposes standing instructions for a folder: the text of its AGENTS doc, which a
       },
       "type" : "array"
     },
+    "fields" : {
+      "description" : "draft: what the user said holds each thing, a 'key: field' each, e.g. 'user: actor.login'.",
+      "items" : {
+        "type" : "string"
+      },
+      "type" : "array"
+    },
     "folder" : {
       "description" : "The folder, by UUID or Explorer path (e.g. '/Feeds/Events/Acme'). The doc proposed is the one directly in it.",
       "type" : "string"
+    },
+    "keys" : {
+      "description" : "draft: keys to give a line even if nothing is found, e.g. 'host'.",
+      "items" : {
+        "type" : "string"
+      },
+      "type" : "array"
     },
     "markdown" : {
       "description" : "The doc's whole proposed text. Give this or edits, not both (a new doc needs this).",
       "type" : "string"
     },
     "summary" : {
-      "description" : "A sentence saying what the change does and why, citing the chats it comes from; shown with the diff.",
+      "description" : "propose (required): a sentence saying what the change does and why, citing the chats it comes from; shown with the diff.",
       "type" : "string"
     }
   },
-  "required" : [ "folder", "summary" ],
+  "required" : [ "folder" ],
   "type" : "object"
 }
 

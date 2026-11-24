@@ -173,6 +173,47 @@ public final class InstructionChecks {
                 : joined;
     }
 
+    /// A doc with `## Fields` lines given anew: each replaces the doc's line for its key (the one in force, the last),
+    /// or is added at the end of its first `## Fields` section, made at the end of the doc if it has none.
+    ///
+    /// @param text  The doc's text.
+    /// @param lines The lines, by the key the tools know (e.g. `user`), each as written, e.g. `- user: actor.login`.
+    /// @return The doc with them.
+    public static String withFieldLines(final String text, final Map<String, String> lines) {
+        final List<String> out = new ArrayList<>(lines(text));
+        final Map<String, Integer> at = new LinkedHashMap<>();
+        for (final Section section : sections(out)) {
+            if (!InstructionRules.FIELDS_SECTION.equals(section.typed()) || !section.first()) {
+                continue;
+            }
+            for (int i = section.start(); i < section.end(); i++) {
+                final Matcher bullet = InstructionRules.BULLET.matcher(out.get(i));
+                final String key = bullet.matches()
+                        ? InstructionRules.FIELDS.get(InstructionRules.normaliseKey(bullet.group(1)))
+                        : null;
+                if (key != null) {
+                    at.put(key, i);
+                }
+            }
+        }
+        final List<String> added = new ArrayList<>();
+        lines.forEach((key, line) -> {
+            final Integer index = at.get(key);
+            if (index == null) {
+                added.add(line);
+            } else {
+                out.set(index, line);
+            }
+        });
+        if (!added.isEmpty()) {
+            addToSection(out, InstructionRules.FIELDS_SECTION, added);
+        }
+        final String joined = String.join("\n", out);
+        return NullSafe.string(text).endsWith("\n") || joined.endsWith("\n")
+                ? joined.stripTrailing() + "\n"
+                : joined;
+    }
+
     // ------------------------------------------------------------------------------------------------
     // The sections the tools read
 

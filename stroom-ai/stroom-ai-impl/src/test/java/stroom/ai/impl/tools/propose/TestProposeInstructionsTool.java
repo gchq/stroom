@@ -19,18 +19,31 @@ package stroom.ai.impl.tools.propose;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.UserActions;
 import stroom.ai.impl.tools.ToolCall;
+import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolCalls;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolRunContext;
+import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.instructions.AgentInstructions;
+import stroom.ai.impl.tools.instructions.AgentInstructions.InstructionDoc;
+import stroom.ai.impl.tools.instructions.InstructionChecks;
+import stroom.ai.impl.tools.instructions.InstructionChecks.Facts;
+import stroom.ai.impl.tools.instructions.InstructionChecks.IndexFacts;
+import stroom.ai.impl.tools.instructions.InstructionChecks.PlanField;
+import stroom.ai.impl.tools.instructions.InstructionDraft;
+import stroom.ai.impl.tools.instructions.InstructionFacts;
+import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.util.json.JsonUtil;
 
+import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -41,6 +54,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,6 +71,8 @@ class TestProposeInstructionsTool {
     private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
     private final ToolRunContext context = new ToolRunContext(null, null, () -> false);
     private final List<Map<String, Object>> offered = new ArrayList<>();
+    private final List<Map<String, Object>> asked = new ArrayList<>();
+    private ElicitResult answer;
     private ProposeInstructionsTool tool;
 
     @BeforeEach
@@ -118,15 +134,36 @@ class TestProposeInstructionsTool {
     }
 
     @Test
-    void aTypedSectionLineTheToolsWouldLeaveOutIsPointedOut() {
+    void aTypedSectionLineTheToolsWouldLeaveOutIsPointedOutWithItsFix() {
         final String result = run(Map.of("folder", "/Feeds/Acme", "markdown",
                 "## Required imports\n\n- translations: Stream-Meta-V1\n- indexng: Common-Index-V1\n"));
 
-        assertThat(result).contains("The tools will leave these lines out",
-                        "'- indexng: Common-Index-V1' names none the tools know", "propose the corrected text again")
+        assertThat(result).contains("Its checks (as check_instructions gives them; if a problem is a slip, propose "
+                                    + "the corrected text again",
+                        "- Problem (unknown_key): '## Required imports' line '- indexng: Common-Index-V1' names no "
+                        + "stage the tools know, so they leave it out. Fix: replace it with '- indexing: "
+                        + "Common-Index-V1'.",
+                        "The text with the problems' fixes applied:\n## Required imports\n\n- translations: "
+                        + "Stream-Meta-V1\n- indexing: Common-Index-V1\n")
                 .doesNotContain("translations: Stream-Meta-V1' names");
-        // Still offered: it may be a note.
+        // Still offered: the user decides.
         assertThat(takeUserActions()).hasSize(1);
+    }
+
+    @Test
+    void aProposalIsCheckedAgainstTheIndexesWhereItWouldApply() {
+        withFacts(new Facts(List.of(), List.of(new IndexFacts("Endpoint", "/Feeds/Acme", Set.of("actor.login"),
+                Map.of(), Map.of()))));
+
+        final String result = run(Map.of("folder", "/Feeds/Acme", "markdown", "## Notes\n- user: actor.login\n"));
+
+        assertThat(result).contains("- Problem (misplaced_fields): '- user: actor.login' under '## Notes'",
+                "The text with the problems' fixes applied:\n## Notes\n\n## Fields\n\n- user: actor.login\n");
+    }
+
+    @Test
+    void aCleanProposalSaysNothingOfChecks() {
+        assertThat(run(Map.of("folder", "/Feeds/Acme", "markdown", PROPOSED))).doesNotContain("Its checks");
     }
 
     @Test
@@ -135,6 +172,70 @@ class TestProposeInstructionsTool {
 
         assertThat(run(Map.of("folder", "/Feeds/Acme", "markdown", SAVED))).contains("nothing to propose");
         assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void aDraftUsesWhatTheUserSaidAndTheIndexPlansAskingOnlyWhereTheyDiffer() {
+        withFacts(new Facts(List.of(), List.of(
+                new IndexFacts("Endpoint", "/Feeds/Acme", Set.of("actor.login", "user.name", "host.name"), Map.of(
+                        InstructionRules.USER_FIELD, new PlanField("actor.login", "Endpoint indexing"),
+                        InstructionRules.HOST_FIELD, new PlanField("host.name", "Endpoint indexing")), Map.of()),
+                new IndexFacts("Proxy", "/Feeds/Acme/Proxy", Set.of("UserId", "user.name"), Map.of(
+                        InstructionRules.USER_FIELD, new PlanField("UserId", "Proxy indexing")), Map.of(
+                        InstructionRules.USER_FIELD, "user.name")))));
+        answer = new ElicitResult(ElicitResult.Action.ACCEPT, Map.of("q1", "UserId"));
+
+        final String result = runDraft(Map.of("folder", "/Feeds/Acme", "action", "draft", "fields",
+                List.of("user: actor.login")));
+
+        // Endpoint's user was said; its host is the plan's; Proxy's plan and the convention differ, so it is asked.
+        assertThat(asked).singleElement().satisfies(form -> assertThat(form.toString())
+                .contains("Index Proxy: which field holds the user?", "UserId (the index plan of 'Proxy indexing')",
+                        "user.name (a field convention)", InstructionDraft.LEAVE_OUT));
+        assertThat(result).startsWith("A draft of the AGENTS doc in /Feeds/Acme (a new doc): - user: actor.login, "
+                                      + "UserId; - host: host.name.\nIts checks:\nNo problems or suggestions.")
+                .endsWith("# Standing instructions\n\n## Fields\n\n- user: actor.login, UserId\n- host: "
+                          + "host.name\n");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void aDraftChangesTheLinesOfTheFoldersDoc() {
+        withAgentsDoc(SAVED + "\n## Fields\n- user: UserId\n");
+        withFacts(new Facts(List.of(new InstructionDoc(AGENTS, "/Feeds/Acme", SAVED + "\n## Fields\n- user: "
+                                                                               + "UserId\n", List.of())),
+                List.of(new IndexFacts("Endpoint", "/Feeds/Acme", Set.of("actor.login", "UserId"), Map.of(),
+                        Map.of()))));
+
+        final String result = runDraft(Map.of("folder", "/Feeds/Acme", "action", "draft", "fields",
+                List.of("user: actor.login")));
+
+        assertThat(result).contains("(its doc with the lines changed): - user: actor.login.")
+                .endsWith(SAVED + "\n## Fields\n- user: actor.login\n");
+    }
+
+    @Test
+    void withoutFormsADraftGivesTheQuestionsToAskInTheChat() {
+        withFacts(new Facts(List.of(), List.of(new IndexFacts("Endpoint", "/Feeds/Acme", Set.of("actor.login"),
+                Map.of(), Map.of()))));
+
+        final String result = runDraft(Map.of("folder", "/Feeds/Acme", "action", "draft", "keys", List.of("user")));
+
+        assertThat(result).isEqualTo("The user can't be asked in a form now. Ask them in the chat, then draft again "
+                                     + "with fields ('key: field' each) from their answers:\n- Which field holds the "
+                                     + "user? (as the indexes name it; blank to leave it out)");
+    }
+
+    @Test
+    void aDraftRefusesAKeyTheToolsDontKnow() {
+        withFacts(new Facts(List.of(), List.of()));
+
+        assertThat(runDraft(Map.of("folder", "/Feeds/Acme", "action", "draft", "fields", List.of("usr: x"))))
+                .startsWith("Error: 'usr: x' isn't 'key: field'");
+        assertThat(runDraft(Map.of("folder", "/Feeds/Acme", "action", "draft", "keys", List.of("nope"))))
+                .isEqualTo("Error: 'nope' is no key the tools know.");
+        assertThat(runDraft(Map.of("folder", "/Feeds/Acme", "action", "draft")))
+                .startsWith("Nothing to draft for /Feeds/Acme");
     }
 
     @Test
@@ -148,6 +249,43 @@ class TestProposeInstructionsTool {
                 .docRef(AGENTS).build()));
         Mockito.when(documentAccess.read(AGENTS, DocumentationDoc.class)).thenReturn(Optional.of(
                 DocumentationDoc.builder().uuid(AGENTS.getUuid()).name(AGENTS.getName()).data(text).build()));
+    }
+
+    private void withFacts(final Facts facts) {
+        final InstructionFacts instructionFacts = Mockito.mock(InstructionFacts.class);
+        Mockito.when(instructionFacts.docs(Mockito.any(), Mockito.anyString())).thenReturn(facts.docs());
+        Mockito.when(instructionFacts.gather(Mockito.anyList(), Mockito.anyString())).thenReturn(facts);
+        Mockito.when(instructionFacts.checkDraft(Mockito.any(), Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyString())).thenAnswer(invocation -> InstructionChecks.check(invocation.getArgument(2),
+                invocation.getArgument(3), facts, true));
+        tool.setInstructionFacts(instructionFacts);
+    }
+
+    // A draft call, in a chat whose user answers a form with the answer set (none: no form can be shown).
+    private String runDraft(final Map<String, Object> arguments) {
+        final ToolCallContext inChat = ToolCallContext.builder(ToolSession.chat(CHAT))
+                .workspace(new SessionWorkspace(workspace, CHAT))
+                .runContext(context)
+                .userQuestions(new UserQuestions() {
+                    @Override
+                    public boolean canAsk() {
+                        return answer != null;
+                    }
+
+                    @Override
+                    public ElicitResult ask(final String toolName,
+                                            final String callId,
+                                            final String intro,
+                                            final Map<String, Object> form) {
+                        asked.add(form);
+                        return answer;
+                    }
+                })
+                .build();
+        final ToolResult result = context.run(() -> tool.execute(new ToolCall("c1", ProposeInstructionsTool.NAME,
+                JsonUtil.writeValueAsString(arguments)), inChat));
+        result.userActions().forEach(action -> offered.add(action.toMap()));
+        return result.text();
     }
 
     private String run(final Map<String, Object> arguments) {
