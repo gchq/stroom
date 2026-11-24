@@ -140,6 +140,26 @@ class TestPersonScope {
     }
 
     @Test
+    void aPersonIdAloneWhereTheIndexHasOnlyAUserFieldSaysToGiveItAsALogonId() {
+        // Chat 195: compare_activity with person ssato (a logon id) and userField user.name, but no logonIds.
+        final Scope named = PersonScope.resolve(fields, SESSION, PROXY, "ssato", List.of(), List.of(),
+                List.of("user.name"), Set.of("user.name", "host.name")::contains);
+        assertThat(named.usable()).isFalse();
+        assertThat(named.leftOut()).contains("no field holding the person id",
+                "Its user field user.name holds logon ids: if 'ssato' is a logon id, call again with "
+                + "logonIds: [\"ssato\"] (a person id isn't taken as a logon id unasked)");
+
+        // A user field found by convention says so too.
+        assertThat(resolve("ssato", List.of(), List.of(), Set.of("user.name")).leftOut())
+                .contains("Its user field user.name holds logon ids", "logonIds: [\"ssato\"]");
+
+        // No user field either: nothing to give logon ids for.
+        assertThat(resolve("ssato", List.of(), List.of(), Set.of("host.name")).leftOut())
+                .contains("no field holding the person id")
+                .doesNotContain("logonIds");
+    }
+
+    @Test
     void closeVariantsDifferByDomainOrCaseOnly() {
         assertThat(PersonScope.variants(List.of("alex.chen", "adm-achen"),
                 List.of("CORP\\alex.chen", "Alex.Chen@corp.example", "alex.chen", "alex.chang", "ADM-ACHEN",

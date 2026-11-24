@@ -78,9 +78,8 @@ public final class PersonScope {
                 return new Scope(By.PERSON, personField.get(), List.of(personId), null);
             }
             if (logons.isEmpty()) {
-                return new Scope(null, null, List.of(), "no field holding the person id was found (a ## Fields "
-                                                        + "'person:' line in the AGENTS doc names it), and no "
-                                                        + "logon ids were given to fall back on");
+                return new Scope(null, null, List.of(), noPersonField(fields, session, index, personId, userFields,
+                        has));
             }
         }
         if (logons.isEmpty()) {
@@ -91,6 +90,24 @@ public final class PersonScope {
         return userField
                 .map(found -> new Scope(By.LOGON, found, logons, null))
                 .orElseGet(() -> new Scope(null, null, List.of(), "no field holding the user was found"));
+    }
+
+    // Why an index with no person field can't be read for a person id alone: where it has a user field (the call's,
+    // or one found), the call to make, the person id given as a logon id only if it is one (never taken as one
+    // unasked).
+    private static String noPersonField(final TimelineFields fields,
+                                        final ToolSession session,
+                                        final DocRef index,
+                                        final String personId,
+                                        final List<String> userFields,
+                                        final Predicate<String> has) {
+        final String why = "no field holding the person id was found (a ## Fields 'person:' line in the AGENTS doc "
+                           + "names it), and no logon ids were given to fall back on";
+        return fields.find(session, index, InstructionRules.USER_FIELD, NullSafe.list(userFields), has)
+                .map(userField -> why + ". Its user field " + userField.field() + " holds logon ids: if '"
+                                  + personId + "' is a logon id, call again with logonIds: [\"" + personId
+                                  + "\"] (a person id isn't taken as a logon id unasked)")
+                .orElse(why);
     }
 
     /// Chooses whose events, done to them, to read in one index: those whose target field (the person or account
