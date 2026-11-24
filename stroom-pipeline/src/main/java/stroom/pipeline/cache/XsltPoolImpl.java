@@ -26,6 +26,7 @@ import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.pipeline.xslt.XsltImports;
 import stroom.pipeline.xsltfunctions.StroomXsltFunctionLibrary;
 import stroom.security.api.SecurityContext;
 import stroom.util.entityevent.EntityAction;
@@ -54,14 +55,16 @@ import javax.xml.transform.stream.StreamSource;
 @Singleton
 @EntityEventHandler(
         type = XsltDoc.TYPE,
-        action = {EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
+        action = {EntityAction.CREATE, EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
 class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implements XsltPool, EntityEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(XsltPoolImpl.class);
     private static final ElementId ELEMENT_ID = new ElementId(XsltPool.class.getSimpleName());
 
+    private final Provider<XsltConfig> xsltConfigProvider;
     private final URIResolver uriResolver;
     private final Provider<StroomXsltFunctionLibrary> stroomXsltFunctionLibraryProvider;
+    private volatile CurrentSettings currentSettings;
 
     @Inject
     XsltPoolImpl(final CacheManager cacheManager,
@@ -76,6 +79,7 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
                 () -> xsltConfigProvider.get().getCacheConfig(),
                 documentPermissionCache,
                 securityContext);
+        this.xsltConfigProvider = xsltConfigProvider;
         this.uriResolver = uriResolver;
         this.stroomXsltFunctionLibraryProvider = stroomXsltFunctionLibraryProvider;
     }
@@ -87,7 +91,16 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
                                                                    final List<PipelineReference> pipelineReferences,
                                                                    final boolean usePool) {
         // Get the item from the pool.
-        final PoolItem<StoredXsltExecutable> poolItem = super.borrowObject(k, usePool);
+        PoolItem<StoredXsltExecutable> poolItem = super.borrowObject(k, usePool);
+
+        // A pooled XSLT compiled with other security settings, e.g. while secure mode was off, is dropped and
+        // another borrowed. Each idle copy is dropped as it is found, so a new copy compiled with the current
+        // settings (by this or another thread) is kept. A copy made without the pool is always new.
+        while (usePool && isStale(poolItem)) {
+            LOGGER.debug("Recompiling {} as the XSLT security settings have changed", k);
+            discardObject(poolItem);
+            poolItem = super.borrowObject(k, usePool);
+        }
 
         // Configure the item.
         if (poolItem != null && poolItem.getValue() != null && poolItem.getValue().getFunctionLibrary() != null) {
@@ -114,6 +127,7 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
             LOGGER.debug("Creating xslt executable: " + xslt.toString());
         }
 
+        final XsltSecuritySettings securitySettings = getSecuritySettings();
         XsltExecutable xsltExecutable = null;
         StroomXsltFunctionLibrary functionLibrary = null;
         final StoredErrorReceiver errorReceiver = new StoredErrorReceiver();
@@ -124,8 +138,8 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
                 errorReceiver);
 
         try {
-            // Create a new Saxon processor.
-            final Processor processor = new Processor(false);
+            // Create a new Saxon processor, secured unless an administrator has turned secure mode off.
+            final Processor processor = securitySettings.newProcessor();
 
             // Register the Stroom XSLT extension functions.
             functionLibrary = stroomXsltFunctionLibraryProvider.get();
@@ -142,7 +156,26 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
             errorReceiver.log(Severity.FATAL_ERROR, null, ELEMENT_ID, e.getMessage(), e);
         }
 
-        return new StoredXsltExecutable(xsltExecutable, functionLibrary, errorReceiver);
+        return new StoredXsltExecutable(xsltExecutable, functionLibrary, errorReceiver, securitySettings);
+    }
+
+    private boolean isStale(final PoolItem<StoredXsltExecutable> poolItem) {
+        return poolItem != null
+               && poolItem.getValue() != null
+               && !getSecuritySettings().equals(poolItem.getValue().getSecuritySettings());
+    }
+
+    // The settings are made once for each XsltConfig, so this is a reference check on the borrow path and a
+    // bad allowed URI prefix is only warned about once each time the configuration changes.
+    private XsltSecuritySettings getSecuritySettings() {
+        final XsltConfig xsltConfig = xsltConfigProvider.get();
+        final CurrentSettings current = currentSettings;
+        if (current != null && current.xsltConfig() == xsltConfig) {
+            return current.securitySettings();
+        }
+        final XsltSecuritySettings securitySettings = XsltSecuritySettings.from(xsltConfig);
+        currentSettings = new CurrentSettings(xsltConfig, securitySettings);
+        return securitySettings;
     }
 
     @Override
@@ -150,35 +183,33 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
         // super deals with invalidating the affected doc
         super.onChange(event);
 
-        // If the oldDocRef is present then use that as that is what would be in the pool
         final DocRef changedXsltDocRef = event.getOldDocRef() != null
                 ? event.getOldDocRef()
                 : event.getDocRef();
-        final String changedXsltName = changedXsltDocRef.getName();
 
-        // An XSLT can have an xsl:include or xsl:import of other XSLTs (referenced by name)
-        // so we need to find any in the pool that reference our changed one and invalidate them too.
-        // E.g. if an imported XSLT is modified then we need to invalidate the one that uses
-        // it, so it picks up the updated import.
-        // href="...the.name..." is used for both import and include so search for that in the XSLT doc data.
-        // In the event that we get a false positive hit then it just means we invalidate something we didn't
-        // intend to but that is no biggie.
-        final String searchStr = "href=\"" + changedXsltName + "\"";
+        // An XSLT can import or include other XSLTs, by name, UUID or doc ref string, directly or through
+        // another XSLT. A pooled XSLT holds the imports as they were when it was compiled, and a failed compile
+        // (e.g. an import of an XSLT that didn't exist yet) is pooled too. Working out which pooled XSLTs
+        // depend on the changed one would mean resolving every import, so invalidate every pooled XSLT that
+        // has any. The cost is recompiling them when next borrowed, and XSLTs are saved far less often than
+        // they are used.
         final Consumer<XsltDoc> loggingPeekFunc = LOGGER.createIfDebugConsumer(xsltDoc ->
-                LOGGER.debug("Invalidating XsltDoc {} with dependency on {}", xsltDoc, changedXsltDocRef));
+                LOGGER.debug("Invalidating XsltDoc {} as it has imports and {} changed", xsltDoc, changedXsltDocRef));
 
-        // This xslt may be imported/included in other XSLTs, so we need to invalidate all of them as well
         getKeys()
                 .stream()
-                .filter(xsltDoc -> {
-                    final String xsltData = xsltDoc.getData();
-                    return xsltData != null
-                           && !xsltData.isBlank()
-                           && xsltData.contains(searchStr);
-                })
+                .filter(xsltDoc -> XsltImports.hasImports(xsltDoc.getData()))
                 .peek(loggingPeekFunc)
                 .forEach(this::invalidate);
 
         LOGGER.debug("Completed event handler for {}", event);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record CurrentSettings(XsltConfig xsltConfig, XsltSecuritySettings securitySettings) {
+
     }
 }

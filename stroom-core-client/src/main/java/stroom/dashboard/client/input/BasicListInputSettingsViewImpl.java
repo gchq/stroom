@@ -52,10 +52,13 @@ public class BasicListInputSettingsViewImpl extends ViewImpl implements BasicLis
     SimplePanel dictionary;
     @UiField
     CustomCheckBox allowTextEntry;
+    @UiField
+    CustomCheckBox multiSelect;
 
     @Inject
     public BasicListInputSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        multiSelect.addValueChangeHandler(event -> updateAllowTextEntryEnabled());
     }
 
     @Override
@@ -128,6 +131,22 @@ public class BasicListInputSettingsViewImpl extends ViewImpl implements BasicLis
     @Override
     public void setAllowTextEntry(final boolean allowTextEntry) {
         this.allowTextEntry.setValue(allowTextEntry);
+    }
+
+    @Override
+    public boolean isMultiSelect() {
+        return multiSelect.getValue();
+    }
+
+    @Override
+    public void setMultiSelect(final boolean multiSelect) {
+        this.multiSelect.setValue(multiSelect);
+        updateAllowTextEntryEnabled();
+    }
+
+    private void updateAllowTextEntryEnabled() {
+        // Free text entry is not available when selecting multiple values.
+        allowTextEntry.setEnabled(!multiSelect.getValue());
     }
 
     public void onResize() {

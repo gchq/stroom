@@ -53,6 +53,46 @@ public class NodeSearchTask {
     private final DateTimeSettings dateTimeSettings;
     @JsonProperty
     private final List<Long> shards; // Specific to Lucene.
+    // The node that runs the search, from which a node fetches the search's join tables, if any.
+    @JsonProperty
+    private final String sourceNode;
+    // Tells apart the tasks a node is sent for one search. A node is sent a second task for a search when it
+    // takes over shards from a node that could not be reached.
+    @JsonProperty
+    private final String dispatchId;
+
+    /// Creates a node search task with no source node, as for a search with no joins.
+    ///
+    /// @param type                The kind of node search.
+    /// @param sourceTaskId        The task that runs the search on the source node.
+    /// @param taskName            The name of the node search's task.
+    /// @param searchRequestSource Where the search came from.
+    /// @param key                 The key of the search.
+    /// @param query               The search's query.
+    /// @param settings            The search's coprocessor settings.
+    /// @param dateTimeSettings    The search's date and time settings.
+    /// @param shards              The index shards to search on the node, for a Lucene search.
+    public NodeSearchTask(final NodeSearchTaskType type,
+                          final TaskId sourceTaskId,
+                          final String taskName,
+                          final SearchRequestSource searchRequestSource,
+                          final QueryKey key,
+                          final Query query,
+                          final List<CoprocessorSettings> settings,
+                          final DateTimeSettings dateTimeSettings,
+                          final List<Long> shards) {
+        this(type,
+                sourceTaskId,
+                taskName,
+                searchRequestSource,
+                key,
+                query,
+                settings,
+                dateTimeSettings,
+                shards,
+                null,
+                null);
+    }
 
     @JsonCreator
     public NodeSearchTask(@JsonProperty("type") final NodeSearchTaskType type,
@@ -63,7 +103,9 @@ public class NodeSearchTask {
                           @JsonProperty("query") final Query query,
                           @JsonProperty("settings") final List<CoprocessorSettings> settings,
                           @JsonProperty("dateTimeSettings") final DateTimeSettings dateTimeSettings,
-                          @JsonProperty("shards") final List<Long> shards) {
+                          @JsonProperty("shards") final List<Long> shards,
+                          @JsonProperty("sourceNode") final String sourceNode,
+                          @JsonProperty("dispatchId") final String dispatchId) {
         this.type = type;
         this.sourceTaskId = sourceTaskId;
         this.taskName = taskName;
@@ -73,6 +115,8 @@ public class NodeSearchTask {
         this.settings = settings;
         this.dateTimeSettings = dateTimeSettings;
         this.shards = shards;
+        this.sourceNode = sourceNode;
+        this.dispatchId = dispatchId;
     }
 
     public NodeSearchTaskType getType() {
@@ -109,5 +153,59 @@ public class NodeSearchTask {
 
     public List<Long> getShards() {
         return shards;
+    }
+
+    /// Gets the node that runs the search, from which the node searching this task fetches the
+    /// search's join tables, if its query has joins.
+    ///
+    /// @return The node's name, or `null` if not given.
+    public String getSourceNode() {
+        return sourceNode;
+    }
+
+    /// Copies this task with the node that runs the search.
+    ///
+    /// @param sourceNode The node's name.
+    /// @return The copy.
+    public NodeSearchTask withSourceNode(final String sourceNode) {
+        return new NodeSearchTask(
+                type,
+                sourceTaskId,
+                taskName,
+                searchRequestSource,
+                key,
+                query,
+                settings,
+                dateTimeSettings,
+                shards,
+                sourceNode,
+                dispatchId);
+    }
+
+    /// Gets the id that tells this task apart from any other task the same node is sent for the search.
+    ///
+    /// @return The id, or `null` if the node is only ever sent one task for a search.
+    public String getDispatchId() {
+        return dispatchId;
+    }
+
+    /// Copies this task to search other shards, as a separate dispatch of the same search.
+    ///
+    /// @param shards     The index shards to search.
+    /// @param dispatchId The id that tells the copy apart from other tasks sent to the same node.
+    /// @return The copy.
+    public NodeSearchTask withShards(final List<Long> shards, final String dispatchId) {
+        return new NodeSearchTask(
+                type,
+                sourceTaskId,
+                taskName,
+                searchRequestSource,
+                key,
+                query,
+                settings,
+                dateTimeSettings,
+                shards,
+                sourceNode,
+                dispatchId);
     }
 }

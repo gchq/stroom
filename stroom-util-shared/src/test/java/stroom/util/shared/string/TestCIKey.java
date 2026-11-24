@@ -16,6 +16,7 @@
 
 package stroom.util.shared.string;
 
+import stroom.test.common.PerformanceTest;
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.json.JsonUtil;
@@ -1089,6 +1090,7 @@ public class TestCIKey {
     }
 
     @Test
+    @PerformanceTest
     @Disabled
         // manual run only
     void testOfLowerKeyPerf() {
@@ -1150,6 +1152,7 @@ public class TestCIKey {
     // HashMap in knownKeys very fractionally faster than ConcurrentHashMap in CIKeys
     // Map lookup is much faster than creating a new CIKey or doing it without CIKey
     @Test
+    @PerformanceTest
     @Disabled
     // manual run only
     void testPerf() {

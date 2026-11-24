@@ -17,6 +17,7 @@
 package stroom.dashboard.shared;
 
 import stroom.docref.DocRef;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -27,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @JsonPropertyOrder({
         "key",
@@ -34,10 +36,14 @@ import java.util.Objects;
         "values",
         "dictionary",
         "useDictionary",
-        "allowTextEntry"
+        "allowTextEntry",
+        "multiSelect",
+        "selectedValues"
 })
 @JsonInclude(Include.NON_NULL)
 public final class ListInputComponentSettings implements ComponentSettings {
+
+    private static final String SELECTED_VALUES_DELIMITER = ",";
 
     @JsonProperty
     private final String key;
@@ -51,6 +57,10 @@ public final class ListInputComponentSettings implements ComponentSettings {
     private final boolean useDictionary;
     @JsonProperty
     private final boolean allowTextEntry;
+    @JsonProperty
+    private final boolean multiSelect;
+    @JsonProperty
+    private final List<String> selectedValues;
 
     @JsonCreator
     public ListInputComponentSettings(@JsonProperty("key") final String key,
@@ -58,13 +68,17 @@ public final class ListInputComponentSettings implements ComponentSettings {
                                       @JsonProperty("values") final List<String> values,
                                       @JsonProperty("dictionary") final DocRef dictionary,
                                       @JsonProperty("useDictionary") final Boolean useDictionary,
-                                      @JsonProperty("allowTextEntry") final Boolean allowTextEntry) {
+                                      @JsonProperty("allowTextEntry") final Boolean allowTextEntry,
+                                      @JsonProperty("multiSelect") final Boolean multiSelect,
+                                      @JsonProperty("selectedValues") final List<String> selectedValues) {
         this.key = key;
         this.value = value;
         this.values = values;
         this.dictionary = dictionary;
         this.useDictionary = Objects.requireNonNullElse(useDictionary, false);
         this.allowTextEntry = Objects.requireNonNullElse(allowTextEntry, false);
+        this.multiSelect = Objects.requireNonNullElse(multiSelect, false);
+        this.selectedValues = selectedValues;
     }
 
     public String getKey() {
@@ -91,6 +105,32 @@ public final class ListInputComponentSettings implements ComponentSettings {
         return allowTextEntry;
     }
 
+    /// @return `true` if the user can select more than one value. The selected values are
+    /// then held in [#getSelectedValues()] rather than [#getValue()].
+    public boolean isMultiSelect() {
+        return multiSelect;
+    }
+
+    /// @return The values the user has selected when [#isMultiSelect()] is `true`.
+    /// May be `null`.
+    public List<String> getSelectedValues() {
+        return selectedValues;
+    }
+
+    /// Joins multi-select values into the comma separated form used when the list input's
+    /// key is interpolated, e.g. `${key}`.
+    ///
+    /// @param values The selected values. Values are trimmed, and blank values and duplicates
+    ///               are ignored.
+    /// @return The joined values, or an empty string if there are none.
+    public static String joinSelectedValues(final List<String> values) {
+        return NullSafe.stream(values)
+                .map(NullSafe::trim)
+                .filter(value -> !value.isEmpty())
+                .distinct()
+                .collect(Collectors.joining(SELECTED_VALUES_DELIMITER));
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -105,12 +145,21 @@ public final class ListInputComponentSettings implements ComponentSettings {
                 Objects.equals(value, that.value) &&
                 Objects.equals(values, that.values) &&
                 Objects.equals(dictionary, that.dictionary) &&
-                Objects.equals(allowTextEntry, that.allowTextEntry);
+                Objects.equals(allowTextEntry, that.allowTextEntry) &&
+                multiSelect == that.multiSelect &&
+                Objects.equals(selectedValues, that.selectedValues);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(key, value, values, dictionary, useDictionary, allowTextEntry);
+        return Objects.hash(key,
+                value,
+                values,
+                dictionary,
+                useDictionary,
+                allowTextEntry,
+                multiSelect,
+                selectedValues);
     }
 
     @Override
@@ -122,6 +171,8 @@ public final class ListInputComponentSettings implements ComponentSettings {
                 ", dictionary=" + dictionary +
                 ", useDictionary=" + useDictionary +
                 ", allowTextEntry=" + allowTextEntry +
+                ", multiSelect=" + multiSelect +
+                ", selectedValues=" + selectedValues +
                 '}';
     }
 
@@ -143,6 +194,8 @@ public final class ListInputComponentSettings implements ComponentSettings {
         private DocRef dictionary;
         private boolean useDictionary;
         private boolean allowTextEntry;
+        private boolean multiSelect;
+        private List<String> selectedValues;
 
         private Builder() {
         }
@@ -156,6 +209,10 @@ public final class ListInputComponentSettings implements ComponentSettings {
             this.dictionary = listInputComponentSettings.dictionary;
             this.useDictionary = listInputComponentSettings.useDictionary;
             this.allowTextEntry = listInputComponentSettings.allowTextEntry;
+            this.multiSelect = listInputComponentSettings.multiSelect;
+            this.selectedValues = listInputComponentSettings.selectedValues == null
+                    ? null
+                    : new ArrayList<>(listInputComponentSettings.selectedValues);
         }
 
         public Builder key(final String key) {
@@ -188,6 +245,20 @@ public final class ListInputComponentSettings implements ComponentSettings {
             return self();
         }
 
+        /// @param multiSelect `true` to let the user select more than one value.
+        /// @return This builder.
+        public Builder multiSelect(final boolean multiSelect) {
+            this.multiSelect = multiSelect;
+            return self();
+        }
+
+        /// @param selectedValues The values the user has selected when multi-select is enabled.
+        /// @return This builder.
+        public Builder selectedValues(final List<String> selectedValues) {
+            this.selectedValues = selectedValues;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -201,7 +272,9 @@ public final class ListInputComponentSettings implements ComponentSettings {
                     values,
                     dictionary,
                     useDictionary,
-                    allowTextEntry
+                    allowTextEntry,
+                    multiSelect,
+                    selectedValues
             );
         }
     }

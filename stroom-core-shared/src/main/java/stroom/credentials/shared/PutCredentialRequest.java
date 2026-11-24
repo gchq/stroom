@@ -22,13 +22,10 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-/**
- * Request to create new credentials and associated secrets in the DB.
- */
+/// Request to create new credentials and associated secrets in the DB.
 @JsonPropertyOrder({
         "credential",
-        "secret"
-})
+        "secret"})
 @JsonInclude(Include.NON_NULL)
 public class PutCredentialRequest {
 
@@ -39,9 +36,8 @@ public class PutCredentialRequest {
     private final Secret secret;
 
     @JsonCreator
-    public PutCredentialRequest(
-            @JsonProperty("credential") final Credential credential,
-            @JsonProperty("secret") final Secret secret) {
+    public PutCredentialRequest(@JsonProperty("credential") final Credential credential,
+                                @JsonProperty("secret") final Secret secret) {
         this.credential = credential;
         this.secret = secret;
     }

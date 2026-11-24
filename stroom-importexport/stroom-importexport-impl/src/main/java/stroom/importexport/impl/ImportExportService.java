@@ -43,4 +43,15 @@ public interface ImportExportService {
      */
     ExportSummary exportConfig(Set<DocRef> docRefs,
                                Path data);
+
+    /// Export the supplied docRefs, and everything below them, restricted to the
+    /// included document types.
+    ///
+    /// @param docRefs       The docRefs to export.
+    /// @param includedTypes The document types to export. If null, all types are exported.
+    /// @param data          The zip file to write to.
+    /// @return The summary of the export.
+    ExportSummary exportConfig(Set<DocRef> docRefs,
+                               Set<String> includedTypes,
+                               Path data);
 }

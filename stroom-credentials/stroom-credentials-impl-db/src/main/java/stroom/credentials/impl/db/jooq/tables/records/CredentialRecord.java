@@ -173,6 +173,20 @@ public class CredentialRecord extends UpdatableRecordImpl<CredentialRecord> {
         return (byte[]) get(10);
     }
 
+    /**
+     * Setter for <code>stroom.credential.key_store_path</code>.
+     */
+    public void setKeyStorePath(String value) {
+        set(11, value);
+    }
+
+    /**
+     * Getter for <code>stroom.credential.key_store_path</code>.
+     */
+    public String getKeyStorePath() {
+        return (String) get(11);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -196,7 +210,7 @@ public class CredentialRecord extends UpdatableRecordImpl<CredentialRecord> {
     /**
      * Create a detached, initialised CredentialRecord
      */
-    public CredentialRecord(String uuid, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String name, String crendentialType, String keyStoreType, Long expiryTimeMs, JSON secretJson, byte[] keyStore) {
+    public CredentialRecord(String uuid, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String name, String crendentialType, String keyStoreType, Long expiryTimeMs, JSON secretJson, byte[] keyStore, String keyStorePath) {
         super(Credential.CREDENTIAL);
 
         setUuid(uuid);
@@ -210,6 +224,7 @@ public class CredentialRecord extends UpdatableRecordImpl<CredentialRecord> {
         setExpiryTimeMs(expiryTimeMs);
         setSecretJson(secretJson);
         setKeyStore(keyStore);
+        setKeyStorePath(keyStorePath);
         resetTouchedOnNotNull();
     }
 }

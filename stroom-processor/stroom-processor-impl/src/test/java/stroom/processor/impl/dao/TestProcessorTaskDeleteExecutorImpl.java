@@ -186,6 +186,10 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
         assertThat(getProcessorTaskCount(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())))
                 .isEqualTo(0);
 
+        // A deleted filter has no dependency edges, so they are removed as soon as it is logically deleted
+        Mockito.verify(mockProcessorFilterDependencies, Mockito.times(1))
+                .remove(Set.of(processorFilter1a.getUuid()));
+
 //        final List<String> filterUuids = filterUuidsCaptor.getValue();
     }
 
@@ -233,5 +237,10 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
         assertThat(filterUuids)
                 .hasSize(1)
                 .containsExactly(processorFilter1a.asDocRef());
+
+        // Once when the filter was logically deleted, then again when it was physically deleted in case
+        // the first removal failed
+        Mockito.verify(mockProcessorFilterDependencies, Mockito.times(2))
+                .remove(Set.of(processorFilter1a.getUuid()));
     }
 }

@@ -213,7 +213,21 @@ public class StepDemandPlanner {
                 : new RecordRange(part, end, start);
     }
 
-    private StepLocation onDemandTargetFor(final PipelineStepRequest request,
+    /// The single record an unfiltered step is about - the record {@link #onDemandRangeFor} widens into a
+    /// prefetch window - or null where the step's records cannot be named in advance.
+    ///
+    /// A step is answered once this record is materialised, whatever the rest of its window holds, so this
+    /// is what a caller checks the store for before launching anything.
+    ///
+    /// @param request     The step being served.
+    /// @param graph       The steppable elements of the pipeline.
+    /// @param decision    The reprocess plan for the step.
+    /// @param store       The session's store for the stream.
+    /// @param metaId      The stream being stepped.
+    /// @param extentFinal Whether the captured extent is the whole stream, which is what LAST needs.
+    /// @return The record, or null if the step is filtered at or below the element being reprocessed or its
+    /// demand cannot be named yet.
+    public StepLocation onDemandTargetFor(final PipelineStepRequest request,
                                            final Graph graph,
                                            final Decision decision,
                                            final StepDataStore store,

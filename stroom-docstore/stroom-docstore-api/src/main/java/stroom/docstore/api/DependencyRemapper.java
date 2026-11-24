@@ -49,6 +49,10 @@ public class DependencyRemapper {
     }
 
     public DocRef remap(final DocRef docRef) {
+        // Many optional references are null, and some map implementations reject null keys
+        if (docRef == null) {
+            return null;
+        }
         final DocRef remap = remappings.getOrDefault(docRef, docRef);
         changed.compareAndSet(false, !Objects.equals(remap, docRef));
         if (remap != null) {

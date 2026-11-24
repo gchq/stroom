@@ -70,7 +70,7 @@ import java.util.stream.Collectors;
  * @param <D> The document type (e.g., {@code FeedDoc}, {@code PipelineDoc}).
  */
 public abstract class AbstractDocumentStore<D extends AbstractDoc>
-        implements DocumentStore<D> {
+        implements DocumentStore<D>, DocDependencyProvider {
 
     private final Store<D> store;
     private final SecurityContext securityContext;
@@ -264,6 +264,13 @@ public abstract class AbstractDocumentStore<D extends AbstractDoc>
                                   final Map<DocRef, DocRef> remappings) {
         checkDocumentPermission(docRef, DocumentPermission.EDIT);
         store.remapDependencies(docRef, remappings);
+    }
+
+    /// Used by the dependency rebuild, which runs as the processing user, so no document permission
+    /// check is applied.
+    @Override
+    public Set<DocRef> getDependencies(final DocRef docRef) {
+        return store.getDependencies(docRef);
     }
 
     // -------------------------------------------------------------------------

@@ -16,21 +16,25 @@
 
 package stroom.credentials.impl.dao;
 
+import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.credentials.impl.CredentialsModule;
 import stroom.credentials.impl.db.CredentialsDbModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docstore.mock.MockDocFinderModule;
+import stroom.event.logging.mock.MockStroomEventLoggingModule;
 import stroom.resource.impl.MockResourceModule;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserGroupsService;
+import stroom.security.api.UserService;
 import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.TempDirProvider;
 
 import com.google.inject.AbstractModule;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -43,6 +47,7 @@ public class TestModule extends AbstractModule {
     protected void configure() {
         super.configure();
         install(new CredentialsDaoModule());
+        install(new MockClusterLockModule());
         install(new CredentialsDbModule());
         install(new CredentialsModule());
         install(new DbTestModule());
@@ -50,10 +55,13 @@ public class TestModule extends AbstractModule {
         install(new MockWordListProviderModule());
         install(new MockResourceModule());
         install(new MockDocFinderModule());
+        install(new MockStroomEventLoggingModule());
 
         bind(SecurityContext.class).to(MockSecurityContext.class);
         bind(DocumentPermissionService.class).to(MockDocumentPermissionService.class);
         bind(UserGroupsService.class).to(MockUserGroupsService.class);
+        // Only needed by KeyStoreFileCredentialsBootstrap, which these tests don't run
+        bind(UserService.class).toInstance(Mockito.mock(UserService.class));
 
         try {
             final Path path = Files.createTempDirectory("stroom");

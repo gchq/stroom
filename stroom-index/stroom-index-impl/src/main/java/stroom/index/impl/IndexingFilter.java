@@ -86,6 +86,7 @@ class IndexingFilter extends AbstractXMLFilter {
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LuceneIndexDocCache luceneIndexDocCache;
     private final IndexFieldCache indexFieldCache;
+    private final PipelinePendingStreams pipelinePendingStreams;
     private final CharBuffer debugBuffer = new CharBuffer(10);
     private DocRef indexRef;
     private LuceneIndexDoc index;
@@ -93,6 +94,9 @@ class IndexingFilter extends AbstractXMLFilter {
     private final NavigableMap<Long, TimePartition> timePartitionTreeMap = new TreeMap<>();
     private final Map<Partition, IndexShardKey> indexShardKeyMap = new HashMap<>();
     private IndexDocument document;
+
+    private PendingStreamTracker pendingStreamTracker;
+    private boolean recordingPendingStreams;
 
     private Locator locator;
 
@@ -105,13 +109,15 @@ class IndexingFilter extends AbstractXMLFilter {
                    final Indexer indexer,
                    final ErrorReceiverProxy errorReceiverProxy,
                    final LuceneIndexDocCache luceneIndexDocCache,
-                   final IndexFieldCache indexFieldCache) {
+                   final IndexFieldCache indexFieldCache,
+                   final PipelinePendingStreams pipelinePendingStreams) {
         this.metaHolder = metaHolder;
         this.locationFactory = locationFactory;
         this.indexer = indexer;
         this.errorReceiverProxy = errorReceiverProxy;
         this.luceneIndexDocCache = luceneIndexDocCache;
         this.indexFieldCache = indexFieldCache;
+        this.pipelinePendingStreams = pipelinePendingStreams;
     }
 
     /**
@@ -133,9 +139,11 @@ class IndexingFilter extends AbstractXMLFilter {
             }
 
             // Create a key to create shards with.
-            if (metaHolder == null || metaHolder.getMeta() == null || index.getPartitionBy() == null) {
-                // Many tests don't use streams so where this is the case just
-                // create a basic key.
+            if (metaHolder == null
+                || metaHolder.getMeta() == null
+                || !index.getPartitionBy().isTimeBased()) {
+                // The index is not partitioned by time, or there is no stream (many tests don't use
+                // streams), so just create a basic key.
                 final Partition partition = AllPartition.INSTANCE;
                 defaultPartition = partition;
                 final IndexShardKey indexShardKey = IndexShardKey.createKey(index, partition);
@@ -148,8 +156,48 @@ class IndexingFilter extends AbstractXMLFilter {
                 indexShardKeyMap.put(indexShardKey.getPartition(), indexShardKey);
                 timePartitionTreeMap.put(timePartition.getPartitionFromTime(), timePartition);
             }
+
+            // Begin recording which shards hold documents of this stream that are not yet committed.
+            try {
+                pendingStreamTracker = pipelinePendingStreams.start();
+                recordingPendingStreams = true;
+            } catch (final RuntimeException e) {
+                log(Severity.FATAL_ERROR, e.getMessage(), e);
+                throw LoggedException.wrap(e);
+            }
         } finally {
             super.startProcessing();
+        }
+    }
+
+    @Override
+    public void endProcessing() {
+        try {
+            endPendingStream();
+        } finally {
+            super.endProcessing();
+        }
+    }
+
+    // Ends the record of this stream's uncommitted documents. If a shard the stream was written to has
+    // lost its documents the stream has not been indexed, which must be reported.
+    private void endPendingStream() {
+        if (recordingPendingStreams) {
+            recordingPendingStreams = false;
+            boolean complete;
+            try {
+                complete = pipelinePendingStreams.end();
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+                complete = false;
+            }
+            if (!complete) {
+                final String message = "The stream has not been indexed in full as an index shard it was " +
+                                       "written to failed to commit or was lost. Its documents will be " +
+                                       "removed from the index and it will be indexed again.";
+                log(Severity.FATAL_ERROR, message, null);
+                throw LoggedException.create(message);
+            }
         }
     }
 
@@ -218,7 +266,8 @@ class IndexingFilter extends AbstractXMLFilter {
         if (!document.getValues().isEmpty()) {
             try {
                 Partition partition = defaultPartition;
-                if (currentEventTime != null) {
+                // Only choose a partition by event time if the index is partitioned by time.
+                if (currentEventTime != null && index.getPartitionBy().isTimeBased()) {
                     final Entry<Long, TimePartition> entry = timePartitionTreeMap.floorEntry(currentEventTime);
                     if (entry != null &&
                         entry.getValue().getPartitionFromTime() <= currentEventTime &&
@@ -235,8 +284,14 @@ class IndexingFilter extends AbstractXMLFilter {
                 final IndexShardKey indexShardKey =
                         indexShardKeyMap.computeIfAbsent(partition, k -> IndexShardKey.createKey(index, k));
 
-                indexer.addDocument(indexShardKey, document);
+                indexer.addDocument(indexShardKey, document, pendingStreamTracker);
             } catch (final RuntimeException e) {
+                // The stream is now part indexed, so have what was indexed removed and the task run again.
+                try {
+                    pipelinePendingStreams.fail();
+                } catch (final RuntimeException e2) {
+                    LOGGER.error(e2.getMessage(), e2);
+                }
                 log(Severity.FATAL_ERROR, e.getMessage(), e);
                 // Terminate processing as this is a fatal error.
                 throw LoggedException.wrap(e);

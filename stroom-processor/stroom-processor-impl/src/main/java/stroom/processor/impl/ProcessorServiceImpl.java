@@ -43,14 +43,20 @@ public class ProcessorServiceImpl implements ProcessorService {
     private final SecurityContext securityContext;
     private final ProcessorDao processorDao;
     private final ProcessorTaskDao processorTaskDao;
+    private final ProcessorFilterDao processorFilterDao;
+    private final ProcessorFilterDependencies processorFilterDependencies;
 
     @Inject
     ProcessorServiceImpl(final SecurityContext securityContext,
                          final ProcessorDao processorDao,
-                         final ProcessorTaskDao processorTaskDao) {
+                         final ProcessorTaskDao processorTaskDao,
+                         final ProcessorFilterDao processorFilterDao,
+                         final ProcessorFilterDependencies processorFilterDependencies) {
         this.securityContext = securityContext;
         this.processorDao = processorDao;
         this.processorTaskDao = processorTaskDao;
+        this.processorFilterDao = processorFilterDao;
+        this.processorFilterDependencies = processorFilterDependencies;
     }
 
     @Override
@@ -161,6 +167,10 @@ public class ProcessorServiceImpl implements ProcessorService {
                 // Once the processor and filters are logically deleted no new tasks will be created
                 // but we may still have active tasks for 'deleted' filters.
                 processorTaskDao.logicalDeleteByProcessorId(id);
+                // The processor's filters were deleted with it, so clear their dependency edges. Include
+                // any that were already deleted, e.g. by the processor task retention job, in case their
+                // edges have not been cleared yet.
+                processorFilterDependencies.remove(processorFilterDao.fetchUuidsByProcessorId(id));
                 return true;
             }
             return false;

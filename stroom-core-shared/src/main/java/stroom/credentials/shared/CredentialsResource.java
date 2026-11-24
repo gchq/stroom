@@ -16,14 +16,12 @@
 
 package stroom.credentials.shared;
 
-import stroom.docref.DocRef;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -57,18 +55,9 @@ public interface CredentialsResource extends RestResource, DirectRestService {
     ResultPage<Credential> findCredentials(FindCredentialRequest request);
 
     /**
-     * Create a temporary doc ref to use for new credentials so that we can assign permissions straight away.
-     */
-    @GET
-    @Path("/createDocRef")
-    @Operation(
-            summary = "Returns a newly generated DocRef that can be used to for permissions",
-            operationId = "createDocRef")
-    DocRef createDocRef();
-
-    /**
      * Stores a credential in the DB. Errors are indicated in the return value.
-     * Credential must already exist.
+     * A new credential must include its secret. When updating an existing credential
+     * any secret in the request is ignored; use {@link #replaceSecret} to change it.
      */
     @POST
     @Path("/store")
@@ -76,6 +65,17 @@ public interface CredentialsResource extends RestResource, DirectRestService {
             summary = "Stores the credential",
             operationId = "storeCredential")
     Credential storeCredential(PutCredentialRequest credential);
+
+    /// Replaces the secret held by an existing credential, discarding the old one.
+    ///
+    /// @param request The credential UUID, the new secret and its expiry.
+    /// @return The updated credential.
+    @POST
+    @Path("/replaceSecret")
+    @Operation(
+            summary = "Replaces the secret held by an existing credential",
+            operationId = "replaceCredentialSecret")
+    Credential replaceSecret(ReplaceSecretRequest request);
 
     /**
      * Gets one credential by UUID.

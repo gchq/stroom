@@ -83,6 +83,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(RandomIntegerFunction.class);
         bindFunction(RecordNoFunction.class);
         bindFunction(SearchIdFunction.class);
+        bindFunction(ShannonEntropyFunction.class);
         bindFunction(SplitDocumentFunction.class);
         bindFunction(SourceFunction.class);
         bindFunction(ToUnixTimeFunction.class);
@@ -831,6 +832,20 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     0,
                     new SequenceType[]{},
                     SequenceType.OPTIONAL_STRING,
+                    functionCallProvider);
+        }
+    }
+
+    private static class ShannonEntropyFunction extends StroomExtensionFunctionDefinition<ShannonEntropy> {
+
+        @Inject
+        ShannonEntropyFunction(final Provider<ShannonEntropy> functionCallProvider) {
+            super(
+                    ShannonEntropy.FUNCTION_NAME,
+                    1,
+                    1,
+                    new SequenceType[]{SequenceType.SINGLE_STRING},
+                    SequenceType.OPTIONAL_DOUBLE,
                     functionCallProvider);
         }
     }

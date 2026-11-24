@@ -103,18 +103,8 @@ public class ScheduledProcessingPresenter
     }
 
     public void replay(final ExecutionHistory executionHistory) {
-        if (executionHistory != null && executionHistory.getExecutionSchedule() != null) {
-            final ExecutionSchedule newSchedule = executionHistory
-                    .getExecutionSchedule()
-                    .copy()
-                    .name(executionHistory.getExecutionSchedule().getName() + " (replay)")
-                    .enabled(false)
-                    .scheduleBounds(ScheduleBounds
-                            .builder()
-                            .startTimeMs(executionHistory.getEffectiveExecutionTimeMs())
-                            .endTimeMs(executionHistory.getEffectiveExecutionTimeMs())
-                            .build())
-                    .build();
+        final ExecutionSchedule newSchedule = ReplayScheduleFactory.create(executionHistory);
+        if (newSchedule != null) {
             add(newSchedule);
         }
     }

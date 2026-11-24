@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.data.store.impl.fs.dao.FsVolumeCache;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;

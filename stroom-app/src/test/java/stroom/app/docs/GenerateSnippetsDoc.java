@@ -107,7 +107,7 @@ public class GenerateSnippetsDoc implements DocumentationGenerator {
                             All [Expression Functions]({{< relref "docs/reference-section/expressions" >}}) are available as snippets.
                             They do not currently have `tab` triggers.
                             """,
-                    "text")
+                    "stroomql")
     );
 
     // IDE keeps adding trailing white space to the 'blank' lines, then checkstyle moans about it.

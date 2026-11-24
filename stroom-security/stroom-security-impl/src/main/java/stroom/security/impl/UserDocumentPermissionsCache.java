@@ -21,39 +21,56 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.collections.BatchingIterator;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.NonNull;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @Singleton
 public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handler, Clearable {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserDocumentPermissionsCache.class);
+
     private static final String CACHE_NAME = "User Document Permissions Cache";
+    static final int BATCH_SIZE = 200;
 
     private final LoadingStroomCache<UserRef, UserDocumentPermissions> cache;
+    private final Provider<DocumentPermissionDao> documentPermissionDaoProvider;
 
     @Inject
     public UserDocumentPermissionsCache(final CacheManager cacheManager,
                                         final Provider<DocumentPermissionDao> documentPermissionDaoProvider,
                                         final Provider<AuthorisationConfig> authorisationConfigProvider) {
-        cache = cacheManager.createLoadingCache(
+        this.documentPermissionDaoProvider = documentPermissionDaoProvider;
+        this.cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> authorisationConfigProvider.get().getUserDocumentPermissionsCache(),
-                userRef -> documentPermissionDaoProvider.get().getPermissionsForUser(userRef.getUuid()));
+                this::load);
     }
 
     boolean hasDocumentPermission(final UserRef userRef,
                                   final DocRef docRef,
                                   final DocumentPermission permission) {
-        return get(userRef)
+        return cache.get(userRef)
                 .hasDocumentPermission(docRef, permission);
     }
 
-    private UserDocumentPermissions get(final UserRef userRef) {
-        return cache.get(userRef);
+    private UserDocumentPermissions load(final UserRef userRef) {
+        final UserDocumentPermissions perms = documentPermissionDaoProvider.get().getPermissionsForUser(
+                userRef.getUuid());
+        LOGGER.debug("load() - userRef: {}, perms: {}", userRef, perms);
+        return perms;
     }
 
     @Override
@@ -62,12 +79,32 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
     }
 
     @Override
-    public void onChange(final PermissionChangeEvent event) {
-        if (cache != null) {
-            if (event.getUserRef() != null) {
-                cache.invalidate(event.getUserRef());
-            } else {
-                cache.clear();
+    public void onChange(@NonNull final PermissionChangeEvent event) {
+        final UserRef userRef = event.getUserRef();
+        if (userRef != null) {
+            LOGGER.debug("onChange() - Invalidating userRef: {}", userRef);
+            cache.invalidate(userRef);
+        } else {
+            // No user so have no choice but to clear the whole cache
+
+            // Capture the users in the cache prior to clearing, so we can build reload them
+            final Set<UserRef> usersInCache = new HashSet<>(cache.keySet());
+
+            LOGGER.debug("onChange() - Clearing cache");
+            cache.clear();
+            // Manually re-load all the users that were in the cache, to save
+            // the cache from having to re-load each one individually.
+            if (!usersInCache.isEmpty()) {
+                // Do it batch wise in case there are a mental number of users
+                BatchingIterator.batchedStreamOf(usersInCache, BATCH_SIZE)
+                        .forEach(userRefsBatch -> {
+                            final Map<UserRef, UserDocumentPermissions> permissionsForUsers =
+                                    documentPermissionDaoProvider.get()
+                                            .getPermissionsForUsers(new HashSet<>(userRefsBatch));
+                            permissionsForUsers.forEach(cache::put);
+                        });
+                LOGGER.debug(() -> LogUtil.message(
+                        "onChange() - Loaded {} entries into the cache", usersInCache.size()));
             }
         }
     }

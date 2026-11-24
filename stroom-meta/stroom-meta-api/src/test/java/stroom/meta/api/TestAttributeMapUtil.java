@@ -16,6 +16,7 @@
 
 package stroom.meta.api;
 
+import stroom.test.common.PerformanceTest;
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.cert.CertificateExtractor;
@@ -823,6 +824,7 @@ class TestAttributeMapUtil {
                 .build();
     }
 
+    @PerformanceTest
     @Disabled
     @Test
     void testReadKeysPerformance(@TempDir final Path tempDir) throws IOException {

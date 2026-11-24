@@ -16,11 +16,6 @@
 
 package stroom.query.language.functions;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeParseException;
-
 @FunctionDef(
         name = RoundTime.NAME,
         commonCategory = FunctionCategory.DATE,
@@ -39,47 +34,27 @@ import java.time.format.DateTimeParseException;
                         @FunctionArg(
                                 name = "duration",
                                 description = "The duration to round by in ISO-8601 format " +
-                                              "(e.g., 'PT5M' for 5 minutes).",
+                                              "(e.g., 'PT5M' for 5 minutes). Multiples of it are " +
+                                              "counted from midnight in the query's time zone.",
                                 argType = ValString.class)
                 })
 )
-class RoundTime extends AbstractRoundDateTime {
+class RoundTime extends AbstractRoundTimeToDuration {
 
     static final String NAME = "roundTime";
 
     public RoundTime(final ExpressionContext expressionContext, final String name) {
-        super(expressionContext, name, 2, 2);
+        super(expressionContext, name);
     }
 
     @Override
-    protected DateTimeAdjuster getAdjuster() {
-        return zonedDateTime -> {
-            final long duration = parseDuration(params[1], "duration").toMillis();
-            final long millis = zonedDateTime.toInstant().toEpochMilli();
-            final long remainder = millis % duration;
-            long roundedMillis = millis - remainder;
-            if (remainder >= duration / 2) {
-                roundedMillis += duration;
-            }
-            return ZonedDateTime.ofInstant(Instant.ofEpochMilli(roundedMillis), zoneId);
-        };
-    }
-
-    // Reads the argument via AbstractRoundDateTime.constantString; reading it with
-    // param.toString() would silently break param('key') here.
-    private Duration parseDuration(final Param param, final String paramName) {
-        if (param == null) {
-            return Duration.ZERO;
-        }
-        final String value = constantString(param);
-        if (value == null) {
-            throw new IllegalArgumentException(
-                    "Invalid " + paramName + ": " + param + " - " + whyNotConstant(param));
-        }
-        try {
-            return Duration.parse(value);
-        } catch (final DateTimeParseException e) {
-            throw new IllegalArgumentException("Invalid " + paramName + " format: " + value);
-        }
+    long adjust(final long millis, final long durationMillis) {
+        final long remainder = remainder(millis, durationMillis);
+        final long flooredMillis = millis - remainder;
+        // Rounds up when the next multiple is no further away than the one below, so halfway
+        // rounds up. Comparing with duration / 2 instead would lose the half in an odd duration.
+        return remainder >= durationMillis - remainder
+                ? flooredMillis + durationMillis
+                : flooredMillis;
     }
 }

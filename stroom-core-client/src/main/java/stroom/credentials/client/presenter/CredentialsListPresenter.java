@@ -27,11 +27,14 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
+import stroom.docref.DocRef;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.ExpiryFormatter;
 import stroom.util.shared.NullSafe;
@@ -96,10 +99,16 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      */
     private final ButtonView btnEdit;
 
+    // Button in view to replace the secret of a credential
+    private final ButtonView btnReplaceSecret;
+
     /**
      * Dialog to edit the credentials
      */
     private final Provider<CredentialEditPresenter> credentialEditPresenterProvider;
+
+    // Dialog to replace the secret of the credentials
+    private final Provider<ReplaceSecretPresenter> replaceSecretPresenterProvider;
 
     /**
      * Permissions client
@@ -132,12 +141,14 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                                     final PagerView view,
                                     final CredentialClient credentialClient,
                                     final Provider<CredentialEditPresenter> credentialEditPresenterProvider,
+                                    final Provider<ReplaceSecretPresenter> replaceSecretPresenterProvider,
                                     final DateTimeFormatter dateTimeFormatter,
                                     final ClientSecurityContext securityContext,
                                     final ExpiryFormatter expiryFormatter) {
         super(eventBus, view);
         this.credentialClient = credentialClient;
         this.credentialEditPresenterProvider = credentialEditPresenterProvider;
+        this.replaceSecretPresenterProvider = replaceSecretPresenterProvider;
         this.dateTimeFormatter = dateTimeFormatter;
         this.securityContext = securityContext;
         this.expiryFormatter = expiryFormatter;
@@ -152,6 +163,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         btnAdd = this.getView().addButton(SvgPresets.ADD);
         btnDelete = this.getView().addButton(SvgPresets.DELETE);
         btnEdit = this.getView().addButton(SvgPresets.EDIT);
+        btnReplaceSecret = this.getView().addButton(new Preset(SvgImage.PASSWORD, "Replace Secret", false));
 
         this.initColumns(dataGrid);
 
@@ -235,16 +247,18 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     /**
      * Sets up the data provider for the list of credentials.
      */
-    @SuppressWarnings("checkstyle:LineLength")
-    private RestDataProvider<CredentialWithPerms, ResultPage<CredentialWithPerms>> createDataProvider(final EventBus eventBus,
-                                                                                                      final PagerView view) {
+    private RestDataProvider<CredentialWithPerms, ResultPage<CredentialWithPerms>> createDataProvider(
+            final EventBus eventBus,
+            final PagerView view) {
+
         return new RestDataProvider<>(eventBus) {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<CredentialWithPerms>> dataConsumer,
                                 final RestErrorHandler restErrorHandler) {
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
-                final FindCredentialRequest request = new FindCredentialRequest(pageRequest,
+                final FindCredentialRequest request = new FindCredentialRequest(
+                        pageRequest,
                         null,
                         null,
                         null,
@@ -267,9 +281,10 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
             dataProvider.addDataDisplay(dataGrid);
         }
 
-        btnAdd.addClickHandler(event -> handleAddButtonClick());
-        btnDelete.addClickHandler(event -> handleDeleteButtonClick());
-        btnEdit.addClickHandler(event -> handleEditButtonClick());
+        btnAdd.addClickHandler(ignored -> handleAddButtonClick());
+        btnDelete.addClickHandler(ignored -> handleDeleteButtonClick());
+        btnEdit.addClickHandler(ignored -> handleEditButtonClick());
+        btnReplaceSecret.addClickHandler(ignored -> handleReplaceSecretButtonClick());
 
         registerHandler(gridSelectionModel.addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
@@ -279,7 +294,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         }));
 
         // Set the state of the UI
-        gridSelectionModel.addSelectionHandler(event -> updateState());
+        gridSelectionModel.addSelectionHandler(ignored -> updateState());
 
         // Get notified when data has loaded and load up the first item
         dataGrid.addLoadingStateChangeHandler(event -> {
@@ -348,9 +363,11 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         if (cwp != null) {
             btnDelete.setEnabled(cwp.isDelete());
             btnEdit.setEnabled(cwp.isEdit());
+            btnReplaceSecret.setEnabled(cwp.isEdit());
         } else {
             btnDelete.setEnabled(false);
             btnEdit.setEnabled(false);
+            btnReplaceSecret.setEnabled(false);
         }
     }
 
@@ -358,10 +375,11 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * Called when the Add (+) button is clicked.
      */
     private void handleAddButtonClick() {
-        credentialClient.createDocRef(docRef -> {
-            credentialEditPresenterProvider.get()
-                    .show(docRef, null, CreationState.NEW_CREDENTIALS, this::afterEdit);
-        }, this);
+        final DocRef newDocRef = Credential.buildDocRef()
+                .randomUuid()
+                .build();
+        credentialEditPresenterProvider.get()
+                .show(newDocRef, null, CreationState.NEW_CREDENTIALS, this::afterEdit);
     }
 
     private void afterEdit(final Credential credential) {
@@ -393,7 +411,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      */
     private void deleteCredentials(final CredentialWithPerms selectedCwp) {
         if (selectedCwp != null) {
-            credentialClient.deleteCredentials(selectedCwp.getCredential().getUuid(), result -> {
+            credentialClient.deleteCredentials(selectedCwp.getCredential().getUuid(), ignored -> {
                 // Reload the list & select the first item
                 dataProvider.refresh();
                 final CredentialWithPerms firstItem = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
@@ -416,6 +434,16 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                     cwp,
                     CreationState.OLD_CREDENTIALS,
                     this::afterEdit);
+        }
+    }
+
+    // Opens the dialog to replace the secret of the selected credentials
+    private void handleReplaceSecretButtonClick() {
+        final CredentialWithPerms cwp = gridSelectionModel.getSelected();
+
+        // Check that the user can edit these credentials
+        if (cwp != null && cwp.isEdit()) {
+            replaceSecretPresenterProvider.get().show(cwp.getCredential(), this::afterEdit);
         }
     }
 }

@@ -20,6 +20,8 @@ import stroom.ai.shared.KeyStoreType;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HasAuditInfoGetters;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -29,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Credentials as stored by the Credentials storage system.
@@ -44,9 +47,10 @@ import java.util.Objects;
         "createUser",
         "updateUser",
         "credentialType",
+        "keyStoreType",
+        "keyStorePath",
         "expiryTimeMs",
-        "secret"
-})
+        "secret"})
 @JsonInclude(Include.NON_NULL)
 public class Credential implements HasAuditInfoGetters, HasDisplayValue {
 
@@ -73,16 +77,59 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
     @JsonProperty
     private final KeyStoreType keyStoreType;
     @JsonProperty
+    private final String keyStorePath;
+    @JsonProperty
     private final Long expiryTimeMs;
 
-    /**
-     * Constructor.
-     *
-     * @param uuid           UUID. Can be null in which case UUID will be assigned the default (unusable) value.
-     * @param name           Name. If null then empty string is assigned.
-     * @param credentialType Type. If null then empty string is assigned.
-     * @param expiryTimeMs   Time in ms since epoch when this expires.
-     */
+    @JsonIgnore
+    private transient volatile DocRef docRef;
+
+    /// Constructor for credentials with no key store file path, i.e. any type other than
+    /// [CredentialType#KEY_STORE_FILE].
+    ///
+    /// @param uuid           UUID.
+    /// @param name           Name.
+    /// @param createTimeMs   Time in ms since epoch when this was created.
+    /// @param updateTimeMs   Time in ms since epoch when this was last updated.
+    /// @param createUser     The user that created this.
+    /// @param updateUser     The user that last updated this.
+    /// @param credentialType Type. If null then [CredentialType#USERNAME_PASSWORD] is assigned.
+    /// @param keyStoreType   The type of key store, for key store credentials only.
+    /// @param expiryTimeMs   Time in ms since epoch when this expires.
+    public Credential(final String uuid,
+                      final String name,
+                      final Long createTimeMs,
+                      final Long updateTimeMs,
+                      final String createUser,
+                      final String updateUser,
+                      final CredentialType credentialType,
+                      final KeyStoreType keyStoreType,
+                      final Long expiryTimeMs) {
+        this(uuid,
+                name,
+                createTimeMs,
+                updateTimeMs,
+                createUser,
+                updateUser,
+                credentialType,
+                keyStoreType,
+                null,
+                expiryTimeMs);
+    }
+
+    /// Constructor.
+    ///
+    /// @param uuid           UUID.
+    /// @param name           Name.
+    /// @param createTimeMs   Time in ms since epoch when this was created.
+    /// @param updateTimeMs   Time in ms since epoch when this was last updated.
+    /// @param createUser     The user that created this.
+    /// @param updateUser     The user that last updated this.
+    /// @param credentialType Type. If null then [CredentialType#USERNAME_PASSWORD] is assigned.
+    /// @param keyStoreType   The type of key store, for key store credentials only.
+    /// @param keyStorePath   The path of the key store file, for key store file credentials only.
+    ///                       This is not secret so can be shown.
+    /// @param expiryTimeMs   Time in ms since epoch when this expires.
     @JsonCreator
     public Credential(
             @JsonProperty("uuid") final String uuid,
@@ -93,18 +140,36 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
             @JsonProperty("updateUser") final String updateUser,
             @JsonProperty("credentialType") final CredentialType credentialType,
             @JsonProperty("keyStoreType") final KeyStoreType keyStoreType,
+            @JsonProperty("keyStorePath") final String keyStorePath,
             @JsonProperty("expiryTimeMs") final Long expiryTimeMs) {
-        this.uuid = uuid;
-        this.name = name;
+        this.uuid = Objects.requireNonNull(uuid, () -> "Credential with name '" + name + "' must have a uuid");
+        this.name = NullSafe.requireNonBlankString(name,
+                () -> "Credential with uuid '" + uuid + "' must have a non-blank name");
         this.createTimeMs = createTimeMs;
         this.updateTimeMs = updateTimeMs;
         this.createUser = createUser;
         this.updateUser = updateUser;
-        this.credentialType = credentialType == null
-                ? CredentialType.USERNAME_PASSWORD
-                : credentialType;
+        this.credentialType = Objects.requireNonNullElse(credentialType, CredentialType.USERNAME_PASSWORD);
         this.keyStoreType = keyStoreType;
+        this.keyStorePath = keyStorePath;
         this.expiryTimeMs = expiryTimeMs;
+    }
+
+    /// Test use only
+    @Deprecated
+    @SerialisationTestConstructor
+    public Credential() {
+        this(
+                UUID.randomUUID().toString(),
+                "Foo",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
     }
 
     public String getUuid() {
@@ -143,12 +208,20 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
         return keyStoreType;
     }
 
+    /// @return The path of the key store file, for key store file credentials only, otherwise null.
+    public String getKeyStorePath() {
+        return keyStorePath;
+    }
+
     public Long getExpiryTimeMs() {
         return expiryTimeMs;
     }
 
     public DocRef asDocRef() {
-        return new DocRef(TYPE, uuid, name);
+        if (docRef == null) {
+            docRef = new DocRef(TYPE, uuid, name);
+        }
+        return docRef;
     }
 
     @JsonIgnore
@@ -182,7 +255,18 @@ public class Credential implements HasAuditInfoGetters, HasDisplayValue {
                ", updateUser='" + updateUser + '\'' +
                ", credentialType=" + credentialType +
                ", keyStoreType=" + keyStoreType +
+               ", keyStorePath='" + keyStorePath + '\'' +
                ", expiryTimeMs=" + expiryTimeMs +
                '}';
+    }
+
+    /// @return A new [DocRef] for this document's type with the supplied uuid.
+    public static DocRef getDocRef(final String uuid) {
+        return new DocRef(TYPE, uuid);
+    }
+
+    /// @return A new builder for creating a [DocRef] for this document's type.
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(TYPE);
     }
 }

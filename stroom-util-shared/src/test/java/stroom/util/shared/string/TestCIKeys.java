@@ -16,6 +16,7 @@
 
 package stroom.util.shared.string;
 
+import stroom.test.common.PerformanceTest;
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.logging.LambdaLogger;
@@ -132,6 +133,7 @@ class TestCIKeys {
     }
 
     @Test
+    @PerformanceTest
     @Disabled
     void testMapPerf() {
 

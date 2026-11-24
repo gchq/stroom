@@ -47,22 +47,24 @@ class PermissionChangeEventHandlers {
     }
 
     public void fireLocally(final PermissionChangeEvent event) {
-        if (!securityContext.isProcessingUser()) {
-            throw new PermissionException(securityContext.getUserRef(),
-                    "Only the processing user can fire permission change events");
-        }
-
-        try {
-            final Set<Handler> set = getHandlers();
-            for (final Handler handler : set) {
-                try {
-                    handler.onChange(event);
-                } catch (final Exception e) {
-                    LOGGER.error("Unable to handle onChange request!", e);
-                }
+        if (event != null) {
+            if (!securityContext.isProcessingUser()) {
+                throw new PermissionException(securityContext.getUserRef(),
+                        "Only the processing user can fire permission change events");
             }
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+
+            try {
+                final Set<Handler> set = getHandlers();
+                for (final Handler handler : set) {
+                    try {
+                        handler.onChange(event);
+                    } catch (final Exception e) {
+                        LOGGER.error("Unable to handle onChange request!", e);
+                    }
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
         }
     }
 

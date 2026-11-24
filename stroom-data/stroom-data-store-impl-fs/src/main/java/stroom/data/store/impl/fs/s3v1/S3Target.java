@@ -45,7 +45,6 @@ import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -174,11 +173,7 @@ public final class S3Target implements Target {
                         final S3Location s3Location = s3StreamStore.upload(tempDir, dataVolume, meta, attributeMap);
                         // Record the concrete S3 location in the database rather than relying on the templates
                         // in the volume s3 config staying the same.
-                        dataVolumeService.createS3LocationDataVolume(
-                                dataVolume.metaId(),
-                                dataVolume.volume(),
-                                Collections.singleton(s3Location),
-                                false);
+                        dataVolumeService.createS3Location(meta, dataVolume, s3Location);
 
                         // Unlock will update the meta data so set it back on the stream
                         // target so the client has the up to date copy

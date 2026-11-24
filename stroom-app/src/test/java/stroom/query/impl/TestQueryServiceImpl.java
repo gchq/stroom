@@ -16,7 +16,11 @@
 
 package stroom.query.impl;
 
+import stroom.docref.DocRef;
+import stroom.query.api.token.TokenType;
+import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.ExpressionPredicateFactory;
+import stroom.query.language.SearchRequestFactory;
 import stroom.query.shared.QueryHelpType;
 import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.TestUtil;
@@ -25,10 +29,16 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.inject.TypeLiteral;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.mockito.Mockito;
 
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TestQueryServiceImpl {
 
@@ -104,6 +114,98 @@ class TestQueryServiceImpl {
                 .addCase("""
                         from Dual
                         eval =\s""", FIELDS_AND_FUNCS)
+                .addCase("""
+                        from Dual
+                        join\s""", Set.of(QueryHelpType.DATA_SOURCE))
+                .addCase("""
+                        from Dual
+                        left join Dual2""", Set.of(QueryHelpType.DATA_SOURCE))
+                .addCase("""
+                        from Dual
+                        join Dual2 as d
+                        """, Set.of(QueryHelpType.STRUCTURE))
+                .addCase("""
+                        from Dual
+                        join Dual2 as d
+                        on\s""", FIELDS_AND_FUNCS)
+                .addCase("""
+                        from Dual
+                        join Dual2 as d
+                        on Dummy = d.Dummy
+                        """, Set.of(QueryHelpType.FIELD, QueryHelpType.FUNCTION, QueryHelpType.STRUCTURE))
                 .build();
+    }
+
+    @Test
+    void joinLineIsFollowedOnlyByItsSqlOrKeys() {
+        final QueryServiceImpl queryService = queryServiceWithSqlSources();
+
+        assertThat(queryService.getQueryHelpContext("from Dual\n").applicableStructureItems())
+                .contains(Structures.name(TokenType.JOIN))
+                .doesNotContain(Structures.name(TokenType.ON));
+        assertThat(queryService.getQueryHelpContext("from Dual\njoin Dual2 as d\n").applicableStructureItems())
+                .containsExactly(Structures.name(TokenType.ON));
+        assertThat(queryService.getQueryHelpContext("from Dual\njoin sql_hr as hr\n").applicableStructureItems())
+                .containsExactlyInAnyOrder(Structures.name(TokenType.SQL), Structures.name(TokenType.ON));
+        assertThat(queryService.getQueryHelpContext("from Dual\njoin Dual2 as d on a = d.a\n")
+                .applicableStructureItems())
+                .contains(Structures.name(TokenType.JOIN), Structures.name(TokenType.WHERE))
+                .doesNotContain(Structures.name(TokenType.ON), Structures.name(TokenType.SQL));
+    }
+
+    // A query service whose data sources named sql_... run SQL, as a Data Connection does.
+    @SuppressWarnings("unchecked")
+    private static QueryServiceImpl queryServiceWithSqlSources() {
+        final SearchRequestFactory searchRequestFactory = Mockito.mock(SearchRequestFactory.class);
+        Mockito.doAnswer(invocation -> {
+            final String query = invocation.getArgument(0);
+            final String name = query.contains("sql_hr")
+                    ? "sql_hr"
+                    : "Dual";
+            ((Consumer<DocRef>) invocation.getArgument(1)).accept(new DocRef("Type", name, name));
+            return null;
+        }).when(searchRequestFactory).extractDataSourceOnly(Mockito.anyString(), Mockito.any());
+        Mockito.when(searchRequestFactory.extractLastJoinDataSource(Mockito.anyString()))
+                .thenAnswer(invocation -> {
+                    final String query = invocation.getArgument(0);
+                    final String joined = query.substring(query.lastIndexOf("join") + 4).trim().split("\\s")[0];
+                    return Optional.of(new DocRef("Type", joined, joined));
+                });
+        final DataSourceProviderRegistry registry = Mockito.mock(DataSourceProviderRegistry.class);
+        Mockito.when(registry.takesNativeQuery(Mockito.any()))
+                .thenAnswer(invocation -> ((DocRef) invocation.getArgument(0)).getName().startsWith("sql_"));
+        return new QueryServiceImpl(null, null, null, new MockSecurityContext(), null, null, null, registry, null,
+                null, searchRequestFactory, null, null, new ExpressionPredicateFactory(), null, null);
+    }
+
+    @Test
+    void sqlClauseIsOnlyOfferedForADataSourceThatRunsSql() {
+        final QueryServiceImpl queryService = queryServiceWithSqlSources();
+        final String sql = Structures.name(TokenType.SQL);
+
+        assertThat(queryService.getQueryHelpContext("from sql_hr\n").applicableStructureItems()).contains(sql);
+        assertThat(queryService.getQueryHelpContext("from Dual\n").applicableStructureItems())
+                .doesNotContain(sql)
+                .contains(Structures.name(TokenType.WHERE));
+    }
+
+    @Test
+    void noHelpIsOfferedWhileTheSqlIsTyped() {
+        // The SQL's own words are not StroomQL, so nothing StroomQL offers applies.
+        final ContextualQueryHelp help = queryServiceWithSqlSources()
+                .getQueryHelpContext("from sql_hr\nsql \"\"\"\nselect a from ");
+
+        assertThat(help.queryHelpTypes()).isEmpty();
+        assertThat(help.applicableStructureItems()).isEmpty();
+    }
+
+    @Test
+    void helpResumesAfterTheSql() {
+        final ContextualQueryHelp help = queryServiceWithSqlSources()
+                .getQueryHelpContext("from sql_hr\nsql \"\"\"select a from t\"\"\"\n");
+
+        assertThat(help.applicableStructureItems())
+                .contains(Structures.name(TokenType.SELECT))
+                .doesNotContain(Structures.name(TokenType.SQL));
     }
 }

@@ -93,6 +93,110 @@ class Structures {
                         ```
                         """,
                 "from \"${1:view}\"$0");
+        add(list, name(TokenType.SQL),
+                """
+                        Give the SQL to run against a Data Connection, straight after `from`, e.g.
+                        ```stroomql
+                        from "Reporting DB"
+                        sql \"""
+                        select feed, count(*) as total
+                        from events
+                        where event_time >= :from and event_time < :to
+                        group by feed
+                        \"""
+                        select feed, total
+                        ```
+
+                        In triple quotes the SQL is taken as written, so it can hold quotes and backslashes.
+                        The columns of the SQL become the fields of the query.
+
+                        `:from` and `:to` take the query's time range, and any other `:name` takes the
+                        query parameter of that name. Values are always bound, never pasted into the SQL.
+                        """,
+                "sql \"\"\"\n${1:select * from my_table}\n\"\"\"\n$0");
+        add(list, name(TokenType.JOIN),
+                """
+                        Join another data source to the rows of the query, straight after `from`, e.g.
+                        ```stroomql
+                        from "Windows events"
+                        left join "HR Users" as hr on UserId = hr.Username
+                        select UserId, hr.Department
+                        ```
+
+                        The kinds of join are:
+                        * `join` or `inner join` - one row per match; rows with no match are dropped.
+                        * `left join` or `left outer join` - one row per match; rows with no match are
+                          kept, with blank joined fields.
+                        * `semi join` or `left semi join` - each row with at least one match, once, with
+                          no joined fields.
+                        * `anti join` or `left anti join` - each row with no match, with no joined fields.
+                        * `right join` or `right outer join` - one row per match; rows of the joined source
+                          with no match are given once, with blank fields of the first source.
+                        * `full join` or `full outer join` - one row per match; rows of either source
+                          with no match are given once, with blank fields of the other.
+
+                        A right or full join gives the joined rows with no match once the first source
+                        has been searched, so they come last. It must be the last join line and can't
+                        have a time window. As in SQL, `where` is tested on the joined rows, including
+                        those with blank first-source fields, so it doesn't narrow the first source's
+                        search; use a bracketed query in `from` for that. A warning names any field
+                        `where` tests this way that had no value in any row, such as one the data source
+                        can search but not give.
+
+                        The joined fields are named `<alias>.<field>`. The alias is the name after `as`,
+                        or the data source's name if there is none.
+
+                        The joined source can be a bracketed query, which needs an alias, e.g.
+                        ```stroomql
+                        left join (
+                          from "File events"
+                          group by UserId
+                          select UserId, count() as Exports
+                        ) as ex on UserId = ex.UserId
+                        ```
+
+                        Several joins can follow `from`, and a later join's keys can use an earlier
+                        join's fields. Keys match exactly, as text, so case matters; a blank key never
+                        matches.
+
+                        `where` can name joined fields too. Conditions on the first source's fields
+                        narrow its search; conditions on the joined fields are applied once rows are
+                        joined.
+
+                        The joined source is searched first and held while the first source is searched,
+                        up to 1 million rows or 256 MB (set by administrators). Group or filter it to
+                        join more. A `join` or `semi join` with at most 1,000 keys, on a field the first
+                        source can search, also narrows the first source's search to those keys.
+
+                        Joins can't be used in streaming or table builder analytic rules.
+                        """,
+                "join \"${1:source}\" as ${2:alias} on ${3:field} = ${2:alias}.${4:field}\n$0");
+        add(list, name(TokenType.ON),
+                """
+                        Give the keys of a join, whose values must be equal for rows to join, e.g.
+                        ```stroomql
+                        on lowerCase(UserId) = hr.Username and Host = hr.Host
+                        ```
+
+                        An event-to-event join can also give a time window, e.g.
+                        ```stroomql
+                        from "Windows events" as logon
+                        join "File events" as export
+                          on logon.UserId = export.UserId
+                          within 10m after logon.EventTime
+                        select logon.UserId, logon.EventTime, export.FileName
+                        ```
+
+                        A joined event matches when its time, taken from its data source's time field,
+                        is within the window: from the first source's time to 10 minutes after it, or,
+                        with `before`, from 10 minutes before it to that time.
+
+                        The first source is searched first and held, up to the join limit, so make it
+                        selective. The joined source is then searched only within the first source's
+                        times and the window. The rows appear once both are searched. A query with a
+                        time window can have only one join line, joining a data source to a data source.
+                        """,
+                "on ${1:field} = ${2:alias}.${3:field}$0");
         add(list, name(TokenType.WHERE),
                 """
                         Use where to construct query criteria, e.g.
@@ -111,6 +215,30 @@ class Structures {
                         where user = "bob"
                         and (feed = "my feed" or feed = "other feed")
                         ```
+
+                        Keep only the rows that have a match in another data source with `exists`, or
+                        those with none with `not exists`, as in SQL, e.g.
+                        ```stroomql
+                        from People as p
+                        where exists (from Teams as t where t.team = p.team and t.on_call = true)
+                        ```
+
+                        or compare a field with one field of another data source with `in` or `not in`, e.g.
+                        ```stroomql
+                        from People
+                        where team not in (from Teams select team)
+                        ```
+
+                        These are another way of writing `semi join` and `anti join`, and run as them. The
+                        bracketed query names the first source's fields by its alias, or by its data
+                        source's name if it has none, and can only compare them with `=`. Its other
+                        conditions narrow its own search. It can only have `from`, `sql`, `where` and
+                        `select`. These forms can only be used at the top level of `where`, joined to the
+                        rest by `and`.
+
+                        A blank key never matches, so `not in` keeps a row whose field is blank, and a
+                        blank value in the other data source doesn't stop any row from being kept. This
+                        differs from SQL, where `not in` gives no rows once the other query holds a null.
                         """,
                 "where ${1:field} ${2:=} ${3:value}\n$0");
         add(list, name(TokenType.EVAL),
@@ -164,18 +292,63 @@ class Structures {
                 "eval ${1:variable_name} = ${2:value}\n$0");
         add(list, name(TokenType.WINDOW),
                 """
-                        Create windowed data, e.g.
+                        Put rows into windows of time, and group them by the window they are in, e.g.
                         ```stroomql
-                        window EventTime by 1y
+                        from Events
+                        window EventTime by 1d
+                        group by UserId
+                        select windowStart() as Day, UserId, count() as Events
                         ```
-                        This will create counts for grouped rows per year plus the previous year.
-                                          
+                        This gives a row for each user for each day. `windowStart()` and `windowEnd()` give
+                        the times of a row's window. A window includes its start and not its end.
+
+                        Add `advance` to make windows that overlap, e.g.
                         ```stroomql
-                        window EventTime by 1y advance 1m
+                        window EventTime by 1h advance 10m
                         ```
-                        This will create counts for grouped rows for each year long period every month and will include the previous 12 months.
+                        A window of an hour then starts every 10 minutes, and each row is counted in every
+                        window that covers it. The size must be a whole number of advances, and a row can
+                        be in at most 100 windows.
+
+                        Add `offset` to move where windows start, e.g.
+                        ```stroomql
+                        window EventTime by 1d offset 6h
+                        ```
+                        Each day then runs from 06:00 to 06:00. Use a minus sign, as in `offset -2h`, to move
+                        the start earlier.
+
+                        Sizes are a number and a unit: `ms`, `s`, `m` (minutes), `h`, `d`, `w`, `M` (months)
+                        or `y`. Days, weeks, months and years follow the calendar in your time zone, so `1d`
+                        is 23 or 25 hours long when the clocks change, weeks start on Monday and months on
+                        the 1st. `24h` is always 24 hours. `7d` is every seven days counted from 1 January
+                        1970, which is not the same as `1w`. A year can advance by months and a week by days,
+                        but months and years can't advance by weeks, days or less.
+
+                        Use `lag` and `lead` to compare a window with another one, e.g.
+                        ```stroomql
+                        from Events
+                        window EventTime by 1d
+                        eval Change = count() - lag(count(), 1)
+                        group by UserId
+                        select windowStart() as Day, UserId, count() as Events, Change
+                        ```
+                        `lag(count(), 1)` is the count of the window one size before for the same user, and
+                        `lead(count(), 1)` the one after. A third value, as in `lag(max(Bytes), 1, 0)`, is
+                        given when the other window has no value. A user with no events in a window still
+                        gets a row for it if a window either side reads it.
+
+                        Rows with no time in the window's field are left out.
+
+                        A rule judges a window only when it has all of its events. A rule that is run on
+                        a schedule judges each window once, in the run whose time range holds the end of
+                        the window, or the end of the last window it reads with `lead`. It searches back
+                        before the start of its time range as far as it needs to for the start of the
+                        window and for the windows it reads with `lag`. Give each run a time range that
+                        follows on from the last one, such as `day() - 1d` to `day()` for a rule run
+                        once a day. This needs a time range with a start, on the field of the window.
+                        Without one, each run judges every window that has ended.
                         """,
-                "window ${1:field} by ${2:period} advance ${3:adv_value}\n$0");
+                "window ${1:time_field} by ${2:size}\n$0");
         add(list, name(TokenType.FILTER),
                 """
                         Use filter to filter values that have not been indexed during search retrieval.
@@ -235,6 +408,18 @@ class Structures {
                         ```stroomql
                         having count > 3
                         ```
+                        A condition can test a column by name, or an expression, e.g.
+                        ```stroomql
+                        having count() > 3 and max(Bytes) < 1000
+                        ```
+                        Two expressions can be compared with `=`, `!=`, `>`, `>=`, `<` or `<=`, e.g.
+                        ```stroomql
+                        having count() > lag(count(), 1) * 2
+                        ```
+                        A name on the right is a column if there is one of that name, and text if not.
+                        A row is kept only if the comparison is true, so a row with nothing to compare
+                        with is left out. To keep the first window, give `lag` a value to use, as in
+                        `lag(count(), 1, 0)`.
                         """,
                 "having ${1:field} ${2:=} ${3:value}\n$0");
         add(list, name(TokenType.LIMIT),

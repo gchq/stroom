@@ -79,6 +79,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+// Some logging done by PermissionChangeService
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class ExplorerResourceImpl implements ExplorerResource {
 

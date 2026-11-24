@@ -97,7 +97,12 @@ public class TestS3 {
         } catch (final Exception e) {
             LOGGER.debug("Error deleting stream {}: {}", meta.getId(), LogUtil.exceptionMessage(e));
         }
-        final PutObjectResponse response = s3Manager.upload(meta, attributeMap, file, S3ZstdStreamStore.TIME_BASIS);
+        final PutObjectResponse response = s3Manager.upload(
+                meta,
+                attributeMap,
+                file,
+                S3ZstdStreamStore.TIME_BASIS,
+                false);
         final Long size = response.size();
         LOGGER.debug("Uploaded stream {}, size: {}", meta.getId(), size);
 
@@ -168,10 +173,12 @@ public class TestS3 {
         final AttributeMap attributeMap = new AttributeMap();
 
         try {
-            final PutObjectResponse response = s3Manager.upload(meta,
+            final PutObjectResponse response = s3Manager.upload(
+                    meta,
                     attributeMap,
                     file,
-                    S3ZstdStreamStore.TIME_BASIS);
+                    S3ZstdStreamStore.TIME_BASIS,
+                    false);
             final Long size = response.size();
             LOGGER.debug("Uploaded stream {}, size: {}", meta.getId(), size);
 

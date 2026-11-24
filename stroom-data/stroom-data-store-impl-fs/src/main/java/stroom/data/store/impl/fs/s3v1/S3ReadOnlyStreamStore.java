@@ -30,7 +30,6 @@ import stroom.data.store.impl.fs.PhysicalDeleteExecutor.Progress;
 import stroom.data.store.impl.fs.PhysicalDeleteOutcome;
 import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
-import stroom.data.store.impl.fs.shared.S3LocationDataVolume;
 import stroom.data.store.impl.fs.shared.ValidationResult;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.SimpleMeta;
@@ -121,16 +120,13 @@ public class S3ReadOnlyStreamStore extends AbstractS3StreamStore {
         Objects.requireNonNull(meta);
         Objects.requireNonNull(dataVolume);
 
-        final S3LocationDataVolume s3LocationDataVolume = dataVolumeService.findS3Locations(meta.getId());
-        final Set<S3Location> s3Locations = s3LocationDataVolume.s3Locations();
+        final Set<S3Location> s3Locations = dataVolumeService.findS3Locations(meta, dataVolume);
         if (NullSafe.hasOneItem(s3Locations)) {
-            final S3Location s3Location = s3Locations.stream()
-                    .findAny()
-                    .orElseThrow();
+            final S3Location s3Location = NullSafe.first(s3Locations);
             return streamStore.openSource(meta, dataVolume, s3Location, FilePadStyle.TEN_DIGITS);
         } else {
             throw new IllegalStateException(LogUtil.message(
-                    "Only one s3Location is supported, found {}, dataVolume: {}, s3Locations: {}",
+                    "Expecting one s3Location, found {}, dataVolume: {}, s3Locations: {}",
                     NullSafe.size(s3Locations), dataVolume, s3Locations));
         }
     }

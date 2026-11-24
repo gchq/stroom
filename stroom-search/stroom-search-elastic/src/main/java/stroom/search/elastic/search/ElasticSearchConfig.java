@@ -32,17 +32,23 @@ import java.util.Objects;
 public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfig {
 
     private static final boolean DEFAULT_HIGHLIGHT = true;
+    private static final int DEFAULT_FIELD_STATS_SAMPLE_SIZE = 5_000;
+    private static final int DEFAULT_FIELD_STATS_MAX_SAMPLE_SIZE = 50_000;
 
     private final boolean highlight;
     private final StroomDuration scrollDuration;
     private final String storeSize;
     private final ElasticSuggestConfig suggestConfig;
+    private final int fieldStatsSampleSize;
+    private final int fieldStatsMaxSampleSize;
 
     public ElasticSearchConfig() {
         highlight = DEFAULT_HIGHLIGHT;
         scrollDuration = StroomDuration.ofMinutes(1);
         storeSize = "1000000,100,10,1";
         suggestConfig = new ElasticSuggestConfig();
+        fieldStatsSampleSize = DEFAULT_FIELD_STATS_SAMPLE_SIZE;
+        fieldStatsMaxSampleSize = DEFAULT_FIELD_STATS_MAX_SAMPLE_SIZE;
     }
 
     @SuppressWarnings("unused")
@@ -50,11 +56,16 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
     public ElasticSearchConfig(@JsonProperty("highlight") final Boolean highlight,
                                @JsonProperty("scrollDuration") final StroomDuration scrollDuration,
                                @JsonProperty("storeSize") final String storeSize,
-                               @JsonProperty("suggestions") final ElasticSuggestConfig suggestConfig) {
+                               @JsonProperty("suggestions") final ElasticSuggestConfig suggestConfig,
+                               @JsonProperty("fieldStatsSampleSize") final Integer fieldStatsSampleSize,
+                               @JsonProperty("fieldStatsMaxSampleSize") final Integer fieldStatsMaxSampleSize) {
         this.highlight = Objects.requireNonNullElse(highlight, DEFAULT_HIGHLIGHT);
         this.scrollDuration = scrollDuration;
         this.storeSize = storeSize;
         this.suggestConfig = suggestConfig;
+        this.fieldStatsSampleSize = Objects.requireNonNullElse(fieldStatsSampleSize, DEFAULT_FIELD_STATS_SAMPLE_SIZE);
+        this.fieldStatsMaxSampleSize = Objects.requireNonNullElse(
+                fieldStatsMaxSampleSize, DEFAULT_FIELD_STATS_MAX_SAMPLE_SIZE);
     }
 
     @JsonPropertyDescription("Highlight matched terms in the source document.")
@@ -77,6 +88,18 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
         return suggestConfig;
     }
 
+    @JsonPropertyDescription("The default approximate number of documents sampled at random when estimating the " +
+                             "statistics of an Elasticsearch index field.")
+    public int getFieldStatsSampleSize() {
+        return fieldStatsSampleSize;
+    }
+
+    @JsonPropertyDescription("The largest approximate number of documents a user may ask to sample at random when " +
+                             "estimating the statistics of an Elasticsearch index field.")
+    public int getFieldStatsMaxSampleSize() {
+        return fieldStatsMaxSampleSize;
+    }
+
     @Override
     public String toString() {
         return "ElasticSearchConfig{" +
@@ -84,6 +107,8 @@ public class ElasticSearchConfig extends AbstractConfig implements IsStroomConfi
                 ", scrollDuration='" + scrollDuration + "'" +
                 ", storeSize=" + storeSize +
                 ", suggestConfig=" + suggestConfig +
+                ", fieldStatsSampleSize=" + fieldStatsSampleSize +
+                ", fieldStatsMaxSampleSize=" + fieldStatsMaxSampleSize +
                 '}';
     }
 }

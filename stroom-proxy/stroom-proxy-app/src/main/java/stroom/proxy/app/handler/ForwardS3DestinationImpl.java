@@ -125,7 +125,8 @@ public class ForwardS3DestinationImpl implements ForwardS3Destination {
                             s3Tags,
                             s3MetaData,
                             DEFAULT_UPLOAD_PROPERTIES,
-                            zipFile);
+                            zipFile,
+                            false);
                     eTag = putObjectResponse.eTag();
                 } catch (final Exception e) {
                     throw new RuntimeException(LogUtil.message(

@@ -29,8 +29,26 @@ import java.util.stream.Collectors;
 
 public final class DocRefUtil {
 
+    // TODO change the uuid+type values to both be something like 'NULL_SELECTION' when
+    //  the DocRef ctor checks for null/blank values
+    /// For use in doc pickers when the user wants to explicitly select nothing.
+    public static final DocRef NULL_SELECTION = DocRef.builder()
+            .uuid("")
+            .name("None")
+            .type("")
+            .build();
+
     private DocRefUtil() {
         // Utility class.
+    }
+
+    /// @return true if docRef is null or is equal to the magic {@link DocRefUtil#NULL_SELECTION}
+    /// {@link DocRef} (when comparing type, uuid and name).
+    public static boolean isNullSelection(final DocRef docRef) {
+        // Don't compare on instance equality in case the docRef has been de-serialised from client
+        // side JSON
+        return docRef == null
+               || DocRef.equalsAll(docRef, NULL_SELECTION);
     }
 
     public static DocRef create(final AbstractDoc doc) {
@@ -108,6 +126,9 @@ public final class DocRefUtil {
         }
     }
 
+    /// Is null safe.
+    ///
+    /// @return A string representation of the DocRef in the format "type name {uuid}".
     public static String createTypedDocRefString(final DocRef docRef) {
         if (docRef == null) {
             return "";

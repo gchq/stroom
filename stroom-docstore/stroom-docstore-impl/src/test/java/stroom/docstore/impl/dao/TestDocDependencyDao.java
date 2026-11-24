@@ -46,6 +46,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static stroom.docstore.impl.db.jooq.tables.Doc.DOC;
 import static stroom.docstore.impl.db.jooq.tables.DocDependency.DOC_DEPENDENCY;
 
 class TestDocDependencyDao {
@@ -133,6 +134,27 @@ class TestDocDependencyDao {
         final Set<DocRef> deps = dao.getDependenciesOf(from.getUuid());
         assertThat(deps).hasSize(1);
         assertThat(deps.iterator().next().getUuid()).isEqualTo(to2.getUuid());
+    }
+
+    @Test
+    void testGetSourceUuids() {
+        final DocRef filter1 = docRef("ProcessorFilter", "");
+        final DocRef filter2 = docRef("ProcessorFilter", "");
+        final DocRef dashboard = docRef("Dashboard", "My Dashboard");
+        final DocRef pipeline = docRef("Pipeline", "My Pipeline");
+        final DocRef index = docRef("Index", "My Index");
+
+        // A source with several edges is only returned once
+        dao.setDependencies(filter1, Set.of(pipeline, index));
+        dao.setDependencies(filter2, Set.of(pipeline));
+        dao.setDependencies(dashboard, Set.of(index));
+
+        assertThat(dao.getSourceUuids("ProcessorFilter"))
+                .containsExactlyInAnyOrder(filter1.getUuid(), filter2.getUuid());
+        assertThat(dao.getSourceUuids("Dashboard"))
+                .containsExactly(dashboard.getUuid());
+        assertThat(dao.getSourceUuids("Unknown"))
+                .isEmpty();
     }
 
     @Test
@@ -408,6 +430,82 @@ class TestDocDependencyDao {
         assertThat(broken).containsOnlyKeys(filter);
         assertThat(broken.get(filter).stream().map(DocRef::getUuid))
                 .containsExactly(missingDict.getUuid());
+    }
+
+    @Test
+    void testGetBrokenDependencies_rollsUpToAnalyticRuleOwner() {
+        // The filter of a streaming analytic is owned by its analytic rule rather than a pipeline
+        final DocRef filter = docRef("ProcessorFilter", "");
+        final DocRef analyticRule = docRef("AnalyticRule", "My Rule");
+        final DocRef missingDict = docRef("Dictionary", "Ghost Dictionary");
+        createDocRow(analyticRule);
+
+        dao.setDependencies(filter, Set.of(analyticRule, missingDict));
+
+        final Map<DocRef, Set<DocRef>> broken = dao.getBrokenDependencies(Set.of());
+
+        assertThat(broken).containsOnlyKeys(analyticRule);
+        assertThat(broken.get(analyticRule).stream().map(DocRef::getUuid))
+                .containsExactly(missingDict.getUuid());
+    }
+
+    @Test
+    void testFetchDependencies_nonExplorerSourceTakesOwnerName() {
+        // A processor filter has no name of its own, so it is shown with its pipeline's name
+        final DocRef filter = docRef("ProcessorFilter", "");
+        final DocRef pipeline = docRef("Pipeline", "My Pipeline");
+        final DocRef index = docRef("Index", "My Index");
+        createDocRow(pipeline);
+        createDocRow(index);
+        dao.setDependencies(filter, Set.of(pipeline, index));
+
+        assertThat(filter("fromtype:ProcessorFilter").getValues())
+                .hasSize(2)
+                .extracting(dependency -> dependency.getFrom().getName())
+                .containsOnly("My Pipeline");
+
+        // The name is the pipeline's live name, so a rename needs no propagating
+        renameDocRow(pipeline, "Renamed Pipeline");
+        assertThat(filter("fromtype:ProcessorFilter").getValues())
+                .extracting(dependency -> dependency.getFrom().getName())
+                .containsOnly("Renamed Pipeline");
+
+        // The quick filter on the source name uses the same name
+        assertThat(filter("fromname:Renamed").getValues())
+                .hasSize(2);
+    }
+
+    @Test
+    void testFetchDependencies_nonExplorerSourceWithDeletedOwnerKeepsStoredName() {
+        final DocRef filter = docRef("ProcessorFilter", "");
+        final DocRef pipeline = docRef("Pipeline", "My Pipeline");
+        createDocRow(pipeline);
+        dao.setDependencies(filter, Set.of(pipeline));
+        deleteDocRow(pipeline);
+
+        assertThat(filter("fromtype:ProcessorFilter").getValues())
+                .singleElement()
+                .satisfies(dependency -> {
+                    assertThat(dependency.getFrom().getName())
+                            .isEmpty();
+                    assertThat(dependency.isOk())
+                            .isFalse();
+                });
+    }
+
+    @Test
+    void testFetchDependencies_documentSourceKeepsItsOwnName() {
+        // A document is never given the name of a pipeline it depends on, e.g. a child pipeline
+        final DocRef child = docRef("Pipeline", "Child Pipeline");
+        final DocRef parent = docRef("Pipeline", "Parent Pipeline");
+        createDocRow(child);
+        createDocRow(parent);
+        dao.setDependencies(child, Set.of(parent));
+
+        assertThat(filter("fromuuid:" + child.getUuid()).getValues())
+                .singleElement()
+                .extracting(dependency -> dependency.getFrom().getName())
+                .isEqualTo("Child Pipeline");
     }
 
     // --- fetchDependencies (paginated) ---
@@ -692,6 +790,178 @@ class TestDocDependencyDao {
                         "fromtype", "fromname", "fromuuid",
                         "totype", "toname", "touuid",
                         "status");
+    }
+
+    // --- dependency_version stamping and rebuild support ---
+
+    @Test
+    void setDependencies_stampsDependencyVersion() {
+        final DocRef from = docRef("View", "View");
+        final DocRef to = docRef("Pipeline", "Pipeline");
+        createDocRow(from);
+
+        assertThat(getDependencyVersion(from))
+                .isNull();
+
+        dao.setDependencies(from, Set.of(to));
+
+        assertThat(getDependencyVersion(from))
+                .isEqualTo(DocDependencyDao.CURRENT_DEPENDENCY_VERSION);
+    }
+
+    @Test
+    void setDependencies_sourceWithNoDocRow() {
+        // e.g. a processor filter, which has edges but no doc row to stamp
+        final DocRef from = docRef("ProcessorFilter", "Filter");
+        final DocRef to = docRef("Pipeline", "Pipeline");
+
+        dao.setDependencies(from, Set.of(to));
+
+        assertThat(dao.getDependenciesOf(from.getUuid()))
+                .extracting(DocRef::getUuid)
+                .containsExactly(to.getUuid());
+    }
+
+    @Test
+    void findDocsWithStaleDependencies() {
+        final DocRef neverBuilt = docRef("Pipeline", "Never built");
+        final DocRef oldVersion = docRef("Pipeline", "Old version");
+        final DocRef current = docRef("Pipeline", "Current");
+        final DocRef deleted = docRef("Pipeline", "Deleted");
+        final String neverBuiltVersion = createDocRow(neverBuilt, null);
+        final String oldVersionVersion = createDocRow(oldVersion, DocDependencyDao.CURRENT_DEPENDENCY_VERSION - 1);
+        createDocRow(current, DocDependencyDao.CURRENT_DEPENDENCY_VERSION);
+        createDocRow(deleted, null);
+        deleteDocRow(deleted);
+
+        // Other tests leave doc rows behind, so only look at the ones created here
+        final Set<String> uuids = Set.of(
+                neverBuilt.getUuid(), oldVersion.getUuid(), current.getUuid(), deleted.getUuid());
+        assertThat(dao.findDocsWithStaleDependencies())
+                .filteredOn(docVersion -> uuids.contains(docVersion.docRef().getUuid()))
+                .containsExactlyInAnyOrder(
+                        new DocDependencyDao.DocVersion(neverBuilt, neverBuiltVersion),
+                        new DocDependencyDao.DocVersion(oldVersion, oldVersionVersion));
+    }
+
+    @Test
+    void setDependenciesIfUnchanged_versionMatches() {
+        final DocRef from = docRef("View", "View");
+        final DocRef oldTo = docRef("Pipeline", "Old pipeline");
+        final DocRef newTo = docRef("Pipeline", "New pipeline");
+        final String version = createDocRow(from, null);
+        dao.setDependencies(from, Set.of(oldTo));
+        setDependencyVersion(from, null);
+
+        final boolean written = dao.setDependenciesIfUnchanged(from, version, Set.of(newTo));
+
+        assertThat(written)
+                .isTrue();
+        assertThat(dao.getDependenciesOf(from.getUuid()))
+                .extracting(DocRef::getUuid)
+                .containsExactly(newTo.getUuid());
+        assertThat(getDependencyVersion(from))
+                .isEqualTo(DocDependencyDao.CURRENT_DEPENDENCY_VERSION);
+    }
+
+    @Test
+    void setDependenciesIfUnchanged_docChangedSinceRead() {
+        final DocRef from = docRef("View", "View");
+        final DocRef savedTo = docRef("Pipeline", "Saved pipeline");
+        final DocRef staleTo = docRef("Pipeline", "Stale pipeline");
+        final String readVersion = createDocRow(from, null);
+        // A save happens after the rebuild read the doc: new version, and it writes its own edges
+        setDocVersion(from, UUID.randomUUID().toString());
+        dao.setDependencies(from, Set.of(savedTo));
+
+        final boolean written = dao.setDependenciesIfUnchanged(from, readVersion, Set.of(staleTo));
+
+        assertThat(written)
+                .isFalse();
+        assertThat(dao.getDependenciesOf(from.getUuid()))
+                .extracting(DocRef::getUuid)
+                .containsExactly(savedTo.getUuid());
+    }
+
+    @Test
+    void setDependenciesIfUnchanged_docDeleted() {
+        final DocRef from = docRef("View", "View");
+        final DocRef to = docRef("Pipeline", "Pipeline");
+        final String version = createDocRow(from, null);
+        deleteDocRow(from);
+
+        final boolean written = dao.setDependenciesIfUnchanged(from, version, Set.of(to));
+
+        assertThat(written)
+                .isFalse();
+        assertThat(dao.getDependenciesOf(from.getUuid()))
+                .isEmpty();
+    }
+
+    @Test
+    void setDependenciesIfUnchanged_noDocRow() {
+        final DocRef from = docRef("View", "View");
+        final DocRef to = docRef("Pipeline", "Pipeline");
+
+        final boolean written = dao.setDependenciesIfUnchanged(from, UUID.randomUUID().toString(), Set.of(to));
+
+        assertThat(written)
+                .isFalse();
+        assertThat(dao.getDependenciesOf(from.getUuid()))
+                .isEmpty();
+    }
+
+    private String createDocRow(final DocRef docRef, final Integer dependencyVersion) {
+        final String version = UUID.randomUUID().toString();
+        JooqUtil.context(connProvider, ctx -> ctx
+                .insertInto(DOC)
+                .set(DOC.TYPE, docRef.getType())
+                .set(DOC.UUID, docRef.getUuid())
+                .set(DOC.NAME, docRef.getName())
+                .set(DOC.VERSION, version)
+                .set(DOC.DEPENDENCY_VERSION, dependencyVersion)
+                .execute());
+        return version;
+    }
+
+    private void deleteDocRow(final DocRef docRef) {
+        JooqUtil.context(connProvider, ctx -> ctx
+                .update(DOC)
+                .set(DOC.DELETED, System.currentTimeMillis())
+                .where(DOC.UUID.eq(docRef.getUuid()))
+                .execute());
+    }
+
+    private void renameDocRow(final DocRef docRef, final String name) {
+        JooqUtil.context(connProvider, ctx -> ctx
+                .update(DOC)
+                .set(DOC.NAME, name)
+                .where(DOC.UUID.eq(docRef.getUuid()))
+                .execute());
+    }
+
+    private void setDocVersion(final DocRef docRef, final String version) {
+        JooqUtil.context(connProvider, ctx -> ctx
+                .update(DOC)
+                .set(DOC.VERSION, version)
+                .where(DOC.UUID.eq(docRef.getUuid()))
+                .execute());
+    }
+
+    private void setDependencyVersion(final DocRef docRef, final Integer dependencyVersion) {
+        JooqUtil.context(connProvider, ctx -> ctx
+                .update(DOC)
+                .set(DOC.DEPENDENCY_VERSION, dependencyVersion)
+                .where(DOC.UUID.eq(docRef.getUuid()))
+                .execute());
+    }
+
+    private Integer getDependencyVersion(final DocRef docRef) {
+        return JooqUtil.contextResult(connProvider, ctx -> ctx
+                .select(DOC.DEPENDENCY_VERSION)
+                .from(DOC)
+                .where(DOC.UUID.eq(docRef.getUuid()))
+                .fetchOne(DOC.DEPENDENCY_VERSION));
     }
 
     // --- Quick filter helpers ---

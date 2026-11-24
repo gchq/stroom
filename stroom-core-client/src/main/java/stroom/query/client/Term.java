@@ -19,12 +19,15 @@ package stroom.query.client;
 import stroom.docref.DocRef;
 import stroom.query.api.ExpressionTerm.Condition;
 
+import java.util.Map;
+
 public final class Term extends Item {
 
     private String field;
     private Condition condition;
     private String value;
     private DocRef docRef;
+    private Map<String, String> options;
 
     public String getField() {
         return field;
@@ -56,6 +59,16 @@ public final class Term extends Item {
 
     public void setDocRef(final DocRef docRef) {
         this.docRef = docRef;
+    }
+
+    /// @return The field-level query options that differ from their defaults, or null if there are none.
+    public Map<String, String> getOptions() {
+        return options;
+    }
+
+    /// @param options The field-level query options that differ from their defaults, or null for none.
+    public void setOptions(final Map<String, String> options) {
+        this.options = options;
     }
 
     @Override

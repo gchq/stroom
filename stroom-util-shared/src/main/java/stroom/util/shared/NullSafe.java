@@ -36,16 +36,16 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
+import java.util.function.ToLongFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * Utility methods for safely dealing with things that may be null.
- * <p>
- * Must contain only methods that are compatible with GWT compilation, else they need
- * to go into NullSafeExtra.
- * </p>
- */
+/// Utility methods for safely dealing with things that may be null.
+///
+/// Must contain only methods that are compatible with GWT compilation, else they need
+/// to go into NullSafeExtra.
+///
 public class NullSafe {
 
     private static final Predicate<?> ALWAYS_TRUE_PREDICATE = ignored -> true;
@@ -54,11 +54,9 @@ public class NullSafe {
     private NullSafe() {
     }
 
-    /**
-     * Allows you to safely compare a child property of val1 to other.
-     *
-     * @return False if val1 is null else whether the child property of val1 is equal to other
-     */
+    /// Allows you to safely compare a child property of val1 to other.
+    ///
+    /// @return False if val1 is null else whether the child property of val1 is equal to other
     public static <T1, T2> boolean equals(final T1 val1,
                                           final Function<T1, T2> getter,
                                           final Object other) {
@@ -70,12 +68,10 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Allows you to safely compare a grandchild property of val1 to other.
-     *
-     * @return False if val1 is null or if val1's child property is null,
-     * else whether the grandchild property of val1 is equal to other
-     */
+    /// Allows you to safely compare a grandchild property of val1 to other.
+    ///
+    /// @return False if val1 is null or if val1's child property is null,
+    /// else whether the grandchild property of val1 is equal to other
     public static <T1, T2, T3> boolean equals(final T1 val1,
                                               final Function<T1, T2> getter1,
                                               final Function<T2, T3> getter2,
@@ -93,13 +89,11 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Test if the properties (accessed using the same getter for both) of two
-     * objects of the same class are equal in a null safe way.
-     *
-     * @return True if val1 and val2 are both null or if the results of applying {@code getter}
-     * to va1 and val2 are equal.
-     */
+    /// Test if the properties (accessed using the same getter for both) of two
+    /// objects of the same class are equal in a null safe way.
+    ///
+    /// @return True if val1 and val2 are both null or if the results of applying `getter`
+    /// to va1 and val2 are equal.
     public static <T, R> boolean equalProperties(final T val1,
                                                  final T val2,
                                                  final Function<T, R> getter) {
@@ -117,13 +111,11 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Test if the properties (accessed using the same getters for both) of two
-     * objects of the same class are equal in a null safe way.
-     *
-     * @return True if val1 and val2 are both null or if the results of applying all {@code getters}
-     * to va1 and val2 are all equal.
-     */
+    /// Test if the properties (accessed using the same getters for both) of two
+    /// objects of the same class are equal in a null safe way.
+    ///
+    /// @return True if val1 and val2 are both null or if the results of applying all `getters`
+    /// to va1 and val2 are all equal.
     public static <T, R> boolean equalProperties(final T val1,
                                                  final T val2,
                                                  final List<Function<T, R>> getters) {
@@ -152,9 +144,7 @@ public class NullSafe {
         }
     }
 
-    /**
-     * @return True if all values in the array are null or the array itself is null
-     */
+    /// @return True if all values in the array are null or the array itself is null
     public static <T> boolean allNull(final T... vals) {
         if (vals == null) {
             return true;
@@ -170,9 +160,7 @@ public class NullSafe {
         }
     }
 
-    /**
-     * @return True if the array itself is non-null and all values in the array are non-null
-     */
+    /// @return True if the array itself is non-null and all values in the array are non-null
     public static boolean allNonNull(final Object... vals) {
         if (vals == null) {
             return false;
@@ -188,9 +176,7 @@ public class NullSafe {
         }
     }
 
-    /**
-     * @return True if the array itself is non-null and all values in the array are non-null
-     */
+    /// @return True if the array itself is non-null and all values in the array are non-null
     public static boolean allNonNull(final Supplier<Object>... valueSuppliers) {
         if (valueSuppliers == null) {
             return false;
@@ -206,11 +192,9 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Return first non-null value or an empty {@link Optional} if all are null
-     * <p>
-     * Alias for {@link NullSafe#coalesce(T[])}
-     */
+    /// Return first non-null value or an empty [Optional] if all are null
+    ///
+    /// Alias for [NullSafe#coalesce(T\[\])]
     public static <T> Optional<T> firstNonNull(final T... vals) {
         if (vals != null) {
             for (final T val : vals) {
@@ -222,9 +206,7 @@ public class NullSafe {
         return Optional.empty();
     }
 
-    /**
-     * @return The first item in the list or null if list is null or empty.
-     */
+    /// @return The first item in the list or null if list is null or empty.
     public static <T> T first(final List<T> list) {
         if (list == null || list.isEmpty()) {
             return null;
@@ -234,9 +216,7 @@ public class NullSafe {
         }
     }
 
-    /**
-     * @return The first item in the collection or null if collection is null or empty.
-     */
+    /// @return The first item in the collection or null if collection is null or empty.
     public static <T> T first(final Collection<T> list) {
         if (list == null || list.isEmpty()) {
             return null;
@@ -245,9 +225,7 @@ public class NullSafe {
         }
     }
 
-    /**
-     * @return The first item in the list or null if list is null or empty.
-     */
+    /// @return The first item in the list or null if list is null or empty.
     public static <T> T last(final List<T> list) {
         if (list == null || list.isEmpty()) {
             return null;
@@ -257,9 +235,7 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Return first non-null value or an empty {@link Optional} if all are null
-     */
+    /// Return first non-null value or an empty [Optional] if all are null
     public static <T> Optional<T> coalesce(final T... vals) {
         if (vals != null) {
             for (final T val : vals) {
@@ -271,9 +247,7 @@ public class NullSafe {
         return Optional.empty();
     }
 
-    /**
-     * Return first non-null value or an empty {@link Optional} if all are null
-     */
+    /// Return first non-null value or an empty [Optional] if all are null
     public static <T> Optional<T> coalesce(final T val1, final T val2) {
         return val1 != null
                 ? Optional.of(val1)
@@ -282,9 +256,7 @@ public class NullSafe {
                         : Optional.empty());
     }
 
-    /**
-     * Return first non-null value or an empty {@link Optional} if all are null
-     */
+    /// Return first non-null value or an empty [Optional] if all are null
     public static <T> Optional<T> coalesce(final T val1, final T val2, final T val3) {
         return val1 != null
                 ? Optional.of(val1)
@@ -295,9 +267,7 @@ public class NullSafe {
                                 : Optional.empty()));
     }
 
-    /**
-     * Return first non-null value or an empty {@link Optional} if all are null
-     */
+    /// Return first non-null value or an empty [Optional] if all are null
     public static <T> Optional<T> coalesce(final T val1,
                                            final T val2,
                                            final T val3,
@@ -314,9 +284,7 @@ public class NullSafe {
     }
 
 
-    /**
-     * @return True if str is null or blank
-     */
+    /// @return True if str is null or blank
     public static boolean isBlankString(final String str) {
         // GWT doesn't emulate String::isBlank
         if (str != null && !str.isEmpty()) {
@@ -329,9 +297,7 @@ public class NullSafe {
         return true;
     }
 
-    /**
-     * @return True if value is null or the string property is null/empty/blank
-     */
+    /// @return True if value is null or the string property is null/empty/blank
     public static <T> boolean isBlankString(final T value,
                                             final Function<T, String> stringGetter) {
         if (value == null) {
@@ -342,16 +308,12 @@ public class NullSafe {
         }
     }
 
-    /**
-     * @return True if str is null or empty
-     */
+    /// @return True if str is null or empty
     public static boolean isEmptyString(final String str) {
         return str == null || str.isEmpty();
     }
 
-    /**
-     * @return True if value is null or the string property is null or empty
-     */
+    /// @return True if value is null or the string property is null or empty
     public static <T> boolean isEmptyString(final T value,
                                             final Function<T, String> stringGetter) {
         if (value == null) {
@@ -362,10 +324,8 @@ public class NullSafe {
         }
     }
 
-    /**
-     * @return True if str is non-null and has at least one character that is not
-     * whitespace
-     */
+    /// @return True if str is non-null and has at least one character that is not
+    /// whitespace
     public static boolean isNonBlankString(final String str) {
         // GWT doesn't emulate String::isBlank
         if (str != null && !str.isEmpty()) {
@@ -378,18 +338,14 @@ public class NullSafe {
         return false;
     }
 
-    /**
-     * @return True if str is non-null and not empty
-     */
+    /// @return True if str is non-null and not empty
     public static boolean isNonEmptyString(final String str) {
         return str != null && !str.isEmpty();
     }
 
-    /**
-     * Maps str using mapper if str is not null/empty.
-     *
-     * @return The mapped value or null if str is null/empty.
-     */
+    /// Maps str using mapper if str is not null/empty.
+    ///
+    /// @return The mapped value or null if str is null/empty.
     public static <T> T mapNonEmptyString(final String str, final Function<String, T> mapper) {
         if (isNonEmptyString(str)) {
             return Objects.requireNonNull(mapper).apply(str);
@@ -398,27 +354,21 @@ public class NullSafe {
         }
     }
 
-    /**
-     * @return str if it is not null/empty/blank, else other.
-     */
+    /// @return str if it is not null/empty/blank, else other.
     public static String nonBlankStringElse(final String str, final String other) {
         return isBlankString(str)
                 ? Objects.requireNonNull(other)
                 : str;
     }
 
-    /**
-     * @return str if it is not null/empty/blank, else result of calling otherSupplier.
-     */
+    /// @return str if it is not null/empty/blank, else result of calling otherSupplier.
     public static String nonBlankStringElseGet(final String str, final Supplier<String> otherSupplier) {
         return isBlankString(str)
                 ? Objects.requireNonNull(Objects.requireNonNull(otherSupplier).get())
                 : str;
     }
 
-    /**
-     * If str is not null/empty/blank then pass it to consumer (if that is not null).
-     */
+    /// If str is not null/empty/blank then pass it to consumer (if that is not null).
     public static void consumeNonBlankString(final String str, final Consumer<String> consumer) {
         // GWT doesn't emulate String::isBlank
         if (!isBlankString(str) && consumer != null) {
@@ -426,9 +376,7 @@ public class NullSafe {
         }
     }
 
-    /**
-     * If str is not null/empty/blank then pass it to consumer (if that is not null).
-     */
+    /// If str is not null/empty/blank then pass it to consumer (if that is not null).
     public static void consumeNonBlankString(final String str,
                                              final boolean trimString,
                                              final Consumer<String> consumer) {
@@ -442,11 +390,9 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Maps str using mapper if str is not null/empty/blank.
-     *
-     * @return The mapped value or null if str is null/empty/blank.
-     */
+    /// Maps str using mapper if str is not null/empty/blank.
+    ///
+    /// @return The mapped value or null if str is null/empty/blank.
     public static <T> T mapNonBlankString(final String str, final Function<String, T> mapper) {
         if (isNonBlankString(str)) {
             return Objects.requireNonNull(mapper).apply(str);
@@ -463,13 +409,25 @@ public class NullSafe {
         }
     }
 
-    /**
-     * @return str trimmed or an empty string if str is null
-     */
+    /// @return str trimmed or an empty string if str is null
     public static String trim(final String str) {
         return str != null
                 ? str.trim()
                 : "";
+    }
+
+    /// @param str    The string to check
+    /// @param prefix The prefix to check for in str. Must not be null.
+    /// @return True if str is non-null and starts with prefix
+    public static boolean startsWith(final String str, final String prefix) {
+        return str != null && str.startsWith(prefix);
+    }
+
+    /// @param str    The string to check
+    /// @param suffix The suffix to check for in str. Must not be null.
+    /// @return True if str is non-null and ends with suffix
+    public static boolean endsWith(final String str, final String suffix) {
+        return str != null && str.endsWith(suffix);
     }
 
     public static String subString(final String str, final int beginIndex, final int endIndex) {
@@ -486,35 +444,679 @@ public class NullSafe {
         }
     }
 
-    /**
-     * @return The un-boxed value if non-null, else zero.
-     */
+    /// @return The un-boxed value if non-null, else zero.
     public static int getInt(final Integer val) {
         return val != null
                 ? val
                 : 0;
     }
 
-    /**
-     * @return The un-boxed value if non-null, else zero.
-     */
+    /// Returns val if it is non-null, else other.
+    ///
+    /// @param val   The value to check.
+    /// @param other The value to return if val is null.
+    /// @return val if it is non-null, else other.
+    public static int getIntOrElse(final Integer val, final int other) {
+        return val != null
+                ? val
+                : other;
+    }
+
+    /// Applies getter to value if value is non-null.
+    ///
+    /// @param value  The value to apply getter to.
+    /// @param getter The primitive int getter to apply to value.
+    /// @return The result of applying getter to value, or zero if value is null.
+    public static <T1> int getInt(final T1 value,
+                                  final ToIntFunction<T1> getter) {
+        if (value == null) {
+            return 0;
+        } else {
+            return Objects.requireNonNull(getter).applyAsInt(value);
+        }
+    }
+
+    /// Applies getter to value if value is non-null.
+    ///
+    /// @param value  The value to apply getter to.
+    /// @param getter The primitive int getter to apply to value.
+    /// @param other  The value to return if value is null.
+    /// @return The result of applying getter to value, or other if value is null.
+    public static <T1> int getIntOrElse(final T1 value,
+                                        final ToIntFunction<T1> getter,
+                                        final int other) {
+        if (value == null) {
+            return other;
+        } else {
+            return Objects.requireNonNull(getter).applyAsInt(value);
+        }
+    }
+
+    /// Applies getter1 and getter2 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The primitive int getter to apply.
+    /// @return The result of applying getter2, or zero if any preceding value is null.
+    public static <T1, T2> int getInt(final T1 value,
+                                      final Function<T1, T2> getter1,
+                                      final ToIntFunction<T2> getter2) {
+        if (value == null) {
+            return 0;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return 0;
+            } else {
+                return Objects.requireNonNull(getter2).applyAsInt(value2);
+            }
+        }
+    }
+
+    /// Applies getter1 and getter2 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The primitive int getter to apply.
+    /// @param other   The value to return if any preceding value is null.
+    /// @return The result of applying getter2, or other if any preceding value is null.
+    public static <T1, T2> int getIntOrElse(final T1 value,
+                                            final Function<T1, T2> getter1,
+                                            final ToIntFunction<T2> getter2,
+                                            final int other) {
+        if (value == null) {
+            return other;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return other;
+            } else {
+                return Objects.requireNonNull(getter2).applyAsInt(value2);
+            }
+        }
+    }
+
+    /// Applies getter1, getter2 and getter3 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The primitive int getter to apply.
+    /// @return The result of applying getter3, or zero if any preceding value is null.
+    public static <T1, T2, T3> int getInt(final T1 value,
+                                          final Function<T1, T2> getter1,
+                                          final Function<T2, T3> getter2,
+                                          final ToIntFunction<T3> getter3) {
+        if (value == null) {
+            return 0;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return 0;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return 0;
+                } else {
+                    return Objects.requireNonNull(getter3).applyAsInt(value3);
+                }
+            }
+        }
+    }
+
+    /// Applies getter1, getter2 and getter3 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The primitive int getter to apply.
+    /// @param other   The value to return if any preceding value is null.
+    /// @return The result of applying getter3, or other if any preceding value is null.
+    public static <T1, T2, T3> int getIntOrElse(final T1 value,
+                                                final Function<T1, T2> getter1,
+                                                final Function<T2, T3> getter2,
+                                                final ToIntFunction<T3> getter3,
+                                                final int other) {
+        if (value == null) {
+            return other;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return other;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return other;
+                } else {
+                    return Objects.requireNonNull(getter3).applyAsInt(value3);
+                }
+            }
+        }
+    }
+
+    /// Applies getter1, getter2, getter3 and getter4 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The third getter to apply.
+    /// @param getter4 The primitive int getter to apply.
+    /// @return The result of applying getter4, or zero if any preceding value is null.
+    public static <T1, T2, T3, T4> int getInt(final T1 value,
+                                              final Function<T1, T2> getter1,
+                                              final Function<T2, T3> getter2,
+                                              final Function<T3, T4> getter3,
+                                              final ToIntFunction<T4> getter4) {
+        if (value == null) {
+            return 0;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return 0;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return 0;
+                } else {
+                    final T4 value4 = Objects.requireNonNull(getter3).apply(value3);
+                    if (value4 == null) {
+                        return 0;
+                    } else {
+                        return Objects.requireNonNull(getter4).applyAsInt(value4);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Applies getter1, getter2, getter3 and getter4 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The third getter to apply.
+    /// @param getter4 The primitive int getter to apply.
+    /// @param other   The value to return if any preceding value is null.
+    /// @return The result of applying getter4, or other if any preceding value is null.
+    public static <T1, T2, T3, T4> int getIntOrElse(final T1 value,
+                                                    final Function<T1, T2> getter1,
+                                                    final Function<T2, T3> getter2,
+                                                    final Function<T3, T4> getter3,
+                                                    final ToIntFunction<T4> getter4,
+                                                    final int other) {
+        if (value == null) {
+            return other;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return other;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return other;
+                } else {
+                    final T4 value4 = Objects.requireNonNull(getter3).apply(value3);
+                    if (value4 == null) {
+                        return other;
+                    } else {
+                        return Objects.requireNonNull(getter4).applyAsInt(value4);
+                    }
+                }
+            }
+        }
+    }
+
+    /// @return The un-boxed value if non-null, else zero.
     public static long getLong(final Long val) {
         return val != null
                 ? val
                 : 0;
     }
 
-    /**
-     * @return True if val is not null and true
-     */
+    /// Returns val if it is non-null, else other.
+    ///
+    /// @param val   The value to check.
+    /// @param other The value to return if val is null.
+    /// @return val if it is non-null, else other.
+    public static long getLongOrElse(final Long val, final long other) {
+        return val != null
+                ? val
+                : other;
+    }
+
+    /// Applies getter to value if value is non-null.
+    ///
+    /// @param value  The value to apply getter to.
+    /// @param getter The primitive long getter to apply to value.
+    /// @return The result of applying getter to value, or zero if value is null.
+    public static <T1> long getLong(final T1 value,
+                                    final ToLongFunction<T1> getter) {
+        if (value == null) {
+            return 0;
+        } else {
+            return Objects.requireNonNull(getter).applyAsLong(value);
+        }
+    }
+
+    /// Applies getter to value if value is non-null.
+    ///
+    /// @param value  The value to apply getter to.
+    /// @param getter The primitive long getter to apply to value.
+    /// @param other  The value to return if value is null.
+    /// @return The result of applying getter to value, or other if value is null.
+    public static <T1> long getLongOrElse(final T1 value,
+                                          final ToLongFunction<T1> getter,
+                                          final long other) {
+        if (value == null) {
+            return other;
+        } else {
+            return Objects.requireNonNull(getter).applyAsLong(value);
+        }
+    }
+
+    /// Applies getter1 and getter2 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The primitive long getter to apply.
+    /// @return The result of applying getter2, or zero if any preceding value is null.
+    public static <T1, T2> long getLong(final T1 value,
+                                        final Function<T1, T2> getter1,
+                                        final ToLongFunction<T2> getter2) {
+        if (value == null) {
+            return 0;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return 0;
+            } else {
+                return Objects.requireNonNull(getter2).applyAsLong(value2);
+            }
+        }
+    }
+
+    /// Applies getter1 and getter2 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The primitive long getter to apply.
+    /// @param other   The value to return if any preceding value is null.
+    /// @return The result of applying getter2, or other if any preceding value is null.
+    public static <T1, T2> long getLongOrElse(final T1 value,
+                                              final Function<T1, T2> getter1,
+                                              final ToLongFunction<T2> getter2,
+                                              final long other) {
+        if (value == null) {
+            return other;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return other;
+            } else {
+                return Objects.requireNonNull(getter2).applyAsLong(value2);
+            }
+        }
+    }
+
+    /// Applies getter1, getter2 and getter3 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The primitive long getter to apply.
+    /// @return The result of applying getter3, or zero if any preceding value is null.
+    public static <T1, T2, T3> long getLong(final T1 value,
+                                            final Function<T1, T2> getter1,
+                                            final Function<T2, T3> getter2,
+                                            final ToLongFunction<T3> getter3) {
+        if (value == null) {
+            return 0;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return 0;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return 0;
+                } else {
+                    return Objects.requireNonNull(getter3).applyAsLong(value3);
+                }
+            }
+        }
+    }
+
+    /// Applies getter1, getter2 and getter3 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The primitive long getter to apply.
+    /// @param other   The value to return if any preceding value is null.
+    /// @return The result of applying getter3, or other if any preceding value is null.
+    public static <T1, T2, T3> long getLongOrElse(final T1 value,
+                                                  final Function<T1, T2> getter1,
+                                                  final Function<T2, T3> getter2,
+                                                  final ToLongFunction<T3> getter3,
+                                                  final long other) {
+        if (value == null) {
+            return other;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return other;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return other;
+                } else {
+                    return Objects.requireNonNull(getter3).applyAsLong(value3);
+                }
+            }
+        }
+    }
+
+    /// Applies getter1, getter2, getter3 and getter4 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The third getter to apply.
+    /// @param getter4 The primitive long getter to apply.
+    /// @return The result of applying getter4, or zero if any preceding value is null.
+    public static <T1, T2, T3, T4> long getLong(final T1 value,
+                                                final Function<T1, T2> getter1,
+                                                final Function<T2, T3> getter2,
+                                                final Function<T3, T4> getter3,
+                                                final ToLongFunction<T4> getter4) {
+        if (value == null) {
+            return 0;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return 0;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return 0;
+                } else {
+                    final T4 value4 = Objects.requireNonNull(getter3).apply(value3);
+                    if (value4 == null) {
+                        return 0;
+                    } else {
+                        return Objects.requireNonNull(getter4).applyAsLong(value4);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Applies getter1, getter2, getter3 and getter4 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The third getter to apply.
+    /// @param getter4 The primitive long getter to apply.
+    /// @param other   The value to return if any preceding value is null.
+    /// @return The result of applying getter4, or other if any preceding value is null.
+    public static <T1, T2, T3, T4> long getLongOrElse(final T1 value,
+                                                      final Function<T1, T2> getter1,
+                                                      final Function<T2, T3> getter2,
+                                                      final Function<T3, T4> getter3,
+                                                      final ToLongFunction<T4> getter4,
+                                                      final long other) {
+        if (value == null) {
+            return other;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return other;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return other;
+                } else {
+                    final T4 value4 = Objects.requireNonNull(getter3).apply(value3);
+                    if (value4 == null) {
+                        return other;
+                    } else {
+                        return Objects.requireNonNull(getter4).applyAsLong(value4);
+                    }
+                }
+            }
+        }
+    }
+
+    /// @return val if it is non-null, else false.
+    public static boolean getBoolean(final Boolean val) {
+        return val != null && val;
+    }
+
+    ///
+    /// @param val   The value to check.
+    /// @param other The value to return if val is null.
+    /// @return val if it is non-null, else other.
+    public static boolean getBooleanOrElse(final Boolean val, final boolean other) {
+        return val != null
+                ? val
+                : other;
+    }
+
+    /// Applies getter to value if value is non-null.
+    /// Alias for [NullSafe#test(Object, Predicate)].
+    ///
+    /// @param value  The value to apply getter to.
+    /// @param getter The primitive boolean getter to apply to value.
+    /// @return The result of applying getter to value, or false if value is null.
+    public static <T1> boolean getBoolean(final T1 value,
+                                          final Predicate<T1> getter) {
+        if (value == null) {
+            return false;
+        } else {
+            return Objects.requireNonNull(getter).test(value);
+        }
+    }
+
+    /// Applies getter to value if value is non-null.
+    ///
+    /// @param value  The value to apply getter to.
+    /// @param getter The primitive boolean getter to apply to value.
+    /// @param other  The value to return if value is null.
+    /// @return The result of applying getter to value, or other if value is null.
+    public static <T1> boolean getBooleanOrElse(final T1 value,
+                                                final Predicate<T1> getter,
+                                                final boolean other) {
+        if (value == null) {
+            return other;
+        } else {
+            return Objects.requireNonNull(getter).test(value);
+        }
+    }
+
+    /// Applies getter1 and getter2 to value if each preceding value is non-null.
+    /// Alias for [NullSafe#test(Object, Function, Predicate)].
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The primitive boolean getter to apply to the child value.
+    /// @return The result of applying getter2, or false if any preceding value is null.
+    public static <T1, T2> boolean getBoolean(final T1 value,
+                                              final Function<T1, T2> getter1,
+                                              final Predicate<T2> getter2) {
+        if (value == null) {
+            return false;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return false;
+            } else {
+                return Objects.requireNonNull(getter2).test(value2);
+            }
+        }
+    }
+
+    /// Applies getter1 and getter2 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The primitive boolean getter to apply to the child value.
+    /// @param other   The value to return if any preceding value is null.
+    /// @return The result of applying getter2, or other if any preceding value is null.
+    public static <T1, T2> boolean getBooleanOrElse(final T1 value,
+                                                    final Function<T1, T2> getter1,
+                                                    final Predicate<T2> getter2,
+                                                    final boolean other) {
+        if (value == null) {
+            return other;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return other;
+            } else {
+                return Objects.requireNonNull(getter2).test(value2);
+            }
+        }
+    }
+
+    /// Applies getter1, getter2 and getter3 to value if each preceding value is non-null.
+    /// Alias for [NullSafe#test(Object, Function, Function, Predicate)].
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The primitive boolean getter to apply to the child value.
+    /// @return The result of applying getter3, or false if any preceding value is null.
+    public static <T1, T2, T3> boolean getBoolean(final T1 value,
+                                                  final Function<T1, T2> getter1,
+                                                  final Function<T2, T3> getter2,
+                                                  final Predicate<T3> getter3) {
+        if (value == null) {
+            return false;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return false;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return false;
+                } else {
+                    return Objects.requireNonNull(getter3).test(value3);
+                }
+            }
+        }
+    }
+
+    /// Applies getter1, getter2 and getter3 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The primitive boolean getter to apply to the child value.
+    /// @param other   The value to return if any preceding value is null.
+    /// @return The result of applying getter3, or other if any preceding value is null.
+    public static <T1, T2, T3> boolean getBooleanOrElse(final T1 value,
+                                                        final Function<T1, T2> getter1,
+                                                        final Function<T2, T3> getter2,
+                                                        final Predicate<T3> getter3,
+                                                        final boolean other) {
+        if (value == null) {
+            return other;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return other;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return other;
+                } else {
+                    return Objects.requireNonNull(getter3).test(value3);
+                }
+            }
+        }
+    }
+
+    /// Applies getter1, getter2, getter3 and getter4 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The third getter to apply.
+    /// @param getter4 The primitive boolean getter to apply to the child value.
+    /// @return The result of applying getter4, or false if any preceding value is null.
+    public static <T1, T2, T3, T4> boolean getBoolean(final T1 value,
+                                                      final Function<T1, T2> getter1,
+                                                      final Function<T2, T3> getter2,
+                                                      final Function<T3, T4> getter3,
+                                                      final Predicate<T4> getter4) {
+        if (value == null) {
+            return false;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return false;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return false;
+                } else {
+                    final T4 value4 = Objects.requireNonNull(getter3).apply(value3);
+                    if (value4 == null) {
+                        return false;
+                    } else {
+                        return Objects.requireNonNull(getter4).test(value4);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Applies getter1, getter2, getter3 and getter4 to value if each preceding value is non-null.
+    ///
+    /// @param value   The value to apply getter1 to.
+    /// @param getter1 The first getter to apply.
+    /// @param getter2 The second getter to apply.
+    /// @param getter3 The third getter to apply.
+    /// @param getter4 The primitive boolean getter to apply to the child value.
+    /// @param other   The value to return if any preceding value is null.
+    /// @return The result of applying getter4, or other if any preceding value is null.
+    public static <T1, T2, T3, T4> boolean getBooleanOrElse(final T1 value,
+                                                            final Function<T1, T2> getter1,
+                                                            final Function<T2, T3> getter2,
+                                                            final Function<T3, T4> getter3,
+                                                            final Predicate<T4> getter4,
+                                                            final boolean other) {
+        if (value == null) {
+            return other;
+        } else {
+            final T2 value2 = Objects.requireNonNull(getter1).apply(value);
+            if (value2 == null) {
+                return other;
+            } else {
+                final T3 value3 = Objects.requireNonNull(getter2).apply(value2);
+                if (value3 == null) {
+                    return other;
+                } else {
+                    final T4 value4 = Objects.requireNonNull(getter3).apply(value3);
+                    if (value4 == null) {
+                        return other;
+                    } else {
+                        return Objects.requireNonNull(getter4).test(value4);
+                    }
+                }
+            }
+        }
+    }
+
+    /// @return True if val is not null and true
     public static boolean isTrue(final Boolean val) {
         return val != null && val;
     }
 
-    /**
-     * @return True if val is not null and the result of applying getter to value
-     * is non-null and true
-     */
+    /// @return True if val is not null and the result of applying getter to value
+    /// is non-null and true
     public static <T> boolean isTrue(final T val, final Function<T, Boolean> getter) {
         if (val == null) {
             return false;
@@ -525,9 +1127,7 @@ public class NullSafe {
         }
     }
 
-    /**
-     * @return True if both str and subStr are non-null and str contains subStr
-     */
+    /// @return True if both str and subStr are non-null and str contains subStr
     public static boolean contains(final String str, final String subStr) {
         return str != null
                && subStr != null
@@ -535,49 +1135,37 @@ public class NullSafe {
                && str.contains(subStr);
     }
 
-    /**
-     * @return True if both str and subStr are non-null and str contains subStr
-     * Case-insensitive.
-     */
+    /// @return True if both str and subStr are non-null and str contains subStr
+    /// Case-insensitive.
     public static boolean containsIgnoringCase(final String str, final String subStr) {
         return str != null
                && subStr != null
                && str.toLowerCase().contains(subStr.toLowerCase());
     }
 
-    /**
-     * @return True if collection is non-null and contains item.
-     */
+    /// @return True if collection is non-null and contains item.
     public static <E> boolean collectionContains(final Collection<E> collection, final E item) {
         return collection != null
                && collection.contains(item);
     }
 
-    /**
-     * @return True if map is non-null and contains key key
-     */
+    /// @return True if map is non-null and contains key key
     public static <K> boolean containsKey(final Map<K, ?> map, final K key) {
         return map != null
                && map.containsKey(key);
     }
 
-    /**
-     * @return True if the collection is null or empty
-     */
+    /// @return True if the collection is null or empty
     public static <T> boolean isEmptyCollection(final Collection<T> collection) {
         return collection == null || collection.isEmpty();
     }
 
-    /**
-     * @return True if the collection is null or empty
-     */
+    /// @return True if the collection is null or empty
     public static <T> boolean isEmptyResultPage(final ResultPage<T> resultPage) {
         return resultPage == null || resultPage.isEmpty();
     }
 
-    /**
-     * @return True if value is null or the collection is null or empty
-     */
+    /// @return True if value is null or the collection is null or empty
     public static <T1, T2 extends Collection<E>, E> boolean isEmptyCollection(final T1 value,
                                                                               final Function<T1, T2> collectionGetter) {
         if (value == null) {
@@ -589,23 +1177,17 @@ public class NullSafe {
         }
     }
 
-    /**
-     * @return True if the array is null or empty
-     */
+    /// @return True if the array is null or empty
     public static <T> boolean isEmptyArray(final T[] arr) {
         return arr == null || arr.length == 0;
     }
 
-    /**
-     * @return True if the map is null or empty
-     */
+    /// @return True if the map is null or empty
     public static <T1, T2> boolean isEmptyMap(final Map<T1, T2> map) {
         return map == null || map.isEmpty();
     }
 
-    /**
-     * @return True if value is null or the map is null or empty
-     */
+    /// @return True if value is null or the map is null or empty
     public static <T1, T2 extends Map<K, V>, K, V> boolean isEmptyMap(final T1 value,
                                                                       final Function<T1, T2> mapGetter) {
         if (value == null) {
@@ -617,9 +1199,7 @@ public class NullSafe {
         }
     }
 
-    /**
-     * If str is not null/empty/blank then pass it to consumer (if that is not null).
-     */
+    /// If str is not null/empty/blank then pass it to consumer (if that is not null).
     public static <T> void consumeNonBlankString(final T value,
                                                  final Function<T, String> stringGetter,
                                                  final Consumer<String> consumer) {
@@ -633,81 +1213,69 @@ public class NullSafe {
         }
     }
 
-    /**
-     * @return True if the collection is non-null and not empty
-     */
+    /// @return True if the collection is non-null and not empty
     public static <T> boolean hasItems(final Collection<T> collection) {
         return collection != null && !collection.isEmpty();
     }
 
-    /**
-     * @return True if the collection is non-null and not empty
-     */
+    /// @return True if the collection is non-null and not empty
     public static <T> boolean hasItems(final ResultPage<T> resultPage) {
         return resultPage != null && !resultPage.isEmpty();
     }
 
-    /**
-     * @return True if the collection is non-null and not empty
-     */
+    /// @return True if the collection is non-null and not empty
     public static <T> boolean hasItems(final T[] items) {
         return items != null && items.length > 0;
     }
 
-    /**
-     * @return True if the map is non-null and not empty
-     */
+    /// @return True if the map is non-null and not empty
     public static <T1, T2> boolean hasEntries(final Map<T1, T2> map) {
         return map != null && !map.isEmpty();
     }
 
-    /**
-     * @return The size of the collection or zero if null.
-     */
+    /// @return The size of the collection or zero if null.
     public static <T> int size(final Collection<T> collection) {
         return collection != null
                 ? collection.size()
                 : 0;
     }
 
-    /**
-     * @return The size of the collection or zero if null.
-     */
+    /// @return The size of the collection or zero if null.
     public static <T> int size(final ResultPage<T> resultPage) {
         return resultPage != null
                 ? resultPage.size()
                 : 0;
     }
 
-    /**
-     * @return The size of the collection or zero if null.
-     */
+    /// @return The size of the collection or zero if null.
     public static <T> int size(final T[] items) {
         return items != null
                 ? items.length
                 : 0;
     }
 
-    /**
-     * @return The size of the collection or zero if null.
-     */
+    /// @return The size of the collection or zero if null.
     public static <K, V> int size(final Map<K, V> map) {
         return map != null
                 ? map.size()
                 : 0;
     }
 
-    /**
-     * @return True if the collection is non-null and contains exactly one item
-     */
+    /// @return True if the collection is non-null and contains exactly one item.
+    /// Includes items that are null.
     public static <T> boolean hasOneItem(final Collection<T> collection) {
         return collection != null
                && collection.size() == 1;
     }
 
-    /**
-     * @return True if value is non-null and the collection is non-null and not empty
-     */
+    /// @return true if the collection is non-null and contains more than one item.
+    /// Includes items that are null.
+    public static <T> boolean hasMoreThanOneItem(final Collection<T> collection) {
+        return collection != null
+               && collection.size() > 1;
+    }
+
+    /// @return True if value is non-null and the collection is non-null and not empty
     public static <T1, T2 extends Collection<E>, E> boolean hasItems(
             final T1 value,
             final Function<T1, T2> collectionGetter) {
@@ -721,9 +1289,7 @@ public class NullSafe {
         }
     }
 
-    /**
-     * @return True if value is non-null and the map is non-null and not empty
-     */
+    /// @return True if value is non-null and the map is non-null and not empty
     public static <T1, T2 extends Map<K, V>, K, V> boolean hasEntries(
             final T1 value,
             final Function<T1, T2> mapGetter) {
@@ -737,9 +1303,7 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Returns a {@link Stream<E>} if collection is non-null else returns an empty {@link Stream<E>}
-     */
+    /// Returns a [Stream<E>] if collection is non-null else returns an empty [Stream<E>]
     public static <E> Stream<E> stream(final Collection<E> collection) {
         if (collection == null || collection.isEmpty()) {
             return Stream.empty();
@@ -748,9 +1312,7 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Returns a {@link Stream<T>} if items is non-null else returns an empty {@link Stream<T>}
-     */
+    /// Returns a [Stream<T>] if items is non-null else returns an empty [Stream<T>]
     public static <T> Stream<T> stream(final T... items) {
         if (items == null || items.length == 0) {
             return Stream.empty();
@@ -759,9 +1321,7 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Returns a {@link Stream<Entry>} of entries if non-null else returns an empty {@link Stream<Entry>}
-     */
+    /// Returns a [Stream<Entry>] of entries if non-null else returns an empty [Stream<Entry>]
     public static <K, V> Stream<Entry<K, V>> streamEntries(final Map<K, V> map) {
         if (map == null || map.isEmpty()) {
             return Stream.empty();
@@ -770,10 +1330,8 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Equivalent to {@link Iterable#forEach(Consumer)}, except consumer is only called for each non-null
-     * item in the iterable. If iterable or consumer are null it is a no-op.
-     */
+    /// Equivalent to [Iterable#forEach(Consumer)], except consumer is only called for each non-null
+    /// item in the iterable. If iterable or consumer are null it is a no-op.
     public static <T> void forEach(final Iterable<T> iterable, final Consumer<? super T> consumer) {
         if (iterable != null && consumer != null) {
             for (final T item : iterable) {
@@ -784,10 +1342,8 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Equivalent to {@link Iterable#forEach(Consumer)}, except consumer is only called for each non-null
-     * item in the iterable. If iterable or consumer are null it is a no-op.
-     */
+    /// Equivalent to [Iterable#forEach(Consumer)], except consumer is only called for each non-null
+    /// item in the iterable. If iterable or consumer are null it is a no-op.
     public static <T> void forEach(final T[] items, final Consumer<? super T> consumer) {
         if (items != null && consumer != null) {
             for (final T item : items) {
@@ -798,83 +1354,67 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Equivalent to {@link Iterable#forEach(Consumer)}, except consumer is only called for each non-null
-     * item in the iterable. If iterable or consumer are null it is a no-op.
-     */
+    /// Equivalent to [Iterable#forEach(Consumer)], except consumer is only called for each non-null
+    /// item in the iterable. If iterable or consumer are null it is a no-op.
     public static <K, V> void forEach(final Map<K, V> map, final BiConsumer<? super K, ? super V> consumer) {
         if (map != null && !map.isEmpty() && consumer != null) {
             map.forEach(consumer);
         }
     }
 
-    /**
-     * Returns the passed value as a singleton list if non-null, else an empty list
-     */
+    /// Returns the passed value as a singleton list if non-null, else an empty list
     public static <T> List<T> singletonList(final T item) {
         return item != null
                 ? Collections.singletonList(item)
                 : Collections.emptyList();
     }
 
-    /**
-     * Returns the passed array of items or varargs items as a non-null list.
-     * Allows null items in the list.
-     *
-     * @return A non-null list of items. List should be assumed to be immutable.
-     */
+    /// Returns the passed array of items or varargs items as a non-null list.
+    /// Allows null items in the list.
+    ///
+    /// @return A non-null list of items. List should be assumed to be immutable.
     public static <T> List<T> asList(final T... items) {
         return items == null || items.length == 0
                 ? Collections.emptyList()
                 : Arrays.asList(items);
     }
 
-    /**
-     * Returns the passed array of items or varargs items as a non-null set.
-     * Does not support null items in the array.
-     *
-     * @return A non-null unmodifiable set of items.
-     */
+    /// Returns the passed array of items or varargs items as a non-null set.
+    /// Does not support null items in the array.
+    ///
+    /// @return A non-null unmodifiable set of items.
     public static <T> Set<T> asSet(final T... items) {
         return items == null || items.length == 0
                 ? Collections.emptySet()
                 : Set.of(items);
     }
 
-    /**
-     * Returns the passed collection items as a non-null set.
-     * Does not support null items.
-     *
-     * @return A non-null unmodifiable set of items.
-     */
+    /// Returns the passed collection items as a non-null set.
+    /// Does not support null items.
+    ///
+    /// @return A non-null unmodifiable set of items.
     public static <T> Set<T> asSet(final Collection<T> collection) {
         return collection == null || collection.isEmpty()
                 ? Collections.emptySet()
                 : Set.copyOf(collection);
     }
 
-    /**
-     * Returns the passed list if it is non-null else returns an empty list.
-     */
+    /// Returns the passed list if it is non-null else returns an empty list.
     public static <L extends List<T>, T> List<T> list(final L list) {
         return list != null
                 ? list
                 : Collections.emptyList();
     }
 
-    /**
-     * Returns an unmodifiable view of the passed list if it is non-null else returns an immutable empty list.
-     */
+    /// Returns an unmodifiable view of the passed list if it is non-null else returns an immutable empty list.
     public static <L extends List<T>, T> List<T> unmodifiableList(final L list) {
         return list != null
                 ? Collections.unmodifiableList(list)
                 : Collections.emptyList();
     }
 
-    /**
-     * Sorts the passed collection using natural order and returns the sorted collection
-     * as a list.
-     */
+    /// Sorts the passed collection using natural order and returns the sorted collection
+    /// as a list.
     public static <C extends Collection<T>, T> List<T> sort(final C collection) {
         return collection != null
                 ? collection.stream()
@@ -883,12 +1423,10 @@ public class NullSafe {
                 : Collections.emptyList();
     }
 
-    /**
-     * Returns a list containing only the non-null items from list.
-     * If list is null, an empty list will be returned.
-     *
-     * @return An immutable list containing no null values.
-     */
+    /// Returns a list containing only the non-null items from list.
+    /// If list is null, an empty list will be returned.
+    ///
+    /// @return An immutable list containing no null values.
     public static <L extends List<T>, T> List<T> removeNulls(final L list) {
         if (list == null || list.stream().allMatch(Objects::isNull)) {
             return Collections.emptyList();
@@ -901,11 +1439,9 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Returns an unmodifiable view of a new {@link ArrayList} instance that has been populated with the
-     * contents of list in a null-safe way.
-     * Allows null list elements.
-     */
+    /// Returns an unmodifiable view of a new [ArrayList] instance that has been populated with the
+    /// contents of list in a null-safe way.
+    /// Allows null list elements.
     public static <L extends List<T>, T> List<T> copyOf(final L list) {
         //noinspection Java9CollectionFactory // List.copyOf will NPE for null elements
         return NullSafe.hasItems(list)
@@ -913,69 +1449,55 @@ public class NullSafe {
                 : Collections.emptyList();
     }
 
-    /**
-     * Returns a new {@link ArrayList} instance. If list is not null, the new {@link ArrayList} will
-     * contain the contents of list, else it will be empty.
-     */
+    /// Returns a new [ArrayList] instance. If list is not null, the new [ArrayList] will
+    /// contain the contents of list, else it will be empty.
     public static <L extends List<T>, T> List<T> mutableList(final L list) {
         return list != null
                 ? new ArrayList<>(list)
                 : new ArrayList<>();
     }
 
-    /**
-     * Returns a new {@link HashMap} instance. If map is not null, the new {@link HashMap} will
-     * contain the contents of map, else it will be empty.
-     */
+    /// Returns a new [HashMap] instance. If map is not null, the new [HashMap] will
+    /// contain the contents of map, else it will be empty.
     public static <M extends Map<K, V>, K, V> Map<K, V> mutableMap(final M map) {
         return map != null
                 ? new HashMap<>(map)
                 : new HashMap<>();
     }
 
-    /**
-     * Returns a new {@link java.util.HashSet} instance. If set is not null, the new {@link java.util.HashSet} will
-     * contain the contents of set, else it will be empty.
-     */
+    /// Returns a new [java.util.HashSet] instance. If set is not null, the new [java.util.HashSet] will
+    /// contain the contents of set, else it will be empty.
     public static <C extends Collection<T>, T> Set<T> mutableSet(final C set) {
         return set != null
                 ? new HashSet<>(set)
                 : new HashSet<>();
     }
 
-    /**
-     * Returns the passed list if it is non-null else returns an empty list.
-     */
+    /// Returns the passed list if it is non-null else returns an empty list.
     public static <L extends Collection<T>, T> Collection<T> collection(final L collection) {
         return collection != null
                 ? collection
                 : Collections.emptyList();
     }
 
-    /**
-     * Returns the passed set if it is non-null else returns an empty set.
-     */
+    /// Returns the passed set if it is non-null else returns an empty set.
     public static <S extends Set<T>, T> Set<T> set(final S set) {
         return set != null
                 ? set
                 : Collections.emptySet();
     }
 
-    /**
-     * Returns an unmodifiable view of the passed set if it is non-null else returns an immutable empty set.
-     */
+    /// Returns an unmodifiable view of the passed set if it is non-null else returns an immutable empty set.
     public static <S extends Set<T>, T> Set<T> unmodifialbeSet(final S set) {
         return set != null
                 ? Collections.unmodifiableSet(set)
                 : Collections.emptySet();
     }
 
-    /**
-     * Returns a set containing only the non-null items from set.
-     * If set is null, an empty set will be returned.
-     *
-     * @return An immutable set containing no null values.
-     */
+    /// Returns a set containing only the non-null items from set.
+    /// If set is null, an empty set will be returned.
+    ///
+    /// @return An immutable set containing no null values.
     public static <S extends Set<T>, T> Set<T> removeNulls(final S set) {
         if (set == null || set.stream().allMatch(Objects::isNull)) {
             return Collections.emptySet();
@@ -988,14 +1510,12 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Returns a non-null {@link EnumSet} containing the items in set.
-     * If set is not itself an {@link EnumSet} then the items will be copied into
-     * a new {@link EnumSet}.
-     *
-     * @param type The class of the {@link Enum} for use when constructing an empty {@link EnumSet}
-     * @return A non-null {@link EnumSet}.
-     */
+    /// Returns a non-null [EnumSet] containing the items in set.
+    /// If set is not itself an [EnumSet] then the items will be copied into
+    /// a new [EnumSet].
+    ///
+    /// @param type The class of the [Enum] for use when constructing an empty [EnumSet]
+    /// @return A non-null [EnumSet].
     public static <S extends Collection<T>, T extends Enum<T>> Set<T> unmodifialbeEnumSet(
             final Class<T> type,
             final S collection) {
@@ -1013,14 +1533,12 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Returns a non-null {@link EnumSet} containing the items in set.
-     * If set is not itself an {@link EnumSet} then the items will be copied into
-     * a new {@link EnumSet}.
-     *
-     * @param type The class of the {@link Enum} for use when constructing an empty {@link EnumSet}
-     * @return A non-null {@link EnumSet}.
-     */
+    /// Returns a non-null [EnumSet] containing the items in set.
+    /// If set is not itself an [EnumSet] then the items will be copied into
+    /// a new [EnumSet].
+    ///
+    /// @param type The class of the [Enum] for use when constructing an empty [EnumSet]
+    /// @return A non-null [EnumSet].
     public static <S extends Collection<T>, T extends Enum<T>> Set<T> mutableEnumSet(
             final Class<T> type,
             final S collection) {
@@ -1032,12 +1550,10 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Returns a non-null mutable {@link EnumSet} containing all non-null items.
-     *
-     * @param type The class of the {@link Enum} for use when constructing an empty {@link EnumSet}.
-     * @return A non-null {@link EnumSet}.
-     */
+    /// Returns a non-null mutable [EnumSet] containing all non-null items.
+    ///
+    /// @param type The class of the [Enum] for use when constructing an empty [EnumSet].
+    /// @return A non-null [EnumSet].
     public static <T extends Enum<T>> Set<T> mutableEnumSetOf(final Class<T> type, final T... items) {
         final EnumSet<T> enumSet = EnumSet.noneOf(type);
         if (items != null) {
@@ -1050,12 +1566,10 @@ public class NullSafe {
         return enumSet;
     }
 
-    /**
-     * Returns a non-null mutable {@link EnumSet} containing all non-null items.
-     *
-     * @param type The class of the {@link Enum} for use when constructing an empty {@link EnumSet}.
-     * @return A non-null {@link EnumSet}.
-     */
+    /// Returns a non-null mutable [EnumSet] containing all non-null items.
+    ///
+    /// @param type The class of the [Enum] for use when constructing an empty [EnumSet].
+    /// @return A non-null [EnumSet].
     public static <T extends Enum<T>> Set<T> unmodifiableEnumSetOf(final Class<T> type, final T... items) {
         final EnumSet<T> enumSet = EnumSet.noneOf(type);
         if (items != null) {
@@ -1068,18 +1582,14 @@ public class NullSafe {
         return Collections.unmodifiableSet(enumSet);
     }
 
-    /**
-     * Returns the passed value as a singleton set if non-null, else an empty set
-     */
+    /// Returns the passed value as a singleton set if non-null, else an empty set
     public static <T> Set<T> singletonSet(final T item) {
         return item != null
                 ? Collections.singleton(item)
                 : Collections.emptySet();
     }
 
-    /**
-     * Returns the passed map if it is non-null else returns an empty map.
-     */
+    /// Returns the passed map if it is non-null else returns an empty map.
     public static <M extends Map<K, V>, K, V> Map<K, V> map(final M map) {
         return map != null
                 ? map
@@ -1098,29 +1608,23 @@ public class NullSafe {
                 : Collections.emptySet();
     }
 
-    /**
-     * Returns the passed string if it is non-null else returns an empty string.
-     */
+    /// Returns the passed string if it is non-null else returns an empty string.
     public static String string(final String str) {
         return str != null
                 ? str
                 : "";
     }
 
-    /**
-     * Returns the passed duration if it is non-null else returns a ZERO {@link SimpleDuration}
-     */
+    /// Returns the passed duration if it is non-null else returns a ZERO [SimpleDuration]
     public static SimpleDuration duration(final SimpleDuration duration) {
         return duration != null
                 ? duration
                 : SimpleDuration.ZERO;
     }
 
-    /**
-     * Apply getter to value if value is non-null.
-     *
-     * @return The result of applying getter to value if value is non-null, else null.
-     */
+    /// Apply getter to value if value is non-null.
+    ///
+    /// @return The result of applying getter to value if value is non-null, else null.
     public static <T1, R> R get(final T1 value,
                                 final Function<T1, R> getter) {
         if (value == null) {
@@ -1193,10 +1697,8 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Apply getter to value if value is non-null. If value or the result of
-     * applying getter to value is null, return other.
-     */
+    /// Apply getter to value if value is non-null. If value or the result of
+    /// applying getter to value is null, return other.
     public static <T1, R> R getOrElse(final T1 value,
                                       final Function<T1, R> getter,
                                       final R other) {
@@ -1236,10 +1738,8 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Apply getter to value if value is non-null. If value or the result of
-     * applying getter to value is null, return the value supplied by otherSupplier.
-     */
+    /// Apply getter to value if value is non-null. If value or the result of
+    /// applying getter to value is null, return the value supplied by otherSupplier.
     public static <T1, R> R getOrElseGet(final T1 value,
                                          final Function<T1, R> getter,
                                          final Supplier<R> otherSupplier) {
@@ -1270,10 +1770,8 @@ public class NullSafe {
         return Objects.requireNonNullElseGet(get(value, getter1, getter2, getter3, getter4), otherSupplier);
     }
 
-    /**
-     * Apply getter to value if value is non-null and return wrapper in an {@link Optional}.
-     * If this result or value are null return an empty {@link Optional}.
-     */
+    /// Apply getter to value if value is non-null and return wrapper in an [Optional].
+    /// If this result or value are null return an empty [Optional].
     public static <T1, R> Optional<R> getAsOptional(final T1 value,
                                                     final Function<T1, R> getter) {
         if (value == null) {
@@ -1347,18 +1845,14 @@ public class NullSafe {
         }
     }
 
-    /**
-     * If runnable is non-null run it.
-     */
+    /// If runnable is non-null run it.
     public static void run(final Runnable runnable) {
         if (runnable != null) {
             runnable.run();
         }
     }
 
-    /**
-     * Return the value supplied by supplier or null if supplier is itself null.
-     */
+    /// Return the value supplied by supplier or null if supplier is itself null.
     public static <T> T supply(final Supplier<T> supplier) {
         if (supplier != null) {
             return supplier.get();
@@ -1367,11 +1861,9 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Return the result of applying mapper to the value supplied by supplier.
-     * Will return null if supplier is null, the supplied value is null or
-     * the result of mapper is null.
-     */
+    /// Return the result of applying mapper to the value supplied by supplier.
+    /// Will return null if supplier is null, the supplied value is null or
+    /// the result of mapper is null.
     public static <T1, T2> T2 supplyAndMap(final Supplier<T1> supplier,
                                            final Function<T1, T2> mapper) {
         if (supplier != null) {
@@ -1386,9 +1878,7 @@ public class NullSafe {
         }
     }
 
-    /**
-     * If value is non-null pass it to the consumer, else it is a no-op.
-     */
+    /// If value is non-null pass it to the consumer, else it is a no-op.
     public static <T> void consume(final T value,
                                    final Consumer<T> consumer) {
         if (value != null && consumer != null) {
@@ -1396,10 +1886,8 @@ public class NullSafe {
         }
     }
 
-    /**
-     * If value is non-null apply getter1 to it.
-     * If the result of that is non-null consume the result.
-     */
+    /// If value is non-null apply getter1 to it.
+    /// If the result of that is non-null consume the result.
     public static <T1, T2> void consume(final T1 value,
                                         final Function<T1, T2> getter1,
                                         final Consumer<T2> consumer) {
@@ -1411,11 +1899,9 @@ public class NullSafe {
         }
     }
 
-    /**
-     * If value is non-null apply getter1 to it.
-     * If the result of that is non-null apply getter2 to the result.
-     * If the result of that is non-null consume the result.
-     */
+    /// If value is non-null apply getter1 to it.
+    /// If the result of that is non-null apply getter2 to the result.
+    /// If the result of that is non-null consume the result.
     public static <T1, T2, T3> void consume(final T1 value,
                                             final Function<T1, T2> getter1,
                                             final Function<T2, T3> getter2,
@@ -1431,9 +1917,7 @@ public class NullSafe {
         }
     }
 
-    /**
-     * If value is non-null pass it to the consumer, else execute runnable.
-     */
+    /// If value is non-null pass it to the consumer, else execute runnable.
     public static <T> void consumeOr(final T value,
                                      final Consumer<T> consumer,
                                      final Runnable runnable) {
@@ -1448,11 +1932,9 @@ public class NullSafe {
         }
     }
 
-    /**
-     * If value and the result of passing value to getter are both non-null then pass the result
-     * of getter to consumer, else call runnable.
-     * consume and runnable can both be null for a no-op.
-     */
+    /// If value and the result of passing value to getter are both non-null then pass the result
+    /// of getter to consumer, else call runnable.
+    /// consume and runnable can both be null for a no-op.
     public static <T1, T2> void consumeOr(final T1 value,
                                           final Function<T1, T2> getter,
                                           final Consumer<T2> consumer,
@@ -1476,16 +1958,15 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Allows you to test a value without worrying if the value is null, e.g.
-     * <pre><code>
-     *    boolean hasValues = NullSafe.test(myList, list -> !list.isEmpty());
-     * </code></pre>
-     *
-     * @return false if value is null
-     * else return the value of the predicate when applied
-     * to the non-null value.
-     */
+    /// Allows you to test a value without worrying if the value is null, e.g.
+    /// ```
+    ///    boolean hasValues = NullSafe.test(myList, list -> !list.isEmpty());
+    /// ```
+    /// Alias for [NullSafe#getBoolean(Object, Predicate)].
+    ///
+    /// @return false if value is null
+    /// else return the value of the predicate when applied
+    /// to the non-null value.
     public static <T> boolean test(final T value,
                                    final Predicate<T> predicate) {
         if (value == null) {
@@ -1496,16 +1977,15 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Allows you to test some property of a value without worrying if the value is null, e.g.
-     * <pre><code>
-     *    boolean hasValues = NullSafe.test(myObject, MyObject::getItems, list -> !list.isEmpty());
-     * </code></pre>
-     *
-     * @return false if value is null or the getter returns null,
-     * else return the value of the predicate when applied
-     * to the result of the getter.
-     */
+    /// Allows you to test some property of a value without worrying if the value is null, e.g.
+    /// ```
+    ///    boolean hasValues = NullSafe.test(myObject, MyObject::getItems, list -> !list.isEmpty());
+    /// ```
+    /// Alias for [NullSafe#getBoolean(Object, Function, Predicate)].
+    ///
+    /// @return false if value is null or the getter returns null,
+    /// else return the value of the predicate when applied
+    /// to the result of the getter.
     public static <T1, R> boolean test(final T1 value,
                                        final Function<T1, R> getter,
                                        final Predicate<R> predicate) {
@@ -1520,16 +2000,16 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Allows you to test some property of a value without worrying if the value is null, e.g.
-     * <pre><code>
-     *    List<Sting> list = null;
-     *    boolean hasValues = NullSafe.test(list, list -> list.size > 0);
-     * </code></pre>
-     *
-     * @return false if value is null, else return the value of the predicate when applied
-     * to the result of the getter.
-     */
+    /// Allows you to test some property of a value without worrying if the value is null, e.g.
+    /// ```
+    ///    List<sting> list = null;
+    ///    boolean hasValues = NullSafe.test(list, list -> list.size > 0);
+    /// </sting>
+    /// ```
+    /// Alias for [[NullSafe#getBoolean(Object, Function, Function, Predicate)]
+    ///
+    /// @return false if value is null, else return the value of the predicate when applied
+    /// to the result of the getter.
     public static <T1, T2, R> boolean test(final T1 value,
                                            final Function<T1, T2> getter1,
                                            final Function<T2, R> getter2,
@@ -1550,14 +2030,12 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Apply each getter to the value of <code>value</code> or the result from the previous
-     * getter while the result is non-null. The <code>predicate</code> is applied to the result of
-     * the last getter.
-     *
-     * @return false if any of the values/results are null, else return the value of the predicate when applied
-     * to the result of the last getter.
-     */
+    /// Apply each getter to the value of `value` or the result from the previous
+    /// getter while the result is non-null. The `predicate` is applied to the result of
+    /// the last getter.
+    ///
+    /// @return false if any of the values/results are null, else return the value of the predicate when applied
+    /// to the result of the last getter.
     public static <T1, T2, T3, R> boolean test(final T1 value,
                                                final Function<T1, T2> getter1,
                                                final Function<T2, T3> getter2,
@@ -1585,10 +2063,8 @@ public class NullSafe {
         }
     }
 
-    /**
-     * @return The result of calling {@link Object#toString()} on value
-     * or an empty string if value is null.
-     */
+    /// @return The result of calling [Object#toString()] on value
+    /// or an empty string if value is null.
     public static String toString(final Object value) {
         return value != null
                 ? value.toString()
@@ -1721,11 +2197,9 @@ public class NullSafe {
         }
     }
 
-    /**
-     * If value is non-null apply getter1 to it.
-     * If the result of that is non-null apply getter2 to the result.
-     * If the result of that is non-null consume the result.
-     */
+    /// If value is non-null apply getter1 to it.
+    /// If the result of that is non-null apply getter2 to the result.
+    /// If the result of that is non-null consume the result.
     public static <T1, T2, T3, T4> void consume(final T1 value,
                                                 final Function<T1, T2> getter1,
                                                 final Function<T2, T3> getter2,
@@ -1773,10 +2247,8 @@ public class NullSafe {
         }
     }
 
-    /**
-     * @return True if any of value or the result of getter1 are
-     * null, else false.
-     */
+    /// @return True if any of value or the result of getter1 are
+    /// null, else false.
     public static <T1, R> boolean isNull(final T1 value,
                                          final Function<T1, R> getter) {
         if (value == null) {
@@ -1786,10 +2258,8 @@ public class NullSafe {
         }
     }
 
-    /**
-     * @return True if any of value, the result of getter1 or the result of getter2 are
-     * null, else false.
-     */
+    /// @return True if any of value, the result of getter1 or the result of getter2 are
+    /// null, else false.
     public static <T1, T2, R> boolean isNull(final T1 value,
                                              final Function<T1, T2> getter1,
                                              final Function<T2, R> getter2) {
@@ -1805,10 +2275,8 @@ public class NullSafe {
         }
     }
 
-    /**
-     * @return True if value and the result of getter
-     * are non-null, else false.
-     */
+    /// @return True if value and the result of getter
+    /// are non-null, else false.
     public static <T1, R> boolean nonNull(final T1 value,
                                           final Function<T1, R> getter) {
         if (value == null) {
@@ -1818,10 +2286,8 @@ public class NullSafe {
         }
     }
 
-    /**
-     * @return True if all of, value; the result of getter1 and the result of getter2
-     * are non-null, else false.
-     */
+    /// @return True if all of, value; the result of getter1 and the result of getter2
+    /// are non-null, else false.
     public static <T1, T2, R> boolean nonNull(final T1 value,
                                               final Function<T1, T2> getter1,
                                               final Function<T2, R> getter2) {
@@ -1837,14 +2303,12 @@ public class NullSafe {
         }
     }
 
-    /**
-     * If value is null or empty an {@link IllegalArgumentException} will be thrown with a message
-     * supplied by messageSupplier.
-     *
-     * @param value           THe string to test.
-     * @param messageSupplier The supplier of the exception message.
-     * @return The supplied string if not empty.
-     */
+    /// If value is null or empty an [IllegalArgumentException] will be thrown with a message
+    /// supplied by messageSupplier.
+    ///
+    /// @param value           THe string to test.
+    /// @param messageSupplier The supplier of the exception message.
+    /// @return The supplied string if not empty.
     public static String requireNonEmtpyString(final String value, final Supplier<String> messageSupplier) {
         if (isEmptyString(value)) {
             throw new IllegalArgumentException(Objects.requireNonNull(messageSupplier).get());
@@ -1852,12 +2316,10 @@ public class NullSafe {
         return value;
     }
 
-    /**
-     * Require that both {@code value} is non-null and the result of applying {@code getter} to
-     * {@code value} is non-null. Throws an {@link NullPointerException} otherwise.
-     *
-     * @throws NullPointerException
-     */
+    /// Require that both `value` is non-null and the result of applying `getter` to
+    /// `value` is non-null. Throws an [NullPointerException] otherwise.
+    ///
+    /// @throws NullPointerException
     public static <T1, R> R requireNonNull(final T1 value,
                                            final Function<T1, R> getter,
                                            final Supplier<String> messageSupplier) {
@@ -1874,13 +2336,11 @@ public class NullSafe {
         }
     }
 
-    /**
-     * Require that {@code value} is non-null, the result of applying {@code getter1} to
-     * {@code value} is non-null and the result applying {@code getter2} to the result
-     * of {@code getter1} is non-null. Throws an {@link NullPointerException} otherwise.
-     *
-     * @throws NullPointerException
-     */
+    /// Require that `value` is non-null, the result of applying `getter1` to
+    /// `value` is non-null and the result applying `getter2` to the result
+    /// of `getter1` is non-null. Throws an [NullPointerException] otherwise.
+    ///
+    /// @throws NullPointerException
     public static <T1, T2, R> R requireNonNull(final T1 value,
                                                final Function<T1, T2> getter1,
                                                final Function<T2, R> getter2,
@@ -1904,24 +2364,20 @@ public class NullSafe {
         }
     }
 
-    /**
-     * If value is null or empty an {@link IllegalArgumentException} will be thrown.
-     *
-     * @param value THe string to test.
-     * @return The supplied string if not empty.
-     */
+    /// If value is null or empty an [IllegalArgumentException] will be thrown.
+    ///
+    /// @param value THe string to test.
+    /// @return The supplied string if not empty.
     public static String requireNonEmptyString(final String value) {
         return requireNonEmptyString(value, null);
     }
 
-    /**
-     * If value is null or empty an {@link IllegalArgumentException} will be thrown with a message
-     * supplied by messageSupplier.
-     *
-     * @param value           THe string to test.
-     * @param messageSupplier The supplier of the exception message.
-     * @return The supplied string if not empty.
-     */
+    /// If value is null or empty an [IllegalArgumentException] will be thrown with a message
+    /// supplied by messageSupplier.
+    ///
+    /// @param value           THe string to test.
+    /// @param messageSupplier The supplier of the exception message.
+    /// @return The supplied string if not empty.
     public static String requireNonEmptyString(final String value, final Supplier<String> messageSupplier) {
         if (isEmptyString(value)) {
             final String msg = NullSafe.getOrElse(messageSupplier, Supplier::get, "Non-empty string required");
@@ -1931,24 +2387,20 @@ public class NullSafe {
         }
     }
 
-    /**
-     * If value is null, empty or blank an {@link IllegalArgumentException} will be thrown.
-     *
-     * @param value THe string to test.
-     * @return The supplied string if not blank.
-     */
+    /// If value is null, empty or blank an [IllegalArgumentException] will be thrown.
+    ///
+    /// @param value THe string to test.
+    /// @return The supplied string if not blank.
     public static String requireNonBlankString(final String value) {
         return requireNonBlankString(value, null);
     }
 
-    /**
-     * If value is null, empty or blank an {@link IllegalArgumentException} will be thrown with a message
-     * supplied by messageSupplier.
-     *
-     * @param value           THe string to test.
-     * @param messageSupplier The supplier of the exception message.
-     * @return The supplied string if not blank.
-     */
+    /// If value is null, empty or blank an [IllegalArgumentException] will be thrown with a message
+    /// supplied by messageSupplier.
+    ///
+    /// @param value           THe string to test.
+    /// @param messageSupplier The supplier of the exception message.
+    /// @return The supplied string if not blank.
     public static String requireNonBlankString(final String value, final Supplier<String> messageSupplier) {
         if (isBlankString(value)) {
             final String msg = NullSafe.getOrElse(messageSupplier, Supplier::get, "Non-blank string required");
@@ -1958,9 +2410,7 @@ public class NullSafe {
         }
     }
 
-    /**
-     * If predicate is non-null return it, else return a Predicate that always returns defaultOutcome.
-     */
+    /// If predicate is non-null return it, else return a Predicate that always returns defaultOutcome.
     @SuppressWarnings("unchecked")
     public static <T> Predicate<T> predicate(final Predicate<T> predicate, final boolean defaultOutcome) {
         return predicate != null

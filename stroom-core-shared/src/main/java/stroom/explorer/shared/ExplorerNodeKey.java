@@ -76,16 +76,16 @@ public class ExplorerNodeKey {
         }
         final ExplorerNodeKey that = (ExplorerNodeKey) o;
         return Objects.equals(type, that.type) &&
-                Objects.equals(uuid, that.uuid) &&
-                Objects.equals(rootNodeUuid, that.rootNodeUuid);
+               Objects.equals(uuid, that.uuid) &&
+               Objects.equals(rootNodeUuid, that.rootNodeUuid);
     }
 
     @Override
     public String toString() {
         return "ExplorerNodeKey{" +
-                "type='" + type + '\'' +
-                ", uuid='" + uuid + '\'' +
-                ", rootNodeUuid='" + rootNodeUuid + '\'' +
-                '}';
+               "type='" + type + '\'' +
+               ", uuid='" + uuid + '\'' +
+               ", rootNodeUuid='" + rootNodeUuid + '\'' +
+               '}';
     }
 }

@@ -296,6 +296,159 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         assertThat(testDataDir).isNotNull();
     }
 
+    @Test
+    void testExportWithIncludedTypesV1() throws IOException {
+        final ExportTestTree tree = createExportTestTree();
+        final Path testDataDir = createExportDir();
+
+        final ExportSummary exportSummary = importExportSerializer.write(
+                null,
+                testDataDir,
+                Set.of(tree.topFolder().getDocRef()),
+                Collections.emptySet(),
+                Set.of(FeedDoc.TYPE),
+                true,
+                ImportExportVersion.V1);
+
+        // Only the feeds should be exported, including the one in the sub-folder
+        assertThat(exportSummary.getSuccessCountsByType())
+                .containsExactlyEntriesOf(Map.of(FeedDoc.TYPE, 2));
+        assertThat(readExportedDocRefs(testDataDir))
+                .contains(tree.topFeed().getDocRef(), tree.subFeed().getDocRef())
+                .doesNotContain(tree.topPipeline().getDocRef(), tree.subPipeline().getDocRef());
+    }
+
+    @Test
+    void testExportWithIncludedTypesV2() throws IOException {
+        final ExportTestTree tree = createExportTestTree();
+        final Path testDataDir = createExportDir();
+
+        final ExportSummary exportSummary = importExportSerializer.write(
+                null,
+                testDataDir,
+                Set.of(tree.topFolder().getDocRef()),
+                Collections.emptySet(),
+                Set.of(FeedDoc.TYPE),
+                true,
+                ImportExportVersion.V2);
+
+        // Only the feeds should be exported, including the one in the sub-folder.
+        // Folders on the path to the feeds are always written.
+        assertThat(exportSummary.getSuccessCountsByType())
+                .containsEntry(FeedDoc.TYPE, 2)
+                .doesNotContainKey(PipelineDoc.TYPE);
+        assertThat(readExportedDocRefs(testDataDir))
+                .contains(tree.topFeed().getDocRef(), tree.subFeed().getDocRef())
+                .doesNotContain(tree.topPipeline().getDocRef(), tree.subPipeline().getDocRef());
+    }
+
+    @Test
+    void testExportWithNullIncludedTypesV2() throws IOException {
+        final ExportTestTree tree = createExportTestTree();
+        final Path testDataDir = createExportDir();
+
+        final ExportSummary exportSummary = importExportSerializer.write(
+                null,
+                testDataDir,
+                Set.of(tree.topFolder().getDocRef()),
+                Collections.emptySet(),
+                null,
+                true,
+                ImportExportVersion.V2);
+
+        // No type filter so everything should be exported
+        assertThat(exportSummary.getSuccessCountsByType())
+                .containsEntry(FeedDoc.TYPE, 2)
+                .containsEntry(PipelineDoc.TYPE, 2);
+        assertThat(readExportedDocRefs(testDataDir))
+                .contains(tree.topFeed().getDocRef(),
+                        tree.subFeed().getDocRef(),
+                        tree.topPipeline().getDocRef(),
+                        tree.subPipeline().getDocRef());
+    }
+
+    @Test
+    void testExportWithEmptyIncludedTypesV2() throws IOException {
+        final ExportTestTree tree = createExportTestTree();
+        final Path testDataDir = createExportDir();
+
+        final ExportSummary exportSummary = importExportSerializer.write(
+                null,
+                testDataDir,
+                Set.of(tree.topFolder().getDocRef()),
+                Collections.emptySet(),
+                Collections.emptySet(),
+                true,
+                ImportExportVersion.V2);
+
+        assertThat(exportSummary.getSuccessTotal())
+                .isZero();
+        assertThat(readExportedDocRefs(testDataDir))
+                .isEmpty();
+    }
+
+    // Creates the following tree under System:
+    // topFolder
+    //   topFeed
+    //   topPipeline
+    //   subFolder
+    //     subFeed
+    //     subPipeline
+    private ExportTestTree createExportTestTree() {
+        final ExplorerNode topFolder = explorerService.create(ExplorerConstants.FOLDER_TYPE,
+                FileSystemTestUtil.getUniqueTestString(),
+                null,
+                null);
+        final ExplorerNode topFeed = createFeed(topFolder);
+        final ExplorerNode topPipeline = explorerService.create(PipelineDoc.TYPE,
+                "TopPipeline",
+                topFolder,
+                null);
+        final ExplorerNode subFolder = explorerService.create(ExplorerConstants.FOLDER_TYPE,
+                FileSystemTestUtil.getUniqueTestString(),
+                topFolder,
+                null);
+        final ExplorerNode subFeed = createFeed(subFolder);
+        final ExplorerNode subPipeline = explorerService.create(PipelineDoc.TYPE,
+                "SubPipeline",
+                subFolder,
+                null);
+        return new ExportTestTree(topFolder, topFeed, topPipeline, subFeed, subPipeline);
+    }
+
+    private ExplorerNode createFeed(final ExplorerNode parent) {
+        final ExplorerNode feedNode = explorerService.create(FeedDoc.TYPE,
+                FileSystemTestUtil.getUniqueTestString(),
+                parent,
+                null);
+        final FeedDoc feedDoc = feedStore.readDocument(feedNode.getDocRef())
+                .copy()
+                .volumeGroup(fsVolumeGroupService.getDefaultVolumeGroupName().orElseThrow())
+                .build();
+        feedStore.writeDocument(feedDoc);
+        return feedNode;
+    }
+
+    private Path createExportDir() throws IOException {
+        final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
+        FileUtil.deleteDir(testDataDir);
+        Files.createDirectories(testDataDir);
+        return testDataDir;
+    }
+
+    private Set<DocRef> readExportedDocRefs(final Path testDataDir) {
+        final List<ImportState> importStates = new ArrayList<>();
+        importExportSerializer.read(
+                testDataDir,
+                importStates,
+                ImportSettings.createConfirmation());
+        final Set<DocRef> docRefs = new HashSet<>();
+        for (final ImportState importState : importStates) {
+            docRefs.add(importState.getDocRef());
+        }
+        return docRefs;
+    }
+
     /**
      * Debugging
      */
@@ -691,4 +844,15 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 ImportExportVersion.V2);
     }*/
 
+
+    // --------------------------------------------------------------------------------
+
+
+    private record ExportTestTree(ExplorerNode topFolder,
+                                  ExplorerNode topFeed,
+                                  ExplorerNode topPipeline,
+                                  ExplorerNode subFeed,
+                                  ExplorerNode subPipeline) {
+
+    }
 }

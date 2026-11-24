@@ -3,7 +3,7 @@
 eventLogging = "5.0-beta.31_schema-v4.0-beta.3"
 
 # ------------3rd-party------------
-aws = "2.54.0"
+aws = "2.57.3"
 commons-io = "2.21.0"
 dropwizard = "5.0.2" # used to set the dropwizard-bom version, that controls lots of dependency versions
 elasticsearch = "9.4.2"
@@ -34,6 +34,7 @@ eventLogging = { module = "uk.gov.gchq.eventlogging:event-logging", version.ref 
 #------3rd Party-libs---------------
 assertj-core = { module = "org.assertj:assertj-core" } # version controlled by dropwizard-dependencies
 aws-bom = { module = "software.amazon.awssdk:bom", version.ref = "aws" }
+aws-athena = { module = "software.amazon.awssdk:athena" } # version controlled by AWS BOM
 aws-crt = { module = "software.amazon.awssdk.crt:aws-crt", version = "0.48.5" }
 aws-s3-transfer-manager = { module = "software.amazon.awssdk:s3-transfer-manager" } # version controlled by AWS BOM
 aws-sqs = { module = "software.amazon.awssdk:sqs" } # version controlled by AWS BOM
@@ -73,11 +74,12 @@ dropwizard-validation = { module = "io.dropwizard:dropwizard-validation" } # ver
 eclipse-transformer-cli = { module = "org.eclipse.transformer:org.eclipse.transformer.cli", version = "1.0.0" }
 elasticsearch-java = { module = "co.elastic.clients:elasticsearch-java", version.ref = "elasticsearch" }
 fast-infoset = { module = "com.sun.xml.fastinfoset:FastInfoset", version = "2.1.1" }
-fastutil-core = { module = "it.unimi.dsi:fastutil-core", version = "8.5.18" }
+fastutil = { module = "it.unimi.dsi:fastutil", version = "8.5.19" }
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
 flyway-mysql = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway" }
 gin = { module = "com.google.gwt.inject:gin", version = "2.1.2" }
-guava = { module = "com.google.guava:guava" } # version controlled by dropwizard-dependencies
+# DropWiz 5.0.2 pulls in 33.6.0-jre but this has a CVE, so manually bring in 33.7.2-jre
+guava = { module = "com.google.guava:guava", version = "33.7.2-jre" } # version controlled by dropwizard-dependencies
 guice-gwt = { module = "com.google.inject:guice", version = "3.0" }
 guice = { module = "com.google.inject:guice", version.ref = "guice" }
 guice-assistedinject = { module = "com.google.inject.extensions:guice-assistedinject", version.ref = "guice" }
@@ -94,7 +96,7 @@ jspecify = { module = "org.jspecify:jspecify", version = "1.0.0" }
 # and package names so can be used together.
 # -jdk8 and -jsr310 are now included in -databind in v3
 # https://github.com/FasterXML/jackson/blob/main/jackson3/MIGRATING_TO_JACKSON_3.md
-jackson-bom = { module = "tools.jackson:jackson-bom", version = "3.1.2" }
+jackson-bom = { module = "tools.jackson:jackson-bom", version = "3.2.4" }
 # jackson-annotations is an exception as it still uses the old v2 maven coords
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations" } # version controlled by jackson-bom
 jackson-core = { module = "tools.jackson.core:jackson-core" } # version controlled by jackson-bom
@@ -104,7 +106,7 @@ jackson-jq = { module = "net.thisptr:jackson-jq", version = "1.2.0" }
 
 # This is legacy Jackson v2 for anything that needs the old version, e.g. mbknor-jackson-jsonSchema
 # jackson-annotations is the same for both and is included above
-jackson2-bom = { module = "com.fasterxml.jackson:jackson-bom", version = "2.21.2" }
+jackson2-bom = { module = "com.fasterxml.jackson:jackson-bom", version = "2.21.8" }
 jackson2-core = { module = "com.fasterxml.jackson.core:jackson-core" } # version controlled by jackson-bom
 jackson2-databind = { module = "com.fasterxml.jackson.core:jackson-databind" } # version controlled by jackson-bom
 
@@ -127,6 +129,9 @@ jersey-client = { module = "org.glassfish.jersey.core:jersey-client" } # version
 jersey-common = { module = "org.glassfish.jersey.core:jersey-common" } # version controlled by dropwizard-dependencies
 jersey-server = { module = "org.glassfish.jersey.core:jersey-server" } # version controlled by dropwizard-dependencies
 jersey-test-framework-grizzly2 = { module = "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-grizzly2" } # version controlled by dropwizard-dependencies
+# DW 5.0.2 pulls in jetty 12.1.9 which has CVEs, so force it up to 12.1.4 for the fix
+# Once we move to DW 5.0.3, we can probably get rid of this and the 'implementation platform(libs.jetty.bom)' in root gradle
+jetty-bom = { module = "org.eclipse.jetty:jetty-bom", version = "12.1.14" }
 jetty-http = { module = "org.eclipse.jetty:jetty-http" } # version controlled by dropwizard-dependencies
 jetty-server = { module = "org.eclipse.jetty:jetty-server" } # version controlled by dropwizard-dependencies
 # The ee10 part needs to correspond to the version pulled in by dropwizard-jetty
@@ -134,7 +139,7 @@ jetty-servlet = { module = "org.eclipse.jetty.ee10:jetty-ee10-servlet" } # versi
 jetty-servlets = { module = "org.eclipse.jetty.ee10:jetty-ee10-servlets" } # version controlled by dropwizard-dependencies
 jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "jgit" }
 jgitssh = { module = "org.eclipse.jgit:org.eclipse.jgit.ssh.apache", version.ref = "jgit" }
-jinjava = { module = "com.hubspot.jinjava:jinjava", version = "2.8.2" }
+jinjava = { module = "com.hubspot.jinjava:jinjava", version = "2.8.5" }
 jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmh-generator-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
 jooq = { module = "org.jooq:jooq", version.ref = "jooq" }
@@ -165,6 +170,7 @@ mbknor-jackson-jsonSchema = { module = "com.kjetland:mbknor-jackson-jsonschema_2
 mockito-core = { module = "org.mockito:mockito-core" } # version controlled by dropwizard-dependencies
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter" } # version controlled by dropwizard-dependencies
 mysql-connector-java = { module = "com.mysql:mysql-connector-j", version = "9.4.0" }
+postgresql = { module = "org.postgresql:postgresql", version = "42.7.14" }
 langchain4j = { module = "dev.langchain4j:langchain4j", version.ref = "langchain4j" }
 langchain4j-open-ai = { module = "dev.langchain4j:langchain4j-open-ai", version.ref = "langchain4j" }
 langchain4j-cohere = { module = "dev.langchain4j:langchain4j-cohere", version.ref = "langchain4j-cohere" }
@@ -185,6 +191,7 @@ spring-security-crypto = { module = "org.springframework.security:spring-securit
 swagger-annotations = { module = "io.swagger.core.v3:swagger-annotations-jakarta", version.ref = "swagger" }
 swagger-core = { module = "io.swagger.core.v3:swagger-core-jakarta", version.ref = "swagger" }
 swagger-jaxrs = { module = "io.swagger.core.v3:swagger-jaxrs2-jakarta", version.ref = "swagger" }
+unboundid-ldapsdk = { module = "com.unboundid:unboundid-ldapsdk", version = "7.0.6" }
 vavr = { module = "io.vavr:vavr", version = "0.10.4" }
 # Wiremock 3.13.2 works with jetty 11 by default, but DW 5.0.1 is using Jetty 12, so we have to use
 # wiremock-jetty12
@@ -195,6 +202,8 @@ xerces = { module = "xerces:xercesImpl", version = "2.12.2" }
 zero-allocation-hashing = { module = "net.openhft:zero-allocation-hashing", version = "2026.0" }
 zstd-jni = { module =  "com.github.luben:zstd-jni", version = "1.5.7-8" }
 zxcvbn = { module = "com.nulab-inc:zxcvbn", version = "1.9.0" }
+# Zookeeper is only here to
+zookeeper = { module = "org.apache.zookeeper:zookeeper", version = "3.9.6" }
 
 
 # --------------------------------------------------------------------------------

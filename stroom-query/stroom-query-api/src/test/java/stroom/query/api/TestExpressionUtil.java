@@ -26,6 +26,7 @@ import org.junit.jupiter.api.TestFactory;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -236,6 +237,45 @@ class TestExpressionUtil {
                 .isFalse();
         assertThat(operator2.containsField("bar", "apple", "orange"))
                 .isTrue();
+    }
+
+    @Test
+    void testReplaceExpressionParameters_keepsOptions() {
+        final Map<String, String> options = Map.of("optionA", "true");
+        final ExpressionOperator operator = ExpressionOperator.builder()
+                .addTerm(ExpressionTerm.builder()
+                        .field(FIELD)
+                        .condition(Condition.EQUALS)
+                        .value("${user}*")
+                        .options(options)
+                        .build())
+                .build();
+
+        final ExpressionOperator replaced = ExpressionUtil.replaceExpressionParameters(
+                operator,
+                key -> "user".equals(key)
+                        ? "admin"
+                        : null,
+                false);
+
+        final ExpressionTerm term = (ExpressionTerm) replaced.getChildren().getFirst();
+        assertThat(term.getValue())
+                .isEqualTo("admin*");
+        assertThat(term.getOptions())
+                .isEqualTo(options);
+    }
+
+    @Test
+    void testCopyTerm_keepsOptions() {
+        final ExpressionTerm term = ExpressionTerm.builder()
+                .field(FIELD)
+                .condition(Condition.EQUALS)
+                .value("bob")
+                .options(Map.of("optionB", "1"))
+                .build();
+
+        assertThat(ExpressionUtil.copyTerm(term, null))
+                .isEqualTo(term);
     }
 
     private static ExpressionOperator getExpressionOperator() {

@@ -376,6 +376,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                                                 .condition(term.getCondition())
                                                 .value(resolved)
                                                 .docRef(term.getDocRef())
+                                                .options(term.getOptions())
                                                 .build());
                                     }
                                 }

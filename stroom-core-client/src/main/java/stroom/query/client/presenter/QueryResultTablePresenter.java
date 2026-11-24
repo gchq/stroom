@@ -1005,6 +1005,7 @@ public class QueryResultTablePresenter
         return new QueryTableColumnValuesDataSupplier(restFactory,
                 currentSearchModel,
                 column,
+                getQueryTablePreferences(),
                 conditionalFormattingRules);
     }
 

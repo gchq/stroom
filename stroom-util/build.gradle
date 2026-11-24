@@ -43,14 +43,23 @@ dependencies {
     testRuntimeOnly libs.bundles.common.test.runtime
 }
 
-tasks.register('writeBuildProperties') {
-    def propertyFile = file "${project.rootDir}/stroom-util/src/main/resources/META-INF/stroom-util-build.properties"
-    def props = new Properties()
+// Read by BuildInfoProvider. buildDate changes on every build, so the root build.gradle
+// tells gradle to ignore it when deciding if tests need to run again.
+def buildInfoDir = layout.buildDirectory.dir('generated/resources/buildInfo')
+def buildPropertiesPath = 'META-INF/stroom-util-build.properties'
 
-    props.setProperty("buildVersion", versions.stroom)
-    props.setProperty("buildDate", ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT))
+def writeBuildProperties = tasks.register('writeBuildProperties', WriteProperties) {
+    destinationFile = buildInfoDir.map { it.file(buildPropertiesPath) }
+    property 'buildVersion', versions.stroom
+    property 'buildDate', ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT)
 
-    props.store(propertyFile.newWriter(), null)
+    // Older builds wrote this file into src, which would now be a duplicate of the
+    // generated one, so remove it if a build on an older branch has left it there
+    doFirst {
+        delete file("src/main/resources/${buildPropertiesPath}")
+    }
 }
 
-tasks.compileJava.dependsOn writeBuildProperties
+// Makes the generated file part of the jar and classpath, and makes
+// processResources depend on writeBuildProperties
+sourceSets.main.resources.srcDir(files(buildInfoDir).builtBy(writeBuildProperties))

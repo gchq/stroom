@@ -16,6 +16,8 @@
 
 package stroom.search.elastic.shared;
 
+import stroom.util.shared.http.HttpClientConfig;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -27,73 +29,40 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/// The connection details for an Elasticsearch cluster.
+///
+/// Secrets are never held here. The API key and any key/trust stores are referred to by the name of a
+/// Stroom credential and are resolved on the server at the point of use, so this object is safe to send to
+/// the UI and to export.
 @JsonPropertyOrder({
         "connectionUrls",
-        "caCertificate",
-        "useAuthentication",
-        "apiKeyId",
-        "apiKeySecret",
-        "connectionTimeoutMillis",
-        "responseTimeoutMillis"})
+        "apiKeyName",
+        "httpClientConfiguration"})
 @JsonInclude(Include.NON_NULL)
 public class ElasticConnectionConfig implements Serializable {
-
-    private static final boolean DEFAULT_USE_AUTHENTICATION = false;
-    private static final int DEFAULT_CONNECTION_TIMEOUT_MILLIS = 3000;
-    private static final int DEFAULT_RESPONSE_TIMEOUT_MILLIS = 0;
 
     @JsonProperty
     private List<String> connectionUrls = new ArrayList<>();
 
-    /**
-     * DER or PEM-encoded CA certificate for X.509 verification
-     */
+    // The name of an Access Token credential holding the base64 encoded Elasticsearch API key
     @JsonProperty
-    private String caCertificate;
+    private String apiKeyName;
 
+    // HTTP client settings, including TLS (key/trust store credential names) and proxy configuration
     @JsonProperty
-    private boolean useAuthentication = DEFAULT_USE_AUTHENTICATION;
-
-    @JsonProperty
-    private String apiKeyId;
-
-    @JsonProperty
-    private String apiKeySecret;
-
-    /**
-     * Amount of time to wait when connecting to Elasticsearch
-     */
-    @JsonProperty
-    private int connectionTimeoutMillis = DEFAULT_CONNECTION_TIMEOUT_MILLIS;
-
-    /**
-     * Amount of time to allow for Elasticsearch requests to complete.
-     * If this interval is exceeded, the request is aborted and an `Error` stream is created.
-     */
-    @JsonProperty
-    private int responseTimeoutMillis = DEFAULT_RESPONSE_TIMEOUT_MILLIS;
+    private HttpClientConfig httpClientConfiguration;
 
     public ElasticConnectionConfig() {
     }
 
     @JsonCreator
     public ElasticConnectionConfig(@JsonProperty("connectionUrls") final List<String> connectionUrls,
-                                   @JsonProperty("caCertificate") final String caCertificate,
-                                   @JsonProperty("useAuthentication") final Boolean useAuthentication,
-                                   @JsonProperty("apiKeyId") final String apiKeyId,
-                                   @JsonProperty("apiKeySecret") final String apiKeySecret,
-                                   @JsonProperty("connectionTimeoutMillis") final Integer connectionTimeoutMillis,
-                                   @JsonProperty("responseTimeoutMillis") final Integer responseTimeoutMillis) {
+                                   @JsonProperty("apiKeyName") final String apiKeyName,
+                                   @JsonProperty("httpClientConfiguration")
+                                   final HttpClientConfig httpClientConfiguration) {
         this.connectionUrls = connectionUrls;
-        this.caCertificate = caCertificate;
-        this.useAuthentication =
-                Objects.requireNonNullElse(useAuthentication, DEFAULT_USE_AUTHENTICATION);
-        this.apiKeyId = apiKeyId;
-        this.apiKeySecret = apiKeySecret;
-        this.connectionTimeoutMillis =
-                Objects.requireNonNullElse(connectionTimeoutMillis, DEFAULT_CONNECTION_TIMEOUT_MILLIS);
-        this.responseTimeoutMillis =
-                Objects.requireNonNullElse(responseTimeoutMillis, DEFAULT_RESPONSE_TIMEOUT_MILLIS);
+        this.apiKeyName = apiKeyName;
+        this.httpClientConfiguration = httpClientConfiguration;
     }
 
     public List<String> getConnectionUrls() {
@@ -104,52 +73,26 @@ public class ElasticConnectionConfig implements Serializable {
         this.connectionUrls = connectionUrls;
     }
 
-    public String getCaCertificate() {
-        return caCertificate;
+    /// @return The name of the Access Token credential holding the encoded Elasticsearch API key, or `null`
+    /// if the cluster does not require authentication.
+    public String getApiKeyName() {
+        return apiKeyName;
     }
 
-    public void setCaCertificate(final String caCertificate) {
-        this.caCertificate = caCertificate;
+    /// @param apiKeyName The name of the Access Token credential holding the encoded Elasticsearch API key,
+    ///                   or `null` if the cluster does not require authentication.
+    public void setApiKeyName(final String apiKeyName) {
+        this.apiKeyName = apiKeyName;
     }
 
-    public boolean getUseAuthentication() {
-        return useAuthentication;
+    /// @return The HTTP client settings to connect with, or `null` to use the defaults.
+    public HttpClientConfig getHttpClientConfiguration() {
+        return httpClientConfiguration;
     }
 
-    public void setUseAuthentication(final boolean useAuthentication) {
-        this.useAuthentication = useAuthentication;
-    }
-
-    public String getApiKeyId() {
-        return apiKeyId;
-    }
-
-    public void setApiKeyId(final String apiKeyId) {
-        this.apiKeyId = apiKeyId;
-    }
-
-    public String getApiKeySecret() {
-        return apiKeySecret;
-    }
-
-    public void setApiKeySecret(final String apiKeySecret) {
-        this.apiKeySecret = apiKeySecret;
-    }
-
-    public int getConnectionTimeoutMillis() {
-        return connectionTimeoutMillis;
-    }
-
-    public void setConnectionTimeoutMillis(final int connectionTimeoutMillis) {
-        this.connectionTimeoutMillis = connectionTimeoutMillis;
-    }
-
-    public int getResponseTimeoutMillis() {
-        return responseTimeoutMillis;
-    }
-
-    public void setResponseTimeoutMillis(final int responseTimeoutMillis) {
-        this.responseTimeoutMillis = responseTimeoutMillis;
+    /// @param httpClientConfiguration The HTTP client settings to connect with, or `null` to use the defaults.
+    public void setHttpClientConfiguration(final HttpClientConfig httpClientConfiguration) {
+        this.httpClientConfiguration = httpClientConfiguration;
     }
 
     @Override
@@ -157,34 +100,25 @@ public class ElasticConnectionConfig implements Serializable {
         if (this == obj) {
             return true;
         }
-        if (!(obj instanceof ElasticConnectionConfig)) {
+        if (!(obj instanceof final ElasticConnectionConfig that)) {
             return false;
         }
-        final ElasticConnectionConfig that = (ElasticConnectionConfig) obj;
         return Objects.equals(connectionUrls, that.connectionUrls) &&
-               Objects.equals(caCertificate, that.caCertificate) &&
-               Objects.equals(useAuthentication, that.useAuthentication) &&
-               Objects.equals(apiKeyId, that.apiKeyId) &&
-               Objects.equals(apiKeySecret, that.apiKeySecret) &&
-               Objects.equals(connectionTimeoutMillis, that.connectionTimeoutMillis) &&
-               Objects.equals(responseTimeoutMillis, that.responseTimeoutMillis);
+               Objects.equals(apiKeyName, that.apiKeyName) &&
+               Objects.equals(httpClientConfiguration, that.httpClientConfiguration);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(connectionUrls);
+        return Objects.hash(connectionUrls, apiKeyName, httpClientConfiguration);
     }
 
     @Override
     public String toString() {
         return "ElasticConnectionConfig{" +
-               "connectionUrls='" + String.join(",", connectionUrls) + '\'' +
-               ", caCertPath='" + caCertificate + '\'' +
-               ", useAuthentication=" + useAuthentication +
-               ", apiKeyId='" + apiKeyId + '\'' +
-               ", apiKeySecret='<redacted>'" +
-               ", connectionTimeoutMillis=" + connectionTimeoutMillis +
-               ", responseTimeoutMillis=" + responseTimeoutMillis +
+               "connectionUrls=" + connectionUrls +
+               ", apiKeyName='" + apiKeyName + '\'' +
+               ", httpClientConfiguration=" + httpClientConfiguration +
                '}';
     }
 }

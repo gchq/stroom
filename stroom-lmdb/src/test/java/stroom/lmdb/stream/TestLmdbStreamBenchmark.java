@@ -16,6 +16,7 @@
 
 package stroom.lmdb.stream;
 
+import stroom.test.common.PerformanceTest;
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.io.ByteSize;
@@ -47,6 +48,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@PerformanceTest
 @Disabled
 public class TestLmdbStreamBenchmark {
 

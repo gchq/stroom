@@ -19,12 +19,15 @@ package stroom.util.collections;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestBatchingIterator {
 
@@ -68,6 +71,56 @@ class TestBatchingIterator {
 
         assertThat(batches).isNotNull();
         assertThat(batches).isEmpty();
+    }
+
+    /// Repeated calls to hasNext() do not discard the prepared batch.
+    @Test
+    void batchedStreamOf_iteratorCanCheckForNextBatchMoreThanOnce() {
+        try (final Stream<List<Integer>> batches = BatchingIterator.batchedStreamOf(
+                Stream.of(1, 2, 3), 2)) {
+            final Iterator<List<Integer>> iterator = batches.iterator();
+
+            assertThat(iterator.hasNext()).isTrue();
+            assertThat(iterator.hasNext()).isTrue();
+            assertThat(iterator.next()).containsExactly(1, 2);
+            assertThat(iterator.next()).containsExactly(3);
+            assertThat(iterator.hasNext()).isFalse();
+        }
+    }
+
+    /// Batch sizes less than one are rejected consistently.
+    @Test
+    void batchedStreamOf_rejectsNonPositiveBatchSize() {
+        assertThatThrownBy(() -> BatchingIterator.batchedStreamOf(Stream.of(1), 0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Batch size must be greater than zero");
+        assertThatThrownBy(() -> BatchingIterator.batchedStreamOf(Stream.of(1), -1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Batch size must be greater than zero");
+    }
+
+    /// A large batch size does not cause an equally large eager allocation.
+    @Test
+    void batchedStreamOf_doesNotPreallocateTheEntireBatchSize() {
+        final List<List<Integer>> batches = BatchingIterator.batchedStreamOf(
+                        Stream.of(1), Integer.MAX_VALUE)
+                .collect(Collectors.toList());
+
+        assertThat(batches).containsExactly(List.of(1));
+    }
+
+    /// Closing the returned stream also closes the supplied source stream.
+    @Test
+    void batchedStreamOf_closesTheOriginalStreamWhenTheBatchStreamIsClosed() {
+        final AtomicBoolean sourceStreamClosed = new AtomicBoolean();
+        final Stream<Integer> sourceStream = Stream.of(1)
+                .onClose(() -> sourceStreamClosed.set(true));
+
+        try (final Stream<List<Integer>> batches = BatchingIterator.batchedStreamOf(sourceStream, 1)) {
+            assertThat(batches).containsExactly(List.of(1));
+        }
+
+        assertThat(sourceStreamClosed).isTrue();
     }
 
 }

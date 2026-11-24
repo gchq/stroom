@@ -1,0 +1,724 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.search.elastic.search;
+
+import stroom.docref.DocRef;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.common.v2.MockIndexFieldCache;
+import stroom.search.elastic.ElasticClientCache;
+import stroom.search.elastic.ElasticClusterStore;
+import stroom.search.elastic.ElasticIndexStore;
+import stroom.search.elastic.ElasticWireMock;
+import stroom.search.elastic.shared.ElasticClusterDoc;
+import stroom.search.elastic.shared.ElasticConnectionConfig;
+import stroom.search.elastic.shared.ElasticFieldStats;
+import stroom.search.elastic.shared.ElasticFieldStatsRequest;
+import stroom.search.elastic.shared.ElasticFieldValueCount;
+import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.search.elastic.shared.ElasticIndexField;
+import stroom.search.elastic.shared.ElasticVirtualFieldGroup;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
+import stroom.util.shared.PermissionException;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import com.github.tomakehurst.wiremock.client.MappingBuilder;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import com.github.tomakehurst.wiremock.verification.LoggedRequest;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+
+/// Tests [ElasticFieldStatsService] with the real Elasticsearch Java client against a WireMock server standing in
+/// for an Elasticsearch cluster.
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class TestElasticFieldStatsService {
+
+    private static final String INDEX_NAME = "test-index";
+    private static final String SEARCH_PATH = "/" + INDEX_NAME + "/_search";
+    private static final String COUNT_PATH = "/" + INDEX_NAME + "/_count";
+    private static final DocRef INDEX_REF = new DocRef(ElasticIndexDoc.TYPE, "index-uuid", "Test Index");
+    private static final DocRef CLUSTER_REF = new DocRef(ElasticClusterDoc.TYPE, "cluster-uuid", "Cluster");
+    private static final String SHARDS = """
+            "took": 1, "timed_out": false,
+            "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0},
+            "hits": {"total": {"value": 100, "relation": "eq"}, "max_score": null, "hits": []},""";
+
+    @RegisterExtension
+    static final WireMockExtension ELASTIC = ElasticWireMock.createExtension();
+
+    @Mock
+    private SecurityContext securityContext;
+    @Mock
+    private ElasticIndexStore elasticIndexStore;
+    @Mock
+    private ElasticClusterStore elasticClusterStore;
+    @Mock
+    private ElasticClientCache elasticClientCache;
+
+    private ElasticsearchClient client;
+    private MockIndexFieldCache indexFieldCache;
+    private ElasticFieldStatsService service;
+
+    @BeforeEach
+    void setUp() {
+        client = ElasticWireMock.createClient(ELASTIC);
+        indexFieldCache = new MockIndexFieldCache();
+        final ElasticClusterDoc cluster = ElasticClusterDoc.builder()
+                .uuid(CLUSTER_REF.getUuid())
+                .connection(new ElasticConnectionConfig(List.of("http://localhost:9200"), null, null))
+                .build();
+        when(elasticClusterStore.readDocument(CLUSTER_REF)).thenReturn(cluster);
+        when(elasticClientCache.contextResult(eq(cluster.getConnection()), any()))
+                .thenAnswer(invocation -> invocation
+                        .<Function<ElasticsearchClient, ?>>getArgument(1)
+                        .apply(client));
+        when(securityContext.hasDocumentPermission(INDEX_REF, DocumentPermission.USE)).thenReturn(true);
+        when(securityContext.useAsReadResult(any()))
+                .thenAnswer(invocation -> invocation.<Supplier<?>>getArgument(0).get());
+        when(elasticIndexStore.readDocument(INDEX_REF)).thenReturn(createIndex());
+        service = new ElasticFieldStatsService(
+                securityContext,
+                elasticIndexStore,
+                elasticClusterStore,
+                elasticClientCache,
+                ElasticSearchConfig::new,
+                null,
+                indexFieldCache,
+                null);
+    }
+
+    @AfterEach
+    void tearDown() throws IOException {
+        client.close();
+    }
+
+    @Test
+    void testKeywordFieldStatsFromRandomSample() {
+        stubCount(100_000);
+        stubSearch(null, randomSample(5_000, """
+                "filter#has_value": {"doc_count": 90000},
+                "cardinality#distinct": {"value": 3},
+                "sterms#top": {
+                  "doc_count_error_upper_bound": 0, "sum_other_doc_count": 0,
+                  "buckets": [{"key": "web01", "doc_count": 50000}, {"key": "web02", "doc_count": 40000}]
+                }"""));
+
+        final ElasticFieldStats stats = service.getFieldStats(request("host", null, 1000L, 2000L, null));
+
+        assertThat(stats.getMessage()).isNull();
+        assertThat(stats.getExact()).isFalse();
+        assertThat(stats.getSampleSize()).isEqualTo(5_000);
+        assertThat(stats.getMaxSampleSize()).isEqualTo(50_000);
+        assertThat(stats.getTotalDocs()).isEqualTo(100_000);
+        assertThat(stats.getSampledDocs()).isEqualTo(5_000);
+        // Counts within the random sampler are already scaled by Elasticsearch to estimate every document
+        assertThat(stats.getDocsWithValue()).isEqualTo(90_000);
+        assertThat(stats.getDistinctCount()).isEqualTo(3);
+        // A sampled distinct count is always an estimate
+        assertThat(stats.getDistinctCountExact()).isFalse();
+        assertThat(stats.getTopValues())
+                .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
+                .containsExactly(tuple("web01", 50_000L), tuple("web02", 40_000L));
+        assertThat(stats.getMin()).isNull();
+
+        // Documents are sampled at random, within the time range on the doc's time field
+        final String body = onlySearchRequest().getBodyAsString();
+        assertThat(body)
+                .contains("\"random_sampler\":{\"probability\":0.05}")
+                .contains("\"@timestamp\"")
+                .contains("\"gte\":1000")
+                .contains("\"lt\":2000")
+                .contains("\"terms\":{\"field\":\"host\",\"size\":10}")
+                .contains("\"cardinality\":{\"field\":\"host\"}");
+        assertThat(onlyCountRequest().getBodyAsString()).contains("\"gte\":1000").contains("\"lt\":2000");
+    }
+
+    @Test
+    void testNumericFieldStatsExact() {
+        stubCount(1_000_000);
+        stubSearch(null, """
+                "filter#has_value": {"doc_count": 10},
+                "cardinality#distinct": {"value": 5},
+                "stats#stats": {"count": 10, "min": 0.0, "max": 100.0, "avg": 42.5, "sum": 425.0},
+                "tdigest_percentiles#median": {"values": [{"key": 50.0, "value": 40.0}]}""");
+        stubSearch("\"histogram\"", """
+                "histogram#histogram": {"buckets": [{"key": 0.0, "doc_count": 4}, {"key": 5.0, "doc_count": 6}]}""");
+
+        final ElasticFieldStats stats = service.getFieldStats(request("bytes", null, null, null, true));
+
+        assertThat(stats.getExact()).isTrue();
+        assertThat(stats.getTotalDocs()).isEqualTo(1_000_000);
+        assertThat(stats.getSampledDocs()).isEqualTo(1_000_000);
+        assertThat(stats.getMin()).isEqualTo("0");
+        assertThat(stats.getMax()).isEqualTo("100");
+        assertThat(stats.getMean()).isEqualTo(42.5);
+        assertThat(stats.getMedian()).isEqualTo(40.0);
+        assertThat(stats.getDistinctCount()).isEqualTo(5);
+        assertThat(stats.getDistinctCountExact()).isTrue();
+        assertThat(stats.getTopValues()).isNull();
+        assertThat(stats.getHistogram())
+                .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
+                .containsExactly(tuple("0 – 5", 4L), tuple("5 – 100", 6L));
+        // An exact distinct count needs the largest precision threshold
+        assertThat(ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH)))
+                .getFirst().getBodyAsString())
+                .contains("\"cardinality\":{\"field\":\"bytes\",\"precision_threshold\":40000}");
+        // A whole number field is split into whole number ranges: (100 - 0) / 10
+        assertThat(ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH)))
+                .getLast().getBodyAsString())
+                .contains("\"interval\":10.0");
+        // Every document is included, with no time range
+        assertThat(ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH))))
+                .hasSize(2)
+                .allSatisfy(request -> assertThat(request.getBodyAsString())
+                        .contains("\"match_all\"")
+                        .doesNotContain("random_sampler"));
+    }
+
+    @Test
+    void testSmallIndexIsExact() {
+        // A sample of more than half the documents can't be random, so all of them are used
+        stubCount(8_000);
+        stubSearch(null, """
+                "filter#has_value": {"doc_count": 7000}""");
+
+        final ElasticFieldStats stats = service.getFieldStats(request("message", null, null, null, null));
+
+        assertThat(stats.getExact()).isTrue();
+        assertThat(stats.getSampledDocs()).isEqualTo(8_000);
+        assertThat(stats.getDocsWithValue()).isEqualTo(7_000);
+        assertThat(onlySearchRequest().getBodyAsString())
+                .doesNotContain("random_sampler")
+                .doesNotContain("cardinality");
+    }
+
+    @Test
+    void testVirtualFieldStatsUseEditedGroups() {
+        indexFieldCache.put("host", keyword("host"));
+        stubCount(1_000_000);
+        stubSearch(null, randomSample(5_000, """
+                "filter#has_value": {"doc_count": 12000},
+                "filters#groups": {"buckets": {"web": {"doc_count": 5000}, "db": {"doc_count": 7000}}}"""));
+        final List<ElasticVirtualFieldGroup> groups = List.of(
+                new ElasticVirtualFieldGroup("web", group("web01")),
+                new ElasticVirtualFieldGroup("db", group("db01")));
+
+        final ElasticFieldStats stats = service.getFieldStats(new ElasticFieldStatsRequest(
+                INDEX_REF, "Category", null, null, null, groups, null, null, null, null));
+
+        assertThat(stats.getDocsWithValue()).isEqualTo(12_000);
+        assertThat(stats.getTopValues())
+                .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
+                .containsExactly(tuple("db", 7_000L), tuple("web", 5_000L));
+        assertThat(onlySearchRequest().getBodyAsString()).contains("web01").contains("db01");
+    }
+
+    @Test
+    void testVirtualFieldGroupsWithDuplicateNames() {
+        indexFieldCache.put("host", keyword("host"));
+        final List<ElasticVirtualFieldGroup> groups = List.of(
+                new ElasticVirtualFieldGroup("web", group("web01")),
+                new ElasticVirtualFieldGroup("web", group("web02")));
+
+        assertThatThrownBy(() -> service.getFieldStats(new ElasticFieldStatsRequest(
+                INDEX_REF, "Category", null, null, null, groups, null, null, null, null)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("more than one group named 'web'");
+        assertThat(ELASTIC.getAllServeEvents()).isEmpty();
+    }
+
+    @Test
+    void testSampleSizeLimitedToMaximum() {
+        stubCount(10_000_000);
+        stubSearch(null, randomSample(50_000, """
+                "filter#has_value": {"doc_count": 0}"""));
+
+        final ElasticFieldStats stats = service.getFieldStats(request("message", 1_000_000, null, null, null));
+
+        assertThat(stats.getSampleSize()).isEqualTo(50_000);
+        assertThat(onlySearchRequest().getBodyAsString()).contains("\"probability\":0.005");
+    }
+
+    @Test
+    void testNoDocumentsInTimeRange() {
+        stubCount(0);
+        stubSearch(null, """
+                "stats#stats": {"count": 3, "min": 1.0, "max": 2.0, "avg": 1.5, "sum": 4.5,
+                  "min_as_string": "2025-01-01T00:00:00.000Z", "max_as_string": "2025-06-30T00:00:00.000Z"}""");
+
+        final ElasticFieldStats stats = service.getFieldStats(request("host", null, 1000L, 2000L, true));
+
+        // Says what dates the index's documents have, so the user can choose a range holding some
+        assertThat(stats.getMessage()).isEqualTo("No documents were found in the time range. The index's " +
+                                                 "documents are dated from 2025-01-01T00:00:00.000Z to " +
+                                                 "2025-06-30T00:00:00.000Z.");
+        assertThat(onlySearchRequest().getBodyAsString()).contains("\"@timestamp\"").doesNotContain("range");
+    }
+
+    @Test
+    void testNoDocumentsInIndex() {
+        stubCount(0);
+
+        final ElasticFieldStats stats = service.getFieldStats(request("host", null, null, null, true));
+
+        assertThat(stats.getMessage()).isEqualTo("No documents were found in the index");
+        assertThat(ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH)))).isEmpty();
+    }
+
+    @Test
+    void testTopValuesOnlyWithFilter() {
+        stubCount(100_000);
+        stubSearch(null, randomSample(5_000, """
+                "sterms#top": {
+                  "doc_count_error_upper_bound": 0, "sum_other_doc_count": 0,
+                  "buckets": [{"key": "WEB01", "doc_count": 50000}]
+                }"""));
+
+        final ElasticFieldStats stats = service.getFieldStats(new ElasticFieldStatsRequest(
+                INDEX_REF, "host", null, null, null, null, null, 25, " web ", true));
+
+        assertThat(stats.getTopValues())
+                .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
+                .containsExactly(tuple("WEB01", 50_000L));
+        // Only the common values are fetched, filtered by Elasticsearch, ignoring case
+        assertThat(onlySearchRequest().getBodyAsString())
+                .contains("\"size\":25")
+                .contains("\"include\":\".*[wW][eE][bB].*\"")
+                .doesNotContain("cardinality")
+                .doesNotContain("exists");
+    }
+
+    @Test
+    void testTopValuesCountLimited() {
+        stubCount(100_000);
+        stubSearch(null, randomSample(5_000, """
+                "sterms#top": {"doc_count_error_upper_bound": 0, "sum_other_doc_count": 0, "buckets": []}"""));
+
+        service.getFieldStats(new ElasticFieldStatsRequest(
+                INDEX_REF, "host", null, null, null, null, null, 1_000, null, true));
+
+        assertThat(onlySearchRequest().getBodyAsString()).contains("\"size\":100");
+    }
+
+    @Test
+    void testVirtualFieldTopValuesFilteredByGroupName() {
+        indexFieldCache.put("host", keyword("host"));
+        stubCount(1_000_000);
+        stubSearch(null, randomSample(5_000, """
+                "filters#groups": {"buckets": {"web": {"doc_count": 5000}}}"""));
+        final List<ElasticVirtualFieldGroup> groups = List.of(
+                new ElasticVirtualFieldGroup("web", group("web01")),
+                new ElasticVirtualFieldGroup("db", group("db01")));
+
+        final ElasticFieldStats stats = service.getFieldStats(new ElasticFieldStatsRequest(
+                INDEX_REF, "Category", null, null, null, groups, null, null, "WE", true));
+
+        assertThat(stats.getTopValues())
+                .extracting(ElasticFieldValueCount::getValue)
+                .containsExactly("web");
+        assertThat(onlySearchRequest().getBodyAsString()).contains("web01").doesNotContain("db01");
+    }
+
+    @Test
+    void testHistogramInterval() {
+        // Whole numbers are split into whole number ranges
+        assertThat(ElasticFieldStatsService.getHistogramInterval(0, 95, true)).isEqualTo(10.0);
+        assertThat(ElasticFieldStatsService.getHistogramInterval(0, 3, true)).isEqualTo(1.0);
+        assertThat(ElasticFieldStatsService.getHistogramInterval(0, 95, false)).isEqualTo(9.5);
+        assertThat(ElasticFieldStatsService.getHistogramInterval(5, 5, false)).isEqualTo(1.0);
+    }
+
+    @Test
+    void testNestedFieldCoverageCountsParentDocuments() {
+        // A field inside a `nested` object is held in hidden documents, which a bare `exists` query never matches
+        stubCount(8_000);
+        stubSearch(null, """
+                "filter#has_value": {"doc_count": 6000}""");
+
+        final ElasticFieldStats stats = service.getFieldStats(request("content.vector", null, null, null, null));
+
+        assertThat(stats.getDocsWithValue()).isEqualTo(6_000);
+        assertThat(onlySearchRequest().getBodyAsString())
+                .contains("\"nested\":{\"path\":\"content\",\"query\":{\"exists\":{\"field\":\"content.vector\"}}}");
+    }
+
+    @Test
+    void testTopLevelFieldCoverageIsNotNested() {
+        stubCount(8_000);
+        stubSearch(null, """
+                "filter#has_value": {"doc_count": 7000}""");
+
+        service.getFieldStats(request("title.vector", null, null, null, null));
+
+        assertThat(onlySearchRequest().getBodyAsString())
+                .contains("\"filter\":{\"exists\":{\"field\":\"title.vector\"}}")
+                .doesNotContain("nested");
+    }
+
+    @Test
+    void testNestedKeywordFieldStatsAreExactAndCountDocuments() {
+        // A random sampler can't hold the nested aggregations a nested field's values need, so every document is
+        // used, even though the index is large enough to sample
+        stubCount(100_000);
+        stubSearch(null, """
+                "filter#has_value": {"doc_count": 60000},
+                "nested#nested": {
+                  "doc_count": 250000,
+                  "cardinality#distinct": {"value": 2},
+                  "sterms#top": {
+                    "doc_count_error_upper_bound": 0, "sum_other_doc_count": 0,
+                    "buckets": [
+                      {"key": "a", "doc_count": 200000, "reverse_nested#parent": {"doc_count": 55000}},
+                      {"key": "b", "doc_count": 50000, "reverse_nested#parent": {"doc_count": 20000}}
+                    ]
+                  }
+                }""");
+
+        final ElasticFieldStats stats = service.getFieldStats(request("content.host", null, null, null, null));
+
+        assertThat(stats.getMessage()).isNull();
+        assertThat(stats.getExact()).isTrue();
+        assertThat(stats.getSampledDocs()).isEqualTo(100_000);
+        assertThat(stats.getDocsWithValue()).isEqualTo(60_000);
+        assertThat(stats.getDistinctCount()).isEqualTo(2);
+        // Each value counts the documents holding it, not the nested objects
+        assertThat(stats.getTopValues())
+                .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
+                .containsExactly(tuple("a", 55_000L), tuple("b", 20_000L));
+        assertThat(onlySearchRequest().getBodyAsString())
+                .doesNotContain("random_sampler")
+                .contains("\"nested\":{\"path\":\"content\"}")
+                .contains("\"terms\":{\"field\":\"content.host\",\"order\":[{\"parent\":\"desc\"},"
+                          + "{\"_key\":\"asc\"}],\"size\":10}")
+                .contains("\"parent\":{\"reverse_nested\":{}}");
+    }
+
+    @Test
+    void testNestedNumericFieldStats() {
+        stubCount(1_000);
+        stubSearch(null, """
+                "filter#has_value": {"doc_count": 10},
+                "nested#nested": {
+                  "doc_count": 30,
+                  "cardinality#distinct": {"value": 5},
+                  "stats#stats": {"count": 30, "min": 0.0, "max": 100.0, "avg": 42.5, "sum": 1275.0},
+                  "tdigest_percentiles#median": {"values": [{"key": 50.0, "value": 40.0}]}
+                }""");
+        stubSearch("\"histogram\"", """
+                "nested#nested": {
+                  "doc_count": 30,
+                  "histogram#histogram": {"buckets": [
+                    {"key": 0.0, "doc_count": 20, "reverse_nested#parent": {"doc_count": 7}},
+                    {"key": 5.0, "doc_count": 10, "reverse_nested#parent": {"doc_count": 4}}
+                  ]}
+                }""");
+
+        final ElasticFieldStats stats = service.getFieldStats(request("content.bytes", null, null, null, null));
+
+        assertThat(stats.getDocsWithValue()).isEqualTo(10);
+        assertThat(stats.getDistinctCount()).isEqualTo(5);
+        assertThat(stats.getMin()).isEqualTo("0");
+        assertThat(stats.getMax()).isEqualTo("100");
+        assertThat(stats.getMean()).isEqualTo(42.5);
+        assertThat(stats.getMedian()).isEqualTo(40.0);
+        assertThat(stats.getHistogram())
+                .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
+                .containsExactly(tuple("0 – 5", 7L), tuple("5 – 100", 4L));
+        assertThat(ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(SEARCH_PATH))))
+                .hasSize(2)
+                .allSatisfy(request -> assertThat(request.getBodyAsString())
+                        .contains("\"nested\":{\"path\":\"content\"}"));
+    }
+
+    @Test
+    void testNestedTopValuesOnly() {
+        stubCount(100_000);
+        stubSearch(null, """
+                "nested#nested": {
+                  "doc_count": 250000,
+                  "sterms#top": {
+                    "doc_count_error_upper_bound": 0, "sum_other_doc_count": 0,
+                    "buckets": [{"key": "a", "doc_count": 200000, "reverse_nested#parent": {"doc_count": 55000}}]
+                  }
+                }""");
+
+        final ElasticFieldStats stats = service.getFieldStats(new ElasticFieldStatsRequest(
+                INDEX_REF, "content.host", null, null, null, null, null, null, null, true));
+
+        assertThat(stats.getExact()).isTrue();
+        assertThat(stats.getTopValues())
+                .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
+                .containsExactly(tuple("a", 55_000L));
+    }
+
+    @Test
+    void testWrapAndUnwrapNestedAggs() {
+        final Map<String, Aggregation> aggs = Map.of(
+                "distinct", Aggregation.of(a -> a.cardinality(c -> c.field("content.chunks.text"))));
+
+        assertThat(ElasticFieldStatsService.wrapInNestedAggs(List.of(), aggs)).isSameAs(aggs);
+        assertThat(ElasticFieldStatsService.wrapInNestedAggs(List.of("content"), Map.of())).isEmpty();
+
+        final Map<String, Aggregation> wrapped = ElasticFieldStatsService.wrapInNestedAggs(
+                List.of("content", "content.chunks"), aggs);
+        final Aggregation outer = wrapped.get("nested");
+        assertThat(outer.nested().path()).isEqualTo("content");
+        final Aggregation inner = outer.aggregations().get("nested");
+        assertThat(inner.nested().path()).isEqualTo("content.chunks");
+        assertThat(inner.aggregations()).containsOnlyKeys("distinct");
+
+        // No value aggregations were asked for, so there is nothing to unwrap
+        assertThat(ElasticFieldStatsService.unwrapNestedAggs(List.of("content"), Map.of())).isEmpty();
+    }
+
+    @Test
+    void testIsDistinctCountExact() {
+        assertThat(ElasticFieldStatsService.isDistinctCountExact(true, null)).isNull();
+        assertThat(ElasticFieldStatsService.isDistinctCountExact(false, null)).isNull();
+        assertThat(ElasticFieldStatsService.isDistinctCountExact(true, 0L)).isTrue();
+        assertThat(ElasticFieldStatsService.isDistinctCountExact(true, 40_000L)).isTrue();
+        // Past the precision threshold, even an exact mode count is an estimate
+        assertThat(ElasticFieldStatsService.isDistinctCountExact(true, 40_001L)).isFalse();
+        assertThat(ElasticFieldStatsService.isDistinctCountExact(false, 3L)).isFalse();
+    }
+
+    @Test
+    void testGetNestedPaths() {
+        final List<ElasticIndexField> fields = createIndex().getFields();
+
+        assertThat(ElasticFieldStatsService.getNestedPaths(fields, "host")).isEmpty();
+        assertThat(ElasticFieldStatsService.getNestedPaths(fields, "title.vector")).isEmpty();
+        assertThat(ElasticFieldStatsService.getNestedPaths(fields, "content.vector")).containsExactly("content");
+        assertThat(ElasticFieldStatsService.getNestedPaths(fields, "content.chunks.text"))
+                .containsExactly("content", "content.chunks");
+        assertThat(ElasticFieldStatsService.getNestedPaths(null, "content.vector")).isEmpty();
+    }
+
+    @Test
+    void testBuildHasValueQueryWrapsEachNestedLevel() {
+        final List<ElasticIndexField> fields = createIndex().getFields();
+
+        final Query query = ElasticFieldStatsService.buildHasValueQuery(fields, "content.chunks.text");
+
+        assertThat(query.isNested()).isTrue();
+        assertThat(query.nested().path()).isEqualTo("content");
+        final Query inner = query.nested().query();
+        assertThat(inner.isNested()).isTrue();
+        assertThat(inner.nested().path()).isEqualTo("content.chunks");
+        assertThat(inner.nested().query().isExists()).isTrue();
+        assertThat(inner.nested().query().exists().field()).isEqualTo("content.chunks.text");
+    }
+
+    @Test
+    void testDecimalPlaces() {
+        assertThat(ElasticFieldStatsService.getDecimalPlaces(25)).isZero();
+        assertThat(ElasticFieldStatsService.getDecimalPlaces(9.5)).isEqualTo(1);
+        assertThat(ElasticFieldStatsService.getDecimalPlaces(0.25)).isEqualTo(2);
+        assertThat(ElasticFieldStatsService.getDecimalPlaces(0.0004)).isEqualTo(5);
+        assertThat(ElasticFieldStatsService.getDecimalPlaces(0)).isZero();
+    }
+
+    @Test
+    void testFormatNumberToDecimalPlaces() {
+        assertThat(ElasticFieldStatsService.formatNumber(12.3456, 2)).isEqualTo("12.35");
+        assertThat(ElasticFieldStatsService.formatNumber(12.5, 0)).isEqualTo("13");
+        assertThat(ElasticFieldStatsService.formatNumber(3.10, 2)).isEqualTo("3.1");
+        assertThat(ElasticFieldStatsService.formatNumber(1200.0, 0)).isEqualTo("1200");
+    }
+
+    @Test
+    void testToRanges() {
+        assertThat(ElasticFieldStatsService.toRanges(List.of("0", "5"), List.of(4L, 6L), "10"))
+                .extracting(ElasticFieldValueCount::getValue, ElasticFieldValueCount::getCount)
+                .containsExactly(tuple("0 – 5", 4L), tuple("5 – 10", 6L));
+        // All values the same
+        assertThat(ElasticFieldStatsService.toRanges(List.of("7"), List.of(3L), "7"))
+                .extracting(ElasticFieldValueCount::getValue)
+                .containsExactly("7");
+    }
+
+    @Test
+    void testToRangesMergesBucketStartingAtMaximum() {
+        // A bucket starting at the largest value is counted in the last full range, leaving 10 ranges
+        final List<String> starts = List.of("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10");
+        final List<Long> counts = List.of(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 5L);
+
+        final List<ElasticFieldValueCount> ranges = ElasticFieldStatsService.toRanges(starts, counts, "10");
+
+        assertThat(ranges).hasSize(10);
+        assertThat(ranges.getLast().getValue()).isEqualTo("9 – 10");
+        assertThat(ranges.getLast().getCount()).isEqualTo(6L);
+    }
+
+    @Test
+    void testGetSampleProbability() {
+        assertThat(ElasticFieldStatsService.getSampleProbability(false, 5_000, 100_000)).isEqualTo(0.05);
+        assertThat(ElasticFieldStatsService.getSampleProbability(false, 5_000, 10_000)).isEqualTo(0.5);
+        assertThat(ElasticFieldStatsService.getSampleProbability(false, 5_000, 9_999)).isNull();
+        assertThat(ElasticFieldStatsService.getSampleProbability(false, 5_000, 0)).isNull();
+        assertThat(ElasticFieldStatsService.getSampleProbability(true, 5_000, 100_000)).isNull();
+    }
+
+    @Test
+    void testNoPermission() {
+        when(securityContext.hasDocumentPermission(INDEX_REF, DocumentPermission.USE)).thenReturn(false);
+
+        assertThatThrownBy(() -> service.getFieldStats(request("host", null, null, null, null)))
+                .isInstanceOf(PermissionException.class);
+        assertThat(ELASTIC.getAllServeEvents()).isEmpty();
+    }
+
+    @Test
+    void testConflictingField() {
+        final ElasticFieldStats stats = service.getFieldStats(request("port", null, null, null, null));
+
+        assertThat(stats.getMessage()).contains("conflicting types");
+        assertThat(ELASTIC.getAllServeEvents()).isEmpty();
+    }
+
+    @Test
+    void testUnknownField() {
+        final ElasticFieldStats stats = service.getFieldStats(request("unknown", null, null, null, null));
+
+        assertThat(stats.getMessage()).isEqualTo("Field 'unknown' was not found in any source index");
+        assertThat(ELASTIC.getAllServeEvents()).isEmpty();
+    }
+
+    @Test
+    void testFormatNumber() {
+        assertThat(ElasticFieldStatsService.formatNumber(5.0)).isEqualTo("5");
+        assertThat(ElasticFieldStatsService.formatNumber(-2.0)).isEqualTo("-2");
+        assertThat(ElasticFieldStatsService.formatNumber(2.5)).isEqualTo("2.5");
+    }
+
+    private void stubCount(final long count) {
+        ELASTIC.stubFor(WireMock.post(WireMock.urlPathEqualTo(COUNT_PATH))
+                .willReturn(ElasticWireMock.elasticResponse(200, """
+                        {"count": %d, "_shards": {"total": 1, "successful": 1, "skipped": 0, "failed": 0}}"""
+                        .formatted(count))));
+    }
+
+    private void stubSearch(final String bodyContaining, final String aggregations) {
+        final MappingBuilder mapping = WireMock.post(WireMock.urlPathEqualTo(SEARCH_PATH));
+        if (bodyContaining != null) {
+            mapping.withRequestBody(WireMock.containing(bodyContaining)).atPriority(1);
+        } else {
+            mapping.atPriority(5);
+        }
+        ELASTIC.stubFor(mapping.willReturn(ElasticWireMock.elasticResponse(200,
+                "{" + SHARDS + "\"aggregations\": {" + aggregations + "}}")));
+    }
+
+    /// @return the aggregations of a search response, wrapped in a random sampler aggregate as Elasticsearch
+    /// returns it, with the client's typed keys
+    private static String randomSample(final long docCount, final String aggregations) {
+        return """
+                "random_sampler#sample": {
+                  "seed": 123, "probability": 0.05, "doc_count": %d,
+                  %s
+                }""".formatted(docCount, aggregations);
+    }
+
+    private LoggedRequest onlySearchRequest() {
+        return onlyRequest(SEARCH_PATH);
+    }
+
+    private LoggedRequest onlyCountRequest() {
+        return onlyRequest(COUNT_PATH);
+    }
+
+    private LoggedRequest onlyRequest(final String path) {
+        final List<LoggedRequest> requests = ELASTIC.findAll(WireMock.postRequestedFor(WireMock.urlPathEqualTo(path)));
+        assertThat(requests).hasSize(1);
+        return requests.getFirst();
+    }
+
+    private static ElasticFieldStatsRequest request(final String fieldName,
+                                                    final Integer sampleSize,
+                                                    final Long fromMs,
+                                                    final Long toMs,
+                                                    final Boolean exact) {
+        return new ElasticFieldStatsRequest(
+                INDEX_REF, fieldName, sampleSize, fromMs, toMs, null, exact, null, null, null);
+    }
+
+    private static ExpressionOperator group(final String host) {
+        return ExpressionOperator.builder().addTerm("host", Condition.EQUALS, host).build();
+    }
+
+    private static ElasticIndexField keyword(final String name) {
+        return ElasticIndexField.builder().fldName(name).fldType(FieldType.KEYWORD).nativeType("keyword").build();
+    }
+
+    private static ElasticIndexDoc createIndex() {
+        return ElasticIndexDoc.builder()
+                .uuid(INDEX_REF.getUuid())
+                .name(INDEX_REF.getName())
+                .clusterRef(CLUSTER_REF)
+                .indexName(INDEX_NAME)
+                .fields(List.of(
+                        keyword("host"),
+                        ElasticIndexField.builder().fldName("bytes").fldType(FieldType.LONG).nativeType("long")
+                                .build(),
+                        ElasticIndexField.builder().fldName("message").fldType(FieldType.TEXT).nativeType("text")
+                                .build(),
+                        ElasticIndexField.builder().fldName("port").fldType(FieldType.LONG).nativeType("long")
+                                .conflictingTypes(Map.of("a", "long", "b", "keyword"))
+                                .build(),
+                        ElasticIndexField.builder().fldName("title.vector").fldType(FieldType.DENSE_VECTOR)
+                                .nativeType("dense_vector").build(),
+                        ElasticIndexField.builder().fldName("content").fldType(FieldType.NESTED)
+                                .nativeType("nested").build(),
+                        ElasticIndexField.builder().fldName("content.vector").fldType(FieldType.DENSE_VECTOR)
+                                .nativeType("dense_vector").build(),
+                        ElasticIndexField.builder().fldName("content.host").fldType(FieldType.KEYWORD)
+                                .nativeType("keyword").build(),
+                        ElasticIndexField.builder().fldName("content.bytes").fldType(FieldType.LONG)
+                                .nativeType("long").build(),
+                        ElasticIndexField.builder().fldName("content.chunks").fldType(FieldType.NESTED)
+                                .nativeType("nested").build(),
+                        ElasticIndexField.builder().fldName("content.chunks.text").fldType(FieldType.TEXT)
+                                .nativeType("text").build()))
+                .build();
+    }
+}

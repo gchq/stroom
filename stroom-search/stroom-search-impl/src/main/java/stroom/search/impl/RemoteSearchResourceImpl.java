@@ -42,13 +42,20 @@ public class RemoteSearchResourceImpl implements RemoteSearchResource {
 
     @Timed
     @Override
-    public StreamingOutput poll(final String queryKey) {
-        return outputStream -> remoteSearchServiceProvider.get().poll(queryKey, outputStream);
+    public StreamingOutput poll(final String queryKey, final String dispatchId) {
+        return outputStream -> remoteSearchServiceProvider.get().poll(
+                RemoteSearchResults.createKey(queryKey, dispatchId), outputStream);
     }
 
     @Timed
     @Override
-    public Boolean destroy(final String queryKey) {
-        return remoteSearchServiceProvider.get().destroy(queryKey);
+    public Boolean destroy(final String queryKey, final String dispatchId) {
+        return remoteSearchServiceProvider.get().destroy(RemoteSearchResults.createKey(queryKey, dispatchId));
+    }
+
+    @Timed
+    @Override
+    public StreamingOutput joinTables(final String queryKey) {
+        return outputStream -> remoteSearchServiceProvider.get().writeJoinTables(queryKey, outputStream);
     }
 }

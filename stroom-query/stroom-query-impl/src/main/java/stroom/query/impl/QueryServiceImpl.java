@@ -16,8 +16,7 @@
 
 package stroom.query.impl;
 
-import stroom.dashboard.impl.ColumnValueComparator;
-import stroom.dashboard.impl.ColumnValueSelectionPredicateFactory;
+import stroom.dashboard.impl.ColumnValuesFinder;
 import stroom.dashboard.impl.SampleGenerator;
 import stroom.dashboard.impl.SearchResponseMapper;
 import stroom.dashboard.impl.download.DelimitedTarget;
@@ -25,7 +24,6 @@ import stroom.dashboard.impl.download.ExcelTarget;
 import stroom.dashboard.impl.download.MarkdownTarget;
 import stroom.dashboard.impl.download.SearchResultWriter;
 import stroom.dashboard.impl.logging.SearchEventLog;
-import stroom.dashboard.shared.ColumnValue;
 import stroom.dashboard.shared.ColumnValues;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
@@ -34,7 +32,6 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.Column;
-import stroom.query.api.ConditionalFormattingRule;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
@@ -50,7 +47,6 @@ import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchResponse;
 import stroom.query.api.TableResultBuilder;
 import stroom.query.api.TableSettings;
-import stroom.query.api.TimeFilter;
 import stroom.query.api.TimeRange;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
@@ -58,26 +54,17 @@ import stroom.query.api.datasource.QueryFieldProvider;
 import stroom.query.api.token.Token;
 import stroom.query.api.token.TokenException;
 import stroom.query.api.token.TokenType;
-import stroom.query.common.v2.ConditionalFormattingMapper.RuleAndMatcher;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory;
-import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
-import stroom.query.common.v2.Item;
-import stroom.query.common.v2.OpenGroups;
-import stroom.query.common.v2.OpenGroupsImpl;
 import stroom.query.common.v2.ResultCreator;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
-import stroom.query.common.v2.RowUtil;
 import stroom.query.common.v2.TableResultCreator;
-import stroom.query.common.v2.ValPredicateFactory;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
-import stroom.query.language.functions.Val;
-import stroom.query.language.functions.Values;
 import stroom.query.language.token.Tokeniser;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryColumnValuesRequest;
@@ -93,7 +80,6 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.EntityServiceExceptionUtil;
-import stroom.util.collections.TrimmedSortedList;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.HttpServletRequestHolder;
@@ -104,6 +90,7 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
+import stroom.util.shared.time.SimpleDuration;
 import stroom.util.string.ExceptionStringUtil;
 import stroom.util.string.StringUtil;
 
@@ -131,11 +118,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @AutoLogged
 class QueryServiceImpl implements QueryService, QueryFieldProvider {
@@ -145,6 +130,8 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
     private static final ContextualQueryHelp EMPTY_QUERY_CONTEXT = new ContextualQueryHelp(
             EnumSet.of(QueryHelpType.STRUCTURE),
             Set.of(Structures.name(TokenType.FROM)));
+    // No help at all, as inside the SQL of a sql clause, where nothing StroomQL offers applies.
+    private static final ContextualQueryHelp NO_QUERY_HELP = new ContextualQueryHelp(Set.of(), Set.of());
     private static final Pattern NON_BASIC_CHARS = Pattern.compile("[^A-Za-z0-9-_ ]");
     private static final Pattern MULTIPLE_SPACE = Pattern.compile(" +");
 
@@ -162,7 +149,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
     private final ExpressionContextFactory expressionContextFactory;
     private final ResourceStore resourceStore;
     private final ExpressionPredicateFactory expressionPredicateFactory;
-    private final ValPredicateFactory valPredicateFactory;
+    private final ColumnValuesFinder columnValuesFinder;
     private final QueryNodeResolver queryNodeResolver;
 
     @Inject
@@ -180,7 +167,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                      final ExpressionContextFactory expressionContextFactory,
                      final ResourceStore resourceStore,
                      final ExpressionPredicateFactory expressionPredicateFactory,
-                     final ValPredicateFactory valPredicateFactory,
+                     final ColumnValuesFinder columnValuesFinder,
                      final QueryNodeResolver queryNodeResolver) {
         this.queryStore = queryStore;
         this.documentResourceHelper = documentResourceHelper;
@@ -196,7 +183,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
         this.expressionContextFactory = expressionContextFactory;
         this.resourceStore = resourceStore;
         this.expressionPredicateFactory = expressionPredicateFactory;
-        this.valPredicateFactory = valPredicateFactory;
+        this.columnValuesFinder = columnValuesFinder;
         this.queryNodeResolver = queryNodeResolver;
     }
 
@@ -356,134 +343,29 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                     .toList();
 
             if (resultRequests.isEmpty()) {
-                throw new EntityServiceException("No tables specified for download");
+                throw new EntityServiceException("No table specified");
             }
 
-            final Set<String> dedupe = new HashSet<>();
-            final ColumnValueComparator comparator = new ColumnValueComparator();
-            final TrimmedSortedList<ColumnValue> list = new TrimmedSortedList<>(
-                    request.getPageRequest(), comparator);
-            for (final ResultRequest resultRequest : resultRequests) {
-                try {
-                    final RequestAndStore requestAndStore = searchResponseCreatorManager
-                            .getResultStore(mappedRequest);
-                    final DataStore dataStore = requestAndStore
-                            .resultStore()
-                            .getData(resultRequest.getComponentId());
+            // A query has a single table.
+            final ResultRequest resultRequest = resultRequests.getFirst();
+            final RequestAndStore requestAndStore = searchResponseCreatorManager
+                    .getResultStore(mappedRequest);
+            final DataStore dataStore = requestAndStore
+                    .resultStore()
+                    .getData(resultRequest.getComponentId());
 
-                    final TimeFilter timeFilter = null;
-//                    if (mappedRequest.getQuery() != null && mappedRequest.getQuery().getTimeRange() != null) {
-//                        timeFilter = DateExpressionParser.getTimeFilter(
-//                                mappedRequest.getQuery().getTimeRange(),
-//                                mappedRequest.getDateTimeSettings());
-//                    }
-
-                    final Predicate<Val> predicate = valPredicateFactory.createValPredicate(
-                            request.getColumn(),
-                            request.getFilter(),
-                            dateTimeSettings);
-
-                    final OpenGroups openGroups = OpenGroupsImpl.fromGroupSelection(
-                            resultRequest.getGroupSelection(), dataStore.getKeyFactory());
-
-                    final List<String> columnIdList = dataStore
-                            .getColumns()
-                            .stream()
-                            .map(Column::getId)
-                            .toList();
-                    final int primaryColumnIndex = columnIdList
-                            .indexOf(request.getColumn().getId());
-                    if (primaryColumnIndex != -1) {
-                        // Get rules.
-                        final List<RuleAndMatcher> ruleAndMatchers = getRules(
-                                request.getColumn(),
-                                dateTimeSettings,
-                                request.getConditionalFormattingRules());
-
-                        final Predicate<Item> columnValueSelectionPredicate = ColumnValueSelectionPredicateFactory
-                                .create(columnIdList, request.getSelections(), primaryColumnIndex);
-
-                        //noinspection unused row, count
-                        dataStore.fetch(
-                                dataStore.getColumns(),
-                                OffsetRange.UNBOUNDED,
-                                openGroups,
-                                timeFilter,
-                                item -> {
-                                    final Val val = item.getValue(primaryColumnIndex);
-                                    if (predicate.test(val) && columnValueSelectionPredicate.test(item)) {
-                                        final Optional<RuleAndMatcher> matchingRule = ruleAndMatchers
-                                                .stream()
-                                                .filter(ruleAndMatcher ->
-                                                        ruleAndMatcher.matcher().test(Values.of(val)))
-                                                .findFirst();
-
-                                        final String value = val.toString();
-                                        if (value != null && dedupe.add(value)) {
-                                            final ColumnValue columnValue = new ColumnValue(value,
-                                                    matchingRule
-                                                            .map(RuleAndMatcher::rule)
-                                                            .map(ConditionalFormattingRule::getId)
-                                                            .orElse(null));
-                                            list.add(columnValue);
-                                        }
-                                    }
-                                    return Stream.empty();
-                                },
-                                row -> {
-
-                                },
-                                count -> {
-
-                                });
-                    }
-                } catch (final Exception e) {
-                    LOGGER.debug(e::getMessage, e);
-                    throw e;
-                }
-            }
-
-            final ResultPage<ColumnValue> resultPage = list.getResultPage();
-            return new ColumnValues(resultPage.getValues(), resultPage.getPageResponse());
+            return columnValuesFinder.find(
+                    dataStore,
+                    resultRequest,
+                    request.getColumn(),
+                    request.getFilter(),
+                    request.getConditionalFormattingRules(),
+                    request.getPageRequest(),
+                    dateTimeSettings);
         } catch (final Exception e) {
             LOGGER.debug(e::getMessage, e);
             throw e;
         }
-    }
-
-    private List<RuleAndMatcher> getRules(final Column column,
-                                          final DateTimeSettings dateTimeSettings,
-                                          final List<ConditionalFormattingRule> rules) {
-        final List<ConditionalFormattingRule> activeRules = NullSafe.list(rules)
-                .stream()
-                .filter(ConditionalFormattingRule::isEnabled)
-                .toList();
-        final List<RuleAndMatcher> ruleAndMatchers = new ArrayList<>();
-        if (!activeRules.isEmpty()) {
-            final ValueFunctionFactories<Values> queryFieldIndex = RowUtil
-                    .createColumnNameValExtractor(Collections.singletonList(column));
-            for (final ConditionalFormattingRule rule : activeRules) {
-                try {
-                    final Optional<Predicate<Values>> optionalValuesPredicate =
-                            expressionPredicateFactory.createOptional(
-                                    rule.getExpression(),
-                                    queryFieldIndex,
-                                    dateTimeSettings);
-                    //noinspection unused t
-                    final Predicate<Values> conditionalFormattingPredicate =
-                            optionalValuesPredicate.orElse(t -> true);
-                    ruleAndMatchers.add(new RuleAndMatcher(rule, conditionalFormattingPredicate));
-                } catch (final RuntimeException e) {
-                    throw new RuntimeException("Error evaluating conditional formatting rule: " +
-                                               rule.getExpression() +
-                                               " (" +
-                                               e.getMessage() +
-                                               ")", e);
-                }
-            }
-        }
-
-        return ruleAndMatchers;
     }
 
     private String getResultsFilename(final DownloadQueryResultsRequest request) {
@@ -768,6 +650,12 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
     }
 
     @Override
+    public Optional<SimpleDuration> fetchMinRefreshInterval(final DocRef dataSourceRef) {
+        return securityContext.useAsReadResult(() ->
+                dataSourceProviderRegistry.fetchMinRefreshInterval(dataSourceRef));
+    }
+
+    @Override
     public Optional<DocRef> getReferencedDataSource(final String query) {
         return securityContext.useAsReadResult(() -> {
             final AtomicReference<DocRef> ref = new AtomicReference<>();
@@ -781,6 +669,30 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
             }
             return Optional.ofNullable(ref.get());
         });
+    }
+
+    // The data source a sql clause typed next would be for: the joined source straight after a join
+    // line, otherwise the from source.
+    private Optional<DocRef> getSqlClauseDataSource(final TokenType lastKeyword, final String query) {
+        return TokenType.JOIN.equals(lastKeyword)
+                ? getJoinedDataSource(query)
+                : getReferencedDataSource(query);
+    }
+
+    // The data source of the last join line, if it can be found yet.
+    private Optional<DocRef> getJoinedDataSource(final String query) {
+        try {
+            return searchRequestFactory.extractLastJoinDataSource(query);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> e.getMessage() + ". Enable TRACE to see stacktrace");
+            LOGGER.trace(e::getMessage, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<String> getReferencedNativeQuery(final String query) {
+        return searchRequestFactory.extractNativeQuery(query);
     }
 
     @Override
@@ -809,11 +721,15 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
     ContextualQueryHelp getQueryHelpContext(final String partialQuery) {
         if (NullSafe.isBlankString(partialQuery)) {
             return EMPTY_QUERY_CONTEXT;
+        } else if (Tokeniser.endsInsideTripleQuotedString(partialQuery)) {
+            return NO_QUERY_HELP;
         } else {
             final Set<QueryHelpType> types = new HashSet<>();
             final Set<String> applicableStructureItems;
             final List<Token> tokens = Tokeniser.parse(partialQuery);
             TokenType lastKeyword = null;
+            // The keyword before lastKeyword, which tells whose sql clause a sql clause is.
+            TokenType previousKeyword = null;
             // The list of token types seen since (and including) lastKeyword
             final List<TokenType> lastKeywordSequence = new ArrayList<>();
             final Set<TokenType> keywordsSeen = new HashSet<>();
@@ -827,6 +743,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                 final TokenType tokenType = token.getTokenType();
                 if (TokenType.isKeyword(tokenType)) {
                     keywordsSeen.add(tokenType);
+                    previousKeyword = lastKeyword;
                     lastKeyword = tokenType;
                     lastKeywordSequence.clear();
                 }
@@ -842,7 +759,8 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
             }
 
             // Determine what keywords can come after the last one seen
-            final Set<TokenType> keywordsValidAfter = getKeywordsValidAfter(lastKeyword, lastKeywordSequence);
+            final Set<TokenType> keywordsValidAfter = getKeywordsValidAfter(
+                    lastKeyword, previousKeyword, lastKeywordSequence);
 
             if (seenInDictionary(tokens)) {
                 // If we see 'in dictionary ' then the only thing we want after that is a dictionary
@@ -853,8 +771,15 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                     types.add(QueryHelpType.DATA_SOURCE);
                 }
 
+                // Only offer a sql clause for a data source that runs SQL: the joined source in a
+                // join line, otherwise the from source.
+                final boolean offerSql = keywordsValidAfter.contains(TokenType.SQL)
+                                         && getSqlClauseDataSource(lastKeyword, partialQuery)
+                                                 .map(docRef -> dataSourceProviderRegistry.takesNativeQuery(docRef))
+                                                 .orElse(false);
                 applicableStructureItems = keywordsValidAfter.stream()
                         .filter(tokenType -> TokenType.BY != tokenType)
+                        .filter(tokenType -> TokenType.SQL != tokenType || offerSql)
                         .map(tokenType -> {
                             if (TokenType.GROUP == tokenType) {
                                 return Structures.name(TokenType.GROUP, TokenType.BY);
@@ -890,8 +815,16 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
             queryHelpTypes = EnumSet.of(QueryHelpType.STRUCTURE);
         } else {
             queryHelpTypes = switch (lastKeyword) {
-                case FROM -> count >= 4
-                        // 'from xxx '
+                case FROM, JOIN -> count >= 4
+                        // 'from xxx ' or 'join xxx '
+                        ? EnumSet.of(QueryHelpType.STRUCTURE)
+                        : QueryHelpType.NO_TYPES;
+                case ON -> count > 2
+                        // 'on UserId = hr.Username '
+                        ? EnumSet.of(QueryHelpType.FIELD, QueryHelpType.FUNCTION, QueryHelpType.STRUCTURE)
+                        : EnumSet.of(QueryHelpType.FIELD, QueryHelpType.FUNCTION);
+                case SQL -> count > 3
+                        // 'sql """...""" ', after which only other clauses can follow
                         ? EnumSet.of(QueryHelpType.STRUCTURE)
                         : QueryHelpType.NO_TYPES;
                 case WHERE -> count > 2
@@ -967,9 +900,15 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
     }
 
     private static Set<TokenType> getKeywordsValidAfter(final TokenType lastKeyword,
+                                                        final TokenType previousKeyword,
                                                         final List<TokenType> lastKeywordSequence) {
         final Set<TokenType> keywordsValidAfter;
-        if (lastKeyword == null) {
+        if (lastKeyword == TokenType.SQL) {
+            // A join line's sql clause is followed by its keys; the from source's by anything but keys.
+            keywordsValidAfter = previousKeyword == TokenType.JOIN
+                    ? Set.of(TokenType.ON)
+                    : TokenType.exclude(TokenType.getKeywordsValidAfter(TokenType.SQL), TokenType.ON);
+        } else if (lastKeyword == null) {
             // FROM must be first keyword
             keywordsValidAfter = Set.of(TokenType.FROM);
         } else if (lastKeyword == TokenType.GROUP || lastKeyword == TokenType.SORT) {
@@ -990,8 +929,10 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
         return keywordsValidAfter;
     }
 
+    // Data sources are offered straight after from or a join line's join.
     private boolean includeDataSources(final List<TokenType> lastKeywordSequence) {
-        return isAtIndex(lastKeywordSequence, TokenType.FROM, 0)
+        return (isAtIndex(lastKeywordSequence, TokenType.FROM, 0)
+                || isAtIndex(lastKeywordSequence, TokenType.JOIN, 0))
                && isAtIndex(lastKeywordSequence, TokenType.WHITESPACE, 1)
                && lastKeywordSequence.size() <= 3;
     }

@@ -16,6 +16,7 @@
 
 package stroom.util.string;
 
+import stroom.test.common.PerformanceTest;
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.logging.LambdaLogger;
@@ -463,6 +464,7 @@ class TestStringUtil {
     }
 
     // getDigitCount is ~x10 faster, 0.62ns/op vs 8.64ns/op
+    @PerformanceTest
     @Disabled
     @Test
     void testGetDigitCountPerf() {

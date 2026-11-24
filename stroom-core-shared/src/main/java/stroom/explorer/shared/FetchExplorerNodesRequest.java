@@ -39,6 +39,25 @@ public class FetchExplorerNodesRequest {
     private final Set<ExplorerNodeKey> ensureVisible;
     @JsonProperty
     private final boolean showAlerts;
+    @JsonProperty
+    private final boolean refresh;
+
+    /// Creates a request that is served from the server's cached explorer tree model.
+    ///
+    /// @param openItems            The nodes the user has opened.
+    /// @param temporaryOpenedItems The nodes opened temporarily, e.g. to show filter matches.
+    /// @param filter               The filter to apply to the tree.
+    /// @param minDepth             The depth to which the tree should be opened as a minimum.
+    /// @param ensureVisible        The nodes whose ancestors should be opened so they are visible.
+    /// @param showAlerts           Whether to include alerts, e.g. broken dependencies, on nodes.
+    public FetchExplorerNodesRequest(final Set<ExplorerNodeKey> openItems,
+                                     final Set<ExplorerNodeKey> temporaryOpenedItems,
+                                     final ExplorerTreeFilter filter,
+                                     final Integer minDepth,
+                                     final Set<ExplorerNodeKey> ensureVisible,
+                                     final Boolean showAlerts) {
+        this(openItems, temporaryOpenedItems, filter, minDepth, ensureVisible, showAlerts, false);
+    }
 
     @JsonCreator
     public FetchExplorerNodesRequest(
@@ -47,13 +66,15 @@ public class FetchExplorerNodesRequest {
             @JsonProperty("filter") final ExplorerTreeFilter filter,
             @JsonProperty("minDepth") final Integer minDepth,
             @JsonProperty("ensureVisible") final Set<ExplorerNodeKey> ensureVisible,
-            @JsonProperty("showAlerts") final Boolean showAlerts) {
+            @JsonProperty("showAlerts") final Boolean showAlerts,
+            @JsonProperty("refresh") final Boolean refresh) {
         this.openItems = openItems;
         this.temporaryOpenedItems = temporaryOpenedItems;
         this.filter = filter;
         this.minDepth = minDepth;
         this.ensureVisible = ensureVisible;
         this.showAlerts = Objects.requireNonNullElse(showAlerts, false);
+        this.refresh = Objects.requireNonNullElse(refresh, false);
     }
 
     public Set<ExplorerNodeKey> getOpenItems() {
@@ -80,6 +101,13 @@ public class FetchExplorerNodesRequest {
         return showAlerts;
     }
 
+    /// @return `true` if the server should rebuild its explorer tree model from the database before
+    /// returning nodes, rather than serving a cached model that may not reflect changes made on other
+    /// nodes or by other users.
+    public boolean isRefresh() {
+        return refresh;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -93,11 +121,12 @@ public class FetchExplorerNodesRequest {
                 Objects.equals(temporaryOpenedItems, criteria.temporaryOpenedItems) &&
                 Objects.equals(filter, criteria.filter) &&
                 Objects.equals(minDepth, criteria.minDepth) &&
-                Objects.equals(ensureVisible, criteria.ensureVisible);
+                Objects.equals(ensureVisible, criteria.ensureVisible) &&
+                refresh == criteria.refresh;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(openItems, temporaryOpenedItems, filter, minDepth, ensureVisible);
+        return Objects.hash(openItems, temporaryOpenedItems, filter, minDepth, ensureVisible, refresh);
     }
 }

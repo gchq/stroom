@@ -23,8 +23,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.Objects;
-
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class TokenResponse {
@@ -115,7 +113,9 @@ public class TokenResponse {
      */
     @JsonIgnore
     public Long getEffectiveRefreshExpiresIn() {
-        return Objects.requireNonNullElse(refreshTokenExpiresIn, refreshExpiresIn);
+        return refreshTokenExpiresIn != null
+                ? refreshTokenExpiresIn
+                : refreshExpiresIn;
     }
 
     public String getTokenType() {
@@ -133,13 +133,13 @@ public class TokenResponse {
     @Override
     public String toString() {
         return "TokenResponse{" +
-                "idToken='" + idToken + '\'' +
-                ", tokenType='" + tokenType + '\'' +
-                ", expiresIn=" + expiresIn +
-                ", refreshTokenExpiresIn=" + refreshTokenExpiresIn +
-                ", accessToken='" + accessToken + '\'' +
-                ", refreshToken='" + refreshToken + '\'' +
-                '}';
+               "idToken='" + idToken + '\'' +
+               ", tokenType='" + tokenType + '\'' +
+               ", expiresIn=" + expiresIn +
+               ", refreshTokenExpiresIn=" + refreshTokenExpiresIn +
+               ", accessToken='" + accessToken + '\'' +
+               ", refreshToken='" + refreshToken + '\'' +
+               '}';
     }
 
 

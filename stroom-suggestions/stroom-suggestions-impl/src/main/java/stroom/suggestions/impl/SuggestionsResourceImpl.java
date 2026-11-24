@@ -18,7 +18,9 @@ package stroom.suggestions.impl;
 
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.query.shared.FetchFieldValuesRequest;
 import stroom.query.shared.FetchSuggestionsRequest;
+import stroom.query.shared.FieldValues;
 import stroom.query.shared.Suggestions;
 import stroom.query.shared.SuggestionsResource;
 import stroom.suggestions.api.SuggestionsService;
@@ -42,6 +44,12 @@ class SuggestionsResourceImpl implements SuggestionsResource {
         // Pretty sure we don't want auditing on this given that it gets
         // hit on each keystroke
         return suggestionsServiceProvider.get().fetch(request);
+    }
+
+    @Override
+    public FieldValues fetchFieldValues(final FetchFieldValuesRequest request) {
+        // Not audited, as this is fetched as the user types a filter, like suggestions
+        return suggestionsServiceProvider.get().fetchFieldValues(request);
     }
 
 }

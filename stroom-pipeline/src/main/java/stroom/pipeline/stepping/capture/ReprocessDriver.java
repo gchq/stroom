@@ -57,6 +57,8 @@ import stroom.pipeline.xsltfunctions.TaskScopeMap;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.util.shared.ElementId;
+import stroom.util.shared.Indicators;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -64,8 +66,10 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -192,7 +196,7 @@ public class ReprocessDriver {
                 () -> {
                     try {
                         reprocessStream(request, metaId, startElementId, upstreamElementId, sourceStore,
-                                fingerprints, scope, onDemandRange);
+                                targetSweep, fingerprints, scope, onDemandRange);
                     } catch (final RuntimeException e) {
                         LOGGER.debug(e.getMessage(), e);
                         failure.set(e);
@@ -206,6 +210,7 @@ public class ReprocessDriver {
                                  final String startElementId,
                                  final String upstreamElementId,
                                  final StepDataStore sourceStore,
+                                 final StreamSweep targetSweep,
                                  final ElementFingerprints fingerprints,
                                  final MidPipelineScope scope,
                                  final RecordRange onDemandRange) {
@@ -254,6 +259,10 @@ public class ReprocessDriver {
                         indicativeCountElements(sourceStore, onDemandRange));
             }
             entryElement.startProcessing();
+            // The reprocessed elements' startup indicators (e.g. compile errors in edited code) belong to the
+            // stream, as a capture's do. Recorded on the sweep, they are merged into every record served from
+            // it, rather than only the first record reprocessed.
+            targetSweep.addStartProcessIndicators(startProcessIndicators());
             try {
                 for (final long partIndex : onDemandRange == null
                         ? sourceStore.getPartIndices()
@@ -381,6 +390,20 @@ public class ReprocessDriver {
                 : Optional.empty();
         counters.removeIf(id -> previous.map(state -> state.countFor(id).isPresent()).orElse(false));
         return counters;
+    }
+
+    // A copy of the indicators raised so far, i.e. while the reprocessed elements started up. Copied because
+    // the receiver's own indicators go on to collect (and are cleared for) each record.
+    private Map<ElementId, Indicators> startProcessIndicators() {
+        final Map<ElementId, Indicators> copy = new HashMap<>();
+        if (loggingErrorReceiver != null) {
+            NullSafe.map(loggingErrorReceiver.getIndicatorsMap()).forEach((elementId, indicators) -> {
+                if (indicators != null && !indicators.isEmpty()) {
+                    copy.put(elementId, new Indicators(indicators));
+                }
+            });
+        }
+        return copy;
     }
 
     /**

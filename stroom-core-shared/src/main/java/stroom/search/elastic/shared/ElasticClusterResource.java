@@ -19,6 +19,7 @@ package stroom.search.elastic.shared;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.http.HttpClientConfig;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -62,4 +63,13 @@ public interface ElasticClusterResource extends RestResource, DirectRestService,
             operationId = "testElasticCluster")
     ElasticClusterTestResponse testCluster(
             @Parameter(description = "elasticClusterDoc", required = true) ElasticClusterDoc elasticClusterDoc);
+
+    /// @return A configuration to start from when a cluster has none, so the screen shows the protocols
+    /// and ciphers this JVM actually supports rather than an empty form.
+    @POST
+    @Path("/getDefaultHttpClientConfig")
+    @Operation(
+            summary = "Get default HTTP client configuration",
+            operationId = "getElasticClusterDefaultHttpClientConfig")
+    HttpClientConfig getDefaultHttpClientConfig();
 }

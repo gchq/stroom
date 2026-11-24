@@ -18,25 +18,40 @@ package stroom.ai.impl;
 
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.jersey.HttpClientProviderCache;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
-import stroom.util.time.StroomDuration;
 
 import dev.langchain4j.http.client.HttpClient;
 import dev.langchain4j.http.client.HttpClientBuilder;
 
 import java.time.Duration;
 
+/// A langchain4j [HttpClientBuilder] that creates [ApacheHttpClient] instances from the HTTP client
+/// configuration held on an OpenAI Model document.
+///
+/// The document's configuration is the only source of the connection and read timeouts. langchain4j's
+/// model classes always push their own timeouts into the builder (e.g. `OpenAiChatModel` pushes 15s/60s
+/// when no timeout is set on the model builder), which would otherwise silently replace the timeouts
+/// the user configured on the document. Those calls are therefore ignored.
 public class ApacheHttpClientBuilder implements HttpClientBuilder {
 
-    private final HttpClientProviderCache httpClientProviderCache;
-    private HttpClientConfiguration httpClientConfiguration;
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApacheHttpClientBuilder.class);
 
+    private final HttpClientProviderCache httpClientProviderCache;
+    private final HttpClientConfiguration httpClientConfiguration;
+
+    /// @param httpClientProviderCache The cache to obtain the underlying Apache HTTP clients from.
+    /// @param httpClientConfiguration The HTTP client configuration resolved from the OpenAI Model
+    ///                                document. Its timeouts are used as-is for every client built.
     public ApacheHttpClientBuilder(final HttpClientProviderCache httpClientProviderCache,
                                    final HttpClientConfiguration httpClientConfiguration) {
         this.httpClientProviderCache = httpClientProviderCache;
         this.httpClientConfiguration = httpClientConfiguration;
     }
 
+    /// @return The connection timeout from the document's HTTP client configuration.
     @Override
     public Duration connectTimeout() {
         return NullSafe.getOrElse(httpClientConfiguration,
@@ -45,12 +60,20 @@ public class ApacheHttpClientBuilder implements HttpClientBuilder {
                 .getDuration();
     }
 
+    /// Ignored, as the connection timeout is controlled by the document's HTTP client configuration.
+    ///
+    /// @param timeout The timeout langchain4j would like to use, which is logged and discarded.
+    /// @return This builder.
     @Override
     public HttpClientBuilder connectTimeout(final Duration timeout) {
-        httpClientConfiguration = httpClientConfiguration.copy().connectionTimeout(StroomDuration.of(timeout)).build();
+        LOGGER.debug(() -> LogUtil.message(
+                "connectTimeout() - Ignoring requested connect timeout {}, using configured {}",
+                timeout,
+                connectTimeout()));
         return this;
     }
 
+    /// @return The read timeout from the document's HTTP client configuration.
     @Override
     public Duration readTimeout() {
         return NullSafe.getOrElse(httpClientConfiguration,
@@ -59,12 +82,20 @@ public class ApacheHttpClientBuilder implements HttpClientBuilder {
                 .getDuration();
     }
 
+    /// Ignored, as the read timeout is controlled by the document's HTTP client configuration.
+    ///
+    /// @param timeout The timeout langchain4j would like to use, which is logged and discarded.
+    /// @return This builder.
     @Override
     public HttpClientBuilder readTimeout(final Duration timeout) {
-        httpClientConfiguration = httpClientConfiguration.copy().timeout(StroomDuration.of(timeout)).build();
+        LOGGER.debug(() -> LogUtil.message(
+                "readTimeout() - Ignoring requested read timeout {}, using configured {}",
+                timeout,
+                readTimeout()));
         return this;
     }
 
+    /// @return A new [ApacheHttpClient] using the document's HTTP client configuration.
     @Override
     public HttpClient build() {
         return new ApacheHttpClient(httpClientProviderCache, httpClientConfiguration);

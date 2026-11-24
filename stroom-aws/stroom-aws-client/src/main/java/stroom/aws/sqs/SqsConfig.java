@@ -30,6 +30,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 import java.util.Objects;
 
@@ -43,7 +45,7 @@ public class SqsConfig extends AbstractConfig implements IsStroomConfig, IsProxy
 
     public static final StroomDuration DEFAULT_POLL_MAX_WAIT_TIME = StroomDuration.ofSeconds(10);
     public static final StroomDuration DEFAULT_VISIBILITY_TIMEOUT = StroomDuration.ofMinutes(3);
-    public static final int DEFAULT_MAX_NUMBER_OF_MESSAGES = 1_000;
+    public static final int DEFAULT_MAX_NUMBER_OF_MESSAGES = 10;
 
     /// An atomic config value
     @JsonProperty
@@ -160,8 +162,11 @@ public class SqsConfig extends AbstractConfig implements IsStroomConfig, IsProxy
         return visibilityTimeout;
     }
 
+    @Min(1)
+    @Max(10)
     @JsonPropertyDescription(
-            "The maximum number of messages to receive from the queue in a single call to receiveMessage.")
+            "The maximum number of messages to receive from the queue in a single call to receiveMessage. " +
+            "Value must be between 1 and 10, inclusive.")
     @JsonProperty
     public int getMaxNumberOfMessages() {
         return maxNumberOfMessages;

@@ -112,12 +112,23 @@ public enum DocumentPermission implements HasDisplayValue, HasPrimitiveValue {
         return description;
     }
 
+    /// @param permission The permission to check against this.
+    /// @return True if this permission is equal or higher than the requested permission.
     public boolean isEqualOrHigher(final DocumentPermission permission) {
         return primitiveValue >= permission.getPrimitiveValue();
     }
 
+    /// @param permission The permission to check against this.
+    /// @return True if this permission is higher than the requested permission.
     public boolean isHigher(final DocumentPermission permission) {
         return primitiveValue > permission.getPrimitiveValue();
+    }
+
+    /// @param permissionByte The permission (in primitive form) to check against this.
+    /// @return True if this permission includes the requested permission, i.e.
+    /// this permission is equal to or higher than the requested permission.
+    public boolean isEqualOrHigher(final byte permissionByte) {
+        return primitiveValue >= permissionByte;
     }
 
     /**

@@ -76,6 +76,49 @@ public class TestSerialisation {
     }
 
     @Test
+    void testFetchRequest_refresh() {
+        final ExplorerTreeFilter explorerTreeFilter = ExplorerTreeFilter.builder().build();
+        final FetchExplorerNodesRequest refreshRequest = new FetchExplorerNodesRequest(
+                Set.of(),
+                Set.of(),
+                explorerTreeFilter,
+                0,
+                null,
+                false,
+                true);
+
+        final JsonMapper objectMapper = JsonUtil.getMapper();
+        final String json = objectMapper.writeValueAsString(refreshRequest);
+        final FetchExplorerNodesRequest deserialised = objectMapper.readValue(json, FetchExplorerNodesRequest.class);
+
+        assertThat(deserialised.isRefresh())
+                .isTrue();
+        assertThat(deserialised)
+                .isEqualTo(refreshRequest);
+    }
+
+    @Test
+    void testFetchRequest_refreshDefaultsToFalse() {
+        final FetchExplorerNodesRequest request = new FetchExplorerNodesRequest(
+                Set.of(),
+                Set.of(),
+                ExplorerTreeFilter.builder().build(),
+                0,
+                null,
+                false);
+
+        assertThat(request.isRefresh())
+                .isFalse();
+
+        // Clients that pre-date the refresh property will not send it.
+        final FetchExplorerNodesRequest deserialised = JsonUtil.getMapper().readValue(
+                "{\"minDepth\":0}",
+                FetchExplorerNodesRequest.class);
+        assertThat(deserialised.isRefresh())
+                .isFalse();
+    }
+
+    @Test
     void testFetchResponse() throws Exception {
         final ExplorerNode child = ExplorerNode
                 .builder()

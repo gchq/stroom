@@ -44,21 +44,15 @@ public class DocumentResourceHelperImpl implements DocumentResourceHelper {
                     } catch (final PermissionException e) {
                         throw new PermissionException(
                                 e.getUser(),
-                                e.getMessage().replaceAll("permission to read", "permission to use"));
-                    } catch (final RuntimeException e) {
-                        throw e;
+                                e.getMessage()
+                                        .replace("permission to read", "permission to use"));
                     }
                 }));
     }
 
     @Override
     public <D extends AbstractDoc> D update(final DocumentActionHandler<D> documentActionHandler, final D doc) {
-        return securityContext.secureResult(() -> {
-            try {
-                return documentActionHandler.writeDocument(doc);
-            } catch (final RuntimeException e) {
-                throw e;
-            }
-        });
+        return securityContext.secureResult(() ->
+                documentActionHandler.writeDocument(doc));
     }
 }

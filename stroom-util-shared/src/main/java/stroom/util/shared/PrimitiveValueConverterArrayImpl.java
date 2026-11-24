@@ -27,6 +27,7 @@ import java.util.Arrays;
 public class PrimitiveValueConverterArrayImpl<E extends HasPrimitiveValue>
         implements PrimitiveValueConverter<E> {
 
+    // Each HasPrimitiveValue is stored in the sparse array at the index of its primitive value.
     private final HasPrimitiveValue[] sparseArray;
     private final Class<E> itemType;
 
@@ -116,5 +117,13 @@ public class PrimitiveValueConverterArrayImpl<E extends HasPrimitiveValue>
             // An unknown primitive value
             return null;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "PrimitiveValueConverterArrayImpl{" +
+               "sparseArray=" + Arrays.toString(sparseArray) +
+               ", itemType=" + itemType +
+               '}';
     }
 }

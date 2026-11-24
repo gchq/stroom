@@ -1708,6 +1708,18 @@ button.main-menu svg {
     align-items: center;
 }
 
+/* Show the explorer loading spinner, without fading it in, once loading has taken 250ms,
+   so quick loads don't flash it. If loading ends sooner the delay is cancelled and it never
+   appears. It still fades out. */
+.navigation-header-spinner.refreshing {
+    transition: opacity 0s linear 250ms;
+}
+
+/* Spin the reload button once when clicked. */
+.explorer-reload.explorer-reload--spin svg {
+    animation: spinner-border 0.6s ease-in-out 1;
+}
+
 .form-control-border {
     border: solid 1px var(--control__border-color);
     border-radius: .25rem;
@@ -1757,6 +1769,14 @@ button.main-menu svg {
     gap: var(--control__gap--vertical);
     flex-direction: column;
     overflow: auto;
+}
+
+/* Rows of a .form shown or hidden together, spaced like the form's own rows. Unlike .form it does
+   not scroll, so it does not clip the focus glow of the controls at its edges. */
+.form-section {
+    display: flex;
+    gap: var(--control__gap--vertical);
+    flex-direction: column;
 }
 
 .form-padding {
@@ -2562,6 +2582,16 @@ button.main-menu svg {
 	min-width: 200px;
 }
 
+/* A value that no row in the table currently has, given the other filters. It can still be ticked. */
+.columnValueCell-unavailable .columnValueCell-text {
+	opacity: 0.5;
+}
+
+/* Separates the values the table currently has from the rest. */
+.columnValueCell-firstUnavailable {
+	border-top: 1px solid var(--menu-separator__color);
+}
+
 .durationSetting {
     display: flex;
 }
@@ -2842,4 +2872,11 @@ button.main-menu svg {
 
 .visualisation-asset-tree .gwt-TreeItem-selected {
     background-color: var(--row__background-color--selected);
+}
+
+/* Shown above the volume list when an index volume group holds both shared and local volumes. */
+.indexVolumeGroupEdit-mixedWarning {
+    margin-bottom: 0.5rem;
+    padding: 0.4rem 0.6rem;
+    border-left: 3px solid var(--warn);
 }

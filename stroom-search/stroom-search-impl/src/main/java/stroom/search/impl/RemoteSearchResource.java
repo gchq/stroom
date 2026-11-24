@@ -40,6 +40,7 @@ public interface RemoteSearchResource extends RestResource {
     String START_PATH_PART = "/start";
     String POLL_PATH_PART = "/poll";
     String DESTROY_PATH_PART = "/destroy";
+    String JOIN_TABLES_PATH_PART = "/joinTables";
 
     @POST
     @Path(START_PATH_PART)
@@ -54,12 +55,27 @@ public interface RemoteSearchResource extends RestResource {
     @Operation(
             summary = "Poll the server for search results for the supplied queryKey",
             operationId = "pollRemoteSearch")
-    StreamingOutput poll(@QueryParam("queryKey") String queryKey);
+    StreamingOutput poll(@QueryParam("queryKey") String queryKey,
+                         @QueryParam("dispatchId") String dispatchId);
 
     @GET
     @Path(DESTROY_PATH_PART)
     @Operation(
             summary = "Destroy search results",
             operationId = "destroyRemoteSearch")
-    Boolean destroy(@QueryParam("queryKey") String queryKey);
+    Boolean destroy(@QueryParam("queryKey") String queryKey,
+                    @QueryParam("dispatchId") String dispatchId);
+
+    /// Gets the join tables of a search, for another node that searches the search's first source and
+    /// applies its joins. Only the user who ran the search, or the processing user, may get them.
+    ///
+    /// @param queryKey The key of the search.
+    /// @return The tables, as written by `JoinTableTransfer`.
+    @GET
+    @Path(JOIN_TABLES_PATH_PART)
+    @Produces("application/octet-stream")
+    @Operation(
+            summary = "Get the join tables of a search, for a node that searches its first source",
+            operationId = "getRemoteSearchJoinTables")
+    StreamingOutput joinTables(@QueryParam("queryKey") String queryKey);
 }

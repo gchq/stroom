@@ -40,11 +40,12 @@ public class ByteArrayImportExportAsset implements ImportExportAsset {
 
     /**
      * Constructor.
-     * @param key The key associated with the asset. Might represent the extension of
-     *            a file or the path to a file, depending on context. Must not be null.
+     *
+     * @param key         The key associated with the asset. Might represent the extension of
+     *                    a file or the path to a file, depending on context. Must not be null.
      * @param docDataType The data type of this asset (JSON, TEXT, or BINARY).
-     * @param data The contents of the asset. Can be null if no data is associated with the asset
-     *             (e.g. this represents a folder).
+     * @param data        The contents of the asset. Can be null if no data is associated with the asset
+     *                    (e.g. this represents a folder).
      */
     public ByteArrayImportExportAsset(final String key,
                                       final DocDataType docDataType,
@@ -82,7 +83,7 @@ public class ByteArrayImportExportAsset implements ImportExportAsset {
     public String toString() {
         return "ByteArrayImportExportAsset{" +
                "key='" + key + '\'' +
+               ", docDataType=" + docDataType +
                '}';
     }
-
 }

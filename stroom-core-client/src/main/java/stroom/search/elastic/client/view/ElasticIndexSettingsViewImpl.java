@@ -53,16 +53,6 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @UiField
     TextBox timeField;
     @UiField
-    SimplePanel vectorGenerationModel;
-    @UiField
-    SimplePanel rerankModel;
-    @UiField
-    TextBox rerankTextFieldSuffix;
-    @UiField
-    TextBox rerankScoreFieldSuffix;
-    @UiField
-    TextBox rerankScoreMinimum;
-    @UiField
     SimplePanel defaultExtractionPipeline;
 
     @Inject
@@ -134,46 +124,6 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     }
 
     @Override
-    public void setVectorGenerationModelView(final View view) {
-        vectorGenerationModel.setWidget(view.asWidget());
-    }
-
-    @Override
-    public String getRerankTextFieldSuffix() {
-        return rerankTextFieldSuffix.getValue();
-    }
-
-    @Override
-    public void setRerankTextFieldSuffix(final String rerankTextFieldSuffix) {
-        this.rerankTextFieldSuffix.setValue(rerankTextFieldSuffix);
-    }
-
-    @Override
-    public String getRerankScoreFieldSuffix() {
-        return rerankScoreFieldSuffix.getValue();
-    }
-
-    @Override
-    public void setRerankScoreFieldSuffix(final String rerankScoreFieldSuffix) {
-        this.rerankScoreFieldSuffix.setValue(rerankScoreFieldSuffix);
-    }
-
-    @Override
-    public Float getRerankScoreMinimum() {
-        return Float.parseFloat(rerankScoreMinimum.getValue());
-    }
-
-    @Override
-    public void setRerankScoreMinimum(final Float rerankScoreMinimum) {
-        this.rerankScoreMinimum.setValue(rerankScoreMinimum.toString());
-    }
-
-    @Override
-    public void setRerankModelView(final View view) {
-        rerankModel.setWidget(view.asWidget());
-    }
-
-    @Override
     public void setDefaultExtractionPipelineView(final View view) {
         this.defaultExtractionPipeline.setWidget(view.asWidget());
     }
@@ -184,9 +134,6 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
         searchSlices.setEnabled(!readOnly);
         searchScrollSize.setEnabled(!readOnly);
         timeField.setEnabled(!readOnly);
-        rerankTextFieldSuffix.setEnabled(!readOnly);
-        rerankScoreFieldSuffix.setEnabled(!readOnly);
-        rerankScoreMinimum.setEnabled(!readOnly);
     }
 
     @UiHandler("indexName")
@@ -206,16 +153,6 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
 
     @UiHandler("timeField")
     public void onTimeFieldValueChange(final ValueChangeEvent<String> e) {
-        fireChange();
-    }
-
-    @UiHandler("rerankTextFieldSuffix")
-    public void onRerankTextFieldSuffixValueChange(final ValueChangeEvent<String> e) {
-        fireChange();
-    }
-
-    @UiHandler("rerankScoreMinimum")
-    public void onRerankScoreMinimumValueChange(final ValueChangeEvent<String> e) {
         fireChange();
     }
 

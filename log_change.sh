@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # **********************************************************************
-# Copyright 2021-2026 Crown Copyright
+# Copyright 2021 Crown Copyright
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,8 +17,11 @@
 # **********************************************************************
 
 ##########################################################################
-# Version: v0.5.3
-# Date: 2026-01-21T13:42:59+00:00
+# Version: v0.5.5
+# Date: 2026-11-09T11:05:29+00:00
+#
+# This script originates from https://github.com/at055612/release-it
+# Any changes should be made there and a new version released.
 #
 # Script to record changelog entries in individual files to get around
 # the issue of merge conflicts on the CHANGELOG file when doing PRs.

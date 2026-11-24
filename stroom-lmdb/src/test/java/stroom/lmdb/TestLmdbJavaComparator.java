@@ -20,6 +20,7 @@ import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.serde.Serde;
 import stroom.lmdb.serde.StringSerde;
+import stroom.test.common.PerformanceTest;
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.logging.LambdaLogger;
@@ -159,6 +160,7 @@ public class TestLmdbJavaComparator extends AbstractLmdbDbTest {
         }
     }
 
+    @PerformanceTest
     @Disabled
     @Test
     void testReflectionPerf() {

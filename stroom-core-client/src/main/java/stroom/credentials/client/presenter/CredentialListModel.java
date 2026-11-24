@@ -37,7 +37,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class CredentialListModel
         implements
@@ -65,12 +64,14 @@ public class CredentialListModel
                               final boolean filterChange,
                               final PageRequest pageRequest,
                               final Consumer<ResultPage<SimpleSelectionItemWrapper<Credential>>> consumer) {
+
+        // User only needs USE to pick credentials as they are not seeing the credential details.
         final FindCredentialRequest findFieldInfoCriteria = new FindCredentialRequest(
                 pageRequest,
                 FindCredentialRequest.DEFAULT_SORT_LIST,
                 filter,
                 credentialTypes,
-                DocumentPermission.VIEW);
+                DocumentPermission.USE);
 
         // Only fetch if the request has changed.
         if (!findFieldInfoCriteria.equals(lastCriteria)) {
@@ -83,7 +84,7 @@ public class CredentialListModel
                             .getValues()
                             .stream()
                             .map(this::wrap)
-                            .collect(Collectors.toList());
+                            .toList();
 
                     // Insert null select item.
                     final List<SimpleSelectionItemWrapper<Credential>> newList = new ArrayList<>();

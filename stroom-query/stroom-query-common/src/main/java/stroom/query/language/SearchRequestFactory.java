@@ -27,6 +27,7 @@ import stroom.query.api.ExpressionUtil;
 import stroom.query.api.GroupSelection;
 import stroom.query.api.HoppingWindow;
 import stroom.query.api.IncludeExcludeFilter;
+import stroom.query.api.Param;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.Query;
 import stroom.query.api.ResultRequest;
@@ -38,30 +39,35 @@ import stroom.query.api.Sort;
 import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.SpecialColumns;
 import stroom.query.api.TableSettings;
-import stroom.query.api.Window;
+import stroom.query.api.TimeRange;
+import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.api.datasource.QueryFieldProvider;
 import stroom.query.api.token.AbstractToken;
 import stroom.query.api.token.FunctionGroup;
 import stroom.query.api.token.KeywordGroup;
+import stroom.query.api.token.QuotedStringToken;
 import stroom.query.api.token.Token;
 import stroom.query.api.token.TokenException;
 import stroom.query.api.token.TokenGroup;
 import stroom.query.api.token.TokenType;
-import stroom.query.common.v2.CompiledWindow;
+import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.DateExpressionParser;
-import stroom.query.common.v2.DateExpressionParser.DatePoint;
+import stroom.query.common.v2.SearchResultStoreConfig;
 import stroom.query.language.functions.Expression;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.ExpressionParser;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ParamFactory;
+import stroom.query.language.functions.TimeWindows;
+import stroom.query.language.functions.UserTimeZoneUtil;
 import stroom.query.language.token.StructureBuilder;
 import stroom.query.language.token.Tokeniser;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
@@ -70,6 +76,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.text.ParseException;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -83,7 +90,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class SearchRequestFactory {
@@ -91,47 +97,143 @@ public class SearchRequestFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchRequestFactory.class);
 
     public static final String TABLE_COMPONENT_ID = "table";
+    /// The name of the hidden column that the rows of a query with a window clause are grouped by.
+    public static final String WINDOW_COLUMN_NAME = "__window__";
+    private static final String WINDOW_KEY_FUNCTION = "windowKey()";
+    private static final String WINDOW_START_FUNCTION = "windowStart()";
+    private static final String WINDOW_EXAMPLE = "as in 'window EventTime by 1d advance 1h offset 6h'";
+    // The most windows one event may be in. A query that would put an event in more is refused.
     public static final String VIS_COMPONENT_ID = "vis";
 
     private final VisualisationTokenConsumer visualisationTokenConsumer;
     private final DataSourceResolver dataSourceResolver;
     private final Provider<QueryFieldProvider> queryFieldProviderProvider;
     private final SecurityContext securityContext;
+    private final Provider<SearchResultStoreConfig> resultStoreConfigProvider;
 
-    @Inject
+    /// Creates the factory with the default limits on a query.
+    ///
+    /// @param visualisationTokenConsumer Parses the `show` clause.
+    /// @param dataSourceResolver         Finds the data source that a query names.
+    /// @param queryFieldProviderProvider Gives the fields of a data source.
+    /// @param securityContext            The security context.
     public SearchRequestFactory(final VisualisationTokenConsumer visualisationTokenConsumer,
                                 final DataSourceResolver dataSourceResolver,
                                 final Provider<QueryFieldProvider> queryFieldProviderProvider,
                                 final SecurityContext securityContext) {
+        this(visualisationTokenConsumer,
+                dataSourceResolver,
+                queryFieldProviderProvider,
+                securityContext,
+                SearchResultStoreConfig::new);
+    }
+
+    /// Creates the factory.
+    ///
+    /// @param visualisationTokenConsumer Parses the `show` clause.
+    /// @param dataSourceResolver         Finds the data source that a query names.
+    /// @param queryFieldProviderProvider Gives the fields of a data source.
+    /// @param securityContext            The security context.
+    /// @param resultStoreConfigProvider  Gives the configured limits on a query.
+    @Inject
+    public SearchRequestFactory(final VisualisationTokenConsumer visualisationTokenConsumer,
+                                final DataSourceResolver dataSourceResolver,
+                                final Provider<QueryFieldProvider> queryFieldProviderProvider,
+                                final SecurityContext securityContext,
+                                final Provider<SearchResultStoreConfig> resultStoreConfigProvider) {
         this.visualisationTokenConsumer = visualisationTokenConsumer;
         this.dataSourceResolver = dataSourceResolver;
         this.queryFieldProviderProvider = queryFieldProviderProvider;
         this.securityContext = securityContext;
+        this.resultStoreConfigProvider = resultStoreConfigProvider;
     }
 
     public void extractDataSourceOnly(final String string,
                                       final Consumer<DocRef> consumer) {
-        new Builder(visualisationTokenConsumer, dataSourceResolver, queryFieldProviderProvider, securityContext)
-                .extractDataSourceOnly(string, consumer);
+        newBuilder().extractDataSourceOnly(string, consumer);
+    }
+
+    /// Finds the native query, such as SQL, in the `sql` clause of a query that may be incomplete, as
+    /// it is while being typed, for listing the fields it returns.
+    ///
+    /// @param string The query text.
+    /// @return The native query, or empty if there is no complete `sql` clause.
+    public Optional<String> extractNativeQuery(final String string) {
+        try {
+            final TokenGroup tokenGroup = StructureBuilder.create(Tokeniser.parse(string));
+            // Only the sql clause straight after from is for the from source; a later one is a
+            // joined source's.
+            return tokenGroup.getChildren()
+                    .stream()
+                    .limit(2)
+                    .filter(token -> TokenType.SQL.equals(token.getTokenType()))
+                    .findFirst()
+                    .map(token -> ((KeywordGroup) token).getChildren())
+                    .filter(children -> !children.isEmpty())
+                    .map(List::getFirst)
+                    .filter(token -> token instanceof QuotedStringToken)
+                    .map(AbstractToken::getUnescapedText)
+                    .filter(sql -> !sql.isBlank());
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to find the native query in '{}'", string), e);
+            return Optional.empty();
+        }
+    }
+
+    /// Finds the data source of the last join line in a query that may be incomplete, as it is while
+    /// being typed, for deciding what can follow it.
+    ///
+    /// @param string The query text.
+    /// @return The data source of the last join line, or empty if there is no join line or its data
+    /// source is not a name that can be found yet.
+    public Optional<DocRef> extractLastJoinDataSource(final String string) {
+        try {
+            final TokenGroup tokenGroup = StructureBuilder.create(Tokeniser.parse(string));
+            final Optional<AbstractToken> source = tokenGroup.getChildren()
+                    .stream()
+                    .filter(token -> TokenType.JOIN.equals(token.getTokenType()))
+                    .reduce((first, second) -> second)
+                    .map(token -> ((KeywordGroup) token).getChildren())
+                    .filter(children -> !children.isEmpty())
+                    .map(List::getFirst)
+                    .filter(TokenType::isString);
+            return source.map(token -> securityContext.useAsReadResult(() ->
+                    dataSourceResolver.resolveDataSourceRef(token.getUnescapedText())));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to find the joined data source in '{}'", string), e);
+            return Optional.empty();
+        }
     }
 
     public SearchRequest create(final String string,
                                 final SearchRequest in,
                                 final ExpressionContext expressionContext) {
-        return new Builder(visualisationTokenConsumer, dataSourceResolver, queryFieldProviderProvider, securityContext)
-                .create(string, in, expressionContext);
+        return newBuilder().create(string, in, expressionContext);
+    }
+
+    // A builder for a whole query, rather than a bracketed query inside one.
+    private Builder newBuilder() {
+        return new Builder(
+                visualisationTokenConsumer,
+                dataSourceResolver,
+                queryFieldProviderProvider,
+                securityContext,
+                resultStoreConfigProvider.get().getMaxWindowCopiesPerEvent(),
+                false);
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    private static class Builder {
+    private static class Builder implements JoinClauses.Parser {
 
         private final VisualisationTokenConsumer visualisationTokenConsumer;
         private final DataSourceResolver dataSourceResolver;
         private final Provider<QueryFieldProvider> queryFieldProviderProvider;
         private final SecurityContext securityContext;
+        // The most times a query with a window clause may add one event to its results.
+        private final int maxWindowCopiesPerEvent;
 
         private ExpressionContext expressionContext;
         private final FieldIndex fieldIndex;
@@ -139,20 +241,53 @@ public class SearchRequestFactory {
         private final Map<String, Expression> expressionMap;
         private final Set<String> addedFields = new HashSet<>();
         private final List<AbstractToken> additionalFields = new ArrayList<>();
+        // The expressions of the select clause's columns, by the names of the columns.
+        private final Map<String, Expression> columnExpressions = new HashMap<>();
+        private final HavingExpressions havingExpressions;
         private boolean inHaving;
-        private Optional<CompiledWindow> optionalCompiledWindow = Optional.empty();
+        private boolean hasWindow;
+        // The windows of the query's window clause, which are parsed before any other clause so that
+        // a window function can be written in a clause that comes before it.
+        private HoppingWindow window;
+
+        // True if this builder parses a bracketed query inside another query.
+        private final boolean bracketed;
+        // The params and time range of the request, which bracketed and joined queries share.
+        private List<Param> params;
+        private TimeRange timeRange;
+        // The where and filter clauses, which are only placed once any joins are known.
+        private ExpressionOperator whereExpression;
+        private ExpressionOperator filterExpression;
+        // The from and join lines, and how where is placed around them.
+        private final JoinClauses joinClauses;
 
         Builder(final VisualisationTokenConsumer visualisationTokenConsumer,
                 final DataSourceResolver dataSourceResolver,
                 final Provider<QueryFieldProvider> queryFieldProviderProvider,
-                final SecurityContext securityContext) {
+                final SecurityContext securityContext,
+                final int maxWindowCopiesPerEvent,
+                final boolean bracketed) {
+            this.maxWindowCopiesPerEvent = maxWindowCopiesPerEvent;
             this.visualisationTokenConsumer = visualisationTokenConsumer;
             this.dataSourceResolver = dataSourceResolver;
             this.queryFieldProviderProvider = queryFieldProviderProvider;
             this.securityContext = securityContext;
+            this.bracketed = bracketed;
             this.fieldIndex = new FieldIndex();
             this.paramMap = Collections.emptyMap();
             this.expressionMap = new HashMap<>();
+            this.havingExpressions = new HavingExpressions(expressionMap, fieldIndex);
+            this.joinClauses = new JoinClauses(this, fieldIndex, bracketed);
+        }
+
+        @Override
+        public List<Param> getParams() {
+            return params;
+        }
+
+        @Override
+        public TimeRange getTimeRange() {
+            return timeRange;
         }
 
         void extractDataSourceOnly(final String string, final Consumer<DocRef> consumer) {
@@ -199,9 +334,13 @@ public class SearchRequestFactory {
 
                 final Query.Builder queryBuilder = Query.builder();
                 if (in.getQuery() != null) {
+                    params = in.getQuery().getParams();
+                    timeRange = in.getQuery().getTimeRange();
                     paramMap = ParamUtil.createParamMap(in.getQuery().getParams());
                     queryBuilder.params(in.getQuery().getParams());
                     queryBuilder.timeRange(in.getQuery().getTimeRange());
+                    // A native query given by the caller is kept, unless the query has a sql clause.
+                    queryBuilder.nativeQuery(in.getQuery().getNativeQuery());
                 }
 
                 // Keep track of consumed tokens to check token order.
@@ -216,6 +355,7 @@ public class SearchRequestFactory {
                 if (query.getDataSource() == null) {
                     throw new TokenException(null, "No data source has been specified.");
                 }
+                checkNativeQuery(query);
 
                 // Make sure there is a non-null expression.
                 if (query.getExpression() == null) {
@@ -236,6 +376,33 @@ public class SearchRequestFactory {
             } catch (final Throwable e) {
                 LOGGER.debug(() -> "Error creating search request from '" + string + "'", e);
                 throw e;
+            }
+        }
+
+        // A data source that takes a native query must have one, and no other may.
+        private void checkNativeQuery(final Query query) {
+            checkNativeQuery(query, joinClauses.getSqlToken(), joinClauses.getFromToken());
+        }
+
+        @Override
+        public void checkNativeQuery(final Query query, final AbstractToken sqlToken, final AbstractToken fromToken) {
+            final DocRef dataSource = query.getDataSource();
+            final boolean takesNativeQuery = dataSourceResolver.takesNativeQuery(dataSource);
+            final boolean hasNativeQuery = NullSafe.isNonBlankString(query.getNativeQuery());
+            if (hasNativeQuery && !takesNativeQuery) {
+                final String what = sqlToken == null
+                        // The SQL came with the request, not from a sql clause.
+                        ? "The query has SQL, but SQL can only be run against a data source that runs SQL"
+                        : "A sql clause can only be used with a data source that runs SQL";
+                throw new TokenException(sqlToken, what + ", such as a JDBC or Amazon Athena Data Connection, "
+                                                   + "or an LDAP one, which takes its search filter there. '"
+                                                   + dataSource.getName() + "' does neither.");
+            } else if (takesNativeQuery && !hasNativeQuery) {
+                throw new TokenException(fromToken, "'" + dataSource.getName() + "' needs the SQL to run, in a sql "
+                                               + "clause after from, e.g. from \"" + dataSource.getName()
+                                               + "\" sql \"\"\"select * from my_table\"\"\", or for an LDAP "
+                                               + "directory its search filter, e.g. sql "
+                                               + "\"\"\"(objectClass=person)\"\"\"");
             }
         }
 
@@ -268,6 +435,11 @@ public class SearchRequestFactory {
             }
 
             final AbstractToken dataSourceToken = keywordGroup.getChildren().get(0);
+            if (dataSourceToken instanceof final TokenGroup bracketedQuery
+                && !bracketedQuery.getChildren().isEmpty()) {
+                addDataSource(bracketedQuery.getChildren(), consumer, isLenient);
+                return tokens.subList(1, tokens.size());
+            }
             final String dataSourceName = resolveDataSourceName(dataSourceToken);
             final DocRef dataSourceDocRef = securityContext.useAsReadResult(() ->
                     dataSourceResolver.resolveDataSourceRef(dataSourceName));
@@ -328,13 +500,27 @@ public class SearchRequestFactory {
 
 
         private ExpressionTerm createTerm(
-                final List<AbstractToken> tokens) {
+                final List<AbstractToken> termTokens) {
             final ExpressionTerm expressionTerm;
 
-            if (NullSafe.isEmptyCollection(tokens)) {
+            if (NullSafe.isEmptyCollection(termTokens)) {
                 throw new RuntimeException("createTerm called with empty list");
-            } else if (tokens.size() < 3) {
-                throw new TokenException(tokens.getFirst(), "Incomplete term");
+            } else if (termTokens.size() < 3) {
+                throw new TokenException(termTokens.getFirst(), "Incomplete term");
+            }
+            final List<AbstractToken> tokens;
+            if (inHaving) {
+                // A comparison of two expressions becomes a test of one hidden column.
+                final ExpressionTerm comparison = havingExpressions.createComparisonTerm(termTokens);
+                if (comparison != null) {
+                    return comparison;
+                }
+                tokens = havingExpressions.replaceLeftExpression(termTokens);
+                if (tokens.size() < 3) {
+                    throw new TokenException(termTokens.getLast(), "Incomplete term");
+                }
+            } else {
+                tokens = termTokens;
             }
 
             final AbstractToken fieldToken = tokens.get(0);
@@ -537,23 +723,13 @@ public class SearchRequestFactory {
             for (final AbstractToken token : tokens) {
                 if (TokenType.FUNCTION_GROUP.equals(token.getTokenType())) {
                     final FunctionGroup functionGroup = (FunctionGroup) token;
-                    DatePoint foundFunction = null;
                     if (functionGroup.getName().equalsIgnoreCase("param")) {
                         return resolveParam(functionGroup);
 
+                    } else if (HavingExpressions.findDatePoint(token.getUnescapedText()) == null) {
+                        throw new TokenException(token, "Unexpected function in value");
                     } else {
-                        final String function = token.getUnescapedText();
-                        for (final DatePoint datePoint : DatePoint.values()) {
-                            if (datePoint.getFunction().equals(function)) {
-                                foundFunction = datePoint;
-                                break;
-                            }
-                        }
-                        if (foundFunction == null) {
-                            throw new TokenException(token, "Unexpected function in value");
-                        } else {
-                            dateExpression = true;
-                        }
+                        dateExpression = true;
                     }
                 } else if (TokenType.DURATION.equals(token.getTokenType())) {
                     dateExpression = true;
@@ -664,7 +840,8 @@ public class SearchRequestFactory {
             }
         }
 
-        private ExpressionOperator processLogic(final List<AbstractToken> tokens) {
+        @Override
+        public ExpressionOperator processLogic(final List<AbstractToken> tokens) {
             // Replace all term tokens with expression items.
             List<Object> out = gatherTerms(tokens);
 
@@ -704,9 +881,15 @@ public class SearchRequestFactory {
             // Gather terms.
             final List<AbstractToken> termTokens = new ArrayList<>();
             for (final AbstractToken token : tokens) {
+                // The exists and in forms at the top level of where have already become joins.
+                if (WhereSubqueries.isSubquery(token)) {
+                    throw new TokenException(token, WhereSubqueries.MISPLACED_MESSAGE);
+                }
                 if (termTokens.isEmpty() && token instanceof final KeywordGroup keywordGroup) {
                     out.add(processLogic(keywordGroup.getChildren()));
-                } else if (termTokens.isEmpty() && token instanceof final TokenGroup tokenGroup) {
+                } else if (termTokens.isEmpty() && token instanceof final TokenGroup tokenGroup
+                           && !(inHaving && HavingExpressions.isExpression(tokenGroup))) {
+                    // Brackets hold conditions, or in a having clause may start an expression.
                     out.add(processLogic(tokenGroup.getChildren()));
                 } else if (TokenType.AND.equals(token.getTokenType()) ||
                            TokenType.OR.equals(token.getTokenType()) ||
@@ -811,24 +994,55 @@ public class SearchRequestFactory {
             final TableSettings.Builder tableSettingsBuilder = TableSettings.builder();
             TableSettings visTableSettings = null;
 
+            // An eval clause can come before the window clause and use a window function, so the
+            // windows are needed before the clauses are worked through in order.
+            for (final AbstractToken token : tokens) {
+                if (window == null
+                    && token instanceof final KeywordGroup keywordGroup
+                    && TokenType.WINDOW.equals(keywordGroup.getTokenType())) {
+                    window = parseWindow(keywordGroup);
+                    expressionContext = expressionContext.copy().window(window).build();
+                }
+            }
+
+            havingExpressions.findSelectNames(tokens);
+
             List<AbstractToken> remaining = new LinkedList<>(tokens);
             while (!remaining.isEmpty()) {
                 final AbstractToken token = remaining.getFirst();
 
                 if (token instanceof final KeywordGroup keywordGroup) {
+                    joinClauses.checkJoinHasKeys(keywordGroup);
                     switch (keywordGroup.getTokenType()) {
                         case FROM -> {
                             checkTokenOrder(token, consumedTokens);
-                            remaining = addDataSource(remaining, queryBuilder::dataSource, false);
+                            joinClauses.processFrom(keywordGroup, queryBuilder);
+                            remaining.removeFirst();
+                        }
+                        case SQL -> {
+                            checkTokenOrder(token, consumedTokens);
+                            joinClauses.processSqlClause(keywordGroup, consumedTokens, queryBuilder);
+                            remaining.removeFirst();
+                        }
+                        case JOIN -> {
+                            checkTokenOrder(token, consumedTokens);
+                            joinClauses.processJoin(keywordGroup);
+                            remaining.removeFirst();
+                        }
+                        case ON -> {
+                            checkTokenOrder(token, consumedTokens);
+                            joinClauses.processOn(keywordGroup);
+                            remaining.removeFirst();
                         }
                         case WHERE -> {
                             checkTokenOrder(token, consumedTokens);
+                            remaining.set(0, joinClauses.addWhereSubqueryJoins(keywordGroup, queryBuilder));
                             remaining =
                                     addExpression(remaining,
                                             consumedTokens,
-                                            Set.of(TokenType.FROM),
+                                            Set.of(TokenType.FROM, TokenType.SQL, TokenType.JOIN, TokenType.ON),
                                             TokenType.WHERE,
-                                            queryBuilder::expression);
+                                            expression -> whereExpression = expression);
                         }
                         case EVAL -> {
                             checkTokenOrder(token, consumedTokens);
@@ -839,7 +1053,8 @@ public class SearchRequestFactory {
                             checkTokenOrder(token, consumedTokens);
                             processWindow(
                                     keywordGroup,
-                                    tableSettingsBuilder);
+                                    tableSettingsBuilder,
+                                    queryBuilder);
                             remaining.removeFirst();
                         }
                         case FILTER -> {
@@ -849,11 +1064,14 @@ public class SearchRequestFactory {
                                             consumedTokens,
                                             Set.of(
                                                     TokenType.FROM,
+                                                    TokenType.SQL,
+                                                    TokenType.JOIN,
+                                                    TokenType.ON,
                                                     TokenType.WHERE,
                                                     TokenType.EVAL,
                                                     TokenType.WINDOW),
                                             TokenType.FILTER,
-                                            tableSettingsBuilder::valueFilter);
+                                            expression -> filterExpression = expression);
                         }
                         case SORT -> {
                             checkTokenOrder(token, consumedTokens);
@@ -902,6 +1120,9 @@ public class SearchRequestFactory {
                         }
                         case SHOW -> {
                             checkTokenOrder(token, consumedTokens);
+                            if (bracketed) {
+                                throw new TokenException(token, "A bracketed query can't show a visualisation");
+                            }
                             final TableSettings parentTableSettings = tableSettingsBuilder.build();
                             visTableSettings = visualisationTokenConsumer
                                     .processVis(keywordGroup, parentTableSettings);
@@ -915,9 +1136,14 @@ public class SearchRequestFactory {
 
                 consumedTokens.add(token.getTokenType());
             }
+            joinClauses.checkNoPendingJoin();
 
-            // Ensure StreamId and EventId fields exist if there is no grouping.
-            if (groupDepth == 0) {
+            // Place the where and filter clauses, now that any joins are known.
+            joinClauses.placeConditions(queryBuilder, tableSettingsBuilder, whereExpression, filterExpression);
+
+            // Ensure StreamId and EventId fields exist if there is no grouping. A bracketed query's
+            // rows are not events, so neither it nor a query reading one has them.
+            if (groupDepth == 0 && !hasWindow && !bracketed && !joinClauses.hasBracketedFrom()) {
                 if (!addedFields.contains(SpecialColumns.RESERVED_STREAM_ID)) {
                     tableSettingsBuilder.addColumns(SpecialColumns.RESERVED_STREAM_ID_COLUMN);
                     addedFields.add(SpecialColumns.RESERVED_STREAM_ID);
@@ -932,7 +1158,12 @@ public class SearchRequestFactory {
                 }
             }
 
-            // Add missing fields if needed.
+            // Add the hidden columns that the where conditions on joined rows test.
+            joinClauses.getPostJoinColumns().forEach((field, columnName) ->
+                    tableSettingsBuilder.addColumns(createFieldColumn(columnName, field)));
+
+            // Add missing fields if needed, with the expressions of the having clause.
+            additionalFields.addAll(havingExpressions.resolve(expressionContext, columnExpressions, addedFields));
             for (final AbstractToken token : additionalFields) {
                 final String fieldName = token.getUnescapedText();
                 if (!addedFields.contains(fieldName)) {
@@ -952,6 +1183,9 @@ public class SearchRequestFactory {
             final TableSettings tableSettings = tableSettingsBuilder
                     .extractValues(true)
                     .build();
+            if (hasWindow) {
+                checkWindowCopies(tokens.getFirst(), tableSettings);
+            }
 
             final ResultRequest tableResultRequest = ResultRequest.builder()
                     .componentId(TABLE_COMPONENT_ID)
@@ -979,96 +1213,186 @@ public class SearchRequestFactory {
             return resultRequests;
         }
 
+        // Adds the windows of a window clause to the table, once the clauses before it are known.
         private void processWindow(final KeywordGroup keywordGroup,
-                                   final TableSettings.Builder builder) {
+                                   final TableSettings.Builder builder,
+                                   final Query.Builder queryBuilder) {
+            if (joinClauses.hasWindowedJoin()) {
+                throw new TokenException(keywordGroup, "A window clause can't be used in a query that has a "
+                                                       + "join with a time window, as in 'within 10m after'");
+            }
+            checkWindowFieldIsDate(keywordGroup.getChildren().getFirst(), window.getTimeField(), queryBuilder);
+
+            // Make sure the time field is fetched.
+            fieldIndex.create(window.getTimeField());
+            builder.window(window);
+            hasWindow = true;
+        }
+
+        // Refuses a query whose lag() and lead() functions would have each row added to its result
+        // store too many times.
+        private void checkWindowCopies(final AbstractToken token, final TableSettings tableSettings) {
+            final int windowShifts;
+            try {
+                windowShifts = CompiledColumns
+                        .create(expressionContext, tableSettings.getColumns(), new HashMap<>())
+                        .getValueReferenceIndex()
+                        .getWindowShifts()
+                        .length;
+            } catch (final RuntimeException e) {
+                throw new TokenException(token, e.getMessage());
+            }
+            final int windowsPerTime = TimeWindows.create(window).getWindowsPerTime();
+            if (TimeWindows.getCopiesPerTime(windowsPerTime, windowShifts) > maxWindowCopiesPerEvent) {
+                throw new TokenException(token, TimeWindows.tooManyCopiesMessage(
+                        windowsPerTime, windowShifts, maxWindowCopiesPerEvent));
+            }
+        }
+
+        // Parses a window clause, as in `window EventTime by 1d advance 1h offset 6h`.
+        private HoppingWindow parseWindow(final KeywordGroup keywordGroup) {
             final List<AbstractToken> children = new ArrayList<>(keywordGroup.getChildren());
 
-            final HoppingWindow.Builder hoppingWindowBuilder = HoppingWindow.builder();
-
-            // Get field name.
-            if (!children.isEmpty()) {
-                final AbstractToken token = children.getFirst();
-                if (!TokenType.isString(token)) {
-                    throw new TokenException(token, "Syntax exception");
-                }
-                final String field = token.getUnescapedText();
-                hoppingWindowBuilder.timeField(field);
-                children.removeFirst();
-            } else {
-                throw new TokenException(keywordGroup, "Expected field");
+            // Get the time field.
+            if (children.isEmpty()) {
+                throw new TokenException(keywordGroup, "Expected the time field of the window, " + WINDOW_EXAMPLE);
             }
-
-            // Get `by` and duration.
-            final int byIndex = getTokenIndex(children, token -> TokenType.BY.equals(token.getTokenType()));
-            if (byIndex == -1) {
-                throw new TokenException(keywordGroup, "Syntax exception, expected by");
-            } else if (children.size() > byIndex + 1) {
-                final AbstractToken token = children.get(byIndex + 1);
-                if (!TokenType.DURATION.equals(token.getTokenType())) {
-                    throw new TokenException(token, "Syntax exception, expected valid window duration");
-                }
-                final String durationString = token.getUnescapedText();
-                hoppingWindowBuilder.windowSize(durationString);
-                hoppingWindowBuilder.advanceSize(durationString);
-
-                // We found the duration so remove the tokens.
-                children.remove(byIndex + 1);
-                children.remove(byIndex);
-            } else {
-                throw new TokenException(children.get(byIndex), "Syntax exception, expected window duration");
+            final AbstractToken fieldToken = children.removeFirst();
+            if (!TokenType.isString(fieldToken)) {
+                throw new TokenException(fieldToken, "Expected the time field of the window, " + WINDOW_EXAMPLE);
             }
+            final String field = fieldToken.getUnescapedText();
 
-            // Get `advance` and duration.
-            final int advanceIndex = getTokenIndex(children, token -> TokenType.isString(token) &&
-                                                                      token.getUnescapedText().equalsIgnoreCase(
-                                                                              "advance"));
-            if (advanceIndex != -1) {
-                if (children.size() > advanceIndex + 1) {
-                    final AbstractToken token = children.get(advanceIndex + 1);
-                    if (!TokenType.DURATION.equals(token.getTokenType())) {
-                        throw new TokenException(token, "Syntax exception, expected valid advance duration");
+            // Get `by` and the size.
+            if (children.isEmpty() || !TokenType.BY.equals(children.getFirst().getTokenType())) {
+                throw new TokenException(children.isEmpty()
+                        ? fieldToken
+                        : children.getFirst(), "Expected 'by' and the size of the window, " + WINDOW_EXAMPLE);
+            }
+            final AbstractToken byToken = children.removeFirst();
+            final String size = removeWindowDuration(children, byToken, "the size of the window");
+
+            // Get `advance` and `offset`, in either order.
+            String advance = null;
+            String offset = null;
+            while (!children.isEmpty()) {
+                final AbstractToken optionToken = children.removeFirst();
+                final String option = TokenType.isString(optionToken)
+                        ? optionToken.getUnescapedText().toLowerCase(Locale.ROOT)
+                        : "";
+                switch (option) {
+                    case "advance" -> {
+                        if (advance != null) {
+                            throw new TokenException(optionToken, "The window already has an advance");
+                        }
+                        advance = removeWindowDuration(children, optionToken, "how far the window advances");
                     }
-                    final String advanceString = token.getUnescapedText();
-                    hoppingWindowBuilder.advanceSize(advanceString);
-
-                    // We found the duration so remove the tokens.
-                    children.remove(advanceIndex + 1);
-                    children.remove(advanceIndex);
-                } else {
-                    throw new TokenException(children.get(advanceIndex), "Syntax exception, expected advance duration");
+                    case "offset" -> {
+                        if (offset != null) {
+                            throw new TokenException(optionToken, "The window already has an offset");
+                        }
+                        final boolean earlier = !children.isEmpty()
+                                                && TokenType.MINUS.equals(children.getFirst().getTokenType());
+                        if (earlier) {
+                            children.removeFirst();
+                        }
+                        offset = (earlier
+                                ? "-"
+                                : "") + removeWindowDuration(children, optionToken, "the offset of the window");
+                    }
+                    case "using" -> throw new TokenException(optionToken, "A window clause no longer takes "
+                            + "'using'. Write the function where its value is wanted, as in 'count()', and "
+                            + "use lag() for the value of an earlier window, as in 'lag(count(), 1)'");
+                    default -> throw new TokenException(optionToken, "Expected 'advance' or 'offset', "
+                                                                     + WINDOW_EXAMPLE);
                 }
             }
 
-            // Get `using` and function.
-            final int usingIndex = getTokenIndex(children, token -> TokenType.isString(token) &&
-                                                                    token.getUnescapedText().equalsIgnoreCase("using"));
-            if (usingIndex != -1) {
-                if (children.size() > usingIndex + 1) {
-                    final AbstractToken token = children.get(usingIndex + 1);
-//                    if (!TokenType.FUNCTION_GROUP.equals(token.getTokenType())) {
-//                        throw new TokenException(token, "Syntax exception, expected valid using function");
-//                    }
-                    final String function = token.getUnescapedText();
-                    hoppingWindowBuilder.function(function);
+            final ZoneId zoneId = UserTimeZoneUtil.getZoneId(expressionContext.getDateTimeSettings());
+            final HoppingWindow window = new HoppingWindow(field, size, advance, offset, zoneId.getId());
+            final TimeWindows timeWindows;
+            try {
+                timeWindows = TimeWindows.create(window);
+            } catch (final IllegalArgumentException e) {
+                throw new TokenException(keywordGroup, e.getMessage());
+            }
+            if (timeWindows.getWindowsPerTime() > maxWindowCopiesPerEvent) {
+                throw new TokenException(keywordGroup, TimeWindows.tooManyCopiesMessage(
+                        timeWindows.getWindowsPerTime(), 0, maxWindowCopiesPerEvent));
+            }
+            return window;
+        }
 
-                    // We found the duration so remove the tokens.
-                    children.remove(usingIndex + 1);
-                    children.remove(usingIndex);
-                } else {
-                    throw new TokenException(children.get(usingIndex), "Syntax exception, expected using function");
+        private String removeWindowDuration(final List<AbstractToken> children,
+                                            final AbstractToken before,
+                                            final String what) {
+            if (children.isEmpty()) {
+                throw new TokenException(before, "Expected " + what + ", " + WINDOW_EXAMPLE);
+            }
+            final AbstractToken token = children.removeFirst();
+            if (!TokenType.DURATION.equals(token.getTokenType())) {
+                throw new TokenException(token, "Expected " + what + " as a duration such as 1d or 30m, "
+                                                + WINDOW_EXAMPLE);
+            }
+            return token.getUnescapedText();
+        }
+
+        // Refuses a window field that the data source says is not a date. A field the data source
+        // doesn't list is let through, as an extraction pipeline can add fields of its own; rows that
+        // turn out to have no time in it are left out when the query runs.
+        private void checkWindowFieldIsDate(final AbstractToken fieldToken,
+                                            final String field,
+                                            final Query.Builder queryBuilder) {
+            final Query query = queryBuilder.build();
+            final DocRef dataSource = query.getDataSource();
+            if (dataSource == null || joinClauses.hasBracketedFrom()) {
+                return;
+            }
+            // The filter matches any field with the name in it, so every match is asked for to be
+            // sure that the field itself is among them.
+            final FindFieldCriteria criteria = new FindFieldCriteria(
+                    PageRequest.unlimited(),
+                    FindFieldCriteria.DEFAULT_SORT_LIST,
+                    dataSource,
+                    field,
+                    null,
+                    query.getNativeQuery());
+            final ResultPage<QueryField> resultPage = queryFieldProviderProvider.get().findFields(criteria);
+            for (final QueryField queryField : NullSafe.list(NullSafe.get(resultPage, ResultPage::getValues))) {
+                if (field.equals(queryField.getFldName())
+                    && queryField.getFldType() != null
+                    && !FieldType.DATE.equals(queryField.getFldType())) {
+                    throw new TokenException(fieldToken, "The window field '" + field + "' is not a date field, "
+                            + "it is " + queryField.getFldType().getDisplayValue());
                 }
             }
+        }
 
-            if (!children.isEmpty()) {
-                throw new TokenException(children.getFirst(), "Unexpected token");
+        // The hidden columns that the rows of a query with a window clause are grouped by. The first
+        // holds the window's key, which is what tells windows apart. The second holds the window's
+        // start under the name that a result store keyed by time, such as a table builder rule's,
+        // takes a row's time from.
+        private List<Column> createWindowColumns(final AbstractToken token) {
+            return List.of(
+                    createWindowColumn(token, WINDOW_COLUMN_NAME, WINDOW_KEY_FUNCTION),
+                    createWindowColumn(token, FieldIndex.DEFAULT_TIME_FIELD_NAME, WINDOW_START_FUNCTION));
+        }
+
+        private Column createWindowColumn(final AbstractToken token, final String name, final String function) {
+            final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(expressionMap));
+            try {
+                final Expression expression = expressionParser.parse(expressionContext, fieldIndex, function);
+                return Column.builder()
+                        .id(name)
+                        .name(name)
+                        .expression(expression.toString())
+                        .group(0)
+                        .visible(false)
+                        .special(true)
+                        .build();
+            } catch (final ParseException e) {
+                throw new TokenException(token, e.getMessage());
             }
-
-            final Window window = hoppingWindowBuilder.build();
-            final CompiledWindow compiledWindow = CompiledWindow.create(window);
-            // Add time window fields, so they can be used by other expressions.
-            compiledWindow.addWindowFields(expressionContext, fieldIndex, expressionMap);
-            optionalCompiledWindow = Optional.of(compiledWindow);
-            builder.window(window);
         }
 
         private void processEval(final KeywordGroup keywordGroup) {
@@ -1208,10 +1532,11 @@ public class SearchRequestFactory {
                         fieldExpression);
             }
 
-            // Modify columns if we have a time window.
-            final List<Column> modifiedColumns = optionalCompiledWindow.map(compiledWindow ->
-                    compiledWindow.addPeriodColumns(columns, expressionMap)).orElse(columns);
-            tableSettingsBuilder.addColumns(modifiedColumns);
+            // Group the rows by window if we have a time window.
+            if (hasWindow) {
+                columns.addAll(createWindowColumns(keywordGroup));
+            }
+            tableSettingsBuilder.addColumns(columns);
         }
 
         private void addColumn(final Map<String, Sort> sortMap,
@@ -1272,7 +1597,8 @@ public class SearchRequestFactory {
                                         final Map<String, AtomicInteger> columnCount,
                                         final List<Column> columns,
                                         final String fieldNameFilter) {
-            final DocRef dataSource = queryBuilder.build().getDataSource();
+            final Query query = queryBuilder.build();
+            final DocRef dataSource = query.getDataSource();
             if (dataSource != null) {
                 String filter = fieldNameFilter;
 
@@ -1285,12 +1611,14 @@ public class SearchRequestFactory {
                     filter = "/" + filter;
                 }
 
+                // The fields of a data source that takes a native query depend on it.
                 final FindFieldCriteria criteria = new FindFieldCriteria(
                         PageRequest.createDefault(),
                         FindFieldCriteria.DEFAULT_SORT_LIST,
                         dataSource,
                         filter,
-                        null);
+                        null,
+                        query.getNativeQuery());
                 final ResultPage<QueryField> resultPage = queryFieldProviderProvider.get().findFields(criteria);
                 final List<QueryField> fields = resultPage.getValues();
                 for (final QueryField field : fields) {
@@ -1345,6 +1673,7 @@ public class SearchRequestFactory {
                 }
             }
 
+            columnExpressions.put(columnName, expression);
             final String expressionString = expression.toString();
             return Column.builder()
                     .id(id)
@@ -1365,6 +1694,7 @@ public class SearchRequestFactory {
                                     final Map<String, Integer> groupMap,
                                     final Map<String, IncludeExcludeFilter> filterMap) {
             addedFields.add(columnName);
+            columnExpressions.put(columnName, expression);
             final String expressionString = expression.toString();
             return Column.builder()
                     .id(id)
@@ -1376,6 +1706,89 @@ public class SearchRequestFactory {
                     .visible(true)
                     .special(false)
                     .build();
+        }
+
+        // A hidden column that holds a field as it is, for a condition to test. The field is named by
+        // its plain name, so a quoted name in the where clause still names the field, not a value.
+        private Column createFieldColumn(final String columnName, final String field) {
+            final Token fieldToken = new Token(TokenType.STRING, field.toCharArray(), 0, field.length() - 1);
+            final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(Collections.emptyMap()));
+            try {
+                final Expression expression = expressionParser.parse(
+                        expressionContext,
+                        fieldIndex,
+                        Collections.singletonList(fieldToken));
+                return Column.builder()
+                        .id(columnName)
+                        .name(columnName)
+                        .expression(expression.toString())
+                        .visible(false)
+                        .special(true)
+                        .build();
+            } catch (final ParseException e) {
+                throw new TokenException(fieldToken, e.getMessage());
+            }
+        }
+
+        // Parses one side of a key as an expression, to check it and to put it in the same form as the
+        // expressions of columns.
+        @Override
+        public String parseKeyExpression(final List<AbstractToken> tokens) {
+            final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(expressionMap));
+            try {
+                return expressionParser.parse(expressionContext, fieldIndex, tokens).toString();
+            } catch (final ParseException e) {
+                throw new TokenException(tokens.getFirst(), e.getMessage());
+            }
+        }
+
+        @Override
+        public DocRef resolveDataSource(final AbstractToken dataSourceToken) {
+            final String dataSourceName = resolveDataSourceName(dataSourceToken);
+            return securityContext.useAsReadResult(() ->
+                    dataSourceResolver.resolveDataSourceRef(dataSourceName));
+        }
+
+        // Parses a bracketed query, as in 'from (from X where Y group by Z select Z, count())', with its
+        // own fields and eval, but the params and time range of the query it is in.
+        @Override
+        public ParsedQuery parseBracketedQuery(final TokenGroup tokenGroup) {
+            final List<AbstractToken> children = tokenGroup.getChildren();
+            if (children.isEmpty() || !TokenType.FROM.equals(children.getFirst().getTokenType())) {
+                throw new TokenException(tokenGroup, "A bracketed query must start with from");
+            }
+
+            final Builder builder = new Builder(
+                    visualisationTokenConsumer,
+                    dataSourceResolver,
+                    queryFieldProviderProvider,
+                    securityContext,
+                    maxWindowCopiesPerEvent,
+                    true);
+            // The bracketed query has the windows of its own window clause, if any, and not this query's.
+            builder.expressionContext = expressionContext.copy().window(null).build();
+            builder.paramMap = paramMap;
+            builder.params = params;
+            builder.timeRange = timeRange;
+
+            final Query.Builder queryBuilder = Query.builder()
+                    .params(params)
+                    .timeRange(timeRange);
+            final List<ResultRequest> resultRequests = builder.addTableSettings(
+                    null, children, new ArrayList<>(), queryBuilder);
+            Query query = queryBuilder.build();
+            // The query it is in only takes a bracketed query's source, where and table, so its own
+            // joins, alias or bracketed query would be dropped without a word.
+            if (query.needsJoinSupport()) {
+                throw new TokenException(tokenGroup, "A bracketed query can't have joins, an alias or a "
+                                                     + "bracketed query of its own yet");
+            }
+            builder.checkNativeQuery(query);
+            if (query.getExpression() == null) {
+                query = query.copy().expression(ExpressionOperator.builder().build()).build();
+            }
+            final TableSettings tableSettings = resultRequests.getFirst().getMappings().getFirst();
+            return new ParsedQuery(query, tableSettings);
         }
 
         private void processLimit(final KeywordGroup keywordGroup,
@@ -1529,15 +1942,5 @@ public class SearchRequestFactory {
             set.removeAll(tokenTypes);
             return set;
         }
-    }
-
-    private static int getTokenIndex(final List<AbstractToken> tokens, final Predicate<AbstractToken> predicate) {
-        for (int i = 0; i < tokens.size(); i++) {
-            final AbstractToken token = tokens.get(i);
-            if (predicate.test(token)) {
-                return i;
-            }
-        }
-        return -1;
     }
 }

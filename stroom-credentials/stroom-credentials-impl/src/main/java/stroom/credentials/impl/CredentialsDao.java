@@ -16,10 +16,12 @@
 
 package stroom.credentials.impl;
 
+import stroom.ai.shared.KeyStoreType;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.FindCredentialRequest;
+import stroom.credentials.shared.Secret;
 import stroom.util.shared.ResultPage;
 
 import java.util.function.Function;
@@ -73,4 +75,40 @@ public interface CredentialsDao {
      * @param secret The secret to store.
      */
     void putStoredSecret(StoredSecret secret, boolean update);
+
+    /// Returns the credential and secret matching the UUID.
+    ///
+    /// @param uuid The UUID of the credential.
+    /// @return The credential and secret, or null if there is no credential with that UUID.
+    StoredSecret getStoredSecretByUuid(String uuid);
+
+    /// Updates the settings of an existing credential (name, expiry, update audit fields) without
+    /// touching its secret, key store or key store type.
+    ///
+    /// @param credential The credential settings to store.
+    /// @return True if the credential was found and updated.
+    boolean updateCredential(Credential credential);
+
+    /// Replaces the secret of an existing credential. Only the secret, key store, key store type,
+    /// expiry and update audit fields are written; the name and type are left as they are.
+    ///
+    /// @param secret The new secret, keyed by the UUID of its credential.
+    /// @return True if the credential was found and updated.
+    boolean updateSecret(StoredSecret secret);
+
+
+    // --------------------------------------------------------------------------------
+
+
+    record UpdateSecretState(
+            String credentialUuid,
+            KeyStoreType keyStoreType,
+            String keyStorePath,
+            Long updateTimeMs,
+            String updateUser,
+            Long expiryTimeMs,
+            Secret secret,
+            byte[] keyStore) {
+
+    }
 }

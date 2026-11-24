@@ -36,6 +36,13 @@ abstract class AbstractManyChildGenerator extends AbstractGenerator {
     }
 
     @Override
+    public final void setShifted(final Val[] values, final StoredValues storedValues) {
+        for (final Generator generator : childGenerators) {
+            generator.setShifted(values, storedValues);
+        }
+    }
+
+    @Override
     public abstract Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier);
 
     @Override

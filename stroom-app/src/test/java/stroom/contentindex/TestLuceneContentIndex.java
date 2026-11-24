@@ -50,6 +50,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -145,39 +146,39 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    void testBasic() {
+    void testBasic() throws InterruptedException {
         test(StringMatch.contains("LOCATION"), 4, "Location");
     }
 
     @Test
-    void testCaseSensitive() {
+    void testCaseSensitive() throws InterruptedException {
         test(StringMatch.contains("LOCATION", true), 1, "LOCATION");
     }
 
     @Test
-    void testPartial() {
+    void testPartial() throws InterruptedException {
         test(StringMatch.contains("TION"), 4, "tion");
     }
 
     @Test
-    void testPartialCaseSensitive() {
+    void testPartialCaseSensitive() throws InterruptedException {
         test(StringMatch.contains("TION", true), 1, "TION");
     }
 
     @Test
-    void testRegex() {
+    void testRegex() throws InterruptedException {
         test(StringMatch.regex("XML\\w*"), 6, "xml");
     }
 
     @Test
-    void testRegexCaseSensitive() {
+    void testRegexCaseSensitive() throws InterruptedException {
         test(StringMatch.regex("XML\\w*", true), 1, "XMLSchema");
         test(StringMatch.regex("xml\\w*", true), 5, "xml");
     }
 
     void test(final StringMatch stringMatch,
               final int expectedHighlightCount,
-              final String expectedFirstHightlight) {
+              final String expectedFirstHightlight) throws InterruptedException {
         final DocContentHighlights highlights = test(stringMatch);
         assertThat(highlights.getText()).isEqualTo(TEXT);
         assertThat(highlights.getHighlights().size()).isEqualTo(expectedHighlightCount);
@@ -186,7 +187,7 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
                 highlights.getHighlights().getFirst().getLength())).isEqualTo(expectedFirstHightlight);
     }
 
-    private DocContentHighlights test(final StringMatch stringMatch) {
+    private DocContentHighlights test(final StringMatch stringMatch) throws InterruptedException {
         final LuceneContentIndex contentIndex = new LuceneContentIndex(
                 tempDirProvider,
                 pathCreator,
@@ -201,6 +202,9 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
                 mockClusterNodeManager);
         contentIndex.reindex();
         contentIndex.flush();
+        // Searching only waits briefly for the index to be built, so would fail on a busy machine
+        assertThat(contentIndex.awaitInitialisation(Duration.ofSeconds(60)))
+                .isTrue();
 
         final FindInContentRequest findInContentRequest =
                 new FindInContentRequest(

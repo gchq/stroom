@@ -25,6 +25,7 @@ import stroom.util.shared.Message;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 public interface Store<D extends AbstractDoc>
@@ -53,6 +54,13 @@ public interface Store<D extends AbstractDoc>
     // ---------------------------------------------------------------------
 
     void remapDependencies(DocRef docRef, Map<DocRef, DocRef> remappings);
+
+    /// Read a document and extract its dependencies with this store's dependency remap function.
+    /// No document permission checks are applied.
+    ///
+    /// @param docRef The document to read.
+    /// @return The document's dependencies, or an empty set if this document type tracks none.
+    Set<DocRef> getDependencies(DocRef docRef);
 
     // ---------------------------------------------------------------------
     // END OF HasDependencies

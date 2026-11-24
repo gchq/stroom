@@ -29,6 +29,7 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.test.RefTestUtil;
 import stroom.pipeline.refdata.test.RefTestUtil.KeyOutcomeMap;
 import stroom.pipeline.refdata.test.RefTestUtil.RangeOutcomeMap;
+import stroom.test.common.PerformanceTest;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.DurationTimer;
@@ -1318,6 +1319,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
     /**
      * Make entryCount very big for manual performance testing or profiling
      */
+    @PerformanceTest
     @Disabled // manual perf testing only
     @Test
     void testBigLoadGetAndPurgeForPerfTesting() {
@@ -1598,6 +1600,7 @@ class TestRefDataOffHeapStore extends AbstractRefDataOffHeapStoreTest {
         LOGGER.info("Full test time {}", Duration.between(fullTestStartTime, Instant.now()));
     }
 
+    @PerformanceTest
     @Disabled // Manual run only
     @Test
     void testLookupPerf() {

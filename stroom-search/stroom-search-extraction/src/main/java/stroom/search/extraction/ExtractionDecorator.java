@@ -18,6 +18,7 @@ package stroom.search.extraction;
 
 import stroom.data.store.api.DataException;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.index.shared.IndexConstants;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
@@ -69,8 +70,6 @@ import java.util.function.Supplier;
 public class ExtractionDecorator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExtractionDecorator.class);
-
-    private static final DocRef NULL_SELECTION = DocRef.builder().uuid("").name("None").type("").build();
 
     private static final ThreadPool STREAM_MAP_CREATOR_THREAD_POOL = new ThreadPoolImpl(
             "Extraction - Stream Map Creator");
@@ -152,7 +151,9 @@ public class ExtractionDecorator {
             if (coprocessorSet.size() == 1) {
                 valuesConsumer = coprocessorSet.iterator().next();
             } else {
-                valuesConsumer = values -> coprocessorSet.forEach(coprocessor -> coprocessor.accept(values));
+                valuesConsumer = values ->
+                        coprocessorSet.forEach(coprocessor ->
+                                coprocessor.accept(values));
             }
 
             // Insert rerank scoring filter.
@@ -462,9 +463,9 @@ public class ExtractionDecorator {
     }
 
     private PipelineData getPipelineData(final DocRef pipelineRef) {
-        return pipelineDataMap.computeIfAbsent(pipelineRef, k -> {
+        return pipelineDataMap.computeIfAbsent(pipelineRef, ignored -> {
             // Check the pipelineRef is not our 'NULL SELECTION'
-            if (pipelineRef == null || NULL_SELECTION.compareTo(pipelineRef) == 0) {
+            if (DocRefUtil.isNullSelection(pipelineRef)) {
                 throw new ExtractionException("Extraction is enabled, but no extraction pipeline is configured.");
             }
 

@@ -29,6 +29,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 
@@ -36,7 +39,8 @@ import java.util.function.Predicate;
         "field",
         "condition",
         "value",
-        "docRef"
+        "docRef",
+        "options"
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(name = "ExpressionTerm",
@@ -60,6 +64,12 @@ public final class ExpressionTerm extends ExpressionItem {
                           "IN_DICTIONARY, IN_FOLDER or IS_DOC_REF")
     @JsonProperty
     private final DocRef docRef;
+
+    @Schema(description = "Field-level query options that tailor how the data source searches the field, " +
+                          "keyed by option id. Only options whose value differs " +
+                          "from the default are stored. The options a field supports depend on its data source.")
+    @JsonProperty
+    private final Map<String, String> options;
 
     /**
      * Convenience method for creating an enabled {@code field = value} {@link ExpressionTerm}
@@ -107,17 +117,38 @@ public final class ExpressionTerm extends ExpressionItem {
         return false;
     }
 
+    /// Creates a term with no field-level query options.
+    ///
+    /// @param enabled   Whether the term is enabled, or null for enabled.
+    /// @param field     The name of the field.
+    /// @param condition The condition the field value is evaluated with.
+    /// @param value     The value the field value is evaluated against.
+    /// @param docRef    The document the field value is evaluated against, for conditions such as IN_DICTIONARY.
+    public ExpressionTerm(final Boolean enabled,
+                          final String field,
+                          final Condition condition,
+                          final String value,
+                          final DocRef docRef) {
+        this(enabled, field, condition, value, docRef, null);
+    }
+
     @JsonCreator
     public ExpressionTerm(@JsonProperty("enabled") final Boolean enabled,
                           @JsonProperty("field") final String field,
                           @JsonProperty("condition") final Condition condition,
                           @JsonProperty("value") final String value,
-                          @JsonProperty("docRef") final DocRef docRef) {
+                          @JsonProperty("docRef") final DocRef docRef,
+                          @JsonProperty("options") final Map<String, String> options) {
         super(enabled);
         this.field = field;
         this.condition = condition;
         this.value = value;
         this.docRef = docRef;
+        // An empty map is stored as null so that terms without options serialise as they did before
+        // options existed
+        this.options = options == null || options.isEmpty()
+                ? null
+                : Collections.unmodifiableMap(new LinkedHashMap<>(options));
     }
 
     public String getField() {
@@ -136,6 +167,12 @@ public final class ExpressionTerm extends ExpressionItem {
         return docRef;
     }
 
+    /// @return The field-level query options that differ from their defaults, keyed by option id,
+    /// or null if there are none.
+    public Map<String, String> getOptions() {
+        return options;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -151,12 +188,13 @@ public final class ExpressionTerm extends ExpressionItem {
         return Objects.equals(field, that.field) &&
                condition == that.condition &&
                Objects.equals(value, that.value) &&
-               Objects.equals(docRef, that.docRef);
+               Objects.equals(docRef, that.docRef) &&
+               Objects.equals(options, that.options);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), field, condition, value, docRef);
+        return Objects.hash(super.hashCode(), field, condition, value, docRef, options);
     }
 
     @Override
@@ -331,6 +369,7 @@ public final class ExpressionTerm extends ExpressionItem {
         private Condition condition;
         private String value;
         private DocRef docRef;
+        private Map<String, String> options;
 
         private Builder() {
         }
@@ -341,6 +380,7 @@ public final class ExpressionTerm extends ExpressionItem {
             this.condition = expressionTerm.condition;
             this.value = expressionTerm.value;
             this.docRef = expressionTerm.docRef;
+            this.options = expressionTerm.options;
         }
 
         /**
@@ -414,6 +454,13 @@ public final class ExpressionTerm extends ExpressionItem {
                             .build());
         }
 
+        /// @param options Field-level query options keyed by option id, or null for none.
+        /// @return This builder.
+        public Builder options(final Map<String, String> options) {
+            this.options = options;
+            return this;
+        }
+
         @Override
         public ExpressionTerm build() {
             Boolean enabled = this.enabled;
@@ -421,7 +468,7 @@ public final class ExpressionTerm extends ExpressionItem {
                 enabled = null;
             }
 
-            return new ExpressionTerm(enabled, field, condition, value, docRef);
+            return new ExpressionTerm(enabled, field, condition, value, docRef, options);
         }
 
         @Override

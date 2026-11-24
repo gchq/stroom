@@ -45,6 +45,7 @@ import stroom.search.extraction.FieldValue;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
+import stroom.test.common.PerformanceTest;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
@@ -345,6 +346,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         assertThat(indexShardDao.find(criteria).size()).isEqualTo(3);
     }
 
+    @PerformanceTest
     @Disabled
     @Test
     void testPerformance() {

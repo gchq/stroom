@@ -23,9 +23,12 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticClusterResource;
 import stroom.search.elastic.shared.ElasticClusterTestResponse;
-import stroom.search.elastic.shared.ElasticConnectionConfig;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.FetchWithUuid;
+import stroom.util.shared.PermissionException;
+import stroom.util.shared.http.HttpClientConfig;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.InfoResponse;
@@ -38,16 +41,25 @@ class ElasticClusterResourceImpl implements ElasticClusterResource, FetchWithUui
     private final Provider<ElasticClusterStore> elasticClusterStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
     private final Provider<ElasticConfig> elasticConfigProvider;
+    private final Provider<ElasticConnectionResolver> elasticConnectionResolverProvider;
+    private final Provider<ElasticClientFactory> elasticClientFactoryProvider;
+    private final Provider<SecurityContext> securityContextProvider;
 
     @Inject
     ElasticClusterResourceImpl(
             final Provider<ElasticClusterStore> elasticClusterStoreProvider,
             final Provider<DocumentResourceHelper> documentResourceHelperProvider,
-            final Provider<ElasticConfig> elasticConfigProvider
+            final Provider<ElasticConfig> elasticConfigProvider,
+            final Provider<ElasticConnectionResolver> elasticConnectionResolverProvider,
+            final Provider<ElasticClientFactory> elasticClientFactoryProvider,
+            final Provider<SecurityContext> securityContextProvider
     ) {
         this.elasticClusterStoreProvider = elasticClusterStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.elasticConfigProvider = elasticConfigProvider;
+        this.elasticConnectionResolverProvider = elasticConnectionResolverProvider;
+        this.elasticClientFactoryProvider = elasticClientFactoryProvider;
+        this.securityContextProvider = securityContextProvider;
     }
 
     @Override
@@ -73,17 +85,30 @@ class ElasticClusterResourceImpl implements ElasticClusterResource, FetchWithUui
     @Override
     @AutoLogged(value = OperationType.PROCESS, verb = "Testing Elasticsearch cluster")
     public ElasticClusterTestResponse testCluster(final ElasticClusterDoc cluster) {
+        // The test uses the (possibly unsaved) URLs from the request together with the stored credentials
+        // named in it. Only allow this for users who could save those URLs anyway, otherwise a user could
+        // send a credential they cannot read to a server of their choosing.
+        checkEditPermission(cluster);
+
         try {
-            final ElasticConnectionConfig connectionConfig = cluster.getConnection();
-            final ElasticClientConfig elasticClientConfig = elasticConfigProvider.get().getClientConfig();
-            final ElasticsearchClient elasticClient = new ElasticClientFactory()
-                    .create(connectionConfig, elasticClientConfig);
+            final ResolvedElasticConnection connection = elasticConnectionResolverProvider.get()
+                    .resolve(cluster.getConnection());
+            return testConnection(connection);
+        } catch (final RuntimeException e) {
+            return new ElasticClusterTestResponse(false, e.getMessage());
+        }
+    }
+
+    private ElasticClusterTestResponse testConnection(final ResolvedElasticConnection connection) {
+        final ElasticClientConfig elasticClientConfig = elasticConfigProvider.get().getClientConfig();
+        try (final ElasticsearchClient elasticClient = elasticClientFactoryProvider.get()
+                .create(connection, elasticClientConfig)) {
 
             final InfoResponse response = elasticClient.info();
 
             final StringBuilder sb = new StringBuilder()
                     .append("Cluster URLs: ")
-                    .append(connectionConfig.getConnectionUrls())
+                    .append(connection.connectionUrls())
                     .append("\nCluster name: ")
                     .append(response.clusterName())
                     .append("\nCluster UUID: ")
@@ -97,6 +122,23 @@ class ElasticClusterResourceImpl implements ElasticClusterResource, FetchWithUui
 
         } catch (final Exception e) {
             return new ElasticClusterTestResponse(false, e.getMessage());
+        }
+    }
+
+    @Override
+    @AutoLogged(OperationType.UNLOGGED)
+    public HttpClientConfig getDefaultHttpClientConfig() {
+        return elasticConnectionResolverProvider.get().getDefaultHttpClientConfig();
+    }
+
+    private void checkEditPermission(final ElasticClusterDoc cluster) {
+        if (cluster == null || cluster.getUuid() == null) {
+            throw new EntityServiceException("No Elasticsearch cluster supplied");
+        }
+        final SecurityContext securityContext = securityContextProvider.get();
+        if (!securityContext.hasDocumentPermission(getDocRef(cluster.getUuid()), DocumentPermission.EDIT)) {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to test this Elasticsearch cluster");
         }
     }
 }

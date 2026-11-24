@@ -16,9 +16,9 @@
 
 package stroom.importexport.api;
 
+import stroom.importexport.shared.ExportContentRequest;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportConfigResponse;
-import stroom.util.shared.DocRefs;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
@@ -28,7 +28,7 @@ public interface ContentService {
 
     void abortImport(ResourceKey resourceKey);
 
-    ResourceGeneration exportContent(DocRefs docRefs);
+    ResourceGeneration exportContent(ExportContentRequest request);
 
     ResourceKey exportAll();
 }

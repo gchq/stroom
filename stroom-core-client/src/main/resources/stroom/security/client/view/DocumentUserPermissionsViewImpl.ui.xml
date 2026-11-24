@@ -13,9 +13,9 @@
             </form:FormGroup>
         </g:south>
         <g:center>
-            <g:FlowPanel>
+            <g:FlowPanel styleName="max dock-container-vertical">
                 <form:FormGroup label="Permission Visibility"
-                                addStyleNames="form-padding">
+                                addStyleNames="form-padding dock-min">
                     <form:HelpHTML>
                         <p>This dropdown controls which users/groups are shown in the <em>Users and Groups</em>
                             pane below.</p>
@@ -33,7 +33,7 @@
                     <l:SelectionBox ui:field="permissionVisibility"/>
                 </form:FormGroup>
                 <form:FormGroup label="Users and Groups"
-                                addStyleNames="form-label-padding max">
+                                addStyleNames="form-label-padding dock-max">
                     <form:HelpHTML>
                         <p>Lists users/groups, optionally filtered based on the value of the
                             <em>Permission Visibility</em> dropdown.</p>

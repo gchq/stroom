@@ -30,6 +30,7 @@ import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
 import stroom.lmdb.serde.UnsignedLong;
 import stroom.lmdb.serde.UnsignedLongSerde;
+import stroom.test.common.PerformanceTest;
 import stroom.test.common.TemporaryPathCreator;
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
@@ -763,6 +764,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         });
     }
 
+    @PerformanceTest
     @Disabled // manual perf test only
     @Test
     void testLoadingSortedKeys_perf() {
@@ -828,6 +830,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     /**
      * Comparing overwriting the same key N times vs putting N entries each with a different key
      */
+    @PerformanceTest
     @Disabled
     @Test
     void testPutVsAppend_perf() {

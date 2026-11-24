@@ -17,6 +17,7 @@
 package stroom.proxy.app.handler;
 
 import stroom.proxy.app.handler.NumberedDirProvider.DirId;
+import stroom.test.common.PerformanceTest;
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
 import stroom.test.common.util.test.StroomUnitTest;
@@ -137,6 +138,7 @@ public class TestNumberedDirProvider extends StroomUnitTest {
         }
     }
 
+    @PerformanceTest
     @Disabled // Manual perf test only
     @Test
     void testCreatePerf() {

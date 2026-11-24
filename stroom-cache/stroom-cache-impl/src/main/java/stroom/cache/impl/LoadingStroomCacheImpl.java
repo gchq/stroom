@@ -63,6 +63,11 @@ class LoadingStroomCacheImpl<K, V> extends AbstractStroomCache<K, V> implements 
     }
 
     @Override
+    boolean isLoadingCache() {
+        return true;
+    }
+
+    @Override
     public V get(final K key) {
         return ((LoadingCache<K, V>) super.getCache()).get(key);
     }

@@ -23,11 +23,11 @@ import stroom.analytics.shared.ExecutionTracker;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
-import stroom.index.shared.IndexConstants;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.DestroyReason;
+import stroom.query.api.HoppingWindow;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.Query;
@@ -36,9 +36,12 @@ import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.query.api.TableSettings;
+import stroom.query.api.TimeFilter;
+import stroom.query.api.TimeRange;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.ConditionalFormattingMapper;
 import stroom.query.common.v2.DataStore;
+import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.ErrorConsumerImpl;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -50,11 +53,15 @@ import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.RowValueFilter;
 import stroom.query.common.v2.SimpleMapper;
+import stroom.query.common.v2.Sizes;
+import stroom.query.common.v2.SizesProvider;
 import stroom.query.common.v2.ValFilter;
+import stroom.query.common.v2.WholeWindowFilter;
 import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
+import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.security.api.SecurityContext;
@@ -76,6 +83,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -95,6 +103,7 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
     private final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider;
     private final SecurityContext securityContext;
     final WordListProvider wordListProvider;
+    private final SizesProvider sizesProvider;
 
     @Inject
     ScheduledQueryAnalyticExecutable(final AnalyticRuleStore analyticRuleStore,
@@ -110,7 +119,8 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                                      final ExpressionPredicateFactory expressionPredicateFactory,
                                      final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider,
                                      final WordListProvider wordListProvider,
-                                     final SecurityContext securityContext) {
+                                     final SecurityContext securityContext,
+                                     final SizesProvider sizesProvider) {
         super(analyticErrorWriterProvider, errorReceiverProxyProvider, analyticRuleHolderProvider);
         this.analyticRuleStore = analyticRuleStore;
         this.securityContext = securityContext;
@@ -124,6 +134,7 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.analyticUiDefaultConfigProvider = analyticUiDefaultConfigProvider;
         this.wordListProvider = wordListProvider;
+        this.sizesProvider = sizesProvider;
     }
 
     @Override
@@ -137,9 +148,35 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
         try {
             final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
 
-            final MappedRequestBundle mappedRequestBundle = buildMappedSearchRequest(doc, effectiveExecutionTime);
+            // A rule with a window clause judges the windows that are ready in its time range, which may
+            // need events from before the start of the range, so the search starts early enough for them.
+            final MappedRequestBundle requestedBundle = buildMappedSearchRequest(
+                    doc,
+                    effectiveExecutionTime,
+                    doc.getTimeRange());
+            final WholeWindowFilter wholeWindowFilter = createWholeWindowFilter(
+                    requestedBundle,
+                    effectiveExecutionTime);
+            final MappedRequestBundle mappedRequestBundle = wholeWindowFilter != null
+                                                            && wholeWindowFilter.searchesBeforeRange()
+                    ? buildMappedSearchRequest(
+                            doc,
+                            effectiveExecutionTime,
+                            new TimeRange(
+                                    null,
+                                    doc.getTimeRange().getCondition(),
+                                    DateUtil.createNormalDateTimeString(wholeWindowFilter.getSearchFrom()),
+                                    doc.getTimeRange().getTo()))
+                    : requestedBundle;
             final ExpressionContext expressionContext = mappedRequestBundle.expressionContext;
-            final SearchRequest mappedRequest = mappedRequestBundle.mappedRequest;
+            // The store of a rule with a window clause holds rows of windows that the rule does not
+            // judge, so the limit of the query is applied to the rows it judges and not to the store.
+            final long judgedRowLimit = wholeWindowFilter != null
+                    ? getRowLimit(mappedRequestBundle.mappedRequest)
+                    : Long.MAX_VALUE;
+            final SearchRequest mappedRequest = wholeWindowFilter != null
+                    ? raiseRowLimits(mappedRequestBundle.mappedRequest, sizesProvider.getDefaultMaxResultsSizes())
+                    : mappedRequestBundle.mappedRequest;
 
             // Fix table result requests.
             final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
@@ -154,8 +191,11 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                         .getResultStore(mappedRequest);
                 final SearchRequest modifiedRequest = requestAndStore.searchRequest();
                 try {
-                    final DataStore dataStore = requestAndStore
-                            .resultStore().getData(SearchRequestFactory.TABLE_COMPONENT_ID);
+                    // A search with joins starts with a placeholder store, so wait for the store
+                    // that holds the results.
+                    final DataStore dataStore = searchResponseCreatorManager
+                            .getSearchStore(requestAndStore)
+                            .getData(SearchRequestFactory.TABLE_COMPONENT_ID);
                     // Wait for search to complete.
                     dataStore.getCompletionState().awaitCompletion();
 
@@ -189,11 +229,19 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                     final ColumnFormatter fieldFormatter =
                             new ColumnFormatter(new FormatterFactory(expressionContext.getDateTimeSettings()));
 
+                    // Only the rows of the time windows that are ready in the time range are judged.
+                    final Predicate<Item> judgedWindowFilter = createJudgedWindowFilter(
+                            wholeWindowFilter,
+                            dataStore.getColumns());
+                    final AtomicLong judgedRows = new AtomicLong();
+
                     try (final DuplicateCheck duplicateCheck =
                             duplicateCheckFactory.create(doc, compiledColumns)) {
                         detectionConsumerProxy.start();
                         final Consumer<Item> itemConsumer = item -> {
-                            if (duplicateCheck.check(item)) {
+                            if (judgedWindowFilter.test(item)
+                                && judgedRows.incrementAndGet() <= judgedRowLimit
+                                && duplicateCheck.check(item)) {
                                 Long streamId = null;
                                 Long eventId = null;
                                 final List<DetectionValue> values = new ArrayList<>();
@@ -202,13 +250,21 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
                                     final String columnName = column.getName();
                                     final Val val = item.getValue(i);
                                     if (val != null) {
-                                        if (IndexConstants.STREAM_ID.equals(columnName)) {
+                                        boolean detectionValue = !Boolean.FALSE.equals(column.isVisible());
+                                        if (FieldIndex.isStreamIdFieldName(columnName)) {
                                             streamId = DetectionConsumerProxy.getSafeLong(val);
-                                        } else if (IndexConstants.EVENT_ID.equals(columnName)) {
+                                            detectionValue = true;
+                                        } else if (FieldIndex.isEventIdFieldName(columnName)) {
                                             eventId = DetectionConsumerProxy.getSafeLong(val);
+                                            detectionValue = true;
                                         }
-                                        final String fieldValStr = fieldFormatter.format(column, val);
-                                        values.add(new DetectionValue(columnName, fieldValStr));
+                                        // Any other hidden column is one the query needs but the
+                                        // select clause does not name, such as the key of a time
+                                        // window, so it is not a value of the detection.
+                                        if (detectionValue) {
+                                            final String fieldValStr = fieldFormatter.format(column, val);
+                                            values.add(new DetectionValue(columnName, fieldValStr));
+                                        }
                                     }
                                 }
 
@@ -424,7 +480,8 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
     }
 
     private MappedRequestBundle buildMappedSearchRequest(final AnalyticRuleDoc analytic,
-                                                         final Instant effectiveExecutionTime) {
+                                                         final Instant effectiveExecutionTime,
+                                                         final TimeRange timeRange) {
         final SearchRequestSource searchRequestSource = SearchRequestSource
                 .builder()
                 .sourceType(SourceType.SCHEDULED_QUERY_ANALYTIC)
@@ -435,7 +492,7 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
         final Query sampleQuery = Query
                 .builder()
                 .params(analytic.getParameters())
-                .timeRange(analytic.getTimeRange())
+                .timeRange(timeRange)
                 .build();
         final SearchRequest sampleRequest = new SearchRequest(
                 searchRequestSource,
@@ -458,7 +515,10 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
     public List<String> extractColumnNames(final AnalyticRuleDoc analytic) {
         if (analytic.getDuplicateNotificationConfig() != null) {
             // Time doesn't matter, so just use now()
-            final MappedRequestBundle mappedRequestBundle = buildMappedSearchRequest(analytic, Instant.now());
+            final MappedRequestBundle mappedRequestBundle = buildMappedSearchRequest(
+                    analytic,
+                    Instant.now(),
+                    analytic.getTimeRange());
             final SearchRequest mappedRequest = mappedRequestBundle.mappedRequest;
             final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
             final TableSettings tableSettings = NullSafe.get(
@@ -496,6 +556,120 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
 
     // --------------------------------------------------------------------------------
 
+
+    // Chooses the time windows that the rule judges, from the windows of the query's window clause and
+    // the time range of the rule, which ends at the time the rule is run for if the range has no
+    // earlier end. Gives null if the query has no window clause.
+    private WholeWindowFilter createWholeWindowFilter(final MappedRequestBundle bundle,
+                                                      final Instant effectiveExecutionTime) {
+        final SearchRequest searchRequest = bundle.mappedRequest();
+        final TableSettings tableSettings = NullSafe.get(
+                searchRequest.getResultRequests(),
+                List::getFirst,
+                resultRequest -> NullSafe.first(resultRequest.getMappings()));
+        if (tableSettings == null || !(tableSettings.getWindow() instanceof final HoppingWindow window)) {
+            return null;
+        }
+        final CompiledColumns compiledColumns = CompiledColumns.create(
+                bundle.expressionContext(),
+                tableSettings.getColumns(),
+                ParamUtil.createParamMap(searchRequest.getQuery().getParams()));
+
+        // The time range of the query only bounds the windows if it is applied to the field that
+        // the windows are of.
+        final TimeRange timeRange = searchRequest.getQuery().getTimeRange();
+        final boolean rangeIsOfWindowField = timeRange != null
+                                             && searchResponseCreatorManager
+                                                     .getTimeRangeField(searchRequest.getQuery().getDataSource())
+                                                     .filter(field -> field.equals(window.getTimeField()))
+                                                     .isPresent();
+        final TimeFilter searched = rangeIsOfWindowField
+                ? DateExpressionParser.getTimeFilter(timeRange, searchRequest.getDateTimeSettings())
+                : new TimeFilter(Long.MIN_VALUE, Long.MAX_VALUE);
+        final long from = rangeIsOfWindowField && !NullSafe.isBlankString(timeRange.getFrom())
+                ? searched.getFrom()
+                : WholeWindowFilter.NO_START;
+        return new WholeWindowFilter(
+                window,
+                compiledColumns.getValueReferenceIndex().getWindowShifts(),
+                new TimeFilter(from, Math.min(searched.getTo(), effectiveExecutionTime.toEpochMilli())));
+    }
+
+    // Creates a test of whether a row is of a time window that the rule judges. Every row passes if
+    // the query has no window clause.
+    private Predicate<Item> createJudgedWindowFilter(final WholeWindowFilter wholeWindowFilter,
+                                                     final List<Column> columns) {
+        if (wholeWindowFilter == null) {
+            return item -> true;
+        }
+        int windowKeyIndex = -1;
+        for (int i = 0; i < columns.size(); i++) {
+            if (SearchRequestFactory.WINDOW_COLUMN_NAME.equals(columns.get(i).getName())) {
+                windowKeyIndex = i;
+            }
+        }
+        if (windowKeyIndex == -1) {
+            // The search may reach back before the time range, so judging every row would judge
+            // windows that are not in it.
+            throw new IllegalStateException("The query has a window clause but no column of the window of a row");
+        }
+        final int index = windowKeyIndex;
+        return item -> {
+            final Long windowKey = NullSafe.get(item.getValue(index), Val::toLong);
+            return windowKey != null && wholeWindowFilter.isJudged(windowKey);
+        };
+    }
+
+    // Gets the most rows that the query's limit allows at the top level of its table, or no limit if
+    // the query has none.
+    private static long getRowLimit(final SearchRequest searchRequest) {
+        final List<Long> maxResults = NullSafe.get(
+                searchRequest.getResultRequests(),
+                List::getFirst,
+                resultRequest -> NullSafe.first(resultRequest.getMappings()),
+                TableSettings::getMaxResults);
+        final Long limit = NullSafe.first(maxResults);
+        return limit != null
+                ? limit
+                : Long.MAX_VALUE;
+    }
+
+    /// Raises the limit of the top level of each table of a query to at least the store's default,
+    /// so that the store keeps the rows of windows that the rule does not judge as well as those it
+    /// does. The limits of the lower levels are kept.
+    ///
+    /// @param searchRequest The request of the query.
+    /// @param defaultSizes  The most rows a store keeps at each level if a query gives no limit.
+    /// @return The request with its limits raised. A table with no limit keeps none.
+    static SearchRequest raiseRowLimits(final SearchRequest searchRequest, final Sizes defaultSizes) {
+        final List<ResultRequest> resultRequests = NullSafe.list(searchRequest.getResultRequests())
+                .stream()
+                .map(resultRequest -> resultRequest.copy()
+                        .mappings(NullSafe.list(resultRequest.getMappings())
+                                .stream()
+                                .map(tableSettings -> tableSettings.copy()
+                                        .maxResults(raiseTopLimit(tableSettings.getMaxResults(), defaultSizes))
+                                        .build())
+                                .toList())
+                        .build())
+                .toList();
+        return searchRequest.copy().resultRequests(resultRequests).build();
+    }
+
+    // Raises the first limit to at least the default for the top level. A single limit is also the
+    // limit of every lower level, so it is kept for them.
+    private static List<Long> raiseTopLimit(final List<Long> maxResults, final Sizes defaultSizes) {
+        final Long top = NullSafe.first(maxResults);
+        if (top == null) {
+            return maxResults;
+        }
+        final List<Long> raised = new ArrayList<>(maxResults);
+        raised.set(0, Math.max(top, defaultSizes.size(0)));
+        if (maxResults.size() == 1) {
+            raised.add(top);
+        }
+        return raised;
+    }
 
     private record MappedRequestBundle(SearchRequest mappedRequest,
                                        SearchRequest sampleRequest,

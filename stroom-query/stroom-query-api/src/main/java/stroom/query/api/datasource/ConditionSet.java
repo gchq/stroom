@@ -147,6 +147,16 @@ public enum ConditionSet {
             Condition.IN,
             Condition.IN_DICTIONARY,
             Condition.MATCHES_REGEX),
+    // A boolean field has only two values, so is only compared with one of them
+    ELASTIC_BOOLEAN(
+            Condition.EQUALS,
+            Condition.NOT_EQUALS),
+    // A virtual field's values are the names of its groups, so it is only matched against group names
+    ELASTIC_VIRTUAL(
+            Condition.EQUALS,
+            Condition.NOT_EQUALS,
+            Condition.IN,
+            Condition.IN_DICTIONARY),
 
     // Solr Conditions.
     SOLR_ID(
@@ -440,6 +450,8 @@ public enum ConditionSet {
             return ConditionSet.ELASTIC_NUMERIC;
         } else if (FieldType.DENSE_VECTOR.equals(elasticIndexFieldType)) {
             return ConditionSet.DEFAULT_DENSE_VECTOR;
+        } else if (FieldType.BOOLEAN.equals(elasticIndexFieldType)) {
+            return ConditionSet.ELASTIC_BOOLEAN;
         } else {
             return ConditionSet.ELASTIC_TEXT;
         }

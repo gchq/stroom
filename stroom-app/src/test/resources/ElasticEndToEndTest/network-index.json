@@ -1,0 +1,26 @@
+{
+  "settings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 0
+  },
+  "mappings": {
+    "dynamic": "strict",
+    "properties": {
+      "StreamId": { "type": "long" },
+      "EventId": { "type": "long" },
+      "Feed": { "type": "keyword" },
+      "EventTime": { "type": "date" },
+      "UserId": { "type": "keyword" },
+      "HostName": { "type": "keyword" },
+      "IPAddress": { "type": "ip" },
+      "Action": { "type": "keyword" },
+      "Command": {
+        "type": "text",
+        "fields": {
+          "keyword": { "type": "keyword" }
+        }
+      },
+      "Description": { "type": "text" }
+    }
+  }
+}

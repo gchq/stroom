@@ -107,10 +107,19 @@ public class AiServiceImpl implements AiService {
 
     private static final String CHAT_RESPONSE_CACHE_NAME = "AI Chat Response Cache";
 
+    // Models can take a long time to produce a response, so allow plenty of time between bytes.
     private static final SimpleDuration DEFAULT_TIMEOUT = SimpleDuration
             .builder()
             .time(10)
             .timeUnit(TimeUnit.MINUTES)
+            .build();
+
+    // Establishing a connection should be quick, so an unreachable model server is reported promptly
+    // rather than after the much longer response timeout.
+    private static final SimpleDuration DEFAULT_CONNECTION_TIMEOUT = SimpleDuration
+            .builder()
+            .time(30)
+            .timeUnit(TimeUnit.SECONDS)
             .build();
 
     private final Provider<OpenAIModelStore> openAIModelStoreProvider;
@@ -294,7 +303,10 @@ public class AiServiceImpl implements AiService {
     private Optional<String> getApiKey(final OpenAIModelDoc doc) {
         final String apiKeyName = doc.getApiKeyName();
         if (NullSafe.isNonBlankString(apiKeyName)) {
-            final StoredSecret storedSecret = storedSecretsProvider.get().get(apiKeyName);
+            // Users only need USE on the cred to use it.
+            final StoredSecret storedSecret = securityContext.useAsReadResult(() ->
+                    storedSecretsProvider.get().get(apiKeyName));
+
             if (storedSecret != null) {
                 if (storedSecret.secret() instanceof final AccessTokenSecret accessTokenSecret) {
                     if (accessTokenSecret.getAccessToken() != null) {
@@ -685,7 +697,10 @@ public class AiServiceImpl implements AiService {
     }
 
     private HttpClientConfig createDefaultHttpClientConfig() {
-        return HttpClientUtil.createDefaultHttpClientConfig(DEFAULT_TIMEOUT);
+        return HttpClientUtil.createDefaultHttpClientConfig(DEFAULT_TIMEOUT)
+                .copy()
+                .connectionTimeout(DEFAULT_CONNECTION_TIMEOUT)
+                .build();
     }
 
     // --------------------------------------------------------------------------------

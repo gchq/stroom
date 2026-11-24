@@ -49,6 +49,8 @@ import stroom.data.client.gin.StreamStoreGinjector;
 import stroom.data.client.gin.StreamStoreModule;
 import stroom.data.store.impl.fs.client.gin.FsVolumeGinjector;
 import stroom.data.store.impl.fs.client.gin.FsVolumeModule;
+import stroom.dataconnection.client.gin.DataConnectionGinjector;
+import stroom.dataconnection.client.gin.DataConnectionModule;
 import stroom.datagen.client.gin.DataGenGinjector;
 import stroom.datagen.client.gin.DataGenModule;
 import stroom.dictionary.client.gin.DictionaryGinjector;
@@ -173,6 +175,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         ChangePasswordModule.class,
         ElasticClusterModule.class,
         ElasticIndexModule.class,
+        DataConnectionModule.class,
         AnalyticsModule.class,
         DataGenModule.class,
         ReportModule.class,
@@ -228,6 +231,7 @@ public interface AppGinjectorUser extends
         FloorMapGinjector,
         ElasticClusterGinjector,
         ElasticIndexGinjector,
+        DataConnectionGinjector,
         ReportGinjector,
         SolrIndexGinjector,
         SqlTemporalStoreGinjector,

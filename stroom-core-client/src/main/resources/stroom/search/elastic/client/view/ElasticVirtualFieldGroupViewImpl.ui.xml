@@ -1,0 +1,36 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  ~ Copyright 2026 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <!-- The name row keeps its height and the query editor takes the rest of the dialog body -->
+    <g:FlowPanel styleName="max form dock-container-vertical">
+        <form:FormGroup identity="elasticVirtualFieldGroupName" label="Name" addStyleNames="dock-min"
+                        helpText="The value users search the virtual field for to run the group's query.">
+            <g:FlowPanel>
+                <g:TextBox ui:field="name" addStyleNames="w-100"/>
+                <g:Label ui:field="nameError" styleName="invalid-feedback" visible="false"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+        <form:FormGroup identity="elasticVirtualFieldGroupQuery" label="Query" addStyleNames="dock-max"
+                        helpText="The query run when users search the virtual field for the group. Terms may
+                                  use the index's keyword fields.">
+            <g:SimplePanel ui:field="expression" styleName="dock-max stroom-control"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

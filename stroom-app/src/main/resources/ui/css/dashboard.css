@@ -562,6 +562,19 @@
     padding: 0 0.4rem 0.4rem 0.4rem;
 }
 
+.TextInputView .svgIconBox input {
+    min-width: 0;
+}
+
+/* Hides the date picker icon when the text input format isn't a date/time */
+.TextInputView .TextInputView-noIcon .svgIconBox-icon-outer {
+    display: none;
+}
+
+.TextInputView .TextInputView-noIcon input {
+    padding-right: var(--input__padding--horizontal);
+}
+
 .selectionItemCell-content .listInputItem-container {
     display: flex;
     flex-direction: row;

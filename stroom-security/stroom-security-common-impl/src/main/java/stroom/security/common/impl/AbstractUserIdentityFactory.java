@@ -404,20 +404,26 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
                 if (newTokenResponse != null
                     && newTokenResponse.getRefreshToken() == null
                     && currentTokenResponse.getRefreshToken() != null) {
+                    final Long effectiveRefreshExpiresIn = NullSafe.firstNonNull(
+                                    newTokenResponse.getEffectiveRefreshExpiresIn(),
+                                    currentTokenResponse.getEffectiveRefreshExpiresIn())
+                            .orElse(null);
                     newTokenResponse = newTokenResponse
                             .copy()
                             .refreshToken(currentTokenResponse.getRefreshToken())
-                            .refreshTokenExpiresIn(Objects.requireNonNullElseGet(
-                                    newTokenResponse.getEffectiveRefreshExpiresIn(),
-                                    currentTokenResponse::getEffectiveRefreshExpiresIn))
+                            .refreshTokenExpiresIn(effectiveRefreshExpiresIn)
                             .build();
                 }
                 fetchTokenResult = new FetchTokenResult(newTokenResponse, jwtClaims);
 
                 LOGGER.debug(LogUtil.message(
-                        "New token expiry max age: {}, refresh token expiry max age: {}",
-                        NullSafe.toString(newTokenResponse, TokenResponse::getExpiresIn, Duration::ofSeconds),
-                        NullSafe.toString(newTokenResponse,
+                        "New token expiresIn: {}, effectiveRefreshExpiresIn: {}",
+                        NullSafe.toString(
+                                newTokenResponse,
+                                TokenResponse::getExpiresIn,
+                                Duration::ofSeconds),
+                        NullSafe.toString(
+                                newTokenResponse,
                                 TokenResponse::getEffectiveRefreshExpiresIn,
                                 Duration::ofSeconds)));
             }

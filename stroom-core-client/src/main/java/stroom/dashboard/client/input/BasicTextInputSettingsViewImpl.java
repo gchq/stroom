@@ -17,6 +17,8 @@
 package stroom.dashboard.client.input;
 
 import stroom.dashboard.client.input.BasicTextInputSettingsPresenter.BasicTextInputSettingsView;
+import stroom.dashboard.shared.TextInputFormat;
+import stroom.item.client.SelectionBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -36,10 +38,18 @@ public class BasicTextInputSettingsViewImpl extends ViewImpl implements BasicTex
     TextBox name;
     @UiField
     TextBox key;
+    @UiField
+    SelectionBox<TextInputFormat> format;
+    @UiField
+    TextBox pattern;
 
     @Inject
     public BasicTextInputSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        format.addItems(TextInputFormat.values());
+        format.setValue(TextInputFormat.TEXT);
+        format.addValueChangeHandler(event -> updatePatternEnabled());
+        updatePatternEnabled();
     }
 
     @Override
@@ -75,6 +85,35 @@ public class BasicTextInputSettingsViewImpl extends ViewImpl implements BasicTex
     @Override
     public void setKey(final String key) {
         this.key.setValue(key);
+    }
+
+    @Override
+    public TextInputFormat getFormat() {
+        return format.getValue();
+    }
+
+    @Override
+    public void setFormat(final TextInputFormat format) {
+        this.format.setValue(format);
+        updatePatternEnabled();
+    }
+
+    @Override
+    public String getPattern() {
+        // Use null for no pattern so an untouched setting isn't seen as a change.
+        final String value = pattern.getValue();
+        return value.isEmpty()
+                ? null
+                : value;
+    }
+
+    @Override
+    public void setPattern(final String pattern) {
+        this.pattern.setValue(pattern);
+    }
+
+    private void updatePatternEnabled() {
+        pattern.setEnabled(format.getValue() == TextInputFormat.PATTERN);
     }
 
     public void onResize() {

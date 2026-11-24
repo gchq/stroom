@@ -19,6 +19,7 @@ package stroom.config.global.impl;
 import stroom.activity.impl.dao.ActivityConfig;
 import stroom.ai.impl.AiConfig;
 import stroom.ai.shared.AskStroomAiConfig;
+import stroom.ai.shared.KeyStoreType;
 import stroom.analytics.impl.AnalyticsConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.aws.s3.impl.S3Config;
@@ -43,7 +44,9 @@ import stroom.contentindex.ContentIndexConfig;
 import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.core.receive.AutoContentCreationConfig;
 import stroom.credentials.impl.CredentialsConfig;
+import stroom.credentials.impl.KeyStoreFileCredentialConfig;
 import stroom.dashboard.impl.DashboardConfig;
+import stroom.dataconnection.impl.DataConnectionConfig;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.DocStoreConfig;
 import stroom.document.asset.impl.DocumentAssetConfig;
@@ -89,6 +92,9 @@ import stroom.util.shared.IsAtomicConfigValue;
 import stroom.util.shared.PropertyPath;
 import stroom.util.time.StroomDuration;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.reflect.TypeToken;
@@ -99,6 +105,7 @@ import io.vavr.Tuple8;
 import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.nio.file.Path;
@@ -584,6 +591,25 @@ class TestConfigMapper {
     }
 
     @Test
+    void testReadOnlyDatabaseValueIgnored() {
+        // XSLT secure mode can only be set in the configuration file.
+        final TestConfig testConfig = new TestConfig();
+        final ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
+        final PropertyPath fullPath = PropertyPath.fromPathString("stroom.pipeline.xslt.secureMode");
+
+        final ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
+        assertThat(configProperty.isEditable()).isFalse();
+        final ConfigProperty decorated = configMapper.decorateDbConfigProperty(copyConfigProperty(configProperty)
+                .copy()
+                .databaseOverrideValue("false")
+                .build());
+
+        assertThat(decorated.hasDatabaseOverride()).isFalse();
+        assertThat(configMapper.getConfigObject(TestConfig.class).getPipelineConfig().getXsltConfig().isSecureMode())
+                .isTrue();
+    }
+
+    @Test
     void update_enumList() {
         final TestConfig testConfig = new TestConfig();
         final ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
@@ -816,6 +842,84 @@ class TestConfigMapper {
     }
 
     @Test
+    void testAtomicConfigList() {
+        // A list of atomic values is serialised as a JSON array, which must be read back as one
+        final PropertyPath propPath = AppConfig.ROOT_PROPERTY_PATH
+                .merge(AppConfig.PROP_NAME_CREDENTIALS)
+                .merge("keyStoreFiles");
+        final List<KeyStoreFileCredentialConfig> keyStoreFiles = List.of(
+                new KeyStoreFileCredentialConfig("keystore 1", KeyStoreType.JKS, "/certs/one.jks", "pass|word,[1]"),
+                new KeyStoreFileCredentialConfig("keystore 2", null, "/certs/two.p12", null));
+        final AppConfig appConfig = AbstractConfigUtil.mutateTree(
+                new AppConfig(),
+                AppConfig.ROOT_PROPERTY_PATH,
+                Map.of(propPath, keyStoreFiles));
+
+        final ConfigMapper configMapper = new ConfigMapper(appConfig, AppConfig::new);
+
+        assertThat(configMapper.getConfigObject(CredentialsConfig.class).getKeyStoreFiles())
+                .isEqualTo(keyStoreFiles);
+
+        final ConfigProperty configProperty = configMapper.getGlobalProperty(propPath).orElseThrow();
+        assertThat(configProperty.isPassword())
+                .isTrue();
+        assertThat(configProperty.isEditable())
+                .isFalse();
+        final String yamlValue = configProperty.getYamlOverrideValue().getValue();
+        assertThat(configMapper.convertValue(propPath, yamlValue))
+                .isEqualTo(keyStoreFiles);
+    }
+
+    @Test
+    void testPasswordValueIsNotLoggedWhenItChanges() {
+        final PropertyPath credentialsPath = AppConfig.ROOT_PROPERTY_PATH.merge(AppConfig.PROP_NAME_CREDENTIALS);
+        final PropertyPath keyStoreFilesPath = credentialsPath.merge("keyStoreFiles");
+        final PropertyPath allowedDirsPath = credentialsPath.merge("allowedKeyStoreFileDirs");
+        final ConfigMapper configMapper = new ConfigMapper(
+                createKeyStoreFilesAppConfig(keyStoreFilesPath, allowedDirsPath, "first-pass-phrase", "/dir1"),
+                AppConfig::new);
+        // Both sets of overrides must be initialised before changes are logged
+        configMapper.decorateAllDbConfigProperties(List.of());
+
+        final Logger logger = (Logger) LoggerFactory.getLogger(ConfigMapper.class);
+        final ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            configMapper.updateConfigFromYaml(
+                    createKeyStoreFilesAppConfig(keyStoreFilesPath, allowedDirsPath, "second-pass-phrase", "/dir2"));
+        } finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+
+        final String logged = appender.list.stream()
+                .map(ILoggingEvent::getFormattedMessage)
+                .collect(Collectors.joining("\n"));
+        assertThat(logged)
+                .contains(keyStoreFilesPath.toString())
+                .doesNotContain("first-pass-phrase")
+                .doesNotContain("second-pass-phrase")
+                // Values of other properties are still logged
+                .contains("/dir1")
+                .contains("/dir2");
+    }
+
+    private static AppConfig createKeyStoreFilesAppConfig(final PropertyPath keyStoreFilesPath,
+                                                          final PropertyPath allowedDirsPath,
+                                                          final String keyStorePassword,
+                                                          final String allowedDir) {
+        return AbstractConfigUtil.mutateTree(
+                new AppConfig(),
+                AppConfig.ROOT_PROPERTY_PATH,
+                Map.of(keyStoreFilesPath,
+                        List.of(new KeyStoreFileCredentialConfig(
+                                "keystore 1", null, "/certs/one.p12", keyStorePassword)),
+                        allowedDirsPath,
+                        List.of(allowedDir)));
+    }
+
+    @Test
     void testAtomicConfig_nonNull() {
         final PropertyPath atomicConfigPropPath = TestConfig.ROOT_PROPERTY_PATH
                 .merge(TestConfig.PROP_NAME_ATOMIC_CONFIG);
@@ -1037,6 +1141,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
                 @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
                 @JsonProperty(PROP_NAME_SESSION) final SessionConfig sessionConfig,
+                @JsonProperty(PROP_NAME_DATA_CONNECTION) final DataConnectionConfig dataConnectionConfig,
                 @JsonProperty(PROP_NAME_SQL_STORE) final SqlStoreConfig sqlStoreConfig,
                 @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
                 @JsonProperty(PROP_NAME_PLANB) final PlanBConfig planBConfig,
@@ -1109,6 +1214,7 @@ class TestConfigMapper {
                     sessionCookieConfig,
                     sessionConfig,
                     solrConfig,
+                    dataConnectionConfig,
                     sqlStoreConfig,
                     planBConfig,
                     statisticsConfig,

@@ -70,16 +70,18 @@ public class S3Appender extends AbstractAppender {
     @SuppressWarnings("ConstantValue")
     private static final boolean DEFAULT_USE_COMPRESSION_PROP_VALUE_BOOLEAN = Boolean.parseBoolean(
             DEFAULT_USE_COMPRESSION_PROP_VALUE);
+
     private static final String DEFAULT_COMPRESSION_METHOD_PROP_VALUE = CompressorStreamFactory.GZIP;
 
+    public static final String DEFAULT_ALLOW_OVERWRITE = "true";
+    @SuppressWarnings("ConstantValue")
+    public static final boolean DEFAULT_ALLOW_OVERWRITE_BOOLEAN = Boolean.parseBoolean(DEFAULT_ALLOW_OVERWRITE);
+
     private final S3AppenderTempDir s3AppenderTempDir;
-    //    private final TemplateCache templateCache;
     private final OutputFactory outputFactory;
     private final S3ClientConfigCache s3ClientConfigCache;
     private final MetaDataHolder metaDataHolder;
     private final MetaHolder metaHolder;
-    //    private final S3MetaFieldsMapper s3MetaFieldsMapper;
-//    private final S3ClientPool s3ClientPool;
     private final S3ManagerFactory s3ManagerFactory;
     private DocRef s3ConfigRef;
     private String bucketNamePattern;
@@ -89,26 +91,21 @@ public class S3Appender extends AbstractAppender {
     private String contentDisposition;
     private String contentEncoding;
     private String contentType;
+    private boolean allowOverwrite = DEFAULT_ALLOW_OVERWRITE_BOOLEAN;
 
     @Inject
     public S3Appender(final ErrorReceiverProxy errorReceiverProxy,
                       final MetaDataHolder metaDataHolder,
                       final MetaHolder metaHolder,
                       final S3AppenderTempDir s3AppenderTempDir,
-//                      final TemplateCache templateCache,
                       final S3ClientConfigCache s3ClientConfigCache,
-//                      final S3MetaFieldsMapper s3MetaFieldsMapper,
-//                      final S3ClientPool s3ClientPool,
                       final S3ManagerFactory s3ManagerFactory) {
         super(errorReceiverProxy);
         this.s3AppenderTempDir = s3AppenderTempDir;
-//        this.templateCache = templateCache;
         this.s3ClientConfigCache = s3ClientConfigCache;
         this.metaDataHolder = metaDataHolder;
         this.metaHolder = metaHolder;
         this.outputFactory = new OutputFactory(metaDataHolder);
-//        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
-//        this.s3ClientPool = s3ClientPool;
         this.s3ManagerFactory = s3ManagerFactory;
 
         // Ensure outputStreamSupport has the defaults for S3Appender
@@ -176,7 +173,8 @@ public class S3Appender extends AbstractAppender {
                                 meta,
                                 attributeMap,
                                 uploadProperties,
-                                tempFile);
+                                tempFile,
+                                allowOverwrite);
 
                         LOGGER.debug(
                                 "createOutput() - Uploaded tempFile '{}' to S3, meta: {}, bucketNamePattern: '{}', " +
@@ -290,5 +288,13 @@ public class S3Appender extends AbstractAppender {
             displayPriority = 12)
     public void setContentType(final String contentType) {
         this.contentType = contentType;
+    }
+
+    @PipelineProperty(
+            description = "Whether to allow overwriting of existing objects.",
+            defaultValue = DEFAULT_ALLOW_OVERWRITE,
+            displayPriority = 13)
+    public void setAllowOverwrite(final boolean allowOverwrite) {
+        this.allowOverwrite = allowOverwrite;
     }
 }

@@ -310,6 +310,11 @@ public class TemplateUtil {
             // Always true for this impl
             return true;
         }
+
+        @Override
+        public String toString() {
+            return "AllStaticTemplateImpl: '" + template + "'";
+        }
     }
 
 
@@ -321,7 +326,6 @@ public class TemplateUtil {
      * </p>
      */
     public static class TemplateImpl implements Template {
-
 
         /**
          * Here for debugging and toString

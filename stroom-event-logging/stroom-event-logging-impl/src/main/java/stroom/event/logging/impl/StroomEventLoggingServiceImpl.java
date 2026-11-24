@@ -723,6 +723,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         //TODO consider replacing or augmenting this hard coding
         // with a mechanism to allow properties to be selected for redaction, e.g. using annotations
         return propNameLowercase.endsWith("password") ||
+               propNameLowercase.endsWith("passphrase") ||
                propNameLowercase.endsWith("secret") ||
                propNameLowercase.endsWith("token") ||
                propNameLowercase.endsWith("nonce") ||

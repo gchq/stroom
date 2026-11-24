@@ -50,7 +50,12 @@ public class ElasticIndexPresenter extends DocTabPresenter<LinkTabPanelView, Ela
         super(eventBus, view);
 
         addTab(SETTINGS, new DocTabProvider<>(indexSettingsPresenterProvider::get));
-        addTab(FIELDS, new DocTabProvider<>(indexFieldListPresenterProvider::get));
+        addTab(FIELDS, new DocTabProvider<>(() -> {
+            final ElasticIndexFieldListPresenter presenter = indexFieldListPresenterProvider.get();
+            // Refreshing the field list needs any unsaved cluster or index name from the Settings tab
+            presenter.setCurrentDocSupplier(() -> write(getEntity()));
+            return presenter;
+        }));
         addTab(DOCUMENTATION, new MarkdownTabProvider<ElasticIndexDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,

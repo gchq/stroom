@@ -31,14 +31,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Singleton
-public class ApiKeyHasherFactoryImpl implements ApiKeyHasherFactory {
+class ApiKeyHasherFactoryImpl implements ApiKeyHasherFactory {
 
-    private final HashFunctionFactory hashFunctionFactory;
     private final Map<HashAlgorithm, ApiKeyHasher> apiKeyHasherMap;
 
     @Inject
     public ApiKeyHasherFactoryImpl(final HashFunctionFactory hashFunctionFactory) {
-        this.hashFunctionFactory = hashFunctionFactory;
         this.apiKeyHasherMap = Arrays.stream(HashAlgorithm.values())
                 .map(hashFunctionFactory::getHashFunction)
                 .map(ApiKeyHasherAdapter::new)

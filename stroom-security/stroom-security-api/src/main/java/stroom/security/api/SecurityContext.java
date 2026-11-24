@@ -76,15 +76,16 @@ public interface SecurityContext extends CommonSecurityContext, HasAuditableUser
      */
     boolean isUseAsRead();
 
-    /**
-     * Check if the user associated with this security context has the requested
-     * permission on the document specified by the document docRef.
-     *
-     * @param docRef     The docRef of the document.
-     * @param permission The permission we are checking for.
-     * @return True if the user associated with the security context has the
-     * requested permission.
-     */
+    /// Check if the user associated with this security context holds the requested
+    /// permission (**OR** a higher permission) on the document specified by the document docRef.
+    ///
+    /// E.g. if the required permission is VIEW and this user holds DELETE (DELETE is a higher perm
+    /// than VIEW), it will return true.
+    ///
+    /// @param docRef     The docRef of the document.
+    /// @param permission The permission we are checking for.
+    /// @return True if the user associated with the security context has the
+    /// requested permission.
     boolean hasDocumentPermission(DocRef docRef, DocumentPermission permission);
 
     /**

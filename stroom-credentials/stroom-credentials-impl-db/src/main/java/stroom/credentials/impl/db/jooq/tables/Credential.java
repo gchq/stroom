@@ -16,13 +16,14 @@ import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
 import org.jooq.SQL;
 import org.jooq.Schema;
-import org.jooq.Select;
 import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableLike;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -106,6 +107,11 @@ public class Credential extends TableImpl<CredentialRecord> {
      * The column <code>stroom.credential.key_store</code>.
      */
     public final TableField<CredentialRecord, byte[]> KEY_STORE = createField(DSL.name("key_store"), SQLDataType.BLOB, this, "");
+
+    /**
+     * The column <code>stroom.credential.key_store_path</code>.
+     */
+    public final TableField<CredentialRecord, String> KEY_STORE_PATH = createField(DSL.name("key_store_path"), SQLDataType.VARCHAR(1000), this, "");
 
     private Credential(Name alias, Table<CredentialRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -195,7 +201,7 @@ public class Credential extends TableImpl<CredentialRecord> {
      */
     @Override
     public Credential where(Condition condition) {
-        return new Credential(getQualifiedName(), aliased() ? this : null, null, condition);
+        return new Credential(getQualifiedName(), aliased() ? this : null, null, Internal.condition(this, condition));
     }
 
     /**
@@ -262,7 +268,7 @@ public class Credential extends TableImpl<CredentialRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public Credential whereExists(Select<?> select) {
+    public Credential whereExists(TableLike<?> select) {
         return where(DSL.exists(select));
     }
 
@@ -270,7 +276,7 @@ public class Credential extends TableImpl<CredentialRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public Credential whereNotExists(Select<?> select) {
+    public Credential whereNotExists(TableLike<?> select) {
         return where(DSL.notExists(select));
     }
 }

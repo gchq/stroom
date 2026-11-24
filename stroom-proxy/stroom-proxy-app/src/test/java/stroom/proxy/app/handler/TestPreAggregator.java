@@ -24,6 +24,7 @@ import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.FeedKeyInterner;
 import stroom.proxy.repo.ProxyServices;
 import stroom.test.common.MockMetrics;
+import stroom.test.common.PerformanceTest;
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
 import stroom.test.common.util.test.StroomUnitTest;
@@ -242,6 +243,7 @@ public class TestPreAggregator extends StroomUnitTest {
     /**
      * Using records takes ~x5 as long
      */
+    @PerformanceTest
     @Disabled // manual only
     @Test
     void testPerf() {

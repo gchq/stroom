@@ -19,6 +19,7 @@ package stroom.pathways.impl;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.docstore.api.AbstractDocumentStore;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.StoreFactory;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.security.api.SecurityContext;
@@ -62,5 +63,14 @@ public class PathwaysStoreImpl
                 // Ignore lock deletion failures to avoid failing the document delete itself.
             }
         }
+    }
+
+    @Override
+    protected DependencyRemapFunction<PathwaysDoc> getDependencyRemapFunction() {
+        return (doc, dependencyRemapper) -> doc
+                .copy()
+                .tracesDocRef(dependencyRemapper.remap(doc.getTracesDocRef()))
+                .infoFeed(dependencyRemapper.remap(doc.getInfoFeed()))
+                .build();
     }
 }

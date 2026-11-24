@@ -16,10 +16,20 @@
 
 package stroom.suggestions.api;
 
+import stroom.query.shared.FetchFieldValuesRequest;
 import stroom.query.shared.FetchSuggestionsRequest;
+import stroom.query.shared.FieldValues;
 import stroom.query.shared.Suggestions;
 
 public interface SuggestionsQueryHandler {
 
     Suggestions getSuggestions(final FetchSuggestionsRequest request);
+
+    /// Fetches the most common values of a field, for the value picker of an expression term.
+    ///
+    /// @param request The data source, field, filter and time range.
+    /// @return The most common values, or no values if the data source doesn't provide them.
+    default FieldValues getFieldValues(final FetchFieldValuesRequest request) {
+        return FieldValues.EMPTY;
+    }
 }

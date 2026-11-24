@@ -79,6 +79,8 @@ public class Fields {
             final QueryService queryService = queryServiceProvider.get();
             final Optional<DocRef> optional = Optional.ofNullable(request.getDataSourceRef())
                     .or(() -> queryService.getReferencedDataSource(request.getQuery()));
+            // The fields of a Data Connection are the columns of the SQL in its sql clause.
+            final String nativeQuery = queryService.getReferencedNativeQuery(request.getQuery()).orElse(null);
 
             if (request.getParentPath().isBlank()) {
                 // Figure out if there are children.
@@ -89,7 +91,8 @@ public class Fields {
                             FindFieldCriteria.DEFAULT_SORT_LIST,
                             optional.get(),
                             request.getFilter(),
-                            null);
+                            null,
+                            nativeQuery);
                     hasChildren = !queryService.findFields(criteria).isEmpty();
                 }
 
@@ -108,7 +111,8 @@ public class Fields {
                         FindFieldCriteria.DEFAULT_SORT_LIST,
                         optional.get(),
                         request.getFilter(),
-                        null);
+                        null,
+                        nativeQuery);
                 final ResultPage<QueryField> resultPage = queryService.findFields(criteria);
                 resultPageBuilder.skip(resultPage.getPageStart());
                 resultPage.getValues().forEach(fieldInfo -> {
@@ -134,6 +138,8 @@ public class Fields {
             final QueryService queryService = queryServiceProvider.get();
             final Optional<DocRef> optDataSourceRef = Optional.ofNullable(request.getDataSourceRef())
                     .or(() -> queryService.getReferencedDataSource(request.getText()));
+            // The fields of a Data Connection are the columns of the SQL in its sql clause.
+            final String nativeQuery = queryService.getReferencedNativeQuery(request.getText()).orElse(null);
 
             optDataSourceRef.ifPresent(dataSourceRef -> {
 
@@ -159,7 +165,8 @@ public class Fields {
                                     FindFieldCriteria.DEFAULT_SORT_LIST,
                                     dataSourceRef,
                                     pattern,
-                                    queryable))
+                                    queryable,
+                                    nativeQuery))
                             .getValues();
 
                     // Score the matching fields so we get the best matches
@@ -185,7 +192,8 @@ public class Fields {
                                     FindFieldCriteria.DEFAULT_SORT_LIST,
                                     dataSourceRef,
                                     null,
-                                    queryable))
+                                    queryable,
+                                    nativeQuery))
                             .getValues();
                     LOGGER.debug(() -> LogUtil.message("Found {} match results using offset {}, maxCompletions {}",
                             fields.size(), maxCompletions));

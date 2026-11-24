@@ -33,6 +33,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
+import java.util.List;
+
 @Tag(name = "Elastic Indices")
 @Path("/elasticIndex" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
@@ -62,4 +64,29 @@ public interface ElasticIndexResource extends RestResource, DirectRestService, F
             operationId = "testElasticIndex")
     ElasticIndexTestResponse testIndex(
             @Parameter(description = "elasticIndexDoc", required = true) ElasticIndexDoc elasticIndexDoc);
+
+    /// Reads the fields of an Elasticsearch index doc from the index mapping, using the doc's cluster and index name
+    /// as given, which may not yet be saved.
+    ///
+    /// @param elasticIndexDoc the index doc
+    /// @return the fields in the index mapping
+    @POST
+    @Path("/fields")
+    @Operation(
+            summary = "Read the fields of an Elasticsearch index doc from its index mapping",
+            operationId = "fetchElasticIndexFields")
+    List<ElasticIndexField> fetchFields(
+            @Parameter(description = "elasticIndexDoc", required = true) ElasticIndexDoc elasticIndexDoc);
+
+    /// Samples documents of an Elasticsearch index doc to give statistics about one of its fields.
+    ///
+    /// @param request the field, sample size, time range and, for a virtual field, its groups
+    /// @return statistics about the field
+    @POST
+    @Path("/fieldStats")
+    @Operation(
+            summary = "Fetch sampled statistics about a field of an Elasticsearch index doc",
+            operationId = "fetchElasticIndexFieldStats")
+    ElasticFieldStats fetchFieldStats(
+            @Parameter(description = "request", required = true) ElasticFieldStatsRequest request);
 }

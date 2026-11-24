@@ -403,7 +403,14 @@ public final class S3ZstdTarget implements Target {
             }
         });
 
-        s3Manager.upload(s3Bucket, s3Key, meta, s3MetaData, DEFAULT_UPLOAD_PROPERTIES, tempFilePath);
+        s3Manager.upload(
+                s3Bucket,
+                s3Key,
+                meta,
+                s3MetaData,
+                DEFAULT_UPLOAD_PROPERTIES,
+                tempFilePath,
+                false);
 
         // TODO store the uploaded key in an instance variable so that the close() method on the parent
         //  can gather them all and write them all to the fs_meta_s3_location table in one batch.

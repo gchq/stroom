@@ -92,6 +92,7 @@ public class IndexVolumeGroupEditPresenter
         rescanButton.setTitle("Rescan Volumes");
 
         view.setListView(volumeStatusListPresenter.getView());
+        volumeStatusListPresenter.setDataHandler(this::showMixedWarning);
         delayedUpdate = new DelayedUpdate(volumeStatusListPresenter::refresh);
     }
 
@@ -174,6 +175,20 @@ public class IndexVolumeGroupEditPresenter
                         }
                     });
         }
+    }
+
+    // Warn when the group holds both kinds of volume, as its shards then differ in which nodes can read them.
+    private void showMixedWarning(final List<IndexVolume> volumes) {
+        boolean hasShared = false;
+        boolean hasLocal = false;
+        for (final IndexVolume volume : volumes) {
+            if (volume.isShared()) {
+                hasShared = true;
+            } else {
+                hasLocal = true;
+            }
+        }
+        getView().setMixedWarningVisible(hasShared && hasLocal);
     }
 
     private void enableButtons() {
@@ -293,6 +308,11 @@ public class IndexVolumeGroupEditPresenter
         String getName();
 
         void setName(String name);
+
+        /// Shows or hides the warning that the group holds both shared and local volumes.
+        ///
+        /// @param visible True to show the warning.
+        void setMixedWarningVisible(boolean visible);
 
         void setListView(View listView);
     }

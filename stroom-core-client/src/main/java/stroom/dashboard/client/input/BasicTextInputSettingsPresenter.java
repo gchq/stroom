@@ -16,11 +16,14 @@
 
 package stroom.dashboard.client.input;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.input.BasicTextInputSettingsPresenter.BasicTextInputSettingsView;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.BasicSettingsView;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TextInputComponentSettings;
+import stroom.dashboard.shared.TextInputFormat;
+import stroom.dashboard.shared.TextInputValidator;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -50,6 +53,8 @@ public class BasicTextInputSettingsPresenter
         final TextInputComponentSettings settings = (TextInputComponentSettings) componentConfig.getSettings();
         if (settings != null) {
             getView().setKey(settings.getKey());
+            getView().setFormat(settings.getFormat());
+            getView().setPattern(settings.getPattern());
         }
     }
 
@@ -65,7 +70,19 @@ public class BasicTextInputSettingsPresenter
         return settings
                 .copy()
                 .key(getView().getKey())
+                .format(getView().getFormat())
+                .pattern(getView().getPattern())
                 .build();
+    }
+
+    @Override
+    public boolean validate() {
+        if (getView().getFormat() == TextInputFormat.PATTERN
+            && !TextInputValidator.isValidPattern(getView().getPattern())) {
+            AlertEvent.fireError(this, "The regex pattern is missing or is not a valid regular expression.", null);
+            return false;
+        }
+        return super.validate();
     }
 
     @Override
@@ -77,7 +94,9 @@ public class BasicTextInputSettingsPresenter
         final TextInputComponentSettings oldSettings = (TextInputComponentSettings) componentConfig.getSettings();
         final TextInputComponentSettings newSettings = writeSettings(oldSettings);
 
-        final boolean equal = Objects.equals(oldSettings.getKey(), newSettings.getKey());
+        final boolean equal = Objects.equals(oldSettings.getKey(), newSettings.getKey()) &&
+                Objects.equals(oldSettings.getFormat(), newSettings.getFormat()) &&
+                Objects.equals(oldSettings.getPattern(), newSettings.getPattern());
 
         return !equal;
     }
@@ -87,5 +106,13 @@ public class BasicTextInputSettingsPresenter
         String getKey();
 
         void setKey(String key);
+
+        TextInputFormat getFormat();
+
+        void setFormat(TextInputFormat format);
+
+        String getPattern();
+
+        void setPattern(String pattern);
     }
 }

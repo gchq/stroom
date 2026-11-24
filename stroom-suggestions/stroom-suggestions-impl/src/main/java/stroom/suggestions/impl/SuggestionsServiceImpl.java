@@ -16,7 +16,9 @@
 
 package stroom.suggestions.impl;
 
+import stroom.query.shared.FetchFieldValuesRequest;
 import stroom.query.shared.FetchSuggestionsRequest;
+import stroom.query.shared.FieldValues;
 import stroom.query.shared.Suggestions;
 import stroom.security.api.SecurityContext;
 import stroom.suggestions.api.SuggestionsQueryHandler;
@@ -59,6 +61,25 @@ public class SuggestionsServiceImpl implements SuggestionsService {
                 } else {
                     LOGGER.debug("Suggestions provider not registered for type: {}", dataSourceType);
                     return Suggestions.EMPTY;
+                }
+            } else {
+                throw new RuntimeException("Data source type not defined");
+            }
+        });
+    }
+
+    @Override
+    public FieldValues fetchFieldValues(final FetchFieldValuesRequest request) {
+        final String dataSourceType = request.getDataSource().getType();
+
+        return securityContext.secureResult(() -> {
+            if (dataSourceType != null) {
+                if (providerMap.containsKey(dataSourceType)) {
+                    final SuggestionsQueryHandler queryHandler = providerMap.get(dataSourceType).get();
+                    return queryHandler.getFieldValues(request);
+                } else {
+                    LOGGER.debug("Suggestions provider not registered for type: {}", dataSourceType);
+                    return FieldValues.EMPTY;
                 }
             } else {
                 throw new RuntimeException("Data source type not defined");

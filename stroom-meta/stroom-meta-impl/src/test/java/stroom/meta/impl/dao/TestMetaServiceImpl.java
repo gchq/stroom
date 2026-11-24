@@ -49,6 +49,7 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.MockMetricsModule;
+import stroom.test.common.PerformanceTest;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.collections.BatchingCollector;
 import stroom.util.date.DateUtil;
@@ -755,6 +756,7 @@ class TestMetaServiceImpl {
     /**
      * Seeing which execution timer was faster
      */
+    @PerformanceTest
     @Disabled
     @Test
     void testLogExecutionTime() {

@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="basicListInputSettingsId" label="Id">
@@ -12,5 +13,13 @@
         <form:FormGroup identity="basicListInputSettingsName" label="Key">
             <g:TextBox ui:field="key" addStyleNames="w-100"/>
         </form:FormGroup>
+        <form:FormGroup identity="basicTextInputSettingsFormat" label="Format"
+                        helpText="The format the entered value must conform to. A value that does not conform is highlighted and is not passed to queries. Date/Time accepts an ISO 8601 date-time or a relative expression such as now()-1d, and provides a date picker.">
+            <l:SelectionBox ui:field="format" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextInputSettingsPattern" label="Regex Pattern"
+                        helpText="The regular expression the entered value must match in full. Only used when the format is Regex Pattern.">
+            <g:TextBox ui:field="pattern" addStyleNames="w-100"/>
+        </form:FormGroup>
     </g:FlowPanel>
-</ui:UiBinder> 
+</ui:UiBinder>

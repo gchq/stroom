@@ -17,11 +17,16 @@
 package stroom.query.language.token;
 
 import stroom.query.api.token.Token;
+import stroom.query.api.token.TokenType;
+
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestTokeniser extends AbstractQueryTest {
 
@@ -42,5 +47,274 @@ public class TestTokeniser extends AbstractQueryTest {
             token.append(sb, false, 0);
         }
         return sb.toString();
+    }
+
+    // The text of the only join keyword token in the input.
+    private static String joinText(final String input) {
+        final List<Token> joins = withoutWhitespace(input).stream()
+                .filter(token -> TokenType.JOIN.equals(token.getTokenType()))
+                .toList();
+        assertThat(joins).as(input).hasSize(1);
+        return joins.getFirst().getText();
+    }
+
+    private static List<Token> withoutWhitespace(final String input) {
+        return Tokeniser.parse(input)
+                .stream()
+                .filter(token -> !TokenType.WHITESPACE.equals(token.getTokenType()))
+                .toList();
+    }
+
+    @Test
+    void tripleQuotedStringIsTakenAsWritten() {
+        // Double quotes, single quotes, backslashes and new lines need no escaping.
+        final List<Token> tokens = withoutWhitespace("""
+                from x sql \"""select "a\\b", 'it''s'
+                from t\"""
+                """);
+
+        assertThat(tokens).extracting(Token::getTokenType)
+                .containsExactly(TokenType.FROM, TokenType.STRING, TokenType.SQL, TokenType.DOUBLE_QUOTED_STRING);
+        assertThat(tokens.get(3).getUnescapedText()).isEqualTo("select \"a\\b\", 'it''s'\nfrom t");
+        assertThat(tokens.get(3).getText()).startsWith("\"\"\"select").endsWith("from t\"\"\"");
+    }
+
+    @Test
+    void keywordsAndCommentsInsideTripleQuotesAreText() {
+        final List<Token> tokens = withoutWhitespace("from x sql \"\"\"select a // b where c\"\"\" select a");
+
+        assertThat(tokens).extracting(Token::getTokenType).containsExactly(
+                TokenType.FROM, TokenType.STRING,
+                TokenType.SQL, TokenType.DOUBLE_QUOTED_STRING,
+                TokenType.SELECT, TokenType.STRING);
+    }
+
+    @Test
+    void emptyTripleQuotedString() {
+        final List<Token> tokens = withoutWhitespace("from x sql \"\"\"\"\"\"");
+
+        assertThat(tokens.get(3).getTokenType()).isEqualTo(TokenType.DOUBLE_QUOTED_STRING);
+        assertThat(tokens.get(3).getUnescapedText()).isEmpty();
+    }
+
+    @Test
+    void unclosedTripleQuoteIsNotAString() {
+        final List<Token> tokens = withoutWhitespace("sql \"\"\"select a");
+
+        assertThat(tokens).extracting(Token::getTokenType).doesNotContain(TokenType.DOUBLE_QUOTED_STRING);
+    }
+
+    @Test
+    void ordinaryDoubleQuotedStringsAreUnchanged() {
+        final List<Token> tokens = withoutWhitespace("from \"my \\\"view\\\"\" select \"\"");
+
+        assertThat(tokens.get(1).getUnescapedText()).isEqualTo("my \"view\"");
+        assertThat(tokens.get(3).getTokenType()).isEqualTo(TokenType.DOUBLE_QUOTED_STRING);
+        assertThat(tokens.get(3).getUnescapedText()).isEmpty();
+    }
+
+    @Test
+    void textCanEndWithAQuote() {
+        // SQL often ends with a quoted identifier; the last three quotes of a run close the string.
+        final List<Token> tokens = withoutWhitespace("from x sql \"\"\"select * from \"events\"\"\"\" select a");
+
+        assertThat(tokens.get(3).getTokenType()).isEqualTo(TokenType.DOUBLE_QUOTED_STRING);
+        assertThat(tokens.get(3).getUnescapedText()).isEqualTo("select * from \"events\"");
+        assertThat(tokens.get(4).getTokenType()).isEqualTo(TokenType.SELECT);
+    }
+
+    @Test
+    void tripleQuoteInsideOtherQuotesOrCommentsIsText() {
+        final List<Token> tokens = withoutWhitespace("from x where a = ' \"\"\" ' // \"\"\"\nselect a");
+
+        assertThat(tokens).extracting(Token::getTokenType).doesNotContain(TokenType.DOUBLE_QUOTED_STRING);
+        assertThat(tokens).extracting(Token::getTokenType).contains(TokenType.SINGLE_QUOTED_STRING, TokenType.SELECT);
+    }
+
+    @Test
+    void sqlIsOnlyAKeywordStraightAfterFromAndTheDataSource() {
+        // A field or data source named sql elsewhere keeps working.
+        assertThat(withoutWhitespace("from x where sql = 1 select sql"))
+                .extracting(Token::getTokenType)
+                .doesNotContain(TokenType.SQL);
+        assertThat(withoutWhitespace("from x eval sql = 1 select sql"))
+                .extracting(Token::getTokenType)
+                .doesNotContain(TokenType.SQL);
+        assertThat(withoutWhitespace("from sql select a"))
+                .extracting(Token::getTokenType)
+                .containsExactly(TokenType.FROM, TokenType.STRING, TokenType.SELECT, TokenType.STRING);
+    }
+
+    @Test
+    void sqlAfterTheDataSourceAndACommentIsAKeyword() {
+        assertThat(withoutWhitespace("from \"my source\" // the data\nsql 'select 1' select a"))
+                .extracting(Token::getTokenType)
+                .contains(TokenType.SQL);
+    }
+
+    @Test
+    void openTripleQuotedStringIsFound() {
+        // As it is while SQL is typed, so the query editor offers no StroomQL help inside it.
+        assertThat(Tokeniser.endsInsideTripleQuotedString("from x sql \"\"\"select a from ")).isTrue();
+        assertThat(Tokeniser.endsInsideTripleQuotedString("from x sql \"\"\"select a\"\"\" ")).isFalse();
+        assertThat(Tokeniser.endsInsideTripleQuotedString("from x where a = 'b ")).isFalse();
+        assertThat(Tokeniser.endsInsideTripleQuotedString("")).isFalse();
+        assertThat(Tokeniser.endsInsideTripleQuotedString(null)).isFalse();
+    }
+
+    @Test
+    void joinKindIsPartOfTheJoinToken() {
+        final List<Token> tokens = withoutWhitespace("from x left join y on a = y.a select a");
+
+        assertThat(tokens)
+                .extracting(Token::getTokenType)
+                .containsExactly(TokenType.FROM, TokenType.STRING,
+                        TokenType.JOIN, TokenType.STRING,
+                        TokenType.ON, TokenType.STRING, TokenType.EQUALS, TokenType.STRING,
+                        TokenType.SELECT, TokenType.STRING);
+        assertThat(tokens.get(2).getText()).isEqualTo("left join");
+        assertThat(withoutWhitespace("from x LEFT\n  OUTER JOIN y on a = y.a").get(2).getText())
+                .isEqualTo("LEFT\n  OUTER JOIN");
+    }
+
+    @Test
+    void everySpellingOfAJoinKindIsOneJoinToken() {
+        for (final String kind : List.of("join", "inner join", "left join", "left outer join",
+                "semi join", "left semi join", "anti join", "left anti join", "right join", "right outer join",
+                "full join", "full outer join")) {
+            final List<Token> tokens = withoutWhitespace("from x " + kind + " y on a = y.a select a");
+
+            assertThat(tokens)
+                    .as(kind)
+                    .extracting(Token::getTokenType)
+                    .startsWith(TokenType.FROM, TokenType.STRING, TokenType.JOIN, TokenType.STRING, TokenType.ON);
+            assertThat(tokens.get(2).getText()).as(kind).isEqualTo(kind);
+        }
+    }
+
+    @Test
+    void oldAndUnknownJoinKindsAreNotPartOfTheJoinToken() {
+        // 'keep join' and 'drop join' were renamed before joins were released, so they are plain words.
+        for (final String kind : List.of("keep", "drop", "cross", "natural")) {
+            assertThat(joinText("from x " + kind + " join y on a = y.a select a")).as(kind).isEqualTo("join");
+        }
+        // 'outer' is only a kind after left, right or full, and semi and anti only after left.
+        assertThat(joinText("from x inner outer join y on a = y.a")).isEqualTo("join");
+        assertThat(joinText("from x right semi join y on a = y.a")).isEqualTo("semi join");
+    }
+
+    @Test
+    void logicalOperatorsAfterABracketedQueryBelongToTheClauseAroundIt() {
+        // The select in the brackets ends at the closing bracket, so 'and' is in where again.
+        assertThat(withoutWhitespace("from x where a in (from y select b) and c = 1 or not d = 2"))
+                .extracting(Token::getTokenType)
+                .contains(TokenType.AND, TokenType.OR, TokenType.NOT);
+        // Inside the brackets, 'and' is in the bracketed query's own where.
+        assertThat(withoutWhitespace("from x where exists (from y where b = x.b and c = 1)"))
+                .extracting(Token::getTokenType)
+                .containsOnlyOnce(TokenType.AND);
+        // Outside an expression clause, 'and' stays a word.
+        assertThat(withoutWhitespace("from x where (a = 1) select and"))
+                .extracting(Token::getTokenType)
+                .doesNotContain(TokenType.AND);
+        // Straight after a bracket, a word is no more a keyword than it ever was.
+        assertThat(withoutWhitespace("from x where a = f(not) and b = g(or)"))
+                .extracting(Token::getTokenType)
+                .containsOnlyOnce(TokenType.AND)
+                .doesNotContain(TokenType.NOT, TokenType.OR);
+    }
+
+    @Test
+    void dataSourceNamedLikeAJoinKindIsNotPartOfALongerKind() {
+        // 'Left' is the data source, and 'semi join' starts the join line.
+        final List<Token> tokens = withoutWhitespace("from Left semi join y on a = y.a");
+
+        assertThat(tokens)
+                .extracting(Token::getTokenType)
+                .startsWith(TokenType.FROM, TokenType.STRING, TokenType.JOIN, TokenType.STRING, TokenType.ON);
+        assertThat(tokens.get(1).getText()).isEqualTo("Left");
+        assertThat(tokens.get(2).getText()).isEqualTo("semi join");
+    }
+
+    @Test
+    void aliasNamedLikeAJoinKindIsNotPartOfTheKind() {
+        for (final String alias : List.of("Anti", "Semi", "Inner", "Left")) {
+            final List<Token> tokens = withoutWhitespace("from x as " + alias + "\njoin y on a = y.a select a");
+
+            assertThat(tokens).as(alias).extracting(Token::getText).contains(alias);
+            assertThat(joinText("from x as " + alias + "\njoin y on a = y.a select a")).as(alias).isEqualTo("join");
+        }
+        // An alias named like a kind, followed by a kind.
+        assertThat(joinText("from x as Left anti join y on a = y.a")).isEqualTo("anti join");
+        // 'as' only makes an alias of the word straight after it.
+        assertThat(joinText("from x as h left join y on a = y.a")).isEqualTo("left join");
+    }
+
+    @Test
+    void onIsOnlyAKeywordInAJoinLine() {
+        assertThat(withoutWhitespace("from x where on = 1 eval on = 2 select on"))
+                .extracting(Token::getTokenType)
+                .doesNotContain(TokenType.ON);
+        // Only the first on of a join line is a keyword.
+        assertThat(withoutWhitespace("from x join y on a = y.on select a"))
+                .extracting(Token::getTokenType)
+                .containsOnlyOnce(TokenType.ON);
+    }
+
+    @Test
+    void onAfterABracketedJoinIsAKeyword() {
+        // The clauses inside the brackets don't end the join line around them.
+        final List<Token> tokens = withoutWhitespace(
+                "from x join (from y where b = 1 select b) as z on a = z.b and c = z.c select a");
+
+        assertThat(tokens).extracting(Token::getTokenType).containsOnlyOnce(TokenType.ON);
+        // The keys are an expression, so their 'and' is a keyword.
+        assertThat(tokens).extracting(Token::getTokenType).contains(TokenType.AND);
+    }
+
+    @Test
+    void fromStraightAfterABracketIsAKeyword() {
+        assertThat(withoutWhitespace("from (from y select b) as z select b"))
+                .extracting(Token::getTokenType)
+                .startsWith(TokenType.FROM, TokenType.OPEN_BRACKET, TokenType.FROM);
+    }
+
+    @Test
+    void joinIsOnlyAKeywordWhereAJoinLineCanStart() {
+        assertThat(withoutWhitespace("from x where join = 1 eval join = 2 select a, join"))
+                .extracting(Token::getTokenType)
+                .doesNotContain(TokenType.JOIN);
+        assertThat(withoutWhitespace("from x where a = 'b' and join = 1 select join"))
+                .extracting(Token::getTokenType)
+                .doesNotContain(TokenType.JOIN, TokenType.ON);
+        // A misplaced join line stays a keyword, so the parser can say it is out of place.
+        assertThat(withoutWhitespace("from x where a = 'b' left join y on a = y.a"))
+                .extracting(Token::getTokenType)
+                .contains(TokenType.JOIN, TokenType.ON);
+        // After a join line's keys, another join line can start.
+        assertThat(withoutWhitespace("from x join y on a = y.a anti join z on a = z.a select a"))
+                .extracting(Token::getTokenType)
+                .containsSubsequence(TokenType.JOIN, TokenType.ON, TokenType.JOIN, TokenType.ON);
+    }
+
+    @Test
+    void dataSourceNamedLikeAJoinKindIsNotPartOfTheJoin() {
+        final List<Token> tokens = withoutWhitespace("from Left join y on a = y.a");
+
+        assertThat(tokens)
+                .extracting(Token::getTokenType)
+                .startsWith(TokenType.FROM, TokenType.STRING, TokenType.JOIN, TokenType.STRING, TokenType.ON);
+        assertThat(tokens.get(1).getText()).isEqualTo("Left");
+        assertThat(tokens.get(2).getText()).isEqualTo("join");
+        assertThat(withoutWhitespace("from join select a"))
+                .extracting(Token::getTokenType)
+                .containsExactly(TokenType.FROM, TokenType.STRING, TokenType.SELECT, TokenType.STRING);
+    }
+
+    @Test
+    void sqlIsAKeywordAfterAJoinedSource() {
+        assertThat(withoutWhitespace("from x join y as z sql 'select 1' on a = z.a select a"))
+                .extracting(Token::getTokenType)
+                .contains(TokenType.SQL);
     }
 }

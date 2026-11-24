@@ -24,6 +24,7 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
 
@@ -64,17 +65,13 @@ class DocRefFromNameCache implements EntityEvent.Handler, Clearable {
     private List<DocRef> load(final Persistence persistence,
                               final TypeAndName typeAndName) {
         LOGGER.trace("load: {}", typeAndName);
-        try {
-            // Persistence has no permission checks, so no asProcessingUser() needed.
-            // Gets ALL types for this name; type filtering happens at retrieval.
-            final List<DocRef> result = persistence.find(typeAndName.type, typeAndName.name, false);
-            return result != null
-                    ? result
-                    : Collections.emptyList();
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e::getMessage, e);
-            return Collections.emptyList();
-        }
+        // Persistence has no permission checks, so no asProcessingUser() needed.
+        // Gets ALL types for this name; type filtering happens at retrieval.
+        // A failure is thrown rather than returned as an empty list, so it isn't cached as "no such document".
+        final List<DocRef> result = persistence.find(typeAndName.type, typeAndName.name, false);
+        return result != null
+                ? result
+                : Collections.emptyList();
     }
 
     /**
@@ -83,7 +80,16 @@ class DocRefFromNameCache implements EntityEvent.Handler, Clearable {
     List<DocRef> get(final String type, final String name) {
         Objects.requireNonNull(type, "Null type");
         Objects.requireNonNull(name, "Null name");
-        return cache.get(new TypeAndName(type, name)).stream()
+        final List<DocRef> docRefs;
+        try {
+            docRefs = cache.get(new TypeAndName(type, name));
+        } catch (final RuntimeException e) {
+            // The load failed, so nothing was cached and the next lookup tries again.
+            LOGGER.debug(() -> LogUtil.message("Unable to find documents of type {} named '{}': {}",
+                    type, name, LogUtil.exceptionMessage(e)), e);
+            return Collections.emptyList();
+        }
+        return docRefs.stream()
                 .filter(docRef -> type.equals(docRef.getType()))
                 .collect(Collectors.toList());
     }
@@ -96,12 +102,17 @@ class DocRefFromNameCache implements EntityEvent.Handler, Clearable {
     @Override
     public void onChange(final EntityEvent event) {
         if (event != null) {
-            // We don't know the old name on rename/delete, so clear the entire cache.
-            // This is acceptable because entity events are relatively infrequent compared to reads.
-            LOGGER.debug("Clearing all entries due to {}", event);
+            // Invalidate the document's name and, on a rename, its old name, so neither lookup is stale.
+            // If the event doesn't say which names, clear the entire cache. This is acceptable because entity
+            // events are relatively infrequent compared to reads.
+            LOGGER.debug("Invalidating entries due to {}", event);
             final DocRef docRef = event.getDocRef();
             if (NullSafe.allNonNull(docRef, docRef.getType(), docRef.getName())) {
                 cache.invalidate(new TypeAndName(docRef.getType(), docRef.getName()));
+                final DocRef oldDocRef = event.getOldDocRef();
+                if (oldDocRef != null && NullSafe.allNonNull(oldDocRef.getType(), oldDocRef.getName())) {
+                    cache.invalidate(new TypeAndName(oldDocRef.getType(), oldDocRef.getName()));
+                }
             } else {
                 cache.clear();
             }

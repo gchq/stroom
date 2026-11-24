@@ -16,10 +16,18 @@
 
 package stroom.suggestions.api;
 
+import stroom.query.shared.FetchFieldValuesRequest;
 import stroom.query.shared.FetchSuggestionsRequest;
+import stroom.query.shared.FieldValues;
 import stroom.query.shared.Suggestions;
 
 public interface SuggestionsService {
 
     Suggestions fetch(final FetchSuggestionsRequest request);
+
+    /// Fetches the most common values of a field from the handler for the request's data source type.
+    ///
+    /// @param request The data source, field, filter and time range.
+    /// @return The most common values, or no values if the data source type has no handler.
+    FieldValues fetchFieldValues(final FetchFieldValuesRequest request);
 }

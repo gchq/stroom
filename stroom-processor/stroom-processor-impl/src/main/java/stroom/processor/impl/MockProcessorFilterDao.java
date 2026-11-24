@@ -26,12 +26,14 @@ import jakarta.inject.Singleton;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Singleton
 public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
@@ -74,8 +76,8 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
     }
 
     @Override
-    public int logicallyDeleteOldProcessorFilters(final Instant deleteThreshold) {
-        return 0;
+    public Set<String> logicallyDeleteOldProcessorFilters(final Instant deleteThreshold) {
+        return Collections.emptySet();
     }
 
     @Override
@@ -102,6 +104,41 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
     @Override
     public List<ProcessorFilter> fetchByRunAsUser(final String userUuid) {
         return Collections.emptyList();
+    }
+
+    @Override
+    public Set<String> fetchUuidsByProcessorId(final int processorId) {
+        return dao.getMap()
+                .values()
+                .stream()
+                .filter(processorFilter -> processorFilter.getProcessor() != null
+                                           && Objects.equals(processorFilter.getProcessor().getId(), processorId))
+                .map(ProcessorFilter::getUuid)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<String> fetchExistingUuids(final Collection<String> uuids) {
+        return dao.getMap()
+                .values()
+                .stream()
+                .map(ProcessorFilter::getUuid)
+                .filter(uuids::contains)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public List<ProcessorFilter> findWithStaleDependencies(final int currentDependencyVersion,
+                                                           final int afterId,
+                                                           final int limit) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public boolean setDependencyVersion(final int processorFilterId,
+                                        final int filterVersion,
+                                        final int dependencyVersion) {
+        return true;
     }
 
     @Override

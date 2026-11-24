@@ -29,7 +29,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.dropwizard.metrics.healthchecks
-    implementation libs.fastutil.core
+    implementation libs.fastutil
     implementation libs.flyway.mysql
     implementation libs.hikari
     implementation libs.guice

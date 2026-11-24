@@ -45,6 +45,7 @@ dependencies {
     implementation libs.dropwizard.lifecycle
     implementation libs.dropwizard.validation
     implementation libs.eventLogging
+    implementation libs.fastutil
     implementation libs.guice
     implementation libs.http.client
     implementation libs.jackson.annotations

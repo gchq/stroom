@@ -16,6 +16,7 @@
 
 package stroom.util.concurrent;
 
+import stroom.test.common.PerformanceTest;
 import stroom.util.concurrent.UniqueId.NodeType;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
@@ -151,6 +152,7 @@ class TestUniqueIdGenerator {
     /**
      * On a 12 core/24 thread cpu, I get about 4mil ops/sec
      */
+    @PerformanceTest
     @Disabled // Manual perf test only
     @Test
     void testPerf() {

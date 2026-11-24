@@ -16,14 +16,17 @@
 
 package stroom.credentials.impl.dao;
 
+import stroom.ai.shared.KeyStoreType;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.impl.CredentialsDao;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
 import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.FindCredentialRequest;
+import stroom.credentials.shared.KeyStoreFileSecret;
 import stroom.credentials.shared.Secret;
 import stroom.credentials.shared.UsernamePasswordSecret;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
@@ -40,6 +43,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Basic sanity tests for the CredentialsDao.
@@ -125,6 +129,123 @@ public class TestCredentialDaoImpl {
         assertThat(listOfPC.size()).isEqualTo(0);
     }
 
+    /// gh-5815: updating the settings of a credential must leave its secret as it is.
+    @Test
+    void testUpdateCredentialKeepsTheSecret() {
+        final Credential credential = createCred("dummy", "Test creds", 1_000L);
+        final Secret secret = new UsernamePasswordSecret("username", "password");
+        credentialsDao.putStoredSecret(new StoredSecret(credential, secret, null), false);
+
+        credentialsDao.updateCredential(createCred("dummy", "Renamed creds", 2_000L));
+
+        final StoredSecret stored = credentialsDao.getStoredSecretByName("Renamed creds");
+        assertThat(stored).isNotNull();
+        assertThat(stored.secret()).isEqualTo(secret);
+        assertThat(stored.credential().getExpiryTimeMs()).isEqualTo(2_000L);
+        assertThat(stored.credential().getCredentialType()).isEqualTo(CredentialType.USERNAME_PASSWORD);
+        assertThat(credentialsDao.getStoredSecretByName("Test creds")).isNull();
+        assertThat(credentialsDao.updateCredential(createCred("missing", "Missing creds", 2_000L))).isFalse();
+    }
+
+    /// gh-5796: the path of a key store file credential is stored where it can be shown, and is
+    /// kept when the settings are updated.
+    @Test
+    void testKeyStorePath() {
+        final Credential credential = new Credential("file",
+                "File creds",
+                1_000L,
+                1_000L,
+                "admin",
+                "admin",
+                CredentialType.KEY_STORE_FILE,
+                KeyStoreType.PKCS12,
+                "/etc/certs/client.p12",
+                null);
+        final Secret secret = new KeyStoreFileSecret(KeyStoreType.PKCS12, "/etc/certs/client.p12", "changeit");
+        credentialsDao.putStoredSecret(new StoredSecret(credential, secret, null), false);
+
+        assertThat(credentialsDao.getCredentialByUuid("file").getKeyStorePath())
+                .isEqualTo("/etc/certs/client.p12");
+        assertThat(credentialsDao.getStoredSecretByName("File creds").secret())
+                .isEqualTo(secret);
+
+        credentialsDao.updateCredential(new Credential("file",
+                "Renamed file creds",
+                1_000L,
+                2_000L,
+                "admin",
+                "admin",
+                CredentialType.KEY_STORE_FILE,
+                null,
+                null,
+                null));
+        assertThat(credentialsDao.getCredentialByUuid("file").getKeyStorePath())
+                .isEqualTo("/etc/certs/client.p12");
+
+        credentialsDao.updateSecret(new StoredSecret(new Credential(
+                "file",
+                "my cred",
+                null,
+                3_000L,
+                null,
+                "admin",
+                null,
+                KeyStoreType.JKS,
+                "/etc/certs/new.jks",
+                null),
+                new KeyStoreFileSecret(KeyStoreType.JKS, "/etc/certs/new.jks", "changeit"),
+                null));
+        final Credential updated = credentialsDao.getCredentialByUuid("file");
+        assertThat(updated.getKeyStorePath())
+                .isEqualTo("/etc/certs/new.jks");
+        assertThat(updated.getKeyStoreType())
+                .isEqualTo(KeyStoreType.JKS);
+        assertThat(updated.getName())
+                .isEqualTo("Renamed file creds");
+    }
+
+    /// Replacing a secret must not touch the name, so a rename made at the same time is kept.
+    @Test
+    void testUpdateSecretKeepsTheName() {
+        final Credential credential = createCred("dummy", "Test creds", 1_000L);
+        credentialsDao.putStoredSecret(
+                new StoredSecret(credential, new UsernamePasswordSecret("username", "password"), null),
+                false);
+        credentialsDao.updateCredential(createCred("dummy", "Renamed creds", 1_000L));
+
+        final Secret newSecret = new UsernamePasswordSecret("username", "new password");
+        final boolean updated = credentialsDao.updateSecret(
+                new StoredSecret(createCred("dummy", "Test creds", 3_000L), newSecret, null));
+
+        assertThat(updated).isTrue();
+        final StoredSecret stored = credentialsDao.getStoredSecretByUuid("dummy");
+        assertThat(stored.secret()).isEqualTo(newSecret);
+        assertThat(stored.credential().getName()).isEqualTo("Renamed creds");
+        assertThat(stored.credential().getExpiryTimeMs()).isEqualTo(3_000L);
+        assertThat(credentialsDao.updateSecret(
+                new StoredSecret(createCred("missing", "Missing creds", 3_000L), newSecret, null))).isFalse();
+    }
+
+    /// Inserting a credential with a name that is already taken must fail, not re-key the
+    /// existing credential to the new UUID.
+    @Test
+    void testInsertWithTakenNameDoesNotTakeOverTheExistingCredential() {
+        final Secret secret = new UsernamePasswordSecret("username", "password");
+        credentialsDao.putStoredSecret(
+                new StoredSecret(createCred("first", "Test creds", 1_000L), secret, null),
+                false);
+
+        assertThatThrownBy(() -> credentialsDao.putStoredSecret(
+                new StoredSecret(createCred("second", "Test creds", 1_000L),
+                        new UsernamePasswordSecret("other", "other"),
+                        null),
+                false))
+                .isInstanceOf(RuntimeException.class);
+
+        assertThat(credentialsDao.getStoredSecretByUuid("first").secret()).isEqualTo(secret);
+        assertThat(credentialsDao.getStoredSecretByUuid("second")).isNull();
+    }
+
     /**
      * The quick filter queries on a debounce as the user types, so partially typed input is an
      * expected transient state. It must match no rows rather than propagate a parse error.
@@ -154,7 +275,7 @@ public class TestCredentialDaoImpl {
                 null,
                 filter,
                 null,
-                null);
+                DocumentPermission.EDIT);
         return credentialsDao.findCredentialsWithPermissions(request, cred ->
                 new CredentialWithPerms(cred, true, true));
     }
@@ -183,7 +304,7 @@ public class TestCredentialDaoImpl {
                 credentialType == null
                         ? null
                         : Set.of(credentialType),
-                null);
+                DocumentPermission.EDIT);
     }
 
     private ResultPage<CredentialWithPerms> find(final CredentialType credentialType) {

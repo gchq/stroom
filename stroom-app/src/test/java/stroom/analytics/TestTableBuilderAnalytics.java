@@ -40,7 +40,11 @@ import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -92,27 +96,95 @@ class TestTableBuilderAnalytics extends AbstractAnalyticsTest {
         basicTest(query, 9, 2);
     }
 
+    // The test events of user5 are one in each of January, February, March, August and December
+    // 2007, and the last of them to be read is the one in March. A rule judges a window only when it
+    // is closed, so January and February are judged and March, which may still be filling, is not.
     @Test
     void testWindowCount() {
         final String query = """
                 from index_view
                 where UserId = user5
-                window EventTime by 1y advance 1y
+                window EventTime by 1M
+                eval count = count()
                 group by UserId
-                select UserId""";
+                having count > 0
+                select windowStart() as Month, UserId, count""";
         basicTest(query, 9, 3);
+        assertThat(readNewestStream())
+                .contains("2007-01-01T00:00:00.000Z")
+                .contains("2007-02-01T00:00:00.000Z")
+                .doesNotContain("2007-03-01T00:00:00.000Z");
     }
 
+    // The count is written in the having clause, and only January has more events than the month
+    // before it.
     @Test
-    void testWindowCountHaving() {
+    void testWindowHavingExpression() {
         final String query = """
                 from index_view
                 where UserId = user5
-                window EventTime by 1y advance 1y
+                window EventTime by 1M
                 group by UserId
-                having "period0" = 0
-                select UserId""";
+                having count() > 0 and count() >= lag(count(), 1, 0) + 1
+                select windowStart() as Month, UserId, count() as Events""";
         basicTest(query, 9, 2);
+    }
+
+    // The month before January is outside the range of the data, so lag gives its default, where a
+    // month inside the range with no events would give zero.
+    @Test
+    void testWindowLag() {
+        final String query = """
+                from index_view
+                where UserId = user5
+                window EventTime by 1M
+                eval before = lag(count(), 1, -1)
+                group by UserId
+                having before = -1
+                select windowStart() as Month, UserId, before""";
+        basicTest(query, 9, 2);
+    }
+
+    // A row that reads a later window with lead is judged only when that window is closed too.
+    // January reads February, which is closed, and is judged. February reads March, which may still
+    // be filling, and is not.
+    @Test
+    void testWindowLead() {
+        final String query = """
+                from index_view
+                where UserId = user5
+                window EventTime by 1M
+                eval after = lead(count(), 1, -1)
+                group by UserId
+                having count() > 0
+                select windowStart() as Month, UserId, count() as Events, after""";
+        basicTest(query, 9, 2);
+        assertThat(readNewestStream())
+                .contains("2007-01-01T00:00:00.000Z")
+                .doesNotContain("2007-02-01T00:00:00.000Z");
+    }
+
+    // A detection holds each column of the select clause once, and none of the hidden columns that
+    // the window and having clauses add.
+    @Test
+    void testWindowDetectionValuesAreNotDuplicated() {
+        final String query = """
+                from index_view
+                where UserId = user5
+                window EventTime by 1M
+                eval before = lag(count(), 1, 0)
+                group by UserId
+                having count() > before and before = 0
+                select windowStart() as Month, UserId, count() as Events, before""";
+        basicTest(query, 9, 2);
+
+        final List<String> names = new ArrayList<>();
+        final String detections = readNewestStream();
+        final Matcher matcher = Pattern.compile("<value name=\"([^\"]*)\">").matcher(detections);
+        while (matcher.find()) {
+            names.add(matcher.group(1));
+        }
+        assertThat(names).as(detections).containsExactly("Month", "UserId", "Events", "before");
     }
 
     /**

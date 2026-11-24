@@ -324,6 +324,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.dataconnection.impl.DataConnectionConfig getDataConnectionConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.dataconnection.impl.DataConnectionConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.feed.impl.FeedConfig getFeedConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(

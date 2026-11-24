@@ -40,6 +40,7 @@ import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
 import stroom.test.CommonTestControl;
 import stroom.test.ContentStoreTestSetup;
+import stroom.test.common.PerformanceTest;
 import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
@@ -66,6 +67,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.sql.DataSource;
 
+@PerformanceTest
 class TestInjectionPerformance {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestInjectionPerformance.class);

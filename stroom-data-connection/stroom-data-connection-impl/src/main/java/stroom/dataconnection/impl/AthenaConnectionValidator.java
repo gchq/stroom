@@ -1,0 +1,117 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.dataconnection.impl;
+
+import stroom.dataconnection.shared.AthenaConnectionSettings;
+import stroom.util.shared.NullSafe;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+
+/// Checks the Amazon Athena settings of a Data Connection against the administrator's controls in
+/// [DataConnectionConfig].
+///
+/// The administrator's controls are:
+///
+/// - The region and workgroup, written `region/workgroup`, must match one of the
+///   `allowedAthenaWorkGroups` patterns, as the workgroup carries the data scan limit.
+/// - An output location, which every query writes its full result to, must match one of the
+///   `allowedAthenaOutputLocations` patterns. With none, documents may not set one.
+/// - A document must name a credential unless `allowDefaultAwsCredentials` lets it use Stroom's
+///   own AWS identity, which any document creator could otherwise use.
+///
+/// It is used when a document is saved, when its connection is tested and before each query.
+public final class AthenaConnectionValidator {
+
+    // Such as 'eu-west-2', 'us-gov-west-1' or 'cn-north-1'.
+    private static final Pattern REGION_PATTERN = Pattern.compile("^[a-z]{2}(-[a-z]+)+-\\d+$");
+
+    private AthenaConnectionValidator() {
+        // Static methods only.
+    }
+
+    /// Finds every way the settings break the administrator's controls.
+    ///
+    /// @param settings The Athena settings to check; `null` is reported as a missing region.
+    /// @param config   The administrator's controls.
+    /// @return A message per problem, or an empty list if the settings may be used.
+    public static List<String> findProblems(final AthenaConnectionSettings settings,
+                                            final DataConnectionConfig config) {
+        final List<String> problems = new ArrayList<>();
+        final String region = NullSafe.get(settings, AthenaConnectionSettings::getRegion);
+        if (NullSafe.isBlankString(region)) {
+            problems.add("No AWS region has been set.");
+            return problems;
+        }
+        if (!REGION_PATTERN.matcher(region.trim()).matches()) {
+            problems.add("'" + region + "' is not an AWS region, such as eu-west-2.");
+        }
+
+        final String workGroup = workGroup(settings);
+        final String regionAndWorkGroup = region.trim() + "/" + workGroup;
+        if (!ConnectionRules.matchesAny(
+                regionAndWorkGroup, config.getAllowedAthenaWorkGroups(), "Athena pattern", problems)) {
+            problems.add("The Athena workgroup '" + regionAndWorkGroup + "' does not match any pattern in the "
+                         + "dataConnection.allowedAthenaWorkGroups property. Ask an administrator to allow it.");
+        }
+
+        final String outputLocation = settings.getOutputLocation();
+        if (NullSafe.isNonBlankString(outputLocation)) {
+            final String trimmedLocation = outputLocation.trim();
+            if (!trimmedLocation.startsWith("s3://")) {
+                problems.add("The output location must be an S3 URI, such as s3://bucket/path/.");
+            } else if (!ConnectionRules.matchesAny(
+                    trimmedLocation, config.getAllowedAthenaOutputLocations(), "Athena pattern", problems)) {
+                problems.add("The output location '" + trimmedLocation + "' does not match any pattern in the "
+                             + "dataConnection.allowedAthenaOutputLocations property. Leave it empty to use the "
+                             + "workgroup's, or ask an administrator to allow it.");
+            }
+        }
+
+        if (NullSafe.isBlankString(settings.getCredentialName()) && !config.isAllowDefaultAwsCredentials()) {
+            problems.add("Choose a credential holding an AWS access key. Stroom's own AWS identity can only be "
+                         + "used if an administrator turns on dataConnection.allowDefaultAwsCredentials.");
+        }
+        return problems;
+    }
+
+    /// Checks the settings and throws if they break the administrator's controls.
+    ///
+    /// @param settings The Athena settings to check.
+    /// @param config   The administrator's controls.
+    /// @throws IllegalArgumentException If there is any problem; its message lists them all.
+    public static void validate(final AthenaConnectionSettings settings,
+                                final DataConnectionConfig config) {
+        ConnectionRules.throwIfAny(findProblems(settings, config));
+    }
+
+    /// @param settings The Athena settings.
+    /// @return The workgroup, or the default if none is set.
+    static String workGroup(final AthenaConnectionSettings settings) {
+        return orDefault(settings.getWorkGroup(), AthenaConnectionSettings.DEFAULT_WORK_GROUP);
+    }
+
+    /// @param value        A setting, or `null`.
+    /// @param defaultValue The value to use if it is not set.
+    /// @return The setting, trimmed, or the default.
+    static String orDefault(final String value, final String defaultValue) {
+        return NullSafe.isBlankString(value)
+                ? defaultValue
+                : value.trim();
+    }
+}

@@ -17,7 +17,7 @@
 package stroom.explorer.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodeKey;
 import stroom.explorer.shared.ExplorerResource;
@@ -45,11 +45,7 @@ public class ExplorerTreeModel {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     public static final ExplorerNode NULL_SELECTION = ExplorerNode.builder()
-            .docRef(DocRef.builder()
-                    .uuid("")
-                    .name("None")
-                    .type("")
-                    .build())
+            .docRef(DocRefUtil.NULL_SELECTION)
             .build();
 
     private final OpenItems<ExplorerNodeKey> openItems = new OpenItems<>();
@@ -71,6 +67,7 @@ public class ExplorerTreeModel {
 
     private List<ExplorerNode> currentRootNodes;
     private boolean selectParentIfNotFound = false;
+    private boolean forceServerRefresh = false;
 
     ExplorerTreeModel(final AbstractExplorerTree explorerTree,
                       final RestFactory restFactory,
@@ -163,6 +160,14 @@ public class ExplorerTreeModel {
         fetchData();
     }
 
+    /// Fetches the tree from the server, asking it to rebuild its tree model from the database first so
+    /// that changes made by other users, background processes or on other nodes are shown.
+    /// Open folders, the filter and the selection are all retained.
+    public void reload() {
+        forceServerRefresh = true;
+        fetchData();
+    }
+
     private void refresh(final boolean fetch) {
         if (fetch) {
             // Fetch data from the server to update the tree.
@@ -183,7 +188,8 @@ public class ExplorerTreeModel {
                     explorerTreeFilter,
                     minDepth,
                     ensureVisible,
-                    showAlerts);
+                    showAlerts,
+                    forceServerRefresh);
 
             if (!fetching) {
                 fetching = true;
@@ -219,6 +225,10 @@ public class ExplorerTreeModel {
             // Some settings have changed so try again with the new settings.
             refresh();
         } else {
+            // The server has now rebuilt its model, so later fetches can use the cached one.
+            if (criteria.isRefresh()) {
+                forceServerRefresh = false;
+            }
             onDataChanged(result);
             // If we have asked the server to ensure one or more nodes are visible then some
             // folders might have been opened to make this happen. The server will tell us which
@@ -327,16 +337,17 @@ public class ExplorerTreeModel {
             addToRows(currentRootNodes, rows, openItems.getAllOpenItems());
         }
 
-        // If we are allowing null selection then insert a node at the root to make it
-        // possible.
+        // If we are allowing null selection then insert a node at the root to make it possible.
         if (includeNullSelection) {
-            if (rows.isEmpty() || rows.get(0) != NULL_SELECTION) {
+            //noinspection SequencedCollectionMethodCanBeUsed
+            if (rows.isEmpty() || !NULL_SELECTION.equals(rows.get(0))) {
                 // If there is any quick filter then NULL_SELECTION is a non-match
                 final boolean isFilterMatch = NullSafe.isBlankString(NullSafe.get(
                         currentCriteria,
                         FetchExplorerNodesRequest::getFilter,
                         ExplorerTreeFilter::getNameFilter));
 
+                //noinspection SequencedCollectionMethodCanBeUsed // Cos GWT
                 rows.add(0, NULL_SELECTION.copy()
                         .setGroupedNodeFlag(NodeFlagGroups.FILTER_MATCH_PAIR, isFilterMatch)
                         .build());

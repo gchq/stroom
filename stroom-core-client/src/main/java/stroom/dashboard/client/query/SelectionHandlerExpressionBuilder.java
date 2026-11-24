@@ -85,6 +85,7 @@ public class SelectionHandlerExpressionBuilder {
                                 .condition(term.getCondition())
                                 .value(replaced)
                                 .docRef(term.getDocRef())
+                                .options(term.getOptions())
                                 .build();
                         if (ExpressionUtil.isValidTerm(expressionTerm, false)) {
                             builder.addTerm(expressionTerm);

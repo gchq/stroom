@@ -62,4 +62,9 @@ public class MockDocDependencyService implements DocDependencyService {
     public Set<DocRef> getDependantsOf(final DocRef docRef) {
         return Set.of();
     }
+
+    @Override
+    public Set<String> getSourceUuids(final String fromType) {
+        return Set.of();
+    }
 }

@@ -25,6 +25,8 @@ import stroom.dashboard.client.main.HasParams;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.TextInputComponentSettings;
+import stroom.dashboard.shared.TextInputFormat;
+import stroom.dashboard.shared.TextInputValidator;
 import stroom.query.api.Param;
 
 import com.google.inject.Inject;
@@ -57,6 +59,7 @@ public class TextInputPresenter
 
     @Override
     public void onValueChanged(final String value) {
+        getView().setValid(isValid(value));
         setSettings(getTextInputSettings().copy().value(value).build());
         ComponentChangeEvent.fire(this, this);
         onChange();
@@ -67,7 +70,10 @@ public class TextInputPresenter
         final List<Param> list = new ArrayList<>();
         final String key = getTextInputSettings().getKey();
         final String value = getView().getValue();
-        if (key != null && key.trim().length() > 0 && value != null && value.trim().length() > 0) {
+        // A value that doesn't conform to the format is not passed on to queries.
+        if (key != null && key.trim().length() > 0
+            && value != null && value.trim().length() > 0
+            && isValid(value)) {
             final Param param = new Param(key.trim(), value.trim());
             list.add(param);
         }
@@ -87,7 +93,14 @@ public class TextInputPresenter
     }
 
     private void update(final TextInputComponentSettings settings) {
+        getView().setFormat(settings.getFormat());
         getView().setValue(settings.getValue());
+        getView().setValid(isValid(settings.getValue()));
+    }
+
+    private boolean isValid(final String value) {
+        final TextInputComponentSettings settings = getTextInputSettings();
+        return TextInputValidator.isValid(settings.getFormat(), settings.getPattern(), value);
     }
 
     private TextInputComponentSettings getTextInputSettings() {
@@ -127,5 +140,15 @@ public class TextInputPresenter
         void setValue(String value);
 
         String getValue();
+
+        /// Sets the format of the value, e.g. to show a date picker for [TextInputFormat#DATE_TIME].
+        ///
+        /// @param format The format the value must conform to.
+        void setFormat(TextInputFormat format);
+
+        /// Marks the value as valid or invalid against its format.
+        ///
+        /// @param valid `false` to show the value as invalid.
+        void setValid(boolean valid);
     }
 }

@@ -67,6 +67,7 @@ public class DocumentStoreBinder {
      *     <li>Adds the implementation to the {@link ImportExportActionHandler} multibinder</li>
      *     <li>Adds the implementation to the {@link ContentIndexable} multibinder</li>
      *     <li>Adds the implementation to the {@link DocumentActionHandler} map binder</li>
+     *     <li>Adds the implementation to the {@link DocDependencyProvider} multibinder, if it is one</li>
      * </ol>
      *
      * @param type           The document type string (e.g. {@code XxxDoc.TYPE})
@@ -105,6 +106,12 @@ public class DocumentStoreBinder {
 
         DocumentActionHandlerBinder.create(binder)
                 .bind(type, (Class) storeImpl);
+
+        // Every AbstractDocumentStore can supply its dependencies for the dependency rebuild
+        if (DocDependencyProvider.class.isAssignableFrom(storeImpl)) {
+            DocDependencyProviderBinder.create(binder)
+                    .bind((Class) storeImpl);
+        }
 
         return this;
     }

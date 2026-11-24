@@ -54,14 +54,14 @@ public class HttpTlsConfigPresenter
         final CredentialListModel keyStoreListModel = new CredentialListModel(
                 eventBus,
                 credentialClient,
-                Set.of(CredentialType.KEY_STORE));
+                Set.of(CredentialType.KEY_STORE, CredentialType.KEY_STORE_FILE));
         keyStoreListModel.setTaskMonitorFactory(this);
         view.getKeyStoreSelectionBox().setModel(keyStoreListModel);
 
         final CredentialListModel trustStoreListModel = new CredentialListModel(
                 eventBus,
                 credentialClient,
-                Set.of(CredentialType.KEY_STORE));
+                Set.of(CredentialType.KEY_STORE, CredentialType.KEY_STORE_FILE));
         trustStoreListModel.setTaskMonitorFactory(this);
         view.getTrustStoreSelectionBox().setModel(trustStoreListModel);
     }

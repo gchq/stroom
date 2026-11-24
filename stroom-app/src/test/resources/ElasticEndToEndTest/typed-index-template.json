@@ -1,0 +1,48 @@
+{
+  "index_patterns": ["INDEX_PATTERN"],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0
+    },
+    "mappings": {
+      "dynamic": "strict",
+      "properties": {
+        "StreamId": { "type": "long" },
+        "EventId": { "type": "long" },
+        "Time": { "type": "date_nanos" },
+        "TimeNotIndexed": { "type": "date_nanos", "index": false },
+        "Host": { "type": "keyword" },
+        "HostAlias": { "type": "alias", "path": "Host" },
+        "TimeNotIndexedAlias": { "type": "alias", "path": "TimeNotIndexed" },
+        "Ip": { "type": "ip" },
+        "Bytes": { "type": "unsigned_long" },
+        "Message": {
+          "type": "text",
+          "fields": {
+            "keyword": { "type": "keyword" }
+          }
+        },
+        "year": { "type": "integer" },
+        "Users": {
+          "type": "nested",
+          "properties": {
+            "Name": { "type": "keyword" },
+            "Role": { "type": "keyword" },
+            "Sessions": {
+              "type": "nested",
+              "properties": {
+                "Device": { "type": "keyword" }
+              }
+            }
+          }
+        },
+        "Meta": {
+          "properties": {
+            "year": { "type": "integer" }
+          }
+        }
+      }
+    }
+  }
+}

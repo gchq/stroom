@@ -39,15 +39,23 @@ public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticClientCacheImpl.class);
     private static final String CACHE_NAME = "Elastic Client Cache";
 
-    private final LoadingStroomCache<ElasticConnectionConfig, ElasticsearchClient> cache;
+    // Keyed on the resolved connection so that a change to a credential (or to the key/trust stores it
+    // names) results in a new client rather than one built with the old secrets.
+    private final LoadingStroomCache<ResolvedElasticConnection, ElasticsearchClient> cache;
     private final IdentityHashMap<ElasticsearchClient, State> useMap = new IdentityHashMap<>();
 
     private final Provider<ElasticConfig> elasticConfigProvider;
+    private final ElasticConnectionResolver elasticConnectionResolver;
+    private final ElasticClientFactory elasticClientFactory;
 
     @Inject
     ElasticClientCacheImpl(final CacheManager cacheManager,
-                           final Provider<ElasticConfig> elasticConfigProvider) {
+                           final Provider<ElasticConfig> elasticConfigProvider,
+                           final ElasticConnectionResolver elasticConnectionResolver,
+                           final ElasticClientFactory elasticClientFactory) {
         this.elasticConfigProvider = elasticConfigProvider;
+        this.elasticConnectionResolver = elasticConnectionResolver;
+        this.elasticClientFactory = elasticClientFactory;
         this.cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> elasticConfigProvider.get().getIndexClientCache(),
@@ -55,17 +63,11 @@ public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
                 this::destroy);
     }
 
-    private ElasticsearchClient create(final ElasticConnectionConfig elasticConnectionConfig) {
-        if (elasticConnectionConfig == null) {
-            throw new NullPointerException("Elasticsearch connection config not provided");
-        }
-
-        // Create a new instance of `RestHighLevelClient`
-        return new ElasticClientFactory().create(elasticConnectionConfig,
-                elasticConfigProvider.get().getClientConfig());
+    private ElasticsearchClient create(final ResolvedElasticConnection connection) {
+        return elasticClientFactory.create(connection, elasticConfigProvider.get().getClientConfig());
     }
 
-    private void destroy(final ElasticConnectionConfig key, final ElasticsearchClient value) {
+    private void destroy(final ResolvedElasticConnection key, final ElasticsearchClient value) {
         synchronized (this) {
             final State state = useMap.get(value);
             state.stale = true;
@@ -97,7 +99,8 @@ public class ElasticClientCacheImpl implements ElasticClientCache, Clearable {
     }
 
     private ElasticsearchClient borrowClient(final ElasticConnectionConfig key) {
-        final ElasticsearchClient client = cache.get(key);
+        // Resolve on every borrow, as this is where the permission to use the credentials is checked
+        final ElasticsearchClient client = cache.get(elasticConnectionResolver.resolve(key));
         synchronized (this) {
             useMap.computeIfAbsent(client, ignored -> new State()).increment();
         }

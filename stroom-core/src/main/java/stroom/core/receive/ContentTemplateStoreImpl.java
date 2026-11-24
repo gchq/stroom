@@ -20,6 +20,7 @@ import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.docstore.api.AbstractDocumentStore;
 import stroom.docstore.api.DependencyRemapFunction;
+import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.StoreFactory;
 import stroom.receive.content.shared.ContentTemplate;
@@ -150,13 +151,25 @@ public class ContentTemplateStoreImpl
         return (doc, dependencyRemapper) -> {
             final List<ContentTemplate> templates = doc.getContentTemplates();
             if (NullSafe.hasItems(templates)) {
-                templates.forEach(receiveDataRule -> {
-                    if (receiveDataRule.getExpression() != null) {
-                        dependencyRemapper.remapExpression(receiveDataRule.getExpression());
-                    }
-                });
+                final List<ContentTemplate> remappedTemplates = templates
+                        .stream()
+                        .map(template -> remapContentTemplate(template, dependencyRemapper))
+                        .toList();
+                return doc.copy().contentTemplates(remappedTemplates).build();
             }
             return doc;
         };
+    }
+
+    private ContentTemplate remapContentTemplate(final ContentTemplate template,
+                                                 final DependencyRemapper dependencyRemapper) {
+        final ContentTemplate.Builder builder = template.copy();
+        if (template.getExpression() != null) {
+            builder.withExpression(dependencyRemapper.remapExpression(template.getExpression()));
+        }
+        if (template.getPipeline() != null) {
+            builder.withPipeline(dependencyRemapper.remap(template.getPipeline()));
+        }
+        return builder.build();
     }
 }

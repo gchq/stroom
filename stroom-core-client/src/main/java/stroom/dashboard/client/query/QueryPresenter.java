@@ -50,10 +50,12 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.QueryKey;
 import stroom.query.api.ResultStoreInfo;
+import stroom.query.client.DataSourceClient;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
+import stroom.query.client.presenter.FieldValuesScope;
 import stroom.query.client.presenter.QueryUiHandlers;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
@@ -116,6 +118,7 @@ public class QueryPresenter
     private final LocationManager locationManager;
     private final IndexLoader indexLoader;
     private final DynamicFieldSelectionListModel fieldSelectionBoxModel;
+    private final DataSourceClient dataSourceClient;
     private final SearchModel searchModel;
     private final ButtonView addOperatorButton;
     private final ButtonView addTermButton;
@@ -149,7 +152,8 @@ public class QueryPresenter
                           final LocationManager locationManager,
                           final DateTimeSettingsFactory dateTimeSettingsFactory,
                           final ResultStoreModel resultStoreModel,
-                          final DynamicFieldSelectionListModel fieldSelectionBoxModel) {
+                          final DynamicFieldSelectionListModel fieldSelectionBoxModel,
+                          final DataSourceClient dataSourceClient) {
         super(eventBus, view, settingsPresenterProvider);
         this.expressionPresenter = expressionPresenter;
         this.historyPresenter = historyPresenter;
@@ -161,6 +165,7 @@ public class QueryPresenter
         this.clientPropertyCache = clientPropertyCache;
         this.locationManager = locationManager;
         this.fieldSelectionBoxModel = fieldSelectionBoxModel;
+        this.dataSourceClient = dataSourceClient;
 
         view.setExpressionView(expressionPresenter.getView());
         view.getQueryButtons().setUiHandlers(new QueryUiHandlers() {
@@ -428,6 +433,16 @@ public class QueryPresenter
         // We only want queryable fields.
         fieldSelectionBoxModel.setQueryable(true);
         expressionPresenter.init(restFactory, dataSourceRef, fieldSelectionBoxModel);
+        expressionPresenter.setValueScopeSupplier(this::getValueScope);
+
+        // Some data sources, such as Amazon Athena, cost money on every run, so may set a minimum.
+        setDataSourceMinRefreshInterval(null);
+        dataSourceClient.fetchMinRefreshInterval(dataSourceRef, minimum -> {
+            // Ignore the answer if the data source has changed since.
+            if (Objects.equals(indexLoader.getLoadedDataSourceRef(), dataSourceRef)) {
+                setDataSourceMinRefreshInterval(minimum);
+            }
+        }, this);
 
         if (!Objects.equals(getQuerySettings().getDataSource(), dataSourceRef)) {
             setSettings(getQuerySettings()
@@ -444,6 +459,18 @@ public class QueryPresenter
 
         // Defer init until all data source load handlers have had a chance to update the loaded data source.
         Scheduler.get().scheduleDeferred(this::init);
+    }
+
+    // The value picker counts values within the dashboard's time range. The query's expression, resolved as for a
+    // search, is passed too so the data source can also apply the query's own conditions, e.g. on its time field.
+    private FieldValuesScope getValueScope() {
+        final DashboardContext dashboardContext = getDashboardContext();
+        if (dashboardContext == null) {
+            return null;
+        }
+        return new FieldValuesScope(
+                dashboardContext.getResolvedTimeRange(),
+                dashboardContext.replaceExpression(expressionPresenter.write(), true));
     }
 
     private void addOperator() {

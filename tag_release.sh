@@ -16,8 +16,11 @@
 # limitations under the License.
 # **********************************************************************
 
-# Version: v0.5.3
-# Date: 2026-01-21T13:42:59+00:00
+# Version: v0.5.5
+# Date: 2026-11-09T11:05:29+00:00
+
+# This script originates from https://github.com/at055612/release-it
+# Any changes should be made there and a new version released.
 
 # This script is for tagging a git repository for the purpose of driving a
 # separate release process from that tagged commit. It also updates the

@@ -21,6 +21,7 @@ import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferSupport;
 import stroom.lmdb.serde.Serde;
 import stroom.lmdb.serde.StringSerde;
+import stroom.test.common.PerformanceTest;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -38,6 +39,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 // tests are performance comparison only so are intended for manual runs only
 
+@PerformanceTest
 @Disabled
 class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
 

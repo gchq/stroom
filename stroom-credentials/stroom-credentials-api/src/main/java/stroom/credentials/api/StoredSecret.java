@@ -19,7 +19,16 @@ package stroom.credentials.api;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.Secret;
 
+import java.util.Objects;
+
 public record StoredSecret(Credential credential, Secret secret, byte[] keyStore) {
 
+    public StoredSecret {
+        Objects.requireNonNull(credential);
+        Objects.requireNonNull(secret);
+    }
 
+    public String uuid() {
+        return credential.getUuid();
+    }
 }

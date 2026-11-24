@@ -21,6 +21,7 @@ import stroom.aws.s3.shared.S3Location;
 import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.S3LocationDataVolume;
+import stroom.meta.shared.SimpleMeta;
 
 import org.jspecify.annotations.Nullable;
 
@@ -29,12 +30,19 @@ import java.util.Set;
 
 public interface FsMetaS3LocationDao {
 
+    /// Creates a {@link S3Location}
+    void create(SimpleMeta meta, DataVolume dataVolume, S3Location s3Location);
+
+    /// Creates a {@link S3Location} if it doesn't already exist.
+    void tryCreate(final SimpleMeta meta,
+                   final DataVolume dataVolume,
+                   final S3Location s3Location);
+
+    /// Creates a {@link DataVolume} and {@link S3LocationDataVolume} in one go.
     S3LocationDataVolume create(final long metaId,
-                                final FsVolume fsVolume, final Set<S3Location> s3Locations);
+                                final FsVolume fsVolume,
+                                final Set<S3Location> s3Locations);
 
-
-    @Nullable
-    S3LocationDataVolume getS3LocationDataVolume(final long metaId);
 
     @Nullable
     Set<S3Location> getS3LocationDataVolume(final DataVolume dataVolume);
@@ -42,4 +50,5 @@ public interface FsMetaS3LocationDao {
     int delete(final Collection<Long> metaIds);
 
     int delete(final Long metaId, final Collection<S3Location> s3Locations);
+
 }

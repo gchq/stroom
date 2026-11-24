@@ -52,12 +52,8 @@ public class DashboardSerialiser implements DocumentSerialiser2<DashboardDoc> {
         DashboardDoc document = delegate.read(importExportDocument);
         final ImportExportAsset jsonAsset = importExportDocument.getExtAsset(JSON);
         if (jsonAsset != null) {
-            try {
-                final DashboardConfig dashboardConfig = getDashboardConfigFromJson(jsonAsset);
-                document = document.copy().dashboardConfig(dashboardConfig).build();
-            } catch (final RuntimeException e) {
-                LOGGER.error("Unable to unmarshal dashboard config", e);
-            }
+            final DashboardConfig dashboardConfig = getDashboardConfigFromJson(jsonAsset);
+            document = document.copy().dashboardConfig(dashboardConfig).build();
         }
         return document;
     }

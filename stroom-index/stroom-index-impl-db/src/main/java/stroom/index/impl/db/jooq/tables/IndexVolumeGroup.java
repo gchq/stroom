@@ -16,13 +16,14 @@ import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
 import org.jooq.SQL;
 import org.jooq.Schema;
-import org.jooq.Select;
 import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableLike;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -55,7 +56,7 @@ public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
     /**
      * The column <code>stroom.index_volume_group.id</code>.
      */
-    public final TableField<IndexVolumeGroupRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<IndexVolumeGroupRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).generatedByDefaultAsIdentity(), this, "");
 
     /**
      * The column <code>stroom.index_volume_group.version</code>.
@@ -185,7 +186,7 @@ public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
      */
     @Override
     public IndexVolumeGroup where(Condition condition) {
-        return new IndexVolumeGroup(getQualifiedName(), aliased() ? this : null, null, condition);
+        return new IndexVolumeGroup(getQualifiedName(), aliased() ? this : null, null, Internal.condition(this, condition));
     }
 
     /**
@@ -252,7 +253,7 @@ public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public IndexVolumeGroup whereExists(Select<?> select) {
+    public IndexVolumeGroup whereExists(TableLike<?> select) {
         return where(DSL.exists(select));
     }
 
@@ -260,7 +261,7 @@ public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public IndexVolumeGroup whereNotExists(Select<?> select) {
+    public IndexVolumeGroup whereNotExists(TableLike<?> select) {
         return where(DSL.notExists(select));
     }
 }

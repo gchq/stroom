@@ -17,7 +17,6 @@
 package stroom.data.store.impl.fs.dao;
 
 import stroom.data.store.impl.fs.DataVolumeDao;
-import stroom.data.store.impl.fs.FsVolumeCache;
 import stroom.data.store.impl.fs.db.FsDataStoreDbConnProvider;
 import stroom.data.store.impl.fs.shared.DataVolume;
 import stroom.data.store.impl.fs.shared.FindDataVolumeCriteria;
@@ -63,12 +62,12 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
         final List<DataVolume> list = JooqUtil.contextResult(fsDataStoreDbConnProvider, context ->
-                        context.select(FS_META_VOLUME.META_ID, FS_META_VOLUME.FS_VOLUME_ID)
-                                .from(FS_META_VOLUME)
-                                .where(conditions)
-                                .limit(offset, limit)
-                                .fetch())
-                .map(this::mapRecordToDataVolume);
+                context.select(FS_META_VOLUME.META_ID, FS_META_VOLUME.FS_VOLUME_ID)
+                        .from(FS_META_VOLUME)
+                        .where(conditions)
+                        .limit(offset, limit)
+                        .fetch()
+                        .map((Record2<Long, Integer> rec) -> mapRecordToDataVolume(context, rec)));
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 
@@ -77,12 +76,21 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
      */
     @Override
     public DataVolume findDataVolume(final long metaId) {
-        final DataVolume dataVolume = JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
-                        .select(FS_META_VOLUME.META_ID, FS_META_VOLUME.FS_VOLUME_ID)
-                        .from(FS_META_VOLUME)
-                        .where(FS_META_VOLUME.META_ID.eq(metaId))
-                        .fetchOptional())
-                .map(this::mapRecordToDataVolume)
+        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context ->
+                findDataVolume(context, metaId));
+    }
+
+    /**
+     * Return the meta data volumes for a meta id.
+     */
+    DataVolume findDataVolume(final DSLContext context, final long metaId) {
+
+        final DataVolume dataVolume = context.select(FS_META_VOLUME.META_ID,
+                        FS_META_VOLUME.FS_VOLUME_ID)
+                .from(FS_META_VOLUME)
+                .where(FS_META_VOLUME.META_ID.eq(metaId))
+                .fetchOptional()
+                .map(rec -> mapRecordToDataVolume(context, rec))
                 .orElse(null);
         LOGGER.debug("findDataVolume - metaId: {}, dataVolume: {}", metaId, dataVolume);
         return dataVolume;
@@ -91,12 +99,13 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
     @Override
     public List<DataVolume> findDataVolumes(final Collection<Long> metaIds) {
         if (NullSafe.hasItems(metaIds)) {
-            final List<DataVolume> dataVolumes = JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
+            final List<DataVolume> dataVolumes = JooqUtil.contextResult(
+                    fsDataStoreDbConnProvider, context -> context
                             .select(FS_META_VOLUME.META_ID, FS_META_VOLUME.FS_VOLUME_ID)
                             .from(FS_META_VOLUME)
                             .where(FS_META_VOLUME.META_ID.in(metaIds))
-                            .fetch())
-                    .map(this::mapRecordToDataVolume);
+                            .fetch()
+                            .map((Record2<Long, Integer> rec) -> mapRecordToDataVolume(context, rec)));
             LOGGER.debug("findDataVolumes - metaIds: {}, dataVolumes: {}", metaIds, dataVolumes);
             return dataVolumes;
         } else {
@@ -104,10 +113,12 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
         }
     }
 
-    private DataVolume mapRecordToDataVolume(final Record2<Long, Integer> rec) {
+    private DataVolume mapRecordToDataVolume(final DSLContext context,
+                                             final Record2<Long, Integer> rec) {
         final long metaId = rec.get(FS_META_VOLUME.META_ID); // NOT_NULL
         final int volumeId = rec.get(FS_META_VOLUME.FS_VOLUME_ID); // NOT_NULL
-        final FsVolume volume = fsVolumeCache.get(volumeId);
+        Objects.requireNonNull(context);
+        final FsVolume volume = fsVolumeCache.get(context, volumeId);
         Objects.requireNonNull(volume, () -> LogUtil.message(
                 "Volume not found for volumeId: {}, metaId: {}", volumeId, metaId));
         return new DataVolumeImpl(metaId, volume);
@@ -124,9 +135,8 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
 
     @Override
     public DataVolume createDataVolume(final long metaId, final FsVolume volume) {
-        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> {
-            return createDataVolume(context, metaId, volume);
-        });
+        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context ->
+                createDataVolume(context, metaId, volume));
     }
 
     @Override

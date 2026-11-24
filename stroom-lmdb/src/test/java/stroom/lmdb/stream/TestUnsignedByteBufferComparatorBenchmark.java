@@ -16,6 +16,7 @@
 
 package stroom.lmdb.stream;
 
+import stroom.test.common.PerformanceTest;
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
 
@@ -27,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+@PerformanceTest
 public class TestUnsignedByteBufferComparatorBenchmark {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestUnsignedByteBufferComparatorBenchmark.class);

@@ -60,7 +60,7 @@ main() {
   echo -e '  "createBuckets" : true,'
   echo -e '  "bucketName" : "bkt1",'
   # shellcheck disable=SC2016
-  echo -e '  "keyPattern" : "${feed}/${type}/${year}/${idPath}",'
+  echo -e '  "keyPattern" : "${feed}/${type}/${year}/${idPath}/${id}.zip",'
   echo -e '  "credentials" : {'
   echo -e '    "type" : "basic",'
   echo -e '    "accessKeyId" : "minioadmin",'

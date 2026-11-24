@@ -19,7 +19,6 @@ package stroom.data.store.impl.fs;
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
-import stroom.cache.api.TemplateCache;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
@@ -29,7 +28,6 @@ import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.data.store.impl.fs.shared.ValidationResult;
-import stroom.docref.DocRef;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
@@ -80,11 +78,12 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Singleton
 // We need to know about changes to volume groups AND volumes as we hold a cache of current volumes
 // grouped by their names, so a volume group may get renamed
-@EntityEventHandler(type = FsVolumeServiceImpl.ENTITY_TYPE, action = {
+@EntityEventHandler(type = FsVolumeService.ENTITY_TYPE, action = {
         EntityAction.CREATE,
         EntityAction.UPDATE,
         EntityAction.DELETE})
@@ -98,10 +97,6 @@ public class FsVolumeServiceImpl implements FsVolumeService {
 
     private static final String LOCK_NAME = "REFRESH_FS_VOLUMES";
     private static final String S3_VOLUME_CACHE_NAME = "S3 Volume Cache";
-    static final String ENTITY_TYPE = "FILE_SYSTEM_VOLUME";
-    static final DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, ENTITY_TYPE, ENTITY_TYPE);
-
-    protected static final String TEMP_FILE_PREFIX = "stroomFsVolVal";
 
     private final FsVolumeDao fsVolumeDao;
     private final FsVolumeGroupService fsVolumeGroupService;
@@ -112,7 +107,6 @@ public class FsVolumeServiceImpl implements FsVolumeService {
     private final ClusterLockService clusterLockService;
     private final Provider<EntityEventBus> entityEventBusProvider;
     private final PathCreator pathCreator;
-    private final TemplateCache templateCache;
     // Use the impl as we are using methods not exposed on the public interface
     private final StoreImpl storeImpl;
     // Hold a cache of the current picture of available volumes, with their used/free/total/etc. stats.
@@ -136,7 +130,6 @@ public class FsVolumeServiceImpl implements FsVolumeService {
                                final ClusterLockService clusterLockService,
                                final Provider<EntityEventBus> entityEventBusProvider,
                                final PathCreator pathCreator,
-                               final TemplateCache templateCache,
                                final StoreImpl storeImpl,
                                final NodeInfo nodeInfo,
                                final TaskContextFactory taskContextFactory,
@@ -151,13 +144,12 @@ public class FsVolumeServiceImpl implements FsVolumeService {
         this.clusterLockService = clusterLockService;
         this.entityEventBusProvider = entityEventBusProvider;
         this.pathCreator = pathCreator;
-        this.templateCache = templateCache;
         this.storeImpl = storeImpl;
         this.nodeInfo = nodeInfo;
         this.taskContextFactory = taskContextFactory;
         this.hasCapacitySelectorFactory = hasCapacitySelectorFactory;
 
-        s3VolumeCache = cacheManager.createLoadingCache(
+        this.s3VolumeCache = cacheManager.createLoadingCache(
                 S3_VOLUME_CACHE_NAME,
                 () -> volumeConfigProvider.get().getS3VolumeCache(),
                 this::doGetS3Volume);
@@ -309,10 +301,7 @@ public class FsVolumeServiceImpl implements FsVolumeService {
         Objects.requireNonNull(s3CacheKey);
 
         final Optional<FsVolume> s3Volume = getCurrentVolumes()
-                .groupNameToVolumesMap()
-                .values()
-                .stream()
-                .flatMap(List::stream)
+                .streamAllVolumes()
                 .filter(fsVolume ->
                         fsVolume.getStatus() == VolumeUseStatus.ACTIVE)
                 .filter(vol -> vol.getVolumeType() != null)
@@ -468,18 +457,20 @@ public class FsVolumeServiceImpl implements FsVolumeService {
 
             // Changes to volumes/groups are pretty rare so the blunt approach of clearing the whole
             // cache is OK.
-            clearCurrentVolumeList();
+            clearCurrentVolumeListAndCache();
+            s3VolumeCache.clear();
         }
     }
 
-    private synchronized void clearCurrentVolumeList() {
+    private synchronized void clearCurrentVolumeListAndCache() {
         LOGGER.debug("Clearing currentVolumeList");
         currentVolumes.set(null);
+        // s3VolumeCache gets its values from currentVolumes, so clear the cache too
+        s3VolumeCache.clear();
     }
 
     private void fireChange(final Integer id, final EntityAction action) {
         LOGGER.debug("fireChange() - id: {}, action: {}", id, action);
-        clearCurrentVolumeList();
         NullSafe.consume(entityEventBusProvider, Provider::get, entityEventBus -> {
             try {
                 entityEventBus.buildFiring()
@@ -488,7 +479,8 @@ public class FsVolumeServiceImpl implements FsVolumeService {
                         .withIntData(id)
                         .fire();
             } catch (final Exception e) {
-                LOGGER.error(e::getMessage, e);
+                LOGGER.error(LogUtil.message("Error firing change event for id {} and action {} - {}",
+                        id, action, LogUtil.exceptionMessage(e)), e);
             }
         });
     }
@@ -520,7 +512,7 @@ public class FsVolumeServiceImpl implements FsVolumeService {
         }
 
         // Clear state between tests.
-        clearCurrentVolumeList();
+        clearCurrentVolumeListAndCache();
         // Now recreate the default vols
         createdDefaultVolumes = false;
         LOGGER.debug("createdDefaultVolumes set to false");
@@ -537,6 +529,7 @@ public class FsVolumeServiceImpl implements FsVolumeService {
                 }
             }
         }
+        LOGGER.trace("getCurrentVolumes() - returning: {}", volumes);
         return volumes;
     }
 
@@ -584,32 +577,31 @@ public class FsVolumeServiceImpl implements FsVolumeService {
             || optMinUpdateTimeEpochMs.get() < updateTimeCutOffEpochMs) {
             for (final FsVolume volume : dbVolumes) {
                 final FsVolumeType volumeType = volume.getVolumeType();
+                final String groupName = groupIdToNameMap.get(volume.getVolumeGroupId());
 
+                final FsVolume updatedVol;
                 if (FsVolumeType.STANDARD == volumeType) {
                     taskContextFactory.current().info(() -> "Refreshing volume '" + getAbsVolumePath(volume) + "'");
                     // Update the volume state and save in the DB.
-                    final FsVolume updated = updateVolumeState(volume);
+                    updatedVol = updateVolumeState(volume);
 
                     // Record some statistics for the use of this volume.
-                    recordStats(updated);
-                    final String groupName = groupIdToNameMap.get(updated.getVolumeGroupId());
-                    groupNameToVolumesMap.computeIfAbsent(groupName, ignored -> new ArrayList<>())
-                            .add(updated);
+                    recordStats(updatedVol);
                 } else {
                     // We would have to make a LOT of api calls to get all size stats for S3 vols.
                     // Could maybe look into using
                     // https://docs.aws.amazon.com/AmazonS3/latest/userguide/storage-inventory.html
                     LOGGER.debug("Can't capture stats for volume type {}", volumeType);
+                    updatedVol = volume;
                 }
+                addVolumeToMap(updatedVol, groupIdToNameMap, groupNameToVolumesMap);
             }
         } else {
             LOGGER.debug(() -> LogUtil.message("Not updating state for vols {}, with min update time {}",
                     dbVolumes,
                     optMinUpdateTimeEpochMs.map(DateUtil::createNormalDateTimeString)));
-            for (final FsVolume volume : dbVolumes) {
-                final String groupName = groupIdToNameMap.get(volume.getVolumeGroupId());
-                groupNameToVolumesMap.computeIfAbsent(groupName, k -> new ArrayList<>()).add(volume);
-            }
+            dbVolumes.forEach(volume ->
+                    addVolumeToMap(volume, groupIdToNameMap, groupNameToVolumesMap));
         }
 
         final Volumes newList = new Volumes(now.toEpochMilli(), groupNameToVolumesMap);
@@ -618,7 +610,16 @@ public class FsVolumeServiceImpl implements FsVolumeService {
             currentVolumes.set(newList);
         }
 
+        LOGGER.debug("refreshVolumeList() - Returning: {}", newList);
         return newList;
+    }
+
+    private void addVolumeToMap(final FsVolume volume,
+                                final Map<Integer, String> groupIdToNameMap,
+                                final Map<String, List<FsVolume>> groupNameToVolumesMap) {
+        final String groupName = groupIdToNameMap.get(volume.getVolumeGroupId());
+        groupNameToVolumesMap.computeIfAbsent(groupName, ignored -> new ArrayList<>())
+                .add(volume);
     }
 
     private void recordStats(final FsVolume volume) {
@@ -828,15 +829,13 @@ public class FsVolumeServiceImpl implements FsVolumeService {
 
     @Override
     public SystemInfoResult getSystemInfo() {
-
         final Volumes volumes = securityContext.asProcessingUserResult(this::getCurrentVolumes);
-        final List<Map<String, Object>> volInfoList = volumes.groupNameToVolumesMap()
-                .values()
-                .stream()
-                .flatMap(List::stream)
+        final List<Map<String, Object>> volInfoList = volumes.streamAllVolumes()
                 .map(vol -> {
                     // Use HashMap so we can cope with null values
                     final Map<String, Object> map = new HashMap<>();
+                    map.put("group", NullSafe.get(vol.getVolumeGroup(), FsVolumeGroup::getName));
+                    map.put("type", vol.getVolumeType());
                     map.put("path", getAbsVolumePath(vol));
                     map.put("limit", vol.getByteLimit());
                     map.put("state", vol.getStatus());
@@ -926,6 +925,15 @@ public class FsVolumeServiceImpl implements FsVolumeService {
     private record Volumes(long createTime,
                            Map<String, List<FsVolume>> groupNameToVolumesMap) {
 
+        private Volumes {
+            Objects.requireNonNull(groupNameToVolumesMap);
+        }
+
+        public Stream<FsVolume> streamAllVolumes() {
+            return groupNameToVolumesMap.values()
+                    .stream()
+                    .flatMap(List::stream);
+        }
     }
 
 

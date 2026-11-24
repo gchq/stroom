@@ -37,6 +37,7 @@ import stroom.docstore.impl.DocFinderModule;
 import stroom.index.VolumeTestConfigModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
+import stroom.query.api.TimeRange;
 import stroom.resource.impl.ResourceModule;
 import stroom.test.BootstrapTestModule;
 import stroom.util.shared.PageRequest;
@@ -87,6 +88,107 @@ class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
             select StreamId, EventId, UserId""";
 
     private static final String RULE_DOCUMENTATION = "Internal notes that must not leave Stroom.";
+
+    // The test events of user5 are one in each of five months of 2007, which are all whole windows
+    // of the time that the rule searches.
+    @Test
+    void testWindowScheduledQuery() {
+        final String query = """
+                from index_view
+                where UserId = user5
+                window EventTime by 1M
+                group by UserId
+                select windowStart() as Month, UserId, count() as Events""";
+        basicTest(query, 9, 6);
+        assertThat(readNewestStream())
+                .contains("<value name=\"Month\">2007-01-01T00:00:00.000Z</value>")
+                .doesNotContain("__window__");
+    }
+
+    // A window that is still filling when the rule is run is not judged, so there are no detections.
+    @Test
+    void testWindowCutShortIsNotJudged() {
+        final String query = """
+                from index_view
+                where UserId = user5
+                window EventTime by 1000y
+                group by UserId
+                select windowStart() as Start, UserId, count() as Events""";
+        createScheduleAndRun(writeRule(ruleBuilder().query(query).build()));
+
+        analyticsDataSetup.checkStreamCount(8);
+    }
+
+    // The time range of the rule is March 2007, so March is the window it judges. Its lag() reads
+    // February, which is before the range, so the rule searches February too and judges March with it.
+    @Test
+    void testWindowLagReadsTheWindowBeforeTheTimeRange() {
+        final String query = """
+                from index_view
+                where UserId = user5
+                window EventTime by 1M
+                eval Before = lag(count(), 1, 0)
+                group by UserId
+                select windowStart() as Month, UserId, count() as Events, Before""";
+        runRule(ruleBuilder()
+                .query(query)
+                .timeRange(new TimeRange("March 2007", "2007-03-01T00:00:00.000Z", "2007-04-01T00:00:00.000Z"))
+                .build());
+
+        testDetectionsStream(9, 2);
+        assertThat(readNewestStream())
+                .contains("<value name=\"Month\">2007-03-01T00:00:00.000Z</value>")
+                .contains("<value name=\"Before\">1</value>")
+                .doesNotContain("2007-02-01T00:00:00.000Z");
+    }
+
+    // The limit of the query applies to the windows that the rule judges, so the row of February, which
+    // is searched only for lag(), does not take the place of March.
+    @Test
+    void testWindowLimitAppliesToTheWindowsJudged() {
+        final String query = """
+                from index_view
+                where UserId = user5
+                window EventTime by 1M
+                eval Before = lag(count(), 1, 0)
+                group by UserId
+                limit 1
+                select windowStart() as Month, UserId, count() as Events, Before""";
+        runRule(ruleBuilder()
+                .query(query)
+                .timeRange(new TimeRange("March 2007", "2007-03-01T00:00:00.000Z", "2007-04-01T00:00:00.000Z"))
+                .build());
+
+        testDetectionsStream(9, 2);
+        assertThat(readNewestStream())
+                .contains("<value name=\"Month\">2007-03-01T00:00:00.000Z</value>");
+    }
+
+    // A range that starts part way through a window judges the window, as long as the window ends in
+    // the range, so a rule run on a schedule that does not line up with its windows still judges each
+    // window once. Here February ends in the range and March is wholly in it.
+    @Test
+    void testWindowThatEndsInTheTimeRangeIsJudged() {
+        final String query = """
+                from index_view
+                where UserId = user5
+                window EventTime by 1M
+                group by UserId
+                select windowStart() as Month, UserId, count() as Events""";
+        runRule(ruleBuilder()
+                .query(query)
+                .timeRange(new TimeRange(
+                        "Mid February to March",
+                        "2007-02-15T00:00:00.000Z",
+                        "2007-04-01T00:00:00.000Z"))
+                .build());
+
+        testDetectionsStream(9, 3);
+        assertThat(readNewestStream())
+                .contains("<value name=\"Month\">2007-02-01T00:00:00.000Z</value>")
+                .contains("<value name=\"Month\">2007-03-01T00:00:00.000Z</value>")
+                .doesNotContain("2007-01-01T00:00:00.000Z");
+    }
 
     @Test
     void testSingleEventScheduledQuery() {

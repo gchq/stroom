@@ -20,6 +20,7 @@ package stroom.task;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.common.PerformanceTest;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Disabled;
@@ -31,6 +32,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@PerformanceTest
 @Disabled
 class TestTaskContextPerformance extends AbstractCoreIntegrationTest {
 

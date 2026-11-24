@@ -24,4 +24,7 @@ public interface ElasticClusterSettingsUiHandlers extends UiHandlers {
     void onChange();
 
     void onTestConnection(TaskMonitorFactory taskMonitorFactory);
+
+    /// Called when the user asks to edit the HTTP client settings, e.g. TLS and proxy configuration.
+    void onSetHttpClientConfiguration();
 }

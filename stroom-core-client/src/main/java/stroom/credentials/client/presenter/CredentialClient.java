@@ -21,9 +21,9 @@ import stroom.credentials.shared.CredentialWithPerms;
 import stroom.credentials.shared.CredentialsResource;
 import stroom.credentials.shared.FindCredentialRequest;
 import stroom.credentials.shared.PutCredentialRequest;
+import stroom.credentials.shared.ReplaceSecretRequest;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocRef;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ResultPage;
 
@@ -46,9 +46,9 @@ public class CredentialClient {
     }
 
     public void findCredentialsWithPermissions(final FindCredentialRequest request,
-                                final Consumer<ResultPage<CredentialWithPerms>> dataConsumer,
-                                final RestErrorHandler restErrorHandler,
-                                final TaskMonitorFactory taskMonitorFactory) {
+                                               final Consumer<ResultPage<CredentialWithPerms>> dataConsumer,
+                                               final RestErrorHandler restErrorHandler,
+                                               final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(CREDENTIALS_RESOURCE)
                 .method(r -> r.findCredentialsWithPermissions(request))
@@ -91,19 +91,10 @@ public class CredentialClient {
                 .exec();
     }
 
-    public void createDocRef(final Consumer<DocRef> consumer,
-                             final TaskMonitorFactory taskMonitorFactory) {
-        restFactory.create(CREDENTIALS_RESOURCE)
-                .method(CredentialsResource::createDocRef)
-                .onSuccess(consumer)
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
-    }
-
     public void storeCredential(final PutCredentialRequest request,
-                      final Consumer<Credential> consumer,
-                      final RestErrorHandler restErrorHandler,
-                      final TaskMonitorFactory taskMonitorFactory) {
+                                final Consumer<Credential> consumer,
+                                final RestErrorHandler restErrorHandler,
+                                final TaskMonitorFactory taskMonitorFactory) {
         restFactory.create(CREDENTIALS_RESOURCE)
                 .method(res ->
                         res.storeCredential(request))
@@ -113,9 +104,27 @@ public class CredentialClient {
                 .exec();
     }
 
+    /// Replaces the secret held by an existing credential.
+    ///
+    /// @param request            The credential UUID, new secret and expiry.
+    /// @param consumer           Receives the updated credential.
+    /// @param restErrorHandler   Handles any failure.
+    /// @param taskMonitorFactory Shows progress.
+    public void replaceSecret(final ReplaceSecretRequest request,
+                              final Consumer<Credential> consumer,
+                              final RestErrorHandler restErrorHandler,
+                              final TaskMonitorFactory taskMonitorFactory) {
+        restFactory.create(CREDENTIALS_RESOURCE)
+                .method(res -> res.replaceSecret(request))
+                .onSuccess(consumer)
+                .onFailure(restErrorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
     public void deleteCredentials(final String uuid,
-                       final Consumer<Boolean> consumer,
-                       final TaskMonitorFactory taskMonitorFactory) {
+                                  final Consumer<Boolean> consumer,
+                                  final TaskMonitorFactory taskMonitorFactory) {
         restFactory.create(CREDENTIALS_RESOURCE)
                 .method(res -> res.deleteCredentials(uuid))
                 .onSuccess(consumer)

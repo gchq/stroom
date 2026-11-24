@@ -121,7 +121,12 @@ public class TestS3Manager {
         final AttributeMap attributeMap = new AttributeMap();
 
         try {
-            final PutObjectResponse response = s3Manager.upload(meta, attributeMap, file, TimeBasis.META_CREATION_TIME);
+            final PutObjectResponse response = s3Manager.upload(
+                    meta,
+                    attributeMap,
+                    file,
+                    TimeBasis.META_CREATION_TIME,
+                    false);
             assertThat(response.size())
                     .isNull();  // Not present for a new upload
 
@@ -160,7 +165,12 @@ public class TestS3Manager {
         final AttributeMap attributeMap = new AttributeMap();
 
         try {
-            final PutObjectResponse response = s3Manager.upload(meta, attributeMap, file, TimeBasis.META_CREATION_TIME);
+            final PutObjectResponse response = s3Manager.upload(
+                    meta,
+                    attributeMap,
+                    file,
+                    TimeBasis.META_CREATION_TIME,
+                    false);
 
             try (final ResponseInputStream<GetObjectResponse> response2 = s3Manager.getByteRange(
                     meta, null, Range.of(10L, 20L), TimeBasis.META_CREATION_TIME)) {

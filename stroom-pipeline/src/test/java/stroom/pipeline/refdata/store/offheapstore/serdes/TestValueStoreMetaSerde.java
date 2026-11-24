@@ -20,6 +20,7 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreMeta;
+import stroom.test.common.PerformanceTest;
 import stroom.test.common.TestUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -93,6 +94,7 @@ class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueSto
                 .build();
     }
 
+    @PerformanceTest
     @Disabled // Manual perf test
     @Test
     void testIsLastReference_perf() {

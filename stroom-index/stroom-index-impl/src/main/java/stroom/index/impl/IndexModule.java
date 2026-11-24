@@ -21,6 +21,7 @@ import stroom.index.api.IndexVolumeGroupService;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
+import stroom.processor.api.ProcessorTaskRecovery;
 import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.IndexFieldCache;
 import stroom.query.common.v2.IndexFieldProviders;
@@ -34,6 +35,7 @@ import stroom.util.shared.Clearable;
 import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.OptionalBinder;
 import jakarta.inject.Inject;
 
 public class IndexModule extends AbstractModule {
@@ -55,6 +57,10 @@ public class IndexModule extends AbstractModule {
         bind(IndexShardCreator.class).to(IndexShardCreatorImpl.class);
         bind(IndexFieldService.class).to(IndexFieldServiceImpl.class);
         bind(Indexer.class).to(IndexerImpl.class);
+        bind(IndexShardPendingStreams.class).to(IndexShardPendingStreamsImpl.class);
+        // Bound by the module that runs processor tasks. Without it failed streams have their documents
+        // removed but nothing puts their tasks back to run again.
+        OptionalBinder.newOptionalBinder(binder(), ProcessorTaskRecovery.class);
         bind(ActiveShardsCache.class).to(ActiveShardsCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
@@ -94,6 +100,12 @@ public class IndexModule extends AbstractModule {
                         .description("Job to set index shards to have a status of deleted that have past their " +
                                      "retention period")
                         .frequencySchedule("10m"))
+                .bindJobTo(IndexShardStreamRecovery.class, builder -> builder
+                        .name("Index Shard Stream Recovery")
+                        .description("Job to remove from index shards the documents of streams that were only " +
+                                     "part indexed or were lost when a shard failed to commit, and to have " +
+                                     "those streams indexed again")
+                        .frequencySchedule("1m"))
                 .bindJobTo(IndexWriterCacheSweep.class, builder -> builder
                         .name("Index Writer Cache Sweep")
                         .description("Job to remove old index shard writers from the cache")
@@ -137,6 +149,18 @@ public class IndexModule extends AbstractModule {
         @Inject
         IndexShardRetention(final IndexShardManager indexShardManager) {
             super(indexShardManager::checkRetention);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class IndexShardStreamRecovery extends RunnableWrapper {
+
+        @Inject
+        IndexShardStreamRecovery(final IndexShardPendingStreamRecovery indexShardPendingStreamRecovery) {
+            super(indexShardPendingStreamRecovery::exec);
         }
     }
 

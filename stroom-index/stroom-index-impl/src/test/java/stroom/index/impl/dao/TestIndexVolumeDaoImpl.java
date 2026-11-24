@@ -16,10 +16,15 @@
 
 package stroom.index.impl.dao;
 
+import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeGroupDao;
 import stroom.index.impl.db.IndexDbModule;
+import stroom.index.shared.AllPartition;
+import stroom.index.shared.IndexShard;
+import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolume.VolumeType;
 import stroom.index.shared.IndexVolumeGroup;
 
 import com.google.inject.Guice;
@@ -31,6 +36,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -41,6 +47,7 @@ class TestIndexVolumeDaoImpl {
 
     private static IndexVolumeDao indexVolumeDao;
     private static IndexVolumeGroupDao indexVolumeGroupDao;
+    private static IndexShardDao indexShardDao;
 
     @BeforeAll
     static void beforeAll() {
@@ -51,6 +58,117 @@ class TestIndexVolumeDaoImpl {
 
         indexVolumeDao = injector.getInstance(IndexVolumeDao.class);
         indexVolumeGroupDao = injector.getInstance(IndexVolumeGroupDao.class);
+        indexShardDao = injector.getInstance(IndexShardDao.class);
+    }
+
+    @Test
+    void testNewVolumeIsLocal() {
+        // A volume created without a type is local, as every volume was before volumes had a type.
+        final IndexVolumeGroup indexVolumeGroup = createGroup(TestData.createVolumeGroupName());
+
+        final IndexVolume created = createVolume(indexVolumeGroup.getId());
+
+        assertThat(indexVolumeDao.fetch(created.getId()))
+                .get()
+                .extracting(IndexVolume::getVolumeType)
+                .isEqualTo(VolumeType.LOCAL);
+    }
+
+    @Test
+    void testSharedVolumeIsUsableByEveryNode() {
+        final String groupName = TestData.createVolumeGroupName();
+        final IndexVolumeGroup indexVolumeGroup = createGroup(groupName);
+        final String node1 = TestData.createNodeName();
+        final String node2 = TestData.createNodeName();
+        final IndexVolume local1 = createVolume(node1, TestData.createPath(), indexVolumeGroup.getId());
+        final IndexVolume local2 = createVolume(node2, TestData.createPath(), indexVolumeGroup.getId());
+        final IndexVolume shared = createSharedVolume(TestData.createPath(), indexVolumeGroup.getId());
+
+        assertThat(shared.getVolumeType()).isEqualTo(VolumeType.SHARED);
+        assertThat(shared.getNodeName()).isNull();
+
+        // Each node gets its own local volume and the shared one, but not the other node's local volume.
+        assertThat(indexVolumeDao.getVolumesInGroupOnNode(groupName, node1))
+                .extracting(IndexVolume::getId)
+                .containsExactlyInAnyOrder(local1.getId(), shared.getId());
+        assertThat(indexVolumeDao.getVolumesInGroupOnNode(groupName, node2))
+                .extracting(IndexVolume::getId)
+                .containsExactlyInAnyOrder(local2.getId(), shared.getId());
+        assertThat(indexVolumeDao.getVolumesOnNodeGrouped(node1).get(groupName))
+                .extracting(IndexVolume::getId)
+                .containsExactlyInAnyOrder(local1.getId(), shared.getId());
+
+        // A node with no volumes of its own still gets the shared one.
+        assertThat(indexVolumeDao.getVolumesInGroupOnNode(groupName, TestData.createNodeName()))
+                .extracting(IndexVolume::getId)
+                .containsExactly(shared.getId());
+    }
+
+    @Test
+    void testMergeIntoSharedVolume() {
+        // Given three nodes that each have a volume row for the same path, and a shard on each row
+        final String groupName = TestData.createVolumeGroupName();
+        final IndexVolumeGroup indexVolumeGroup = createGroup(groupName);
+        final String path = TestData.createPath();
+        final String node1 = TestData.createNodeName();
+        final String node2 = TestData.createNodeName();
+        final String node3 = TestData.createNodeName();
+        final IndexVolume volume1 = createVolume(node1, path, indexVolumeGroup.getId());
+        final IndexVolume volume2 = createVolume(node2, path, indexVolumeGroup.getId());
+        final IndexVolume volume3 = createVolume(node3, path, indexVolumeGroup.getId());
+        // A volume with another path is not part of the merge.
+        final IndexVolume otherVolume = createVolume(node2, TestData.createPath(), indexVolumeGroup.getId());
+
+        final IndexShard shard1 = createShard(volume1, node1);
+        final IndexShard shard2 = createShard(volume2, node2);
+        final IndexShard shard3 = createShard(volume3, node3);
+        final IndexShard otherShard = createShard(otherVolume, node2);
+
+        // When the first node's volume is marked as shared and the other two are merged into it
+        final IndexVolume shared = indexVolumeDao.mergeIntoSharedVolume(
+                volume1.copy()
+                        .nodeName(null)
+                        .volumeType(VolumeType.SHARED)
+                        .build(),
+                List.of(volume2.getId(), volume3.getId()));
+
+        // Then one shared row is left for the path
+        assertThat(shared.getId()).isEqualTo(volume1.getId());
+        assertThat(shared.getVolumeType()).isEqualTo(VolumeType.SHARED);
+        assertThat(shared.getNodeName()).isNull();
+        assertThat(indexVolumeDao.fetch(volume2.getId())).isEmpty();
+        assertThat(indexVolumeDao.fetch(volume3.getId())).isEmpty();
+        assertThat(indexVolumeDao.getVolumesInGroup(groupName))
+                .extracting(IndexVolume::getId)
+                .containsExactlyInAnyOrder(shared.getId(), otherVolume.getId());
+
+        // And every shard points at it, still owned by the node that wrote it
+        for (final IndexShard shard : List.of(shard1, shard2, shard3)) {
+            final IndexShard reloaded = indexShardDao.fetch(shard.getId()).orElseThrow();
+            assertThat(reloaded.getVolume().getId()).isEqualTo(shared.getId());
+            assertThat(reloaded.getVolume().getVolumeType()).isEqualTo(VolumeType.SHARED);
+            assertThat(reloaded.getNodeName()).isEqualTo(shard.getNodeName());
+        }
+        assertThat(indexShardDao.fetch(otherShard.getId()).orElseThrow().getVolume().getId())
+                .isEqualTo(otherVolume.getId());
+    }
+
+    @Test
+    void testMergeIntoSharedVolume_nothingToMerge() {
+        final IndexVolumeGroup indexVolumeGroup = createGroup(TestData.createVolumeGroupName());
+        final IndexVolume volume = createVolume(indexVolumeGroup.getId());
+        final IndexShard shard = createShard(volume, volume.getNodeName());
+
+        final IndexVolume shared = indexVolumeDao.mergeIntoSharedVolume(
+                volume.copy()
+                        .nodeName(null)
+                        .volumeType(VolumeType.SHARED)
+                        .build(),
+                List.of());
+
+        assertThat(shared.getVolumeType()).isEqualTo(VolumeType.SHARED);
+        assertThat(indexShardDao.fetch(shard.getId()).orElseThrow().getVolume().getId())
+                .isEqualTo(shared.getId());
     }
 
     @Test
@@ -183,6 +301,26 @@ class TestIndexVolumeDaoImpl {
                 .stampAudit("test")
                 .build();
         return indexVolumeDao.create(indexVolume);
+    }
+
+    private IndexVolume createSharedVolume(final String path, final int indexVolumeGroupId) {
+        final IndexVolume indexVolume = IndexVolume
+                .builder()
+                .path(path)
+                .volumeType(VolumeType.SHARED)
+                .indexVolumeGroupId(indexVolumeGroupId)
+                .stampAudit("test")
+                .build();
+        return indexVolumeDao.create(indexVolume);
+    }
+
+    private IndexShard createShard(final IndexVolume indexVolume, final String ownerNodeName) {
+        final IndexShardKey indexShardKey = IndexShardKey
+                .builder()
+                .indexUuid(UUID.randomUUID().toString())
+                .partition(AllPartition.INSTANCE)
+                .build();
+        return indexShardDao.create(indexShardKey, indexVolume, ownerNodeName, "1.0-test");
     }
 
     private IndexVolumeGroup createGroup(final String name) {

@@ -76,4 +76,12 @@ public class PrimitiveValueConverterMapImpl<E extends HasPrimitiveValue>
         }
         return mapByPrimitiveValue.get(i);
     }
+
+    @Override
+    public String toString() {
+        return "PrimitiveValueConverterMapImpl{" +
+               "mapByPrimitiveValue=" + mapByPrimitiveValue +
+               ", itemType=" + itemType +
+               '}';
+    }
 }

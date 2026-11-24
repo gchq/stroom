@@ -22,6 +22,7 @@ import stroom.statistics.impl.sql.exception.StatisticsEventValidationException;
 import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
 import stroom.task.api.TaskContextFactory;
 import stroom.test.AbstractStatisticsCoreIntegrationTest;
+import stroom.test.common.PerformanceTest;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
@@ -187,6 +188,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
                 .isEqualTo(0);
     }
 
+    @PerformanceTest
     @Disabled // manual testing only, too slow for CI
     @TestFactory
     Stream<DynamicTest> testBatchSavePerformance() throws SQLException {
@@ -243,6 +245,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractStatisticsCoreIntegration
      * on any db locks.
      * Useful for testing the performance of the two process when running concurrently.
      */
+    @PerformanceTest
     @Disabled // Manual running only, too slow for CI
     @Test
     void testFlushAndAggregatePerformance() throws SQLException, InterruptedException {

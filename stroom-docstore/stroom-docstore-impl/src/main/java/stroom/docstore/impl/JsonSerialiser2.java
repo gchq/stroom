@@ -27,6 +27,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.string.EncodingUtil;
 
+import org.jspecify.annotations.Nullable;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
@@ -67,9 +68,20 @@ public class JsonSerialiser2<D> implements Serialiser2<D> {
         if (asset != null) {
             final byte[] data = asset.getInputData();
             if (data != null) {
-                final D document = mapper.readValue(data, clazz);
+                final D document;
+                try {
+                    document = mapper.readValue(data, clazz);
+                } catch (final Exception e) {
+                    if (LOGGER.isDebugEnabled()) {
+                        final String dataStr = getDataAsStringForLogging(data);
+                        LOGGER.debug("Error deserialising asset {} - {}:\n{}",
+                                asset, LogUtil.exceptionMessage(e), dataStr, e);
+                    }
+                    throw new RuntimeException("Error deserialising asset "
+                                               + asset + " - " + e.getMessage(), e);
+                }
                 LOGGER.trace(() -> LogUtil.message("read() - document: {}, json:\n{}",
-                        document, EncodingUtil.asString(data)));
+                        document, getDataAsStringForLogging(data)));
                 return document;
             } else {
                 return null;
@@ -77,6 +89,16 @@ public class JsonSerialiser2<D> implements Serialiser2<D> {
         } else {
             return null;
         }
+    }
+
+    private static @Nullable String getDataAsStringForLogging(final byte[] data) {
+        String dataStr;
+        try {
+            dataStr = EncodingUtil.asString(data);
+        } catch (final Exception ex) {
+            dataStr = "<Error reading data>";
+        }
+        return dataStr;
     }
 
     @Override

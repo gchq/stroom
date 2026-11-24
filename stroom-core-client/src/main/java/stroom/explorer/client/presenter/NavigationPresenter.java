@@ -119,6 +119,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
     private final InlineSvgButton find;
     private final InlineSvgButton collapseAll;
     private final InlineSvgButton expandAll;
+    private final InlineSvgButton reload;
     private final InlineSvgButton add;
     private final InlineSvgButton delete;
     private final InlineSvgToggleButton filter;
@@ -184,6 +185,12 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         expandAll.setTitle("Expand All");
         expandAll.setEnabled(true);
 
+        reload = new InlineSvgButton();
+        reload.setSvg(SvgImage.REFRESH);
+        reload.getElement().addClassName("navigation-header-button explorer-reload");
+        reload.setTitle("Reload Explorer Tree");
+        reload.setEnabled(true);
+
         find = new InlineSvgButton();
         find.setSvg(SvgImage.FIND);
         find.getElement().addClassName("navigation-header-button find");
@@ -203,6 +210,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         buttons.add(locate);
         buttons.add(expandAll);
         buttons.add(collapseAll);
+        buttons.add(reload);
         buttons.add(filter);
         buttons.add(find);
 
@@ -288,6 +296,10 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
             explorerTree.getTreeModel().setForceSelection(explorerTree.getSelectionModel().getSelected());
             explorerTree.getTreeModel().expandAll();
         }));
+        registerHandler(reload.addClickHandler((e) -> {
+            spinReloadButton();
+            explorerTree.getTreeModel().reload();
+        }));
         registerHandler(locate.addClickHandler((e) -> LocateDocEvent.fire(this, selectedDoc)));
         registerHandler(find.addClickHandler((e) -> ShowFindInContentEvent.fire(this)));
         registerHandler(add.addClickHandler((e) -> newItem(add.getElement())));
@@ -361,6 +373,14 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
             activityButton.setHTML(sb.toString());
         }, getView().getTaskListener());
+    }
+
+    private void spinReloadButton() {
+        final Element element = reload.getElement();
+        element.removeClassName("explorer-reload--spin");
+        // Reading the width forces a reflow, so the spin restarts if the button is clicked again mid-spin.
+        element.getOffsetWidth();
+        element.addClassName("explorer-reload--spin");
     }
 
     public void newItem(final Element element) {

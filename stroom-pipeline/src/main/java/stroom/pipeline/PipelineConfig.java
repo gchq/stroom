@@ -52,9 +52,13 @@ public class PipelineConfig extends AbstractConfig implements IsStroomConfig {
         xmlSchemaConfig = new XmlSchemaConfig();
         xsltConfig = new XsltConfig();
         steppingConfig = new SteppingConfig();
+        // Refreshed so that clients pick up key store files changed on disk, e.g. by cert-manager.
+        // The refresh happens in the background and replaced clients are only closed once nothing
+        // is using them.
         httpClientCache = CacheConfig.builder()
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .refreshAfterWrite(StroomDuration.ofMinutes(10))
                 .build();
         pipelineDataCache = CacheConfig.builder()
                 .maximumSize(1000L)

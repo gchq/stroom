@@ -26,7 +26,9 @@ import java.util.Objects;
 
 @JsonPropertyOrder({
         "key",
-        "value"
+        "value",
+        "format",
+        "pattern"
 })
 @JsonInclude(Include.NON_NULL)
 public final class TextInputComponentSettings implements ComponentSettings {
@@ -35,12 +37,20 @@ public final class TextInputComponentSettings implements ComponentSettings {
     private final String key;
     @JsonProperty
     private final String value;
+    @JsonProperty
+    private final TextInputFormat format;
+    @JsonProperty
+    private final String pattern;
 
     @JsonCreator
     public TextInputComponentSettings(@JsonProperty("key") final String key,
-                                      @JsonProperty("value") final String value) {
+                                      @JsonProperty("value") final String value,
+                                      @JsonProperty("format") final TextInputFormat format,
+                                      @JsonProperty("pattern") final String pattern) {
         this.key = key;
         this.value = value;
+        this.format = Objects.requireNonNullElse(format, TextInputFormat.TEXT);
+        this.pattern = pattern;
     }
 
     public String getKey() {
@@ -49,6 +59,17 @@ public final class TextInputComponentSettings implements ComponentSettings {
 
     public String getValue() {
         return value;
+    }
+
+    /// @return The format the entered value must conform to. Never `null`.
+    public TextInputFormat getFormat() {
+        return format;
+    }
+
+    /// @return The regular expression the entered value must fully match when the format is
+    /// [TextInputFormat#PATTERN].
+    public String getPattern() {
+        return pattern;
     }
 
     @Override
@@ -66,12 +87,14 @@ public final class TextInputComponentSettings implements ComponentSettings {
 //        final boolean b2 = Objects.equals(value, that.value);
 
         return Objects.equals(key, that.key) &&
-                Objects.equals(value, that.value);
+                Objects.equals(value, that.value) &&
+                format == that.format &&
+                Objects.equals(pattern, that.pattern);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(key, value);
+        return Objects.hash(key, value, format, pattern);
     }
 
     @Override
@@ -79,6 +102,8 @@ public final class TextInputComponentSettings implements ComponentSettings {
         return "DropDownInputComponentSettings{" +
                 "key='" + key + '\'' +
                 ", value='" + value + '\'' +
+                ", format=" + format +
+                ", pattern='" + pattern + '\'' +
                 '}';
     }
 
@@ -96,6 +121,8 @@ public final class TextInputComponentSettings implements ComponentSettings {
 
         private String key;
         private String value;
+        private TextInputFormat format;
+        private String pattern;
 
         private Builder() {
         }
@@ -103,6 +130,8 @@ public final class TextInputComponentSettings implements ComponentSettings {
         private Builder(final TextInputComponentSettings keyValueInputComponentSettings) {
             this.key = keyValueInputComponentSettings.key;
             this.value = keyValueInputComponentSettings.value;
+            this.format = keyValueInputComponentSettings.format;
+            this.pattern = keyValueInputComponentSettings.pattern;
         }
 
         public Builder key(final String key) {
@@ -115,6 +144,22 @@ public final class TextInputComponentSettings implements ComponentSettings {
             return self();
         }
 
+        /// @param format The format the entered value must conform to. `null` means
+        ///               [TextInputFormat#TEXT].
+        /// @return This builder.
+        public Builder format(final TextInputFormat format) {
+            this.format = format;
+            return self();
+        }
+
+        /// @param pattern The regular expression the entered value must fully match when the
+        ///                format is [TextInputFormat#PATTERN].
+        /// @return This builder.
+        public Builder pattern(final String pattern) {
+            this.pattern = pattern;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -124,7 +169,9 @@ public final class TextInputComponentSettings implements ComponentSettings {
         public TextInputComponentSettings build() {
             return new TextInputComponentSettings(
                     key,
-                    value
+                    value,
+                    format,
+                    pattern
             );
         }
     }

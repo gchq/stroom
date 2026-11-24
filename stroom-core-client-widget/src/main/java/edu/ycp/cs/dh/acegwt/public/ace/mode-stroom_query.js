@@ -28,6 +28,12 @@ var StroomQueryHighlightRules = function() {
             start : "/\\*",
             end : "\\*/"
         }, {
+            // """ string, which may span lines, e.g. the SQL of a sql clause. A run of more than
+            // three quotes closes on its last three, so the text can end with a quote.
+            token : "string.quoted.triple",
+            start : /"""/,
+            end : /"{3,}/
+        }, {
             token : "keyword", // From Dual | From "My View"
             regex : /(from|show)\b/,
             next : "doc-rule" // All subsequent matching done with doc-rule set
@@ -45,8 +51,17 @@ var StroomQueryHighlightRules = function() {
             token : ["variable", "variable", "text", "variable" ], // ${xxx}
             regex : '(\\$)(\\{)(.*?)(})'
         },  {
+            // A join line, e.g. 'left outer join "HR Users"'. Its kind is only a keyword as part of one.
+            token : "keyword",
+            regex : "\\b(?:inner|left(?:\\s+(?:outer|semi|anti))?|(?:right|full)(?:\\s+outer)?|semi|anti)\\s+join\\b",
+            next : "doc-rule" // The joined data source, as after from
+        },  {
+            token : "keyword",
+            regex : /join\b/,
+            next : "doc-rule" // The joined data source, as after from
+        },  {
             token : ["keyword"],
-            regex : "(from|select|where|filter|eval|and|or|not|sort|group|order|"
+            regex : "(from|sql|on|within|select|where|filter|eval|and|or|not|sort|group|order|"
                     + "limit|having|as|by|when|desc|asc|window|show|advance)\\b"
         },  {
             token : ["support.function", "text", "paren.lparen" ], // Un-quoted func, 'foo('
@@ -93,6 +108,11 @@ var StroomQueryHighlightRules = function() {
 
         // For highlighting a Doc name, e.g. show/from/dictionary
         "doc-rule" : [ {
+            // A bracketed query, e.g. 'from (from MyDoc ...)', so back to the main rules.
+            token : "paren.lparen",
+            regex : /\(/,
+            next : "start"
+        },  {
             token : "support.type", // e.g. '"My Doc"'
             regex : /"(?:\\"|[^"])*"/,
             next : "start"

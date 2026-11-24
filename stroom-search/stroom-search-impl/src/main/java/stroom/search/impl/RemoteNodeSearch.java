@@ -65,24 +65,28 @@ public class RemoteNodeSearch implements NodeSearch {
         LOGGER.debug(() -> task.getSearchName() + " - start searching node: " + targetNode);
         parentContext.info(() -> task.getSearchName() + " - start searching node: " + targetNode);
         final String queryKey = task.getKey().getUuid();
+        final String dispatchId = nodeSearchTask.getDispatchId();
         final ResultStore resultCollector = task.getResultStore();
 
         // Start remote cluster search execution.
         LOGGER.debug(() -> "Dispatching node search task to node: " + targetNode);
         try {
-            final boolean success = startRemoteSearch(targetNode, nodeSearchTask);
+            // The target node fetches the search's join tables, if it has any, from this node.
+            final boolean success = startRemoteSearch(
+                    targetNode, nodeSearchTask.withSourceNode(nodeInfo.getThisNodeName()));
             if (!success) {
                 LOGGER.debug(() -> "Failed to start remote search on node: " + targetNode);
-                final SearchException searchException = new SearchException(
-                        "Failed to start remote search on node: " + targetNode);
-                resultCollector.onFailure(targetNode, searchException);
-                throw searchException;
+                throw new NodeSearchStartException("Failed to start remote search on node: " + targetNode);
             }
+        } catch (final NodeSearchStartException e) {
+            abandonRemoteSearch(targetNode, queryKey, dispatchId);
+            throw e;
         } catch (final Throwable e) {
+            // No results have been taken from the node, so the caller may be able to give its work to
+            // another node. It is for the caller to report the failure if it cannot.
             LOGGER.debug(e::getMessage, e);
-            final SearchException searchException = new SearchException(e.getMessage(), e);
-            resultCollector.onFailure(targetNode, searchException);
-            throw searchException;
+            abandonRemoteSearch(targetNode, queryKey, dispatchId);
+            throw new NodeSearchStartException(e.getMessage(), e);
         }
 
         try {
@@ -92,7 +96,7 @@ public class RemoteNodeSearch implements NodeSearch {
             // Poll for results until completion.
             boolean complete = false;
             while (!Thread.currentThread().isInterrupted() && !complete) {
-                complete = pollRemoteSearch(targetNode, queryKey, resultCollector);
+                complete = pollRemoteSearch(targetNode, queryKey, dispatchId, resultCollector);
             }
 
         } catch (final Throwable e) {
@@ -105,7 +109,7 @@ public class RemoteNodeSearch implements NodeSearch {
 
             // Destroy search results.
             try {
-                final boolean success = destroyRemoteSearch(targetNode, queryKey);
+                final boolean success = destroyRemoteSearch(targetNode, queryKey, dispatchId);
                 if (!success) {
                     LOGGER.debug(() -> "Failed to destroy remote search on node: " + targetNode);
                     resultCollector.onFailure(targetNode, new SearchException("Failed to destroy remote search"));
@@ -114,6 +118,24 @@ public class RemoteNodeSearch implements NodeSearch {
                 resultCollector.onFailure(targetNode, e);
             }
         }
+    }
+
+    // The request to start may have reached the node even though its answer did not come back, e.g. if it
+    // timed out. Nothing will ever poll that search, so ask the node to drop it rather than leave it running
+    // until its results expire. The node may well be unreachable, in which case there is nothing to drop.
+    private void abandonRemoteSearch(final String targetNode, final String queryKey, final String dispatchId) {
+        try {
+            destroyRemoteSearch(targetNode, queryKey, dispatchId);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to destroy remote search on node: " + targetNode + " - " + e.getMessage(), e);
+        }
+    }
+
+    // Names the task among those this search has sent to the node, if it has an id.
+    private WebTarget addDispatchId(final WebTarget webTarget, final String dispatchId) {
+        return dispatchId == null
+                ? webTarget
+                : UriBuilderUtil.addParam(webTarget, "dispatchId", dispatchId);
     }
 
     private Boolean startRemoteSearch(final String nodeName, final NodeSearchTask nodeSearchTask) {
@@ -143,6 +165,7 @@ public class RemoteNodeSearch implements NodeSearch {
 
     private Boolean pollRemoteSearch(final String nodeName,
                                      final String queryKey,
+                                     final String dispatchId,
                                      final ResultStore resultCollector) throws IOException {
         final boolean complete;
         final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
@@ -152,6 +175,7 @@ public class RemoteNodeSearch implements NodeSearch {
 
         WebTarget webTarget = webTargetFactory.create(url);
         webTarget = UriBuilderUtil.addParam(webTarget, "queryKey", queryKey);
+        webTarget = addDispatchId(webTarget, dispatchId);
 
         try (final InputStream inputStream = webTarget
                 .request(MediaType.APPLICATION_OCTET_STREAM)
@@ -164,7 +188,8 @@ public class RemoteNodeSearch implements NodeSearch {
     }
 
     private Boolean destroyRemoteSearch(final String nodeName,
-                                        final String queryKey) {
+                                        final String queryKey,
+                                        final String dispatchId) {
         final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                 + ResourcePaths.buildAuthenticatedApiPath(
                 RemoteSearchResource.BASE_PATH,
@@ -173,6 +198,7 @@ public class RemoteNodeSearch implements NodeSearch {
         try {
             WebTarget webTarget = webTargetFactory.create(url);
             webTarget = UriBuilderUtil.addParam(webTarget, "queryKey", queryKey);
+            webTarget = addDispatchId(webTarget, dispatchId);
 
             try (final Response response = webTarget
                     .request(MediaType.APPLICATION_JSON)
