@@ -17,10 +17,13 @@
 package stroom.ai.impl.tools.generation;
 
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /// A test on the record (or, with `for_each`, the item): give field or xpath and one of equals, one_of, matches,
@@ -58,6 +61,11 @@ public record Condition(String field,
     private static final List<String> TESTS = List.of("equals", "one_of", "matches", "in_dictionary", "starts_with",
             "contains");
 
+    // A condition written as text, `name=value` or `name!=value` (the value optionally quoted): read only to show the
+    // condition it would be, never accepted as one (other readers of a mapping's when take only objects).
+    private static final Pattern SHORTHAND = ToolText.re(
+            "\\s*([A-Za-z_][\\w.\\-]*)\\s*(!=|==|=)\\s*(?:\"([^\"=]*)\"|'([^'=]*)'|([^\"'=]*?))\\s*");
+
     /// @param json A condition as JSON-like values.
     /// @return It validated, with the model's own checks.
     /// @throws MappingValidationException if it doesn't validate.
@@ -73,6 +81,12 @@ public record Condition(String field,
     /// @param loc    Where it is.
     /// @return It, or null (with the errors noted) if it doesn't validate.
     public static Condition read(final ModelReader reader, final Object input, final List<Object> loc) {
+        if (input instanceof final String text) {
+            // Chat 194: all 11 proposals' conditions written as "evt=logon"; the refusal now shows the form.
+            reader.error(loc, "model_type", "Input should be a valid dictionary or instance of Condition: "
+                                            + textHint(text), input);
+            return null;
+        }
         final Object data = spread(input);
         final ModelReader.Fields fields = reader.fields(data, loc, "Condition");
         if (fields == null) {
@@ -110,6 +124,32 @@ public record Condition(String field,
             return null;
         }
         return condition;
+    }
+
+    /// @param text A condition given as text.
+    /// @return What a condition is, with the one the text would be when it reads as `name=value` or `name!=value`.
+    static String textHint(final String text) {
+        final String form = "a condition is an object {field (or xpath), <one test>}, the test one of equals, one_of, "
+                            + "matches, starts_with, contains, present or in_dictionary";
+        final Matcher matcher = SHORTHAND.matcher(text);
+        if (!matcher.matches()) {
+            return form + ", e.g. {\"field\": \"<field>\", \"equals\": \"<value>\"}";
+        }
+        final String value = Stream.of(matcher.group(3), matcher.group(4), matcher.group(5))
+                .filter(group -> group != null)
+                .findFirst()
+                .orElse("");
+        if (value.isEmpty()) {
+            return form + ", e.g. {\"field\": " + ToolJson.dumps(matcher.group(1)) + ", \"present\": false} for a "
+                   + "field with no value";
+        }
+        final Map<String, Object> condition = new LinkedHashMap<>();
+        condition.put("field", matcher.group(1));
+        condition.put("equals", value);
+        if ("!=".equals(matcher.group(2))) {
+            condition.put("not", true);
+        }
+        return form + ": " + ToolJson.dumps(text) + " is " + ToolJson.dumps(condition);
     }
 
     // Seen: "matches": {"value": "Event: \\[User\\]", "xpath": "/Event/EventData/Data"}. The test's value and its

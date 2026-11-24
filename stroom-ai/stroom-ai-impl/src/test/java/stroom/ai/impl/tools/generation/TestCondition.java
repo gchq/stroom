@@ -42,6 +42,41 @@ class TestCondition {
                 "contains", "fault"));
     }
 
+    // Chat 194: all 11 catalogue proposals had their conditions written as "evt=logon" and were refused with only
+    // "Input should be a valid dictionary or instance of Condition"; the agent had to read the mapping guide.
+    @Test
+    void aConditionWrittenAsTextIsRefusedShowingTheConditionItWouldBe() {
+        final ModelReader reader = new ModelReader();
+
+        final Condition read = Condition.read(reader, "evt=logon", List.of("when", 0));
+
+        assertThat(read).isNull();
+        assertThat(reader.errors()).singleElement().satisfies(error -> {
+            assertThat(error.type()).isEqualTo("model_type");
+            assertThat(error.message()).startsWith("Input should be a valid dictionary or instance of Condition: ")
+                    .contains("{field (or xpath), <one test>}")
+                    .endsWith("\"evt=logon\" is {\"field\": \"evt\", \"equals\": \"logon\"}");
+        });
+    }
+
+    @Test
+    void aConditionWrittenAsTextShowsQuotedNegatedAndEmptyValues() {
+        assertThat(Condition.textHint("user = 'alice'")).endsWith("is {\"field\": \"user\", \"equals\": \"alice\"}");
+        assertThat(Condition.textHint("evt!=lock")).endsWith(
+                "is {\"field\": \"evt\", \"equals\": \"lock\", \"not\": true}");
+        assertThat(Condition.textHint("app=")).endsWith("{\"field\": \"app\", \"present\": false} for a field with no "
+                                                      + "value");
+        // Not one reading: the form alone, with a placeholder example.
+        assertThat(Condition.textHint("evt=a=b")).endsWith("e.g. {\"field\": \"<field>\", \"equals\": \"<value>\"}");
+        assertThat(Condition.textHint("starts with logon")).endsWith(
+                "e.g. {\"field\": \"<field>\", \"equals\": \"<value>\"}");
+        // A number is no text: the message stays the model's own.
+        final ModelReader reader = new ModelReader();
+        Condition.read(reader, 3, List.of());
+        assertThat(reader.errors()).singleElement().satisfies(error -> assertThat(error.message())
+                .isEqualTo("Input should be a valid dictionary or instance of Condition"));
+    }
+
     @Test
     void notIsWrittenOnlyWhenSet() {
         final Condition not = Condition.fromJson(Map.of("field", "eventType", "equals", "Logon", "not", true));
