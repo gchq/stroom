@@ -26,6 +26,7 @@ import stroom.document.client.component.CodeTabController;
 import stroom.document.client.component.DocumentationTabController;
 import stroom.document.client.editor.DocumentEditor;
 import stroom.document.client.editor.LinkTabPanel;
+import stroom.document.client.editor.UnsetText;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ToolbarButton;
@@ -83,7 +84,7 @@ public class S3ConfigEditor extends DocumentEditor<S3ConfigDoc> {
                     return config;
                 },
                 (config, docRef, doc) -> config.setText(doc.getData()),
-                (config, doc) -> doc.copy().data(config.getText()).build());
+                (config, doc) -> doc.copy().data(UnsetText.asRead(config.getText(), doc.getData())).build());
         addDocumentationTab(DOCUMENTATION,
                 documentationTabProvider,
                 S3ConfigDoc::getDescription,

@@ -1822,9 +1822,19 @@ to delete them by hand.~~
     pipeline's documentation opened the picker with nothing in it (`PipelineEditor`
     `SaveDocumentationOnly`). `TabbedController` has no unit test, as `LinkTabPanel` can't be loaded
     without a browser.
+    From the second review (24 November 2026): tabs that write but keep the document (a Solr or Elastic
+    index's fields, an Elastic cluster's and a floor map's settings, a pipeline's structure) are given
+    the one saved (`HasSavedDocument`), and a floor map's Map and Editor are read again, which keeps what
+    they have staged (`SolrIndexEditor` `KeptChangesUseTheSavedIndex`); text that isn't set is written
+    as it was read (`UnsetText`), so looking at a document's Documentation isn't a change; code edited
+    while stepping, assets and facts changed during a save mark the document dirty; statistics data
+    sources, which save themselves, keep what is typed too and refuse invalid input; and Save All asks
+    nothing about a pipeline with nothing to save (`PipelineEditor` `SaveAllWithNothingChanged`).
+    **Open:** what is typed during a Save As is still lost, as the tabs also need the new document's
+    reference.
     **Open:** saving again before the first save's reply sends the old version, which the server should
-    refuse (`StoreImpl.update`); older too, and not tried. A save that only sends assets or floor map
-    facts still marks the document unchanged when more were changed meanwhile.
+    refuse (`StoreImpl.update`); older too, and not tried. An asset's text
+    typed during a save is still lost, as the assets are fetched again once it is saved.
 * ~~`XPathFilterEditor` sets Equals as the default condition, but new filters use Exists; harmless, as
   the controller overwrites it.~~ **Fixed** (23 November 2026): it starts with
   `XPathFilter.DEFAULT_MATCH_TYPE` (Exists), with the value fields hidden to match, and decides

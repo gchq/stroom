@@ -45,15 +45,6 @@ class TestUnsetSettings {
         assertThat(UnsetSettings.linesAsRead(List.of(), List.of("a"))).isEmpty();
     }
 
-    /// Blank text is as read, and text set or cleared as shown.
-    @Test
-    void text() {
-        assertThat(UnsetSettings.textAsRead("", null)).isNull();
-        assertThat(UnsetSettings.textAsRead("", " ")).isEqualTo(" ");
-        assertThat(UnsetSettings.textAsRead("a", null)).isEqualTo("a");
-        assertThat(UnsetSettings.textAsRead("", "a")).isEmpty();
-    }
-
     /// An expression with no terms is none if there was none, and otherwise is as shown.
     @Test
     void expression() {

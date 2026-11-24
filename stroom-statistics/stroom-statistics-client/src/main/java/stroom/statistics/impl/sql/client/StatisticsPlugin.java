@@ -92,7 +92,8 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
         if (tabData instanceof DocumentEditorHost<?>) {
             final DocumentEditorHost<StatisticStoreDoc> controller =
                     (DocumentEditorHost<StatisticStoreDoc>) tabData;
-            if (controller.isDirty()) {
+            // Not saved while a field holds input that can't be kept, which the field says
+            if (controller.isDirty() && !controller.refuseInvalidInput()) {
                 final StatisticStoreDoc entity = controller.getEntity();
 
                 // re-load the entity from the database so we have the
@@ -162,8 +163,9 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
     private void doSave(final DocumentEditorHost<StatisticStoreDoc> controller,
                         final StatisticStoreDoc entity,
                         final TaskMonitorFactory taskMonitorFactory) {
+        // What is typed while it is being saved is kept, as DocumentPlugin does
         save(DocRefUtil.create(entity), entity, doc ->
-                        controller.read(DocRefUtil.create(doc), doc),
+                        controller.readSaved(DocRefUtil.create(doc), doc, controller.hasChangedSince(entity)),
                 throwable -> {
                 },
                 taskMonitorFactory);

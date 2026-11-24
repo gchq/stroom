@@ -277,7 +277,6 @@ public class PipelineEditor extends DocumentEditor<PipelineDoc> {
 
     @Override
     protected void onKeepChanges(final DocRef docRef, final PipelineDoc saved) {
-        pipelineStructure.setSavedDoc(saved);
         if (stepping.getPipelineDoc() != null) {
             // As when stepping is read, so that it steps with the saved version
             stepping.setPipelineDoc(saved);

@@ -23,6 +23,7 @@ import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.document.client.editor.HasSavedDocument;
 import stroom.http.client.component.HttpClientConfigEditorController;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticClusterResource;
@@ -42,7 +43,7 @@ import java.util.Set;
 
 /// An Elasticsearch cluster's Settings tab ([ElasticClusterSettings]): its node URLs, API key and
 /// HTTP client configuration, and a test of the connection with them. Read only as its document is.
-public class ElasticClusterSettingsController extends Controller {
+public class ElasticClusterSettingsController extends Controller implements HasSavedDocument<ElasticClusterDoc> {
 
     private static final ElasticClusterResource ELASTIC_CLUSTER_RESOURCE = GWT.create(ElasticClusterResource.class);
 
@@ -146,6 +147,11 @@ public class ElasticClusterSettingsController extends Controller {
                     .taskMonitorFactory(taskMonitor())
                     .exec();
         }
+    }
+
+    @Override
+    public void setSavedDocument(final ElasticClusterDoc saved) {
+        this.cluster = saved;
     }
 
     /// Writes the settings shown into a copy of a cluster.

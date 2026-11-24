@@ -22,6 +22,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.component.DocumentationTabController;
 import stroom.document.client.editor.LinkTabPanel;
 import stroom.document.client.editor.TabbedController;
+import stroom.document.client.editor.UnsetText;
 import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
 import stroom.receive.rules.shared.ReceiveDataRules;
@@ -109,7 +110,9 @@ public class RuleSetEditor extends TabbedController<ReceiveDataRules> {
                     return documentation;
                 },
                 (documentation, docRef, rules) -> documentation.setText(rules.getDescription()),
-                (documentation, rules) -> rules.copy().description(documentation.getText()).build());
+                (documentation, rules) -> rules.copy()
+                        .description(UnsetText.asRead(documentation.getText(), rules.getDescription()))
+                        .build());
         setDefaultTab(RULES_TAB);
         // A tab's menu (e.g. to close others) is the app's
         own(getTabView().getTabBar().addShowMenuHandler(this::fireEvent));

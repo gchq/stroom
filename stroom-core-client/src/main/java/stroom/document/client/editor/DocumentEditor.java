@@ -129,7 +129,8 @@ public abstract class DocumentEditor<D> extends TabbedController<D> {
                     return documentation;
                 },
                 (documentation, docRef, doc) -> documentation.setText(description.apply(doc)),
-                (documentation, doc) -> withDescription.apply(doc, documentation.getText()));
+                (documentation, doc) -> withDescription.apply(doc,
+                        UnsetText.asRead(documentation.getText(), description.apply(doc))));
         setCommonTab(CommonDocLinkTab.DOCUMENTATION, tab);
     }
 
@@ -177,6 +178,14 @@ public abstract class DocumentEditor<D> extends TabbedController<D> {
     void afterRead() {
         saveAsButton.setEnabled(true);
         setDirty(false);
+    }
+
+    /// Called once the document is saved and read again: what goes with it (e.g. its assets, or code
+    /// edited while stepping) may have been changed while it was being saved.
+    final void refreshAssociatedDirty() {
+        if (!context(Contexts.READ_ONLY) && hasAssociatedDirty()) {
+            setDirty(true);
+        }
     }
 
     @Override

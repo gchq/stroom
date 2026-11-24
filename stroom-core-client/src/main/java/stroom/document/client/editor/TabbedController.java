@@ -129,7 +129,8 @@ public abstract class TabbedController<D> extends Controller implements RefusesI
 
     /// Takes what was saved as what is shown, without reading it into the tabs that write, as they were
     /// changed after what was saved was written ([#hasChangedSince(Object)]). What they show stays, to
-    /// be written over what was saved. The tabs that only show what is read are read into.
+    /// be written over what was saved. The tabs that only show what is read are read into, and those
+    /// that keep it ([HasSavedDocument]) are told.
     ///
     /// @param docRef The reference of what was saved.
     /// @param saved  What was saved.
@@ -140,6 +141,8 @@ public abstract class TabbedController<D> extends Controller implements RefusesI
         for (final Tab<?> tab : allTabs) {
             if (tab.writer == null) {
                 tab.read(docRef, saved);
+            } else {
+                tab.setSavedDocument(saved);
             }
         }
         onKeepChanges(docRef, saved);
@@ -576,6 +579,13 @@ public abstract class TabbedController<D> extends Controller implements RefusesI
         private void read(final DocRef docRef, final D document) {
             if (content != null) {
                 reader.read(content, docRef, document);
+            }
+        }
+
+        @SuppressWarnings("unchecked") // Content keeps the type of document it reads
+        private void setSavedDocument(final D saved) {
+            if (content instanceof final HasSavedDocument<?> hasSavedDocument) {
+                ((HasSavedDocument<D>) hasSavedDocument).setSavedDocument(saved);
             }
         }
 

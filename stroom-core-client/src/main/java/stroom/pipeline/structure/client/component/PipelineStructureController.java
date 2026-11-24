@@ -22,6 +22,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.document.client.editor.HasSavedDocument;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.editor.client.component.CodeEditor;
 import stroom.editor.client.component.CodeEditorController;
@@ -77,7 +78,7 @@ import java.util.UUID;
 /// A pipeline's Structure tab ([PipelineStructure]): its elements, which can be added, removed,
 /// edited, restored and moved (in advanced mode, unless the pipeline is read only), the pipeline it
 /// inherits from, the selected element's properties and pipeline references, and its source.
-public class PipelineStructureController extends Controller {
+public class PipelineStructureController extends Controller implements HasSavedDocument<PipelineDoc> {
 
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
 
@@ -230,11 +231,9 @@ public class PipelineStructureController extends Controller {
                && !Objects.equals(readDoc, write(readDoc));
     }
 
-    /// Says what was saved, when it isn't read again as the structure was changed meanwhile, so that
-    /// whether the structure is changed ([#isDirty()]) is worked out from it.
-    ///
-    /// @param saved The pipeline, as saved.
-    public void setSavedDoc(final PipelineDoc saved) {
+    @Override
+    public void setSavedDocument(final PipelineDoc saved) {
+        // What tells whether the structure is changed
         this.readDoc = saved;
     }
 

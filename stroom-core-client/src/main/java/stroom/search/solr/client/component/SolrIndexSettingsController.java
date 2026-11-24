@@ -20,6 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.document.client.editor.UnsetText;
 import stroom.explorer.client.component.DocSelectionController;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.ExpressionOperator;
@@ -156,7 +157,7 @@ public class SolrIndexSettingsController extends Controller {
                 .instanceType(view.getInstanceType())
                 .solrUrls(UnsetSettings.linesAsRead(view.getSolrUrls(), read.getSolrUrls()))
                 .zkHosts(UnsetSettings.linesAsRead(view.getZkHosts(), read.getZkHosts()))
-                .zkPath(UnsetSettings.textAsRead(view.getZkPath(), read.getZkPath()))
+                .zkPath(UnsetText.asRead(view.getZkPath(), read.getZkPath()))
                 .useZk(view.isUseZk())
                 .build();
 
@@ -168,7 +169,7 @@ public class SolrIndexSettingsController extends Controller {
         return index
                 .copy()
                 .collection(collection)
-                .timeField(UnsetSettings.textAsRead(view.getTimeField(), index.getTimeField()))
+                .timeField(UnsetText.asRead(view.getTimeField(), index.getTimeField()))
                 .solrConnectionConfig(connectionConfig)
                 .retentionExpression(UnsetSettings.expressionAsRead(
                         expressionEditor.write(), index.getRetentionExpression()))

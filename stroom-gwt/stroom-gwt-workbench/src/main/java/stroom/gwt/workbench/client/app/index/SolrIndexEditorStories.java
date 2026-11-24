@@ -81,6 +81,7 @@ public final class SolrIndexEditorStories {
     private static final String SOLR_TYPES = """
             ["string", "pdate", "pint", "plong", "boolean", "text_general"]""";
 
+    private static final String SLOW_COLLECTION = "slow-collection";
     private static final String UPDATE = "/solrIndex/v1/solr-events";
 
     // A FormGroup gives its control the group's identity as its id
@@ -232,6 +233,33 @@ public final class SolrIndexEditorStories {
                 // As above, with the blanks the settings used to store
                 .story("TypingMarksChangedWithBlanks", context -> render(context, BLANKS_DOC, FIELDS, false))
                 .withPlay(SolrIndexEditorStories::typingMarksChanged)
+                // Settings changed while the index is saved stay, and the Fields tab asks the server about the
+                // index as saved, where it kept the one from before
+                .story("KeptChangesUseTheSavedIndex", context -> render(context, FIELDS))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(play.getByText("EventTime")).toBeInTheDocument());
+                    openSettings(play);
+                    final Query save = play.getByRole("button", "Save");
+                    final Query collection = play.getByLabelText("Collection");
+                    play.clear(collection);
+                    play.type(collection, SLOW_COLLECTION);
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    play.click(save);
+                    final Query timeField = play.getByLabelText("Main Time Field Name");
+                    play.type(timeField, "Typed");
+                    // Once the reply has been handled
+                    play.sleep(2500);
+                    play.expect(timeField).toHaveValue("Typed");
+                    play.expect(save).not().toHaveAttribute("aria-disabled");
+                    play.click(DocEditors.tab(play, "Fields"));
+                    play.click(play.getByRole("button", "New Index Field"));
+                    play.waitFor(() -> play.expect(screen.getByText("Field Name", "label")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/solrIndex/v1/fetchSolrTypes")
+                                    .withBodyContaining(SLOW_COLLECTION).toSpyMatcher()));
+                    play.click(screen.getByRole("button", StroomDom.button("Cancel")));
+                })
                 // Test Connection sends the instance type shown, as the server takes none as a Solr Cloud
                 .story("TestConnection", context -> render(context, FIELDS))
                 .withPlay(play -> {
@@ -340,7 +368,11 @@ public final class SolrIndexEditorStories {
                                  final boolean readOnly) {
         final RestFixtures fixtures = DocEditors.permissionRoutes(RestFixtures.builder())
                 .get(UPDATE, RestReply.json(json.replace("FIELDS", fields)))
-                .put(UPDATE, request -> RestReply.json(request.getBody()))
+                // A Save of the new collection takes a while (KeptChangesUseTheSavedIndex)
+                .put(UPDATE, request -> RestReply.json(request.getBody())
+                        .delayed(request.getBody().contains(SLOW_COLLECTION)
+                                ? 2000
+                                : 0))
                 .post("/solrIndex/v1/fetchSolrTypes", RestReply.json(SOLR_TYPES))
                 .post("/solrIndex/v1/solrConnectionTest", RestReply.json(
                         "{\"ok\": true, \"message\": \"Solr reachable.\"}"))

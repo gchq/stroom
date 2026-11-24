@@ -16,6 +16,7 @@
 
 package stroom.floormap.client.component;
 
+import stroom.docref.DocRef;
 import stroom.document.asset.client.component.DocumentAssetsTabController;
 import stroom.document.client.component.DocumentationTabController;
 import stroom.document.client.editor.DocumentEditor;
@@ -288,6 +289,17 @@ public class FloorMapEditor extends DocumentEditor<FloorMapDoc> {
     public BiConsumer<FloorMapDoc, Consumer<FloorMapDoc>> getPostSaveAsCallback() {
         // The assets are copied from the document being saved, even if its Assets tab was never shown
         return (copy, callback) -> assetsTab.onSaveAs(getDocument(), copy, callback);
+    }
+
+    @Override
+    protected void onKeepChanges(final DocRef docRef, final FloorMapDoc saved) {
+        // Reading keeps what they have staged, dropping what the save has persisted
+        if (map != null) {
+            map.read(docRef, saved);
+        }
+        if (editor != null) {
+            editor.read(docRef, saved);
+        }
     }
 
     // Flushes the Editor's staged changes, if any, and only once that succeeds saves the assets

@@ -147,6 +147,9 @@ public class DocumentEditorHost<D>
     public final void readSaved(final DocRef docRef, final D saved, final boolean changed) {
         if (!changed) {
             read(docRef, saved);
+            if (editor instanceof final DocumentEditor<D> documentEditor) {
+                documentEditor.refreshAssociatedDirty();
+            }
         } else {
             this.document = saved;
             documentContext.set(docRef);

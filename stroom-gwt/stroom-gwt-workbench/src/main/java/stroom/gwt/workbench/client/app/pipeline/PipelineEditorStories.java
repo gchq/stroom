@@ -38,6 +38,7 @@ import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.component.PipelineEditor;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineResource;
@@ -271,6 +272,8 @@ public final class PipelineEditorStories {
             {"type": "XSLT", "uuid": "x1", "name": "My XSLT", "data": "ORIGINAL XSLT CODE"}""";
 
     // Stepping, with the xslt element's code in 'My XSLT' (loaded and saved by its plugin)
+    // The plugin of the last story rendered with plugins (renderWithPlugins), for its play
+    private static PipelinePlugin pipelinePlugin;
     private static final RestFixtures MULTI_SAVE_FIXTURES = fixtures(DOC, STREAMS, NO_ROWS,
             StoryDocumentPlugins.documentRoutes(RestFixtures.builder()
                             .post(LAYERS_PATH, RestReply.json(LAYERS))
@@ -1056,6 +1059,21 @@ public final class PipelineEditorStories {
                     play.expect(screen.queryByText(TextMatch.startingWith("Save Pipeline"))).toBeNull();
                     expectNoProblems(play);
                 })
+                // Saving all with nothing to save asks nothing: it opened the picker with nothing in it
+                .story("SaveAllWithNothingChanged", PipelineEditorStories::renderWithPlugins)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openStructure(play);
+                    play.findByText("xslt");
+                    // No documentation, so looking at it isn't a change
+                    play.click(play.getByText("Documentation", StroomDom.LINK_TAB_LABEL));
+                    play.waitFor(() -> play.expect(play.querySelector(".ace_editor")).toBeVisible());
+                    // As the Save All shortcut does, of every plugin
+                    play.run("save all", () -> pipelinePlugin.save());
+                    play.sleep(500);
+                    play.expect(screen.queryByText(TextMatch.startingWith("Save Pipeline"))).toBeNull();
+                    expectNoProblems(play);
+                })
                 // Saving with another dirty document (code edited while stepping) opens the picker;
                 // OK saves both
                 .story("MultiDocumentSave", PipelineEditorStories::renderWithPlugins)
@@ -1401,8 +1419,9 @@ public final class PipelineEditorStories {
                 .realAlerts()
                 .build();
         harness.getSecurityContext().setDocumentPermission(DocumentPermission.EDIT);
+        pipelinePlugin = injector.getPipelinePlugin();
         StoryDocumentPlugins.register(harness, injector.getDocumentPluginEventManager(),
-                        injector.getPipelinePlugin(), injector.getXsltPlugin())
+                        pipelinePlugin, injector.getXsltPlugin())
                 .showOpenedTabs();
         harness.afterStartUp(() -> OpenDocumentEvent.fire(harness.getHasHandlers(), DOC_REF, true));
         return harness.asWidget();

@@ -121,7 +121,9 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
             final List<DocRef> dirtyDocs = pipelineEditor.getDirtyDocs();
             final DocRef pipeline = pipelineEditor.getDocRef();
 
-            if (!(dirtyDocs.size() == 1 && dirtyDocs.contains(pipeline))) {
+            // With nothing to choose from, the pipeline is saved if it is dirty at all (e.g. refused, as a
+            // field holds input that can't be kept)
+            if (!dirtyDocs.isEmpty() && !(dirtyDocs.size() == 1 && dirtyDocs.contains(pipeline))) {
                 saveChangedDocumentsProvider.get().show(appRoot, "Save Pipeline: " + pipeline.getName(), dirtyDocs,
                         selectedDocRefs -> {
                             final AtomicInteger completedSaves = new AtomicInteger(0);

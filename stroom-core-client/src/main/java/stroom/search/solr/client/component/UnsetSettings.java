@@ -39,15 +39,6 @@ final class UnsetSettings {
                 : shown;
     }
 
-    /// @param shown The text shown.
-    /// @param read  The text read, or null.
-    /// @return The text shown, or that read if both are blank.
-    static String textAsRead(final String shown, final String read) {
-        return NullSafe.isBlankString(shown) && NullSafe.isBlankString(read)
-                ? read
-                : shown;
-    }
-
     /// @param shown The expression shown.
     /// @param read  The expression read, or null.
     /// @return The expression shown, or null if none was read and it has no terms.

@@ -576,6 +576,8 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
                 .method(r -> r.saveDraftToLive(document.getUuid()))
                 .onSuccess(result -> {
                     if (result) {
+                        // The draft is now live, so there is nothing to save
+                        serverDirty = false;
                         // Do the original resultConsumer
                         callback.accept(document);
                     } else {

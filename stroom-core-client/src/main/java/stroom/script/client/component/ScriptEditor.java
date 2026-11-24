@@ -21,6 +21,7 @@ import stroom.document.client.component.CodeTabController;
 import stroom.document.client.component.DocumentationTabController;
 import stroom.document.client.editor.DocumentEditor;
 import stroom.document.client.editor.LinkTabPanel;
+import stroom.document.client.editor.UnsetText;
 import stroom.script.client.event.ClearScriptCacheEvent;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
@@ -69,7 +70,7 @@ public class ScriptEditor extends DocumentEditor<ScriptDoc> {
                     return script;
                 },
                 (script, docRef, doc) -> script.setText(doc.getData()),
-                (script, doc) -> doc.copy().data(script.getText()).build());
+                (script, doc) -> doc.copy().data(UnsetText.asRead(script.getText(), doc.getData())).build());
         addTab(SETTINGS,
                 settingsProvider::get,
                 ScriptSettingsController::read,
