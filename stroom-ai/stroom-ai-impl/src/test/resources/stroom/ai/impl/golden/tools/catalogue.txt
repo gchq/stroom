@@ -1,6 +1,6 @@
 # The built-in tools the model is shown
 
-Built-in tools: 64
+Built-in tools: 65
 
 ## Offered in each mode (in a chat with no MCP servers)
 
@@ -834,6 +834,151 @@ Checks a skill, saved (by name) or a draft (its markdown), and gives its problem
     },
     "name" : {
       "description" : "A saved skill's name.",
+      "type" : "string"
+    }
+  },
+  "required" : [ ],
+  "type" : "object"
+}
+
+================================================================================
+## compare_activity
+
+isReadOnly: true
+readsUntrustedContent: true
+boundsItsOutput: true
+strict: null
+metadata: { }
+offered in modes: 
+
+### Description
+
+Compares one person's activity in a window with their own baseline and their peers' (the same UserDetails Organisation, read from one event each), from index aggregates only, never the events: volume (events, active hours, sums), rhythm (first and last of the day, hour of the week), breadth (distinct values) and novelty (values first seen). Scored in code: robust z-scores, change points with their date, drifts, values started and stopped; coverage gaps, leave and source-wide shifts are checked first. Gives at most 20 ranked findings, each an indicator with its evidence and an alternative explanation (never a conclusion about the person: say so), a line a month, and CSV files of the daily profile and monthly rollup. Give person (the person id) or logonIds where there is none. Drill into flagged days with activity_timeline.
+
+### Parameters
+
+{
+  "properties" : {
+    "accessField" : {
+      "description" : "Optional: a field of the resources people reach (shares, repositories, sites, record types): the baseline's people and resources are clustered, and the window's access outside the person's cluster found.",
+      "type" : "string"
+    },
+    "baselineFrom" : {
+      "description" : "The baseline's start (default 180 days before baselineTo).",
+      "type" : "string"
+    },
+    "baselineTo" : {
+      "description" : "The baseline's end, exclusive (default windowFrom).",
+      "type" : "string"
+    },
+    "breadthFields" : {
+      "description" : "Fields whose distinct and new values to count a day (default: the host, application and object fields found).",
+      "items" : {
+        "type" : "string"
+      },
+      "type" : "array"
+    },
+    "categories" : {
+      "description" : "Add events a day by category (personal cloud storage, webmail, job search...) of the first breadth field's values: from categoryField where the index has one, else classified by the model (marked inferred). Default false.",
+      "type" : "boolean"
+    },
+    "categoryCorrections" : {
+      "description" : "Corrections of categories inferred, each value=category: kept for re-runs.",
+      "items" : {
+        "type" : "string"
+      },
+      "type" : "array"
+    },
+    "categoryField" : {
+      "description" : "Optional: the index's own category field, e.g. a proxy's URL category.",
+      "type" : "string"
+    },
+    "categoryList" : {
+      "description" : "The site's own categories, each value=category (from the AGENTS doc or skill): override the rest.",
+      "items" : {
+        "type" : "string"
+      },
+      "type" : "array"
+    },
+    "countryField" : {
+      "description" : "Optional: the country field, where it isn't a *.geo.country_iso_code field.",
+      "type" : "string"
+    },
+    "exceptions" : {
+      "description" : "Approved exceptions, each yyyy-MM-dd..yyyy-MM-dd: reason (e.g. an approved migration), from the question, skill or AGENTS doc: not scored.",
+      "items" : {
+        "type" : "string"
+      },
+      "type" : "array"
+    },
+    "leave" : {
+      "description" : "The person's leave, each yyyy-MM-dd..yyyy-MM-dd, from the question, skill or AGENTS doc: not scored.",
+      "items" : {
+        "type" : "string"
+      },
+      "type" : "array"
+    },
+    "location" : {
+      "description" : "Look for new countries, impossible travel and activity abroad on leave, from the index's geo fields (default true where it has them).",
+      "type" : "boolean"
+    },
+    "logonIds" : {
+      "description" : "Logon ids (accounts) to use where an index has no person field, each kept visible; other accounts aren't included.",
+      "items" : {
+        "type" : "string"
+      },
+      "type" : "array"
+    },
+    "peerElement" : {
+      "description" : "The UserDetails element peers share (default Organisation).",
+      "enum" : [ "Group", "Organisation", "Role", "Unit" ],
+      "type" : "string"
+    },
+    "peers" : {
+      "description" : "Compare with peers (default true).",
+      "type" : "boolean"
+    },
+    "person" : {
+      "description" : "The person id, as the indexes' person field holds it.",
+      "type" : "string"
+    },
+    "personField" : {
+      "description" : "Optional: the person field, where the AGENTS doc's ## Fields or the convention don't give it.",
+      "type" : "string"
+    },
+    "sources" : {
+      "description" : "The indexes by name or uuid (default: every Elastic and Lucene index you can use with a person or user field).",
+      "items" : {
+        "type" : "string"
+      },
+      "type" : "array"
+    },
+    "sumFields" : {
+      "description" : "Numeric fields to sum a day, e.g. bytes sent.",
+      "items" : {
+        "type" : "string"
+      },
+      "type" : "array"
+    },
+    "timeZone" : {
+      "description" : "Time zone for the times and results: local, UTC, a zone id or an offset; default the user's. The person's days and hours are in it.",
+      "type" : "string"
+    },
+    "unit" : {
+      "description" : "What the window is compared in (default week).",
+      "enum" : [ "day", "week", "month" ],
+      "type" : "string"
+    },
+    "userField" : {
+      "description" : "Optional: the user (logon id) field, likewise.",
+      "type" : "string"
+    },
+    "windowFrom" : {
+      "description" : "The window's start: a date (yyyy-MM-dd) or Stroom's now()-30d (default 30 days before windowTo).",
+      "type" : "string"
+    },
+    "windowTo" : {
+      "description" : "The window's end, exclusive (default now()).",
       "type" : "string"
     }
   },

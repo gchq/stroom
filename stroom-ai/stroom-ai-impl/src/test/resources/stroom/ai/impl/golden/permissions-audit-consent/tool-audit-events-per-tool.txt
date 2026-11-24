@@ -29,6 +29,9 @@
     }
   }
 
+## compare_activity {"person":"alice","personField":"UserId","sources":["elastic-index-uuid"],"peers":false}
+(nothing recorded)
+
 ## config_properties {"mode":"get","paths":["stroom.ui.defaultMaxResults"]}
 - audit: propertiesViewed(1, ["stroom.ui.defaultMaxResults"], "Read by the config_properties tool")
 - event: AskStroomAi.viewProperties "Ask Stroom AI viewed 1 system property in chat 1"

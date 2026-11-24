@@ -6,6 +6,7 @@
 - activity_timeline (read-only, reads untrusted content): RUN in every situation
 - ask_user (read-only, reads only trusted content): RUN in every situation
 - check_skill (read-only, reads untrusted content): RUN in every situation
+- compare_activity (read-only, reads untrusted content): RUN in every situation
 - config_properties (read-only, reads untrusted content): RUN in every situation
 - current_results (read-only, reads untrusted content): RUN in every situation
 - delete_file (changes things, reads only trusted content): RUN | ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "You were away when the agent wanted to do this, and it changes something: in Stroom, or the chat's files or memory."} | RUN | RUN | RUN | RUN | RUN | RUN | RUN | RUN | RUN | ASK {allow for chat: no, allow server's read-only tools: no, risks: [], reason: "You were away when the agent wanted to do this, and it changes something: in Stroom, or the chat's files or memory."}

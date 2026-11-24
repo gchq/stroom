@@ -276,6 +276,8 @@ public final class BuiltInToolWorld implements AutoCloseable {
             Map.entry("activity_timeline", "{\"entity\":\"alice\",\"sources\":[{\"index\":"
                                          + "\"elastic-index-uuid\",\"user\":\"UserId\",\"roles\":{\"focus\":"
                                          + "{\"where\":[{\"field\":\"UserId\",\"value\":\"alice\"}]}}}]}"),
+            Map.entry("compare_activity", "{\"person\":\"alice\",\"personField\":\"UserId\",\"sources\":"
+                                        + "[\"elastic-index-uuid\"],\"peers\":false}"),
             Map.entry("summarise_column", "{\"path\":\"/outputs/a.csv\",\"column\":\"UserId\"}"),
             Map.entry("gantt_chart", "{\"path\":\"/outputs/a.csv\",\"start\":\"EventId\",\"label\":\"UserId\"}"),
             Map.entry("document_info", "{\"uuid\":\"xslt-uuid\"}"),

@@ -43,7 +43,7 @@ class TestToolCategories {
                     "instruction_evidence", "jq", "ls", "memory", "pipeline", "read_document", "read_file",
                     "read_turn", "str_replace",
                     "summarise_column", "table", "task_list", "wc", "write_file", "xpath"),
-            AiToolCategory.SEARCH, List.of("activity_timeline", "current_results", "describe_data_source",
+            AiToolCategory.SEARCH, List.of("activity_timeline", "compare_activity", "current_results", "describe_data_source",
                     "esql_query",
                     "fetch_events", "list_data_sources", "run_stroomql", "search_events", "search_history",
                     "sequence_query", "validate_stroomql"),
