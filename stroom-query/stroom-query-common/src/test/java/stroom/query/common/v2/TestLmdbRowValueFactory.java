@@ -24,6 +24,8 @@ import stroom.query.language.functions.ref.ValReference;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -96,6 +98,39 @@ class TestLmdbRowValueFactory {
             createRow(valReference, 5_000 - i);
         }
         assertThat(byteBufferFactory.acquired).isEqualTo(100);
+    }
+
+    // Buffers of up to 1,024 bytes are pooled.
+    @ParameterizedTest
+    @CsvSource({
+            "100, 100, 200",
+            "500, 500, 1000",
+            "700, 700, 1024",
+            "1024, 1024, 1024",
+            "1024, 1, 1024",
+            "1025, 10, 1035",
+            "10, 12290, 12300"})
+    void testMergedBufferIsPooledIfEitherRowCouldBe(final int existingSize,
+                                                    final int newSize,
+                                                    final int expectedSize) {
+        final int size = LmdbRowValueFactory.getMergedSize(existingSize, newSize);
+        assertThat(size).isEqualTo(expectedSize);
+
+        // It is enough if the merged row is no bigger than the larger one.
+        final int largest = Math.max(existingSize, newSize);
+        final ByteBuffer merged = lmdbRowValueFactory.useOutput(size, output -> output.write(new byte[largest]));
+        assertThat(byteBufferFactory.acquired).isEqualTo(1);
+        assertThat(merged.remaining()).isEqualTo(largest);
+        byteBufferFactory.release(merged);
+    }
+
+    @Test
+    void testMergedBufferGrowsIfBothRowsAreNeeded() {
+        final int size = LmdbRowValueFactory.getMergedSize(700, 700);
+        final ByteBuffer merged = lmdbRowValueFactory.useOutput(size, output -> output.write(new byte[1_400]));
+        assertThat(merged.remaining()).isEqualTo(1_400);
+        byteBufferFactory.release(merged);
+        assertThat(byteBufferFactory.held).isEmpty();
     }
 
     @Test

@@ -1316,7 +1316,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
             addRuleRows(second, 90, 150);
             second.sync();
         })).singleElement().satisfies(message -> assertThat(message)
-                .contains("limit of 50 unique values", queryKey.toString()));
+                .contains("limit of 50 unique values", "owner=" + queryKey));
         assertThat(getRowValues(second, tableSettings).stream().map(row -> row.subList(1, row.size())))
                 .containsExactlyInAnyOrder(
                         List.of("a", "150", "100", "320"),

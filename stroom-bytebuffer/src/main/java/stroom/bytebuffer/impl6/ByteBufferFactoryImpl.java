@@ -24,7 +24,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 public class ByteBufferFactoryImpl implements ByteBufferFactory {
 
     private static final double LOG2 = Math.log(2);
-    static final int MAX_CACHED_BUFFER_SIZE = 1024;
+    /// The size of the largest buffer that is pooled.
+    public static final int MAX_CACHED_BUFFER_SIZE = 1024;
 
     // Cache buffers big enough for single integers and above.
     private static final int MIN_CACHED_BUFFER_SIZE = Integer.BYTES;

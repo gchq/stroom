@@ -31,6 +31,7 @@ import stroom.util.rest.RestUtil;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.Severity;
 import stroom.util.shared.TokenError;
 
 import jakarta.inject.Inject;
@@ -174,13 +175,17 @@ class CsvSearchService {
         }
 
         final List<String> messages = new ArrayList<>();
-        NullSafe.list(response.getErrorMessages())
+        // A warning is not a reason for there being no results, e.g. if the search has not had time to finish.
+        final List<ErrorMessage> errorMessages = NullSafe.list(response.getErrorMessages());
+        errorMessages
                 .stream()
+                .filter(message -> message.getSeverity() == null ||
+                                   message.getSeverity().greaterThanOrEqual(Severity.ERROR))
                 .map(ErrorMessage::getMessage)
                 .filter(Objects::nonNull)
                 .forEach(messages::add);
         // Older nodes in a mixed version cluster may only populate the deprecated errors field.
-        if (messages.isEmpty()) {
+        if (errorMessages.isEmpty()) {
             NullSafe.list(response.getErrors())
                     .stream()
                     .filter(Objects::nonNull)

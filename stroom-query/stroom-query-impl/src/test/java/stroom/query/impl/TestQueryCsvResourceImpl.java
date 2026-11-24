@@ -208,6 +208,44 @@ class TestQueryCsvResourceImpl {
         assertThat(captor.getValue().getTimeout()).isEqualTo(250L);
     }
 
+    /**
+     * A search that has not had time to finish has no results, and its warnings are not the reason.
+     */
+    @Test
+    void warningWithNoResultsIsNotAnError() {
+        final DashboardSearchResponse response = new DashboardSearchResponse(
+                "node1", null, null, List.of("A warning"), null, false, null,
+                List.of(new ErrorMessage(Severity.WARNING, "A warning")));
+
+        final Response actual = csvSearch(response);
+
+        assertThat(body(actual)).isNullOrEmpty();
+        assertThat(header(actual, QueryCsvResource.CSV_COMPLETE_HEADER)).isEqualTo("false");
+    }
+
+    @Test
+    void warningIsNotGivenAsTheReasonForAFailure() {
+        final DashboardSearchResponse response = new DashboardSearchResponse(
+                "node1", null, null, null, null, true, null,
+                List.of(new ErrorMessage(Severity.WARNING, "A warning"),
+                        new ErrorMessage(Severity.ERROR, "An error")));
+
+        assertThatThrownBy(() -> csvSearch(response))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("An error")
+                .hasMessageNotContaining("A warning");
+    }
+
+    @Test
+    void errorsOfAnOlderNodeAreStillUsed() {
+        final DashboardSearchResponse response = new DashboardSearchResponse(
+                "node1", null, null, List.of("An old error"), null, true, null, null);
+
+        assertThatThrownBy(() -> csvSearch(response))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("An old error");
+    }
+
     private TableResult tableResult() {
         return TableResult
                 .builder()

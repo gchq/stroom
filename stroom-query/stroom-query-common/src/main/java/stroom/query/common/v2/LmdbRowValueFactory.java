@@ -17,6 +17,7 @@
 package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBufferPoolOutput;
 import stroom.query.language.functions.ref.DataWriter;
 import stroom.query.language.functions.ref.KryoDataWriter;
@@ -62,6 +63,21 @@ public class LmdbRowValueFactory {
                 throw e;
             }
         }
+    }
+
+    /// Gets how many bytes to expect two row values to take once they are merged.
+    ///
+    /// @param existingSize The size of the existing row value.
+    /// @param newSize      The size of the new row value.
+    /// @return The expected size.
+    static int getMergedSize(final int existingSize, final int newSize) {
+        // The merged row is about as big as the two rows at most, but can be no bigger than one of them. A buffer that
+        // is too large to be pooled is costly, so don't use one on the chance that it is needed.
+        final int largest = Math.max(existingSize, newSize);
+        final int total = existingSize + newSize;
+        return largest <= ByteBufferFactoryImpl.MAX_CACHED_BUFFER_SIZE
+                ? Math.min(total, ByteBufferFactoryImpl.MAX_CACHED_BUFFER_SIZE)
+                : total;
     }
 
     public ByteBuffer create(final StoredValues storedValues) {

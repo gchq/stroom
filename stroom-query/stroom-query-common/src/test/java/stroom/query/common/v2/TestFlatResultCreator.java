@@ -38,6 +38,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -61,6 +62,28 @@ class TestFlatResultCreator {
             assertThat(result.getStructure()).isNotEmpty();
             assertThat(result.getErrorMessages()).hasSize(1);
         }
+    }
+
+    // Only 100 messages are kept, so the warnings of earlier results must not leave no room for an error.
+    @Test
+    void testErrorAfterManyWarnings() {
+        final AtomicInteger count = new AtomicInteger();
+        final FlatResultCreator creator = create(errorConsumer -> {
+            errorConsumer.add(Severity.WARNING, () -> "a warning");
+            if (count.incrementAndGet() == 151) {
+                throw new IllegalStateException("an error");
+            }
+        });
+        for (int i = 0; i < 150; i++) {
+            assertThat(createResult(creator).getErrorMessages()).hasSize(1);
+        }
+        for (int i = 0; i < 3; i++) {
+            final FlatResult result = createResult(creator);
+            assertThat(result.getValues()).isNullOrEmpty();
+            assertThat(result.getErrorMessages().toString()).contains("an error");
+        }
+        // There was no point in trying again.
+        assertThat(count.get()).isEqualTo(151);
     }
 
     @Test

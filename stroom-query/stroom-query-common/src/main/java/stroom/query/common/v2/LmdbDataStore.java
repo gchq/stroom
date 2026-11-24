@@ -218,12 +218,13 @@ public class LmdbDataStore implements DataStore {
         // The messages of a rule's store or search are not shown to anyone, so log these as well.
         final boolean logWarnings = SourceType.TABLE_BUILDER_ANALYTIC.equals(sourceType) ||
                                     SourceType.SCHEDULED_QUERY_ANALYTIC.equals(sourceType);
+        // The key of a table builder rule's store names the rule.
         final DocRef ownerDocRef = NullSafe.get(searchRequestSource, SearchRequestSource::getOwnerDocRef);
+        final Object owner = Objects.requireNonNullElse(ownerDocRef, queryKey);
         valueReferenceIndex.getFunctionWarnings().setConsumer(message -> {
             errorConsumer.add(Severity.WARNING, () -> message);
             if (logWarnings) {
-                LOGGER.warn("{} (owner={}, queryKey={}, componentId={})",
-                        message, ownerDocRef, queryKey, componentId);
+                LOGGER.warn("{} (owner={}, componentId={})", message, owner, componentId);
             }
         });
         checkWindowUse(resultStoreConfig);
@@ -824,8 +825,9 @@ public class LmdbDataStore implements DataStore {
 
                         // Get the existing entry for this key.
                         final ByteBuffer existingValueBuffer = db.get(writeTxn, lmdbKV.key());
-                        // The merged row is about as big as the two rows at most.
-                        final int expectedSize = existingValueBuffer.remaining() + lmdbKV.val().remaining();
+                        final int expectedSize = LmdbRowValueFactory.getMergedSize(
+                                existingValueBuffer.remaining(),
+                                lmdbKV.val().remaining());
                         final ByteBuffer newValueBuffer = lmdbRowValueFactory.useOutput(expectedSize, output -> {
                             boolean merged = false;
                             while (existingValueBuffer.remaining() > 0) {

@@ -70,11 +70,12 @@ public class FlatResultCreator implements ResultCreator {
     private final Map<String, String> paramMap;
     private final FormatterFactory formatterFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
-    private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
     private final Sizes defaultMaxResultsSizes;
     private final boolean cacheLastResult;
     private final Provider<Executor> executorProvider;
     private FlatResult lastResult;
+    // The messages of the result that failed, or null if none has.
+    private ErrorConsumer failure;
 
     public FlatResultCreator(final DataStoreFactory dataStoreFactory,
                              final SearchRequest searchRequest,
@@ -98,8 +99,8 @@ public class FlatResultCreator implements ResultCreator {
         this.executorProvider = executorProvider;
     }
 
-    // This is used again each time the result is asked for, so a warning must not stop later ones.
-    private boolean hasFailed() {
+    // Only an error is a failure, as a warning must not stop later results.
+    private static boolean hasFailed(final ErrorConsumer errorConsumer) {
         return errorConsumer.getErrorMessages()
                 .stream()
                 .anyMatch(message -> message.getSeverity().greaterThanOrEqual(Severity.ERROR));
@@ -168,8 +169,11 @@ public class FlatResultCreator implements ResultCreator {
                 .filter(Objects::nonNull)
                 .toList();
 
+        // This is used again each time the result is asked for. Only so many messages are kept, so each result has its
+        // own, and the same warning each time can't leave no room for a later error.
+        final ErrorConsumer errorConsumer = Objects.requireNonNullElseGet(failure, ErrorConsumerImpl::new);
         final FlatResultBuilder resultBuilder = FlatResult.builder();
-        if (!hasFailed()) {
+        if (failure == null) {
             try {
                 // Map data.
                 DataStore mappedDataStore = dataStore;
@@ -327,6 +331,10 @@ public class FlatResultCreator implements ResultCreator {
                         LogUtil.message(
                                 "Error creating result for resultRequest {}", resultRequest.getComponentId()), e);
                 errorConsumer.add(e);
+            }
+
+            if (hasFailed(errorConsumer)) {
+                failure = errorConsumer;
             }
         }
 
