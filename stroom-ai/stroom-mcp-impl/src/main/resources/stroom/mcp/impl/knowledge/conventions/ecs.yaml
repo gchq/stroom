@@ -113,6 +113,8 @@ field_map:
   EventSource/User/Domain: {name: user.domain, type: keyword}
   EventSource/User/EmailAddress: {name: user.email, type: keyword}
   EventSource/User/UserDetails/Role: {name: user.roles, type: keyword}
+  # The person, the same for all of their accounts (the user's id where processing decorates it).
+  EventSource/User/UserDetails/Id: {name: user.id, type: keyword}
   EventDetail/TypeId: {name: event.code, type: keyword}
   EventDetail/Description: {name: message, type: text}
   # What happened, whichever the action element: its Action (else, for the many actions with none - View, Send,

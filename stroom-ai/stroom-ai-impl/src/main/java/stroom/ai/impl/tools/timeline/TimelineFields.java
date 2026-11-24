@@ -42,12 +42,15 @@ import java.util.regex.Pattern;
 /// index is ([InstructionRules#fields]); else the field conventions' (the ECS profile's `user.name`, the flat
 /// profile's `UserId`: their `EventSource/User/Id`); else, for the user, a field the index's documentation names on
 /// a line about the user. The first the index has is used, and where it came from is said. Asking the user is the
-/// tool's, when none is found.
-class TimelineFields {
+/// tool's, when none is found. The person ([InstructionRules#PERSON_FIELD], an id decorated on each event, the same
+/// for all of a person's accounts) is found the same way, by the convention's `EventSource/User/UserDetails/Id`
+/// (ECS `user.id`); [PersonScope] chooses between it and the logon ids for each index.
+public class TimelineFields {
 
     /// The event-logging paths of what is found, as the conventions map them.
     static final Map<String, String> CONVENTION_PATHS = Map.of(
             InstructionRules.USER_FIELD, "EventSource/User/Id",
+            InstructionRules.PERSON_FIELD, "EventSource/User/UserDetails/Id",
             InstructionRules.HOST_FIELD, "EventSource/Device/HostName",
             InstructionRules.ACTION_FIELD, "EventDetail/*/Action",
             InstructionRules.EVENT_TYPE_FIELD, "EventDetail/TypeId");
@@ -64,9 +67,9 @@ class TimelineFields {
     /// @param dataSourceAccess  Gives an index's documentation.
     /// @param knowledge         The field conventions, where the module that bundles them is present.
     @Inject
-    TimelineFields(final AgentInstructions agentInstructions,
-                   final DataSourceAccess dataSourceAccess,
-                   final Optional<AgentKnowledge> knowledge) {
+    public TimelineFields(final AgentInstructions agentInstructions,
+                          final DataSourceAccess dataSourceAccess,
+                          final Optional<AgentKnowledge> knowledge) {
         this.agentInstructions = agentInstructions;
         this.dataSourceAccess = dataSourceAccess;
         this.knowledge = knowledge;
@@ -80,7 +83,7 @@ class TimelineFields {
     /// @param given   The call's (or skill's) fields, the first the index has used; empty for none.
     /// @param has     True for a field the index has.
     /// @return The field and where it came from, or empty if none is found.
-    Optional<Found> find(final ToolSession session,
+    public Optional<Found> find(final ToolSession session,
                          final DocRef index,
                          final String what,
                          final List<String> given,
@@ -170,7 +173,7 @@ class TimelineFields {
 
 
     /// Where a field came from, in the order they are tried.
-    enum Origin {
+    public enum Origin {
         /// The call's, or the skill's.
         CALL("the call (or skill)"),
         /// An AGENTS doc's `## Fields`.
@@ -189,7 +192,7 @@ class TimelineFields {
         }
 
         /// @return Its name in the result.
-        String description() {
+        public String description() {
             return description;
         }
     }
@@ -203,10 +206,10 @@ class TimelineFields {
     /// @param field  The field.
     /// @param origin Where it came from.
     /// @param detail The AGENTS doc's folder or the convention's name, or null.
-    record Found(String field, Origin origin, String detail) {
+    public record Found(String field, Origin origin, String detail) {
 
         /// @return Where it came from, as the result says it.
-        String from() {
+        public String from() {
             return detail == null
                     ? origin.description()
                     : origin.description() + " (" + detail + ")";

@@ -127,10 +127,12 @@ class TestInstructionRules {
         final Map<String, FieldRule> fields = InstructionRules.fields(List.of(
                 doc("/", "## Fields\n- user: Initiator.Id, user.name\n- host: HostName\n- Host names are lower "
                          + "case.\n"),
-                doc("/Indexes/Proxy", "## Fields\n- `User`: SrcUser\n- event type: `Vendor.EventId`\n")));
+                doc("/Indexes/Proxy", "## Fields\n- `User`: SrcUser\n- event type: `Vendor.EventId`\n- person id: "
+                                      + "user.id\n")));
 
         assertThat(fields).containsOnlyKeys(InstructionRules.USER_FIELD, InstructionRules.HOST_FIELD,
-                InstructionRules.EVENT_TYPE_FIELD);
+                InstructionRules.EVENT_TYPE_FIELD, InstructionRules.PERSON_FIELD);
+        assertThat(fields.get(InstructionRules.PERSON_FIELD).fields()).containsExactly("user.id");
         assertThat(fields.get(InstructionRules.USER_FIELD)).isEqualTo(new FieldRule(List.of("SrcUser"),
                 "/Indexes/Proxy"));
         assertThat(fields.get(InstructionRules.HOST_FIELD)).isEqualTo(new FieldRule(List.of("HostName"), "/"));
@@ -143,7 +145,8 @@ class TestInstructionRules {
 
         assertThat(InstructionRules.problems(text)).singleElement().asString()
                 .startsWith("'## Fields' line '- colour: Red' names none the tools know (action, application, "
-                            + "element, event code, event detail, event type, host, object, process, user)");
+                            + "element, event code, event detail, event type, host, object, person, person id, "
+                            + "process, user)");
         assertThat(InstructionRules.fieldProblems(text, Set.of("Initiator.Id", "HostName")))
                 .containsExactly("'## Fields' line for user names no field the data sources where the doc applies "
                                  + "have (Initiator.ID)");

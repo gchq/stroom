@@ -82,6 +82,9 @@ public final class InstructionRules {
     public static final String COMPACT = "compact";
     /// The field holding the user (or entity) an event is of.
     public static final String USER_FIELD = "user";
+    /// The field holding the person an event is of: an id processing decorates each event with, the same for all of
+    /// a person's accounts (the user field holds the logon id, which differs by source).
+    public static final String PERSON_FIELD = "person";
     /// The field holding the host an event happened on.
     public static final String HOST_FIELD = "host";
     /// The field holding the application.
@@ -133,6 +136,8 @@ public final class InstructionRules {
     /// What each field may be called in a doc's `## Fields` section.
     static final Map<String, String> FIELDS = Map.ofEntries(
             Map.entry("user", USER_FIELD),
+            Map.entry("person", PERSON_FIELD),
+            Map.entry("person id", PERSON_FIELD),
             Map.entry("host", HOST_FIELD),
             Map.entry("application", APPLICATION_FIELD),
             Map.entry("process", APPLICATION_FIELD),
