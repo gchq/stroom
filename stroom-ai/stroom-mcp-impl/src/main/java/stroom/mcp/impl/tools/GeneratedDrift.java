@@ -18,7 +18,12 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.generation.CodeDiff;
+import stroom.ai.impl.tools.generation.DumpMode;
+import stroom.ai.impl.tools.generation.ModuleChecks;
+import stroom.ai.impl.tools.generation.SourceTypeModule;
+import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.processing.MergedPipeline.TranslationDoc;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
@@ -32,8 +37,13 @@ import stroom.util.shared.NullSafe;
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /// Whether a build's XSLTs are still what their kept mappings generate, for the checks before promotion ([BuildChecks])
 /// and the Field mapping section: each XSLT is regenerated from its mapping and compared.
@@ -44,6 +54,8 @@ class GeneratedDrift {
     // Stroom since.
     private static final String HAND_SAVED = "its XSLT was saved as written by hand";
     private static final String EDITED = "its XSLT was edited by hand";
+    // The UUID an import's href names.
+    private static final Pattern HREF_UUID = Pattern.compile("uuid='([^']+)'");
 
     private final KeptCode keptCode;
     private final XsltHistory history;
@@ -163,6 +175,83 @@ class GeneratedDrift {
         return Optional.of("its XSLT was edited by hand since the server saved it, and differs from what its " + kind
                            + " plan generates: " + HandEditGate.CARRY.get(kind) + ", as a save from the plan that "
                            + "undoes the edit is refused." + differs);
+    }
+
+    /// The aggregated feed's modules an XSLT imports (its common module, and the helpers that imports), each edited by
+    /// hand in Stroom since the tools saved it ([ModuleEdits]), for the checks before promotion: a module runs as
+    /// edited, and a later build that adds to it asks the user whether to keep the edit.
+    ///
+    /// @param code An XSLT's code (a source type group's).
+    /// @return Why, for each module edited, by the module's UUID; none for an XSLT importing no module.
+    public Map<String, String> moduleEdits(final String code) {
+        final Map<String, String> out = new LinkedHashMap<>();
+        final List<String> uuids = new ArrayList<>();
+        ModuleChecks.hrefs(code).forEach(href -> uuidOf(href).ifPresent(uuids::add));
+        for (int i = 0; i < uuids.size(); i++) {
+            final String uuid = uuids.get(i);
+            final Optional<XsltDoc> module = readModule(uuid);
+            final Optional<ModuleChecks.Marker> marker = module.flatMap(doc -> ModuleChecks.marker(
+                    NullSafe.string(doc.getData())));
+            if (module.isEmpty() || marker.isEmpty() || out.containsKey(uuid)) {
+                continue;
+            }
+            final XsltDoc doc = module.get();
+            final Optional<ModuleEdits.Edit> edit;
+            if (SourceTypeModule.COMMON.equals(marker.get().kind())) {
+                // The helpers it imports are read too.
+                ModuleChecks.hrefs(doc.getData()).forEach(href -> uuidOf(href).filter(next -> !uuids.contains(next))
+                        .ifPresent(uuids::add));
+                edit = commonEdit(uuid, doc);
+            } else if (ModuleChecks.HELPERS.equals(marker.get().kind())) {
+                edit = ModuleEdits.helpers(uuid, doc);
+            } else {
+                edit = Optional.empty();
+            }
+            edit.ifPresent(found -> out.put(uuid, "its imported module '" + found.name() + "' was edited by hand in "
+                                                  + "Stroom since the tools saved it" + found.by() + ": "
+                                                  + found.changed() + ". It runs as edited; a later build that adds "
+                                                  + "to it asks the user whether to keep the edit (read into its "
+                                                  + "mapping) or discard it"));
+        }
+        return out;
+    }
+
+    // A common module's edit, against what its kept mapping generates now.
+    private Optional<ModuleEdits.Edit> commonEdit(final String uuid, final XsltDoc doc) {
+        final Optional<KeptMapping.Kept> kept = KeptMapping.readMapping(doc.getDescription())
+                .filter(found -> KeptMapping.TRANSLATION.equals(found.kind()));
+        if (kept.isEmpty()) {
+            return Optional.empty();
+        }
+        try {
+            final TranslationMapping mapping = TranslationMapping.parse(kept.get().payload().get("mapping"));
+            final Function<TranslationMapping, String> generate = each -> {
+                final Map<String, Object> payload = new LinkedHashMap<>(kept.get().payload());
+                payload.put("mapping", each.toJson(DumpMode.COMPACT));
+                return keptCode.regenerate(payload, doc.getData()).xslt();
+            };
+            return ModuleEdits.common(uuid, doc, mapping, generate);
+        } catch (final RuntimeException e) {
+            // A safeguard: nothing to say rather than a failed check.
+            LOGGER.debug(() -> LogUtil.message("Module {} not compared with its mapping: {}", uuid, e.getMessage()));
+            return Optional.empty();
+        }
+    }
+
+    private Optional<XsltDoc> readModule(final String uuid) {
+        try {
+            return documentAccess.read(new DocRef(XsltDoc.TYPE, uuid), XsltDoc.class);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Module {} can't be read: {}", uuid, e.getMessage()));
+            return Optional.empty();
+        }
+    }
+
+    private static Optional<String> uuidOf(final String href) {
+        final Matcher matcher = HREF_UUID.matcher(NullSafe.string(href));
+        return matcher.find()
+                ? Optional.of(matcher.group(1))
+                : Optional.empty();
     }
 
     /// @param pipelineUuid A pipeline whose own XSLTs keep no mapping.

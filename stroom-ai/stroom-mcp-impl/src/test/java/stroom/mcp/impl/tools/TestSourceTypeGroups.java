@@ -31,6 +31,7 @@ import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.FeedSampling.SurveyRecord;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.ToolJson;
+import stroom.ai.impl.tools.validation.XsltVersionHistory;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.pipeline.shared.XsltDoc;
@@ -1011,7 +1012,10 @@ class TestSourceTypeGroups {
         final String older = HelpersXslt.generate().replaceFirst("version=\"" + HelpersXslt.VERSION + "\"",
                 "version=\"0\"");
         assertThat(HelpersXslt.isCurrent(older)).isFalse();
-        world.world.docs.put(helpers, world.xslt(helpers).copy().data(older).build());
+        // As the tools saved them, an older generator's: out of date, not edited by hand (which is asked about).
+        world.world.docs.put(helpers, world.xslt(helpers).copy().data(older).description(XsltVersionHistory
+                .withPending(world.xslt(helpers).getDescription(), null, "jane", "Older helpers", "stroom-mcp 0.1",
+                        Instant.parse("2026-10-01T00:00:00Z"), older)).build());
         final String commonCode = world.xslt(promoted.get("PEGA common")).getData();
         final Map<String, Object> again = new LinkedHashMap<>(args(security(), "PEGA security",
                 List.of("PegaSecurityEvent")));

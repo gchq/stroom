@@ -111,6 +111,26 @@ class TestBuildChecks {
     }
 
     @Test
+    void aModuleEditedByHandIsSaidOnceForThePipelinesImportingItAndOnlyWarns() {
+        // Decided by the user (2026-11-24): promotion's checks include the drift of the modules each pipeline's XSLT
+        // imports, not only its own XSLT.
+        world.records().recordPassed(new DocRef(PipelineDoc.TYPE, "p", "Acme"), BuildRecords.STEPPED, null, null);
+        world.records().recordPassed(new DocRef(PipelineDoc.TYPE, "q", "Other"), BuildRecords.STEPPED, null, null);
+        final String hidden = "<!-- stroom-mcp translation mapping: kept by the server, do not edit or delete\n"
+                              + "{\"mapping\":{}}\n-->";
+        world.docs.put("x", XsltDoc.builder().uuid("x").name("Acme").description(hidden)
+                .data("<xsl:stylesheet>v1</xsl:stylesheet>").build());
+        final GeneratedDrift drift = Mockito.mock(GeneratedDrift.class);
+        final String why = "its imported module 'ACME common' was edited by hand in Stroom since the tools saved it";
+        Mockito.when(drift.moduleEdits("<xsl:stylesheet>v1</xsl:stylesheet>")).thenReturn(Map.of("m", why));
+        final List<Map<String, Object>> docs = List.of(
+                FakeBuildFacts.doc(PipelineDoc.TYPE, "p", "Acme", "working_copy_of", "prod"),
+                FakeBuildFacts.doc(PipelineDoc.TYPE, "q", "Other", "working_copy_of", "prod"));
+
+        assertThat(checks(drift).checks(docs)).containsExactly("Pipeline 'Acme': " + why);
+    }
+
+    @Test
     void aPipelineStroomCantLoadIsOneProblemSaid() {
         Mockito.when(world.pipelineService.fetchPipelineLayers(new DocRef(PipelineDoc.TYPE, "q")))
                 .thenThrow(new IllegalStateException("Unknown property 'foo'"));

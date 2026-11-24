@@ -59,6 +59,10 @@ final class TranslationArgs {
                                             + "(every hand edit dropped), or for each field it names 'keep' (their "
                                             + "hand edit) or 'overwrite' (with the proposed field). Never chosen for "
                                             + "them.";
+    /// `hand_edit_choices` as build_translation_xslt takes it: an aggregated feed's modules' answers too.
+    static final String GROUP_HAND_EDIT_CHOICES = HAND_EDIT_CHOICES + " For an aggregated feed's module a refusal "
+                                                  + "names as edited by hand, by the module's name: 'keep' (the "
+                                                  + "edit kept) or 'overwrite' (the edit discarded).";
     /// The answers `hand_edit_choices` takes.
     static final List<String> CHOICES = List.of("keep", "overwrite", "per_field");
 

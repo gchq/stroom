@@ -68,6 +68,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -337,6 +338,40 @@ class SourceTypeGroups {
               final EventSchema schema,
               final String version,
               final String generator) {
+        return plan(build, registry, group, sourceTypes, keptTypes, given, schema, version, generator, Map.of());
+    }
+
+    /// Splits a mapping into a source type group's and the feed's common module's, as
+    /// [#plan(String, Registry, String, List, List, TranslationMapping, EventSchema, String, String)] does, with the
+    /// user's answers about the feed's modules edited by hand in Stroom since the tools saved them ([ModuleEdits],
+    /// decided by the user 2026-11-24). A common module's edit whose values read back from its code is what the module
+    /// runs, so the group is split and documented from those values (a hand-replaced Generator placeholder is no
+    /// placeholder), unless the user discarded it; an edit of a module the save would write that the user hasn't
+    /// answered about is in the plan's `moduleEdits().asked()`, to be asked before anything is written.
+    ///
+    /// @param build       The build.
+    /// @param registry    The feed's registry.
+    /// @param group       The group's name.
+    /// @param sourceTypes The source types it translates; none for the build's scope's.
+    /// @param keptTypes   The source types the group's saved mapping names, or none.
+    /// @param given       The mapping given for the group.
+    /// @param schema      The event-logging schema the Events are written in.
+    /// @param version     Its version.
+    /// @param generator   The feed's own Generator the user gave now, else null.
+    /// @param decided     The user's answers about the modules edited by hand, by the module's UUID:
+    ///                    [ModuleEdits#KEEP_CHOICE] or [ModuleEdits#DISCARD_CHOICE].
+    /// @return The plan.
+    /// @throws ToolRefusal as the plan without answers is.
+    Plan plan(final String build,
+              final Registry registry,
+              final String group,
+              final List<String> sourceTypes,
+              final List<String> keptTypes,
+              final TranslationMapping given,
+              final EventSchema schema,
+              final String version,
+              final String generator,
+              final Map<String, String> decided) {
         final Map<String, Object> state = registry.found().state();
         final String feed = registry.feed();
         final String field = JsonValues.text(state.get("field"));
@@ -367,14 +402,34 @@ class SourceTypeGroups {
         final String feedGenerator = NullSafe.isNonBlankString(generator)
                 ? generator
                 : FeedGenerators.kept(state);
+        final Function<TranslationMapping, String> generate = mapping -> XsltGenerator.generate(mapping, schema,
+                version).xslt();
+        final TranslationMapping keptCommon = commonDoc == null
+                ? null
+                : keptCommon(commonDoc);
+        final Optional<ModuleEdits.Edit> commonEdit = commonDoc == null
+                ? Optional.empty()
+                : moduleDoc(commonDoc).flatMap(doc -> ModuleEdits.common(commonDoc.uuid(), doc, keptCommon,
+                        generate));
+        final Optional<ModuleEdits.Edit> helpersEdit = helpersDoc == null
+                ? Optional.empty()
+                : moduleDoc(helpersDoc).flatMap(doc -> ModuleEdits.helpers(helpersDoc.uuid(), doc));
+        // The common module as it runs: an edit's values read back from its code, unless the user discarded it.
+        final boolean commonDiscarded = commonEdit.isPresent()
+                                        && ModuleEdits.DISCARD_CHOICE.equals(decided.get(commonDoc.uuid()));
+        final TranslationMapping moduleMapping = commonEdit.map(ModuleEdits.Edit::read)
+                .filter(read -> !commonDiscarded)
+                .orElse(keptCommon);
         final Split split = commonDoc == null
                 ? firstSplit(given, state, feed, naming, helpersHref, feedGenerator)
-                : leftToCommon(given, keptCommon(commonDoc), helpersHref, commonSaid(commonDoc), state, feed,
+                : leftToCommon(given, moduleMapping, helpersHref, commonSaid(commonDoc), state, feed,
                         feedGenerator);
         final TranslationMapping common = split.common();
         final TranslationMapping groupMapping = split.group();
         notes.addAll(split.notes());
         final boolean commonChanged = commonDoc != null && split.commonChanged();
+        final ModuleEdits.Edits moduleEdits = moduleEdits(helpersDoc, helpersEdit, commonDoc, commonEdit,
+                moduleMapping, split, group, decided, notes);
         final SourceTypeModule module = new SourceTypeModule(SourceTypeModule.GROUP, group, mode, types, commonHref,
                 null, SourceTypeModule.commonParts(common), systemName, field, rows(state));
         final Map<String, String> unsaved = new LinkedHashMap<>();
@@ -391,7 +446,87 @@ class SourceTypeGroups {
         }
         return new Plan(feed, group, mode, types, field, systemName, registry, helpersDoc, commonDoc, common,
                 commonChanged, groupMapping.withModule(module), effective(groupMapping, common, systemName, field),
-                notes, unsaved, problems, new FeedGenerator(split.generatorAsk(), generator));
+                notes, unsaved, problems, new FeedGenerator(split.generatorAsk(), generator), moduleEdits);
+    }
+
+    // The feed's modules' edits made by hand, and those of modules the save writes still to be asked about (what the
+    // save writes predicted as saveImports writes it: the helpers when not what the generator writes now, unless
+    // kept; the common module when changed, or importing the helpers' new version). What was decided, or read, said
+    // in the notes.
+    private ModuleEdits.Edits moduleEdits(final Module helpersDoc,
+                                          final Optional<ModuleEdits.Edit> helpersEdit,
+                                          final Module commonDoc,
+                                          final Optional<ModuleEdits.Edit> commonEdit,
+                                          final TranslationMapping moduleMapping,
+                                          final Split split,
+                                          final String group,
+                                          final Map<String, String> decided,
+                                          final List<String> notes) {
+        if (helpersEdit.isEmpty() && commonEdit.isEmpty()) {
+            return ModuleEdits.Edits.NONE;
+        }
+        final Map<String, ModuleEdits.Edit> found = new LinkedHashMap<>();
+        final List<ModuleEdits.Ask> asked = new ArrayList<>();
+        helpersEdit.ifPresent(edit -> found.put(edit.uuid(), edit));
+        commonEdit.ifPresent(edit -> found.put(edit.uuid(), edit));
+        final boolean helpersKept = helpersEdit.isPresent()
+                                    && ModuleEdits.KEEP_CHOICE.equals(decided.get(helpersDoc.uuid()));
+        // An edit is written over only where the helpers aren't the generator's now, which an edit makes them.
+        final boolean helpersVersioned = helpersDoc != null && !helpersDoc.inBuild() && !helpersKept
+                                         && (helpersEdit.isPresent() || !helpersCurrent(helpersDoc));
+        if (helpersEdit.isPresent() && !decided.containsKey(helpersDoc.uuid())) {
+            asked.add(new ModuleEdits.Ask(helpersEdit.get(), "write the generator's helpers (version "
+                                                             + HelpersXslt.VERSION + ") " + (helpersDoc.inBuild()
+                    ? "over them"
+                    : "as their new version")));
+        }
+        if (commonEdit.isPresent()) {
+            final List<String> needs = new ArrayList<>();
+            if (split.commonChanged() && !Objects.equals(generatorValue(split.common()),
+                    generatorValue(moduleMapping))) {
+                needs.add("write the feed's own Generator in place of its placeholder");
+            }
+            if (split.commonChanged() && split.common().shared().size() > moduleMapping.shared().size()) {
+                needs.add("add group '" + group + "''s shared call(s) to it");
+            }
+            if (helpersVersioned) {
+                needs.add("import the helpers' new version");
+            }
+            if ((split.commonChanged() || helpersVersioned) && !decided.containsKey(commonDoc.uuid())) {
+                asked.add(new ModuleEdits.Ask(commonEdit.get(), needs.isEmpty()
+                        ? "add to the module"
+                        : String.join(", and ", needs)));
+            }
+        }
+        found.values().forEach(edit -> notes.add(moduleEditNote(edit, decided.get(edit.uuid()))));
+        return new ModuleEdits.Edits(found, asked, Map.copyOf(decided));
+    }
+
+    // What the group's notes say of a module's edit: as decided, else as read.
+    private static String moduleEditNote(final ModuleEdits.Edit edit, final String decided) {
+        final String said = "'" + edit.name() + "' was edited by hand in Stroom" + edit.by() + ": " + edit.changed();
+        if (ModuleEdits.KEEP_CHOICE.equals(decided)) {
+            return said + ". The user kept the edit: " + (edit.read() != null
+                    ? "it is read into the module's mapping, and what this build adds is written beside it"
+                    : "the module is left as edited, nothing written to it");
+        }
+        if (ModuleEdits.DISCARD_CHOICE.equals(decided)) {
+            return said + ". The user discarded the edit: the module goes back to the generated code";
+        }
+        return said + (edit.read() != null
+                ? ". The group is split and documented from its values as edited (" + edit.readSaid() + ")"
+                : ". Its mapping can't hold the edit, so the group is split and documented from the mapping kept "
+                  + "with it");
+    }
+
+    // The helpers as the generator writes them now: a promoted one exactly, as saveImports keeps it.
+    private boolean helpersCurrent(final Module helpers) {
+        return HelpersXslt.isCurrent(readXsltData(helpers.uuid()));
+    }
+
+    // A module's document, as the user reads it.
+    private Optional<XsltDoc> moduleDoc(final Module module) {
+        return documentAccess.read(new DocRef(XsltDoc.TYPE, module.uuid(), module.name()), XsltDoc.class);
     }
 
     // A later group's build whose feed's common module isn't found (other groups translated already): refused, never
@@ -448,10 +583,18 @@ class SourceTypeGroups {
         final Map<String, Object> saved = new LinkedHashMap<>();
         final Map<String, Object> state = plan.registry().found().state();
         final Module helpersDoc = plan.helpersDoc();
+        final ModuleEdits.Edits edits = plan.moduleEdits();
         final Map<String, Object> helpers;
-        if (helpersDoc != null && !helpersDoc.inBuild() && HelpersXslt.isCurrent(readXsltData(helpersDoc.uuid()))) {
+        // As the generator writes them now, or kept as edited by hand (the user's choice).
+        final boolean asTheyAre = helpersDoc != null
+                                  && (edits.kept(helpersDoc.uuid()) || (!helpersDoc.inBuild()
+                                                                         && helpersCurrent(helpersDoc)));
+        if (asTheyAre) {
             helpers = moduleSaid(helpersDoc, false);
         } else {
+            if (helpersDoc != null) {
+                refuseUndecided(edits, helpersDoc);
+            }
             final String into = helpersDoc == null
                     ? null
                     : helpersDoc.inBuild()
@@ -459,7 +602,8 @@ class SourceTypeGroups {
                             : newModuleVersion(context, build, state, HELPERS_KEY, helpersDoc,
                                     HelpersXslt.docName(plan.feed()));
             helpers = translationDocs.saveModule(context, build, HelpersXslt.docName(plan.feed()), into,
-                    HelpersXslt.generate(), TranslationDocs.Source.NONE, "The generator's helpers, version "
+                    HelpersXslt.generate(), TranslationDocs.Source.NONE, discarded(edits, helpersDoc)
+                                                                         + "The generator's helpers, version "
                                                                          + HelpersXslt.VERSION);
         }
         saved.put(HELPERS_KEY, helpers);
@@ -467,7 +611,17 @@ class SourceTypeGroups {
         final String helpersHref = href(helpersUuid, String.valueOf(helpers.get("name")));
         final Module commonDoc = plan.commonDoc();
         final Map<String, Object> made;
-        if (commonDoc == null || plan.commonChanged()) {
+        final Optional<String> imported = commonDoc == null
+                ? Optional.empty()
+                : importedHref(commonDoc.uuid(), ModuleChecks.HELPERS);
+        final boolean helpersMoved = imported.isPresent() && !imported.get().contains("uuid='" + helpersUuid + "'");
+        // A module edited by hand is generated from the mapping read from it (kept), or kept with it (discarded),
+        // never its import changed by text alone: its kept mapping then says what it holds.
+        final boolean edited = commonDoc != null && edits.found().containsKey(commonDoc.uuid());
+        if (commonDoc == null || plan.commonChanged() || (edited && helpersMoved)) {
+            if (commonDoc != null) {
+                refuseUndecided(edits, commonDoc);
+            }
             final TranslationMapping common = plan.common().withModule(plan.common().module().withImports(null,
                     helpersHref));
             final XsltGenerator.Generated generated = XsltGenerator.generate(common, schema, version);
@@ -485,24 +639,26 @@ class SourceTypeGroups {
             made = translationDocs.saveModule(context, build, commonName(plan.feed()), into, generated.xslt(),
                     TranslationDocs.Source.of(common), commonDoc == null
                             ? "The parts every source type group of " + plan.feed() + " writes one way"
-                            : plan.generator().given() != null
-                                    ? "The feed's own Generator, given in group '" + plan.group() + "''s build"
-                                    : "The shared calls of group '" + plan.group() + "' added");
+                            : discarded(edits, commonDoc) + (edits.kept(commonDoc.uuid())
+                                    ? "Its hand edit read into its mapping; "
+                                    : "") + (!plan.commonChanged()
+                                    ? "Imports the helpers' new version"
+                                    : plan.generator().given() != null
+                                            ? "The feed's own Generator, given in group '" + plan.group()
+                                              + "''s build"
+                                            : "The shared calls of group '" + plan.group() + "' added"));
+        } else if (helpersMoved) {
+            // The helpers' new version, imported by UUID: the common module importing it is a new version too (seen
+            // in testing when the helpers were regenerated: the chain is by UUID).
+            final String into = commonDoc.inBuild()
+                    ? commonDoc.uuid()
+                    : newModuleVersion(context, build, state, COMMON_KEY, commonDoc, commonName(plan.feed()));
+            translationDocs.rewriteModule(context, into, readXsltData(into).replace(imported.get(), helpersHref),
+                    description -> NullSafe.string(description).replace(imported.get(), helpersHref),
+                    "Imports the helpers' new version");
+            made = moduleSaid(new Module(into, nameOf(into), true), true);
         } else {
-            final Optional<String> imported = importedHref(commonDoc.uuid(), ModuleChecks.HELPERS);
-            if (imported.isPresent() && !imported.get().contains("uuid='" + helpersUuid + "'")) {
-                // The helpers' new version, imported by UUID: the common module importing it is a new version too
-                // (seen in testing when the helpers were regenerated: the chain is by UUID).
-                final String into = commonDoc.inBuild()
-                        ? commonDoc.uuid()
-                        : newModuleVersion(context, build, state, COMMON_KEY, commonDoc, commonName(plan.feed()));
-                translationDocs.rewriteModule(context, into, readXsltData(into).replace(imported.get(), helpersHref),
-                        description -> NullSafe.string(description).replace(imported.get(), helpersHref),
-                        "Imports the helpers' new version");
-                made = moduleSaid(new Module(into, nameOf(into), true), true);
-            } else {
-                made = moduleSaid(commonDoc, false);
-            }
+            made = moduleSaid(commonDoc, false);
         }
         saved.put(COMMON_KEY, made);
         final String commonHref = href(String.valueOf(made.get("uuid")), String.valueOf(made.get("name")));
@@ -510,6 +666,23 @@ class SourceTypeGroups {
         final TranslationMapping group = plan.groupMapping().withModule(plan.groupMapping().module()
                 .withImports(commonHref, null));
         return new Imports(group, helpersHref, saved);
+    }
+
+    // A module edited by hand is written only once the user said whether to keep the edit: asked before anything is
+    // written (build_translation_xslt), so this is a safeguard.
+    private static void refuseUndecided(final ModuleEdits.Edits edits, final Module module) {
+        if (edits.undecided(module.uuid())) {
+            throw new ToolRefusal("Not saved: '" + module.name() + "' was edited by hand since the tools saved it, "
+                                  + "and the user hasn't said whether to keep the edit. Nothing was written.");
+        }
+    }
+
+    // How a module's version history says its edit was discarded, before what else was written: "" otherwise.
+    private static String discarded(final ModuleEdits.Edits edits, final Module module) {
+        return module != null && edits.found().containsKey(module.uuid())
+               && ModuleEdits.DISCARD_CHOICE.equals(edits.decided().get(module.uuid()))
+                ? "Its hand edit discarded (the user's choice); "
+                : "";
     }
 
     // A new version of a promoted module of the feed, in the build: its content as the original's, named for the
@@ -554,6 +727,25 @@ class SourceTypeGroups {
             return have;
         }
         return Optional.of(versionCopy(context, build, uuid, plan));
+    }
+
+    /// The XSLT whose hand edits a group's save is checked for before anything is written ([#groupTarget] writes a
+    /// new version): the one the save goes to where it exists already, else the promoted one its new version is
+    /// copied from (code and version history alike, so the check is the same).
+    ///
+    /// @param build The build.
+    /// @param plan  The plan.
+    /// @param name  The name the group's XSLT is saved with.
+    /// @return The XSLT's UUID; empty for a new group.
+    Optional<String> groupTargetNow(final String build, final Plan plan, final String name) {
+        final String uuid = groupXslt(plan.registry().found().state(), plan.group());
+        if (uuid.isEmpty() || !readable(uuid)) {
+            return xsltNamed(build, name);
+        }
+        if (inBuild(build, uuid)) {
+            return Optional.of(uuid);
+        }
+        return copyInBuild(build, uuid).or(() -> versionInBuild(build, uuid)).or(() -> Optional.of(uuid));
     }
 
     // The UUID of the XSLT the registry names for a group, or "".
@@ -1964,6 +2156,8 @@ class SourceTypeGroups {
     /// @param problems     What stops the common module made now being generated.
     /// @param generator    The feed's own Generator: proposed to the user where the common module needs it, and
     ///                     given by the user now.
+    /// @param moduleEdits  The feed's modules' edits made by hand, those still to be asked about, and the user's
+    ///                     answers ([ModuleEdits]).
     record Plan(String feed,
                 String group,
                 String mode,
@@ -1980,7 +2174,8 @@ class SourceTypeGroups {
                 List<String> notes,
                 Map<String, String> unsaved,
                 List<String> problems,
-                FeedGenerator generator) {
+                FeedGenerator generator,
+                ModuleEdits.Edits moduleEdits) {
 
         /// @param mapping The group's mapping as changed since (a domain split, a placeholder left out).
         /// @return This plan with it, its module kept.
@@ -1990,7 +2185,7 @@ class SourceTypeGroups {
                     : mapping;
             return new Plan(feed, group, mode, sourceTypes, field, systemName, registry, helpersDoc, commonDoc,
                     common, commonChanged, withModule, SourceTypeGroups.effective(withModule.withModule(null), common,
-                    systemName, field), notes, unsaved, problems, generator);
+                    systemName, field), notes, unsaved, problems, generator, moduleEdits);
         }
     }
 

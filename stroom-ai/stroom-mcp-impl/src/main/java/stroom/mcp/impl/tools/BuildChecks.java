@@ -26,17 +26,20 @@ import stroom.util.shared.NullSafe;
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /// What a build's pipelines still lack before promotion: a clean step of their current code (recorded in the build's
 /// record), a Documentation doc (for new pipelines), an Elasticsearch index template agreed and the sample indexed and
-/// verified (for indexing pipelines), a Field mapping section that matches the current mapping and XSLT, and an XSLT
-/// that is what its mapping generates ([GeneratedDrift]).
+/// verified (for indexing pipelines), a Field mapping section that matches the current mapping and XSLT, an XSLT
+/// that is what its mapping generates ([GeneratedDrift]), and an aggregated feed's modules it imports not edited by
+/// hand since the tools saved them (each said once, not holding promotion up).
 class BuildChecks {
 
     /// Said of a check promotion waits for, rather than one shown in the approval: documentation left behind by the
@@ -77,9 +80,10 @@ class BuildChecks {
                 .filter(doc -> DocumentationDoc.TYPE.equals(doc.get("type")))
                 .forEach(doc -> documented.put(String.valueOf(doc.get("name")), doc));
         final List<String> problems = new ArrayList<>();
+        final Set<String> modulesSaid = new HashSet<>();
         for (final Map<String, Object> doc : docs) {
             if (PipelineDoc.TYPE.equals(doc.get("type"))) {
-                check(doc, documented, problems);
+                check(doc, documented, problems, modulesSaid);
             }
         }
         return problems;
@@ -87,7 +91,8 @@ class BuildChecks {
 
     private void check(final Map<String, Object> doc,
                        final Map<String, Map<String, Object>> documented,
-                       final List<String> problems) {
+                       final List<String> problems,
+                       final Set<String> modulesSaid) {
         final String name = String.valueOf(doc.get("name"));
         final String uuid = String.valueOf(doc.get("uuid"));
         final DocRef ref = new DocRef(PipelineDoc.TYPE, uuid, name);
@@ -122,6 +127,13 @@ class BuildChecks {
                     ? mappingDrift.drift(kept.get())
                     : mappingDrift.planDrift(kept.get());
             drift.ifPresent(why -> problems.add(said + why));
+            // The feed's modules its XSLT imports, edited by hand: each said once, a warning (decided by the user,
+            // 2026-11-24: promotion checks include the imported modules' drift).
+            mappingDrift.moduleEdits(NullSafe.string(kept.get().xslt().getData())).forEach((module, why) -> {
+                if (modulesSaid.add(module)) {
+                    problems.add(said + why);
+                }
+            });
             if (documented.containsKey(name)) {
                 final String body = documentAccess.read(new DocRef(DocumentationDoc.TYPE,
                                 String.valueOf(documented.get(name).get("uuid"))), DocumentationDoc.class)

@@ -145,6 +145,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     static final String FEED_GENERATOR_ARG = "feed_generator";
     // The block of UnsavedChoices that keeps the feed's own Generator the user gave in its form, by feed.
     private static final String GENERATOR_CHOSEN = "feed generator chosen";
+    // The user's answers about the feed's modules edited by hand, kept until the group is saved.
+    private static final String MODULE_EDIT_CHOSEN = "module hand edit chosen";
 
     // The answers suggested when the mapping translates event types the user confirmed otherwise.
     private static final String KEEP_CHANGE = "Keep the mapping's change";
@@ -418,7 +420,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                                                    + "undo one is refused, saying what it changed, "
                                                                    + "so it can be carried into the mapping "
                                                                    + "(rebuild_mapping) instead.")
-                        .addProperty(HAND_EDIT_CHOICES_ARG, TranslationArgs.object(TranslationArgs.HAND_EDIT_CHOICES))
+                        .addProperty(HAND_EDIT_CHOICES_ARG, TranslationArgs.object(
+                                TranslationArgs.GROUP_HAND_EDIT_CHOICES))
                         .addStringProperty(GROUP_ARG, "An aggregated feed's source type group to build, by name "
                                                       + "(e.g. 'PEGA security'): the XSLT is the group's, the "
                                                       + "XSLT of its own pipeline. Needs the build's "
@@ -867,7 +870,58 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                         b.version, answered.get());
             }
         }
+        if (saves(request)) {
+            // A module the save writes, edited by hand since the tools saved it: the user decides first (keep the
+            // edit, discard it, or stop), before the sample check and before anything is written (decided by the
+            // user, 2026-11-24). The helpers are asked first: keeping them leaves the common module's import as it is.
+            final String feedGenerator = b.group.generator().given();
+            final Map<String, String> decided = new LinkedHashMap<>();
+            while (!b.group.moduleEdits().asked().isEmpty()) {
+                final ModuleEdits.Ask ask = b.group.moduleEdits().asked().getFirst();
+                decided.put(ask.edit().uuid(), moduleEditChoice(call, context, request, target, ask));
+                b.group = groups.plan(build, registry, group, request.sourceTypes(), keptTypes, given, b.schema,
+                        b.version, feedGenerator, decided);
+            }
+        }
         b.mapping = b.group.groupMapping();
+    }
+
+    // The user's answer about a module edited by hand: given in hand_edit_choices (by the module's name), kept from a
+    // form answered for the module as it is now, else asked in a form. Stop, or no form to ask in, saves nothing.
+    private String moduleEditChoice(final ToolCall call,
+                                    final ToolCallContext context,
+                                    final Request request,
+                                    final String target,
+                                    final ModuleEdits.Ask ask) {
+        final ModuleEdits.Edit edit = ask.edit();
+        final String question = ask.question();
+        final String given = NullSafe.map(request.handEditChoices()).get(edit.name());
+        if (given != null) {
+            if (ModuleEdits.KEEP_CHOICE.equals(given) && !edit.keepable()) {
+                throw new ToolRefusal(ModuleEdits.refusal(edit, question));
+            }
+            if (ModuleEdits.KEEP_CHOICE.equals(given) || ModuleEdits.DISCARD_CHOICE.equals(given)) {
+                return given;
+            }
+        }
+        final String recalled = UnsavedChoices.recalled(context, target, MODULE_EDIT_CHOSEN).get(edit.answerKey());
+        if (recalled != null) {
+            return recalled;
+        }
+        final Optional<String> chosen = consent.choose(call, context, NAME, question, ModuleEdits.options(edit),
+                "'" + edit.name() + "', edited by hand: keep the edit, discard it, or stop?");
+        if (chosen.isEmpty()) {
+            throw new ToolRefusal(ModuleEdits.refusal(edit, question));
+        }
+        if (ModuleEdits.STOP.equals(chosen.get())) {
+            throw new ToolRefusal("Nothing was saved: the user chose to stop, leaving '" + edit.name() + "' as "
+                                  + "edited by hand. Don't save the group again unless the user asks.");
+        }
+        final String answer = ModuleEdits.KEEP.equals(chosen.get())
+                ? ModuleEdits.KEEP_CHOICE
+                : ModuleEdits.DISCARD_CHOICE;
+        UnsavedChoices.remember(context, target, MODULE_EDIT_CHOSEN, Map.of(edit.answerKey(), answer));
+        return answer;
     }
 
     // The build the call is in: the one it names, else the one holding the saved XSLT it changes; null for neither
@@ -1292,6 +1346,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         String name = request.name();
         SourceTypeGroups.Placement placement = null;
         String choice = null;
+        // True once the group's hand edits were decided, before its imports were saved.
+        boolean gated = false;
         if (b.group != null) {
             // Where a new group's Events go is the user's choice, asked before anything is saved; a change to a
             // promoted pipeline makes a new version of it.
@@ -1299,6 +1355,19 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                     ? b.placement
                     : placement(call, context, b);
             choice = pipelineChoice(b);
+            // Every gate decided before anything is written (decided by the user, 2026-11-24): the feed's modules'
+            // when the group was planned, and the group's own hand edit now, before its imports are saved.
+            final String now = request.uuid() != null && groups.isInBuild(b.build, request.uuid())
+                    ? request.uuid()
+                    : groups.groupTargetNow(b.build, b.group, SourceTypeGroups.xsltName(b.group)).orElse(null);
+            if (now != null && !request.discardHandEdit()) {
+                final Optional<Map<String, Object>> handEdit = translationDocs.handEditQuestion(call, context, now,
+                        xslt, TranslationDocs.Source.of(b.mapping), request.handEditChoices());
+                if (handEdit.isPresent()) {
+                    return handEdit;
+                }
+                gated = true;
+            }
             imports = groups.saveImports(context, b.build, b.group.withGroupMapping(b.mapping), b.schema, b.version);
             b.mapping = imports.group();
             final XsltGenerator.Generated regenerated = XsltGenerator.generate(b.mapping, b.schema, b.version);
@@ -1328,10 +1397,11 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         Map<String, Object> saved;
         if (target != null) {
             saved = translationDocs.updateXslt(call, context, target, xslt, null,
-                    TranslationDocs.Source.of(b.mapping), said, request.discardHandEdit(),
+                    TranslationDocs.Source.of(b.mapping), said, request.discardHandEdit() || gated,
                     request.handEditChoices());
             if (!(saved.get("uuid") instanceof String)) {
-                // The user is asked about fields edited by hand: nothing saved yet.
+                // The user is asked about fields edited by hand: nothing saved yet (a group's are asked before its
+                // imports are saved, above, so never here).
                 return Optional.of(saved);
             }
         } else if (name != null) {

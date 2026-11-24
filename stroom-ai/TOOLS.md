@@ -3240,7 +3240,10 @@ the steps and `next` are worked out. `before_promotion` lists what `BuildChecks.
 clean step of each pipeline's current code, documentation, an agreed Elasticsearch template and a verified index for
 indexing pipelines, a Field mapping section that matches the current mapping and XSLT, and an XSLT that is still what
 its mapping generates (`GeneratedDrift`). An aggregated feed's group pipeline is checked as any events pipeline: its
-one XSLT is the group's, which keeps its mapping. A check ending `(promotion waits for this)` blocks `promote_build`.
+one XSLT is the group's, which keeps its mapping; the feed's modules it imports (its common module, and the helpers
+that imports) are checked too (`GeneratedDrift.moduleEdits`, decided by the user 2026-11-24): one edited by hand since
+the tools saved it is said once, naming what changed, as a warning (it runs as edited, and a later build that adds to
+it asks whether to keep the edit). A check ending `(promotion waits for this)` blocks `promote_build`.
 
 * **Arguments**: `build` (required), `full` (default false).
 * **Returns**: by default compact (`BuildStatusTool.compact`): `next`, `before_promotion` and `steps` first, each step
@@ -5952,10 +5955,28 @@ such a build with no `group` is that group's), and another group name is refused
 for a scope kept before scopes named their group, another group whose XSLT the build made is refused). Its source types
 are `source_types`, else the build's scope's with those the group translates already (an existing group named in the
 scope keeps its own); the sample check reads theirs alone. A build with a whole-feed scope (no registry) is
-unaffected. Saving: the helpers (made, or written again when this
-generator writes them otherwise) and common module first, then the group importing the common module by UUID, and the
+unaffected. Saving: every gate decided before anything is written (decided by the user, 2026-11-24): the feed's
+modules' hand edits (below) when the group is planned, then the group's own XSLT's hand edit (`HandEditGate`, on the
+XSLT the save goes to, or the promoted one its new version copies), then the helpers (made, or written again when this
+generator writes them otherwise) and common module, then the group importing the common module by UUID, and the
 registry's rows for the group's source types set `translated` with `group` and `group_xslt`, and its `modules` the
-versions saved. A group's new XSLT is named for the group, as its pipeline is (`SourceTypeGroups.xsltName`: the
+versions saved. **A module edited by hand** (`ModuleEdits`, decided by the user 2026-11-24): before a save writes the
+feed's common module or helpers (in the build, or as a new version of a promoted one), an edit made in Stroom since the
+tools saved it is told, as the version history tells one (`XsltVersionHistory`: code the tools last saved is an older
+generator's, out of date, never an edit). A common module's constants are read back from its code (each where the
+generator writes it), proven by generating the module from them, which must give its code exactly: values read so are
+an edit whatever the history says, and what the module runs, so the group is split and documented from them (a
+hand-replaced `TODO generator` is no placeholder, and isn't asked for), said in `group.notes`. Helpers of the
+generator's own version other than its code are an edit. When the save would write the module, nothing is written yet:
+the user is asked in a form ("The common module was edited by hand: '<feed> common' was changed in Stroom since the
+tools saved it (by <user>, <date>): <path> is now "…" (was "…"). This build needs to …"): **Keep the edit
+(recommended)** (the common module generated from the mapping read back, what the build adds beside it, its kept
+mapping then matching its code; helpers left as edited, nothing added), **Discard the edit** (the module goes back to
+the generated code), or **Stop** (refused, nothing changed). The helpers are asked first (kept, the common module's
+import stays as it is). An edit that can't be kept (a common module changed in more than its values; helpers of an
+older generator's version, whose new functions can't be added beside the edit) offers discard or stop, saying why.
+Without a form, refused saying the choices: the agent asks, and calls again with `hand_edit_choices={'<module name>':
+'keep' or 'overwrite'}`. Answers are kept for the module's code as edited until the group is saved. A group's new XSLT is named for the group, as its pipeline is (`SourceTypeGroups.xsltName`: the
 registry's pipeline name for the group, else `SourceTypeGroups.pipelineName`, `<feed> <group> V1.0`), whatever `name`
 the agent passes (seen in chat 185: saved as the agent's `Azure-Audit-V1.0-Events` beside a pipeline create_pipeline
 named for the group); where it replaces a name given, `name_note` says so and to use the uuid from then on. No form

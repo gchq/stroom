@@ -718,6 +718,24 @@ class TestPromoteBuildTool {
     }
 
     @Test
+    void aModuleEditedByHandIsAWarningInTheApprovalNeverHoldingPromotionUp() {
+        // Decided by the user (2026-11-24): the checks before promotion say a module a pipeline imports that was
+        // edited by hand (BuildChecks, from GeneratedDrift.moduleEdits); like any hand edit, it only warns.
+        exists("System/Feeds/Acme");
+        listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null));
+        final String edited = "Pipeline 'ACME-Events': its imported module 'ACME common' was edited by hand in Stroom "
+                              + "since the tools saved it (by john.smith, 2026-11-20): EventSource/Generator is now "
+                              + "\"ACME by hand\" (was \"ACME\"). It runs as edited; a later build that adds to it "
+                              + "asks the user whether to keep the edit (read into its mapping) or discard it";
+        docs.facts.checks = List.of(edited);
+
+        final Map<String, Object> shown = call(Map.of("Pipeline", "/Feeds/Acme"), null);
+
+        assertThat(shown).doesNotContainKey("error");
+        assertThat(shown.get("warnings")).isEqualTo(List.of(edited));
+    }
+
+    @Test
     void anUnchangedWorkingCopyIsShownAndReportedAsDiscardedNotUpdated() {
         // Seen in an eval: an unchanged working copy XSLT was listed "updated from its working copy" in the layout
         // and updated_in_place while promotion discarded it unchanged.

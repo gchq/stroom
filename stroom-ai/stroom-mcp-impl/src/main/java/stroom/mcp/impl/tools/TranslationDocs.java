@@ -485,10 +485,34 @@ public class TranslationDocs {
         return planProvider.get().nextFor(context, ref, result);
     }
 
+    /// Asks, before anything is written, whether new code may be saved over an XSLT edited by hand since the tools
+    /// saved it ([HandEditGate]), as [#updateXslt] asks: a source type group's save decides it before it writes the
+    /// feed's modules, so nothing is written when the user is asked (decided by the user, 2026-11-24).
+    ///
+    /// @param call    The call, whose id tells its forms apart.
+    /// @param context The call's context.
+    /// @param uuid    The XSLT's UUID.
+    /// @param code    The new code.
+    /// @param source  The mapping the new code was generated from.
+    /// @param choices The user's answers about fields edited by hand (`hand_edit_choices`), or null.
+    /// @return Empty when the code may be saved; otherwise the question to return.
+    /// @throws ToolRefusal saying what to carry, when the new code undoes an edit.
+    public Optional<Map<String, Object>> handEditQuestion(final ToolCall call,
+                                                          final ToolCallContext context,
+                                                          final String uuid,
+                                                          final String code,
+                                                          final Source source,
+                                                          final Map<String, String> choices) {
+        return handEditGate.check(call, context, readXslt(uuid), code, source.kind(), source.handEditPayload(),
+                choices);
+    }
+
     /// Saves one of an aggregated feed's generated modules in a build (its helpers, its common module): made new, or
     /// written over the build's own. check_xslt first, as every save; not the imports the
-    /// standing instructions require of a translation (the source type groups import those), nor the hand-edit gate
-    /// (a module is regenerated, never edited: its own code says so). The version history records it as generated.
+    /// standing instructions require of a translation (the source type groups import those). Not the hand-edit gate
+    /// either: the caller asks the user about a module edited by hand before anything is written ([ModuleEdits]),
+    /// and writes the code they chose (the edit read into the module's mapping, or discarded). The version history
+    /// records it as generated.
     ///
     /// @param context The call's context.
     /// @param build   The build.
