@@ -14,11 +14,23 @@ elastic_index:
            EventDetail: text, Action: text, EventCode: text, Process: text, WindowTitle: text, WindowId: text,
            Object: text, Destination: text, Category: text, BytesOut: long, SessionId: text, Country: text,
            Site: text}
+agents: |
+  # Insider events
+
+  The indexes in this folder hold every source's events, one flat record each, decorated with the person's id.
+
+  ## Fields
+  - person: PersonId
+  - user: UserName
+  - host: HostName
+  - action: Action
+  - category: Category
+  - country: Country
 request: >
   What was Sam Okafor (person id P10006) working on on Wednesday 16 September 2026, Sydney time? Use the "Insider
   events" Elasticsearch index.
 user_knows: >
-  PersonId is the person's id, the same in every source; UserName differs by source. Times are in
+  A person's id is the same in every source; their account differs by source. Times are in
   Australia/Sydney. WindowTitle is a window's title, Object a file, URL or record, Destination a web site.
 expected:
   tools_used: [activity_timeline]
@@ -29,9 +41,8 @@ expected:
 reference:
   activity_timeline:
     person: P10006
-    personField: PersonId
     timeFrom: '2026-09-16T00:00:00+10:00'
     timeTo: '2026-09-17T00:00:00+10:00'
     timeZone: Australia/Sydney
     view: activities
-    sources: [{index: Insider events, host: HostName, actionField: Action}]
+    sources: [Insider events]

@@ -14,13 +14,25 @@ elastic_index:
            EventDetail: text, Action: text, EventCode: text, Process: text, WindowTitle: text, WindowId: text,
            Object: text, Destination: text, Category: text, BytesOut: long, SessionId: text, Country: text,
            Site: text}
+agents: |
+  # Insider events
+
+  The indexes in this folder hold every source's events, one flat record each, decorated with the person's id.
+
+  ## Fields
+  - person: PersonId
+  - user: UserName
+  - host: HostName
+  - action: Action
+  - category: Category
+  - country: Country
 request: >
   Tom Bakker (person id P10004) was on leave from 6 to 17 April 2026. Is there anything odd about his activity in
   April? Use the "Insider events" index.
 user_knows: >
-  The "Insider events" Elasticsearch index holds every source's events: PersonId is the person's id, the same in
-  every source (UserName differs by source); Destination is the site a web request reached, Category the proxy's
-  category of it, BytesOut the bytes sent, Site the cloud site a file came from, Country where a sign-in came from.
+  The "Insider events" Elasticsearch index holds every source's events: a person's id is the same in every source
+  (their account differs by source); Destination is the site a web request reached, Category the proxy's category
+  of it, BytesOut the bytes sent, Site the cloud site a file came from, Country where a sign-in came from.
   Times are Sydney time (Australia/Sydney).
 expected:
   tools_used: [compare_activity]
@@ -36,13 +48,11 @@ expected:
 reference:
   compare_activity:
     person: P10004
-    personField: PersonId
     sources: [Insider events]
     windowFrom: '2026-04-06'
     windowTo: '2026-04-19'
     baselineFrom: '2026-02-02'
     unit: week
     leave: ['2026-04-06..2026-04-17']
-    countryField: Country
     peers: false
     timeZone: Australia/Sydney

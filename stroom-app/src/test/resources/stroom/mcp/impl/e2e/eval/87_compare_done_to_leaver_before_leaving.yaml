@@ -5,8 +5,11 @@ capabilities: [compare, elasticsearch, insider]
 # events", with the events done to people by others (InsiderDataset.targetActs: TargetPersonId and TargetUserName
 # are whom an event was done to, PersonId and UserName who did it). The known answer (the dataset's "targets"): on
 # 2026-09-14, 11 days before she leaves, an administrator (P20002) grants Dana Whitfield's account (P10001) the
-# privileged group "Finance Data Admins", the first time that account has acted on hers. The traps: reading only her
-# own activity (the grant is not her act and isn't in it); calling it her doing or intent; missing who did it.
+# privileged group "Finance Data Admins" (the event's Object), the first time that account has acted on hers. Scored
+# by what the answer says, not the tool: compare_activity with includeTargets finds the day and the new actor, a
+# search by TargetPersonId the event itself; either way the answer names the group and who granted it (in a reference
+# run, the tool results do). The traps: reading only her own activity (the grant is not her act and isn't in it);
+# calling it her doing or intent; missing who did it.
 # Skipped without an Elasticsearch node.
 elastic_index:
   name: Insider events
@@ -16,33 +19,38 @@ elastic_index:
            EventDetail: text, Action: text, EventCode: text, Process: text, WindowTitle: text, WindowId: text,
            Object: text, Destination: text, Category: text, BytesOut: long, SessionId: text, Country: text,
            Site: text, TargetPersonId: text, TargetUserName: text}
+agents: |
+  # Insider events
+
+  The indexes in this folder hold every source's events, one flat record each, decorated with the person's id.
+
+  ## Fields
+  - person: PersonId
+  - user: UserName
+  - host: HostName
+  - action: Action
+  - category: Category
+  - country: Country
+  - target person: TargetPersonId
+  - target user: TargetUserName
 request: >
   Dana Whitfield (person id P10001) left on 25 September 2026. Was anything done to her account in the month before
   she left? Use the "Insider events" index.
 user_knows: >
-  The "Insider events" Elasticsearch index holds the cloud audit log's events. PersonId and UserName are who acted;
-  TargetPersonId and TargetUserName are whom an event was done to (access or a group granted, a password reset, MFA
-  changed, a failed logon against an account), where it was done to someone. Action is what was done. Times are
-  Sydney time (Australia/Sydney).
+  The "Insider events" Elasticsearch index holds the cloud audit log's events. Each event has who acted and, where
+  it was done to someone, whom it was done to (access or a group granted, a password reset, MFA changed, a failed
+  logon against an account); the AGENTS doc beside the index names those fields. Action is what was done, Object
+  what it was done with (e.g. the group). Times are Sydney time (Australia/Sydney).
 expected:
-  tools_used: [compare_activity]
-  answer:
-    tool: compare_activity
-    result: {person: P10001}
   findings:
-    must_include:
-      - {done_to_them: true, feature: 'done_to_them:events', near: '2026-09-14'}
-      - {done_to_them: true, feature: 'done_to_them:new_actors', near: '2026-09-14'}
-    must_not_include:
-      - {feature: 'done_to_them:events'}
-    answer_must_say_one_of: [granted, group, administrator]
+    # The grant and who made it, whichever tool found them.
+    answer_must_say_all_of:
+      - [Finance Data Admins]
+      - [P20002, ben.petrov, Ben Petrov]
     answer_must_not_say: [guilty, intends to]
 reference:
   compare_activity:
     person: P10001
-    personField: PersonId
-    userField: UserName
-    targetPersonField: TargetPersonId
     sources: [Insider events]
     windowFrom: '2026-08-24'
     windowTo: '2026-09-25'
@@ -51,3 +59,8 @@ reference:
     peers: false
     includeTargets: true
     timeZone: Australia/Sydney
+  esql_query:
+    pipeline: >-
+      | WHERE TargetPersonId == "P10001" AND EventTime >= TO_DATETIME("2026-08-23T14:00:00.000Z")
+      | KEEP EventTime, PersonId, UserName, Action, Object
+      | SORT EventTime

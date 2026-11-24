@@ -18,13 +18,25 @@ elastic_index:
            EventDetail: text, Action: text, EventCode: text, Process: text, WindowTitle: text, WindowId: text,
            Object: text, Destination: text, Category: text, BytesOut: long, SessionId: text, Country: text,
            Site: text}
+agents: |
+  # Insider events
+
+  The indexes in this folder hold every source's events, one flat record each, decorated with the person's id.
+
+  ## Fields
+  - person: PersonId
+  - user: UserName
+  - host: HostName
+  - action: Action
+  - category: Category
+  - country: Country
 request: >
   Build an activity timeline for Dana Whitfield, person id P10001, for the week starting Monday 14 September 2026
   (Sydney time), from the "Insider events" Elasticsearch index. She leaves on 25 September 2026. What stands out,
   and when?
 user_knows: >
-  PersonId is the person's id, the same in every source; UserName is the account as each source holds it, which
-  differs by source. Source names the product (endpoint, proxy, vpn, cloud, pam). EventTime is when it happened,
+  A person's id is the same in every source; their account differs by source (the AGENTS doc beside the index names
+  both fields). Source names the product (endpoint, proxy, vpn, cloud, pam). EventTime is when it happened,
   HostName the host, EventDetail and Action the event-logging element and Action, EventCode the source's own type,
   Destination a web site or target host, Category the proxy's site category, BytesOut the bytes uploaded. Times are
   in Australia/Sydney. Her leaving date is 25 September 2026; she has no approved exceptions.
@@ -38,8 +50,7 @@ expected:
 reference:
   activity_timeline:
     person: P10001
-    personField: PersonId
     timeFrom: '2026-09-14T00:00:00+10:00'
     timeTo: '2026-09-19T00:00:00+10:00'
     timeZone: Australia/Sydney
-    sources: [{index: Insider events, host: HostName, actionField: Action}]
+    sources: [Insider events]

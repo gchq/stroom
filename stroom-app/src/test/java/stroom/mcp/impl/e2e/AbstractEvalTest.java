@@ -28,6 +28,7 @@ import stroom.dataconnection.shared.DataColumnType;
 import stroom.dataconnection.shared.DataConnectionDoc;
 import stroom.dataconnection.shared.DataConnectionType;
 import stroom.docref.DocRef;
+import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexFieldService;
@@ -274,7 +275,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     /// A question's data, in Stroom before the user asks: any of an Elasticsearch index ([#questionIndex]), a Lucene
     /// index of the case's records (`lucene_index`: `name`, `events`, `fields`, [EvalCases#table]), and data
     /// connections of the case's CSV records (`data_connections`: each its `name`, `csv` and `columns`), each
-    /// document beside the standard templates.
+    /// document beside the standard templates; and the site's standing instructions for them (`agents`: Markdown,
+    /// e.g. a `## Fields` section naming the person field), a Documentation doc named AGENTS in the same folder,
+    /// as a site would keep one beside its indexes, removed once the case is done.
     ///
     /// @param evalCase The case.
     /// @return What to remove once the case is done.
@@ -282,6 +285,10 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         final QuestionIndex elastic = evalCase.get("elastic_index") != null
                 ? questionIndex(evalCase)
                 : null;
+        final List<DocRef> docs = new ArrayList<>();
+        if (evalCase.get("agents") instanceof final String agents && !agents.isBlank()) {
+            docs.add(new DocRef(DocumentationDoc.TYPE, documentationDoc(templateFolder(), "AGENTS", agents)));
+        }
         if (evalCase.get("lucene_index") instanceof final Map<?, ?> spec) {
             questionLuceneIndex(EvalCases.table((Map<String, Object>) spec));
         }
@@ -289,7 +296,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                 List.of())) {
             questionDataConnection(EvalCases.table(spec));
         }
-        return new QuestionData(elastic);
+        return new QuestionData(elastic, docs.stream()
+                .<Runnable>map(doc -> () -> delete(doc))
+                .toList());
     }
 
     /// A question's Elasticsearch data, indexed before the user asks (`elastic_index`): the case's records
@@ -1482,11 +1491,19 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
 
     /// A question's data in Stroom ([#questionData]).
     ///
-    /// @param elastic Its Elasticsearch index, or null if it has none.
-    record QuestionData(QuestionIndex elastic) {
+    /// @param elastic  Its Elasticsearch index, or null if it has none.
+    /// @param removals Removes each document left beside the indexes that would apply to the next case (its AGENTS
+    ///                 doc).
+    record QuestionData(QuestionIndex elastic, List<Runnable> removals) {
 
-        /// Removes what Stroom doesn't remove between cases: the Elasticsearch index.
+        /// Copies the list.
+        QuestionData {
+            removals = List.copyOf(removals);
+        }
+
+        /// Removes what Stroom doesn't remove between cases: the AGENTS doc, the Elasticsearch index.
         void remove() {
+            removals.forEach(Runnable::run);
             if (elastic != null) {
                 elastic.node().deleteIndices(elastic.indexName());
             }

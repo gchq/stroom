@@ -14,13 +14,25 @@ elastic_index:
            EventDetail: text, Action: text, EventCode: text, Process: text, WindowTitle: text, WindowId: text,
            Object: text, Destination: text, Category: text, BytesOut: long, SessionId: text, Country: text,
            Site: text}
+agents: |
+  # Insider events
+
+  The indexes in this folder hold every source's events, one flat record each, decorated with the person's id.
+
+  ## Fields
+  - person: PersonId
+  - user: UserName
+  - host: HostName
+  - action: Action
+  - category: Category
+  - country: Country
 request: >
   Did Dana Whitfield (person id P10001) use a VPN session on the night of Thursday 17 September 2026, Sydney time
   (from 6 pm to midnight)? Use the "Insider events" Elasticsearch index, and give each session's id, when it started
   and when it ended.
 user_knows: >
   Source is vpn for the VPN's events; EventCode vpn.login starts a session and vpn.logout ends it; SessionId is the
-  VPN's session id. PersonId is the person's id. Times are in Australia/Sydney, ten hours ahead of UTC in September.
+  VPN's session id. Times are in Australia/Sydney, ten hours ahead of UTC in September.
 expected:
   tools_used: [esql_query]
   answer:

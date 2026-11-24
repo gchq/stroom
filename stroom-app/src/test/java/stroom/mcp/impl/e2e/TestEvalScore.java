@@ -1533,6 +1533,43 @@ class TestEvalScore {
     }
 
     @Test
+    void anAnswerIsScoredByWhatItSaysWhicheverToolFoundIt() {
+        // No answer tool: the reply must name the group and one of the ways of naming who granted it.
+        final Map<String, Object> question = Map.of("kind", "question", "expected", Map.of("findings", Map.of(
+                "answer_must_say_all_of", List.of(List.of("Finance Data Admins"), List.of("P20002", "ben.petrov")),
+                "answer_must_not_say", List.of("guilty"))));
+        final List<EvalScore.ToolUse> search = List.of(new EvalScore.ToolUse("search_events", false, Map.of(),
+                "| EventTime | PersonId | Action | Object |\n| 2026-09-14T00:38 | P20002 | AddGroup | Finance Data "
+                + "Admins |"));
+
+        final EvalScore named = new EvalScore("q");
+        named.scoreQuestion(question, search, "On 14 September ben.petrov added her to Finance Data Admins.");
+        assertThat(named.passed()).as(named.summary()).isTrue();
+
+        // The reply missing the grant fails, though a tool result held it.
+        final EvalScore missed = new EvalScore("q");
+        missed.scoreQuestion(question, search, "ben.petrov ran an AddGroup action against her account.");
+        assertThat(missed.passed()).isFalse();
+        assertThat(missed.summary()).contains("the reply says none of [Finance Data Admins]");
+        final EvalScore wrongWords = new EvalScore("q");
+        wrongWords.scoreQuestion(question, search, "Finance Data Admins was granted by P20002: she is guilty.");
+        assertThat(wrongWords.passed()).isFalse();
+        assertThat(wrongWords.summary()).contains("the reply says 'guilty'");
+
+        // A reference run (no reply): the accepted tool results must say it; a refused call's text doesn't count.
+        final EvalScore reference = new EvalScore("q");
+        reference.scoreQuestion(question, search);
+        assertThat(reference.passed()).as(reference.summary()).isTrue();
+        assertThat(reference.summary()).contains("no reply: what the answer must say was looked for in the tool "
+                                                 + "results");
+        final EvalScore refused = new EvalScore("q");
+        refused.scoreQuestion(question, List.of(new EvalScore.ToolUse("esql_query", true, Map.of(),
+                "Error: no Finance Data Admins for P20002")));
+        assertThat(refused.passed()).isFalse();
+        assertThat(refused.summary()).contains("no tool result says any of [Finance Data Admins]");
+    }
+
+    @Test
     void aFindingOfWhatWasDoneToThePersonIsMatchedAgainstThoseFindingsOnly() {
         final Map<String, Object> question = Map.of("kind", "question", "expected", Map.of("answer", Map.of("tool",
                 "compare_activity"), "findings", Map.of(

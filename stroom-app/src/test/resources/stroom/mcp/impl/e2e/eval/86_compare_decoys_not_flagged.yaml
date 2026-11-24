@@ -14,13 +14,25 @@ elastic_index:
            EventDetail: text, Action: text, EventCode: text, Process: text, WindowTitle: text, WindowId: text,
            Object: text, Destination: text, Category: text, BytesOut: long, SessionId: text, Country: text,
            Site: text}
+agents: |
+  # Insider events
+
+  The indexes in this folder hold every source's events, one flat record each, decorated with the person's id.
+
+  ## Fields
+  - person: PersonId
+  - user: UserName
+  - host: HostName
+  - action: Action
+  - category: Category
+  - country: Country
 request: >
   Review Ava Hart's (person id P20001) activity from 4 May to 26 June 2026 against her earlier months. The
   data-centre migration she worked on from 11 to 15 May 2026 was approved. Use the "Insider events" index.
 user_knows: >
-  The "Insider events" Elasticsearch index holds every source's events: PersonId is the person's id, the same in
-  every source (UserName differs by source); Destination is the site a web request reached, Category the proxy's
-  category of it, BytesOut the bytes sent, Site the cloud site a file came from, Country where a sign-in came from.
+  The "Insider events" Elasticsearch index holds every source's events: a person's id is the same in every source
+  (their account differs by source); Destination is the site a web request reached, Category the proxy's category
+  of it, BytesOut the bytes sent, Site the cloud site a file came from, Country where a sign-in came from.
   Times are Sydney time (Australia/Sydney).
 expected:
   tools_used: [compare_activity]
@@ -35,7 +47,6 @@ expected:
 reference:
   compare_activity:
     person: P20001
-    personField: PersonId
     sources: [Insider events]
     windowFrom: '2026-05-04'
     windowTo: '2026-06-26'

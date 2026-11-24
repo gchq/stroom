@@ -246,7 +246,8 @@ final class InsiderRecords {
         putText(record, "WindowTitle", act.field("title"));
         putText(record, "WindowId", act.field("window"));
         putText(record, "Object", firstOf(act.field("url"), act.field("name"), act.field("file"),
-                act.field("record"), act.field("secret"), act.field("device"), act.field("log")));
+                act.field("record"), act.field("secret"), act.field("device"), act.field("log"),
+                act.field("group")));
         putText(record, "Destination", firstOf(act.field("domain"), act.field("target")));
         putText(record, "Category", act.field("category"));
         putText(record, "BytesOut", act.field("bytes_out"));

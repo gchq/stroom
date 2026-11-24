@@ -1365,6 +1365,17 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
     /// @param text   Its text.
     /// @return Its UUID.
     String documentationDoc(final String folder, final String name, final String text) {
+        return documentationDoc(findFolder(folder).orElseThrow(() -> new AssertionError("No folder " + folder)), name,
+                text);
+    }
+
+    /// A Documentation doc made directly in Stroom, its text typed in as in the UI.
+    ///
+    /// @param folder The folder.
+    /// @param name   Its name.
+    /// @param text   Its text.
+    /// @return Its UUID.
+    String documentationDoc(final ExplorerNode folder, final String name, final String text) {
         final ExplorerNode node = create(DocumentationDoc.TYPE, name, folder);
         asUser(admin, () -> documentationStore.writeDocument(documentationStore.readDocument(node.getDocRef())
                 .copy()

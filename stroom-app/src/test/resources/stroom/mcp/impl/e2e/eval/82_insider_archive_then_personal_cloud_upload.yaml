@@ -22,12 +22,24 @@ elastic_index:
            EventDetail: text, Action: text, EventCode: text, Process: text, WindowTitle: text, WindowId: text,
            Object: text, Destination: text, Category: text, BytesOut: long, SessionId: text, Country: text,
            Site: text}
+agents: |
+  # Insider events
+
+  The indexes in this folder hold every source's events, one flat record each, decorated with the person's id.
+
+  ## Fields
+  - person: PersonId
+  - user: UserName
+  - host: HostName
+  - action: Action
+  - category: Category
+  - country: Country
 request: >
   Between June and September 2026, did anyone archive files and then upload more than 10 MB to a personal cloud
   service within an hour? Use the "Insider events" Elasticsearch index. Give each person with the time of the
   archive and of the upload.
 user_knows: >
-  PersonId is the person's id, the same in every source; UserName differs by source. EventCode file.archive is an
+  A person's id is the same in every source; their account differs by source. EventCode file.archive is an
   archive made on the endpoint. Category is the proxy's site category ("Personal Cloud Storage" for personal cloud),
   BytesOut the bytes uploaded. The period is 1 June 2026 00:00 to 1 October 2026 00:00, Sydney time (UTC+10).
 expected:

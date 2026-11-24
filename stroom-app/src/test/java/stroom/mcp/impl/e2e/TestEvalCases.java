@@ -333,24 +333,52 @@ class TestEvalCases {
                 .orElseThrow();
         final String day = String.valueOf(((Map<String, Object>) grant.get("facts")).get("day"));
 
-        // The grant, done to her by the administrator, is in the case's records, and its matchers are of its day.
-        assertThat(matcher(evalCase, "must_include", 0)).containsEntry("done_to_them", true)
-                .containsEntry("near", day);
-        assertThat(matcher(evalCase, "must_include", 1)).containsEntry("feature", "done_to_them:new_actors")
-                .containsEntry("near", day);
+        // The grant, done to her by the administrator on its day, is in the case's records, the group its Object; the
+        // answer must name the group and who granted it (their person id or account, or name), whatever tool found
+        // them.
         final List<Map<String, String>> records = EvalCases.table((Map<String, Object>) evalCase.get(
                 "elastic_index")).records();
+        final Map<String, String> granted = records.stream()
+                .filter(record -> InsiderDataset.LEAVER.equals(record.get("TargetPersonId")))
+                .findFirst()
+                .orElseThrow();
         assertThat(records).filteredOn(record -> InsiderDataset.LEAVER.equals(record.get("TargetPersonId")))
                 .singleElement().satisfies(record -> {
                     assertThat(record).containsEntry("PersonId", InsiderDataset.GRANTING_ADMIN)
-                            .containsEntry("Action", "AddGroup");
-                    assertThat(record.get("EventTime")).startsWith("2026-09-14T00:");
+                            .containsEntry("Action", "AddGroup")
+                            .containsEntry("Object", InsiderDataset.PRIVILEGED_GROUP);
+                    assertThat(record.get("EventTime")).startsWith(day + "T00:");
                 });
+        final Map<String, Object> findings = (Map<String, Object>) ((Map<String, Object>) evalCase.get("expected"))
+                .get("findings");
+        assertThat((List<List<String>>) findings.get("answer_must_say_all_of")).containsExactly(
+                List.of(InsiderDataset.PRIVILEGED_GROUP), List.of(InsiderDataset.GRANTING_ADMIN,
+                        granted.get("UserName"), "Ben Petrov"));
+        assertThat(((Map<String, Object>) evalCase.get("expected"))).doesNotContainKeys("tools_used", "answer");
         // Her own events are there too, and none done to her among them.
         assertThat(records).anySatisfy(record -> assertThat(record).containsEntry("PersonId", InsiderDataset.LEAVER)
                 .doesNotContainKey("TargetPersonId"));
         assertThat((Map<String, Object>) ((Map<String, Object>) evalCase.get("reference")).get("compare_activity"))
-                .containsEntry("includeTargets", true).containsEntry("targetPersonField", "TargetPersonId");
+                .containsEntry("includeTargets", true).doesNotContainKey("targetPersonField");
+        assertThat(String.valueOf(evalCase.get("agents"))).contains("- target person: TargetPersonId\n");
+    }
+
+    @Test
+    void theInsiderCasesFieldsAreTheSitesAgentsDocs() {
+        // As a site keeps them: the person and user fields in an AGENTS doc beside the index, so neither the
+        // question, the user nor the reference names them.
+        for (final String id : List.of("79_insider_leaver_week_timeline", "80_insider_working_on_a_day",
+                "81_insider_vpn_session_at_night", "82_insider_archive_then_personal_cloud_upload",
+                "83_compare_leaver_before_leaving", "84_compare_viewer_against_team", "85_compare_compromised_in_april",
+                "86_compare_decoys_not_flagged", "87_compare_done_to_leaver_before_leaving")) {
+            final Map<String, Object> evalCase = EvalCases.load(id);
+            assertThat(String.valueOf(evalCase.get("agents"))).as(id).contains("## Fields\n- person: PersonId\n"
+                                                                               + "- user: UserName\n");
+            assertThat(String.valueOf(evalCase.get("user_knows"))).as(id).doesNotContain("PersonId", "UserName");
+            ((Map<String, Object>) evalCase.get("reference")).values().forEach(call -> assertThat(
+                    (Map<String, Object>) call).as(id).doesNotContainKeys("personField", "userField",
+                    "targetPersonField"));
+        }
     }
 
     // One of a compare case's finding matchers.
