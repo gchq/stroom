@@ -67,6 +67,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.slf4j.LoggerFactory;
 
@@ -1164,6 +1165,72 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 
         assertThat(lastErrorConsumer.getErrorMessages().toString()).contains("max capacity");
         assertThat(large).isEmpty();
+    }
+
+    @Test
+    void countUniqueApproxTakesLessSpace() throws InterruptedException {
+        final long exact = addUniqueValues("countUnique(${Value})", 10, 2_000);
+        final long approx = addUniqueValues("countUniqueApprox(${Value})", 10, 2_000);
+        assertThat(approx).isLessThan(exact / 2);
+    }
+
+    // For measuring by hand, as the exact counts take a long time.
+    @Disabled
+    @ParameterizedTest
+    @CsvSource({
+            "countUnique(${Value}), 100, 1000",
+            "countUniqueApprox(${Value}), 100, 1000",
+            "countUnique(${Value}), 10, 10000",
+            "countUniqueApprox(${Value}), 10, 10000",
+            "'countUniqueApprox(${Value}, 10)', 10, 10000",
+            "'countUniqueApprox(${Value}, 16)', 10, 10000",
+            "countUniqueApprox(${Value}), 1000, 10000",
+            "countUnique(${Value}), 1000, 10000"})
+    void compareCountUnique(final String expression,
+                            final int groups,
+                            final int valuesPerGroup) throws InterruptedException {
+        final long start = System.nanoTime();
+        final long size = addUniqueValues(expression, groups, valuesPerGroup);
+        final double micros = (System.nanoTime() - start) / 1_000D;
+        LOGGER.info("{} of {} groups of {} values: {} bytes per group, {} microseconds per event",
+                expression,
+                groups,
+                valuesPerGroup,
+                size / groups,
+                String.format("%.1f", micros / groups / valuesPerGroup));
+    }
+
+    // Adds each unique value to each group once and gives the size of the store.
+    private long addUniqueValues(final String expression,
+                                 final int groups,
+                                 final int valuesPerGroup) throws InterruptedException {
+        final TableSettings tableSettings = TableSettings.builder()
+                .addColumns(Column.builder()
+                        .id("Group")
+                        .name("Group")
+                        .expression(ParamUtil.create("Group"))
+                        .format(Format.TEXT)
+                        .group(0)
+                        .build())
+                .addColumns(Column.builder()
+                        .id("Count")
+                        .name("Count")
+                        .expression(expression)
+                        .format(Format.NUMBER)
+                        .build())
+                .build();
+        final DataStore dataStore = createUnlimitedDataStore(tableSettings);
+        for (int value = 0; value < valuesPerGroup; value++) {
+            for (int group = 0; group < groups; group++) {
+                dataStore.accept(Val.of(
+                        ValString.create("group" + group),
+                        ValString.create("192.168." + group + "." + value)));
+            }
+        }
+        dataStore.getCompletionState().signalComplete();
+        dataStore.getCompletionState().awaitCompletion();
+        assertThat(lastErrorConsumer.getErrorMessages()).isEmpty();
+        return dataStore.getByteSize();
     }
 
     // The grouped table of a rule must be grouped by a time, which is put first.
