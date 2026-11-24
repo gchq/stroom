@@ -30,6 +30,7 @@ import stroom.ai.impl.tools.skills.SkillDoc.Parameter;
 import stroom.ai.impl.tools.skills.SkillDoc.Skill;
 import stroom.ai.impl.tools.skills.SkillDoc.Step;
 import stroom.ai.impl.tools.timeline.EventChains;
+import stroom.ai.impl.tools.timeline.TimelineChainCheck;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
@@ -61,6 +62,8 @@ final class SkillChecks {
     static final int OFTEN_OFFERED = 5;
     /// The chart kind the chat draws itself; anything else is a dashboard's.
     static final String CHAT_CHART = "gantt";
+    /// The tool a timeline skill's steps call, whose fields its Event chains are checked by.
+    static final String TIMELINE_TOOL = "activity_timeline";
 
     private static final Set<String> DATA_SOURCE_KEYS = Set.of("index", "data_source", "dataSource");
     private static final Pattern FROM = Pattern.compile("(?i)\\bfrom\\s+(\"([^\"]+)\"|'([^']+)'|([^\\s,()]+))");
@@ -130,7 +133,11 @@ final class SkillChecks {
                         "Name the index as list_data_sources gives it."));
             }
         }
-        for (final String problem : facts.eventChains(usable)) {
+        final List<Map<String, Object>> timelineCalls = skill.calls().stream()
+                .filter(call -> call.problem() == null && TIMELINE_TOOL.equals(call.tool()))
+                .map(ExampleCall::arguments)
+                .toList();
+        for (final String problem : facts.eventChains(usable, TimelineChainCheck.GivenFields.of(timelineCalls))) {
             findings.add(Finding.problem("event_chains", problem, "Correct the entry, or remove it so the timeline "
                                                                   + "infers the pair again."));
         }
@@ -691,9 +698,11 @@ final class SkillChecks {
         SkillUsage.Counts usage(String skill);
 
         /// @param entries A timeline skill's Event chains entries, of data sources the reader can use.
+        /// @param given   The fields the skill's own timeline calls give (its user field first).
         /// @return What recent data says is wrong with them (types not seen, a key not held, a pair no longer
         /// alternating); none by default.
-        default List<String> eventChains(final List<EventChains.Entry> entries) {
+        default List<String> eventChains(final List<EventChains.Entry> entries,
+                                         final TimelineChainCheck.GivenFields given) {
             return List.of();
         }
     }

@@ -174,10 +174,11 @@ class SkillFacts {
             }
 
             @Override
-            public List<String> eventChains(final List<EventChains.Entry> entries) {
+            public List<String> eventChains(final List<EventChains.Entry> entries,
+                                            final TimelineChainCheck.GivenFields given) {
                 return timelineChainCheck == null || session == null || entries.isEmpty()
                         ? List.of()
-                        : timelineChainCheck.check(session, entries);
+                        : timelineChainCheck.check(session, entries, given);
             }
         };
     }

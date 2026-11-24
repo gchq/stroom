@@ -39,6 +39,7 @@ import stroom.query.api.TimeRange;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -48,12 +49,14 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 
 /// Checks a timeline skill's Event chains against recent data, as `check_skill` checks a skill: each entry's
-/// index can be used and has a field holding the user; its event types are seen in the index's recent events (read
+/// index can be used and has a field holding the user (the skill's own, else the AGENTS docs', else the field
+/// conventions', as a timeline finds it: [TimelineFields]); its event types are seen in the index's recent events (read
 /// as a timeline reads them: their Events XML by StreamId and EventId), a pair's key path is held by its events, and
 /// a pair still alternates for nearly every key (per user and host). Read as the reader, within a small budget.
 public class TimelineChainCheck {
@@ -89,8 +92,10 @@ public class TimelineChainCheck {
 
     /// @param session The reader's session.
     /// @param entries A skill's Event chains entries.
+    /// @param given   The fields the skill's own `activity_timeline` calls give ([GivenFields#of(List)]), tried
+    ///                before the AGENTS docs and the field conventions, as a timeline tries them.
     /// @return What is wrong with them in recent data, a line each; empty if nothing is (or it can't be checked).
-    public List<String> check(final ToolSession session, final List<Entry> entries) {
+    public List<String> check(final ToolSession session, final List<Entry> entries, final GivenFields given) {
         final Map<String, List<Entry>> bySource = new LinkedHashMap<>();
         entries.forEach(entry -> bySource.computeIfAbsent(entry.source(), s -> new ArrayList<>()).add(entry));
         final List<String> out = new ArrayList<>();
@@ -99,7 +104,7 @@ public class TimelineChainCheck {
                 return;
             }
             try {
-                out.addAll(checkSource(session, source, list));
+                out.addAll(checkSource(session, source, list, given));
             } catch (final RuntimeException e) {
                 LOGGER.debug(() -> "Unable to check the Event chains of " + source, e);
                 out.add("'" + source + "' couldn't be read to check its Event chains: " + e.getMessage());
@@ -108,7 +113,10 @@ public class TimelineChainCheck {
         return out;
     }
 
-    private List<String> checkSource(final ToolSession session, final String source, final List<Entry> entries) {
+    private List<String> checkSource(final ToolSession session,
+                                     final String source,
+                                     final List<Entry> entries,
+                                     final GivenFields given) {
         final DocRef index = dataSourceAccess.find(source).stream()
                 .filter(doc -> ElasticIndexDoc.TYPE.equals(doc.getType()))
                 .findFirst()
@@ -122,18 +130,20 @@ public class TimelineChainCheck {
             return List.of("'" + source + "' has no time field, so its Event chains can't be checked.");
         }
         final Map<String, ElasticEql.Field> mapping = target.docs().getFirst().fields();
-        final String user = timelineFields.find(session, index, InstructionRules.USER_FIELD, List.of(),
+        final String user = timelineFields.find(session, index, InstructionRules.USER_FIELD, given.users(source),
                         field -> mapping.containsKey(field) && JoinKeys.kind(mapping.get(field).nativeType()) != null)
                 .map(TimelineFields.Found::field)
                 .orElse(null);
         if (user == null) {
             return List.of("'" + source + "' has no field holding the user that can be found, so its Event chains "
-                           + "can't be checked: give one in the AGENTS doc's ## Fields.");
+                           + "can't be checked: give one as the skill's " + ActivityTimelineTool.NAME + " call's "
+                           + ActivityTimelineTool.USER_FIELD_ARG + " (or its source's " + ActivityTimelineTool.USER_KEY
+                           + "), or in the AGENTS doc's ## Fields.");
         }
         if (!mapping.containsKey(EqlSequenceResults.STREAM_ID) || !mapping.containsKey(EqlSequenceResults.EVENT_ID)) {
             return List.of();
         }
-        final String host = timelineFields.find(session, index, InstructionRules.HOST_FIELD, List.of(),
+        final String host = timelineFields.find(session, index, InstructionRules.HOST_FIELD, given.hosts(source),
                 mapping::containsKey).map(TimelineFields.Found::field).orElse(null);
         final List<Typed> typed = recent(session, streams, index, user, host, JoinKeys.kind(mapping.get(user)
                 .nativeType()));
@@ -225,6 +235,84 @@ public class TimelineChainCheck {
                     : Long.parseLong(value.strip());
         } catch (final NumberFormatException e) {
             return null;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The fields a timeline skill's own `activity_timeline` example calls give, as a timeline would be given them:
+    /// each source's `user` and `host` on its index, and the call's `userField` for every index.
+    ///
+    /// @param users      Each index's sources' user fields, by the index's name in lower case.
+    /// @param hosts      Each index's sources' host fields, likewise.
+    /// @param userFields The calls' `userField`, for every index.
+    public record GivenFields(Map<String, List<String>> users, Map<String, List<String>> hosts,
+                              List<String> userFields) {
+
+        /// None given.
+        public static final GivenFields NONE = new GivenFields(Map.of(), Map.of(), List.of());
+
+        /// @param calls The arguments of a skill's `activity_timeline` example calls.
+        /// @return The fields they give; a parameter (`{field}`) or a template's placeholder isn't a field.
+        public static GivenFields of(final List<Map<String, Object>> calls) {
+            final Map<String, List<String>> users = new LinkedHashMap<>();
+            final Map<String, List<String>> hosts = new LinkedHashMap<>();
+            final List<String> userFields = new ArrayList<>();
+            for (final Map<String, Object> arguments : NullSafe.list(calls)) {
+                if (arguments == null) {
+                    continue;
+                }
+                userFields.addAll(fields(arguments.get(ActivityTimelineTool.USER_FIELD_ARG)));
+                if (arguments.get(ActivityTimelineTool.SOURCES_ARG) instanceof final List<?> sources) {
+                    for (final Object item : sources) {
+                        if (item instanceof final Map<?, ?> spec
+                            && spec.get(ActivityTimelineTool.INDEX_KEY) instanceof final String index) {
+                            final String key = index.strip().toLowerCase(Locale.ROOT);
+                            users.computeIfAbsent(key, k -> new ArrayList<>())
+                                    .addAll(fields(spec.get(ActivityTimelineTool.USER_KEY)));
+                            hosts.computeIfAbsent(key, k -> new ArrayList<>())
+                                    .addAll(fields(spec.get(ActivityTimelineTool.HOST_KEY)));
+                        }
+                    }
+                }
+            }
+            return new GivenFields(Map.copyOf(users), Map.copyOf(hosts), List.copyOf(userFields));
+        }
+
+        /// @param index An index's name.
+        /// @return The user fields given for it: its sources' first, then the calls' `userField`.
+        public List<String> users(final String index) {
+            final List<String> out = new ArrayList<>(NullSafe.list(users.get(key(index))));
+            out.addAll(userFields);
+            return out.stream().distinct().toList();
+        }
+
+        /// @param index An index's name.
+        /// @return The host fields its sources give.
+        public List<String> hosts(final String index) {
+            return NullSafe.list(hosts.get(key(index))).stream().distinct().toList();
+        }
+
+        private static String key(final String index) {
+            return NullSafe.string(index).strip().toLowerCase(Locale.ROOT);
+        }
+
+        // A field or a list of them; a stand-in for one ({name}, [[name]]) is left out.
+        private static List<String> fields(final Object value) {
+            final List<String> out = new ArrayList<>();
+            if (value instanceof final List<?> list) {
+                list.forEach(item -> out.addAll(fields(item)));
+            } else if (value instanceof final String text) {
+                for (final String part : text.split(",")) {
+                    final String field = part.strip();
+                    if (!field.isEmpty() && !field.contains("{") && !field.contains("[[")) {
+                        out.add(field);
+                    }
+                }
+            }
+            return out;
         }
     }
 }

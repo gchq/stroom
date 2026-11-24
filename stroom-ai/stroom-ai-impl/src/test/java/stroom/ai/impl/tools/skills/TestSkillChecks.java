@@ -27,6 +27,7 @@ import stroom.ai.impl.tools.skills.SkillChecks.Kind;
 import stroom.ai.impl.tools.skills.SkillChecks.OtherSkill;
 import stroom.ai.impl.tools.skills.SkillDoc.Skill;
 import stroom.ai.impl.tools.timeline.EventChains;
+import stroom.ai.impl.tools.timeline.TimelineChainCheck;
 
 import org.junit.jupiter.api.Test;
 
@@ -99,7 +100,8 @@ class TestSkillChecks {
             }
 
             @Override
-            public List<String> eventChains(final List<EventChains.Entry> entries) {
+            public List<String> eventChains(final List<EventChains.Entry> entries,
+                                            final TimelineChainCheck.GivenFields given) {
                 checked.add(entries.stream().map(EventChains.Entry::line).toList());
                 return List.of("'Proxy: pair Tun-Ascend -> Tun-Recede by Tunnel/Id' no longer alternates: 40% of 5 "
                                + "key(s) in the last 7 days.");
@@ -118,6 +120,44 @@ class TestSkillChecks {
         assertThat(findings).allSatisfy(finding -> assertThat(finding.kind()).isEqualTo(Kind.PROBLEM));
         // Only the usable source's entries are checked against its data.
         assertThat(checked).containsExactly(List.of("- Proxy: pair Tun-Ascend -> Tun-Recede by Tunnel/Id"));
+    }
+
+    @Test
+    void aTimelineSkillsEventChainsAreCheckedByTheFieldsItsOwnTimelineCallGives() {
+        final Skill skill = skill("""
+                ## Steps
+
+                1. Build it:
+                   ```json
+                   {"tool": "activity_timeline", "arguments": {"entity": "{user}", "userField": "UserName", \
+                "sources": [{"index": "Proxy", "user": "Account", "host": "Host"}, {"index": "VPN", \
+                "user": "{account}"}]}}
+                   ```
+
+                ## Event chains
+
+                - Proxy: Lock-Workstation is idle
+                - VPN: Tun-Up is active
+                """);
+        final List<TimelineChainCheck.GivenFields> given = new ArrayList<>();
+        final SkillChecks.Facts facts = new DelegatingFacts(SkillTestFacts.permissive()) {
+            @Override
+            public List<String> eventChains(final List<EventChains.Entry> entries,
+                                            final TimelineChainCheck.GivenFields fields) {
+                given.add(fields);
+                return List.of();
+            }
+        };
+
+        SkillChecks.check(skill, null, facts);
+
+        // A source's own user field first, then the call's userField; a parameter isn't a field.
+        assertThat(given).singleElement().satisfies(fields -> {
+            assertThat(fields.users("proxy")).containsExactly("Account", "UserName");
+            assertThat(fields.hosts("Proxy")).containsExactly("Host");
+            assertThat(fields.users("VPN")).containsExactly("UserName");
+            assertThat(fields.users("Elsewhere")).containsExactly("UserName");
+        });
     }
 
     @Test
