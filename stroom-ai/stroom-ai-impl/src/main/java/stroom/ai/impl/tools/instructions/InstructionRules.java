@@ -85,6 +85,11 @@ public final class InstructionRules {
     /// The field holding the person an event is of: an id processing decorates each event with, the same for all of
     /// a person's accounts (the user field holds the logon id, which differs by source).
     public static final String PERSON_FIELD = "person";
+    /// The field holding the person an event was done to (access granted to them, their password reset, a failed
+    /// logon against their account): their person id, as [#PERSON_FIELD] holds the actor's.
+    public static final String TARGET_PERSON_FIELD = "target person";
+    /// The field holding the account an event was done to, its logon id, as [#USER_FIELD] holds the actor's.
+    public static final String TARGET_USER_FIELD = "target user";
     /// The field holding the host an event happened on.
     public static final String HOST_FIELD = "host";
     /// The field holding the application.
@@ -138,6 +143,9 @@ public final class InstructionRules {
             Map.entry("user", USER_FIELD),
             Map.entry("person", PERSON_FIELD),
             Map.entry("person id", PERSON_FIELD),
+            Map.entry("target person", TARGET_PERSON_FIELD),
+            Map.entry("target person id", TARGET_PERSON_FIELD),
+            Map.entry("target user", TARGET_USER_FIELD),
             Map.entry("host", HOST_FIELD),
             Map.entry("application", APPLICATION_FIELD),
             Map.entry("process", APPLICATION_FIELD),

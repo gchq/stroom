@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.timeline.PersonScope.By;
 import stroom.ai.impl.tools.timeline.PersonScope.Scope;
+import stroom.ai.impl.tools.timeline.PersonScope.Target;
 import stroom.ai.impl.tools.timeline.TimelineFields.Origin;
 import stroom.docref.DocRef;
 import stroom.search.elastic.shared.ElasticIndexDoc;
@@ -65,7 +66,9 @@ class TestPersonScope {
         @Override
         public Optional<String> convention(final String name) {
             return Optional.of("field_map:\n  EventSource/User/Id: {name: user.name, type: keyword}\n"
-                               + "  EventSource/User/UserDetails/Id: {name: user.id, type: keyword}\n");
+                               + "  EventSource/User/UserDetails/Id: {name: user.id, type: keyword}\n"
+                               + "  EventDetail/*/User/Id: {name: user.target.name, type: keyword}\n"
+                               + "  EventDetail/*/User/UserDetails/Id: {name: user.target.id, type: keyword}\n");
         }
     };
     private final TimelineFields fields = new TimelineFields(agentInstructions, dataSourceAccess,
@@ -143,6 +146,71 @@ class TestPersonScope {
                 .containsExactly("CORP\\alex.chen", "Alex.Chen@corp.example", "ADM-ACHEN");
         assertThat(PersonScope.variants(List.of(), List.of("alex.chen"))).isEmpty();
         assertThat(PersonScope.variants(List.of("alex.chen"), null)).isEmpty();
+    }
+
+    @Test
+    void theTargetPersonFieldIsFoundByConventionTheActorsOwnActsLeftOut() {
+        final Set<String> has = Set.of("user.id", "user.name", "user.target.id", "user.target.name");
+        final Scope actor = resolve("P0042", List.of(), List.of(), has);
+
+        final Target target = PersonScope.target(fields, SESSION, PROXY, "P0042", List.of(), List.of(), List.of(),
+                actor, has::contains);
+
+        assertThat(target.by()).isEqualTo(By.PERSON);
+        assertThat(target.field().field()).isEqualTo("user.target.id");
+        assertThat(target.field().origin()).isEqualTo(Origin.CONVENTION);
+        assertThat(target.values()).containsExactly("P0042");
+        assertThat(target.actorField()).isEqualTo("user.id");
+        assertThat(target.actorValues()).containsExactly("P0042");
+        assertThat(target.describe()).isEqualTo("done to them, by target person id (user.target.id from the field "
+                                                + "convention (ecs); their own acts by user.id left out)");
+    }
+
+    @Test
+    void theAgentsDocsTargetLineComesBeforeTheConventionAndTheCallsFirst() {
+        Mockito.when(agentInstructions.fieldsRuled(SESSION, PROXY)).thenReturn(Map.of(
+                InstructionRules.TARGET_PERSON_FIELD, new FieldRule(List.of("TargetEmployeeId"), "/Indexes")));
+        final Set<String> has = Set.of("TargetEmployeeId", "user.target.id", "acted_on");
+
+        assertThat(PersonScope.target(fields, SESSION, PROXY, "P0042", List.of(), List.of(), List.of(), null,
+                has::contains)).satisfies(target -> {
+                    assertThat(target.field().field()).isEqualTo("TargetEmployeeId");
+                    assertThat(target.field().origin()).isEqualTo(Origin.AGENTS);
+                    // No actor's scope: nothing left out.
+                    assertThat(target.actorField()).isNull();
+                });
+        assertThat(PersonScope.target(fields, SESSION, PROXY, "P0042", List.of(), List.of("acted_on"), List.of(),
+                null, has::contains).field().origin()).isEqualTo(Origin.CALL);
+    }
+
+    @Test
+    void anIndexWithNoTargetPersonFieldFallsBackToTheTargetLogonField() {
+        final Set<String> has = Set.of("user.name", "user.target.name");
+        final Scope actor = resolve("P0042", List.of("alex.chen"), List.of(), has);
+
+        final Target target = PersonScope.target(fields, SESSION, PROXY, "P0042", List.of("alex.chen"), List.of(),
+                List.of(), actor, has::contains);
+
+        assertThat(target.by()).isEqualTo(By.LOGON);
+        assertThat(target.field().field()).isEqualTo("user.target.name");
+        assertThat(target.values()).containsExactly("alex.chen");
+        assertThat(target.actorField()).isEqualTo("user.name");
+    }
+
+    @Test
+    void anIndexWithNoTargetFieldIsLeftOutSayingWhy() {
+        final Set<String> has = Set.of("user.id", "user.name");
+
+        assertThat(PersonScope.target(fields, SESSION, PROXY, "P0042", List.of(), List.of(), List.of(), null,
+                has::contains)).satisfies(target -> {
+                    assertThat(target.usable()).isFalse();
+                    assertThat(target.leftOut()).contains("'target person:'", "no logon ids");
+                    assertThat(target.describe()).isEqualTo(target.leftOut());
+                });
+        assertThat(PersonScope.target(fields, SESSION, PROXY, null, List.of("alex.chen"), List.of(), List.of(),
+                null, has::contains).leftOut()).contains("'target user:'");
+        assertThat(PersonScope.target(fields, SESSION, PROXY, " ", List.of(), List.of(), List.of(), null,
+                has::contains).leftOut()).isEqualTo("give a person id or one or more logon ids");
     }
 
     private Scope resolve(final String person,

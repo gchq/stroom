@@ -128,10 +128,14 @@ class TestInstructionRules {
                 doc("/", "## Fields\n- user: Initiator.Id, user.name\n- host: HostName\n- Host names are lower "
                          + "case.\n"),
                 doc("/Indexes/Proxy", "## Fields\n- `User`: SrcUser\n- event type: `Vendor.EventId`\n- person id: "
-                                      + "user.id\n")));
+                                      + "user.id\n- target person: user.target.id\n- Target user: "
+                                      + "user.target.name\n")));
 
         assertThat(fields).containsOnlyKeys(InstructionRules.USER_FIELD, InstructionRules.HOST_FIELD,
-                InstructionRules.EVENT_TYPE_FIELD, InstructionRules.PERSON_FIELD);
+                InstructionRules.EVENT_TYPE_FIELD, InstructionRules.PERSON_FIELD,
+                InstructionRules.TARGET_PERSON_FIELD, InstructionRules.TARGET_USER_FIELD);
+        assertThat(fields.get(InstructionRules.TARGET_PERSON_FIELD).fields()).containsExactly("user.target.id");
+        assertThat(fields.get(InstructionRules.TARGET_USER_FIELD).fields()).containsExactly("user.target.name");
         assertThat(fields.get(InstructionRules.PERSON_FIELD).fields()).containsExactly("user.id");
         assertThat(fields.get(InstructionRules.USER_FIELD)).isEqualTo(new FieldRule(List.of("SrcUser"),
                 "/Indexes/Proxy"));
@@ -146,7 +150,7 @@ class TestInstructionRules {
         assertThat(InstructionRules.problems(text)).singleElement().asString()
                 .startsWith("'## Fields' line '- colour: Red' names none the tools know (action, application, "
                             + "element, event code, event detail, event type, host, object, person, person id, "
-                            + "process, user)");
+                            + "process, target person, target person id, target user, user)");
         assertThat(InstructionRules.fieldProblems(text, Set.of("Initiator.Id", "HostName")))
                 .containsExactly("'## Fields' line for user names no field the data sources where the doc applies "
                                  + "have (Initiator.ID)");

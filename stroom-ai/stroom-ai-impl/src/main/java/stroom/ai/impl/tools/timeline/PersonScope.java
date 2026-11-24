@@ -93,6 +93,66 @@ public final class PersonScope {
                 .orElseGet(() -> new Scope(null, null, List.of(), "no field holding the user was found"));
     }
 
+    /// Chooses whose events, done to them, to read in one index: those whose target field (the person or account
+    /// an action was done to: access granted to them, their password reset, a failed logon against their account)
+    /// holds the person id, by the target person field, else the logon ids, by the target user field, each found as
+    /// the person and user fields are ([TimelineFields]: the call's or skill's, the AGENTS doc's `## Fields`
+    /// `target person:` or `target user:`, the convention's ECS `user.target.id` or `user.target.name`). The person's
+    /// own acts on themselves (their own logon, a password they changed) are left out by the actor's scope, so what
+    /// is read was done by someone else, or by no account at all (a failed logon).
+    ///
+    /// @param fields             Finds the index's target fields.
+    /// @param session            The session, for the AGENTS docs' audit.
+    /// @param index              The index.
+    /// @param person             The person id, or null.
+    /// @param logonIds           The logon ids, empty for none.
+    /// @param targetPersonFields The call's (or skill's) target person fields; empty for none.
+    /// @param targetUserFields   The call's (or skill's) target user fields; empty for none.
+    /// @param actor              Whose acts the index's events are, as [#resolve] chose (its field and values are
+    ///                           left out of what was done to them); unusable for none.
+    /// @param has                True for a field the index has (and can filter on).
+    /// @return The target scope: by person id, by logon id, or neither with why.
+    public static Target target(final TimelineFields fields,
+                                final ToolSession session,
+                                final DocRef index,
+                                final String person,
+                                final List<String> logonIds,
+                                final List<String> targetPersonFields,
+                                final List<String> targetUserFields,
+                                final Scope actor,
+                                final Predicate<String> has) {
+        final String personId = NullSafe.trim(person);
+        final List<String> logons = cleaned(logonIds);
+        final String actorField = actor != null && actor.usable()
+                ? actor.field().field()
+                : null;
+        final List<String> actorValues = actorField == null
+                ? List.of()
+                : actor.values();
+        if (!personId.isEmpty()) {
+            final Optional<Found> targetPerson = fields.find(session, index, InstructionRules.TARGET_PERSON_FIELD,
+                    NullSafe.list(targetPersonFields), has);
+            if (targetPerson.isPresent()) {
+                return new Target(By.PERSON, targetPerson.get(), List.of(personId), actorField, actorValues, null);
+            }
+        }
+        if (logons.isEmpty()) {
+            return new Target(null, null, List.of(), null, List.of(), personId.isEmpty()
+                    ? "give a person id or one or more logon ids"
+                    : "no field holding the person an event was done to was found (a ## Fields 'target person:' "
+                      + "line in the AGENTS doc names it), and no logon ids were given to fall back on");
+        }
+        final Optional<Found> targetUser = fields.find(session, index, InstructionRules.TARGET_USER_FIELD,
+                NullSafe.list(targetUserFields), has);
+        return targetUser
+                .map(found -> new Target(By.LOGON, found, logons, actorField, actorValues, null))
+                .orElseGet(() -> new Target(null, null, List.of(), null, List.of(), "no field holding the account "
+                                                                                     + "an event was done to was "
+                                                                                     + "found (a ## Fields 'target "
+                                                                                     + "user:' line in the AGENTS "
+                                                                                     + "doc names it)"));
+    }
+
     /// The values an index holds that are close variants of the logon ids given (the domain added or removed, or
     /// another case) but not the same: offered to the user where nothing matched as given, never merged unasked.
     ///
@@ -175,6 +235,49 @@ public final class PersonScope {
         /// @return True if the index can be read.
         public boolean usable() {
             return by != null;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Whose events, done to them, to read in one index.
+    ///
+    /// @param by          By the target person id or the target logon id; null if neither can be read (see
+    ///                    `leftOut`).
+    /// @param field       The target field filtered on and where it came from; null with `by`.
+    /// @param values      The values it is filtered on: the person id, or each logon id.
+    /// @param actorField  The field holding who acted, whose `actorValues` are left out (the person's own acts on
+    ///                    themselves); null for none.
+    /// @param actorValues The actor's values left out.
+    /// @param leftOut     Why the index can't be read for them, or null.
+    public record Target(By by,
+                         Found field,
+                         List<String> values,
+                         String actorField,
+                         List<String> actorValues,
+                         String leftOut) {
+
+        /// Copies the lists.
+        public Target {
+            values = NullSafe.list(values).stream().toList();
+            actorValues = NullSafe.list(actorValues).stream().toList();
+        }
+
+        /// @return True if the index can be read.
+        public boolean usable() {
+            return by != null;
+        }
+
+        /// @return How the result says it, e.g. "done to them, by target person id (user.target.id)".
+        public String describe() {
+            return by == null
+                    ? leftOut
+                    : "done to them, by target " + by.label().substring("by ".length()) + " (" + field.field()
+                      + " from " + field.from() + (actorField == null
+                    ? ")"
+                    : "; their own acts by " + actorField + " left out)");
         }
     }
 }
