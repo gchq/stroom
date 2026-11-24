@@ -1313,7 +1313,7 @@ public class ContextAssembler {
         final StringBuilder sb = new StringBuilder("Tools you used to answer this:");
         for (final ToolCallRecord call : calls) {
             sb.append("\n- ").append(call.tool()).append('(')
-                    .append(TurnDigests.oneLine(call.arguments(), TOOL_LOG_ARGS_LIMIT)).append(')');
+                    .append(TurnDigests.arguments(call.arguments(), TOOL_LOG_ARGS_LIMIT)).append(')');
             final ToolResultRecord result = results.get(call.callId());
             if (result != null) {
                 sb.append(" -> ");

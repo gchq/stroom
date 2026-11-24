@@ -25,10 +25,14 @@ import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /// Builds the digest of a finished turn, in code (no model call), for the model to see in place of the turn once
 /// the chat has been compacted. A digest keeps what later turns are most likely to need, exactly as it was:
@@ -49,6 +53,24 @@ final class TurnDigests {
     static final int MAX_EXACT_RESULT_CHARS = 2_000;
     static final int MAX_RESULT_PREVIEW_CHARS = 200;
     static final int MAX_ANSWER_CHARS = 1_000;
+    /// The most characters a shortened text runs past its limit to keep an identifier the cut falls in whole (a
+    /// UUID's 36, with room).
+    static final int MAX_ID_OVERRUN = 40;
+    /// The most identifiers past the cut a call's shortened arguments name, whole.
+    static final int MAX_IDS_AFTER_CUT = 4;
+
+    private static final Pattern UUID = Pattern.compile(
+            "[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}");
+    private static final Pattern HEX_ID = Pattern.compile("(?=.*\\d)(?=.*[A-Fa-f])[0-9A-Fa-f]{12,}");
+    private static final Pattern ALNUM_ID = Pattern.compile("(?=.*\\d)(?=.*[A-Za-z])[A-Za-z0-9_]{16,}");
+    // The longest token taken for an identifier.
+    private static final int MAX_ID_CHARS = 128;
+    // A run of identifier characters, for the identifiers in a text.
+    private static final Pattern IDENTIFIER = Pattern.compile("[A-Za-z0-9_-]+");
+    // A JSON key, and the quote opening its value if it is a string: the argument a value after it belongs to.
+    private static final Pattern KEY = Pattern.compile("\"([A-Za-z0-9_]+)\"\\s*:\\s*\"?");
+    // How far before an identifier its argument's key is looked for.
+    private static final int KEY_WINDOW = 80;
 
     private TurnDigests() {
         // Static only.
@@ -90,7 +112,7 @@ final class TurnDigests {
         }
         for (final ToolCallRecord call : calls) {
             sb.append("- Tool ").append(call.tool()).append('(')
-                    .append(oneLine(call.arguments(), MAX_ARGUMENTS_CHARS)).append(')');
+                    .append(arguments(call.arguments(), MAX_ARGUMENTS_CHARS)).append(')');
             appendResult(sb, results.get(call.callId()), turnId, maxRows);
         }
         if (!files.isEmpty()) {
@@ -166,11 +188,108 @@ final class TurnDigests {
         }
     }
 
+    /// A text on one line, shortened to about the limit. The cut never ends inside an identifier (a UUID, or a long
+    /// hex or letters-and-digits id): one it would end in is kept whole where its rest is short, else left out.
+    /// Seen in chat 194: a digest cut a UUID short, and after compaction the model called tools with the cut UUIDs.
+    ///
+    /// @param text  A text, or null.
+    /// @param limit The most characters, but for an identifier kept whole (at most [#MAX_ID_OVERRUN] more).
+    /// @return The text on one line, ending in `…` where it was shortened.
     static String oneLine(final String text, final int limit) {
         final String oneLine = NullSafe.string(text).replaceAll("\\s+", " ").strip();
         return oneLine.length() > limit
-                ? oneLine.substring(0, limit - 1) + "…"
+                ? oneLine.substring(0, cutAt(oneLine, limit - 1)) + "…"
                 : oneLine;
+    }
+
+    /// A tool call's arguments on one line, shortened as [#oneLine] shortens a text, saying where they were cut: the
+    /// argument cut, and the identifiers further on, whole (up to [#MAX_IDS_AFTER_CUT]), each with its argument's
+    /// name where it has one.
+    ///
+    /// @param arguments The arguments, as the call gave them (JSON, usually), or null.
+    /// @param limit     The most characters of the arguments kept, as [#oneLine]'s limit.
+    /// @return The arguments on one line, shortened where they are longer than the limit.
+    static String arguments(final String arguments, final int limit) {
+        final String oneLine = NullSafe.string(arguments).replaceAll("\\s+", " ").strip();
+        if (oneLine.length() <= limit) {
+            return oneLine;
+        }
+        final int cut = cutAt(oneLine, limit - 1);
+        final String kept = oneLine.substring(0, cut);
+        final String cutArgument = lastKey(kept, false);
+        final List<String> later = new ArrayList<>();
+        final Set<String> seen = new HashSet<>();
+        final Matcher id = IDENTIFIER.matcher(oneLine);
+        int count = 0;
+        while (id.find()) {
+            if (id.start() >= cut && isIdentifier(id.group()) && !kept.contains(id.group())
+                && seen.add(id.group())) {
+                count++;
+                if (later.size() < MAX_IDS_AFTER_CUT) {
+                    final String named = lastKey(oneLine.substring(Math.max(0, id.start() - KEY_WINDOW),
+                            id.start()), true);
+                    later.add(named == null
+                            ? id.group()
+                            : named + "=" + id.group());
+                }
+            }
+        }
+        final StringBuilder sb = new StringBuilder(kept).append("… (cut");
+        if (cutArgument != null) {
+            sb.append(" in ").append(cutArgument);
+        }
+        if (!later.isEmpty()) {
+            sb.append("; ids further on, whole: ").append(String.join(", ", later));
+            if (count > later.size()) {
+                sb.append(" and ").append(count - later.size()).append(" more");
+            }
+        }
+        return sb.append(')').toString();
+    }
+
+    // The name of the last JSON key in a text, or null: only one the text ends with (its value next), if asked.
+    private static String lastKey(final String text, final boolean atEnd) {
+        final Matcher key = KEY.matcher(text);
+        String last = null;
+        int end = -1;
+        while (key.find()) {
+            last = key.group(1);
+            end = key.end();
+        }
+        return atEnd && end != text.length()
+                ? null
+                : last;
+    }
+
+    // Where to cut a text near an end: never inside an identifier, which is kept whole if its rest is short enough,
+    // else left out.
+    private static int cutAt(final String text, final int end) {
+        int start = end;
+        while (start > 0 && isIdChar(text.charAt(start - 1))) {
+            start--;
+        }
+        int stop = end;
+        while (stop < text.length() && isIdChar(text.charAt(stop))) {
+            stop++;
+        }
+        if (start == end || stop == end || !isIdentifier(text.substring(start, stop))) {
+            // Not inside a token, or inside one that is no identifier.
+            return end;
+        }
+        return stop - end <= MAX_ID_OVERRUN
+                ? stop
+                : start;
+    }
+
+    private static boolean isIdChar(final char c) {
+        return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c == '-' || c == '_';
+    }
+
+    // Whether a token is an identifier: it holds a UUID, or is a long run of hex digits, or of letters and digits
+    // (both), e.g. a review id or a tool call's id; no longer than MAX_ID_CHARS (a longer run is data, cut anywhere).
+    private static boolean isIdentifier(final String token) {
+        return token.length() <= MAX_ID_CHARS && (UUID.matcher(token).find() || HEX_ID.matcher(token).matches()
+                                                  || ALNUM_ID.matcher(token).matches());
     }
 
     private static String firstParagraph(final String answer) {

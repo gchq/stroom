@@ -23,6 +23,8 @@ import stroom.util.json.JsonUtil;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.regex.MatchResult;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -96,6 +98,93 @@ class TestTurnDigests {
         assertThat(TurnDigests.oneLine(" a\n  b\tc ", 100)).isEqualTo("a b c");
         assertThat(TurnDigests.oneLine("abcdef", 4)).isEqualTo("abc…");
         assertThat(TurnDigests.oneLine(null, 4)).isEmpty();
+    }
+
+    @Test
+    void aDigestNeverCutsAnIdentifierInACallsArguments() {
+        // Seen in chat 194: the digest cut index_uuid at "81b", and after compaction the model called
+        // create_indexing_pipeline and find_pipeline_templates with the cut UUIDs.
+        final String arguments = "{\"build\": \"endpoint-logs-v1.0\", \"name\": \"Endpoint-Logs-V1.0-Indexing\", "
+                                 + "\"template_uuid\": \"1c70ba40-29be-44f1-891b-183acb84b7e4\", "
+                                 + "\"xslt_uuid\": \"a0e33cb9-c5d3-4592-a4a1-6f1e0d5c0b3e\", "
+                                 + "\"index_uuid\": \"81b0cd88-2481-4291-a8cc-7d3a93e65c4b\", "
+                                 + "\"events_stream_ids\": [\"73356\",\"73357\"], "
+                                 + "\"source_pipeline_uuid\": \"c05a150d-532e-4b6d-8b0a-1f0e0ec55ddf\"}";
+        final List<AiChatMessage> turn = List.of(
+                message(10, AiMessageType.USER_MESSAGE, "go on"),
+                json(11, AiMessageType.TOOL_CALL, new ToolCallRecord("c1", "create_indexing_pipeline", arguments,
+                        null)),
+                json(12, AiMessageType.TOOL_RESULT, new ToolResultRecord("c1", "create_indexing_pipeline", false,
+                        "ok", null, 2, 5, null)));
+
+        final String digest = TurnDigests.build(10, turn, 20);
+
+        assertThat(arguments).hasSizeGreaterThan(TurnDigests.MAX_ARGUMENTS_CHARS);
+        assertThat(digest)
+                // The UUID the cut fell in, whole; the argument cut said, and the UUID after it given whole.
+                .contains("\"index_uuid\": \"81b0cd88-2481-4291-a8cc-7d3a93e65c4b… (cut in index_uuid; ids "
+                          + "further on, whole: source_pipeline_uuid=c05a150d-532e-4b6d-8b0a-1f0e0ec55ddf)")
+                .contains("\"template_uuid\": \"1c70ba40-29be-44f1-891b-183acb84b7e4\"");
+        // Every UUID-like run in the digest is a whole UUID.
+        assertThat(cutUuids(digest)).isEmpty();
+    }
+
+    @Test
+    void aDigestNeverCutsAnIdentifierInAResultsPreview() {
+        // Seen in chat 194: folder_contents' preview cut a folder's docUuid.
+        final String result = "Folder 'endpoint-logs-v1.0' (/MCP Workspace/endpoint-logs-v1.0, uuid "
+                              + "d96be8d9-f7fa-41a0-b012-c7d229d09e60, [endpoint-logs-v1.0](?action=open-doc&docType="
+                              + "Folder&docUuid=d96be8d9-f7fa-41a0-b012-c7d229d09e60))\n"
+                              + "row\n".repeat(30);
+        final List<AiChatMessage> turn = List.of(
+                message(10, AiMessageType.USER_MESSAGE, "q"),
+                json(11, AiMessageType.TOOL_CALL, new ToolCallRecord("c1", "folder_contents", "{}", null)),
+                json(12, AiMessageType.TOOL_RESULT, new ToolResultRecord("c1", "folder_contents", false, result,
+                        null, result.length(), 5, null)));
+
+        final String digest = TurnDigests.build(10, turn, 20);
+
+        assertThat(digest).contains("docUuid=d96be8d9-f7fa-41a0-b012-c7d229d09e60…");
+        assertThat(cutUuids(digest)).isEmpty();
+    }
+
+    @Test
+    void anIdentifierTooFarPastTheCutIsLeftOutWhole() {
+        // A long id the cut falls early in: left out, never cut, and the text stays within its limit.
+        final String id = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+        final String shortened = TurnDigests.oneLine("read " + id, 10);
+
+        assertThat(shortened).isEqualTo("read …");
+        // Ordinary words are still cut where they fall.
+        assertThat(TurnDigests.oneLine("abcdefghij klmnop", 8)).isEqualTo("abcdefg…");
+    }
+
+    @Test
+    void shortenedArgumentsStayBounded() {
+        // Five UUIDs past the cut: four named whole, the rest counted.
+        final StringBuilder sb = new StringBuilder("{\"text\": \"").append("x".repeat(300)).append('"');
+        for (int i = 0; i < 5; i++) {
+            sb.append(", \"u").append(i).append("\": \"").append(i).append("1b0cd88-2481-4291-a8cc-7d3a93e65c4b\"");
+        }
+        final String shortened = TurnDigests.arguments(sb.append('}').toString(), TurnDigests.MAX_ARGUMENTS_CHARS);
+
+        assertThat(shortened).endsWith("… (cut in text; ids further on, whole: "
+                                       + "u0=01b0cd88-2481-4291-a8cc-7d3a93e65c4b, "
+                                       + "u1=11b0cd88-2481-4291-a8cc-7d3a93e65c4b, "
+                                       + "u2=21b0cd88-2481-4291-a8cc-7d3a93e65c4b, "
+                                       + "u3=31b0cd88-2481-4291-a8cc-7d3a93e65c4b and 1 more)");
+        assertThat(shortened.length()).isLessThanOrEqualTo(TurnDigests.MAX_ARGUMENTS_CHARS
+                                                           + TurnDigests.MAX_ID_OVERRUN + 250);
+        // Short arguments are as they were.
+        assertThat(TurnDigests.arguments("{\"a\": 1}", 200)).isEqualTo("{\"a\": 1}");
+    }
+
+    // The runs of hex digits and hyphens starting like a UUID that aren't whole UUIDs.
+    private static List<String> cutUuids(final String text) {
+        return Pattern.compile("[0-9a-f]{8}-[0-9a-f-]*").matcher(text).results()
+                .map(MatchResult::group)
+                .filter(run -> !run.matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"))
+                .toList();
     }
 
     private static AiChatMessage message(final int id, final AiMessageType type, final String text) {
