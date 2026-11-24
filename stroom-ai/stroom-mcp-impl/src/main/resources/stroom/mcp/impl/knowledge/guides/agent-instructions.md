@@ -61,11 +61,28 @@ says wins, and the result notes it. A layout the user asks for goes in `field_ma
 `compact`) and wins over the doc.
 
 Lines of a `## Fields` section of the form `- user: Initiator.Id, user.name` name the fields that hold a thing in
-the data sources where the doc applies: `user`, `host`, `application`, `object`, `element` (the EventDetail
-element), `action` (its Action) and `event type` (the source's own code). `activity_timeline` reads them itself, the
-first field an index has used, the most specific doc winning, after the call's own and before the field conventions;
-`propose_instructions` points out a line naming no field the data sources there have. Prose bullets in the section
-(no `key:`) are left to the agent.
+the data sources where the doc applies: `user`, `person` (`person id`), `target user`, `target person` (`target
+person id`), `host`, `application` (`process`), `object`, `element` (`event detail`: the EventDetail element),
+`action` (its Action), `event type` (`event code`: the source's own code), `category` and `country`.
+`activity_timeline`, `sequence_query` and `compare_activity` read them themselves, the first field an index has
+used, the most specific doc winning, after the call's own and before the index plan and the field conventions.
+Prose bullets in the section (no `key:`) are left to the agent.
+
+## What the tools read exactly
+
+The tools apply these sections themselves: `## Fields`, `## Required imports`, `## Component templates` and
+`## Documentation`, each a heading of its own (any level) and its `- key: value` bullets, up to the next heading;
+and `## Ignore`, the folders searches leave out. Only the first section of each name is read. A bullet whose key the tools don't know, a field no index
+there has, or a field line under another heading (e.g. `## Notes`) is left out without a word. Everything else in a
+doc, including prose in those sections, guides the agent only, and no format is asked of it.
+
+`check_instructions` checks the docs that apply in a folder, or a draft, against the first four and the indexes there:
+problems (what the tools can't apply as written: an unknown key, a misspelt field, field lines under another
+heading, a heading such as `## Field names`, a section given twice, the same key twice with different fields) and
+suggestions (a line a more general doc gives already, a field the index plan of a feeding pipeline maps otherwise,
+an index whose user only a field convention finds), each with its fix. `propose_instructions` makes the same checks
+on what it proposes, and `action=draft` drafts the `## Fields` lines from the indexes, their plans, the docs in
+force and what the user said, asking only where those differ or nothing is found.
 
 An XSLT style section is applied through the translation mapping's `style` (naming, and when to use variables and
 xsl:maps; see the XSLT guide), and the same `style` of an index plan and of a CEF plan (`draft_cef_mapping style=`),
