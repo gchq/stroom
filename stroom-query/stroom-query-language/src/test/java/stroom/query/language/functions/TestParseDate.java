@@ -59,6 +59,17 @@ public class TestParseDate extends AbstractFunctionTest<ParseDate> {
     }
 
     @Test
+    void dateThatIsTooLarge() throws ParseException {
+        final String text = "+999999999-01-01T00:00:00Z";
+        final String message = "'" + text + "' is too large to be a date";
+
+        assertThatThrownBy(() -> evalInLondon("parseDate('" + text + "')", ValNull.INSTANCE))
+                .hasMessageContaining(message);
+        assertThat(evalInLondon("parseDate(${field})", ValString.create(text)))
+                .isEqualTo(ValErr.create(message));
+    }
+
+    @Test
     void parseDateOfAConstantGivesADate() throws ParseException {
         final long millis = Instant.parse("2024-07-01T08:00:00Z").toEpochMilli();
 

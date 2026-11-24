@@ -79,7 +79,8 @@ final class DateReader {
     ///
     /// @param val  A date, a number of milliseconds since the epoch, or text of either.
     /// @param zone The time zone of text that has no offset, and of the date that is returned.
-    /// @return The date, or `null` if the value is null, blank or text that is neither a date nor a number.
+    /// @return The date, or `null` if the value is null, blank or text that is not a date, such as of a number that is
+    ///         too large to be one.
     /// @throws DateTimeException If the value is anything else that is not a date, which includes text of a duration.
     static ZonedDateTime readIfDate(final Val val, final ZoneId zone) {
         if (isBlank(val)) {
@@ -88,11 +89,16 @@ final class DateReader {
         try {
             return read(val, zone);
         } catch (final DateTimeException e) {
-            if (val instanceof ValString && val.toLong() == null) {
+            if (val instanceof ValString && !isDuration(val)) {
                 return null;
             }
             throw e;
         }
+    }
+
+    // Text of a plain number can be read as a duration, but is meant to be a date.
+    private static boolean isDuration(final Val text) {
+        return !TimeRounder.isNumber(text.toString().trim()) && text.toLong() != null;
     }
 
     /// Tells whether a value has nothing to read.
@@ -134,7 +140,7 @@ final class DateReader {
     /// @param text An ISO 8601 date with an optional time and offset, or a number of milliseconds since the epoch.
     /// @param zone Gets the time zone of text that has no offset.
     /// @return The milliseconds since the epoch, or `null` if the text is not a date.
-    /// @throws DateTimeException If it is a number that is too large.
+    /// @throws DateTimeException If it is a date or number that is too large.
     static Long parse(final String text, final Supplier<ZoneId> zone) {
         if (TimeRounder.isNumber(text)) {
             try {
@@ -154,7 +160,7 @@ final class DateReader {
         } catch (final DateTimeParseException e) {
             return null;
         }
-        return date.atStartOfDay(zone.get()).toInstant().toEpochMilli();
+        return toMillis(date.atStartOfDay(zone.get()).toInstant(), text);
     }
 
     /// Reads text as a date and time.
@@ -163,11 +169,26 @@ final class DateReader {
     /// @param zone Gets the time zone of text that has no offset.
     /// @return The milliseconds since the epoch.
     /// @throws DateTimeParseException If the text is not a date and time.
+    /// @throws DateTimeException      If the date is too large.
     static long parseDateTime(final String text, final Supplier<ZoneId> zone) {
         final TemporalAccessor temporal = DateUtil.DEFAULT_ISO_PARSER.parseBest(
                 text, ZonedDateTime::from, LocalDateTime::from);
         return temporal instanceof final LocalDateTime local
-                ? local.atZone(zone.get()).toInstant().toEpochMilli()
-                : Instant.from(temporal).toEpochMilli();
+                ? toMillis(local.atZone(zone.get()).toInstant(), text)
+                : toMillis(Instant.from(temporal), text);
+    }
+
+    /// Gets the milliseconds of a date.
+    ///
+    /// @param instant The date.
+    /// @param text    The date as it is shown if it is too large.
+    /// @return The milliseconds since the epoch.
+    /// @throws DateTimeException If there are too many. The message is fit to show the query's author.
+    static long toMillis(final Instant instant, final String text) {
+        try {
+            return instant.toEpochMilli();
+        } catch (final ArithmeticException e) {
+            throw new DateTimeException("'" + text + "' is too large to be a date", e);
+        }
     }
 }

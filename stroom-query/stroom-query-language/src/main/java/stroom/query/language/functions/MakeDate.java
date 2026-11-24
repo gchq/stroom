@@ -135,10 +135,8 @@ class MakeDate extends AbstractCalendarFunction {
         for (int i = 0; i < vals.length; i++) {
             parts[i] = toInt(vals[i], PART_NAMES[i]);
         }
-        return ValDate.create(LocalDateTime.of(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5])
-                .with(ChronoField.MILLI_OF_SECOND, parts[6])
-                .atZone(zone.get())
-                .toInstant()
-                .toEpochMilli());
+        final LocalDateTime local = LocalDateTime.of(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5])
+                .with(ChronoField.MILLI_OF_SECOND, parts[6]);
+        return ValDate.create(DateReader.toMillis(local.atZone(zone.get()).toInstant(), local.toString()));
     }
 }

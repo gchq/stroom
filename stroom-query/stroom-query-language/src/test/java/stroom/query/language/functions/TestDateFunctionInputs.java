@@ -99,6 +99,16 @@ class TestDateFunctionInputs {
             field("infinity", ValDouble.create(Double.POSITIVE_INFINITY)),
             field("NaN float", ValFloat.create(Float.NaN)),
             field("huge number", ValDouble.create(1e300)));
+    private static final List<Input> TOO_LARGE = List.of(
+            text("99999999999999999999"),
+            text("-99999999999999999999"),
+            text("+99999999999999999999"),
+            text(" 99999999999999999999 "),
+            text("1e30"),
+            text("+999999999-01-01T00:00:00Z"),
+            text("+999999999-01-01T00:00:00"),
+            text("+999999999-01-01"),
+            text("-999999999-01-01"));
     private static final List<Input> NAMES = List.of(
             text("Europe/London"),
             text("UTC"),
@@ -365,6 +375,34 @@ class TestDateFunctionInputs {
         // They have always given a null for this, so saved dashboards may have it.
         for (final Input input : notDates.stream().filter(TestDateFunctionInputs::isTextOfNothing).toList()) {
             assertThat(argument.evalField(LONDON, input).getSummary()).as(input.name).isEqualTo(NO_VALUE);
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("dateArguments")
+    void datesThatAreTooLargeAreErrors(final Argument argument) {
+        final List<String> problems = new ArrayList<>();
+        for (final Input input : TOO_LARGE) {
+            for (final Result result : argument.evalEveryWay(LONDON, input)) {
+                final String message = result.val == null
+                        ? result.thrown.getMessage()
+                        : result.val.toString();
+                if (!result.getSummary().equals(ERROR) || !message.contains("is too large to be a date")) {
+                    problems.add(input + " gives " + message);
+                }
+            }
+        }
+        assertThat(problems).isEmpty();
+    }
+
+    @ParameterizedTest
+    @MethodSource("olderDateArguments")
+    void textOfDatesThatAreTooLargeIsNullInOlderFunctions(final Argument argument) {
+        for (final Input input : TOO_LARGE) {
+            assertThat(argument.evalEveryWay(LONDON, input))
+                    .as(input.name)
+                    .extracting(Result::getSummary)
+                    .containsOnly(NO_VALUE);
         }
     }
 

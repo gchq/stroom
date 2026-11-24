@@ -99,6 +99,7 @@ class TestMakeDate {
     @CsvSource(delimiter = '|', value = {
             "makeDate(2023, 2, 29)|February 29",
             "makeDate(2024, 20 - 7, 1)|MonthOfYear",
+            "makeDate(999999999, 1, 1)|'+999999999-01-01T00:00' is too large to be a date",
             "makeDate(2024, ${field}, 1)|The month '1.5' is not a whole number"})
     void errors(final String expression, final String message) throws ParseException {
         final Val val = eval(expression, ValDouble.create(1.5));

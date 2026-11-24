@@ -89,7 +89,8 @@ class TestDateReader {
         assertThat(DateReader.readIfDate(ValString.create("2024-07-01T09:00:00"), LONDON))
                 .isEqualTo(Instant.parse("2024-07-01T08:00:00Z").atZone(LONDON));
         for (final Val val : List.of(ValNull.INSTANCE, ValErr.create("bad"), ValString.create(" "),
-                ValString.create("soon"), ValString.create("-12345678901234567890"))) {
+                ValString.create("soon"), ValString.create("-12345678901234567890"),
+                ValString.create("12345678901234567890"), ValString.create("+999999999-01-01"))) {
             assertThat(DateReader.readIfDate(val, LONDON)).as(val.toString()).isNull();
         }
         for (final Val val : List.of(ValString.create("2h"), ValDuration.create(5), ValBoolean.TRUE,
@@ -98,11 +99,14 @@ class TestDateReader {
         }
     }
 
-    @Test
-    void numberInTextThatIsTooLarge() {
-        assertThatThrownBy(() -> DateReader.readMillis(ValString.create("12345678901234567890"), NOT_NEEDED))
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "12345678901234567890", "-12345678901234567890", "1e30", "+999999999-01-01T00:00:00Z",
+            "-999999999-01-01T00:00:00+01:00", "+999999999-01-01T00:00:00", "+999999999-01-01"})
+    void textThatIsTooLarge(final String text) {
+        assertThatThrownBy(() -> DateReader.readMillis(ValString.create(text), () -> LONDON))
                 .isInstanceOf(DateTimeException.class)
-                .hasMessage("'12345678901234567890' is too large to be a date");
+                .hasMessage("'" + text + "' is too large to be a date");
     }
 
     @ParameterizedTest

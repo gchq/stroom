@@ -166,9 +166,11 @@ class Round extends AbstractRoundingFunction {
                 return ValDouble.create(Math.round(val * multiplier) / multiplier);
             }
             // A number halfway between two is rounded up, so one that is negative is rounded towards zero.
-            return ValDouble.create(round(val, decimalPlaces, val < 0
+            final double rounded = round(val, decimalPlaces, val < 0
                     ? RoundingMode.HALF_DOWN
-                    : RoundingMode.HALF_UP));
+                    : RoundingMode.HALF_UP);
+            // Adding zero makes a negative zero positive, as they are not equal to each other.
+            return ValDouble.create(rounded + 0.0);
         }
     }
 }

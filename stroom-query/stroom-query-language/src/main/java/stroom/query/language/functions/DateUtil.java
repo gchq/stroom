@@ -136,7 +136,7 @@ public final class DateUtil {
     public static long parse(final String value,
                              final DateTimeFormatter formatter,
                              final Supplier<ZoneId> zone) {
-        return parseInternal(value, formatter, zone).toInstant().toEpochMilli();
+        return DateReader.toMillis(parseInternal(value, formatter, zone).toInstant(), value);
     }
 
     public static LocalDateTime parseLocal(final String value,
