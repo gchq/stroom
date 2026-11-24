@@ -26,6 +26,7 @@ import stroom.ai.impl.tools.ToolDescription;
 import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolTables;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.compare.ActivityProfiles.Fields;
 import stroom.ai.impl.tools.compare.ActivityProfiles.Scope;
@@ -79,6 +80,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -107,6 +110,11 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     static final String LEAVE_ARG = "leave";
     static final String EXCEPTIONS_ARG = "exceptions";
     static final String PEERS_ARG = "peers";
+    static final String CATEGORIES_ARG = "categories";
+    static final String CATEGORY_FIELD_ARG = "categoryField";
+    static final String CATEGORY_LIST_ARG = "categoryList";
+    static final String CATEGORY_CORRECTIONS_ARG = "categoryCorrections";
+    static final String CATEGORIES_FILE = "categories.csv";
     static final String PEER_ELEMENT_ARG = "peerElement";
     /// The most findings the result gives; the rest are in the findings file.
     static final int MAX_FINDINGS = 20;
@@ -272,6 +280,20 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                                                        + "approved migration), from the question, "
                                                                        + "skill or AGENTS doc: not scored."))
                         .addBooleanProperty(PEERS_ARG, "Compare with peers (default true).")
+                        .addBooleanProperty(CATEGORIES_ARG, "Add events a day by category (personal cloud "
+                                                            + "storage, webmail, job search...) of the first "
+                                                            + "breadth field's values: from categoryField where the "
+                                                            + "index has one, else classified by the model (marked "
+                                                            + "inferred). Default false.")
+                        .addStringProperty(CATEGORY_FIELD_ARG, "Optional: the index's own category field, e.g. a "
+                                                               + "proxy's URL category.")
+                        .addProperty(CATEGORY_LIST_ARG, stringArraySchema("The site's own categories, each "
+                                                                          + "value=category (from the AGENTS doc "
+                                                                          + "or skill): override the rest."))
+                        .addProperty(CATEGORY_CORRECTIONS_ARG, stringArraySchema("Corrections of categories "
+                                                                                 + "inferred, each "
+                                                                                 + "value=category: kept for "
+                                                                                 + "re-runs."))
                         .addEnumProperty(PEER_ELEMENT_ARG, PeerGroups.ELEMENTS.stream().sorted().toList(),
                                 "The UserDetails element peers share (default Organisation).")
                         .addStringProperty(UserTimeZones.ARG, UserTimeZones.DESCRIPTION
@@ -305,6 +327,10 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                 periods.windowTo(), unit, leave, zone.zone(), exceptions(stringListArg(request, EXCEPTIONS_ARG)));
         final String element = peerElement(stringArg(request, PEER_ELEMENT_ARG));
         final boolean peers = booleanArg(request, PEERS_ARG, true);
+        final boolean categories = booleanArg(request, CATEGORIES_ARG, false);
+        final Map<String, String> siteList = pairs(stringListArg(request, CATEGORY_LIST_ARG), CATEGORY_LIST_ARG);
+        final Map<String, String> corrections = pairs(stringListArg(request, CATEGORY_CORRECTIONS_ARG),
+                CATEGORY_CORRECTIONS_ARG);
 
         final List<Planned> planned = plan(request, context, person, logonIds);
         final String folder = FOLDER + safe(NullSafe.isBlankString(person)
@@ -327,6 +353,9 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
             queries.add(ActivityProfiles.population(source.source(), source.scope().field(), from, to));
             for (final String field : source.fields().breadth()) {
                 queries.add(ActivityProfiles.seen(source.source(), source.scope(), field, from, to));
+            }
+            if (categories && !source.fields().breadth().isEmpty()) {
+                queries.add(categoryQuery(source, from, to));
             }
             final boolean peersHere = peers && source.hasEventIds();
             if (peersHere) {
@@ -394,10 +423,19 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                 notes.add(source.source().name() + " has no StreamId and EventId fields, so the peers' groups "
                           + "can't be read from their events: compared without peers.");
             }
+            Map<String, SortedMap<LocalDate, Double>> extra = Map.of();
+            if (categories) {
+                if (source.fields().breadth().isEmpty()) {
+                    notes.add(source.source().name() + ": no breadth field whose values to put in categories.");
+                } else {
+                    extra = categorised(context, workspace, source, own.get(3 + source.fields().breadth().size()),
+                            siteList, corrections, folder, notes);
+                }
+            }
             data.add(new SourceData(source.source().name(), source.label(), source.fields(),
                     ActivityProfiles.days(own.get(0), own.get(1), source.fields(), zone.zone()),
                     ActivityProfiles.hourOfWeek(own.get(1), zone.zone()), seen, seenCutShort,
-                    ActivityProfiles.population(own.get(2)), null));
+                    ActivityProfiles.population(own.get(2)), null, extra));
             index++;
         }
         // The peers' days, in a second round.
@@ -466,6 +504,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         final List<String> userFields = optionalList(stringArg(request, USER_FIELD_ARG));
         final List<String> sums = NullSafe.list(stringListArg(request, SUM_FIELDS_ARG));
         final List<String> breadth = NullSafe.list(stringListArg(request, BREADTH_FIELDS_ARG));
+        final String categoryField = stringArg(request, CATEGORY_FIELD_ARG);
         final List<Planned> planned = new ArrayList<>();
         for (final DocRef doc : docs) {
             final Optional<QueryField> time = dataSourceAccess.timeField(doc);
@@ -492,7 +531,10 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                    && fields.containsKey(EqlSequenceResults.EVENT_ID);
             planned.add(new Planned(doc, source, new Scope(scope.field().field(), scope.values()),
                     new Fields(sumFields, breadthFields), scope.by().label() + " (" + scope.field().field() + " from "
-                                                          + scope.field().from() + ")", hasIds, null));
+                                                          + scope.field().from() + ")", hasIds, null,
+                    categoryField != null && fields.containsKey(categoryField)
+                            ? categoryField
+                            : null));
         }
         if (planned.stream().noneMatch(Planned::usable)) {
             throw new WorkspaceException("No source can be compared: " + String.join("; ", planned.stream()
@@ -500,6 +542,97 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                     .toList()) + ".");
         }
         return planned;
+    }
+
+    // The person's events by day and value of the first breadth field (and the index's category field, where it
+    // has one).
+    private static AggregateQuery categoryQuery(final Planned source, final Instant from, final Instant to) {
+        final List<String> groups = new ArrayList<>();
+        groups.add(source.fields().breadth().getFirst());
+        if (source.categoryField() != null) {
+            groups.add(source.categoryField());
+        }
+        return new AggregateQuery(source.source(), source.scope().filter(), from, to, AggregateQuery.Bucket.DAY,
+                groups, List.of(new AggregateQuery.Metric(AggregateQuery.Kind.COUNT, null, ActivityProfiles.EVENTS)),
+                ActivityProfiles.MAX_ROWS);
+    }
+
+    // Each category's events a day: the values' categories from the index's category field, else the model's; the
+    // site's list and the corrections over both. The categories are written to a file, said in the notes.
+    private Map<String, SortedMap<LocalDate, Double>> categorised(final ToolCallContext context,
+                                                                           final SessionWorkspace workspace,
+                                                                           final Planned source,
+                                                                           final Table table,
+                                                                           final Map<String, String> siteList,
+                                                                           final Map<String, String> corrections,
+                                                                           final String folder,
+                                                                           final List<String> notes) {
+        final String field = source.fields().breadth().getFirst();
+        final SortedMap<LocalDate, Map<String, Double>> byDay = new TreeMap<>();
+        final Map<String, Long> counts = new LinkedHashMap<>();
+        final Map<String, String> fromField = new LinkedHashMap<>();
+        for (final Map<String, String> row : table.rows()) {
+            final String value = row.get(AggregateQuery.groupColumn(0));
+            final String bucket = row.get(AggregateQuery.BUCKET_COLUMN);
+            if (NullSafe.isBlankString(value) || NullSafe.isBlankString(bucket)) {
+                continue;
+            }
+            final double events = ActivityProfiles.number(row.get(ActivityProfiles.EVENTS));
+            byDay.computeIfAbsent(LocalDate.parse(bucket), k -> new LinkedHashMap<>()).merge(value, events,
+                    Double::sum);
+            counts.merge(value, (long) events, Long::sum);
+            final String category = row.get(AggregateQuery.groupColumn(1));
+            if (NullSafe.isNonBlankString(category)) {
+                fromField.putIfAbsent(value, category);
+            }
+        }
+        if (table.cutShort()) {
+            notes.add(source.source().name() + ": the events by " + field + " were cut short at "
+                      + ActivityProfiles.MAX_ROWS + " rows a month: the categories' counts are approximate.");
+        }
+        final Map<String, ActivityCategories.Category> categories = new TreeMap<>();
+        if (source.categoryField() != null) {
+            fromField.forEach((value, category) -> categories.put(value, new ActivityCategories.Category(
+                    category, ActivityCategories.Origin.FIELD)));
+            counts.keySet().forEach(value -> {
+                final String key = value.toLowerCase(Locale.ROOT);
+                if (siteList.containsKey(key)) {
+                    categories.put(value, new ActivityCategories.Category(siteList.get(key),
+                            ActivityCategories.Origin.SITE));
+                } else if (corrections.containsKey(key)) {
+                    categories.put(value, new ActivityCategories.Category(corrections.get(key),
+                            ActivityCategories.Origin.CORRECTED));
+                }
+            });
+            notes.add(source.source().name() + ": categories from its field " + source.categoryField()
+                      + (siteList.isEmpty() && corrections.isEmpty()
+                              ? ""
+                              : ", the site's list and corrections over it") + ".");
+        } else {
+            final ActivityCategories.Classified classified = ActivityCategories.classify(workspace, field, counts,
+                    siteList, corrections, context.sideCalls());
+            categories.putAll(classified.categories());
+            classified.notes().forEach(note -> notes.add(source.source().name() + ": " + note));
+        }
+        final List<List<String>> rows = new ArrayList<>();
+        categories.forEach((value, category) -> rows.add(List.of(field, value, category.name(),
+                category.origin().name().toLowerCase(Locale.ROOT), String.valueOf(counts.getOrDefault(value, 0L)))));
+        final WorkspacePath path = WorkspacePath.parse(folder + safe(source.source().name()) + "-" + CATEGORIES_FILE);
+        ToolTables.write(workspace, path, List.of("field", "value", "category", "origin", "events"), rows,
+                source.doc().getUuid());
+        notes.add(source.source().name() + ": each value's category is in " + path.path() + ".");
+        final Map<String, SortedMap<LocalDate, Double>> extra = new LinkedHashMap<>();
+        ActivityCategories.daily(byDay, categories).forEach((category, daily) ->
+                extra.put(ActivityScoring.CATEGORY + category, daily));
+        return extra;
+    }
+
+    private static Map<String, String> pairs(final List<String> values, final String arg) {
+        try {
+            return ActivityCategories.pairs(values);
+        } catch (final IllegalArgumentException e) {
+            throw new WorkspaceException(arg + ": " + e.getMessage() + ": give value=category.");
+        }
     }
 
     // The host, application and object fields the index has (by the call, skill, AGENTS doc or convention), of a
@@ -779,18 +912,23 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     /// @param scope       Whose events: the field and values; null if left out.
     /// @param fields      The sum and breadth fields; null if left out.
     /// @param label       Whose events, as the result says it.
-    /// @param hasEventIds True if it has StreamId and EventId fields.
-    /// @param leftOut     Why it can't be read, or null.
+    /// @param hasEventIds   True if it has StreamId and EventId fields.
+    /// @param leftOut       Why it can't be read, or null.
+    /// @param categoryField The index's category field, or null.
     record Planned(DocRef doc,
                    Source source,
                    Scope scope,
                    Fields fields,
                    String label,
                    boolean hasEventIds,
-                   String leftOut) {
+                   String leftOut,
+                   String categoryField) {
 
+        /// @param doc The index.
+        /// @param why Why it can't be read.
+        /// @return It, left out.
         static Planned leftOut(final DocRef doc, final String why) {
-            return new Planned(doc, null, null, null, null, false, why);
+            return new Planned(doc, null, null, null, null, false, why, null);
         }
 
         /// @return True if it can be read.

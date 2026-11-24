@@ -80,6 +80,7 @@ class TestCompareActivityTool {
     private final List<QueryField> fields = new ArrayList<>(List.of(QueryField.createDate("@timestamp"),
             QueryField.createKeyword("user.id"), QueryField.createKeyword("user.name"),
             QueryField.createKeyword("host.name"), QueryField.createKeyword("destination.domain"),
+            QueryField.createKeyword("url.category"),
             QueryField.createId("StreamId"), QueryField.createId("EventId")));
     private FakeTabWorkspace files;
     private CompareFixtures fixtures;
@@ -198,6 +199,34 @@ class TestCompareActivityTool {
 
         assertThat(result.isError()).isTrue();
         assertThat(result.text()).contains("No source can be compared: Proxy: no field holding the person id");
+    }
+
+    @Test
+    void eventsByCategoryFromTheIndexsCategoryField() {
+        for (LocalDate date = FROM; date.isBefore(WINDOW_TO); date = date.plusDays(1)) {
+            if (date.getDayOfWeek().getValue() <= 5) {
+                fixtures.hours("p1", date, 10, 11, 1, Map.of("destination.domain", "intranet.example",
+                        "url.category", "Business"));
+                if (!date.isBefore(STEP)) {
+                    fixtures.hours("p1", date, 14, 15, 6, Map.of("destination.domain", "drive.example",
+                            "url.category", "Personal Cloud Storage"));
+                }
+            }
+        }
+        final Map<String, Object> arguments = arguments();
+        arguments.put(CompareActivityTool.BREADTH_FIELDS_ARG, List.of("destination.domain"));
+        arguments.put(CompareActivityTool.CATEGORIES_ARG, true);
+        arguments.put(CompareActivityTool.CATEGORY_FIELD_ARG, "url.category");
+        arguments.put(CompareActivityTool.CATEGORY_LIST_ARG, List.of("intranet.example=work"));
+        final Map<String, Object> json = json(mcp(), arguments);
+
+        assertThat(list(json, "findings")).anySatisfy(finding -> assertThat(finding)
+                .containsEntry("feature", "category:Personal Cloud Storage"));
+        assertThat(String.valueOf(json.get("notes"))).contains("categories from its field url.category, the site's "
+                                                               + "list and corrections over it");
+        assertThat(files.content(FOLDER + "Proxy-categories.csv").orElseThrow())
+                .contains("destination.domain,drive.example,Personal Cloud Storage,field,")
+                .contains("destination.domain,intranet.example,work,site,");
     }
 
     @Test
