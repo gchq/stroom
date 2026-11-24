@@ -408,9 +408,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
         // Convert after the commit, so that a filter cache miss never takes a second connection while
         // this claim's connection and row locks are held.
-        final List<ProcessorTask> claimed = claimedRecords == null
-                ? List.of()
-                : convert(claimedRecords);
+        final List<ProcessorTask> claimed = NullSafe.getOrElse(claimedRecords, this::convert, List.of());
 
         LOGGER.debug(() -> LogUtil.message("claimTasks() - filter {} asked for {}, claimed {}",
                 filterId, limit, claimed.size()));
