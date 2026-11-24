@@ -419,9 +419,8 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                 final int sourceIndex = peerAt.get(i);
                 queriesRun += peerTables.get(i).queries();
                 final SourceData old = data.get(sourceIndex);
-                data.set(sourceIndex, new SourceData(old.source(), old.label(), old.fields(), old.days(),
-                        old.hourOfWeek(), old.seen(), old.seenCutShort(), old.population(),
-                        new PeerData(peerGroupNames.get(sourceIndex), ActivityProfiles.peersDaily(peerTables.get(i)))));
+                data.set(sourceIndex, old.withPeers(new PeerData(peerGroupNames.get(sourceIndex),
+                        ActivityProfiles.peersDaily(peerTables.get(i)))));
             }
         }
         final List<Scored> scored = data.stream().map(source -> ActivityScoring.score(spec, source)).toList();

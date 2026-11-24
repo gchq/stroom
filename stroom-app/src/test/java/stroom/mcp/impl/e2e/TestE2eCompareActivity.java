@@ -115,8 +115,13 @@ class TestE2eCompareActivity extends AbstractE2eTest {
         final DocRef elastic = elasticIndex(events, stream);
         final DocRef lucene = luceneIndex(events, stream);
 
+        // Each call writes the same person's files: each is read before the next call.
         final Map<String, Object> viaEsql = compare(elastic, "user.id", "destination.domain");
+        final Map<String, String> esqlDays = eventsByDay(viaEsql);
+        final String esqlValues = file(viaEsql, 3);
         final Map<String, Object> viaStroomQl = compare(lucene, "UserId", "Destination");
+        final Map<String, String> stroomQlDays = eventsByDay(viaStroomQl);
+        final String stroomQlValues = file(viaStroomQl, 3);
         for (final Map<String, Object> result : List.of(viaEsql, viaStroomQl)) {
             LOGGER.info(() -> "compare_activity: " + JsonUtil.writeValueAsString(result, true));
             final List<Map<String, Object>> findings = (List<Map<String, Object>>) result.get("findings");
@@ -130,17 +135,14 @@ class TestE2eCompareActivity extends AbstractE2eTest {
             assertThat(String.valueOf(result.get("note"))).contains("never a conclusion about the person");
             assertThat((List<String>) result.get("flagged_days")).isNotEmpty();
         }
-        final Map<String, String> esqlDays = eventsByDay(viaEsql);
-        final Map<String, String> stroomQlDays = eventsByDay(viaStroomQl);
         assertThat(esqlDays).hasSize((int) ChronoUnit.DAYS.between(FROM, WINDOW_TO));
         assertThat(stroomQlDays).isEqualTo(esqlDays);
         // The planted numbers, by day in the person's zone: 2 an hour for 8 hours, 8 an hour from the step.
         assertThat(esqlDays).containsEntry("2026-05-08", "16").containsEntry("2026-05-12", String.valueOf(64
                                                                                                           + NEW_A_DAY))
                 .containsEntry("2026-05-09", "0");
-        final String values = file(viaEsql, 3);
-        assertThat(values).contains("destination.domain,48,45,0");
-        assertThat(file(viaStroomQl, 3)).contains("Destination,48,45,0");
+        assertThat(esqlValues).contains("destination.domain,48,45,0,new-2026-05-11-0.example; ");
+        assertThat(stroomQlValues).contains("Destination,48,45,0,new-2026-05-11-0.example; ");
     }
 
     private Map<String, Object> compare(final DocRef index, final String personField, final String breadthField) {

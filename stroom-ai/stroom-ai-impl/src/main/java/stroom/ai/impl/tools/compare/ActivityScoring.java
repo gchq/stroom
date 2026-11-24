@@ -53,6 +53,10 @@ import java.util.function.Function;
 /// an alternative explanation, never a verdict.
 final class ActivityScoring {
 
+    /// The most a z-score counts for in ranking, and is shown as: past it, a baseline with almost no spread makes the
+    /// number meaningless.
+    static final double MAX_Z = 50;
+
     /// The |z| from which a value is a finding.
     static final double Z_THRESHOLD = 3.5;
     /// The previous same weekdays a day is scored against.
@@ -81,6 +85,7 @@ final class ActivityScoring {
     static final String SUM = "sum:";
     static final String DISTINCT = "distinct:";
     static final String NOVEL = "new:";
+    static final String CATEGORY = "category:";
     static final String RHYTHM = "rhythm";
     static final String PEERS = "events_vs_peers";
 
@@ -227,6 +232,9 @@ final class ActivityScoring {
                             (double) novel.getOrDefault(field, Map.of()).getOrDefault(date, 0));
                 }
             }
+            for (final Map.Entry<String, SortedMap<LocalDate, Double>> extra : data.extra().entrySet()) {
+                features.get(extra.getKey()).put(date, extra.getValue().getOrDefault(date, 0.0));
+            }
         }
         return features;
     }
@@ -238,6 +246,7 @@ final class ActivityScoring {
         data.fields().breadth().stream()
                 .filter(data.seen()::containsKey)
                 .forEach(field -> names.add(NOVEL + field));
+        data.extra().keySet().stream().filter(name -> !names.contains(name)).forEach(names::add);
         return names;
     }
 
@@ -278,17 +287,18 @@ final class ActivityScoring {
                 }
                 final String weekday = date.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.UK);
                 String alternative = alternative(feature.getKey(), score.get().z());
-                double size = Math.abs(score.get().z());
-                if (sharedBySource(feature.getKey(), population, date, score.get().z())) {
-                    alternative = "Everyone else's events per person shifted the same way that day: a change in "
-                                  + "the source (collection, a pipeline), not the person's alone.";
-                    size /= 2;
+                final boolean shared = sharedBySource(feature.getKey(), population, date, value, score.get());
+                if (shared) {
+                    alternative = "Everyone else's events per person shifted as far the same way that day: a change "
+                                  + "in the source (collection, a pipeline), not the person's.";
                 }
                 findings.add(new Finding(data.source(), feature.getKey(), date.toString(), score.get().median(),
-                        value, size, label(feature.getKey()) + " " + shown(feature.getKey(), value) + " on "
-                                     + weekday + " " + date + " against a median of " + shown(feature.getKey(),
-                                score.get().median()) + " on the " + score.get().n() + " previous " + weekday
-                                     + "s (robust z " + round(score.get().z()) + ")", alternative, Kind.DAY));
+                        value, capped(score.get().z()), label(feature.getKey()) + " " + shown(feature.getKey(), value)
+                                                        + " on " + weekday + " " + date + " against a median of "
+                                                        + shown(feature.getKey(), score.get().median()) + " on the "
+                                                        + score.get().n() + " previous " + weekday + "s (robust z "
+                                                        + zText(score.get().z()) + ")", alternative, Kind.DAY,
+                        shared));
             }
         }
         return findings;
@@ -306,21 +316,54 @@ final class ActivityScoring {
         return values.stream().mapToDouble(Double::doubleValue).toArray();
     }
 
-    // Whether everyone's events per person moved as far, the same way, on that day.
+    // Whether everyone else's events per person moved the same way on that day, past the threshold and by at least
+    // half as much relative to their level as the person's did.
     private static boolean sharedBySource(final String feature,
                                           final Map<LocalDate, Double> population,
                                           final LocalDate date,
-                                          final double z) {
-        if (!feature.equals(EVENTS) && !feature.equals(ACTIVE_HOURS) && !feature.startsWith(SUM)) {
+                                          final double value,
+                                          final Score score) {
+        if (!isVolume(feature)) {
             return false;
         }
-        final Double value = population.get(date);
-        if (value == null) {
+        final Double others = population.get(date);
+        if (others == null) {
             return false;
         }
-        return ActivityStatistics.robustZ(value, sameWeekday(population, date))
-                .map(score -> Math.signum(score.z()) == Math.signum(z) && Math.abs(score.z()) >= Z_THRESHOLD)
+        return ActivityStatistics.robustZ(others, sameWeekday(population, date))
+                .map(theirs -> sharedShift(value, score, others, theirs))
                 .orElse(false);
+    }
+
+    // Two departures from their baselines (the person's, everyone else's) the same way, everyone else's past the
+    // threshold and at least half the person's relative to its level.
+    private static boolean sharedShift(final double value,
+                                       final Score score,
+                                       final double others,
+                                       final Score theirs) {
+        return Math.signum(theirs.z()) == Math.signum(score.z())
+               && Math.abs(theirs.z()) >= Z_THRESHOLD
+               && relativeChange(others, theirs.median()) >= 0.5 * relativeChange(value, score.median());
+    }
+
+    private static double relativeChange(final double value, final double baseline) {
+        return baseline == 0
+                ? (value == 0
+                        ? 0
+                        : 1)
+                : Math.abs(value - baseline) / Math.abs(baseline);
+    }
+
+    private static double capped(final double z) {
+        return Math.min(Math.abs(z), MAX_Z);
+    }
+
+    private static String zText(final double z) {
+        return Math.abs(z) > MAX_Z
+                ? (z > 0
+                        ? "over "
+                        : "under -") + round(MAX_Z)
+                : round(z);
     }
 
     // --------------------------------------------------------------------------------
@@ -362,25 +405,24 @@ final class ActivityScoring {
                     continue;
                 }
                 String alternative = alternative(feature.getKey(), score.z());
-                double size = Math.abs(score.z());
                 final Double populationValue = aggregate(EVENTS, population, window);
-                if (populationValue != null && isVolume(feature.getKey())
-                    && ActivityStatistics.robustZ(populationValue, basePopulation)
-                            .map(s -> Math.signum(s.z()) == Math.signum(score.z())
-                                      && Math.abs(s.z()) >= Z_THRESHOLD)
-                            .orElse(false)) {
-                    alternative = "Everyone else's events per person moved the same way in that " + spec.unit()
-                            .word() + ": a change in the source, not the person's alone.";
-                    size /= 2;
+                final boolean shared = populationValue != null && isVolume(feature.getKey())
+                                       && ActivityStatistics.robustZ(populationValue, basePopulation)
+                                               .map(theirs -> sharedShift(v, score, populationValue, theirs))
+                                               .orElse(false);
+                if (shared) {
+                    alternative = "Everyone else's events per person moved as far the same way in that "
+                                  + spec.unit().word() + ": a change in the source, not the person's.";
                 }
-                findings.add(new Finding(data.source(), feature.getKey(), window.label(), score.median(), v, size,
-                        label(feature.getKey()) + " " + shown(feature.getKey(), v) + perDay(feature.getKey())
-                        + " in the " + spec.unit().word() + " from " + window.from() + " against a median of "
-                        + shown(feature.getKey(), score.median()) + " over " + score.n() + " baseline "
-                        + spec.unit().word() + "s (robust z " + round(score.z()) + ")", alternative,
+                findings.add(new Finding(data.source(), feature.getKey(), window.label(), score.median(), v,
+                        capped(score.z()), label(feature.getKey()) + " " + shown(feature.getKey(), v)
+                                           + perDay(feature.getKey()) + " in the " + spec.unit().word() + " from "
+                                           + window.from() + " against a median of " + shown(feature.getKey(),
+                                score.median()) + " over " + score.n() + " baseline " + spec.unit().word()
+                                           + "s (robust z " + zText(score.z()) + ")", alternative,
                         spec.unit() == Unit.WEEK
                                 ? Kind.WEEK
-                                : Kind.MONTH));
+                                : Kind.MONTH, shared));
             }
         }
         if (tooFew) {
@@ -455,7 +497,8 @@ final class ActivityScoring {
             }
             final Shift s = shift.get().shift();
             String alternative = alternative(feature.getKey(), s.after() - s.before());
-            double size = s.score();
+            final double size = Math.min(s.score(), MAX_Z);
+            boolean shared = false;
             if (isVolume(feature.getKey()) && sourceShift.isPresent()
                 && Math.abs(ChronoUnit.DAYS.between(sourceShift.get().date(), shift.get().date())) <= SOURCE_SHIFT_DAYS
                 && Math.signum(sourceShift.get().shift().after() - sourceShift.get().shift().before())
@@ -465,7 +508,7 @@ final class ActivityScoring {
                 alternative = "Everyone else's events per person shifted the same way from "
                               + sourceShift.get().date() + ": a change in the source (collection, a pipeline), "
                               + "not the person's.";
-                size /= 4;
+                shared = true;
             }
             final long beforeWindow = ChronoUnit.DAYS.between(shift.get().date(), spec.windowTo());
             findings.add(new Finding(data.source(), feature.getKey(), shift.get().date().toString(), s.before(),
@@ -473,7 +516,7 @@ final class ActivityScoring {
                                      + shown(feature.getKey(), s.before()) + " to "
                                      + shown(feature.getKey(), s.after()) + perDay(feature.getKey()) + " from "
                                      + shift.get().date() + " (" + beforeWindow + " days before the window's end; "
-                                     + "size " + round(s.score()) + ")", alternative, Kind.CHANGE));
+                                     + "size " + zText(s.score()) + ")", alternative, Kind.CHANGE, shared));
         }
         return findings;
     }
@@ -533,6 +576,13 @@ final class ActivityScoring {
                     best = difference.getKey();
                     break;
                 }
+            }
+        }
+        // The first day the new level shows, from it on: a quiet day (a weekend) before a step isn't its start.
+        for (LocalDate d = best; d.isBefore(best.plusDays(7)); d = d.plusDays(1)) {
+            final Double value = series.get(d);
+            if (value != null && direction * (value - shift.before()) > 0) {
+                return Optional.of(new Dated(d, shift));
             }
         }
         return Optional.of(new Dated(best, shift));
@@ -651,9 +701,9 @@ final class ActivityScoring {
             final Score score = ActivityStatistics.robustZ(distance, referenceValues).orElseThrow();
             if (score.z() >= Z_THRESHOLD && distance - score.median() >= 0.1) {
                 findings.add(new Finding(data.source(), RHYTHM, month.getKey().toString(), score.median(), distance,
-                        score.z(), "The hour-of-week pattern in " + month.getKey() + " differs from the baseline's "
+                        capped(score.z()), "The hour-of-week pattern in " + month.getKey() + " differs from the baseline's "
                                    + "by " + round(distance) + " (total variation, 0 to 1) against a median of "
-                                   + round(score.median()) + " for the baseline months (robust z " + round(score.z())
+                                   + round(score.median()) + " for the baseline months (robust z " + zText(score.z())
                                    + "); its busiest hours: " + busiest(month.getValue()) + "; the baseline's: "
                                    + busiest(total),
                         "A change of shift, on-call duty, travel or a time zone change; or another person using "
@@ -714,11 +764,11 @@ final class ActivityScoring {
             if (score.isPresent() && Math.abs(score.get().z()) >= Z_THRESHOLD
                 && Math.abs(ratio.get() - score.get().median()) >= 0.5) {
                 findings.add(new Finding(data.source(), PEERS, block.label(), score.get().median(), ratio.get(),
-                        Math.abs(score.get().z()), "Events per day " + round(ratio.get()) + " times the median of "
+                        capped(score.get().z()), "Events per day " + round(ratio.get()) + " times the median of "
                                                    + peers.size() + " peers in " + data.peers().group()
                                                    + " in the week from " + block.from() + ", against "
                                                    + round(score.get().median()) + " times in the baseline weeks "
-                                                   + "(robust z " + round(score.get().z()) + ")",
+                                                   + "(robust z " + zText(score.get().z()) + ")",
                         "A role or workload unlike the group's (e.g. a project, cover for a colleague), or the "
                         + "group in the Event XML out of date.", Kind.PEERS));
             }
@@ -732,12 +782,12 @@ final class ActivityScoring {
         final Optional<Score> overall = ActivityStatistics.robustZ(person, others);
         if (overall.isPresent() && overall.get().z() >= Z_THRESHOLD && person >= 2 * overall.get().median()) {
             findings.add(new Finding(data.source(), PEERS, spec.windowFrom() + " to " + spec.windowTo(),
-                    overall.get().median(), person, overall.get().z(), round(person) + " events per day in the window "
+                    overall.get().median(), person, capped(overall.get().z()), round(person) + " events per day in the window "
                                                                        + "against a median of "
                                                                        + round(overall.get().median()) + " for "
                                                                        + peers.size() + " peers in "
                                                                        + data.peers().group() + " (robust z "
-                                                                       + round(overall.get().z()) + ")",
+                                                                       + zText(overall.get().z()) + ")",
                     "A role with more of this activity than the group's (e.g. a caseload, a support rota), or the "
                     + "group in the Event XML out of date.", Kind.PEERS));
         }
@@ -865,7 +915,11 @@ final class ActivityScoring {
         for (final Map.Entry<String, List<Seen>> field : data.seen().entrySet()) {
             final List<String> started = new ArrayList<>();
             final List<String> stopped = new ArrayList<>();
-            for (final Seen seen : field.getValue()) {
+            // In the order first seen, then by value.
+            final List<Seen> ordered = field.getValue().stream()
+                    .sorted(Comparator.comparing(Seen::first).thenComparing(Seen::value))
+                    .toList();
+            for (final Seen seen : ordered) {
                 final LocalDate first = ZonedDateTime.ofInstant(seen.first(), spec.zone()).toLocalDate();
                 final LocalDate last = ZonedDateTime.ofInstant(seen.last(), spec.zone()).toLocalDate();
                 if (!first.isBefore(spec.windowFrom()) && !first.isBefore(burnedIn)) {
@@ -916,7 +970,8 @@ final class ActivityScoring {
     }
 
     private static boolean isVolume(final String feature) {
-        return feature.equals(EVENTS) || feature.equals(ACTIVE_HOURS) || feature.startsWith(SUM);
+        return feature.equals(EVENTS) || feature.equals(ACTIVE_HOURS) || feature.startsWith(SUM)
+               || feature.startsWith(CATEGORY);
     }
 
     /// @param feature A feature's name.
@@ -938,6 +993,8 @@ final class ActivityScoring {
             return "New " + feature.substring(NOVEL.length()) + " values";
         } else if (feature.equals(RHYTHM)) {
             return "Hour-of-week rhythm";
+        } else if (feature.startsWith(CATEGORY)) {
+            return "Events in the category " + feature.substring(CATEGORY.length());
         }
         return "Events against peers";
     }
@@ -945,6 +1002,12 @@ final class ActivityScoring {
     // The obvious other reading of a change, by feature and direction.
     private static String alternative(final String feature, final double direction) {
         final boolean up = direction > 0;
+        if (feature.startsWith(CATEGORY)) {
+            return up
+                    ? "A work use of such a service (e.g. an approved file share), or values put in the wrong "
+                      + "category (check the categories, and correct them)."
+                    : "Less use of such services, or a source no longer recording them.";
+        }
         if (isTime(feature)) {
             return "A change of hours, shift or time zone, travel, or on-call duty.";
         } else if (feature.startsWith(DISTINCT) || feature.startsWith(NOVEL)) {
@@ -1168,6 +1231,7 @@ final class ActivityScoring {
     /// @param seenCutShort The breadth fields whose values were cut short by the row limit.
     /// @param population   The whole source's volume by day.
     /// @param peers        The peers' daily events, or null without peers.
+    /// @param extra        More daily features by name (e.g. `category:webmail`, events a day), scored as volume.
     record SourceData(String source,
                       String label,
                       ActivityProfiles.Fields fields,
@@ -1176,8 +1240,45 @@ final class ActivityScoring {
                       Map<String, List<Seen>> seen,
                       Set<String> seenCutShort,
                       SortedMap<LocalDate, Population> population,
-                      PeerData peers) {
+                      PeerData peers,
+                      Map<String, SortedMap<LocalDate, Double>> extra) {
 
+        /// Without more features.
+        ///
+        /// @param source       The source's name.
+        /// @param label        Whose events they are.
+        /// @param fields       The sum and breadth fields.
+        /// @param days         The person's days with activity.
+        /// @param hourOfWeek   The person's hour-of-week profile a month.
+        /// @param seen         Each breadth field's values with their first and last times.
+        /// @param seenCutShort The breadth fields whose values were cut short.
+        /// @param population   The whole source's volume by day.
+        /// @param peers        The peers' daily events, or null without peers.
+        SourceData(final String source,
+                   final String label,
+                   final ActivityProfiles.Fields fields,
+                   final SortedMap<LocalDate, Day> days,
+                   final SortedMap<YearMonth, double[]> hourOfWeek,
+                   final Map<String, List<Seen>> seen,
+                   final Set<String> seenCutShort,
+                   final SortedMap<LocalDate, Population> population,
+                   final PeerData peers) {
+            this(source, label, fields, days, hourOfWeek, seen, seenCutShort, population, peers, Map.of());
+        }
+
+        /// @param more More daily features by name.
+        /// @return It with them.
+        SourceData withExtra(final Map<String, SortedMap<LocalDate, Double>> more) {
+            return new SourceData(source, label, fields, days, hourOfWeek, seen, seenCutShort, population, peers,
+                    more);
+        }
+
+        /// @param peerData The peers' daily events.
+        /// @return It with them.
+        SourceData withPeers(final PeerData peerData) {
+            return new SourceData(source, label, fields, days, hourOfWeek, seen, seenCutShort, population, peerData,
+                    extra);
+        }
     }
 
 
@@ -1203,11 +1304,12 @@ final class ActivityScoring {
     /// @param window      The day, week, month or range it is of.
     /// @param baseline    The baseline's value (a median).
     /// @param value       The value.
-    /// @param score       Its size, for ranking (a robust z, or a shift's size; halved or quartered where the
-    ///                    source shifted too).
+    /// @param score       Its size, for ranking (a robust z, or a shift's size, at most [#MAX_Z]).
     /// @param evidence    What was seen, in words.
     /// @param alternative An alternative explanation.
     /// @param kind        What it is of.
+    /// @param sourceWide  True if everyone else's activity in the source moved as far the same way: a change in the
+    ///                    source, listed apart from the person's findings.
     record Finding(String source,
                    String feature,
                    String window,
@@ -1216,8 +1318,31 @@ final class ActivityScoring {
                    double score,
                    String evidence,
                    String alternative,
-                   Kind kind) {
+                   Kind kind,
+                   boolean sourceWide) {
 
+        /// The person's own (not source-wide).
+        ///
+        /// @param source      The source.
+        /// @param feature     The feature.
+        /// @param window      The day, week, month or range it is of.
+        /// @param baseline    The baseline's value.
+        /// @param value       The value.
+        /// @param score       Its size, for ranking.
+        /// @param evidence    What was seen, in words.
+        /// @param alternative An alternative explanation.
+        /// @param kind        What it is of.
+        Finding(final String source,
+                final String feature,
+                final String window,
+                final double baseline,
+                final double value,
+                final double score,
+                final String evidence,
+                final String alternative,
+                final Kind kind) {
+            this(source, feature, window, baseline, value, score, evidence, alternative, kind, false);
+        }
     }
 
 

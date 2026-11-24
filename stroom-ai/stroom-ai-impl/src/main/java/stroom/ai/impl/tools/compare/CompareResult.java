@@ -55,6 +55,8 @@ final class CompareResult {
                                      + "conclusion about the person.";
     /// The most flagged days named for activity_timeline.
     static final int FLAGGED_DAYS = 5;
+    /// The most source-wide findings shown.
+    static final int SOURCE_WIDE_SHOWN = 5;
 
     private CompareResult() {
         // Static only.
@@ -114,18 +116,20 @@ final class CompareResult {
         final WorkspacePath monthly = path(run, CompareActivityTool.MONTHLY_FILE);
         ToolTables.write(workspace, monthly, monthColumns, monthRows, null);
 
-        final List<Finding> all = ranked(run);
+        final List<Finding> all = new ArrayList<>(ranked(run));
+        all.addAll(sourceWide(run));
         final List<List<String>> findingRows = new ArrayList<>();
         for (int i = 0; i < all.size(); i++) {
             final Finding finding = all.get(i);
             findingRows.add(List.of(String.valueOf(i + 1), finding.source(), finding.kind().name().toLowerCase(),
                     finding.feature(), finding.window(), ActivityScoring.shown(finding.feature(), finding.baseline()),
                     ActivityScoring.shown(finding.feature(), finding.value()),
-                    ActivityScoring.round(finding.score()), finding.evidence(), finding.alternative()));
+                    ActivityScoring.round(finding.score()), finding.evidence(), finding.alternative(),
+                    String.valueOf(finding.sourceWide())));
         }
         final WorkspacePath findings = path(run, CompareActivityTool.FINDINGS_FILE);
         ToolTables.write(workspace, findings, List.of("rank", "source", "kind", "feature", "window", "baseline",
-                "value", "score", "evidence", "alternative"), findingRows, null);
+                "value", "score", "evidence", "alternative", "source_wide"), findingRows, null);
 
         final List<List<String>> valueRows = new ArrayList<>();
         for (final Scored scored : run.scored()) {
@@ -146,7 +150,9 @@ final class CompareResult {
     /// @return Every finding, across the sources, largest first.
     static List<Finding> ranked(final Run run) {
         final List<Finding> all = new ArrayList<>();
-        run.scored().forEach(scored -> all.addAll(scored.findings()));
+        run.scored().forEach(scored -> scored.findings().stream()
+                .filter(finding -> !finding.sourceWide())
+                .forEach(all::add));
         all.sort(Comparator.comparingDouble(Finding::score).reversed());
         return all;
     }
@@ -190,6 +196,12 @@ final class CompareResult {
             final Finding finding = ranked.get(i);
             sb.append(i + 1).append(". [").append(finding.source()).append("] ").append(finding.evidence())
                     .append(". Alternatively: ").append(finding.alternative()).append('\n');
+        }
+        final List<Finding> shared = sourceWide(run);
+        if (!shared.isEmpty()) {
+            sb.append("\n**Explained by the source** (everyone else's activity moved as far: not the person's)\n");
+            shared.stream().limit(SOURCE_WIDE_SHOWN).forEach(finding -> sb.append("- [").append(finding.source())
+                    .append("] ").append(finding.evidence()).append('\n'));
         }
         for (final Scored scored : run.scored()) {
             final List<Values> changed = scored.values().stream()
@@ -289,6 +301,10 @@ final class CompareResult {
             findings.add(map);
         }
         result.put("findings", findings);
+        result.put("source_wide", sourceWide(run).stream()
+                .limit(SOURCE_WIDE_SHOWN)
+                .map(finding -> "[" + finding.source() + "] " + finding.evidence())
+                .toList());
         result.put("findings_total", ranked.size());
         result.put("months", run.scored().stream()
                 .flatMap(scored -> scored.months().stream())
@@ -302,6 +318,17 @@ final class CompareResult {
         result.put("flagged_days", flaggedDays(ranked));
         result.put("queries", run.queries());
         return result;
+    }
+
+    /// @param run What was compared.
+    /// @return The findings everyone else's activity shared (a change in the source), largest first.
+    static List<Finding> sourceWide(final Run run) {
+        final List<Finding> all = new ArrayList<>();
+        run.scored().forEach(scored -> scored.findings().stream()
+                .filter(Finding::sourceWide)
+                .forEach(all::add));
+        all.sort(Comparator.comparingDouble(Finding::score).reversed());
+        return all;
     }
 
     // The days of the largest day and change findings, for activity_timeline.
@@ -340,7 +367,8 @@ final class CompareResult {
         }
         for (final Map.Entry<String, Double> value : line.values().entrySet()) {
             if (value.getKey().startsWith(ActivityScoring.SUM) || value.getKey().startsWith(ActivityScoring.DISTINCT)
-                || value.getKey().startsWith(ActivityScoring.NOVEL)) {
+                || value.getKey().startsWith(ActivityScoring.NOVEL)
+                || value.getKey().startsWith(ActivityScoring.CATEGORY)) {
                 sb.append(", ").append(ActivityScoring.label(value.getKey()).toLowerCase()).append(' ')
                         .append(ActivityScoring.round(value.getValue()));
             }

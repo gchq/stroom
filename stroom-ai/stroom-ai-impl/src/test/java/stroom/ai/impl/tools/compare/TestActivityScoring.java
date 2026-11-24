@@ -67,6 +67,7 @@ class TestActivityScoring {
         assertThat(change.baseline()).isCloseTo(40 * 5 / 7.0, within(1e-9));
         assertThat(change.value()).isCloseTo(160 * 5 / 7.0, within(1e-9));
         assertThat(change.alternative()).doesNotContain("Everyone else");
+        assertThat(change.sourceWide()).isFalse();
         assertThat(scored.findings()).anySatisfy(finding -> {
             assertThat(finding.kind()).isEqualTo(Kind.WEEK);
             assertThat(finding.feature()).isEqualTo(ActivityScoring.EVENTS);
@@ -94,16 +95,34 @@ class TestActivityScoring {
 
         final Finding change = only(scored, Kind.CHANGE, ActivityScoring.EVENTS);
         assertThat(change.alternative()).contains("Everyone else's events per person shifted the same way");
-        // Quartered: well under the same step as the person's alone.
-        final CompareFixtures alone = background(ZONE, BASE_FROM, WINDOW_TO, 1.0);
-        alone.workdays("p1", BASE_FROM, WINDOW_TO, 9, 17, date -> date.isBefore(STEP)
-                ? 5
-                : 20, date -> Map.of());
-        final Finding own = only(ActivityScoring.score(spec(Unit.WEEK), alone.data("p1", NO_FIELDS, BASE_FROM,
-                WINDOW_TO, List.of())), Kind.CHANGE, ActivityScoring.EVENTS);
-        assertThat(change.score()).isLessThanOrEqualTo(own.score() / 4 + 1e-9);
+        // Listed apart, as the source's.
+        assertThat(change.sourceWide()).isTrue();
         assertThat(scored.findings()).filteredOn(finding -> finding.kind() == Kind.WEEK)
-                .allSatisfy(finding -> assertThat(finding.alternative()).contains("Everyone else"));
+                .isNotEmpty()
+                .allSatisfy(finding -> {
+                    assertThat(finding.alternative()).contains("Everyone else");
+                    assertThat(finding.sourceWide()).isTrue();
+                });
+    }
+
+    @Test
+    void aStepFarBeyondEveryoneElsesIsThePersons() {
+        // Everyone's events double from the step and the person's go up eightfold: the step is still the person's.
+        final CompareFixtures fixtures = new CompareFixtures(ZONE);
+        for (int i = 0; i < 10; i++) {
+            fixtures.workdays("other" + i, BASE_FROM, WINDOW_TO, 9, 17, date -> date.isBefore(STEP)
+                    ? 5
+                    : 10, date -> Map.of());
+        }
+        fixtures.workdays("p1", BASE_FROM, WINDOW_TO, 9, 17, date -> date.isBefore(STEP)
+                ? 5
+                : 40, date -> Map.of());
+        final Scored scored = ActivityScoring.score(spec(Unit.WEEK), fixtures.data("p1", NO_FIELDS, BASE_FROM,
+                WINDOW_TO, List.of()));
+
+        assertThat(scored.findings()).filteredOn(finding -> finding.feature().equals(ActivityScoring.EVENTS))
+                .isNotEmpty()
+                .allSatisfy(finding -> assertThat(finding.sourceWide()).isFalse());
     }
 
     @Test
