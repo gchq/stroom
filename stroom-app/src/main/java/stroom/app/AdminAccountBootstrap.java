@@ -148,7 +148,8 @@ public class AdminAccountBootstrap {
     }
 
     private void createAccount() {
-        final boolean forcePasswordChange = NullSafe.get(identityConfigProvider.get(),
+        final boolean forcePasswordChange = NullSafe.getBoolean(
+                identityConfigProvider.get(),
                 IdentityConfig::getPasswordPolicyConfig,
                 PasswordPolicyConfig::isForcePasswordChangeOnFirstLogin);
 

@@ -336,19 +336,19 @@ public class TracesListPresenter
 
     private void addServicesColumn() {
         final Function<TraceRoot, String> valueExtractor = trace ->
-                NumberUtil.formatInt(NullSafe.get(trace, TraceRoot::getServices));
+                NumberUtil.formatInt(NullSafe.getInt(trace, TraceRoot::getServices));
         addTextColumn("Services", 100, valueExtractor);
     }
 
     private void addDepthColumn() {
         final Function<TraceRoot, String> valueExtractor = trace ->
-                NumberUtil.formatInt(NullSafe.get(trace, TraceRoot::getDepth));
+                NumberUtil.formatInt(NullSafe.getInt(trace, TraceRoot::getDepth));
         addTextColumn("Depth", 100, valueExtractor);
     }
 
     private void addTotalSpansColumn() {
         final Function<TraceRoot, String> valueExtractor = trace ->
-                NumberUtil.formatInt(NullSafe.get(trace, TraceRoot::getTotalSpans));
+                NumberUtil.formatInt(NullSafe.getInt(trace, TraceRoot::getTotalSpans));
         addTextColumn("Total Spans", 100, valueExtractor);
     }
 

@@ -296,7 +296,9 @@ public class DocumentUserPermissionsListPresenter
     }
 
     private boolean isUserEnabled(final DocumentUserPermissions documentUserPermissions) {
-        return NullSafe.get(documentUserPermissions, DocumentUserPermissions::getUserRef, UserRef::isEnabled);
+        return NullSafe.test(documentUserPermissions,
+                DocumentUserPermissions::getUserRef,
+                UserRef::isEnabled);
     }
 
     public SafeHtml permissionsToExplicitTypeIcons(final DocumentUserPermissions row,
