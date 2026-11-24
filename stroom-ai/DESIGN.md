@@ -537,8 +537,9 @@ plan routed to drafting, and the agent spent about ten calls copying the old cat
 * **Coverage**: the reader's hand-written fixtures (`TestHandWrittenTranslations`) pin, per style, what is read, kept
   as xpath and not read, and every output path that differs from the original; `TestE2eStartFromExistingPipeline`
   runs it on a real Stroom (a hand-written pipeline the tools never built, the offer, copy, rebuild with proof, the
-  catalogue confirmed, a field added, promotion as V1.1 with the original untouched); eval case 78 (`e2e/eval-pending/`, kept
-  out of the reference runner until it can set up a hand-written pipeline) scores inducting over drafting.
+  catalogue confirmed, a field added, promotion as V1.1 with the original untouched); eval case 97 (moved into the set
+  2026-11-25 from `e2e/eval-pending/` as case 78; its setup, `setup: {hand_written: ...}`, makes the same hand-written
+  pipeline in Stroom) scores inducting over drafting.
 
 ### Fix a reported issue
 
@@ -1666,11 +1667,15 @@ it again with new parameters. AGENTS docs hold rules, guides facts, skills proce
     discovery (the list the model is given: every readable skill, near-context ones first, the size guard; a skill
     the user can't read left out); a trial run; a template filled; the reverse diff for undo; a slash command's
     invocation with missing parameters asked.
-  * **Evals** (a model, on the eval harness): saving a skill from a finished investigation (scored: its parameters
-    are the values that vary, its steps name real tools with calls that fit, `check_skill` finds nothing); running
-    a skill from a chat with no context (the right skill chosen among distractors, its parameters asked or taken
-    from the question, the result as the skill says); a skill broken since it was written (a renamed index) reported
-    before it runs, with the fix; and the timeline skill end to end on the generated data. Run on Haiku and Sonnet.
+  * **Evals** (a model, on the eval harness; cases 88 to 96, `kind: skill`, built 2026-11-25): saving a skill from a
+    finished investigation (scored: its parameters are the values that vary, its steps name real tools with calls
+    that fit, `check_skill` finds nothing); running a skill from a chat with no context (the right skill chosen
+    among distractors, its steps followed with the values bound, the result as the skill says); a skill broken since
+    it was written (a renamed index) reported before it runs, with the fix; the timeline skill from its template,
+    tried and saved; and modifications: a source added, a parameter's default changed (each scored on the diff
+    touching only what was asked), a timeline run learning a new event pair into the skill's Event chains (proposed
+    for a user who can edit the doc; for one who can't, nothing proposed and who can record it said), and undoing the
+    last change. Run in Stroom's own chat (see [Testing](#testing)), on Haiku and Sonnet.
 * **Later**: reverting to an older saved version (above, needing the core feature); a skill's own tests (a skill and
   its expected outcome on known data, run like eval cases, to check it still works after indexes or tools change).
 * **Checking tool**: reads a skill and reports problems and suggestions, each with a proposed fix. Problems: no
@@ -5828,6 +5833,36 @@ when its Events hold what it expects, they are indexed and found, and nothing el
 documentation, stepping). Each case's score is written to `build/eval-reference/<case>.json`; all 53 take about 20
 minutes, and `STROOM_EVAL_CASES=12,35` runs only those.
 
+**Skill cases** (`kind: skill`, cases 88 to 96, 2026-11-25) run in Stroom's own chat, not over `/mcp`: `propose_skill`
+is chat-only (its 'Review and apply' button), `/mcp` drops a result's buttons, and `undo` reads the chat's earlier
+proposals. A case gives its data as a question does (`lucene_index`, one or a list; `elastic_index`, with
+`events_xml: any_source` to store the records' Events XML; `recent: true` moves the records by whole days to end
+yesterday, for skills that look back from now), its `folders`, its `skills_docs` (each skill's Markdown, saved with a
+history entry), the user who chats (`user`: the administrator, or e.g. an analyst with View only on the skills docs),
+and earlier turns (`chat`: each asked of a scripted model, with `apply: true` the proposal applied and saved), so the
+scored turn has a true history. `EvalChat` (stroom.ai.impl, test) runs the chat as the user (forms answered,
+approvals given); the reference's model is a scripted `FakeModelServer` (its calls' `<SKILLS /Hunts>` and
+`<result:regex>` placeholders worked out as it goes). `EvalScore.scoreSkill` reads the chat: tools used (a call
+refused as its group wasn't on doesn't count), `find_skills` reading a skill by name and not the distractors,
+`calls_with` (arguments, and `result_contains`), the last proposal (folder, skill, parameters, defaults, steps'
+tools and text, a section's text, `check_skill` problems, `changed_sections` with `may_change` and every other
+section and skill unchanged, the history entry), `no_proposal`, and the reply's wording.
+
+The **hand-written case** (97, `setup: {hand_written: ...}`) has its feed's translation written by hand in Stroom
+(`AbstractE2eTest.handWritten`, shared with `TestE2eStartFromExistingPipeline`) before the build, and is scored from
+Stroom and the calls: the route (`calls_in_order`, `forbidden_calls`), the copy's Events stepped record by record
+(`records_in_sample`; `same_as_setup_except` compares each with the original's, the added paths taken out;
+`type_ids.exactly`), the catalogue (read beside the promoted copy once promotion moved its notes; `origin`), and the
+promotion (`promoted`: the copy's name, the original untouched).
+
+The **agent harness** (`TestE2eEvalAgent`, shelved as a patch) runs a skill case through the same chat with Claude
+playing its model (`ClaudeChatModel`): each model turn the chat asks is put to `claude -p` with no tools of its own,
+the chat's system prompt and tool definitions as its system prompt and the chat so far as its message, answered with
+one tool call or a reply as structured output. The calls, forms, buttons and history are Stroom's; the choices are
+Claude's, written as JSON rather than through native tool use. (Seen 2026-11-25: told only that tools exist, Haiku
+tried them as native tools inside `claude -p`, was refused, and told the user the skill tools weren't there; the
+bridge's instructions now say it has none.)
+
 Known local failures in the full build, neither caused by this code:
 
 * `stroom-proxy-app` tests fail when another process holds port 8090.
@@ -5890,6 +5925,7 @@ behaviour; the settled ones are listed here with the section that records them.
 | Date | Decision | Section |
 | --- | --- | --- |
 | 2026-11-25 | Chat 195's timeline defects fixed: side calls made as the run's user on any thread (characterisation's parallel batches failed the security check); the summary counts spans of every kind and says when calls failed; a person id alone with only a user field is refused naming `logonIds`, never taken as a logon id unasked; the timeline dashboard's chart draws its own unfiltered table in a hidden tab (a click no longer narrows the chart); spans say what happened (`action`, labels led by it, the chart's tooltip `detail`); lanes titled by what they are (the host field's description, `Source`, `Day (<zone>)`); with no roles given, `focus` is a role of event codes, `typeRoles` and Event chains, an automatic source keeps the call's process, title, window and text fields, and no pair or key span is inferred from a focus (eval case 77) | Activity timelines, streaming joins and skills (2c., "Fixed from chat 195"); TOOLS.md (activity_timeline, compare_activity, propose_timeline_dashboard) |
+| 2026-11-25 | Skill eval cases (88 to 96) run in Stroom's own chat, not over `/mcp` (`propose_skill` is chat-only and `undo` reads the chat), with true earlier turns from a scripted model; the hand-written pipeline case moved into the set as 97 with its setup made in Stroom. A copy of a pipeline whose XSLT keeps no mapping is read back (`rebuild_mapping`) before it is stepped: seen in case 97 on Haiku and Sonnet, copied straight from `start_build`'s advice, `next` said `step_sample` and the agent rewrote the copy's XSLT by hand. Open: `start_build`'s advice for a feed already translated still lets the agent copy before the survey, so the catalogue's start-from-existing offer (and its confirmation) is skipped | [Testing](#testing); Builds and onboarding (start from an existing pipeline); [Skills](#4-skills) |
 | 2026-11-24 | Chat 194 (an endpoint feed's onboarding) fixes: (1) `promote_build`'s role locations: each role's choice in the form shows the folder it gives, as the layout puts the role's pipeline (`System/Feeds/Endpoint/Events/V1.0 (the feed's own folder)`), never the root, ending in `another folder (type it)` with a text field; a typed answer that is no folder path nor a folder in System is refused and asked again, never recorded; the feed's own folder given under `Feed` (a feed already in production; for a feed the build makes `Feed` places the feed only) puts every role in the feed's own folder, and any destination given replaces the recorded choice; a folder given for a role inside the feed's folder, or ending in its name, is read as the feed's own or the folder holding it; the review lists each role's resulting folder, and its hint and the reply to a message sent instead of the approval name the keys that change roles; (2) turn digests never cut an identifier (a UUID, a long hex or letters-and-digits id): one the cut falls in is kept whole (up to 40 more characters) or left out, a call's shortened arguments say the argument cut and give up to 4 identifiers further on whole with their keys (an argument line was at most 200 characters; now about 200 to 520, typically +60 for one UUID), also in the context's tool log | TOOLS.md (promote_build); `TurnDigests` |
 | 2026-11-24 | From chat 194 (an endpoint feed in an `evt=... key=value` format): a catalogue condition written as text (`"evt=logon"`) is refused showing what a condition is and, where the text reads as `name=value` or `name!=value`, the condition it would be; it isn't accepted as one, as the mapping's other readers of `when` take only objects. A field a mapping change writes as it is to an element takes its plain Data copies with it (the rules the entry reaches, and common for a common entry; a Data entry given in the same changes is kept); the draft itself already leaves a placed field out of Data (a catalogue placement's `also_data` keeps one on purpose). The draft gives EventSource/Generator a field only when it is filled in the sample records of every catalogued event type, else the constant, said in a note. step_sample's group of fields no rule reads says, a field at a time, the event types of the records holding it (`unread_in`), and build_translation_xslt's warning of Data no record of a rule holds names the rules whose records do: both were right in chat 194, of different records, and read as a contradiction. The verification columns suggested are the index plan's own fields, said to be, never a name the index lacks (the agent offered ECS `event.type`; the plan had `event.code`) | Builds and onboarding, Indexing; TOOLS.md (catalogue_event_types, draft_translation_mapping, build_translation_xslt, step_sample, verify_index) |
 | 2026-11-24 | compare_activity defaults and the insider evals' AGENTS doc (the user's decisions): categories and location on by default where a source has a category field (`categoryField`, AGENTS `## Fields` `category:` (new key), the flat `Category` or an ECS-style `*.category` but `event.category`) or a country field (`countryField`, AGENTS `country:` (new key), `*.geo.country_iso_code`, the flat `Country`), each turned off by `false` and said in the notes with the field and where it came from; the model classifies values only when `categories: true` is asked for with no category field; categories from the field counted row by row (a value of more than one category in each); peers and the access graph unchanged; a date alone a whole day, an end date included (a one-day window the same date twice; a `baselineTo` of the window's first day read as the day before), times exclusive ends; leave and exceptions take `from - to`. The insider eval cases 79 to 87 get the site's AGENTS doc beside their index (case key `agents`), not a flat convention change; case 83 drops `access:Site`; case 87 is scored by the answer (`answer_must_say_all_of`, the reply or a reference run's tool results), not by `tools_used`; `TestE2ePersonFieldFromAgents` covers the AGENTS person field in all three tools | [Insider risk](#insider-risk-patterns-anomalies-and-a-record-per-person-built-2026-11-24) (as built: Categories, Location, Times, Eval cases); TOOLS.md (compare_activity, propose_instructions) |
