@@ -16,6 +16,8 @@
 
 package stroom.explorer.client.component;
 
+import stroom.dispatch.client.DefaultErrorHandler;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.model.OpenItems;
 import stroom.explorer.shared.ExplorerNode;
@@ -274,6 +276,7 @@ public class ExplorerTreeController extends Controller {
 
             if (!fetching) {
                 fetching = true;
+                explorerTree.startLoading();
                 Scheduler.get().scheduleDeferred(() -> {
                     final FetchExplorerNodesRequest criteria = currentCriteria;
                     restFactory
@@ -282,11 +285,24 @@ public class ExplorerTreeController extends Controller {
                             .onSuccess(result -> {
                                 handleFetchResult(criteria, result);
                             })
+                            .onFailure(error -> handleFetchFailure(criteria, error))
                             .owner(this)
                             .taskMonitorFactory(taskMonitorFactory)
                             .exec();
                 });
             }
+        }
+    }
+
+    // So that the tree can be fetched again, e.g. by Reload or another filter
+    private void handleFetchFailure(final FetchExplorerNodesRequest criteria, final RestError error) {
+        fetching = false;
+        if (criteria != currentCriteria) {
+            // Not what is wanted any more, so fetch that instead
+            refresh();
+        } else {
+            explorerTree.finishLoading(false);
+            new DefaultErrorHandler(this, null).onError(error);
         }
     }
 
@@ -299,6 +315,7 @@ public class ExplorerTreeController extends Controller {
             // Some settings have changed so try again with the new settings.
             refresh();
         } else {
+            explorerTree.finishLoading(true);
             // The server has now rebuilt its model, so later fetches can use the cached one.
             if (criteria.isRefresh()) {
                 forceServerRefresh = false;

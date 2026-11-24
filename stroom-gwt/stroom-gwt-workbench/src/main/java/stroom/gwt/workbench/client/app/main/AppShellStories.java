@@ -90,6 +90,8 @@ public final class AppShellStories {
     /// The name of the spy recording the registry's answers in `LocateOnlyForExplorerTabs`.
     static final String LOCATE_SPY = "getExplorerDocRef";
 
+    // A filter the tree can't be fetched with
+    private static final String FAILING_FILTER = "zzz";
     // The explorer panel is Explorer's '.explorer'
     private static final String NAVIGATION = ".explorer";
     // The document tabs' labels
@@ -710,6 +712,38 @@ public final class AppShellStories {
                                     .toSpyMatcher()));
                     play.expect(navTree(play).getByText("Countries")).toBeInTheDocument();
                     expectNoProblems(play);
+                })
+                // A slow reload is announced to screen readers, and so is its end
+                .story("ReloadAnnounced", context -> render(context, AppShellFixtures.dictTree(),
+                        AppShellStories::slowReloadRoute, builder -> {
+                        }, null))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(navTree(play).getByText("Countries")).toBeInTheDocument());
+                    final Query status = play.querySelector(".explorer-tree [role='status']");
+                    // The first load was quick
+                    play.expect(status).toHaveTextContent("");
+                    play.click(play.getByRole("button", "Reload Explorer Tree"));
+                    play.waitFor(2500, () -> play.expect(status).toHaveTextContent("Loading documents"));
+                    play.waitFor(3000, () -> play.expect(status).toHaveTextContent("Documents loaded"));
+                    expectNoProblems(play);
+                })
+                // Once fetching the tree has failed it can be fetched again. It never was, whatever the
+                // user did, until the page was reloaded
+                .story("FetchAgainAfterFailure", context -> render(context, AppShellFixtures.dictTree(),
+                        AppShellStories::failingFilterRoute, builder -> {
+                        }, null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(navTree(play).getByText("Countries")).toBeInTheDocument());
+                    final Query filter = play.querySelector(NAVIGATION + " .quick-filter__input");
+                    play.type(filter, FAILING_FILTER);
+                    play.click(screen.findByRole("button", StroomDom.button("Close")));
+                    play.clear(filter);
+                    play.type(filter, "Countries");
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post(TreeFixtures.FETCH_EXPLORER_NODES)
+                                    .withBodyContaining("\"Countries\"").toSpyMatcher()));
+                    play.waitFor(() -> play.expect(navTree(play).getByText("Countries")).toBeInTheDocument());
                 })
                 // The main toolbar is shown at the right of the content's tab row, over the content,
                 // but comes first in the page, so the Tab key reaches it before the explorer and the
@@ -1679,6 +1713,23 @@ public final class AppShellStories {
         }
         play.keyboard("{Escape}");
         play.waitFor(() -> play.expect(screen.querySelector(".selection-popup")).toBeNull());
+    }
+
+    // Reload takes a while
+    private static void slowReloadRoute(final RestFixtures.Builder routes) {
+        final ExplorerFixture tree = AppShellFixtures.dictTree();
+        routes.post(TreeFixtures.FETCH_EXPLORER_NODES, request -> RestReply.json(tree.fetch(request.getBody()))
+                .delayed(request.getBody().replace(" ", "").contains("\"refresh\":true")
+                        ? 2500
+                        : 0));
+    }
+
+    // Fetching the tree fails with one filter
+    private static void failingFilterRoute(final RestFixtures.Builder routes) {
+        final ExplorerFixture tree = AppShellFixtures.dictTree();
+        routes.post(TreeFixtures.FETCH_EXPLORER_NODES, request -> request.getBody().contains(FAILING_FILTER)
+                ? RestReply.error(500, "The tree can't be fetched")
+                : RestReply.json(tree.fetch(request.getBody())));
     }
 
     // Answers the save of the user's preferences

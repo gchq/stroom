@@ -53,6 +53,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.CellPreviewEvent;
@@ -88,13 +89,26 @@ public class ExplorerTree extends Component implements Focus {
             .build();
 
     private static final Binder BINDER = GWT.create(Binder.class);
+    // How long the tree loads before screen readers are told, as a tab does (AbstractTabBar)
+    private static final int LOAD_DELAY_MILLIS = 1000;
     private static final Action[] ITEM_KEY_ACTIONS = {Action.EXPLORER_RENAME, Action.EXPLORER_INFO};
 
     @UiField
     DataGrid<ExplorerNode> tree;
-    // Tells screen reader users why an item's key did nothing, e.g. "Feeds can't be renamed"
+    // Tells screen reader users why an item's key did nothing, e.g. "Feeds can't be renamed", and that
+    // the tree is loading
     @UiField
     Element liveRegion;
+
+    private final LoadAnnouncements loadAnnouncements = new LoadAnnouncements();
+    private final Timer loadDelay = new Timer() {
+        @Override
+        public void run() {
+            if (loadAnnouncements.delayElapsed()) {
+                announce("Loading documents");
+            }
+        }
+    };
 
     private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
     private final String expanderClassName;
@@ -576,6 +590,39 @@ public class ExplorerTree extends Component implements Focus {
         Scheduler.get().scheduleDeferred(() ->
                 ExplorerItemKeyEvent.fire(ExplorerTree.this, action, this::announce));
         return true;
+    }
+
+    /// Says that the tree's nodes are being fetched, which screen readers are told if it takes a while.
+    void startLoading() {
+        if (loadAnnouncements.start()) {
+            loadDelay.schedule(LOAD_DELAY_MILLIS);
+        }
+    }
+
+    /// Says that the tree's nodes have been fetched, or couldn't be.
+    ///
+    /// @param loaded Whether they have been. If not, the error shown says so.
+    void finishLoading(final boolean loaded) {
+        loadDelay.cancel();
+        if (loadAnnouncements.finish()) {
+            announce(loaded
+                    ? "Documents loaded"
+                    : "");
+        }
+    }
+
+    @Override
+    protected void onLoad() {
+        super.onLoad();
+        if (loadAnnouncements.isWaiting()) {
+            loadDelay.schedule(LOAD_DELAY_MILLIS);
+        }
+    }
+
+    @Override
+    protected void onUnload() {
+        loadDelay.cancel();
+        super.onUnload();
     }
 
     // Says something to screen reader users, emptying the region first so a repeat is said again

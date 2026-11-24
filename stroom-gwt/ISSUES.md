@@ -1842,6 +1842,11 @@ to delete them by hand.~~
   condition beside one that applies (`SAXEventRecorder` read the null condition), which now skips
   it, as `SteppingFilterSettings.isFilterApplied` already ignored it (`TestPersistedFilterEvaluator`
   `testXPathWithNoCondition`, failed before). `FilterWithNoCondition` covers the search type too.
+* **Fixed** (24 November 2026, found announcing the explorer's loading): once fetching the explorer's
+  tree had failed (e.g. the network dropped) it was never fetched again, whatever the user did, until
+  the page was reloaded: `ExplorerTreeController` noted that it was fetching and cleared that only when
+  a fetch succeeded. Every tree of documents, on master too. `App/Main/AppShell`
+  `FetchAgainAfterFailure`.
 * `CombinedParser.getMode()` guesses XML Fragment or Data Splitter for a None converter. The parser
   built is always a Data Splitter (`ParserFactoryPoolImpl`), but the guess isn't without effect:
   `ReaderRecorder.java:89-91` takes the stepping range mode from it, so an XML Fragment guess gives
