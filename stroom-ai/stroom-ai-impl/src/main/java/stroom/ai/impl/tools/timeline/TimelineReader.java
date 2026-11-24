@@ -151,8 +151,30 @@ final class TimelineReader {
                                             final int count,
                                             final Instant deadline,
                                             final BooleanSupplier stopped) {
+        return sample(streams, source, timeRange, fields, count, deadline, stopped, null);
+    }
+
+    /// The first events of one source for the user that also meet a condition, with the fields asked for.
+    ///
+    /// @param streams   The key streams.
+    /// @param source    The source, with the values its user (or person) field is filtered on.
+    /// @param timeRange The period.
+    /// @param fields    The fields to fetch.
+    /// @param count     The most events.
+    /// @param deadline  When to stop.
+    /// @param stopped   True once the user has stopped the call.
+    /// @param filter    The condition, e.g. the user field not holding the user as given; null for none.
+    /// @return Each event's values by field.
+    static List<Map<String, String>> sample(final ElasticKeyStreams streams,
+                                            final Source source,
+                                            final TimeRange timeRange,
+                                            final List<String> fields,
+                                            final int count,
+                                            final Instant deadline,
+                                            final BooleanSupplier stopped,
+                                            final ExpressionOperator filter) {
         final Side side = new Side(source.doc(), List.of(new KeyField(source.userField(), source.transforms())),
-                null, timeRange, KeyRange.ALL, List.of(source.terms()));
+                filter, timeRange, KeyRange.ALL, List.of(source.terms()));
         final JoinBudget budget = new JoinBudget(count, Long.MAX_VALUE, deadline, stopped);
         final List<Map<String, String>> out = new ArrayList<>();
         try (final KeyGroupSource scan = KeyGroupSource.scan(streams, List.of(side), fields, PAGE_SIZE,

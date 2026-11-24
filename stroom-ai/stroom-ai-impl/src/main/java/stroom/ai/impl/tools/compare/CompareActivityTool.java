@@ -1114,6 +1114,24 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                 : time.toLocalDate().plusDays(1);
     }
 
+    /// A period's bound given as a date alone (yyyy-MM-dd), a whole day in the zone: a start is the day's start; an
+    /// end includes the date to its end, so is the next day's start (`2026-06-01` to `2026-06-30` is all of June).
+    /// compare_activity's dates, and activity_timeline's alike.
+    ///
+    /// @param value The argument as given, or null.
+    /// @param zone  The zone the day is in.
+    /// @param end   True for the period's end.
+    /// @return The bound, or empty where the value isn't a date alone.
+    public static Optional<Instant> dateBound(final String value, final ToolTimeZone zone, final boolean end) {
+        if (!isDate(value)) {
+            return Optional.empty();
+        }
+        final LocalDate date = LocalDate.parse(value.strip());
+        return Optional.of((end
+                ? date.plusDays(1)
+                : date).atStartOfDay(zone.zone()).toInstant());
+    }
+
     // True for a date given alone (yyyy-MM-dd).
     private static boolean isDate(final String value) {
         return value != null && DATE.matcher(value.strip()).matches();
@@ -1121,8 +1139,9 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
 
     private static Instant instant(final String value, final ToolTimeZone zone, final long now) {
         final String trimmed = value.strip();
-        if (DATE.matcher(trimmed).matches()) {
-            return LocalDate.parse(trimmed).atStartOfDay(zone.zone()).toInstant();
+        final Optional<Instant> date = dateBound(trimmed, zone, false);
+        if (date.isPresent()) {
+            return date.get();
         }
         final String time = StroomQlDatePoints.timeInZone(trimmed, zone, now);
         try {

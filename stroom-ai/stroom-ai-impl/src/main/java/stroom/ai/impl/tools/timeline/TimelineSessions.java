@@ -952,9 +952,9 @@ final class TimelineSessions {
         private void action(final Event event) {
             leaveIdle(event);
             active = true;
-            if (current == null && event.process() != null) {
-                start(event, "no focus event seen");
-            }
+            // Only a focus starts a session: an action's application (a call's process field, which may hold a
+            // source's name) isn't the window in front, so an action outside a session is left to the activity
+            // periods (eval case 78: a user seen only in web proxy events got sessions of 'proxy').
             if (current != null) {
                 final By by = event.process() != null && event.process().equalsIgnoreCase(current.process)
                         ? By.PROCESS

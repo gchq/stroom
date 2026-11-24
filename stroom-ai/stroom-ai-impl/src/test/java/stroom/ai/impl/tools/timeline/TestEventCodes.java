@@ -61,6 +61,35 @@ class TestEventCodes {
     }
 
     @Test
+    void codesNothingClassifiedAreGivenToTheCallingModelCommonestFirstWithTheRolesAndWhy() {
+        final Map<String, Integer> counts = new LinkedHashMap<>();
+        counts.put("lock", 11);
+        counts.put("focus", 55);
+        counts.put("clipboard", 127);
+        counts.put("unlock", 11);
+
+        final String text = EventCodes.unclassified("User activity", "EventType", counts, ModelSideCalls.NONE);
+
+        assertThat(text).startsWith("Source 'User activity': its events have no Events XML or element field to go "
+                                    + "by, and their codes (EventType) couldn't be classified (no model: this "
+                                    + "session has no model a tool can call)")
+                .contains("call again with the source's typeRoles, {\"<code>\": \"<role>\"}",
+                        "\"idle\" (the user went idle", "\"focus\" (a window",
+                        "A code left out is an action of its own name.")
+                .endsWith("the commonest first: clipboard 127, focus 55, lock 11, unlock 11.");
+        // A model that answered, but not readably.
+        assertThat(EventCodes.unclassified("Windows", "event.code", Map.of("4800", 1), stub("?", new ArrayList<>())))
+                .contains("(the model's answer couldn't be read)");
+        // At most the commonest codes asked of a model, the rest counted.
+        final Map<String, Integer> many = new LinkedHashMap<>();
+        for (int i = 0; i < EventCodes.MAX_CODES + 2; i++) {
+            many.put("c" + i, 1_000 - i);
+        }
+        assertThat(EventCodes.unclassified("Windows", "event.code", many, ModelSideCalls.NONE))
+                .contains("c99 901").doesNotContain("c100 ").endsWith(" and 2 more.");
+    }
+
+    @Test
     void rolesAreTheTimelinesOwn() {
         assertThat(EventCodes.role("active")).isEqualTo(Role.IDLE_END);
         assertThat(EventCodes.role("Idle")).isEqualTo(Role.IDLE_START);

@@ -176,6 +176,34 @@ class TestTimelineSpans {
     }
 
     @Test
+    void aSourceWhoseEventsAllHoldOneApplicationHasItsPeriodsLabelledByWhatTheyTouched() {
+        // Eval case 78: the call's process field is the source column, 'proxy' on every event.
+        action("09:00", "proxy", "https://research.example.org/a");
+        action("09:05", "proxy", "https://research.example.org/b");
+        action("09:20", "proxy", "https://news.example.com/");
+        action("10:00", "Proxy", null);
+
+        final Built built = build(List.of());
+
+        assertThat(built.spans()).filteredOn(span -> span.kind() == Kind.ACTIVITY)
+                .extracting(Span::label)
+                .containsExactly("research.example.org", "news.example.com", "Proxy");
+    }
+
+    @Test
+    void aSourceWithSeveralApplicationsHasItsPeriodsLabelledByTheApplication() {
+        action("09:00", "chrome.exe", "https://research.example.org/a");
+        action("09:05", "chrome.exe", "https://research.example.org/b");
+        action("09:20", "msedge.exe", "https://news.example.com/");
+
+        final Built built = build(List.of());
+
+        assertThat(built.spans()).filteredOn(span -> span.kind() == Kind.ACTIVITY)
+                .extracting(Span::label)
+                .containsExactly("chrome.exe", "msedge.exe");
+    }
+
+    @Test
     void anActionWithNoHostIsInItsSourcesLane() {
         events.add(new Event(at("09:00"), 1, "e" + ++ids, Role.ACTION, "message", null, null, null, null, null,
                 null, null, null));

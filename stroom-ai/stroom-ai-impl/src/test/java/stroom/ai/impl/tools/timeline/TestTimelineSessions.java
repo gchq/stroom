@@ -142,13 +142,12 @@ class TestTimelineSessions {
         assertThat(timeline.actions()).extracting(action -> action.event().kind() + "@" + action.session() + "/"
                                                            + action.by())
                 .containsExactly("clipboard copy@1/process", "file copy@1/time", "web access@1/time",
-                        "file copy@2/process", "web access@0/null");
+                        "file copy@0/null", "web access@0/null");
         assertThat(timeline.unattached()).extracting(action -> action.event().object())
-                .containsExactly("https://example.org/news");
-        // An action on an application with no interval running starts one, its start uncertain.
-        final Session notepad = timeline.sessions().get(1);
-        assertThat(notepad.process()).isEqualTo("notepad.exe");
-        assertThat(notepad.startMark()).isEqualTo("no focus event seen");
+                .containsExactly("notes.txt", "https://example.org/news");
+        // An action on an application with no session running starts none: only a focus does (eval case 78, the
+        // process field holding a source's name, 'proxy'). It is left to the activity periods.
+        assertThat(timeline.sessions()).extracting(Session::process).containsExactly("WINWORD.EXE");
         assertThat(timeline.sessions().getFirst().actionsByKind()).containsEntry("clipboard copy", 1)
                 .containsEntry("file copy", 1).containsEntry("web access", 1);
         final Action copy = timeline.actions().get(1);

@@ -34,6 +34,7 @@ import stroom.ai.impl.tools.ToolSchema;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.UserQuestions;
+import stroom.ai.impl.tools.compare.CompareActivityTool;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.instructions.InstructionRules;
@@ -236,6 +237,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     /// The events of an automatic source probed first: whether the user has any there, and which of its fields
     /// holds the EventDetail element.
     static final int PROBE_EVENTS = 200;
+    /// The most events read for the close variants of a user found as given.
+    static final int VARIANT_EVENTS = 20;
     /// The most fields fetched by the probe.
     static final int PROBE_FIELDS = 100;
     /// The share of an index field's values in the probe that are EventDetail elements, for it to be taken as the
@@ -471,9 +474,13 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                              + "\"ask\" (as omitted: the user is asked which).").build())
                         .addStringProperty(USER_FIELD_ARG, "Optional: the field holding the user in every source "
                                                            + "that has it (a skill's), before the other ways.")
-                        .addStringProperty(TIME_FROM_ARG, "The period's start: ISO 8601 or a date expression "
-                                                          + "(default " + DEFAULT_FROM + ").")
-                        .addStringProperty(TIME_TO_ARG, "The period's end (default " + DEFAULT_TO + ").")
+                        .addStringProperty(TIME_FROM_ARG, "The period's start: a date, ISO 8601 or a date "
+                                                          + "expression (default " + DEFAULT_FROM + "). A date "
+                                                          + "alone is a whole day in timeZone, as "
+                                                          + "compare_activity's: timeFrom 2026-11-09 and timeTo "
+                                                          + "2026-11-13 are those five days.")
+                        .addStringProperty(TIME_TO_ARG, "The period's end (default " + DEFAULT_TO + "); a date "
+                                                        + "alone is included.")
                         .addStringProperty(IDLE_CAP_ARG, "How long with no event on a host ends an interval, "
                                                          + "e.g. 30m (default the setting, 30 minutes).")
                         .addEnumProperty(VIEW_ARG, List.of(View.ACTIVITIES.argName(), View.DETAIL.argName(),
@@ -558,7 +565,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
 
         final XmlOutcome xml = readXml(context, config, sources, read);
         final Map<Integer, Map<String, CodeRole>> codes = codes(request, context, sources, read, plan.fields(),
-                xml.xml());
+                xml.xml(), plan.overrides());
         final TimelineClassification.Result classification = TimelineClassification.classify(read.events(),
                 sources, read.extras(), plan.fields(), xml.xml(), codes, plan.overrides());
 
@@ -883,7 +890,10 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                             ? null
                             : String.join(", ", probed.transforms().stream()
                                     .map(transform -> transform.name().toLowerCase(Locale.ROOT)).toList())
-                              + " (the user wasn't found as given)", null, automatic.by()));
+                              + (probed.variants().isEmpty()
+                                    ? " (the user wasn't found as given)"
+                                    : " (the index also writes the user as " + String.join(", ",
+                                            probed.variants()) + ": read together)"), null, automatic.by()));
         }
         if (sources.isEmpty()) {
             final StringBuilder sb = new StringBuilder("No source holds ").append(entity)
@@ -1090,12 +1100,45 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 throw new WorkspaceException("You can't use Elastic Index '" + automatic.doc().getName() + "'.");
             }
             if (!rows.isEmpty()) {
-                return new Probed(transforms, automatic.element() != null
+                final String element = automatic.element() != null
                         ? automatic.element()
-                        : elementField(rows, fields));
+                        : elementField(rows, fields);
+                if (transforms.isEmpty() && tries.size() > 1) {
+                    // Found as given: read with its close variants too where the index also writes the user so
+                    // (eval case 77: the logons' CORP\jsmith beside the endpoint's jsmith, their locks and unlocks
+                    // otherwise missed, so idleness never ended a session).
+                    final List<String> variants = heldVariants(context, automatic, period, deadline);
+                    if (!variants.isEmpty()) {
+                        return new Probed(tries.get(1), element, variants);
+                    }
+                }
+                return new Probed(transforms, element, List.of());
             }
         }
         return null;
+    }
+
+    // The values of an automatic source's user field, other than the one user as given, that are close variants of
+    // it (the domain added or removed, another case), as the index holds them; empty for none.
+    private List<String> heldVariants(final ToolCallContext context,
+                                      final Automatic automatic,
+                                      final Period period,
+                                      final Instant deadline) {
+        final String field = automatic.user().field();
+        final Source source = automatic.source(PersonScope.variantTransforms(), List.of());
+        final ExpressionOperator notAsGiven = ExpressionOperator.builder().op(Op.NOT)
+                .addTerm(ExpressionTerm.builder().field(field).condition(Condition.IN)
+                        .value(String.join(",", automatic.values())).build())
+                .build();
+        try {
+            final List<String> held = TimelineReader.sample(keyStreamsProvider.get(), source, period.timeRange(),
+                            List.of(field), VARIANT_EVENTS, deadline, context.stopped(), notAsGiven).stream()
+                    .map(row -> row.get(field))
+                    .toList();
+            return PersonScope.variants(automatic.values(), held);
+        } catch (final PermissionException e) {
+            return List.of();
+        }
     }
 
     // The values of an automatic source's user field that are close variants of the logon ids (the domain added or
@@ -1355,13 +1398,17 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
 
     // The event codes of each automatic source whose events neither XML nor an element field classify: kept from an
     // earlier run, else asked of the model once and confirmed by the user (a chat's form; over MCP used unconfirmed
-    // and not kept).
+    // and not kept). Where nothing gives any of a source's codes a role (no model to ask, as over a client that
+    // doesn't sample, nor a skill's or the call's typeRoles), the call is refused with the codes, for the calling
+    // model to give their roles: a timeline of codes nothing classified has no focus, idle or window, so its
+    // sessions would be wrong (eval case 77 with no roles: 11 sessions for the plan's 63).
     private Map<Integer, Map<String, CodeRole>> codes(final ToolCall request,
                                                       final ToolCallContext context,
                                                       final List<Source> sources,
                                                       final Read read,
                                                       final Map<Integer, Fields> fields,
-                                                      final Map<String, String> xml) {
+                                                      final Map<String, String> xml,
+                                                      final Map<Integer, Map<String, RoleOverride>> overrides) {
         final Map<Integer, Map<String, CodeRole>> out = new LinkedHashMap<>();
         final Map<Integer, Map<String, Integer>> counts = new LinkedHashMap<>();
         for (final Event event : read.events()) {
@@ -1399,6 +1446,14 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                         EventCodes.keep(keptIn, doc.getUuid(), kept);
                     }
                 });
+            }
+            final Map<String, RoleOverride> given = overrides.getOrDefault(source.getKey(), Map.of());
+            final boolean anyRole = source.getValue().keySet().stream()
+                    .anyMatch(code -> kept.containsKey(code) || given.keySet().stream()
+                            .anyMatch(type -> type.equalsIgnoreCase(code)));
+            if (!anyRole) {
+                throw new WorkspaceException(EventCodes.unclassified(sources.get(source.getKey()).name(),
+                        fields.get(source.getKey()).eventType(), source.getValue(), context.sideCalls()));
             }
             out.put(source.getKey(), kept);
         }
@@ -1594,13 +1649,25 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     private Period period(final ToolCall request, final ToolTimeZone zone, final long now) {
         final String givenFrom = NullSafe.nonBlankStringElse(stringArg(request, TIME_FROM_ARG), DEFAULT_FROM);
         final String givenTo = NullSafe.nonBlankStringElse(stringArg(request, TIME_TO_ARG), DEFAULT_TO);
-        final long from = instant(StroomQlDatePoints.timeInZone(givenFrom, zone, now), now, TIME_FROM_ARG);
-        final long to = instant(StroomQlDatePoints.timeInZone(givenTo, zone, now), now, TIME_TO_ARG);
+        final long from = bound(givenFrom, zone, now, false, TIME_FROM_ARG);
+        final long to = bound(givenTo, zone, now, true, TIME_TO_ARG);
         if (to <= from) {
             throw new WorkspaceException(TIME_TO_ARG + " must be after " + TIME_FROM_ARG + ".");
         }
         return new Period(from, to, new TimeRange(null, Instant.ofEpochMilli(from).toString(),
                 Instant.ofEpochMilli(to).toString()));
+    }
+
+    // A bound of the period: a date alone a whole day in the zone (an end date included), as compare_activity reads
+    // it; else a time, one without an offset in the zone, or a date expression.
+    private static long bound(final String value,
+                              final ToolTimeZone zone,
+                              final long now,
+                              final boolean end,
+                              final String arg) {
+        return CompareActivityTool.dateBound(value, zone, end)
+                .map(Instant::toEpochMilli)
+                .orElseGet(() -> instant(StroomQlDatePoints.timeInZone(value, zone, now), now, arg));
     }
 
     private static long instant(final String value, final long now, final String arg) {
@@ -1612,8 +1679,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         } catch (final RuntimeException e) {
             // Said below.
         }
-        throw new WorkspaceException(arg + " '" + value + "' isn't a time: give ISO 8601 (e.g. 2026-11-10T00:00:00Z) "
-                                     + "or a date expression (e.g. now()-7d).");
+        throw new WorkspaceException(arg + " '" + value + "' isn't a time: give a date (yyyy-MM-dd), ISO 8601 "
+                                     + "(e.g. 2026-11-10T00:00:00Z) or a date expression (e.g. now()-7d).");
     }
 
     private long idleCap(final ToolCall request, final AiWorkspaceConfig config) {
@@ -2111,8 +2178,9 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     // --------------------------------------------------------------------------------
 
 
-    // What a probe found: the transforms the user was found with, and the element field.
-    private record Probed(List<Transform> transforms, String element) {
+    // What a probe found: the transforms the user was found with, the element field, and the close variants of the
+    // user the index also holds, read with them (none where it was read as given, or found only so).
+    private record Probed(List<Transform> transforms, String element, List<String> variants) {
 
     }
 

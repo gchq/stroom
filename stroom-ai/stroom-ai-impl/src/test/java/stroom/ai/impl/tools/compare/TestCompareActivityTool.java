@@ -333,6 +333,20 @@ class TestCompareActivityTool {
     }
 
     @Test
+    void aDateAloneAsAPeriodsBoundIsItsDaysStartOrForAnEndTheNextDaysStart() {
+        final ToolTimeZone zone = new ToolTimeZone(ZONE, ToolTimeZone.Source.GIVEN, null);
+        assertThat(CompareActivityTool.dateBound("2026-06-01", zone, false))
+                .contains(LocalDate.of(2026, 6, 1).atStartOfDay(ZONE).toInstant());
+        assertThat(CompareActivityTool.dateBound(" 2026-06-30 ", zone, true))
+                .contains(LocalDate.of(2026, 7, 1).atStartOfDay(ZONE).toInstant());
+        // Anything else isn't a date alone: a time, a date expression, nothing.
+        assertThat(CompareActivityTool.dateBound("2026-06-01T00:00:00Z", zone, false)).isEmpty();
+        assertThat(CompareActivityTool.dateBound("now()-7d", zone, true)).isEmpty();
+        assertThat(CompareActivityTool.dateBound(null, zone, true)).isEmpty();
+        assertThat(CompareActivityTool.dateBound("2026-6-1", zone, false)).isEmpty();
+    }
+
+    @Test
     void aDateAloneIsAWholeDayInTheTimeZone() {
         final ToolTimeZone zone = new ToolTimeZone(ZONE, ToolTimeZone.Source.GIVEN, null);
         final long now = WINDOW_TO.atStartOfDay(ZONE).toInstant().toEpochMilli();

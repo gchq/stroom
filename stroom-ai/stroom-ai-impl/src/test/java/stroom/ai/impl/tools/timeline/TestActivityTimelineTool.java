@@ -382,6 +382,14 @@ class TestActivityTimelineTool {
         assertThat(text(mcp(), Map.of("entity", "jsmith", "sources", List.of(endpointSource(false)),
                 "timeFrom", "2026-11-10T12:00:00Z", "timeTo", "2026-11-10T00:00:00Z")))
                 .isEqualTo("Error: timeTo must be after timeFrom.");
+        // Dates alone are whole days (as compare_activity reads them): the 10th to the 9th ends before it starts,
+        // where the 10th alone is the whole day.
+        assertThat(text(mcp(), Map.of("entity", "jsmith", "sources", List.of(endpointSource(false)),
+                "timeFrom", "2026-11-10", "timeTo", "2026-11-09")))
+                .isEqualTo("Error: timeTo must be after timeFrom.");
+        assertThat(text(mcp(), Map.of("entity", "jsmith", "sources", List.of(endpointSource(false)),
+                "timeFrom", "2026-11-10", "timeTo", "2026-11-10")))
+                .doesNotContain("timeTo must be after timeFrom", "isn't a time");
     }
 
     // ------------------------------------------------------------------------------------------------

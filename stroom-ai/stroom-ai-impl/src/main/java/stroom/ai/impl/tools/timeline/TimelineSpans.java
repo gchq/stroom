@@ -433,6 +433,7 @@ final class TimelineSpans {
         for (final Event event : actions) {
             byLane.computeIfAbsent(lane(event, options), lane -> new ArrayList<>()).add(event);
         }
+        final Set<Integer> oneApplication = oneApplication(sorted);
         // An idle start (a lock, a logoff) on the lane's host ends its period.
         for (final Event event : sorted) {
             if (event.role() == Role.IDLE_START && event.host() != null && byLane.containsKey(event.host())) {
@@ -454,7 +455,10 @@ final class TimelineSpans {
                     }
                     continue;
                 }
-                final String label = cut(label(event, classified.get(event.id())));
+                final String touched = objectLabel(event.object());
+                final String label = cut(oneApplication.contains(event.source()) && touched != null
+                        ? touched
+                        : label(event, classified.get(event.id())));
                 if (current != null && event.time() - last > options.capMs()) {
                     current.end = last;
                     drafts.add(current);
@@ -485,6 +489,27 @@ final class TimelineSpans {
             }
         }
         return drafts;
+    }
+
+    // The sources whose events all hold one application (two or more of them, ignoring case): their application
+    // field says which source they are (a call's process field naming its source column, eval case 78's 'proxy'),
+    // not what was used, so their activity periods are labelled by what they touched.
+    private static Set<Integer> oneApplication(final List<Event> events) {
+        final Map<Integer, Set<String>> applications = new HashMap<>();
+        final Map<Integer, Integer> counts = new HashMap<>();
+        for (final Event event : events) {
+            counts.merge(event.source(), 1, Integer::sum);
+            applications.computeIfAbsent(event.source(), source -> new HashSet<>()).add(event.process() == null
+                    ? ""
+                    : event.process().strip().toLowerCase(Locale.ROOT));
+        }
+        final Set<Integer> out = new HashSet<>();
+        applications.forEach((source, names) -> {
+            if (counts.get(source) > 1 && names.size() == 1 && !names.contains("")) {
+                out.add(source);
+            }
+        });
+        return out;
     }
 
     /// What an event did, as its type is named: the source's own name for it (its TypeId, e.g. `Focus-Window`)
