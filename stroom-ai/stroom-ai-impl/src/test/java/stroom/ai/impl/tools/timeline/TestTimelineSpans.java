@@ -173,9 +173,13 @@ class TestTimelineSpans {
     void aSessionIdSeveralTypesShareBoundsASpanSplitWhereTheUserIsIdle() {
         // Five sessions, each a checkout, an action and a close sharing a session id; no start or end of their own
         // the schema knows, and no pair matched by it.
-        for (final String[] session : new String[][]{{"09:00", "09:05", "09:20", "701"}, {"10:00", "10:10", "10:15",
-                "702"}, {"13:00", "13:02", "13:25", "703"}, {"14:00", "14:05", "14:10", "704"}, {"15:00", "15:05", "15:10",
-                "705"}}) {
+        final String[][] sessions = {
+                {"09:00", "09:05", "09:20", "701"},
+                {"10:00", "10:10", "10:15", "702"},
+                {"13:00", "13:02", "13:25", "703"},
+                {"14:00", "14:05", "14:10", "704"},
+                {"15:00", "15:05", "15:10", "705"}};
+        for (final String[] session : sessions) {
             typed(session[0], "vault-checkout", Map.of("Data[SessionId]", session[3]), "srv-db-01");
             typed(session[1], "vault-command", Map.of("Data[SessionId]", session[3]), "srv-db-01");
             typed(session[2], "vault-close", Map.of("Data[SessionId]", session[3]), "srv-db-01");
