@@ -164,7 +164,7 @@ offered in modes:
 
 ### Description
 
-Builds one user's (or entity's) activity timeline for a period from any Elastic Index sources, in code. Two levels: detail spans (focus sessions where a source records window focus; pairs from a start to its end, e.g. a process's start and end, the schema's, a skill's, or inferred from the user's own events; activity periods, the actions in neither close in time, by host or source) and activities rolled up from them (what the user was working on). Events without roles are classified from their Events XML (the EventDetail element and Action), else the index's fields; the user and time always come from the index. Each index's user field: userField, the AGENTS doc's ## Fields, a field convention, the index's documentation, else asked. Data-quality flags for missing events. Omit sources to ask the user which (or read all you can use). Its tables draw as timelines with gantt_chart (dashboards group) as they are; the result gives the arguments for the view.
+Builds one user's (or entity's) activity timeline for a period from any Elastic Index sources, in code. Two levels: detail spans (focus sessions where a source records window focus; pairs from a start to its end, e.g. a process's start and end, the schema's, a skill's, or inferred from the user's own events; spans bounded by a key, e.g. a session id; activity periods, the actions in neither close in time, by host or source) and activities rolled up from them (what the user was working on). Events without roles are classified from their Events XML (the EventDetail element and Action), else the index's fields; the user and time always come from the index. Each index's user field: userField, the AGENTS doc's ## Fields, a field convention, the index's documentation, else asked. Data-quality flags for missing events. Omit sources to ask the user which (or read all you can use). Its tables draw as timelines with gantt_chart (dashboards group) as they are; the result gives the arguments for the view.
 
 ### Parameters
 
@@ -195,6 +195,21 @@ Builds one user's (or entity's) activity timeline for a period from any Elastic 
     "lanes" : {
       "description" : "Optional: the lanes: activities by day (default) or activity; detail by host (default) or source.",
       "enum" : [ "day", "activity", "host", "source" ],
+      "type" : "string"
+    },
+    "logonIds" : {
+      "description" : "Optional: more logon ids of the person (forms differ by source: alex.chen, CORP\\achen, adm-achen), read together, each account counted; close variants are offered, never merged.",
+      "items" : {
+        "type" : "string"
+      },
+      "type" : "array"
+    },
+    "person" : {
+      "description" : "Optional: a person id, read in each index by its person field (personField, AGENTS ## Fields 'person:', ECS user.id); an index without one falls back to entity and logonIds. The result says 'by person id' or 'by logon id' per source.",
+      "type" : "string"
+    },
+    "personField" : {
+      "description" : "Optional: the field holding the person id (a skill's), before the other ways.",
       "type" : "string"
     },
     "runAnyway" : {
@@ -662,6 +677,13 @@ Builds one user's (or entity's) activity timeline for a period from any Elastic 
             "required" : [ ],
             "type" : "object"
           },
+          "spanBy" : {
+            "description" : "Optional: keys (an index field, or a key path such as Data[SessionId]) whose values bound spans, from the first to the last event sharing one, e.g. destination.domain (session ids are found).",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
           "text" : {
             "description" : "The field holding free text (a message, an AI chat prompt), for characterise.",
             "type" : "string"
@@ -720,7 +742,7 @@ Builds one user's (or entity's) activity timeline for a period from any Elastic 
       "type" : "string"
     }
   },
-  "required" : [ "entity" ],
+  "required" : [ ],
   "type" : "object"
 }
 
@@ -3575,12 +3597,27 @@ Use for any 'X, then Y, by the same user/host, within N' question, in one data s
       "description" : "The most sequences (default 1000, at most 10000; the stream engine: default 10000, at most 100000, counting all).",
       "type" : "integer"
     },
+    "logonIds" : {
+      "description" : "Optional: the person's logon ids (all kept), for docs with no person field, or alone.",
+      "items" : {
+        "type" : "string"
+      },
+      "type" : "array"
+    },
     "maxspan" : {
       "description" : "How far apart the first and last events may be, e.g. 30s, 2m, 1h (at most 24h); leave it out if the user didn't say, and they are asked.",
       "type" : "string"
     },
     "out" : {
       "description" : "A .md file in /outputs/ for the sequences (default /outputs/eql/eql-<time>.md).",
+      "type" : "string"
+    },
+    "person" : {
+      "description" : "Optional: one person's sequences only: a person id, each step filtered on its doc's person field (personField, AGENTS ## Fields 'person:', ECS user.id), else on its user field by logonIds; the result says which.",
+      "type" : "string"
+    },
+    "personField" : {
+      "description" : "Optional: the field holding the person id (a skill's).",
       "type" : "string"
     },
     "runAnyway" : {
@@ -3793,6 +3830,10 @@ Use for any 'X, then Y, by the same user/host, within N' question, in one data s
       },
       "required" : [ "index", "by" ],
       "type" : "object"
+    },
+    "userField" : {
+      "description" : "Optional: the field holding the logon id (a skill's).",
+      "type" : "string"
     }
   },
   "required" : [ "steps" ],
