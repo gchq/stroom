@@ -742,7 +742,7 @@ public class ProposeSkillTool extends AbstractWorkspaceTool {
         if (existing.isPresent()) {
             return existingTarget(existing.get());
         }
-        return new Target(null, folder, SkillDoc.parse(""), "folder '" + folderPath(folder) + "'", "");
+        return new Target(null, folder, SkillDoc.parse(""), "folder '" + documentAccess.folderPath(folder) + "'", "");
     }
 
     private Target existingTarget(final DocRef doc) {
@@ -754,18 +754,6 @@ public class ProposeSkillTool extends AbstractWorkspaceTool {
                                                                          + "' in folder '"
                                                                          + documentAccess.path(named) + "'",
                 NullSafe.string(read.getData()));
-    }
-
-    // A folder's own path: the folders above it (a document's path), then its name.
-    private String folderPath(final DocRef folder) {
-        if (ExplorerConstants.SYSTEM_DOC_REF.equals(folder)) {
-            return "/";
-        }
-        final String above = documentAccess.path(folder);
-        final String name = documentAccess.node(folder).map(ExplorerNode::getName).orElse(folder.getName());
-        return (above.endsWith("/")
-                ? above
-                : above + "/") + NullSafe.string(name);
     }
 
     private Optional<DocRef> skillsDocIn(final DocRef folder) {

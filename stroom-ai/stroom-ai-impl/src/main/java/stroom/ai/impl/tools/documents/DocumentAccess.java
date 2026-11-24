@@ -311,6 +311,21 @@ public class DocumentAccess {
         }
     }
 
+    /// A folder's own path, where [#path] gives the folder holding it: the folders above it, then its name.
+    ///
+    /// @param folder A folder the user can view, or the root.
+    /// @return Its path in the Explorer tree, e.g. `/Security/Lookups`, or `/` for the root.
+    public String folderPath(final DocRef folder) {
+        if (ExplorerConstants.SYSTEM_DOC_REF.equals(folder)) {
+            return "/";
+        }
+        final String above = path(folder);
+        final String name = node(folder).map(ExplorerNode::getName).orElse(folder.getName());
+        return (above.endsWith("/")
+                ? above
+                : above + "/") + NullSafe.string(name);
+    }
+
     /// [#node] for a caller that must tell a failed lookup from a document with no node.
     ///
     /// @param docRef A document.

@@ -104,6 +104,7 @@ class TestProposeSkillTool {
         // A document's path is its folder's: the folders above it.
         Mockito.when(documentAccess.path(FOLDER)).thenReturn("/");
         Mockito.when(documentAccess.path(SKILLS)).thenReturn("/Hunts");
+        Mockito.when(documentAccess.folderPath(Mockito.any())).thenCallRealMethod();
         Mockito.when(documentAccess.children(FOLDER)).thenReturn(List.of());
         Mockito.when(documentAccess.parent(SKILLS)).thenReturn(Optional.of(FOLDER));
         Mockito.when(facts.forSkill(Mockito.any(), Mockito.any(), Mockito.anyBoolean()))

@@ -66,7 +66,11 @@ class TestProposeInstructionsTool {
         Mockito.when(workspace.withTimeLimit(Mockito.any(Duration.class), Mockito.any()))
                 .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(1)).get());
         Mockito.when(documentAccess.findFolder("/Feeds/Acme")).thenReturn(Optional.of(FOLDER));
-        Mockito.when(documentAccess.path(FOLDER)).thenReturn("/Feeds/Acme");
+        // A document's path is the folder holding it: a folder's own is that, then its name.
+        Mockito.when(documentAccess.path(FOLDER)).thenReturn("/Feeds");
+        Mockito.when(documentAccess.node(FOLDER)).thenReturn(Optional.of(ExplorerNode.builder().docRef(FOLDER)
+                .name("Acme").build()));
+        Mockito.when(documentAccess.folderPath(FOLDER)).thenCallRealMethod();
         Mockito.when(documentAccess.children(FOLDER)).thenReturn(List.of());
         tool = new ProposeInstructionsTool(workspace, documentAccess);
     }

@@ -184,7 +184,7 @@ public class ProposeInstructionsTool extends AbstractWorkspaceTool {
                                  && AgentInstructions.DOC_NAME.equals(child.getName()))
                 .findFirst()
                 .orElse(null);
-        final String where = "folder '" + documentAccess.path(folder) + "'";
+        final String where = "folder '" + documentAccess.folderPath(folder) + "'";
         final String base;
         if (existing == null) {
             if (!hasMarkdown) {
