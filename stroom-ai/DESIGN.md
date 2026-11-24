@@ -1706,7 +1706,7 @@ The same features find an insider and a compromised account, so findings keep bo
   score on fewer than about five baseline windows. The model gets at most about 20 ranked findings and a line a
   month; the daily profile and monthly rollup are workspace files (charts by the CSV Data Connection route), kept
   for re-runs, which add only new days. Drill-down is `activity_timeline` on the flagged days only.
-* **Peers**: by role and team from reference data (never by anything else), the group's daily median; findings
+* **Peers**: by the decorated `Organisation` (below; never by anything else), the group's daily median; findings
   where one person parts from it. Groups capped, asked past the cap. Population-scale learned baselines stay with
   ML products; their scores could come in as one more signal.
 * **Sequences of acts** (`sequence_query`): sensitive files, then an archive, then an upload to a personal domain
@@ -1718,14 +1718,13 @@ The same features find an insider and a compromised account, so findings keep bo
   endpoint to proxy to cloud.
 * **Categories**: personal cloud, webmail, job sites, anonymisers, archive and encryption tools, remote access: a
   category field the source has first; else the model classifies the distinct values once (cached, correctable,
-  marked inferred, as activity characterisation does), the site's own list in reference data overriding both.
+  marked inferred, as activity characterisation does), the site's own list in the AGENTS doc or skill overriding both.
 * **Access graph**: people and the resources they touch, clustered (Leiden, as for charts and characterisation):
   access outside one's cluster, or a resource reached from a new cluster; also peer groups learned from access.
-* **Location**: impossible travel and new countries from sign-in, VPN and cloud locations with the GeoLite2
-  reference data; activity abroad while on leave.
+* **Location**: impossible travel and new countries from sign-in, VPN and cloud locations from the index's geo fields (none: not available for that index); activity abroad while on leave.
 
-**Context, from reference data** (user, 2026-11-24: the site's reference environment already resolves a person's
-identities, and holds it as Stroom reference data)
+**Context** (user, 2026-11-24: the site's reference environment resolves a person's identities, and processing
+decorates events with the result)
 
 * **The person id is an index field** (user, 2026-11-24): processing decorates each event with it, and it is
   indexed, so the tools work per person by filtering and aggregating on it in the index, with no expansion to
@@ -1751,15 +1750,12 @@ identities, and holds it as Stroom reference data)
   people active in the window, from the index (one aggregate by the person or user field); then one event of each
   read back (`fetch_events`, its XML) for its `Organisation`, capped (about 200 people, asked past it), the map of
   person to organisation kept in the workspace and reused. The group's features are then aggregated in the index
-  for those people (`IN` their ids), and each day's median taken in code. Where a site has the membership in
-  reference data, its map (named in the skill or AGENTS doc) replaces the sampling. A skill or AGENTS doc may name
+  for those people (`IN` their ids), and each day's median taken in code. A skill or AGENTS doc may name
   another `UserDetails` element (`Unit`, `Group`, `Role`) for finer groups; `Nationality` and like elements are
   never a peer group or a feature.
-* **The rest of the context from reference data**: what isn't on events (start and leaving dates, leave, approved
-  exceptions, sensitive assets, a team's members where not decorated). Gap: the agent can list reference data maps
-  (`find_reference_data`) but not read a value by key; a read-only lookup by map, keys and effective time (Stroom's
-  `ReferenceDataService.lookup`, its View Data and loader Use checks), several keys a call, never a map's whole
-  contents, the maps named in the skill or AGENTS doc. Small, as it no longer resolves identities.
+* **No reference data lookup** (user, 2026-11-24): context not on events (a leaving date, leave, approved
+  exceptions, sensitive assets) comes from the question, the skill's parameters or the AGENTS doc; leave not given is
+  found as long quiet runs, reported, not scored.
 * Change points are read against these dates ("breadth up threefold from 12 April, 41 days before the leaving
   date").
 
@@ -1795,11 +1791,11 @@ rules](#skills-run-by-analytic-rules-future-2026-11-24)).
 * Aggregates and findings first; events fetched only for flagged windows.
 * Findings are worded as indicators with evidence and an alternative explanation; the model never states intent or
   guilt (the guide and `check_skill`).
-* No profiling by protected characteristics; peers by role from reference data only.
+* No profiling by protected characteristics; peers by the decorated organisation only.
 * The chat, its calls and files, the ledger and the case are the record of what was looked at and why.
 * No tool acts against an account or a person.
 * Not built: sentiment or "disgruntlement" analysis of communications (intrusive, often unlawful without grounds,
-  unreliable); a grievance comes in as an HR date in reference data. Pseudonymised views (reveal with a reason,
+  unreliable); a grievance comes in as a date the analyst gives. Pseudonymised views (reveal with a reason,
   audited) are recommended but a core Stroom feature, for the Stroom developers.
 * Findings may carry tags from a published insider-risk framework (CERT's indicators, MITRE's insider threat work),
   as text in the skill.
@@ -1815,7 +1811,7 @@ CERT insider threat datasets are an external benchmark to add after checking the
 threat-hunting evals are.
 
 **Proposed order**: the Network object fix and the empty-window hint; the dataset generator; wider correlation keys,
-spans bounded by a key, activities for pairs; the reference data lookup; `compare_activity` and its template skills;
+spans bounded by a key, activities for pairs; `compare_activity` and its template skills;
 categories; the access graph; location. Parked: the findings ledger, risk score, exceptions and annotation cases.
 
 ### Stop and Elasticsearch errors (built 2026-11-16)
