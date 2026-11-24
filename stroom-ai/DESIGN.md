@@ -1781,9 +1781,14 @@ decorates events with the result)
   * **Forms differ by source** (`alex.chen`, `CORP\achen`, `alex.chen@corp.example`): matched counts per source;
     for a source with none, close variants found in its index (domain added or removed, case) are offered, merged
     only on the user's confirmation.
-  * **Renames and new accounts** split a history: flagged as an account stopping where a similar one starts, not
-    joined.
-  * **Shared accounts** (several hosts or `Organisation` values at once) are flagged; their baselines mean less.
+  * **Account flags parked** (user, 2026-11-24): renames, new accounts, shared accounts and linked secondary
+    accounts (e.g. `john.smith_a`) are not flagged. The tools count on logon ids being normalised and person ids
+    being stable. Discussed for later: names only find candidates (token containment, the site's own naming
+    patterns in an AGENTS `## Accounts` section; never fuzziness alone, as `john.smith1` may be another person),
+    behaviour confirms (logons chained from the person's host, the person's personal hosts, the same
+    `Organisation`; against: personal hosts of its own, another `Organisation`), renames also need a hand-over
+    (one stops, the other starts, never active together), shared accounts need concurrent use on other people's
+    personal hosts; always offered, never merged without confirmation; near-name decoys in the generator.
   * **Peers** by logon id, each counted once, the accounts named for the person under review left out.
 * **Peers by `EventSource/User/UserDetails/Organisation`** (user, 2026-11-24), which processing decorates in the
   Event XML only, not the index, so it can't be grouped by in an aggregate. Peers are found in two steps: the
@@ -1863,8 +1868,8 @@ order, the timeline package first, then the comparison package; the record per p
   field. `activity_timeline`, `sequence_query` and `compare_activity` take `person`, `logonIds` and `personField`
   (and `userField`); each source or doc says "by person id" or "by logon id", by logon id with the accounts counted
   and "other accounts aren't included unless named". Close variants of logon ids (domain added or removed, case)
-  are offered by `activity_timeline` only, never merged. Renames, new accounts and shared accounts aren't flagged
-  yet.
+  are offered by `activity_timeline` only, never merged. Account flags (renames, new, shared, linked secondary
+  accounts) are parked: logon ids are taken as normalised and person ids as stable.
 * **The timeline additions** (part 2c's "Added for insider risk"): a Network event's object is its destination;
   the empty window's hint (`none_in_period`: each source's first and last events); wider correlation keys (every
   leaf, `Data[...]` by name, index fields); spans bounded by a key, automatic only for session-like keys, others by
@@ -1934,7 +1939,7 @@ order, the timeline package first, then the comparison package; the record per p
 * **Not built**: the record per person (parked, below); a `check_skill` rule against stating intent or guilt (the
   tool's wording and the templates only, so far); the tools' own tool policy (the safeguard above); charts of
   `compare_activity`'s CSVs through `propose_timeline_dashboard` (it takes the timeline's tables only); speed from
-  numeric latitude and longitude on non-Elastic indexes; flags for renamed, new and shared accounts.
+  numeric latitude and longitude on non-Elastic indexes; flags for renamed, new, shared and linked secondary accounts (parked).
   Characterisation quality on the generated data is poor (clusters such as "Chrome"), the existing behaviour; cloud
   sign-ins have no logoff, so their starts are unpaired.
 
@@ -6141,6 +6146,7 @@ behaviour; the settled ones are listed here with the section that records them.
 | Skills run by analytic rules (per detection or scheduled; typed parameters, declared output) | Future (2026-11-24) | See [Skills run by analytic rules](#skills-run-by-analytic-rules-future-2026-11-24). |
 | Insider risk: comparison across windows | Built (2026-11-24) | `compare_activity`; reference data context dropped (the question, skill or AGENTS doc give it). See [Insider risk](#insider-risk-patterns-anomalies-and-a-record-per-person-built-2026-11-24), "As built". |
 | Insider risk: the record per person (findings ledger, risk score, exceptions and verdicts, annotation cases) | Parked (2026-11-24) | Still parked after the comparison was built. See [Insider risk](#insider-risk-patterns-anomalies-and-a-record-per-person-built-2026-11-24), "The record per person". |
+| Insider risk: account flags (renames, new, shared, linked secondary accounts such as `john.smith_a`) | Parked (2026-11-24) | Logon ids taken as normalised, person ids as stable. Design notes in [Insider risk](#insider-risk-patterns-anomalies-and-a-record-per-person-built-2026-11-24), "Fallback: a logon id". |
 | Insider risk: a `check_skill` rule against stating intent or guilt | Open (2026-11-24) | The safeguard names the guide and `check_skill`; only the tool's wording and the skill templates say it so far. |
 | Insider risk: a tool policy of its own for these tools | Open (2026-11-24) | The safeguard: granted to the insider risk team. Today the general tool policies decide who may run `compare_activity` and the timelines. |
 | `compare_activity`'s CSVs to a dashboard | Open (2026-11-24) | `propose_timeline_dashboard` takes the timeline's tables only; charting `profile.csv`, `monthly.csv` and `findings.csv` needs it extended. |
