@@ -1832,9 +1832,21 @@ to delete them by hand.~~
     nothing about a pipeline with nothing to save (`PipelineEditor` `SaveAllWithNothingChanged`).
     **Open:** what is typed during a Save As is still lost, as the tabs also need the new document's
     reference.
-    **Open:** saving again before the first save's reply sends the old version, which the server should
-    refuse (`StoreImpl.update`); older too, and not tried. An asset's text
-    typed during a save is still lost, as the assets are fetched again once it is saved.
+    **Fixed** (24 November 2026; older): saving again before the first save's reply sent the version it
+    replaces, which the server refuses ("has been modified by another user", `DBPersistence.write`). It
+    now waits for the first, and is sent then if there is more to save (`SaveQueue`; every document
+    editor, statistics data sources and Data Receipt Rules). Likewise a save tried again once its assets
+    or a floor map's facts couldn't be saved, which the message asks for: the document is now the one
+    saved (`PostSave`, `DocumentEditorHost.setSaved`). A statistics data source that couldn't be saved,
+    or fetched to be, said nothing, and now does. `PipelineEditor` `SaveAgainWhileSaving`,
+    `DataReceiptRulesScreen` `SaveAgainWhileSaving`, `TestSaveQueue`, `TestDocumentPlugin`,
+    `TestStatisticsPlugin`. From its code review (24 November 2026): code edited while stepping waits
+    too, as does a Save As (a save's late reply showed the original again in the copy's tab); a waiting
+    save is dropped once its tab is closed; a fault during a save lets it be saved again; a Save As that
+    couldn't be loaded says so; and a Data Connection's workbook, stored by a save during which something
+    was typed, isn't uploaded again by the next (`DataConnectionEditor` `ExcelSavedWhileTyping`).
+    **Open:** an asset's text typed during a save is still lost, as the assets are fetched again once it
+    is saved.
 * ~~`XPathFilterEditor` sets Equals as the default condition, but new filters use Exists; harmless, as
   the controller overwrites it.~~ **Fixed** (23 November 2026): it starts with
   `XPathFilter.DEFAULT_MATCH_TYPE` (Exists), with the value fields hidden to match, and decides

@@ -632,12 +632,13 @@ public class FloorMapEditorTabController
     /// - **Failure** (server-side error or HTTP error): the buffer is
     ///   *kept* so the user can retry, a top-level alert is shown, and
     ///   panels are not reloaded over in-progress edits. The `callback`
-    ///   is *not* invoked, so the save chain stops here.
+    ///   is *not* invoked, so the save chain stops here; `failed` is.
     ///
     /// @param document the saved document; passed through to the callback on
     ///         success
     /// @param callback invoked with the document only when the flush succeeds
-    public void onSave(final FloorMapDoc document, final Consumer<FloorMapDoc> callback) {
+    /// @param failed   run instead if it fails, once the user has been told
+    public void onSave(final FloorMapDoc document, final Consumer<FloorMapDoc> callback, final Runnable failed) {
         if (!model.hasPendingChanges()) {
             callback.accept(document);
             return;
@@ -651,15 +652,18 @@ public class FloorMapEditorTabController
         restFactory.create(SQL_TEMPORAL_STORE_RESOURCE)
                 .method(res -> res.applyChanges(buildApplyChangesRequest()))
                 .onSuccess(result -> {
-                    if (result.isSuccess()) {
+                    if (result != null && result.isSuccess()) {
                         // Only discard the staged changes once the server has
                         // confirmed they were applied — and only the ones sent.
                         model.getPendingChanges().clearSent(sentCount);
                         // Reload all panels so they reflect the newly-persisted data
-                        reloadAllPanels();
-                        callback.accept(document);
+                        try {
+                            reloadAllPanels();
+                        } finally {
+                            callback.accept(document);
+                        }
                     } else {
-                        onFlushError(result);
+                        onFlushError(result, failed);
                     }
                 })
                 .onFailure(error -> {
@@ -672,7 +676,7 @@ public class FloorMapEditorTabController
                     AlertEvent.fireError(this,
                             "Error saving floor map editor changes — your changes "
                             + "have been kept, please try saving again: "
-                            + error.getMessage(), null);
+                            + error.getMessage(), failed::run);
                 })
                 .owner(this)
                 .taskMonitorFactory(taskMonitor())
@@ -2131,16 +2135,16 @@ public class FloorMapEditorTabController
     /// would overwrite the user's in-progress edits with server state and lose their work.
     ///
     /// @param result the failed [ApplyChangesResult]
-    private void onFlushError(final ApplyChangesResult result) {
+    private void onFlushError(final ApplyChangesResult result, final Runnable failed) {
         // The server reported the changes were NOT applied, so keep them staged
         // for a retry rather than clearing the user's work and reloading over
         // it (replay is idempotent — upserts + deletions).
-        final String message = result.getErrorMessage() != null
+        final String message = result != null && result.getErrorMessage() != null
                 ? result.getErrorMessage()
                 : "Unknown error";
         AlertEvent.fireError(this,
                 "Error saving floor map editor changes — your changes have been "
-                + "kept, please try saving again: " + message, null);
+                + "kept, please try saving again: " + message, failed::run);
     }
 
     /// Reloads all panels by re-reading from the server using the current time.

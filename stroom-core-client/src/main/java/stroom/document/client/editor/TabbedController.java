@@ -132,21 +132,34 @@ public abstract class TabbedController<D> extends Controller implements RefusesI
     /// be written over what was saved. The tabs that only show what is read are read into, and those
     /// that keep it ([HasSavedDocument]) are told.
     ///
-    /// @param docRef The reference of what was saved.
-    /// @param saved  What was saved.
-    protected final void keepChanges(final DocRef docRef, final D saved) {
-        this.docRef = docRef;
-        this.document = Objects.requireNonNull(saved, "saved");
-        view.setAccessibleName(tabsName(docRef));
+    /// @param docRef  The reference of what was saved.
+    /// @param written What was written to be saved.
+    /// @param saved   What was saved.
+    protected final void keepChanges(final DocRef docRef, final D written, final D saved) {
+        setSaved(docRef, written, saved);
         for (final Tab<?> tab : allTabs) {
             if (tab.writer == null) {
                 tab.read(docRef, saved);
-            } else {
-                tab.setSavedDocument(saved);
             }
         }
         onKeepChanges(docRef, saved);
         afterKeepChanges();
+    }
+
+    /// Takes what was saved as what is shown, to be written over, reading it into no tab.
+    ///
+    /// @param docRef  The reference of what was saved.
+    /// @param written What was written to be saved.
+    /// @param saved   What was saved.
+    protected final void setSaved(final DocRef docRef, final D written, final D saved) {
+        this.docRef = docRef;
+        this.document = Objects.requireNonNull(saved, "saved");
+        view.setAccessibleName(tabsName(docRef));
+        for (final Tab<?> tab : allTabs) {
+            if (tab.writer != null) {
+                tab.setSavedDocument(written, saved);
+            }
+        }
     }
 
     /// @return What is shown, as the tabs show it (e.g. to save it), or null before it is read.
@@ -583,9 +596,9 @@ public abstract class TabbedController<D> extends Controller implements RefusesI
         }
 
         @SuppressWarnings("unchecked") // Content keeps the type of document it reads
-        private void setSavedDocument(final D saved) {
+        private void setSavedDocument(final D written, final D saved) {
             if (content instanceof final HasSavedDocument<?> hasSavedDocument) {
-                ((HasSavedDocument<D>) hasSavedDocument).setSavedDocument(saved);
+                ((HasSavedDocument<D>) hasSavedDocument).setSavedDocument(written, saved);
             }
         }
 

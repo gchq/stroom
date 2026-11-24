@@ -23,6 +23,8 @@ import stroom.dispatch.client.RestFactory.MethodExecutor;
 import stroom.docref.DocRef;
 import stroom.document.client.editor.DocumentEditor;
 import stroom.document.client.editor.DocumentEditorHost;
+import stroom.document.client.editor.PostSave;
+import stroom.document.client.editor.SaveQueue;
 import stroom.document.client.event.SaveDocumentEvent;
 import stroom.event.client.StaticEventBus;
 import stroom.gwt.workbench.client.app.gin.editors.EditorsScreenGinjector;
@@ -46,7 +48,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Map;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -200,8 +201,18 @@ public final class DocEditors {
             }
 
             @Override
-            public void readSaved(final DocRef docRef, final D saved, final boolean changed) {
-                host.readSaved(docRef, saved, changed);
+            public void readSaved(final DocRef docRef, final D written, final D saved, final boolean changed) {
+                host.readSaved(docRef, written, saved, changed);
+            }
+
+            @Override
+            public void setSaved(final DocRef docRef, final D written, final D saved) {
+                host.setSaved(docRef, written, saved);
+            }
+
+            @Override
+            public SaveQueue getSaveQueue() {
+                return host.getSaveQueue();
             }
 
             @Override
@@ -220,7 +231,7 @@ public final class DocEditors {
             }
 
             @Override
-            public BiConsumer<D, Consumer<D>> getPostSaveCallback() {
+            public PostSave<D> getPostSaveCallback() {
                 return host.getPostSaveCallback();
             }
         }, resource);
@@ -256,8 +267,19 @@ public final class DocEditors {
             }
 
             @Override
-            public void readSaved(final DocRef docRef, final D saved, final boolean changed) {
+            public void readSaved(final DocRef docRef, final D written, final D saved, final boolean changed) {
                 tab.read(docRef, saved);
+            }
+
+            @Override
+            public void setSaved(final DocRef docRef, final D written, final D saved) {
+                // A tab on its own has no Save
+            }
+
+            @Override
+            public SaveQueue getSaveQueue() {
+                // A tab on its own has no Save
+                return new SaveQueue();
             }
 
             @Override
@@ -276,7 +298,7 @@ public final class DocEditors {
             }
 
             @Override
-            public BiConsumer<D, Consumer<D>> getPostSaveCallback() {
+            public PostSave<D> getPostSaveCallback() {
                 // A tab on its own has no Save
                 return null;
             }
@@ -353,26 +375,36 @@ public final class DocEditors {
                                  final TaskMonitorFactory taskMonitorFactory) {
         if (editor.isDirty()) {
             final D document = editor.write(editor.getEntity());
-            if (document != null) {
-                final BiConsumer<D, Consumer<D>> postSaveCallback = editor.getPostSaveCallback();
+            final SaveQueue saveQueue = editor.getSaveQueue();
+            if (document != null
+                && saveQueue.start(() -> save(harness, docRef, editor, resource, taskMonitorFactory), () -> {
+                })) {
+                final PostSave<D> postSave = editor.getPostSaveCallback();
                 resource.update(harness.getRestFactory(), document)
                         .onSuccess(saved -> {
                             // What is typed while the document is being saved is kept
                             final boolean changed = editor.hasChangedSince(document);
                             final D writtenSince = editor.write(editor.getEntity());
-                            final Consumer<D> afterSave = doc -> editor.readSaved(docRef, doc,
-                                    changed || editor.hasChangedSince(writtenSince));
+                            final Consumer<D> afterSave = doc -> saveQueue.succeeded(() ->
+                                    editor.readSaved(docRef, document, doc,
+                                            changed || editor.hasChangedSince(writtenSince)));
                             // As the plugins with a post save callback (VisualisationPlugin) do
-                            if (postSaveCallback != null) {
-                                postSaveCallback.accept(saved, afterSave);
+                            if (postSave != null) {
+                                postSave.run(saved, afterSave, () -> {
+                                    editor.setSaved(docRef, document, saved);
+                                    saveQueue.failed();
+                                });
                             } else {
                                 afterSave.accept(saved);
                             }
                         })
-                        .onFailure(error -> AlertEvent.fireError(harness.getHasHandlers(),
-                                "Unable to save document " + docRef,
-                                error.getMessage(),
-                                null))
+                        .onFailure(error -> {
+                            AlertEvent.fireError(harness.getHasHandlers(),
+                                    "Unable to save document " + docRef,
+                                    error.getMessage(),
+                                    null);
+                            saveQueue.failed();
+                        })
                         .taskMonitorFactory(taskMonitorFactory)
                         .exec();
             }
@@ -499,9 +531,20 @@ public final class DocEditors {
         /// Takes the document saved as the one being edited.
         ///
         /// @param docRef  The document's reference.
+        /// @param written The document, as it was written to be saved.
         /// @param saved   The document, as saved.
         /// @param changed Whether the editor was changed while it was being saved.
-        void readSaved(DocRef docRef, D saved, boolean changed);
+        void readSaved(DocRef docRef, D written, D saved, boolean changed);
+
+        /// Takes the document saved as the one being edited, when what goes with it couldn't be saved.
+        ///
+        /// @param docRef  The document's reference.
+        /// @param written The document, as it was written to be saved.
+        /// @param saved   The document, as saved.
+        void setSaved(DocRef docRef, D written, D saved);
+
+        /// @return What makes the document's saves wait for each other.
+        SaveQueue getSaveQueue();
 
         D write(D document);
 
@@ -509,6 +552,6 @@ public final class DocEditors {
 
         D getEntity();
 
-        BiConsumer<D, Consumer<D>> getPostSaveCallback();
+        PostSave<D> getPostSaveCallback();
     }
 }

@@ -150,7 +150,7 @@ public class ElasticClusterSettingsController extends Controller implements HasS
     }
 
     @Override
-    public void setSavedDocument(final ElasticClusterDoc saved) {
+    public void setSavedDocument(final ElasticClusterDoc written, final ElasticClusterDoc saved) {
         this.cluster = saved;
     }
 

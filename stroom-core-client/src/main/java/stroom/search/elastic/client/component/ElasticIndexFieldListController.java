@@ -186,7 +186,7 @@ public class ElasticIndexFieldListController extends Controller implements HasSa
     }
 
     @Override
-    public void setSavedDocument(final ElasticIndexDoc saved) {
+    public void setSavedDocument(final ElasticIndexDoc written, final ElasticIndexDoc saved) {
         this.document = saved;
     }
 

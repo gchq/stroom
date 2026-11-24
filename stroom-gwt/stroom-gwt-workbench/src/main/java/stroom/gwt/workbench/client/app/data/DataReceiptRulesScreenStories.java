@@ -184,6 +184,25 @@ public final class DataReceiptRulesScreenStories {
                     play.waitFor(() -> play.expect(save).toHaveAttribute("aria-disabled", "true"));
                     expectNoProblems(play);
                 })
+                // Saving again before the first save has finished waits for it, then saves the newer rule over
+                // the version saved
+                .story("SaveAgainWhileSaving", context -> render(context, SLOW_SAVE_FIXTURES, false, false, false))
+                .withPlay(play -> {
+                    play.findByText("Reject test feeds");
+                    addRule(play, "Sent rule");
+                    final Query save = play.getByRole("button", SAVE);
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    play.click(save);
+                    addRule(play, NEWER_RULE);
+                    play.click(save);
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.put(RULES_PATH).withBodyContaining(NEWER_RULE).toSpyMatcher());
+                    play.waitFor(SLOW_SAVE_MILLIS + 1000, () -> play.expect(play.spy(ScreenHarness.REQUEST_SPY))
+                            .toHaveBeenCalledWith(RequestMatcher.put(RULES_PATH)
+                                    .withBodyContaining(NEWER_RULE).toSpyMatcher()));
+                    play.waitFor(() -> play.expect(save).toHaveAttribute("aria-disabled", "true"));
+                    expectNoProblems(play);
+                })
                 // Saving another document (with changes) leaves the rules alone: they were once saved
                 // whenever any dirty document was
                 .story("SavingAnotherDocument", context -> render(context, false))

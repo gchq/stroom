@@ -172,7 +172,7 @@ public class FloorMapSettingsController extends Controller implements HasSavedDo
     }
 
     @Override
-    public void setSavedDocument(final FloorMapDoc saved) {
+    public void setSavedDocument(final FloorMapDoc written, final FloorMapDoc saved) {
         this.doc = saved;
     }
 

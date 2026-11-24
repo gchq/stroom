@@ -96,6 +96,7 @@ class TestDocumentAssetsTabController {
         // The tab was never shown, so it was never given the document. Before, Save As read the
         // document from the tab, and failed with nothing to copy from
         controller.onSaveAs(source, copy, saved -> {
+        }, () -> {
         });
 
         assertThat(requests).hasSize(1);

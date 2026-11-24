@@ -282,7 +282,7 @@ public final class DashboardSupport {
                 harness.getRestFactory()
                         .create(resource)
                         .method(res -> res.update(document.getUuid(), document))
-                        .onSuccess(saved -> controller.readSaved(docRef, saved,
+                        .onSuccess(saved -> controller.readSaved(docRef, document, saved,
                                 controller.hasChangedSince(document)))
                         .onFailure(error -> AlertEvent.fireError(harness.getHasHandlers(),
                                 "Unable to save document " + docRef,

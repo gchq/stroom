@@ -25,6 +25,7 @@ public interface HasSavedDocument<D> {
 
     /// Takes the document saved in place of the one read, leaving what is shown as it is.
     ///
-    /// @param saved The document, as saved.
-    void setSavedDocument(D saved);
+    /// @param written The document, as it was written to be saved.
+    /// @param saved   The document, as saved.
+    void setSavedDocument(D written, D saved);
 }

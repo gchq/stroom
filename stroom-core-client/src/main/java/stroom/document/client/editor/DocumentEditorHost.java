@@ -42,7 +42,6 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /// Opens a [DocumentEditor], or another [TabbedController] such as a folder's tabs, as a tab of
@@ -76,6 +75,7 @@ public class DocumentEditorHost<D>
     private DocRef docRef;
     private D document;
     private boolean dirty;
+    private final SaveQueue saveQueue = new SaveQueue();
     private String lastLabel;
 
     /// @param eventBus The application's event bus.
@@ -141,10 +141,11 @@ public class DocumentEditorHost<D>
     /// saved.
     ///
     /// @param docRef  The document's reference.
+    /// @param written The document, as it was written to be saved.
     /// @param saved   The document, as saved.
     /// @param changed Whether the editor was changed while it was being saved
     ///                ([#hasChangedSince(Object)]).
-    public final void readSaved(final DocRef docRef, final D saved, final boolean changed) {
+    public final void readSaved(final DocRef docRef, final D written, final D saved, final boolean changed) {
         if (!changed) {
             read(docRef, saved);
             if (editor instanceof final DocumentEditor<D> documentEditor) {
@@ -154,13 +155,34 @@ public class DocumentEditorHost<D>
             this.document = saved;
             documentContext.set(docRef);
             this.docRef = docRef;
-            editor.keepChanges(docRef, saved);
+            editor.keepChanges(docRef, written, saved);
             if (!(editor instanceof DocumentEditor<D>)) {
                 onChange();
             }
             // The name may have changed
             refreshTabIfLabelChanged();
         }
+    }
+
+    /// Takes the document saved as the one being edited, leaving the editor and whether it is dirty as
+    /// they are, as what goes with it (e.g. its assets) couldn't be saved. Saving again then sends the
+    /// version saved, which the server expects.
+    ///
+    /// @param docRef  The document's reference.
+    /// @param written The document, as it was written to be saved.
+    /// @param saved   The document, as saved.
+    public final void setSaved(final DocRef docRef, final D written, final D saved) {
+        this.document = saved;
+        documentContext.set(docRef);
+        this.docRef = docRef;
+        editor.setSaved(docRef, written, saved);
+        // The name may have changed
+        refreshTabIfLabelChanged();
+    }
+
+    /// @return What makes the document's saves wait for each other.
+    public SaveQueue getSaveQueue() {
+        return saveQueue;
     }
 
     /// Writes what the editor shows into a document, which for Save As is the new one.
@@ -268,7 +290,7 @@ public class DocumentEditorHost<D>
 
     /// @return What to run once the document is saved, before it is read again (see
     /// [DocumentEditor#getPostSaveCallback()]), or null.
-    public BiConsumer<D, Consumer<D>> getPostSaveCallback() {
+    public PostSave<D> getPostSaveCallback() {
         return editor instanceof final DocumentEditor<D> documentEditor
                 ? documentEditor.getPostSaveCallback()
                 : null;
@@ -276,7 +298,7 @@ public class DocumentEditorHost<D>
 
     /// @return What to run once a copy of the document is saved (see
     /// [DocumentEditor#getPostSaveAsCallback()]), or null.
-    public BiConsumer<D, Consumer<D>> getPostSaveAsCallback() {
+    public PostSave<D> getPostSaveAsCallback() {
         return editor instanceof final DocumentEditor<D> documentEditor
                 ? documentEditor.getPostSaveAsCallback()
                 : null;

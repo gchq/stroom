@@ -280,6 +280,17 @@ public final class PipelineEditorStories {
                             .post("/stepping/v1/findElementDoc", RestReply.json(
                                     "{\"type\": \"XSLT\", \"uuid\": \"x1\", \"name\": \"My XSLT\"}")),
                     XSLT_PATH, XSLT));
+    // A save that takes a while and gives the pipeline a new version, as the server does
+    private static final int SLOW_SAVE_MILLIS = 3000;
+    private static final String SAVED_VERSION = "v2";
+    private static final RestFixtures SLOW_SAVE_FIXTURES = RestFixtures.builder()
+            .put("/pipeline/v1/" + UUID, request -> RestReply.json(
+                            request.getBody().replace("\"v1\"", "\"" + SAVED_VERSION + "\""))
+                    .delayed(request.getBody().contains("\"v1\"")
+                            ? SLOW_SAVE_MILLIS
+                            : 0))
+            .addAll(MULTI_SAVE_FIXTURES)
+            .build();
     private static final RestFixtures INHERIT_FIXTURES = fixtures(INHERIT_DOC, NO_ROWS, NO_ROWS,
             RestFixtures.builder()
                     .route(RequestMatcher.post(LAYERS_PATH).withJsonBodyContaining("{\"uuid\": \"parent2\"}"),
@@ -1055,6 +1066,39 @@ public final class PipelineEditorStories {
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put("/pipeline/v1/" + UUID)
                                     .withBodyContaining("Typed documentation").toSpyMatcher()));
+                    play.waitFor(() -> play.expect(save).toHaveAttribute("aria-disabled", "true"));
+                    play.expect(screen.queryByText(TextMatch.startingWith("Save Pipeline"))).toBeNull();
+                    expectNoProblems(play);
+                })
+                // Saving again before the first save has finished waits for it, then saves what was typed
+                // since over the version saved. It sent the version it replaced, which the server refuses
+                // as if another user had changed the pipeline
+                .story("SaveAgainWhileSaving", context -> renderWithPlugins(context, SLOW_SAVE_FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openStructure(play);
+                    play.findByText("xslt");
+                    play.click(play.getByText("Documentation", StroomDom.LINK_TAB_LABEL));
+                    play.waitFor(() -> play.expect(play.querySelector(".ace_editor")).toBeVisible());
+                    play.click(play.querySelector(".ace_content"));
+                    play.keyboard("First");
+                    final Query save = play.getByRole("button", "Save");
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    play.click(save);
+                    play.click(play.querySelector(".ace_content"));
+                    play.keyboard("Second");
+                    play.click(save);
+                    play.waitFor(SLOW_SAVE_MILLIS + 2000, () -> play.expect(play.spy(ScreenHarness.REQUEST_SPY))
+                            .toHaveBeenCalledWith(RequestMatcher.put("/pipeline/v1/" + UUID)
+                                    .withBody("the second edit over the version saved", body ->
+                                            body.contains("Second") && body.contains("\"" + SAVED_VERSION + "\""))
+                                    .toSpyMatcher()));
+                    // Never over the version the first save replaces
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.put("/pipeline/v1/" + UUID)
+                                    .withBody("the second edit over the first version", body ->
+                                            body.contains("Second") && body.contains("\"v1\""))
+                                    .toSpyMatcher());
                     play.waitFor(() -> play.expect(save).toHaveAttribute("aria-disabled", "true"));
                     play.expect(screen.queryByText(TextMatch.startingWith("Save Pipeline"))).toBeNull();
                     expectNoProblems(play);

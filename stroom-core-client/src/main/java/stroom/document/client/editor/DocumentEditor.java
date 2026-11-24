@@ -31,7 +31,6 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Objects;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -163,14 +162,14 @@ public abstract class DocumentEditor<D> extends TabbedController<D> {
     }
 
     /// @return What to run once the document is saved, before it is read again, e.g. to save its
-    /// assets: given the saved document and what to run when it is done; or null for nothing.
-    public BiConsumer<D, Consumer<D>> getPostSaveCallback() {
+    /// assets; or null for nothing.
+    public PostSave<D> getPostSaveCallback() {
         return null;
     }
 
     /// @return What to run once a copy of the document is saved (Save As), before the copy is read,
-    /// as [#getPostSaveCallback()]; or null for nothing.
-    public BiConsumer<D, Consumer<D>> getPostSaveAsCallback() {
+    /// or null for nothing.
+    public PostSave<D> getPostSaveAsCallback() {
         return null;
     }
 

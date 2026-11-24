@@ -16,8 +16,10 @@
 
 package stroom.statistics.impl.sql.client;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.ContentManager;
+import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -26,6 +28,7 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.editor.DocumentEditorHost;
+import stroom.document.client.editor.SaveQueue;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.statistics.impl.sql.client.component.StatisticsDataSourceEditor;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
@@ -92,18 +95,25 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
         if (tabData instanceof DocumentEditorHost<?>) {
             final DocumentEditorHost<StatisticStoreDoc> controller =
                     (DocumentEditorHost<StatisticStoreDoc>) tabData;
-            // Not saved while a field holds input that can't be kept, which the field says
-            if (controller.isDirty() && !controller.refuseInvalidInput()) {
+            // Not saved once its tab is closed, nor while a field holds input that can't be kept, which the
+            // field says
+            if (!controller.isDisposed() && controller.isDirty() && !controller.refuseInvalidInput()) {
+                if (!controller.getSaveQueue().start(() -> save(tabData), () -> {
+                })) {
+                    // Saved once the save in progress has finished, if there is anything to save
+                    return;
+                }
                 final StatisticStoreDoc entity = controller.getEntity();
 
                 // re-load the entity from the database so we have the
                 // persistent version, and not one that has had
                 // fields added/removed/changed
-                load(DocRefUtil.create(entity),
-                        entityFromDb -> doConfirmSave(controller, entity, entityFromDb, controller),
-                        throwable -> {
-                        },
-                        controller);
+                final SaveQueue saveQueue = controller.getSaveQueue();
+                saveQueue.guard(() -> load(DocRefUtil.create(entity),
+                        entityFromDb -> saveQueue.guard(() ->
+                                doConfirmSave(controller, entity, entityFromDb, controller)),
+                        error -> onSaveFailed(controller, entity, error),
+                        controller));
             }
         }
     }
@@ -148,10 +158,11 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
                                                     "Please ensure you understand the full consequences of the " +
                                                     "change.<br/><br/>" + "Do you wish to continue?"),
                     result -> {
-                        if (result) {
-                            doSave(controller, writtenEntity, taskMonitorFactory);
+                        if (result && !controller.isDisposed()) {
+                            controller.getSaveQueue().guard(() ->
+                                    doSave(controller, writtenEntity, taskMonitorFactory));
                         } else {
-                            // Re-enable popup buttons.
+                            controller.getSaveQueue().failed();
                         }
                     });
         } else {
@@ -164,11 +175,25 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
                         final StatisticStoreDoc entity,
                         final TaskMonitorFactory taskMonitorFactory) {
         // What is typed while it is being saved is kept, as DocumentPlugin does
-        save(DocRefUtil.create(entity), entity, doc ->
-                        controller.readSaved(DocRefUtil.create(doc), doc, controller.hasChangedSince(entity)),
-                throwable -> {
-                },
+        save(DocRefUtil.create(entity),
+                entity,
+                doc -> controller.getSaveQueue().succeeded(() -> {
+                    if (!controller.isDisposed()) {
+                        controller.readSaved(DocRefUtil.create(doc), entity, doc,
+                                controller.hasChangedSince(entity));
+                    }
+                }),
+                error -> onSaveFailed(controller, entity, error),
                 taskMonitorFactory);
+    }
+
+    private void onSaveFailed(final DocumentEditorHost<StatisticStoreDoc> controller,
+                              final StatisticStoreDoc entity,
+                              final RestError error) {
+        AlertEvent.fireError(this,
+                "Unable to save document " + DocRefUtil.createTypedDocRefString(DocRefUtil.create(entity)),
+                error.getMessage(), null);
+        controller.getSaveQueue().failed();
     }
 
     @Override

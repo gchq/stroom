@@ -195,7 +195,7 @@ public class SolrIndexFieldListController extends Controller implements HasSaved
     }
 
     @Override
-    public void setSavedDocument(final SolrIndexDoc saved) {
+    public void setSavedDocument(final SolrIndexDoc written, final SolrIndexDoc saved) {
         this.index = saved;
         showSyncState(saved);
     }

@@ -232,7 +232,7 @@ public class PipelineStructureController extends Controller implements HasSavedD
     }
 
     @Override
-    public void setSavedDocument(final PipelineDoc saved) {
+    public void setSavedDocument(final PipelineDoc written, final PipelineDoc saved) {
         // What tells whether the structure is changed
         this.readDoc = saved;
     }
