@@ -60,6 +60,12 @@ final class EventXmlClassifier {
     static final Set<String> ENDS = Set.of("Terminate", "Shutdown");
     /// The schema's leaves that name what an event touched, the most telling first.
     static final List<String> OBJECTS = List.of("Title", "Subject", "URL", "Path", "Name");
+    /// The schema's elements whose events go from a source to a destination: their object is the destination's
+    /// device (its HostName, else its IPAddress), for a Network event first, for Send and Receive after the object
+    /// leaves (a subject, a URL); the source and destination devices' own names are never the object.
+    static final Set<String> TO_DESTINATION = Set.of("Network", "Send", "Receive");
+    private static final String NETWORK = "Network";
+    private static final Set<String> ENDPOINTS = Set.of("Source", "Destination");
     /// The longest value kept as a key.
     static final int MAX_KEY_CHARS = 200;
     private static final String AUTHENTICATE = "Authenticate";
@@ -109,7 +115,7 @@ final class EventXmlClassifier {
         final String application = PROCESS.equals(element)
                 ? baseName(keys.get("Command"))
                 : null;
-        return Optional.of(of(element, actionName, typeId, application, object(action), host, keys,
+        return Optional.of(of(element, actionName, typeId, application, object(element, action), host, keys,
                 Route.XML));
     }
 
@@ -188,15 +194,64 @@ final class EventXmlClassifier {
                 : base + " " + action.strip().toLowerCase(Locale.ROOT);
     }
 
-    // What the event touched: the most telling of the schema's object leaves under the action element.
-    private static String object(final XmlElement action) {
+    // What the event touched: the most telling of the schema's object leaves under the action element; for a
+    // Network event its destination first, for Send and Receive its destination where no leaf tells more.
+    private static String object(final String element, final XmlElement action) {
+        if (!TO_DESTINATION.contains(element)) {
+            return objectLeaf(action, false);
+        }
+        final String destination = destination(action);
+        if (NETWORK.equals(element) && destination != null) {
+            return destination;
+        }
+        final String leaf = objectLeaf(action, true);
+        return leaf != null
+                ? leaf
+                : destination;
+    }
+
+    // The most telling object leaf, leaving out those under a Source or Destination where asked.
+    private static String objectLeaf(final XmlElement action, final boolean skipEndpoints) {
         for (final String name : OBJECTS) {
-            for (final XmlElement element : action.iterElements()) {
-                if (name.equals(element.localName()) && element.childElements().isEmpty()) {
-                    final String text = text(element);
-                    if (text != null) {
-                        return text;
-                    }
+            final String found = objectLeaf(action, name, skipEndpoints);
+            if (found != null) {
+                return found;
+            }
+        }
+        return null;
+    }
+
+    private static String objectLeaf(final XmlElement parent, final String name, final boolean skipEndpoints) {
+        for (final XmlElement child : parent.childElements()) {
+            if (child.childElements().isEmpty()) {
+                if (name.equals(child.localName()) && text(child) != null) {
+                    return text(child);
+                }
+            } else if (!skipEndpoints || !ENDPOINTS.contains(child.localName())) {
+                final String found = objectLeaf(child, name, skipEndpoints);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+
+    // The first Destination's device below the element: its HostName, else its IPAddress (the schema's
+    // Destination holds a Device; one written straight under it is read too).
+    private static String destination(final XmlElement parent) {
+        for (final XmlElement child : parent.childElements()) {
+            if ("Destination".equals(child.localName())) {
+                final XmlElement device = child(child, "Device");
+                final XmlElement holder = device != null
+                        ? device
+                        : child;
+                return firstNonBlank(text(child(holder, "HostName")), text(child(holder, "IPAddress")));
+            }
+            if (!child.childElements().isEmpty() && !"Source".equals(child.localName())) {
+                final String found = destination(child);
+                if (found != null) {
+                    return found;
                 }
             }
         }

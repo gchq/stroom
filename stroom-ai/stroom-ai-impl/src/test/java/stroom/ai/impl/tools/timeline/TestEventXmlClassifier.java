@@ -106,6 +106,37 @@ class TestEventXmlClassifier {
     }
 
     @Test
+    void aNetworkSendOrReceiveEventsObjectIsItsDestinationsHostElseItsAddress() {
+        final Classified network = EventXmlClassifier.classify("""
+                <Event><EventDetail><Network><Open>
+                  <Source><Device><HostName>ws-01</HostName><IPAddress>10.0.0.5</IPAddress></Device></Source>
+                  <Destination><Device><HostName>files.personal-cloud.example</HostName>
+                    <IPAddress>203.0.113.9</IPAddress></Device><Port>443</Port></Destination>
+                </Open></Network></EventDetail></Event>""").orElseThrow();
+        final Classified byAddress = EventXmlClassifier.classify("""
+                <Event><EventDetail><Network><Close>
+                  <Source><Device><Name>laptop</Name></Device></Source>
+                  <Destination><Device><IPAddress>203.0.113.9</IPAddress></Device></Destination>
+                </Close></Network></EventDetail></Event>""").orElseThrow();
+        final Classified receive = EventXmlClassifier.classify("""
+                <Event><EventDetail><Receive>
+                  <Source><Device><HostName>mail.example.com</HostName></Device></Source>
+                  <Destination><Device><HostName>ws-01</HostName></Device></Destination>
+                </Receive></EventDetail></Event>""").orElseThrow();
+        final Classified send = EventXmlClassifier.classify("""
+                <Event><EventDetail><Send>
+                  <Destination><Device><HostName>smtp.example.com</HostName></Device></Destination>
+                  <Payload><Email><Subject>Q3 numbers</Subject></Email></Payload>
+                </Send></EventDetail></Event>""").orElseThrow();
+
+        assertThat(network.object()).isEqualTo("files.personal-cloud.example");
+        assertThat(byAddress.object()).isEqualTo("203.0.113.9");
+        assertThat(receive.object()).isEqualTo("ws-01");
+        // A more telling object (a subject, a URL) still comes first.
+        assertThat(send.object()).isEqualTo("Q3 numbers");
+    }
+
+    @Test
     void whatIsntAnEventWithAnEventDetailIsNotClassified() {
         assertThat(EventXmlClassifier.classify("<Events><Event><EventTime/></Event></Events>")).isEmpty();
         assertThat(EventXmlClassifier.classify("not xml")).isEmpty();
