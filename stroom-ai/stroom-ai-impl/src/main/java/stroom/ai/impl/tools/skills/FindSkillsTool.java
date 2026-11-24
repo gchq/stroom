@@ -32,6 +32,7 @@ import stroom.ai.impl.tools.skills.SkillDoc.Parameter;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
@@ -44,10 +45,12 @@ import java.util.Map;
 import java.util.Set;
 
 /// `find_skills` - finds the skills the user can read ([SkillCatalogue]): by words, or one by name to read it whole
-/// and follow it. Read by name, a skill is checked first ([SkillChecks], its problems only: a renamed index or a
-/// changed tool says so before it runs); given `arguments`, its parameters are given their values, defaults
-/// applied, and any required one not given is asked of the user in a form, and its steps come back with the values
-/// in (a skill run by name with the chat's `/skill:` command comes here).
+/// and follow it. Read by name, a skill is checked first ([SkillChecks], its problems only): one with a problem (a
+/// renamed index, a changed tool) isn't run: the result says to stop and tell the user what is broken, with a likely
+/// replacement where one is evident, and offers the fix or the skill's removal (`propose_skill`) to a user who can
+/// edit its skills doc, else says its owner or editors can fix it. Given `arguments`, its parameters are given their
+/// values, defaults applied, and any required one not given is asked of the user in a form, and its steps come back
+/// with the values in (a skill run by name with the chat's `/skill:` command comes here).
 public class FindSkillsTool extends AbstractBuiltInTool {
 
     static final String NAME = SkillCatalogue.FIND_SKILLS;
@@ -58,6 +61,11 @@ public class FindSkillsTool extends AbstractBuiltInTool {
     /// The most skills a search lists.
     static final int MAX_FOUND = 20;
     static final String FORM_KEY = "skill-parameters";
+    /// The problems that don't stop a skill running, as its steps still work as written: a hand edit since its
+    /// doc's latest history entry (the history's, not the skill's), a parameter listed and not used, no description
+    /// (what it is chosen by, not run by), and its Event chains (a timeline leaves out an entry it can't use).
+    static final Set<String> NOT_STOPPING = Set.of("hand_edit", "unused_parameter", "no_description",
+            "event_chains");
 
     private final SkillCatalogue catalogue;
     private final SkillFacts facts;
@@ -174,8 +182,12 @@ public class FindSkillsTool extends AbstractBuiltInTool {
         documentAccess.logView(context.session(), skill.doc(), "Skill '" + skill.skill().name() + "' read by the "
                                                                + NAME + " tool");
         final SkillDoc doc = catalogue.readDoc(skill.doc()).map(SkillCatalogue.SkillsDoc::parsed).orElse(null);
+        final SkillChecks.Facts checkFacts = facts.forSkill(skill.skill(), skill.doc(), false);
         final List<SkillChecks.Finding> problems = SkillChecks.problems(SkillChecks.check(skill.skill(), doc,
-                facts.forSkill(skill.skill(), skill.doc(), false)));
+                checkFacts));
+        final List<SkillChecks.Finding> stopping = problems.stream()
+                .filter(problem -> !NOT_STOPPING.contains(problem.rule()))
+                .toList();
         final StringBuilder sb = new StringBuilder("Skill '").append(skill.skill().name()).append("' (folder ")
                 .append(skill.folderPath()).append(", doc ").append(skill.doc().getUuid()).append(")");
         if (named.size() > 1) {
@@ -186,9 +198,13 @@ public class FindSkillsTool extends AbstractBuiltInTool {
             sb.append(" (give folder= for one of those)");
         }
         sb.append(".\n");
+        if (!stopping.isEmpty()) {
+            return ToolResult.text(stop(sb, context, skill, stopping, checkFacts,
+                    documentAccess.canEdit(skill.doc())));
+        }
         if (!problems.isEmpty()) {
-            sb.append("\nIt has problems: say so to the user before running it, with the fixes (check_skill "
-                      + "gives them all):\n").append(SkillChecks.describe(problems)).append('\n');
+            sb.append("\nIt has problems that don't stop it running: say so to the user, with the fixes:\n")
+                    .append(SkillChecks.describe(problems)).append('\n');
         }
         final Object given = argsMap(request).get(ARGUMENTS_ARG);
         if (given == null) {
@@ -220,6 +236,46 @@ public class FindSkillsTool extends AbstractBuiltInTool {
         }
         sb.append("\n## Steps\n\n").append(bound.steps()).append("\n\n## Output\n\n").append(bound.output());
         return ToolResult.text(sb.toString().stripTrailing());
+    }
+
+    // A skill that won't work as written isn't run: what is broken, and the fix or removal where the user can make
+    // either (propose_skill, in the chat); else who can. Never a stand-in run, nor a second version of the skill.
+    private static String stop(final StringBuilder sb,
+                               final ToolCallContext context,
+                               final Listed skill,
+                               final List<SkillChecks.Finding> problems,
+                               final SkillChecks.Facts checkFacts,
+                               final boolean canEdit) {
+        sb.append("\nStop: don't run this skill, nor its steps against anything in place of what is broken (e.g. "
+                  + "another index, even one like it). Tell the user it can't run as written, and what is broken "
+                  + "(each problem, with its fix):\n").append(SkillChecks.describe(problems)).append("\n\n");
+        final String name = skill.skill().name();
+        if (!canEdit) {
+            sb.append("The user can't change its skills doc, so propose no fix: tell them the doc's owner or editors "
+                      + "can fix it (its skills doc in folder ").append(skill.folderPath()).append(").");
+            return sb.toString();
+        }
+        if (context.session().isChat() && checkFacts.allowed(ProposeSkillTool.NAME)) {
+            final Map<String, Object> fix = new LinkedHashMap<>();
+            fix.put(ProposeSkillTool.DOC_ARG, skill.doc().getUuid());
+            fix.put(ProposeSkillTool.MARKDOWN_ARG, "<the skill, corrected>");
+            fix.put(ProposeSkillTool.CHANGE_ARG, "<what the fix does>");
+            final Map<String, Object> removal = new LinkedHashMap<>();
+            removal.put(ProposeSkillTool.ACTION_ARG, ProposeSkillTool.REMOVE);
+            removal.put(ProposeSkillTool.DOC_ARG, skill.doc().getUuid());
+            removal.put(ProposeSkillTool.NAME_ARG, name);
+            sb.append("The user can edit its skills doc, so offer them the fix: the skill itself corrected, as ")
+                    .append(ProposeSkillTool.NAME).append(' ').append(JsonUtil.writeValueAsString(fix, false))
+                    .append(" (a diff they review and apply; never a second version of it), or its removal, ")
+                    .append(ProposeSkillTool.NAME).append(' ').append(JsonUtil.writeValueAsString(removal, false))
+                    .append(". Propose either only once they say which they want.");
+        } else {
+            sb.append("The user can edit its skills doc (in folder ").append(skill.folderPath())
+                    .append("): tell them they can correct the skill in it (the skill itself, never a second "
+                            + "version of it), or remove it.");
+        }
+        sb.append("\n\nThe skill as saved, to correct (not to run):\n\n").append(skill.skill().text());
+        return sb.toString();
     }
 
     // Asks the user for the required parameters not given: their answers, empty if they gave none, or null if they

@@ -154,6 +154,11 @@ class SkillFacts {
             }
 
             @Override
+            public List<String> dataSourcesLike(final String name) {
+                return SkillFacts.this.dataSourcesLike(name);
+            }
+
+            @Override
             public Optional<String> closestByPurpose(final Set<String> words) {
                 return SkillFacts.this.closestByPurpose(words);
             }
@@ -227,6 +232,20 @@ class SkillFacts {
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> "Unable to read the fields of " + found.getFirst(), e);
             return new DataSource(true, null);
+        }
+    }
+
+    // The data sources the user can use named like one they can't.
+    private List<String> dataSourcesLike(final String name) {
+        try {
+            return SkillChecks.likeNamed(name, dataSourceAccess.listUsable().stream()
+                    .map(DocRef::getName)
+                    .filter(NullSafe::isNonBlankString)
+                    .distinct()
+                    .toList());
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to list the data sources named like " + name, e);
+            return List.of();
         }
     }
 

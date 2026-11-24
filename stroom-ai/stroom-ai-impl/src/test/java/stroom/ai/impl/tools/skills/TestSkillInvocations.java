@@ -50,7 +50,8 @@ class TestSkillInvocations {
         assertThat(expanded).startsWith(SkillInvocations.EXPANDED_PREFIX)
                 .contains("run the skill 'timeline'", "find_skills {\"name\":\"timeline\",\"arguments\":"
                                                       + "{\"user\":\"jsmith\"}}",
-                        "asks the user for any required parameter not given");
+                        "asks the user for any required parameter not given",
+                        "Then follow its steps, unless it says to stop: then tell the user why");
     }
 
     @Test

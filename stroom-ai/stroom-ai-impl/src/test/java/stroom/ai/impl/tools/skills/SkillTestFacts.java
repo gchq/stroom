@@ -42,6 +42,56 @@ final class SkillTestFacts {
         return facts(false);
     }
 
+    /// @param missing The one data source that doesn't exist.
+    /// @param like    The data sources named like it.
+    /// @return Facts as [#permissive()], but for that data source.
+    static SkillChecks.Facts missingDataSource(final String missing, final List<String> like) {
+        final SkillChecks.Facts permissive = permissive();
+        return new SkillChecks.Facts() {
+            @Override
+            public Optional<ToolDefinition> tool(final String name) {
+                return permissive.tool(name);
+            }
+
+            @Override
+            public Set<String> toolNames() {
+                return permissive.toolNames();
+            }
+
+            @Override
+            public boolean allowed(final String name) {
+                return true;
+            }
+
+            @Override
+            public DataSource dataSource(final String dataSource) {
+                return new DataSource(!missing.equalsIgnoreCase(dataSource), null);
+            }
+
+            @Override
+            public List<String> dataSourcesLike(final String name) {
+                return missing.equalsIgnoreCase(name)
+                        ? like
+                        : List.of();
+            }
+
+            @Override
+            public Optional<String> closestByPurpose(final Set<String> words) {
+                return Optional.empty();
+            }
+
+            @Override
+            public List<OtherSkill> otherSkills() {
+                return List.of();
+            }
+
+            @Override
+            public SkillUsage.Counts usage(final String skill) {
+                return null;
+            }
+        };
+    }
+
     private static SkillChecks.Facts facts(final boolean tools) {
         return new SkillChecks.Facts() {
             @Override

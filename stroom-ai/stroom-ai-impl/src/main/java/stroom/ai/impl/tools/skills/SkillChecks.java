@@ -35,6 +35,7 @@ import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -64,6 +65,8 @@ final class SkillChecks {
     static final String CHAT_CHART = "gantt";
     /// The tool a timeline skill's steps call, whose fields its Event chains are checked by.
     static final String TIMELINE_TOOL = "activity_timeline";
+    /// The most data sources named like a missing one that its fix gives.
+    static final int MAX_LIKE = 3;
 
     private static final Set<String> DATA_SOURCE_KEYS = Set.of("index", "data_source", "dataSource");
     private static final Pattern FROM = Pattern.compile("(?i)\\bfrom\\s+(\"([^\"]+)\"|'([^']+)'|([^\\s,()]+))");
@@ -387,7 +390,7 @@ final class SkillChecks {
                         findings.add(Finding.problem("missing_data_source", where + " names data source '" + name
                                                                             + "', which doesn't exist or you "
                                                                             + "can't Use.",
-                                "Use a data source list_data_sources gives, or make it a parameter."));
+                                missingDataSourceFix(name.strip(), facts)));
                     } else {
                         NullSafe.consume(dataSource.fields(), known -> fieldsOf(node).stream()
                                 .filter(field -> !hasStandIn(field) && !known.contains(field))
@@ -406,11 +409,82 @@ final class SkillChecks {
                         findings.add(Finding.problem("missing_data_source", where + "'s query is from '" + name
                                                                             + "', which doesn't exist or you "
                                                                             + "can't Use.",
-                                "Use a data source list_data_sources gives, or make it a parameter."));
+                                missingDataSourceFix(name, facts)));
                     }
                 }
             }
         });
+    }
+
+    // The fix for a data source that is missing: the data sources the reader can use named like it, if any are.
+    private static String missingDataSourceFix(final String name, final Facts facts) {
+        final List<String> like = facts.dataSourcesLike(name);
+        final String fix = "Use a data source list_data_sources gives, or make it a parameter.";
+        if (like.isEmpty()) {
+            return fix;
+        }
+        return "Likely replacement: " + String.join(" or ", like.stream().map(other -> "'" + other + "'").toList())
+               + ", a data source you can use named like it (check it holds the same data before changing the skill "
+               + "to it). Otherwise: " + fix;
+    }
+
+    /// Data sources named like a missing one: those whose names (in lower case, letters and digits only) start with
+    /// its name or that its name starts with, nearest in length first, then those a letter or so from it (an edit
+    /// for every five letters). None for a name of under three letters.
+    ///
+    /// @param missing The missing data source's name.
+    /// @param names   The names of the data sources the reader can use.
+    /// @return Up to [#MAX_LIKE] of them.
+    static List<String> likeNamed(final String missing, final Collection<String> names) {
+        final String wanted = letters(missing);
+        if (wanted.length() < 3 || names == null) {
+            return List.of();
+        }
+        final int maxEdits = Math.max(1, wanted.length() / 5);
+        final List<String> prefixed = new ArrayList<>();
+        final List<String> near = new ArrayList<>();
+        for (final String name : names) {
+            final String other = letters(name);
+            if (other.length() < 3 || other.equals(wanted)) {
+                continue;
+            }
+            if (other.startsWith(wanted) || wanted.startsWith(other)) {
+                prefixed.add(name);
+            } else if (edits(wanted, other) <= maxEdits) {
+                near.add(name);
+            }
+        }
+        prefixed.sort(Comparator.comparingInt((String name) -> Math.abs(letters(name).length() - wanted.length()))
+                .thenComparing(Comparator.naturalOrder()));
+        near.sort(Comparator.comparingInt((String name) -> edits(wanted, letters(name)))
+                .thenComparing(Comparator.naturalOrder()));
+        final List<String> out = new ArrayList<>(prefixed);
+        out.addAll(near);
+        return out.stream().limit(MAX_LIKE).toList();
+    }
+
+    private static String letters(final String name) {
+        return NullSafe.string(name).toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
+    }
+
+    // The fewest single-letter insertions, deletions and substitutions turning one into the other.
+    private static int edits(final String a, final String b) {
+        int[] previous = new int[b.length() + 1];
+        for (int j = 0; j <= b.length(); j++) {
+            previous[j] = j;
+        }
+        for (int i = 1; i <= a.length(); i++) {
+            final int[] current = new int[b.length() + 1];
+            current[0] = i;
+            for (int j = 1; j <= b.length(); j++) {
+                final int substitution = previous[j - 1] + (a.charAt(i - 1) == b.charAt(j - 1)
+                        ? 0
+                        : 1);
+                current[j] = Math.min(substitution, Math.min(previous[j], current[j - 1]) + 1);
+            }
+            previous = current;
+        }
+        return previous[b.length()];
     }
 
     // The fields an object of a call's arguments names: its fields, by, field and where conditions' fields.
@@ -685,6 +759,13 @@ final class SkillChecks {
         /// @param dataSource A data source's name or uuid.
         /// @return Whether the reader can Use it (it exists), and its fields.
         DataSource dataSource(String dataSource);
+
+        /// @param name A data source's name that the reader can't use.
+        /// @return The data sources they can use named like it ([SkillChecks#likeNamed(String, Collection)]); none by
+        /// default.
+        default List<String> dataSourcesLike(final String name) {
+            return List.of();
+        }
 
         /// @param words A step's words.
         /// @return The tool whose description shares most of them, if any does.

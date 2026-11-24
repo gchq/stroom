@@ -110,7 +110,7 @@ public final class SkillInvocations {
     public record Invocation(String name, Map<String, String> arguments, String text) {
 
         /// @return What the model is given: to read the skill with find_skills with the values typed, which asks
-        /// for any required parameter missing, then follow its steps.
+        /// for any required parameter missing, then follow its steps unless it says to stop (a broken skill).
         public String request() {
             final Map<String, Object> call = new LinkedHashMap<>();
             call.put(FindSkillsTool.NAME_ARG, name);
@@ -126,7 +126,8 @@ public final class SkillInvocations {
                    + (text == null
                            ? ""
                            : " (the values their words give put in arguments)")
-                   + ": it asks the user for any required parameter not given. Then follow its steps.";
+                   + ": it asks the user for any required parameter not given. Then follow its steps, unless it "
+                   + "says to stop: then tell the user why, and run nothing in its place.";
         }
     }
 }

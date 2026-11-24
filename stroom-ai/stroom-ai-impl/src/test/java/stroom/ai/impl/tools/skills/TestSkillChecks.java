@@ -161,6 +161,43 @@ class TestSkillChecks {
     }
 
     @Test
+    void aMissingDataSourcesFixNamesALikelyReplacement() {
+        final Skill skill = skill("""
+                ## Steps
+
+                1. Count them:
+                   ```json
+                   {"tool": "run_stroomql", "arguments": {"query": "from Logons where UserId = 'x'"}}
+                   ```
+                2. Then by index:
+                   ```json
+                   {"tool": "run_stroomql", "arguments": {"index": "Gone", "query": "select x"}}
+                   ```
+                """);
+
+        final List<Finding> findings = SkillChecks.check(skill, null, SkillTestFacts.missingDataSource("Logons",
+                        List.of("Logons-V2")))
+                .stream()
+                .filter(finding -> "missing_data_source".equals(finding.rule()))
+                .toList();
+
+        assertThat(findings).singleElement().satisfies(finding -> {
+            assertThat(finding.message()).contains("query is from 'Logons'");
+            assertThat(finding.fix()).contains("Likely replacement: 'Logons-V2'", "the same data");
+        });
+    }
+
+    @Test
+    void dataSourcesNamedLikeAMissingOneStartWithItOrAreAnEditAway() {
+        assertThat(SkillChecks.likeNamed("Logons", List.of("Firewall", "Logins", "Logons-V2", "Lo", "Logons",
+                "logons_archive", "Proxy logons")))
+                .containsExactly("Logons-V2", "logons_archive", "Logins");
+        assertThat(SkillChecks.likeNamed("Logons-V2", List.of("Logons"))).containsExactly("Logons");
+        assertThat(SkillChecks.likeNamed("ab", List.of("abc", "ab1"))).isEmpty();
+        assertThat(SkillChecks.likeNamed("Logons", List.of())).isEmpty();
+    }
+
+    @Test
     void aGoodSkillHasNoProblemsOrSuggestions() {
         final List<Finding> findings = check(skill("""
                 ## When to use
