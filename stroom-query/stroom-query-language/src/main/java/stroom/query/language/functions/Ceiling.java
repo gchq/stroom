@@ -18,6 +18,8 @@ package stroom.query.language.functions;
 
 import stroom.query.language.functions.TimeRounder.Mode;
 
+import java.math.RoundingMode;
+
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Ceiling.NAME,
@@ -124,8 +126,7 @@ class Ceiling extends AbstractRoundingFunction {
             return new NumericCeiling();
         }
 
-        final double multiplier = Math.pow(10D, decimalPlaces);
-        return new DecimalPlaceCeiling(multiplier);
+        return new DecimalPlaceCeiling(decimalPlaces.intValue());
     }
 
     private static class NumericCeiling implements RoundCalculator {
@@ -143,10 +144,10 @@ class Ceiling extends AbstractRoundingFunction {
 
     private static class DecimalPlaceCeiling implements RoundCalculator {
 
-        private final double multiplier;
+        private final int decimalPlaces;
 
-        DecimalPlaceCeiling(final double multiplier) {
-            this.multiplier = multiplier;
+        DecimalPlaceCeiling(final int decimalPlaces) {
+            this.decimalPlaces = decimalPlaces;
         }
 
         @Override
@@ -156,7 +157,9 @@ class Ceiling extends AbstractRoundingFunction {
                 return ValNull.INSTANCE;
             }
 
-            return ValDouble.create(Math.ceil(val * multiplier) / multiplier);
+            return ValDouble.create(Double.isFinite(val)
+                    ? round(val, decimalPlaces, RoundingMode.CEILING)
+                    : val);
         }
     }
 }

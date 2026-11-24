@@ -18,6 +18,8 @@ package stroom.query.language.functions;
 
 import stroom.query.language.functions.TimeRounder.Mode;
 
+import java.math.RoundingMode;
+
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Floor.NAME,
@@ -124,8 +126,7 @@ class Floor extends AbstractRoundingFunction {
             return new NumericFloor();
         }
 
-        final double multiplier = Math.pow(10D, decimalPlaces);
-        return new DecimalPlaceFloor(multiplier);
+        return new DecimalPlaceFloor(decimalPlaces.intValue());
     }
 
     private static class NumericFloor implements RoundCalculator {
@@ -145,10 +146,10 @@ class Floor extends AbstractRoundingFunction {
     private static class DecimalPlaceFloor implements RoundCalculator {
 
 
-        private final double multiplier;
+        private final int decimalPlaces;
 
-        DecimalPlaceFloor(final double multiplier) {
-            this.multiplier = multiplier;
+        DecimalPlaceFloor(final int decimalPlaces) {
+            this.decimalPlaces = decimalPlaces;
         }
 
         @Override
@@ -158,7 +159,9 @@ class Floor extends AbstractRoundingFunction {
                 return ValNull.INSTANCE;
             }
 
-            return ValDouble.create(Math.floor(val * multiplier) / multiplier);
+            return ValDouble.create(Double.isFinite(val)
+                    ? round(val, decimalPlaces, RoundingMode.FLOOR)
+                    : val);
         }
     }
 }

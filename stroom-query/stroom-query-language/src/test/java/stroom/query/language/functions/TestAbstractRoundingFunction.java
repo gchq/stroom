@@ -134,12 +134,27 @@ class TestAbstractRoundingFunction {
             "round(1.25, '1')|1.3",
             "round(1.239, '2.0')|1.24",
             "round(1.239, ' 2 ')|1.24",
-            "round(1.5)|2"})
+            "round(1.5)|2",
+            // These are not exact as doubles.
+            "ceiling(1.1, 2)|1.1",
+            "floor(0.29, 2)|0.29",
+            "floor(4.35, 2)|4.35",
+            "round(1.005, 2)|1.01",
+            "round(1.5, 20)|1.5",
+            "floor(1719820800000, 300)|1719820800000",
+            "ceiling(1.5, 308)|1.5",
+            "round(478934961435163.94, 1)|478934961435163.9",
+            // Halfway is rounded up.
+            "round(2.5, 1)|2.5",
+            "round(0.25, 1)|0.3",
+            "round(0 - 0.25, 1)|-0.2",
+            "round(0 - 0.26, 1)|-0.3"})
     void numbers(final String expression, final double expected) throws ParseException {
         assertThat(eval(expression, Map.of(), ValNull.INSTANCE)).isEqualTo(ValDouble.create(expected));
     }
 
-    // Recorded before dates and durations could be rounded, as nothing about numbers was meant to change.
+    // Recorded before dates and durations could be rounded, as nothing about numbers was meant to change, except that
+    // decimal places are now exact.
     @ParameterizedTest
     @CsvFileSource(resources = "TestAbstractRoundingFunction_numbers.csv")
     void numbersAreRoundedAsTheyWere(final String function, final double number, final double expected)

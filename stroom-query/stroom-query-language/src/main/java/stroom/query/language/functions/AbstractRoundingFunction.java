@@ -20,6 +20,8 @@ import stroom.query.language.functions.TimeRounder.Mode;
 import stroom.query.language.functions.TimeRounder.Origin;
 import stroom.query.language.functions.ref.StoredValues;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.ParseException;
 import java.time.DateTimeException;
 import java.time.ZoneId;
@@ -161,6 +163,20 @@ abstract class AbstractRoundingFunction extends AbstractManyChildFunction {
                     ? val
                     : calculator.calc(val);
         };
+    }
+
+    /// Rounds a number to a number of decimal places of the decimal that it is shown as, so that 4.35 to two places is
+    /// itself, although no double is exactly 4.35.
+    ///
+    /// @param number        The number, which must be finite.
+    /// @param decimalPlaces The decimal places to keep.
+    /// @param roundingMode  How to round it.
+    /// @return The rounded number.
+    static double round(final double number, final int decimalPlaces, final RoundingMode roundingMode) {
+        final BigDecimal decimal = BigDecimal.valueOf(number);
+        return decimal.scale() <= decimalPlaces
+                ? number
+                : decimal.setScale(decimalPlaces, roundingMode).doubleValue();
     }
 
     protected abstract RoundCalculator createCalculator(Double decimalPlaces);

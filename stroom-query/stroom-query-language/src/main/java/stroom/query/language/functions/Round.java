@@ -18,6 +18,8 @@ package stroom.query.language.functions;
 
 import stroom.query.language.functions.TimeRounder.Mode;
 
+import java.math.RoundingMode;
+
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Round.NAME,
@@ -125,7 +127,7 @@ class Round extends AbstractRoundingFunction {
         }
 
         final double multiplier = Math.pow(10D, decimalPlaces);
-        return new DecimalPlaceRound(multiplier);
+        return new DecimalPlaceRound(decimalPlaces.intValue(), multiplier);
     }
 
     private static class NumericRound implements RoundCalculator {
@@ -145,9 +147,11 @@ class Round extends AbstractRoundingFunction {
     private static class DecimalPlaceRound implements RoundCalculator {
 
 
+        private final int decimalPlaces;
         private final double multiplier;
 
-        DecimalPlaceRound(final double multiplier) {
+        DecimalPlaceRound(final int decimalPlaces, final double multiplier) {
+            this.decimalPlaces = decimalPlaces;
             this.multiplier = multiplier;
         }
 
@@ -158,7 +162,13 @@ class Round extends AbstractRoundingFunction {
                 return ValNull.INSTANCE;
             }
 
-            return ValDouble.create(Math.round(val * multiplier) / multiplier);
+            if (!Double.isFinite(val)) {
+                return ValDouble.create(Math.round(val * multiplier) / multiplier);
+            }
+            // A number halfway between two is rounded up, so one that is negative is rounded towards zero.
+            return ValDouble.create(round(val, decimalPlaces, val < 0
+                    ? RoundingMode.HALF_DOWN
+                    : RoundingMode.HALF_UP));
         }
     }
 }
