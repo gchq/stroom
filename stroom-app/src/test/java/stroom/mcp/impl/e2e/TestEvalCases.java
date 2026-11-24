@@ -199,24 +199,39 @@ class TestEvalCases {
         assertThat(vpnRows).isNotEmpty().isEqualTo(expectedRows(EvalCases.load("81_insider_vpn_session_at_night")));
 
         // 82: each archive then an upload of over 10 MB to personal cloud by the same person within the hour, an
-        // event in one sequence at most (EQL's rule: the latest archive before the upload).
+        // event in one sequence at most (EQL's rule: each person's latest archive before the upload), in time order
+        // (the background people's archives and personal cloud use come after the rest in the records).
         final Map<String, Object> uploads = EvalCases.load("82_insider_archive_then_personal_cloud_upload");
         final List<Map<String, String>> events = EvalCases.table((Map<String, Object>) uploads.get("elastic_index"))
-                .records();
+                .records().stream()
+                .sorted(java.util.Comparator.comparing(TestEvalCases::time))
+                .toList();
         final List<List<Object>> sequences = new ArrayList<>();
-        Map<String, String> archive = null;
+        final Map<String, Map<String, String>> archives = new LinkedHashMap<>();
         for (final Map<String, String> event : events) {
+            final Map<String, String> archive = archives.get(event.get("PersonId"));
             if ("file.archive".equals(event.get("EventCode"))) {
-                archive = event;
+                archives.put(event.get("PersonId"), event);
             } else if (archive != null && InsiderDataset.PERSONAL_CLOUD_CATEGORY.equals(event.get("Category"))
                        && Long.parseLong(event.getOrDefault("BytesOut", "0")) > 10_000_000
-                       && archive.get("PersonId").equals(event.get("PersonId"))
                        && Duration.between(time(archive), time(event)).compareTo(Duration.ofHours(1)) <= 0) {
                 sequences.add(List.of(event.get("PersonId"), archive.get("EventTime"), event.get("EventTime")));
-                archive = null;
+                archives.remove(event.get("PersonId"));
             }
         }
         assertThat(sequences).hasSize(6).isEqualTo(expectedRows(uploads));
+        // Hand pairing can't do: the archives and personal cloud events are past what one esql_query gives.
+        assertThat(events.stream().filter(event -> "file.archive".equals(event.get("EventCode"))
+                                                   || InsiderDataset.PERSONAL_CLOUD_CATEGORY.equals(
+                event.get("Category")))).hasSizeGreaterThan(stroom.ai.api.ElasticEsql.MAX_ROWS);
+        // The near misses are there and none is a sequence.
+        final List<Map<String, Object>> misses = (List<Map<String, Object>>) InsiderDataset.generate(
+                new InsiderDataset.Options(InsiderDataset.SEED, 30, 0.1, List.of(new InsiderDataset.Period(
+                        java.time.LocalDate.of(2026, 6, 1), java.time.LocalDate.of(2026, 9, 30))))).knownAnswer()
+                .get("near_misses");
+        assertThat(misses).extracting(miss -> miss.get("person_id")).containsExactlyInAnyOrder("P20001", "P20003",
+                "P20004");
+        assertThat(sequences).allSatisfy(row -> assertThat(row.getFirst()).isEqualTo(InsiderDataset.LEAVER));
 
         // 80: the drift person's tasks that day, as the known answer has them.
         final InsiderDataset dataset = InsiderDataset.generate(new InsiderDataset.Options(InsiderDataset.SEED, 5,
@@ -245,12 +260,16 @@ class TestEvalCases {
                 "kind")), decoy));
         final String pipeline = String.valueOf(decoys.get("source-wide pipeline change").get("from"));
 
-        // 83: the leaver's job-site browsing starts the change; the pipeline change is not hers.
+        // 83: the leaver's job-site browsing from the plant's first day, her bulk downloads from 8 September; the
+        // pipeline change is not hers.
         final Map<String, Object> leaver = EvalCases.load("83_compare_leaver_before_leaving");
         final Map<String, Object> leaverPlant = plants.get(InsiderDataset.LEAVER);
-        assertThat(matcher(leaver, "must_include", 0)).containsEntry("near", leaverPlant.get("from"));
-        assertThat(matcher(leaver, "must_include", 1)).containsEntry("feature", "category:"
-                                                                                 + InsiderDataset.JOB_CATEGORY);
+        assertThat(matcher(leaver, "must_include", 0)).containsEntry("near", leaverPlant.get("from"))
+                .containsEntry("feature", "category:" + InsiderDataset.JOB_CATEGORY);
+        assertThat(matcher(leaver, "must_include", 1)).containsEntry("kind", "week")
+                .containsEntry("near", "2026-09-08");
+        assertThat(String.join(" ", (List<String>) leaverPlant.get("indicators")))
+                .contains("bulk downloads on working days 2026-09-08");
         assertThat(matcher(leaver, "must_not_include", 0)).containsEntry("near", pipeline);
         assertThat(String.valueOf(leaver.get("request"))).contains("25 September 2026");
         assertThat(((Map<String, Object>) leaverPlant.get("facts")).get("leaving")).isEqualTo("2026-09-25");

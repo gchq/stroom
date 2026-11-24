@@ -32,9 +32,13 @@ expected:
     tool: compare_activity
     result: {person: P10001}
   findings:
+    # The job-site browsing from 1 July as her own weekly category finding from the window's first week, and the bulk
+    # downloads from 8 September as her own weekly events finding: not as change points, as her events step at
+    # both (and everyone's at the pipeline change on 15 June), so their one change point falls on either by the
+    # data's noise.
     must_include:
-      - {kind: change, feature: events, near: '2026-07-01', days: 3}
-      - {feature: 'category:Job Search'}
+      - {kind: week, feature: 'category:Job Search', near: '2026-07-01', days: 4}
+      - {kind: week, feature: events, near: '2026-09-08', days: 3}
       - {kind: access, feature: 'access:Site'}
     must_not_include:
       - {kind: change, feature: events, near: '2026-06-15', days: 5}
