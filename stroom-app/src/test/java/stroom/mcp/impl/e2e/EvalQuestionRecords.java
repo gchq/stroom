@@ -57,7 +57,8 @@ final class EvalQuestionRecords {
     ///               in one table, by time ([InsiderRecords#flat]); with `streams: true`, their Events XML is stored
     ///               in a stream the index's StreamId and EventId lead to ([#insiderEventXml]); with
     ///               `targets: true`, the events done to people by others too ([InsiderDataset#targetActs], with
-    ///               `TargetPersonId` and `TargetUserName`), after the rest.
+    ///               `TargetPersonId` and `TargetUserName`), after the rest; with `noise: true`, the background
+    ///               people's archives and personal cloud use ([InsiderDataset#noiseActs]), after those.
     /// @return The records, each its values by column.
     static List<Map<String, String>> generate(final Map<String, Object> spec) {
         final String kind = String.valueOf(spec.get("kind"));
@@ -106,6 +107,9 @@ final class EvalQuestionRecords {
         if (Boolean.TRUE.equals(spec.get("targets"))) {
             // After the rest, so each record's place (its EventId) is the same with or without them.
             acts.addAll(dataset.targetActs());
+        }
+        if (Boolean.TRUE.equals(spec.get("noise"))) {
+            acts.addAll(dataset.noiseActs());
         }
         return acts.stream()
                 .filter(act -> sources.isEmpty() || sources.contains(act.source().key()))

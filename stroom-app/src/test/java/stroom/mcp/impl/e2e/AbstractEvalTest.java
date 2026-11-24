@@ -135,6 +135,8 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     // Events read and checked a stream; a larger stream's are read in blocks of BLOCK, spread over it.
     private static final int READ_EVENTS = 300;
     private static final int BLOCK = 50;
+    // The most documents a bulk request sends.
+    private static final int BULK_BATCH = 5_000;
     private static final Pattern SAMPLED_VALUES = Pattern.compile("Sample values are what the [1-9]\\d* documents");
     private static final Pattern ERROR_LINE = Pattern.compile("\\b(ERROR|FATAL)\\b");
 
@@ -1251,8 +1253,13 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         properties.putObject(STREAM_ID).put("type", "long");
         properties.putObject(EVENT_ID).put("type", "long");
         node.createIndex(indexName, JsonUtil.writeValueAsString(body, false));
-        final ArrayNode documents = JsonUtil.getMapper().createArrayNode();
+        // In batches, so a large question (case 82's months of every person's events) isn't one request body.
+        ArrayNode documents = JsonUtil.getMapper().createArrayNode();
         for (int i = 0; i < table.records().size(); i++) {
+            if (documents.size() >= BULK_BATCH) {
+                node.bulkIndex(indexName, documents);
+                documents = JsonUtil.getMapper().createArrayNode();
+            }
             final ObjectNode document = documents.addObject();
             document.put("_id", String.valueOf(i + 1));
             table.records().get(i).forEach((column, value) -> {
@@ -1265,7 +1272,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             document.put(STREAM_ID, stream);
             document.put(EVENT_ID, i + 1);
         }
-        node.bulkIndex(indexName, documents);
+        if (!documents.isEmpty()) {
+            node.bulkIndex(indexName, documents);
+        }
     }
 
     // A question's records in a Lucene index of the table's name, a field a column (text as keywords), each record

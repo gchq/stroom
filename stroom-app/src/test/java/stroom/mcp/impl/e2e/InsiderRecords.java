@@ -446,9 +446,11 @@ final class InsiderRecords {
                     final Path path = folder.resolve(source.key() + "-" + month.toString().substring(0, 7)
                                                      + extension(source));
                     final int offset = offsets.getOrDefault(source, 0);
-                    // The events done to people (the cloud's) among the source's own, in time order.
+                    // The events done to people (the cloud's) and the noise (the endpoint's and proxy's) among the
+                    // source's own, in time order.
                     final List<Act> acts = new ArrayList<>(dataset.acts(source));
                     acts.addAll(dataset.targetActs(source));
+                    acts.addAll(dataset.noiseActs(source));
                     acts.sort(Comparator.comparingLong(Act::time));
                     try (final BufferedWriter out = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
                         if (source == Source.PROXY) {
@@ -498,6 +500,7 @@ final class InsiderRecords {
             first.put("tasks", tasks);
             first.put("events", new LinkedHashMap<>((Map<String, Object>) month.get("events")));
             first.put("target_noise", new ArrayList<>((List<Object>) month.get("target_noise")));
+            first.put("near_misses", new ArrayList<>((List<Object>) month.get("near_misses")));
             return first;
         }
         final Map<String, Object> tasks = (Map<String, Object>) before.get("tasks");
@@ -507,6 +510,9 @@ final class InsiderRecords {
         ((Map<String, Object>) month.get("events")).forEach((source, count) -> events.merge(source, count,
                 (a, b) -> ((Number) a).longValue() + ((Number) b).longValue()));
         ((List<Object>) before.get("target_noise")).addAll((List<Object>) month.get("target_noise"));
+        ((List<Object>) before.get("near_misses")).addAll((List<Object>) month.get("near_misses"));
+        before.put("noise_events", ((Number) before.get("noise_events")).longValue()
+                                   + ((Number) month.get("noise_events")).longValue());
         before.put("target_events", ((Number) before.get("target_events")).longValue()
                                     + ((Number) month.get("target_events")).longValue());
         return before;

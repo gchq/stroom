@@ -113,6 +113,8 @@ final class InsiderDataset {
     private final List<Person> people = new ArrayList<>();
     private final List<Act> acts = new ArrayList<>();
     private final List<Act> targetActs = new ArrayList<>();
+    private final List<Act> noiseActs = new ArrayList<>();
+    private final List<Map<String, Object>> nearMisses = new ArrayList<>();
     private final List<Map<String, Object>> targetPlants = new ArrayList<>();
     private final List<Map<String, Object>> targetNoise = new ArrayList<>();
     private final List<Map<String, Object>> plants = new ArrayList<>();
@@ -133,6 +135,7 @@ final class InsiderDataset {
         dataset.makePeople();
         dataset.makeActs();
         dataset.makeTargets();
+        dataset.makeNoise();
         dataset.describePlants();
         return dataset;
     }
@@ -178,6 +181,23 @@ final class InsiderDataset {
     /// @return Its events done to people by others, in time order.
     List<Act> targetActs(final Source source) {
         return targetActs.stream().filter(act -> act.source() == source).toList();
+    }
+
+    /// The background people's ordinary archives and personal cloud use, drawn from a stream of their own so every
+    /// event of [#acts] and [#targetActs] is the same with or without them: archives of their work, personal cloud
+    /// page views and small uploads (under 10 MB), uploads over 10 MB with no archive that day, and a few near
+    /// misses of the leaver's archive-then-upload ([#knownAnswer]'s `near_misses`). Numbered on from the last of
+    /// their source's [#acts] and [#targetActs].
+    ///
+    /// @return Them, in time order.
+    List<Act> noiseActs() {
+        return noiseActs;
+    }
+
+    /// @param source A source.
+    /// @return Its noise events, in time order.
+    List<Act> noiseActs(final Source source) {
+        return noiseActs.stream().filter(act -> act.source() == source).toList();
     }
 
     /// The known answer: the people (their ids, accounts, organisation, dates), each planted behaviour and decoy with
@@ -226,6 +246,8 @@ final class InsiderDataset {
         map.put("targets", targetPlants);
         map.put("target_noise", targetNoise);
         map.put("target_events", targetActs.size());
+        map.put("near_misses", nearMisses);
+        map.put("noise_events", noiseActs.size());
         final Map<String, Object> counts = new LinkedHashMap<>();
         for (final Source source : Source.values()) {
             counts.put(source.key(), acts.stream().filter(act -> act.source() == source).count());
@@ -369,6 +391,165 @@ final class InsiderDataset {
         for (final Act act : made) {
             targetActs.add(act.numbered(numbers.merge(act.source(), 1, Integer::sum)));
         }
+    }
+
+    // The background people's archives and personal cloud use, a stream of their own (its own seeded draw a
+    // person-day): on working days, an archive of their work (now and then followed by a small upload), personal
+    // cloud page views most days, small uploads, and now and then an upload over 10 MB with no archive that day (a
+    // photo backup); and three near misses of the leaver's archive-then-upload, on days no other noise of theirs is
+    // made: an archive then an upload over 10 MB 70 to 90 minutes later, an upload over 10 MB with no archive, and
+    // an archive by one person with an upload over 10 MB by another within the hour.
+    private void makeNoise() {
+        final List<Act> made = new ArrayList<>();
+        final Map<String, LocalDate> missDays = Map.of("P20003", LocalDate.of(2026, 7, 14), "P20004",
+                LocalDate.of(2026, 8, 5), "P20005", LocalDate.of(2026, 9, 2), "P20001", LocalDate.of(2026, 9, 2));
+        for (int p = 0; p < people.size(); p++) {
+            final Person person = people.get(p);
+            if (person.scenario() != null) {
+                continue;
+            }
+            for (LocalDate day = FIRST_DAY; day.isBefore(END_DAY); day = day.plusDays(1)) {
+                final boolean weekend = day.getDayOfWeek() == DayOfWeek.SATURDAY
+                                        || day.getDayOfWeek() == DayOfWeek.SUNDAY;
+                if (!options.keeps(day) || weekend || person.onLeave(day) || day.isBefore(person.start())) {
+                    continue;
+                }
+                final SeededRandom random = new SeededRandom(Math.floorMod(options.seed() * 9_000_011L + p * 10_037L
+                                                                           + day.toEpochDay() * 41L + 2_026L,
+                        4_294_967_296L));
+                final long midnight = ZonedDateTime.of(day, LocalTime.MIDNIGHT, ZONE).toInstant().toEpochMilli();
+                if (day.equals(missDays.get(person.id()))) {
+                    nearMiss(made, person, day, midnight, random);
+                    continue;
+                }
+                final boolean bigUpload = random.random() < 0.02;
+                if (!bigUpload && random.random() < 0.08) {
+                    final long at = midnight + (10 * 60 + random.randint(0, 360)) * (long) MINUTE;
+                    made.add(archive(person, day, at, random));
+                    if (random.random() < 0.3) {
+                        made.addAll(upload(person, day, at + random.randint(5, 50) * (long) MINUTE,
+                                random.randint(50_000, 9_500_000)));
+                    }
+                }
+                if (random.random() < 0.8) {
+                    for (int i = random.randint(1, 5); i > 0; i--) {
+                        made.addAll(cloudPage(person, day, midnight + (9 * 60 + random.randint(0, 480))
+                                                                      * (long) MINUTE, random));
+                    }
+                }
+                if (random.random() < 0.1) {
+                    made.addAll(upload(person, day, midnight + (9 * 60 + random.randint(0, 480)) * (long) MINUTE,
+                            random.randint(20_000, 9_000_000)));
+                }
+                if (bigUpload) {
+                    made.addAll(upload(person, day, midnight + (12 * 60 + random.randint(0, 60)) * (long) MINUTE,
+                            random.randint(12_000_000, 300_000_000)));
+                }
+            }
+        }
+        made.sort(Comparator.comparingLong(Act::time).thenComparing(Act::source).thenComparing(Act::personId)
+                .thenComparing(Act::type));
+        final Map<Source, Integer> numbers = new LinkedHashMap<>();
+        for (final Source source : Source.values()) {
+            numbers.put(source, (int) (acts.stream().filter(act -> act.source() == source).count()
+                                       + targetActs.stream().filter(act -> act.source() == source).count()));
+        }
+        for (final Act act : made) {
+            noiseActs.add(act.numbered(numbers.merge(act.source(), 1, Integer::sum)));
+        }
+    }
+
+    // One near miss: the archive and the upload too far apart, the upload alone, or each by another person.
+    private void nearMiss(final List<Act> made,
+                          final Person person,
+                          final LocalDate day,
+                          final long midnight,
+                          final SeededRandom random) {
+        final long at = midnight + (11 * 60 + random.randint(0, 30)) * (long) MINUTE;
+        switch (person.id()) {
+            case "P20003" -> {
+                final int gap = random.randint(70, 90);
+                made.add(archive(person, day, at, random));
+                made.addAll(upload(person, day, at + gap * (long) MINUTE, random.randint(20_000_000, 90_000_000)));
+                nearMisses.add(Map.of("person_id", person.id(), "date", day.toString(), "what", "an archive, then "
+                                                                                                + "an upload over 10 "
+                                                                                                + "MB " + gap
+                                                                                                + " minutes later"));
+            }
+            case "P20004" -> {
+                made.addAll(upload(person, day, at, random.randint(20_000_000, 90_000_000)));
+                nearMisses.add(Map.of("person_id", person.id(), "date", day.toString(), "what", "an upload over 10 "
+                                                                                                + "MB with no archive "
+                                                                                                + "before it"));
+            }
+            case "P20001" -> {
+                made.add(archive(person, day, at, random));
+                nearMisses.add(Map.of("person_id", person.id(), "date", day.toString(), "what", "an archive, and "
+                                                                                                + "P20005's upload "
+                                                                                                + "over 10 MB within "
+                                                                                                + "the hour"));
+            }
+            default -> made.addAll(upload(person, day, midnight + (11 * 60 + 40) * (long) MINUTE,
+                    random.randint(20_000_000, 90_000_000)));
+        }
+    }
+
+    // An archive of a person's work on their host.
+    private static Act archive(final Person person, final LocalDate day, final long at, final SeededRandom random) {
+        final String name = random.choice(List.of("project-notes", "q3-working-files", "photos", "reports",
+                "drafts")) + "-" + day + ".zip";
+        return new Act(at, Source.ENDPOINT, person.id(), person.logon(Source.ENDPOINT), person.hostOn(day),
+                "file.archive", Map.of("path", "C:\\Users\\" + person.shortName() + "\\Documents\\" + name,
+                "name", name, "size", String.valueOf(random.randint(1_000_000, 80_000_000)), "hash", hash(name),
+                "files", String.valueOf(random.randint(5, 120))), person.organisationOn(day), 0);
+    }
+
+    // A personal cloud page view.
+    private static List<Act> cloudPage(final Person person,
+                                       final LocalDate day,
+                                       final long at,
+                                       final SeededRandom random) {
+        return proxy(person, day, at, "/" + random.choice(List.of("", "home", "view", "recent")), "GET",
+                random.randint(300, 4_000));
+    }
+
+    // An upload to personal cloud of so many bytes.
+    private static List<Act> upload(final Person person, final LocalDate day, final long at, final int bytes) {
+        return proxy(person, day, at, "/upload", "POST", bytes);
+    }
+
+    // A proxy event to the personal cloud domain, with its tunnel from the pipeline change on.
+    private static List<Act> proxy(final Person person,
+                                   final LocalDate day,
+                                   final long at,
+                                   final String path,
+                                   final String method,
+                                   final int bytesOut) {
+        final Map<String, String> fields = new LinkedHashMap<>();
+        fields.put("domain", PERSONAL_CLOUD);
+        fields.put("url", "https://" + PERSONAL_CLOUD + path);
+        fields.put("category", PERSONAL_CLOUD_CATEGORY);
+        fields.put("method", method);
+        fields.put("bytes_out", String.valueOf(bytesOut));
+        fields.put("bytes_in", "POST".equals(method)
+                ? "1200"
+                : "45000");
+        fields.put("ip", "203.0.113." + (1 + Math.floorMod(PERSONAL_CLOUD.hashCode(), 250)));
+        fields.put("process", "chrome.exe");
+        fields.put("access", "Office");
+        final List<Act> out = new ArrayList<>();
+        out.add(new Act(at, Source.PROXY, person.id(), person.logon(Source.PROXY), person.hostOn(day), "web",
+                fields, person.organisationOn(day), 0));
+        if (!day.isBefore(PIPELINE_CHANGE)) {
+            final Map<String, String> tunnel = new LinkedHashMap<>(fields);
+            tunnel.put("method", "CONNECT");
+            tunnel.put("url", PERSONAL_CLOUD + ":443");
+            tunnel.put("bytes_out", "0");
+            tunnel.put("bytes_in", "0");
+            out.add(new Act(at - 200, Source.PROXY, person.id(), person.logon(Source.PROXY), person.hostOn(day),
+                    "web", tunnel, person.organisationOn(day), 0));
+        }
+        return out;
     }
 
     // A cloud event done to a person by an actor (null fields for none), whom it was done to in its fields.

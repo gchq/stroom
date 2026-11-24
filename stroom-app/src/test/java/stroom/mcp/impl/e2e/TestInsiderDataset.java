@@ -298,6 +298,39 @@ class TestInsiderDataset {
     }
 
     @Test
+    void theBackgroundsArchivesAndPersonalCloudUseAreAStreamOfTheirOwn() {
+        final InsiderDataset reduced = InsiderDataset.generate(Options.reduced());
+        // The reduced days hold every day's, and none is a scenario person's.
+        assertThat(reduced.noiseActs().stream().map(TestInsiderDataset::withoutNumber).toList())
+                .isEqualTo(everyDay.noiseActs().stream()
+                        .filter(act -> Options.reduced().keeps(day(act)))
+                        .map(TestInsiderDataset::withoutNumber)
+                        .toList());
+        assertThat(everyDay.noiseActs()).isNotEmpty().allSatisfy(act -> {
+            assertThat(everyDay.person(act.personId()).scenario()).isNull();
+            assertThat(act.type()).isIn("file.archive", "web");
+        });
+        // Numbered on after their source's own and done-to-them events.
+        final long endpoint = reduced.acts(Source.ENDPOINT).size() + reduced.targetActs(Source.ENDPOINT).size();
+        assertThat(reduced.noiseActs(Source.ENDPOINT)).extracting(Act::number).first()
+                .isEqualTo((int) endpoint + 1);
+        // The near misses, as the known answer says.
+        assertThat((List<Map<String, Object>>) everyDay.knownAnswer().get("near_misses"))
+                .extracting(miss -> miss.get("person_id"), miss -> miss.get("date")).containsExactlyInAnyOrder(
+                        org.assertj.core.groups.Tuple.tuple("P20003", "2026-07-14"),
+                        org.assertj.core.groups.Tuple.tuple("P20004", "2026-08-05"),
+                        org.assertj.core.groups.Tuple.tuple("P20001", "2026-09-02"));
+        final List<Act> missed = everyDay.noiseActs().stream()
+                .filter(act -> day(act).equals(LocalDate.of(2026, 7, 14)) && "P20003".equals(act.personId()))
+                .toList();
+        assertThat(missed).extracting(Act::type).contains("file.archive", "web");
+        assertThat(missed.getLast().time() - missed.getFirst().time()).isBetween(70 * 60_000L, 90 * 60_000L);
+        // Every render works.
+        reduced.noiseActs().forEach(act -> assertThat(InsiderRecords.document(act, 7)).containsEntry("user.id",
+                act.personId()));
+    }
+
+    @Test
     void theEventsDoneToPeopleRenderWithWhomTheyWereDoneTo() throws Exception {
         final InsiderDataset reduced = InsiderDataset.generate(Options.reduced());
         final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
