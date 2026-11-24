@@ -105,6 +105,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     static final String SUM_FIELDS_ARG = "sumFields";
     static final String BREADTH_FIELDS_ARG = "breadthFields";
     static final String LEAVE_ARG = "leave";
+    static final String EXCEPTIONS_ARG = "exceptions";
     static final String PEERS_ARG = "peers";
     static final String PEER_ELEMENT_ARG = "peerElement";
     /// The most findings the result gives; the rest are in the findings file.
@@ -266,6 +267,10 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                         .addProperty(LEAVE_ARG, stringArraySchema("The person's leave, each yyyy-MM-dd..yyyy-MM-dd, "
                                                                   + "from the question, skill or AGENTS doc: not "
                                                                   + "scored."))
+                        .addProperty(EXCEPTIONS_ARG, stringArraySchema("Approved exceptions, each "
+                                                                       + "yyyy-MM-dd..yyyy-MM-dd: reason (e.g. an "
+                                                                       + "approved migration), from the question, "
+                                                                       + "skill or AGENTS doc: not scored."))
                         .addBooleanProperty(PEERS_ARG, "Compare with peers (default true).")
                         .addEnumProperty(PEER_ELEMENT_ARG, PeerGroups.ELEMENTS.stream().sorted().toList(),
                                 "The UserDetails element peers share (default Organisation).")
@@ -297,7 +302,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         final Unit unit = unit(stringArg(request, UNIT_ARG));
         final List<LocalDate[]> leave = leave(stringListArg(request, LEAVE_ARG));
         final Spec spec = new Spec(periods.baselineFrom(), periods.baselineTo(), periods.windowFrom(),
-                periods.windowTo(), unit, leave, zone.zone());
+                periods.windowTo(), unit, leave, zone.zone(), exceptions(stringListArg(request, EXCEPTIONS_ARG)));
         final String element = peerElement(stringArg(request, PEER_ELEMENT_ARG));
         final boolean peers = booleanArg(request, PEERS_ARG, true);
 
@@ -682,6 +687,32 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
             ranges.add(new LocalDate[]{start, end});
         }
         return ranges;
+    }
+
+    /// @param values The approved exceptions as given, each `from..to: reason` (or a date and a reason).
+    /// @return Each.
+    static List<ActivityScoring.Excepted> exceptions(final List<String> values) {
+        final List<ActivityScoring.Excepted> exceptions = new ArrayList<>();
+        for (final String value : NullSafe.list(values)) {
+            final String text = NullSafe.string(value);
+            final int colon = text.indexOf(':');
+            final String reason = colon < 0
+                    ? ""
+                    : text.substring(colon + 1).strip();
+            final Matcher matcher = RANGE.matcher(colon < 0
+                    ? text
+                    : text.substring(0, colon));
+            if (!matcher.matches() || reason.isEmpty()) {
+                throw new WorkspaceException("Exception '" + value + "' can't be read: give yyyy-MM-dd..yyyy-MM-dd: "
+                                             + "the reason.");
+            }
+            final LocalDate start = LocalDate.parse(matcher.group(1));
+            final LocalDate end = matcher.group(2) == null
+                    ? start
+                    : LocalDate.parse(matcher.group(2));
+            exceptions.add(new ActivityScoring.Excepted(start, end, reason));
+        }
+        return exceptions;
     }
 
     /// @param value The element as given, or null.

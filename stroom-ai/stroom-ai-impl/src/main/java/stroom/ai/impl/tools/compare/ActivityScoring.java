@@ -131,6 +131,15 @@ final class ActivityScoring {
             findings.addAll(rhythm(spec, data, notes));
             findings.addAll(peers(spec, data, status, notes));
         }
+        for (final Excepted excepted : spec.exceptions()) {
+            final long days = status.entrySet().stream()
+                    .filter(day -> day.getValue() == Status.EXCEPTION && excepted.contains(day.getKey()))
+                    .count();
+            if (days > 0) {
+                notes.add(days + " day(s) from " + excepted.from() + " to " + excepted.to() + " not scored: "
+                          + excepted.reason() + " (an approved exception given).");
+            }
+        }
         final long uncovered = status.values().stream().filter(s -> s == Status.NO_SOURCE_DATA).count();
         if (uncovered > 0) {
             notes.add(uncovered + " day(s) with no data in the source at all (e.g. retention or a gap in "
@@ -158,7 +167,9 @@ final class ActivityScoring {
                     ? Status.NO_SOURCE_DATA
                     : spec.onLeave(date)
                             ? Status.LEAVE
-                            : Status.SCORED;
+                            : spec.exception(date).isPresent()
+                                    ? Status.EXCEPTION
+                                    : Status.SCORED;
             status.put(date, s);
             final Day day = data.days().get(date);
             // Quiet: a day the source holds data, not leave, and the person did nothing; else the run breaks.
@@ -1034,6 +1045,8 @@ final class ActivityScoring {
         NO_SOURCE_DATA,
         /// Given as leave.
         LEAVE,
+        /// In an approved exception given (e.g. a migration, an on-call week).
+        EXCEPTION,
         /// In a run of quiet days no one named: reported, not scored.
         QUIET_RUN
     }
@@ -1073,23 +1086,69 @@ final class ActivityScoring {
     /// @param unit         The unit windows are compared in.
     /// @param leave        The person's leave, each `{from, to}` (to inclusive).
     /// @param zone         The person's zone.
+    /// @param exceptions   Approved exceptions (e.g. a migration): their days aren't scored, and are said.
     record Spec(LocalDate baselineFrom,
                 LocalDate baselineTo,
                 LocalDate windowFrom,
                 LocalDate windowTo,
                 Unit unit,
                 List<LocalDate[]> leave,
-                ZoneId zone) {
+                ZoneId zone,
+                List<Excepted> exceptions) {
 
-        /// Copies the list.
+        /// Copies the lists.
         Spec {
             leave = List.copyOf(leave);
+            exceptions = List.copyOf(exceptions);
+        }
+
+        /// Without exceptions.
+        ///
+        /// @param baselineFrom The baseline's first day.
+        /// @param baselineTo   The day after the baseline's last.
+        /// @param windowFrom   The window's first day.
+        /// @param windowTo     The day after the window's last.
+        /// @param unit         The unit windows are compared in.
+        /// @param leave        The person's leave, each `{from, to}` (to inclusive).
+        /// @param zone         The person's zone.
+        Spec(final LocalDate baselineFrom,
+             final LocalDate baselineTo,
+             final LocalDate windowFrom,
+             final LocalDate windowTo,
+             final Unit unit,
+             final List<LocalDate[]> leave,
+             final ZoneId zone) {
+            this(baselineFrom, baselineTo, windowFrom, windowTo, unit, leave, zone, List.of());
+        }
+
+        /// @param date A day.
+        /// @return The approved exception it is in, if any.
+        Optional<Excepted> exception(final LocalDate date) {
+            return exceptions.stream().filter(excepted -> excepted.contains(date)).findFirst();
         }
 
         /// @param date A day.
         /// @return True if it is in the leave given.
         boolean onLeave(final LocalDate date) {
             return leave.stream().anyMatch(range -> !date.isBefore(range[0]) && !date.isAfter(range[1]));
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// An approved exception: days whose activity is explained (e.g. an approved migration, an on-call week).
+    ///
+    /// @param from   Its first day.
+    /// @param to     Its last day (inclusive).
+    /// @param reason Why, as given.
+    record Excepted(LocalDate from, LocalDate to, String reason) {
+
+        /// @param date A day.
+        /// @return True if it is in it.
+        boolean contains(final LocalDate date) {
+            return !date.isBefore(from) && !date.isAfter(to);
         }
     }
 

@@ -331,6 +331,28 @@ class TestActivityScoring {
     }
 
     @Test
+    void anApprovedExceptionIsNotScored() {
+        final CompareFixtures fixtures = background(ZONE, BASE_FROM, WINDOW_TO, 1.0);
+        final LocalDate migrationFrom = LocalDate.of(2026, 5, 18);
+        final LocalDate migrationTo = LocalDate.of(2026, 5, 22);
+        fixtures.workdays("p1", BASE_FROM, WINDOW_TO, 9, 17, date -> !date.isBefore(migrationFrom)
+                                                                     && !date.isAfter(migrationTo)
+                ? 50
+                : 5, date -> Map.of());
+        final Spec spec = new Spec(BASE_FROM, WINDOW_FROM, WINDOW_FROM, WINDOW_TO, Unit.DAY, List.of(), ZONE,
+                List.of(new ActivityScoring.Excepted(migrationFrom, migrationTo, "approved data-centre migration")));
+        final Scored scored = ActivityScoring.score(spec, fixtures.data("p1", NO_FIELDS, BASE_FROM, WINDOW_TO,
+                List.of()));
+
+        assertThat(scored.status().get(LocalDate.of(2026, 5, 19))).isEqualTo(Status.EXCEPTION);
+        assertThat(scored.findings()).isEmpty();
+        assertThat(scored.notes()).contains("5 day(s) from 2026-05-18 to 2026-05-22 not scored: approved "
+                                            + "data-centre migration (an approved exception given).");
+        assertThat(CompareActivityTool.exceptions(List.of("2026-05-18..2026-05-22: approved migration")))
+                .singleElement().satisfies(excepted -> assertThat(excepted.reason()).isEqualTo("approved migration"));
+    }
+
+    @Test
     void constantActivityFindsNothing() {
         final CompareFixtures fixtures = background(ZONE, BASE_FROM, WINDOW_TO, 1.0);
         fixtures.workdays("p1", BASE_FROM, WINDOW_TO, 9, 17, date -> 5, date -> Map.of());
