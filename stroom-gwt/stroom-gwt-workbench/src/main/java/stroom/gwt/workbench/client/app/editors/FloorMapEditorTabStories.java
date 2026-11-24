@@ -119,6 +119,8 @@ public final class FloorMapEditorTabStories {
 
     // The canvas's focusable element (FloorMapCanvas's focus panel)
     private static final String CANVAS = ".floor-map-canvas";
+    private static final String DESK_GLYPH = "[id=\"__obj_desk-1\"]";
+    private static final String READOUT_VISIBLE = "floor-map-canvas__gesture-readout--visible";
     // Told when the editor tells its document of a change
     private static final String ON_CHANGE = "onChange";
 
@@ -265,6 +267,29 @@ public final class FloorMapEditorTabStories {
                     play.keyboard("{Escape}");
                     play.waitFor(() -> play.expect(screen.queryByRole("menu")).toBeNull());
                     DocEditors.expectNoProblems(play);
+                })
+                // Dragging an object says where it is, beside the pointer, from the press to the drop
+                .story("DragReadout", context -> render(context, DESK_FIXTURES))
+                .withPlay(play -> {
+                    final Query canvas = play.querySelector(CANVAS);
+                    play.waitFor(() -> play.expect(play.querySelector(DESK_GLYPH)).toBeInTheDocument());
+                    final Query glyph = play.querySelector(DESK_GLYPH);
+                    final Query readout = play.querySelector(".floor-map-canvas__gesture-readout");
+                    play.fireEvent().mouseDown(glyph, EventInit.create().relativeTo(glyph, 2, 2).buttons(1));
+                    play.waitFor(() -> play.expect(readout).toHaveClass(READOUT_VISIBLE));
+                    play.expect(readout).toHaveTextContent(TextMatch.regex("\\d", ""));
+                    play.fireEvent().mouseMove(canvas, EventInit.create().relativeTo(canvas, 200, 200).buttons(1));
+                    play.expect(readout).toHaveClass(READOUT_VISIBLE);
+                    play.expect("the readout is within the canvas", () -> {
+                        final Element inner = readout.element().get();
+                        final Element outer = canvas.element().get();
+                        return inner.getAbsoluteLeft() >= outer.getAbsoluteLeft()
+                               && inner.getAbsoluteTop() >= outer.getAbsoluteTop()
+                               && inner.getAbsoluteRight() <= outer.getAbsoluteRight()
+                               && inner.getAbsoluteBottom() <= outer.getAbsoluteBottom();
+                    }).toEqual(true);
+                    play.fireEvent().mouseUp(canvas, EventInit.create().relativeTo(canvas, 200, 200));
+                    play.waitFor(() -> play.expect(readout).not().toHaveClass(READOUT_VISIBLE));
                 })
                 // Set Scale, from the canvas's menu, shows the crosshair and takes the focus; Escape
                 // leaves the mode, and the normal pointer is back

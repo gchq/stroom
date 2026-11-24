@@ -1248,11 +1248,11 @@ shows one), and the app itself.
 | Tree `Keyboard` and TopBar `Keyboard` screenshots; `AceEditorFeatures` `Snippet`; screenshots that differ with many workers; the light theme's `CalendarToolbarsInTheDialog` and `ShortcutsAreButtons` | Need runs; the light theme's two **Fixed** (23 November 2026), as the entry below |
 | `TraceOverviewChart` draws its fixed text and ARIA as HTML | Still open |
 | The floor map Layers drag never forgets `dragFromIndex` after a drop | **Fixed** (23 November 2026), as the entry below |
-| No story hovers or drags on the floor map canvas but Set Scale | Still open |
+| No story hovers or drags on the floor map canvas but Set Scale | **Fixed** (24 November 2026): `FloorMapMap` `ClusterTooltip` and `FloorMapEditorTab` `DragReadout` |
 | A sized `PopupType.POPUP` sets an inline width and height | **Fixed**: `--popup__width` and `--popup__height` with `popup--sized-*` classes (`PopupUtil.java:159-168`, `popup.css`) |
 | A dialog's New shows its busy spinner on Cancel | **Fixed** (19 November 2026): the pressed button shows it (`DialogFrame`), as the entry below |
 | The API key dialog and the start-up activity chooser can't hear a failed config fetch | Still open (`UiConfigCache.java:129-132`) |
-| Wave 11's dialogs with no story | In part: Batch Change All, Copy and Move, and the attachment data dialog have stories now; Chat History, the floor map's Track and the credential picker's empty OK and Cancel don't |
+| Wave 11's dialogs with no story | In part: Batch Change All, Copy and Move, and the attachment data dialog have stories now; **Fixed** (24 November 2026): Chat History had one already (`App/AI/AskStroomAiDialog` `OpenFromHistory`); `FloorMapMap` `ClusterTrack`, and `CredentialPickerDialog` `OkWithNothingChosen` and `Cancel`. Choose Annotation shown a second time still has none |
 | Solr fields mark the document changed on key down | **Fixed** (23 November 2026): they tell of a change on key up and when left; nor is it changed by any other key, as it was because what isn't set (e.g. no ZooKeeper hosts) was written back as a blank (`SolrIndexEditor` `TypingMarksChanged`) |
 | Wave 12's screens with no story | In part: the data generator's Execution grids have checks; the traces store's Settings tab and the permissions filter's help don't |
 | Classes wave 12 left un-BEM'd | **Done**: none of them is named anywhere |
@@ -1540,10 +1540,10 @@ to delete them by hand.~~
   and `emailTextBox` and `passwordPolicyMessage` in `change-password.css`. Give them BEM names in
   one pass, as the five pages share the two files.~~ **Done** (checked 30 October 2026: no class
   has those names; both sheets are BEM, the policy message `change-password__policy`).
-* A Solr index's Collection, Solr URLs and ZooKeeper hosts mark the document changed on a key down
+* ~~A Solr index's Collection, Solr URLs and ZooKeeper hosts mark the document changed on a key down
   (found 27 October 2026, in wave 12; as on master), before the typed character is in the field, so
-  the change the user sees isn't the one compared; a paste with the mouse marks nothing. Use the
-  fields' value change (or input) events, with a story typing one character and checking Save.
+  the change the user sees isn't the one compared; a paste with the mouse marks nothing.~~ **Fixed**
+  (23 November 2026): `SolrIndexEditor` `TypingMarksChanged`.
 * Wave 12's screens with no story or no check (found 27 October 2026, in its audit): a Traces
   store's Settings tab (now `PlanBSettingsController` with its state type locked, which dropped its
   doubled form padding: no screenshot shows it); the data generator's Execution tab's grids (a
