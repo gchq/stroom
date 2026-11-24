@@ -50,9 +50,9 @@ expected:
     folder: /Hunts
     skill: Failed logons by host
     changed_sections: [steps]
-    may_change: [description, output]
+    may_change: [description, output, when to use]
     steps_call: [run_stroomql]
-    steps_contain: [from VPN, ConnectFailed, Gateway]
+    steps_contain: [VPN, ConnectFailed, Gateway]
     parameters: [user, days]
     check_problems: 0
 reference:

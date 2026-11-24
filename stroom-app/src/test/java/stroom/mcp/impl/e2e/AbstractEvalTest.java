@@ -42,6 +42,7 @@ import stroom.documentation.impl.DocumentationStore;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.feed.shared.FeedDoc;
 import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexFieldService;
 import stroom.index.impl.IndexStore;
@@ -70,6 +71,7 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.extraction.FieldValue;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
@@ -328,6 +330,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         if (elastic != null) {
             sources.add(elastic.doc());
             sources.add(elastic.cluster());
+            if (elastic.feed() != null) {
+                sources.add(elastic.feed());
+            }
         }
         for (final Map<String, Object> spec : EvalCases.luceneIndexes(evalCase)) {
             sources.add(questionLuceneIndex(EvalCases.table(spec)));
@@ -354,6 +359,7 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     /// @return The Elastic Index doc, and the index to remove once the case is done.
     QuestionIndex questionIndex(final Map<String, Object> evalCase) {
         final ElasticTestNode node = ElasticTestNode.getOrSkip();
+        DocRef feedDoc = null;
         final Map<String, Object> spec = (Map<String, Object>) evalCase.get("elastic_index");
         final EvalCases.QuestionTable table = EvalCases.table(spec);
         final String indexName = ElasticTestNode.createIndexName("eval-" + String.valueOf(evalCase.get("id"))
@@ -366,8 +372,11 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             streams = List.of(storeEvents("EVAL-" + indexName.toUpperCase(Locale.ROOT),
                     EvalQuestionRecords.insiderEventXml(generate)));
         } else if (ANY_SOURCE_XML.equals(spec.get("events_xml")) && table != null) {
-            // The any-source records' Events XML, one stream, an event a record in order (the index's EventIds).
-            streams = List.of(storeEvents("EVAL-" + indexName.toUpperCase(Locale.ROOT), table.records().stream()
+            // The any-source records' Events XML, one stream, an event a record in order (the index's EventIds), in
+            // a feed with its Feed doc, so a user who isn't an administrator can be let read it.
+            final String feed = "EVAL-" + indexName.toUpperCase(Locale.ROOT);
+            feedDoc = create(FeedDoc.TYPE, feed, templateFolder()).getDocRef();
+            streams = List.of(storeEvents(feed, table.records().stream()
                     .map(EvalQuestionRecords::anySourceEventXml)
                     .toList()));
         } else {
@@ -392,7 +401,7 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                 .indexName(indexName)
                 .timeField(timeField)
                 .build()));
-        return new QuestionIndex(node, indexName, created.getDocRef(), cluster);
+        return new QuestionIndex(node, indexName, created.getDocRef(), cluster, feedDoc);
     }
 
     /// A question's reference answer: each tool call of its `reference` (a tool's name, its arguments; e.g.
@@ -461,8 +470,8 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     /// (`folders`, each an Explorer path such as `/Hunts`); its skills docs (`skills_docs`, each a `folder` and its
     /// `skills`, the Markdown of each, saved as a SKILLS doc with a history entry a skill, as `propose_skill` would
     /// have left it); the user who chats (`user`: the administrator, unless it names another, e.g. `{name: analyst,
-    /// edit_skills: false}`: a user with every tool, View on the case's data, Use on its models, and View only on the
-    /// skills docs and their folders); a chat of theirs on a scripted model ([FakeModelServer]); and the case's earlier
+    /// edit_skills: false}`: a user with every tool and View Data, View on the case's data (with the feed of its
+    /// Events XML), Use on its models, and View only on the skills docs and their folders); a chat of theirs on a scripted model ([FakeModelServer]); and the case's earlier
     /// turns (`chat`, each an `ask`, the `calls` the scripted model makes, its `answer`, and with `apply: true` the
     /// user applying the turn's proposal and saving it), asked in that chat, so the turn the case scores has them as
     /// its history, as a user's chat would.
@@ -693,7 +702,8 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         if (spec.get("name") == null) {
             return admin;
         }
-        final UserRef user = user(String.valueOf(spec.get("name")), Set.of());
+        // View Data, so the events' Events XML can be read where they have View on its feed.
+        final UserRef user = user(String.valueOf(spec.get("name")), Set.of(AppPermission.VIEW_DATA_PERMISSION));
         toolPolicy("Eval " + spec.get("name"), AiToolAccess.READ_WRITE, user);
         asUser(admin, () -> {
             // View (which holds Use): an analyst sees the indexes they search.
@@ -2019,7 +2029,8 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     /// @param indexName Its name there.
     /// @param doc       Its Elastic Index doc.
     /// @param cluster   The Elastic Cluster doc it is on.
-    record QuestionIndex(ElasticTestNode node, String indexName, DocRef doc, DocRef cluster) {
+    /// @param feed      The Feed doc of the stream holding its events' Events XML, or null if Stroom holds none.
+    record QuestionIndex(ElasticTestNode node, String indexName, DocRef doc, DocRef cluster, DocRef feed) {
 
     }
 

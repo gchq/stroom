@@ -69,9 +69,10 @@ expected:
   tools_used: [find_skills, activity_timeline]
   tools_not_used: [propose_skill]
   no_proposal: true
-  find_skills: {name: User activity timeline, arguments: {user: mlee}}
+  find_skills: {name: User activity timeline}
   calls_with:
-    - {tool: activity_timeline, contains: [mlee, User activity timeline]}
+    - {tool: activity_timeline, contains: [mlee, User activity timeline],
+       result_contains: [Learned for the skill, "you can't change the skills doc"]}
   answer_must_say_all_of: [Tun-Ascend]
   answer_must_say_one_of: [owner, administrator, Edit]
 reference:

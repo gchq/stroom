@@ -1429,8 +1429,9 @@ final class EvalScore {
     /// * `expected.find_skills`: an accepted `find_skills` call read the skill by `name` (its name or its command's,
     ///   any case), with `arguments` holding each of these values (any case); `not_chosen`: no call read any of these
     ///   skills;
-    /// * `expected.calls_with`: each a `tool` and what its arguments must hold, `contains` (any case): some call of
-    ///   it holds them all, e.g. the skill's steps followed with the values bound;
+    /// * `expected.calls_with`: each a `tool` and what its arguments must hold, `contains` (any case), and its
+    ///   result, `result_contains`: some call of it holds them all, e.g. the skill's steps followed with the values
+    ///   bound;
     /// * `expected.proposal`: of the last proposal (the 'Review and apply' button a `propose_skill` call offered):
     ///   `folder`, where its skills doc is or is to be made (an Explorer path, with or without `/` or `System/`);
     ///   `skill`, the skill it proposes, by name; `parameters`, each a name (or a list of names, any one of them)
@@ -1480,11 +1481,16 @@ final class EvalScore {
             final Map<String, Object> wanted = maps(item);
             final String tool = String.valueOf(wanted.get("tool"));
             final List<String> contains = strings(wanted.get("contains"));
+            final List<String> resultContains = strings(wanted.get("result_contains"));
             final boolean found = run.calls().stream()
                     .filter(call -> tool.equals(call.tool()) && !call.error())
-                    .anyMatch(call -> holdsAll(call.arguments(), contains));
-            questionCheck(tool + " with " + contains, found, "no accepted " + tool + " call's arguments hold all of "
-                                                              + contains);
+                    .anyMatch(call -> holdsAll(call.arguments(), contains) && resultContains.stream()
+                            .allMatch(text -> String.valueOf(call.text()).contains(text)));
+            questionCheck(tool + " with " + contains + resultContains, found, "no accepted " + tool + " call's "
+                                                                              + "arguments hold all of " + contains
+                                                                              + (resultContains.isEmpty()
+                    ? ""
+                    : " with a result holding " + resultContains));
         }
         if (Boolean.TRUE.equals(expected.get("no_proposal"))) {
             questionCheck("no proposal", run.proposals().isEmpty(), run.proposals().size() + " proposal(s) made");

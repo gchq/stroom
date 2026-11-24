@@ -1020,6 +1020,23 @@ class TestEvalScore {
     }
 
     @Test
+    void aCallWithItsArgumentsMayAlsoNeedWhatItsResultSays() {
+        final Map<String, Object> evalCase = skillCase(Map.of("calls_with", List.of(Map.of("tool",
+                "activity_timeline", "contains", List.of("mlee"), "result_contains",
+                List.of("Learned for the skill")))));
+        final EvalScore learned = new EvalScore("94");
+        final EvalScore nothing = new EvalScore("94");
+
+        learned.scoreSkill(evalCase, run(List.of(new EvalScore.SkillCall("activity_timeline", Map.of("entity",
+                "mlee"), false, "Spans...\nLearned for the skill:\n- VPN: pair Up -> Down by Id"))));
+        nothing.scoreSkill(evalCase, run(List.of(new EvalScore.SkillCall("activity_timeline", Map.of("entity",
+                "mlee"), false, "Spans: 0 pair span(s)"))));
+
+        assertThat(learned.passed()).as(learned.summary()).isTrue();
+        assertThat(nothing.summary()).contains("with a result holding [Learned for the skill]");
+    }
+
+    @Test
     void aSkillCaseChecksWhatTheAgentToldTheUserAndThatTheChatRan() {
         final Map<String, Object> evalCase = skillCase(Map.of("answer_must_say_all_of", List.of("Logons-V2"),
                 "answer_must_say_one_of", List.of("missing", "renamed"), "answer_must_not_say", List.of("ws-01")));

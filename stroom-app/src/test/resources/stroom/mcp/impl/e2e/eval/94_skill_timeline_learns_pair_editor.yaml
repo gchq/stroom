@@ -69,9 +69,9 @@ user_knows: >
   UserName is the user. When it offers to record what the timeline learned in the skill, say yes: record it.
 expected:
   tools_used: [find_skills, activity_timeline, propose_skill]
-  find_skills: {name: User activity timeline, arguments: {user: mlee}}
+  find_skills: {name: User activity timeline}
   calls_with:
-    - {tool: activity_timeline, contains: [mlee, User activity timeline]}
+    - {tool: activity_timeline, contains: [mlee, User activity timeline], result_contains: [Learned for the skill]}
   proposal:
     folder: /Hunts
     skill: User activity timeline

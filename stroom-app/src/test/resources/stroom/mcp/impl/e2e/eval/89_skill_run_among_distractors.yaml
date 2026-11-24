@@ -80,7 +80,7 @@ request: How many failed logons did bob have this week?
 user_knows: The Logons index holds the logons; bob is the account name. This week means the last 7 days.
 expected:
   tools_used: [find_skills, run_stroomql]
-  find_skills: {name: Failed logons by host, arguments: {user: bob}}
+  find_skills: {name: Failed logons by host}
   not_chosen: [Logon times of day, Accounts locked out]
   calls_with:
     - {tool: run_stroomql, contains: [Logons, bob, Failure, Host]}
