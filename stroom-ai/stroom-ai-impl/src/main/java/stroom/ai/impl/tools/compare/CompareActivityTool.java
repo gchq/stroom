@@ -270,7 +270,8 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                  + "(about 1 more query a month each per source). peers (only when the question "
                                  + "compares them with their team or organisation) also compares them with the "
                                  + "others of their UserDetails Organisation, read from one event each (about 1 "
-                                 + "more query a month per source); accessField is asked for too. A date alone is a whole day in timeZone: windowFrom 2026-06-01 "
+                                 + "more query a month per source); accessField is asked for too. A date alone is "
+                                 + "a whole day in timeZone: windowFrom 2026-06-01 "
                                  + "and windowTo 2026-06-30 are all of June.")
                         .chatOnly(" Drill into flagged days with activity_timeline.")
                         .build())
