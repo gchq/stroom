@@ -1,0 +1,55 @@
+name: A skill broken since it was written is reported before it runs, with the fix
+kind: skill
+capabilities: [skills, find_skills, check_skill]
+# The skill's example call reads the index "Logons", renamed to "Logons-V2" since. find_skills, reading it by name,
+# reports the missing data source before the steps run. Scored on: the skill read by name, the agent telling the
+# user it can't run as written and naming the fix (the index's new name, Logons-V2, or the skill's change), and the
+# steps not run against the missing index (no run_stroomql call reading "Logons" alone).
+lucene_index:
+  name: Logons-V2
+  events: questions/skill-logons.csv
+  recent: true
+  fields: {EventTime: date, UserId: text, Outcome: text, Host: text}
+skills_docs:
+  - folder: /Hunts
+    skills:
+      - |
+        # Failed logons by host
+
+        Counts a user's failed logons over a period, by host, from the Logons index.
+
+        ## When to use
+        - "how many failed logons did jsmith have?"
+        - "failed logons by host for a user this week"
+
+        ## Parameters
+        - user (required): the account name, as the Logons index holds it (UserId).
+        - days (default 7): how many days back from now.
+
+        ## Steps
+        1. Count the user's failed logons by host:
+           ```json
+           {"tool": "run_stroomql", "arguments": {"query": "from Logons where UserId = '{user}' and Outcome = 'Failure' and EventTime > now() - {days}d eval Count = count() group by Host select Host, Count", "out": "/outputs/skills/failed-logons-{user}.md"}}
+           ```
+
+        ## Output
+        A table in the chat: each host and its count of failed logons.
+request: /skill:failed-logons-by-host user=jsmith
+user_knows: >
+  The Logons index was renamed Logons-V2 last month. Don't change the skill now; just tell me what's wrong with it.
+expected:
+  tools_used: [find_skills]
+  find_skills: {name: Failed logons by host}
+  answer_must_say_all_of: [Logons-V2]
+  answer_must_say_one_of: [missing, doesn't exist, does not exist, no longer, not found, renamed, isn't, can't find, cannot find, couldn't find, could not find]
+  answer_must_not_say: [ws-01]
+reference:
+  calls:
+    - {tool: activate_skills, arguments: {}}
+    - tool: find_skills
+      arguments: {name: failed-logons-by-host, arguments: {user: jsmith}}
+    - {tool: list_data_sources, arguments: {}}
+  answer: >-
+    The skill "Failed logons by host" can't run as written: its step reads the index Logons, which doesn't exist any
+    more. There is an index Logons-V2 with the same fields; the skill's query needs "from Logons-V2" (check_skill
+    reports it as a missing data source). I haven't run it.

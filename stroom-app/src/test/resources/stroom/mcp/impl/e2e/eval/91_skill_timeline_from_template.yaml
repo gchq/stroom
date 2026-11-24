@@ -1,0 +1,145 @@
+name: The user activity timeline skill, from its template, tried and saved, on the generated data
+kind: skill
+capabilities: [skills, templates, trial_run, timeline]
+# From the built-in "user-activity-timeline" template, filled with the generated endpoint, Windows and proxy data's
+# index (aggregated/activity-timeline, eval case 77's week, moved to end yesterday) and its role conditions, tried on
+# one user for the last 2 days, then saved in /Investigations. Scored on: the template read, the trial run with the
+# user's values and the timeline built by following its steps (activity_timeline for jsmith), the proposal holding
+# the skill with its placeholders filled from the user's index (check_skill finds no problems, none left unfilled),
+# its steps calling activity_timeline on "User activity". Skipped without an Elasticsearch node.
+elastic_index:
+  name: User activity
+  events: aggregated/activity-timeline/activity-timeline.csv
+  recent: true
+  fields: {EventTime: date, Source: text, UserName: text, Host: text, Process: text, WindowTitle: text,
+           WindowId: text, EventType: text, Object: text, Text: text}
+folders: [/Investigations]
+request: >
+  Make me a skill that builds a user's activity timeline from our "User activity" Elasticsearch index, and try it on
+  jsmith for the last 2 days first. Then save it in /Investigations.
+user_knows: >
+  Call it "User activity timeline"; the user and the number of days vary (7 days unless they say); a timeline in the
+  chat. Source says which product wrote each event: endpoint (EventType focus, open, close, clipboard, save,
+  removable_copy), windows (lock, unlock; UserName is CORP\jsmith there), proxy (web), aichat (prompt) and messages
+  (message). Host is the host, Process the application, WindowTitle the window title, WindowId the window, Object the
+  file or URL. The trial looked right: save it.
+expected:
+  tools_used: [propose_skill, activity_timeline]
+  calls_with:
+    - {tool: propose_skill, contains: [template, user-activity-timeline]}
+    - {tool: propose_skill, contains: [trial, jsmith]}
+    - {tool: activity_timeline, contains: [jsmith, User activity]}
+  proposal:
+    folder: /Investigations
+    skill: User activity timeline
+    parameters: [[user, username, account], [days, period]]
+    steps_call: [activity_timeline]
+    steps_contain: [User activity]
+    check_problems: 0
+reference:
+  calls:
+    - {tool: activate_skills, arguments: {}}
+    - {tool: propose_skill, arguments: {action: template, name: user-activity-timeline}}
+    - {tool: describe_data_source, arguments: {data_source: User activity}}
+    - tool: propose_skill
+      arguments:
+        action: trial
+        parameters: {user: jsmith, days: 2}
+        markdown: |
+          # User activity timeline
+
+          Builds a timeline of one user's activity over a period from the User activity index, in time order: the
+          applications in focus on each host, a lock to its unlock, their web browsing, what they were working on, the gaps
+          where they were idle, and the events missing from the sources.
+
+          ## When to use
+
+          - "build a timeline of jsmith's activity over the past 7 days"
+          - "what was this user doing last week?"
+          - "show me a user's activity, in order, across their hosts"
+
+          ## Parameters
+
+          - user (required): the user's account name, as the User activity index holds it (UserName).
+          - days (default 7): how many days back from now.
+
+          ## Steps
+
+          1. Build the timeline from the User activity index's endpoint, Windows and proxy events, applying this skill's
+             Event chains:
+             ```json
+             {"tool": "activity_timeline", "arguments": {"entity": "{user}", "timeFrom": "now()-{days}d", "timeTo": "now()", "sources": [{"index": "User activity", "name": "Endpoint", "user": "UserName", "host": "Host", "process": "Process", "title": "WindowTitle", "window": "WindowId", "object": "Object", "roles": {"focus": {"where": [{"field": "Source", "value": "endpoint"}, {"field": "EventType", "value": "focus"}]}, "open": {"where": [{"field": "Source", "value": "endpoint"}, {"field": "EventType", "value": "open"}]}, "close": {"where": [{"field": "Source", "value": "endpoint"}, {"field": "EventType", "value": "close"}]}}}, {"index": "User activity", "name": "Logons", "user": "UserName", "transform": ["strip_domain"], "host": "Host", "roles": {"idle_start": {"where": [{"field": "Source", "value": "windows"}, {"field": "EventType", "value": "lock"}]}, "idle_end": {"where": [{"field": "Source", "value": "windows"}, {"field": "EventType", "value": "unlock"}]}}}, {"index": "User activity", "name": "Proxy", "user": "UserName", "host": "Host", "object": "Object", "roles": {"actions": [{"kind": "web access", "where": [{"field": "Source", "value": "proxy"}, {"field": "EventType", "value": "web"}]}]}}], "view": "both", "skill": "User activity timeline"}}
+             ```
+          2. Draw each view the result gives with gantt_chart, using the arguments it gives for that view; where it says a view
+             is too dense for one chart, draw one day or one activity.
+          3. Say what the data-quality flags found (unpaired starts and ends, idle starts with no end, a source silent while
+             another shows the user active): events may be missing, so say so rather than read a gap as idleness.
+          4. Where it offers to record what was learned in this skill's Event chains, ask the user, and if they agree record it
+             as the result says.
+
+          ## Event chains
+
+          What each source's events mean beyond the schema, learned by earlier runs and applied before the schema's pairs and
+          inference: a line each, a pair as source: pair start -> end by key, or a type's role as source: type is idle.
+
+          ## Output
+
+          The timeline in the chat (the activities, each label marked as an inference with its evidence; the spans by host),
+          the active time by application, and the data-quality flags with examples.
+    - {tool: activate_timelines, arguments: {}}
+    - tool: activity_timeline
+      arguments:
+        entity: jsmith
+        timeFrom: now()-2d
+        timeTo: now()
+        view: both
+        skill: User activity timeline
+        sources: [{"index": "User activity", "name": "Endpoint", "user": "UserName", "host": "Host", "process": "Process", "title": "WindowTitle", "window": "WindowId", "object": "Object", "roles": {"focus": {"where": [{"field": "Source", "value": "endpoint"}, {"field": "EventType", "value": "focus"}]}, "open": {"where": [{"field": "Source", "value": "endpoint"}, {"field": "EventType", "value": "open"}]}, "close": {"where": [{"field": "Source", "value": "endpoint"}, {"field": "EventType", "value": "close"}]}}}, {"index": "User activity", "name": "Logons", "user": "UserName", "transform": ["strip_domain"], "host": "Host", "roles": {"idle_start": {"where": [{"field": "Source", "value": "windows"}, {"field": "EventType", "value": "lock"}]}, "idle_end": {"where": [{"field": "Source", "value": "windows"}, {"field": "EventType", "value": "unlock"}]}}}, {"index": "User activity", "name": "Proxy", "user": "UserName", "host": "Host", "object": "Object", "roles": {"actions": [{"kind": "web access", "where": [{"field": "Source", "value": "proxy"}, {"field": "EventType", "value": "web"}]}]}}]
+    - tool: propose_skill
+      arguments:
+        folder: /Investigations
+        change: Created from the user-activity-timeline template, for the User activity index
+        markdown: |
+          # User activity timeline
+
+          Builds a timeline of one user's activity over a period from the User activity index, in time order: the
+          applications in focus on each host, a lock to its unlock, their web browsing, what they were working on, the gaps
+          where they were idle, and the events missing from the sources.
+
+          ## When to use
+
+          - "build a timeline of jsmith's activity over the past 7 days"
+          - "what was this user doing last week?"
+          - "show me a user's activity, in order, across their hosts"
+
+          ## Parameters
+
+          - user (required): the user's account name, as the User activity index holds it (UserName).
+          - days (default 7): how many days back from now.
+
+          ## Steps
+
+          1. Build the timeline from the User activity index's endpoint, Windows and proxy events, applying this skill's
+             Event chains:
+             ```json
+             {"tool": "activity_timeline", "arguments": {"entity": "{user}", "timeFrom": "now()-{days}d", "timeTo": "now()", "sources": [{"index": "User activity", "name": "Endpoint", "user": "UserName", "host": "Host", "process": "Process", "title": "WindowTitle", "window": "WindowId", "object": "Object", "roles": {"focus": {"where": [{"field": "Source", "value": "endpoint"}, {"field": "EventType", "value": "focus"}]}, "open": {"where": [{"field": "Source", "value": "endpoint"}, {"field": "EventType", "value": "open"}]}, "close": {"where": [{"field": "Source", "value": "endpoint"}, {"field": "EventType", "value": "close"}]}}}, {"index": "User activity", "name": "Logons", "user": "UserName", "transform": ["strip_domain"], "host": "Host", "roles": {"idle_start": {"where": [{"field": "Source", "value": "windows"}, {"field": "EventType", "value": "lock"}]}, "idle_end": {"where": [{"field": "Source", "value": "windows"}, {"field": "EventType", "value": "unlock"}]}}}, {"index": "User activity", "name": "Proxy", "user": "UserName", "host": "Host", "object": "Object", "roles": {"actions": [{"kind": "web access", "where": [{"field": "Source", "value": "proxy"}, {"field": "EventType", "value": "web"}]}]}}], "view": "both", "skill": "User activity timeline"}}
+             ```
+          2. Draw each view the result gives with gantt_chart, using the arguments it gives for that view; where it says a view
+             is too dense for one chart, draw one day or one activity.
+          3. Say what the data-quality flags found (unpaired starts and ends, idle starts with no end, a source silent while
+             another shows the user active): events may be missing, so say so rather than read a gap as idleness.
+          4. Where it offers to record what was learned in this skill's Event chains, ask the user, and if they agree record it
+             as the result says.
+
+          ## Event chains
+
+          What each source's events mean beyond the schema, learned by earlier runs and applied before the schema's pairs and
+          inference: a line each, a pair as source: pair start -> end by key, or a type's role as source: type is idle.
+
+          ## Output
+
+          The timeline in the chat (the activities, each label marked as an inference with its evidence; the spans by host),
+          the active time by application, and the data-quality flags with examples.
+  answer: >-
+    I tried the skill on jsmith for the last 2 days and it built the timeline; I've proposed "User activity timeline"
+    for /Investigations: review and apply it to save it.

@@ -1,0 +1,99 @@
+name: Running a skill from a chat with no context, chosen among distractors
+kind: skill
+capabilities: [skills, find_skills, discovery]
+# Three skills are readable in /Hunts: the one wanted and two that share words with the question (logons, a user).
+# No tab is attached. Scored on: the right skill read whole with find_skills, by name, its required parameter taken
+# from the question (bob) and the default used for the period; neither distractor read; its step followed (a
+# run_stroomql call on the Logons index with bob and Failure in it); and the answer given as its Output says: bob's
+# failed logons by host (ws-07 2, ws-01 1).
+lucene_index:
+  name: Logons
+  events: questions/skill-logons.csv
+  recent: true
+  fields: {EventTime: date, UserId: text, Outcome: text, Host: text}
+skills_docs:
+  - folder: /Hunts
+    skills:
+      - |
+        # Failed logons by host
+
+        Counts a user's failed logons over a period, by host, from the Logons index.
+
+        ## When to use
+        - "how many failed logons did jsmith have?"
+        - "failed logons by host for a user this week"
+
+        ## Parameters
+        - user (required): the account name, as the Logons index holds it (UserId).
+        - days (default 7): how many days back from now.
+
+        ## Steps
+        1. Count the user's failed logons by host:
+           ```json
+           {"tool": "run_stroomql", "arguments": {"query": "from Logons where UserId = '{user}' and Outcome = 'Failure' and EventTime > now() - {days}d eval Count = count() group by Host select Host, Count", "out": "/outputs/skills/failed-logons-{user}.md"}}
+           ```
+
+        ## Output
+        A table in the chat: each host and its count of failed logons.
+      - |
+        # Logon times of day
+
+        Shows the hours of the day a user logs on at, to spot logons at odd hours.
+
+        ## When to use
+        - "what time of day does jsmith usually log on?"
+        - "does this user log on at night?"
+
+        ## Parameters
+        - user (required): the account name (UserId).
+        - days (default 30): how many days back from now.
+
+        ## Steps
+        1. Count the user's successful logons by hour of the day:
+           ```json
+           {"tool": "run_stroomql", "arguments": {"query": "from Logons where UserId = '{user}' and Outcome = 'Success' and EventTime > now() - {days}d eval Hour = formatDate(EventTime, 'HH') eval Count = count() group by Hour select Hour, Count", "out": "/outputs/skills/logon-hours-{user}.md"}}
+           ```
+
+        ## Output
+        A table in the chat: each hour and its count of logons.
+      - |
+        # Accounts locked out
+
+        Lists the accounts with five or more failed logons in a row on one host, as a lockout policy would lock them.
+
+        ## When to use
+        - "which accounts were locked out this week?"
+        - "show me the lockouts"
+
+        ## Parameters
+        - days (default 7): how many days back from now.
+
+        ## Steps
+        1. Count each account's failed logons by host:
+           ```json
+           {"tool": "run_stroomql", "arguments": {"query": "from Logons where Outcome = 'Failure' and EventTime > now() - {days}d eval Count = count() group by UserId, Host having Count >= 5 select UserId, Host, Count", "out": "/outputs/skills/lockouts.md"}}
+           ```
+
+        ## Output
+        A table in the chat: each account and host locked out.
+request: How many failed logons did bob have this week?
+user_knows: The Logons index holds the logons; bob is the account name. This week means the last 7 days.
+expected:
+  tools_used: [find_skills, run_stroomql]
+  find_skills: {name: Failed logons by host, arguments: {user: bob}}
+  not_chosen: [Logon times of day, Accounts locked out]
+  calls_with:
+    - {tool: run_stroomql, contains: [Logons, bob, Failure, Host]}
+  answer_must_say_all_of: [ws-07, ws-01]
+reference:
+  calls:
+    - {tool: activate_skills, arguments: {}}
+    - tool: find_skills
+      arguments: {name: failed-logons-by-host, arguments: {user: bob}}
+    - tool: run_stroomql
+      arguments:
+        query: >-
+          from Logons where UserId = 'bob' and Outcome = 'Failure' and EventTime > now() - 7d
+          eval Count = count() group by Host select Host, Count
+        out: /outputs/skills/failed-logons-bob.md
+  answer: "bob had 3 failed logons in the last 7 days: 2 on ws-07 and 1 on ws-01."

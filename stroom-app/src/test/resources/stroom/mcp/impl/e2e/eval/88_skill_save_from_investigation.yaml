@@ -1,0 +1,68 @@
+name: Saving a skill from a finished investigation
+kind: skill
+capabilities: [skills, propose_skill, check_skill]
+# A chat counted jsmith's failed logons over the last 7 days in a Lucene index, by host (the earlier turn, made by the
+# scripted model: the history the agent sees), then the user asks to save it as a skill. Scored on the proposal: a new
+# SKILLS doc in /Hunts; its parameters the values that vary (the user, the period), never the index or the conditions
+# that define the work (Logons, Outcome, Failure); its steps call run_stroomql with an example call that fits its
+# schema; and check_skill finding no problems in it.
+lucene_index:
+  name: Logons
+  events: questions/skill-logons.csv
+  recent: true
+  fields: {EventTime: date, UserId: text, Outcome: text, Host: text}
+folders: [/Hunts]
+chat:
+  - ask: How many failed logons did jsmith have in the last 7 days, by host?
+    calls:
+      - tool: run_stroomql
+        arguments:
+          query: >-
+            from Logons where UserId = 'jsmith' and Outcome = 'Failure' and EventTime > now() - 7d
+            eval Count = count() group by Host select Host, Count
+          out: /outputs/failed-logons-jsmith.md
+    answer: jsmith had 5 failed logons in the last 7 days, 3 on ws-01 and 2 on vpn-gw-1.
+request: Save this as a skill.
+user_knows: >
+  Call it "Failed logons by host". People ask "how many failed logons did <user> have" and "failed logons by host
+  for a user". The user and the number of days vary (7 days unless they say); the results go in a table in the chat.
+  Save it in the /Hunts folder.
+expected:
+  tools_used: [propose_skill]
+  proposal:
+    folder: /Hunts
+    skill: Failed logons by host
+    parameters: [[user, username, user_id, userid, account], [days, period, lookback_days, lookback]]
+    not_parameters: [index, logons, outcome, failure]
+    steps_call: [run_stroomql]
+    steps_contain: [Logons, Failure]
+    check_problems: 0
+reference:
+  calls:
+    - {tool: activate_skills, arguments: {}}
+    - tool: propose_skill
+      arguments:
+        folder: /Hunts
+        change: Created from the failed logons investigation
+        markdown: |
+          # Failed logons by host
+
+          Counts a user's failed logons over a period, by host, from the Logons index.
+
+          ## When to use
+          - "how many failed logons did jsmith have?"
+          - "failed logons by host for a user this week"
+
+          ## Parameters
+          - user (required): the account name, as the Logons index holds it (UserId).
+          - days (default 7): how many days back from now.
+
+          ## Steps
+          1. Count the user's failed logons by host:
+             ```json
+             {"tool": "run_stroomql", "arguments": {"query": "from Logons where UserId = '{user}' and Outcome = 'Failure' and EventTime > now() - {days}d eval Count = count() group by Host select Host, Count", "out": "/outputs/skills/failed-logons-{user}.md"}}
+             ```
+
+          ## Output
+          A table in the chat: each host and its count of failed logons.
+  answer: I've proposed the skill "Failed logons by host" for /Hunts; review and apply it to save it.

@@ -1,0 +1,94 @@
+name: Adding a source to an existing skill ("also check the VPN index")
+kind: skill
+capabilities: [skills, find_skills, propose_skill, check_skill]
+# The saved skill "Failed logons by host" reads the Logons index only. The user asks for the VPN index's failed
+# connections too. Scored on the diff: a change to the existing SKILLS doc in /Hunts, its Steps changed (a run_stroomql
+# step on the VPN index with ConnectFailed in it), its description and Output allowed to change, its parameters and
+# "When to use" as they were; and check_skill finding no problems in it.
+lucene_index:
+  - name: Logons
+    events: questions/skill-logons.csv
+    recent: true
+    fields: {EventTime: date, UserId: text, Outcome: text, Host: text}
+  - name: VPN
+    events: questions/skill-vpn.csv
+    recent: true
+    fields: {EventTime: date, UserId: text, Action: text, Gateway: text, SourceIp: text}
+skills_docs:
+  - folder: /Hunts
+    skills:
+      - |
+        # Failed logons by host
+
+        Counts a user's failed logons over a period, by host, from the Logons index.
+
+        ## When to use
+        - "how many failed logons did jsmith have?"
+        - "failed logons by host for a user this week"
+
+        ## Parameters
+        - user (required): the account name, as the Logons index holds it (UserId).
+        - days (default 7): how many days back from now.
+
+        ## Steps
+        1. Count the user's failed logons by host:
+           ```json
+           {"tool": "run_stroomql", "arguments": {"query": "from Logons where UserId = '{user}' and Outcome = 'Failure' and EventTime > now() - {days}d eval Count = count() group by Host select Host, Count", "out": "/outputs/skills/failed-logons-{user}.md"}}
+           ```
+
+        ## Output
+        A table in the chat: each host and its count of failed logons.
+request: >
+  In the "Failed logons by host" skill, also check the VPN index: count the user's failed VPN connections too, by
+  gateway.
+user_knows: >
+  In the VPN index, Action ConnectFailed is a failed connection and Gateway is the VPN gateway; UserId is the user, as
+  in Logons. Keep everything else in the skill as it is.
+expected:
+  tools_used: [propose_skill]
+  proposal:
+    folder: /Hunts
+    skill: Failed logons by host
+    changed_sections: [steps]
+    may_change: [description, output]
+    steps_call: [run_stroomql]
+    steps_contain: [from VPN, ConnectFailed, Gateway]
+    parameters: [user, days]
+    check_problems: 0
+reference:
+  calls:
+    - {tool: activate_skills, arguments: {}}
+    - {tool: find_skills, arguments: {name: failed-logons-by-host}}
+    - {tool: describe_data_source, arguments: {data_source: VPN}}
+    - tool: propose_skill
+      arguments:
+        folder: /Hunts
+        change: Also counts failed VPN connections, by gateway
+        markdown: |
+          # Failed logons by host
+
+          Counts a user's failed logons over a period, by host, from the Logons index, and their failed VPN connections, by
+          gateway, from the VPN index.
+
+          ## When to use
+          - "how many failed logons did jsmith have?"
+          - "failed logons by host for a user this week"
+
+          ## Parameters
+          - user (required): the account name, as the Logons index holds it (UserId).
+          - days (default 7): how many days back from now.
+
+          ## Steps
+          1. Count the user's failed logons by host:
+             ```json
+             {"tool": "run_stroomql", "arguments": {"query": "from Logons where UserId = '{user}' and Outcome = 'Failure' and EventTime > now() - {days}d eval Count = count() group by Host select Host, Count", "out": "/outputs/skills/failed-logons-{user}.md"}}
+             ```
+          2. Count the user's failed VPN connections by gateway:
+             ```json
+             {"tool": "run_stroomql", "arguments": {"query": "from VPN where UserId = '{user}' and Action = 'ConnectFailed' and EventTime > now() - {days}d eval Count = count() group by Gateway select Gateway, Count", "out": "/outputs/skills/failed-vpn-{user}.md"}}
+             ```
+
+          ## Output
+          Two tables in the chat: each host and its count of failed logons, and each VPN gateway and its count of failed
+          connections.
+  answer: I've proposed the change to "Failed logons by host" (a second step on the VPN index); review and apply it.

@@ -1,0 +1,89 @@
+name: A timeline run learns a new event pair, for a user who can't edit the skill (nothing proposed, said so)
+kind: skill
+capabilities: [skills, find_skills, timeline]
+# As case 94, but the user (analyst) has View only on the skills doc and its folder: the timeline infers the tunnel
+# pair, keeps what was learned for the chat and says who could record it, with the lines to give them. Scored on: the
+# skill read by name and followed, nothing proposed, and the agent telling the user they can't change the skill and
+# who can (its owner or an administrator, someone with Edit). Skipped without an Elasticsearch node.
+elastic_index:
+  name: Any source activity
+  events: aggregated/activity-timeline/any-source.csv
+  events_xml: any_source
+  recent: true
+  fields: {EventTime: date, Source: text, UserName: text, XmlUser: text, Host: text, Element: text, Action: text,
+           TypeId: text, KeyPath: text, KeyValue: text}
+agents: |
+  # Activity
+
+  The Any source activity index holds every source's events, one flat record each.
+
+  ## Fields
+  - user: UserName
+  - host: Host
+skills_docs:
+  - folder: /Hunts
+    skills:
+      - |
+        # User activity timeline
+
+        Builds a timeline of one user's activity over a period from the Any source activity index, in time order: what
+        they did on each host (a process from its start to its end, a lock to its unlock, a VPN tunnel up to down, activity
+        periods in web proxy logs), the gaps where they were idle, and the events missing from the sources.
+
+        ## When to use
+
+        - "build a timeline of mlee's activity over the past 7 days"
+        - "what was this user doing last week?"
+        - "show me a user's activity, in order, across their hosts"
+
+        ## Parameters
+
+        - user (required): the user's account name, as the index holds it (UserName).
+        - days (default 7): how many days back from now.
+
+        ## Steps
+
+        1. Build the timeline from the Any source activity index, applying this skill's Event chains:
+           ```json
+           {"tool": "activity_timeline", "arguments": {"entity": "{user}", "timeFrom": "now()-{days}d", "timeTo": "now()", "sources": [{"index": "Any source activity", "user": "UserName", "host": "Host"}], "userField": "UserName", "view": "both", "skill": "User activity timeline"}}
+           ```
+        2. Draw each view the result gives with gantt_chart, using the arguments it gives for that view.
+        3. Say what the data-quality flags found: events may be missing, so say so rather than read a gap as idleness.
+        4. Where the result offers to record what was learned in this skill's Event chains, ask the user, and if they agree
+           record it as the result says.
+
+        ## Event chains
+
+        What each source's events mean beyond the schema, learned by earlier runs and applied before the schema's pairs and
+        inference: a line each, a pair as source: pair start -> end by key, or a type's role as source: type is idle.
+
+        ## Output
+
+        The timeline in the chat (the spans by host), the active time by application or place, and the data-quality flags
+        with examples.
+user: {name: analyst, edit_skills: false}
+request: Run the user activity timeline skill for mlee over the last 3 days.
+user_knows: >
+  UserName is the user. If it offers to record what the timeline learned in the skill, say yes.
+expected:
+  tools_used: [find_skills, activity_timeline]
+  tools_not_used: [propose_skill]
+  no_proposal: true
+  find_skills: {name: User activity timeline, arguments: {user: mlee}}
+  calls_with:
+    - {tool: activity_timeline, contains: [mlee, User activity timeline]}
+  answer_must_say_all_of: [Tun-Ascend]
+  answer_must_say_one_of: [owner, administrator, Edit]
+reference:
+  calls:
+    - {tool: activate_skills, arguments: {}}
+    - {tool: activate_timelines, arguments: {}}
+    - tool: find_skills
+      arguments: {name: user-activity-timeline, arguments: {user: mlee, days: 3}}
+    - tool: activity_timeline
+      arguments: {entity: mlee, timeFrom: now()-3d, timeTo: now(), sources: [{index: Any source activity, user: UserName, host: Host}], userField: UserName,
+                  view: both, skill: User activity timeline}
+  answer: >-
+    The timeline found mlee's VPN tunnels as a pair (Tun-Ascend to Tun-Recede by Tunnel/Id). You can't change the
+    skills doc, so I can't record it there: give its owner or an administrator (someone with Edit on it) this line
+    for its Event chains section.

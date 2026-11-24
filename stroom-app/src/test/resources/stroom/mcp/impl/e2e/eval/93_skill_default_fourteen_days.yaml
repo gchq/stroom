@@ -1,0 +1,96 @@
+name: Changing a skill parameter's default ("default to 14 days")
+kind: skill
+capabilities: [skills, find_skills, propose_skill, check_skill]
+# The saved skill "Failed logons by host" looks back 7 days unless asked. The user wants 14. Scored on the diff: its
+# Parameters changed, days defaulting to 14; every other section, and the doc's other skill, as they were; and
+# check_skill finding no problems in it.
+lucene_index:
+  - name: Logons
+    events: questions/skill-logons.csv
+    recent: true
+    fields: {EventTime: date, UserId: text, Outcome: text, Host: text}
+skills_docs:
+  - folder: /Hunts
+    skills:
+      - |
+        # Failed logons by host
+
+        Counts a user's failed logons over a period, by host, from the Logons index.
+
+        ## When to use
+        - "how many failed logons did jsmith have?"
+        - "failed logons by host for a user this week"
+
+        ## Parameters
+        - user (required): the account name, as the Logons index holds it (UserId).
+        - days (default 7): how many days back from now.
+
+        ## Steps
+        1. Count the user's failed logons by host:
+           ```json
+           {"tool": "run_stroomql", "arguments": {"query": "from Logons where UserId = '{user}' and Outcome = 'Failure' and EventTime > now() - {days}d eval Count = count() group by Host select Host, Count", "out": "/outputs/skills/failed-logons-{user}.md"}}
+           ```
+
+        ## Output
+        A table in the chat: each host and its count of failed logons.
+      - |
+        # Logon times of day
+
+        Shows the hours of the day a user logs on at, to spot logons at odd hours.
+
+        ## When to use
+        - "what time of day does jsmith usually log on?"
+        - "does this user log on at night?"
+
+        ## Parameters
+        - user (required): the account name (UserId).
+        - days (default 30): how many days back from now.
+
+        ## Steps
+        1. Count the user's successful logons by hour of the day:
+           ```json
+           {"tool": "run_stroomql", "arguments": {"query": "from Logons where UserId = '{user}' and Outcome = 'Success' and EventTime > now() - {days}d eval Hour = formatDate(EventTime, 'HH') eval Count = count() group by Hour select Hour, Count", "out": "/outputs/skills/logon-hours-{user}.md"}}
+           ```
+
+        ## Output
+        A table in the chat: each hour and its count of logons.
+request: Change the "Failed logons by host" skill so that it looks back 14 days by default.
+user_knows: Only the default changes; everything else in the skill stays as it is.
+expected:
+  tools_used: [propose_skill]
+  proposal:
+    folder: /Hunts
+    skill: Failed logons by host
+    changed_sections: [parameters]
+    defaults: {days: 14}
+    check_problems: 0
+reference:
+  calls:
+    - {tool: activate_skills, arguments: {}}
+    - {tool: find_skills, arguments: {name: failed-logons-by-host}}
+    - tool: propose_skill
+      arguments:
+        folder: /Hunts
+        change: Looks back 14 days by default
+        markdown: |
+          # Failed logons by host
+
+          Counts a user's failed logons over a period, by host, from the Logons index.
+
+          ## When to use
+          - "how many failed logons did jsmith have?"
+          - "failed logons by host for a user this week"
+
+          ## Parameters
+          - user (required): the account name, as the Logons index holds it (UserId).
+          - days (default 14): how many days back from now.
+
+          ## Steps
+          1. Count the user's failed logons by host:
+             ```json
+             {"tool": "run_stroomql", "arguments": {"query": "from Logons where UserId = '{user}' and Outcome = 'Failure' and EventTime > now() - {days}d eval Count = count() group by Host select Host, Count", "out": "/outputs/skills/failed-logons-{user}.md"}}
+             ```
+
+          ## Output
+          A table in the chat: each host and its count of failed logons.
+  answer: I've proposed the change (days now defaults to 14); review and apply it.
