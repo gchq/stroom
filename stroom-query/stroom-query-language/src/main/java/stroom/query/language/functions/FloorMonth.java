@@ -16,7 +16,9 @@
 
 package stroom.query.language.functions;
 
-import java.time.ZonedDateTime;
+import stroom.query.language.functions.TimeRounder.Mode;
+
+import java.time.Period;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -41,15 +43,7 @@ class FloorMonth extends AbstractRoundDateTime {
 
     @Override
     protected DateTimeAdjuster getAdjuster() {
-        return FloorMonth::floor;
-    }
-
-    public static ZonedDateTime floor(final ZonedDateTime zonedDateTime) {
-        return zonedDateTime
-                .withDayOfMonth(1)
-                .withHour(0)
-                .withMinute(0)
-                .withSecond(0)
-                .withNano(0);
+        final TimeRounder timeRounder = TimeRounder.ofPeriod(Mode.FLOOR, Period.ofMonths(1), null);
+        return timeRounder::round;
     }
 }

@@ -37,7 +37,7 @@ class TestRoundDay extends AbstractFunctionTest<RoundDay> {
 
         final Instant truncatedUp = time.truncatedTo(ChronoUnit.DAYS).plus(1, ChronoUnit.DAYS);
 
-        final Instant timeT = LocalDateTime.of(2025, 4, 7, 12, 0, 0)
+        final Instant timeT = LocalDateTime.of(2025, 4, 7, 11, 59, 59)
                 .toInstant(ZoneOffset.UTC);
 
         final Instant truncated = time.truncatedTo(ChronoUnit.DAYS);

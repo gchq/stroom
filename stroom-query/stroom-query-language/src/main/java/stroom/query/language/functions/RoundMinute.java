@@ -42,11 +42,8 @@ class RoundMinute extends AbstractRoundDateTime {
     @Override
     protected DateTimeAdjuster getAdjuster() {
         return zonedDateTime -> {
-            ZonedDateTime result = FloorMinute.floor(zonedDateTime);
-            if (zonedDateTime.isAfter(result.plusSeconds(30))) {
-                result = result.plusMinutes(1);
-            }
-            return result;
+            final ZonedDateTime floor = FloorMinute.floor(zonedDateTime);
+            return TimeRounder.nearest(zonedDateTime, floor, floor.plusMinutes(1));
         };
     }
 }

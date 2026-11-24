@@ -16,7 +16,9 @@
 
 package stroom.query.language.functions;
 
-import java.time.ZonedDateTime;
+import stroom.query.language.functions.TimeRounder.Mode;
+
+import java.time.Duration;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -42,12 +44,7 @@ class CeilingHour extends AbstractRoundDateTime {
 
     @Override
     protected DateTimeAdjuster getAdjuster() {
-        return zonedDateTime -> {
-            ZonedDateTime result = FloorHour.floor(zonedDateTime);
-            if (zonedDateTime.isAfter(result)) {
-                result = result.plusHours(1);
-            }
-            return result;
-        };
+        final TimeRounder timeRounder = TimeRounder.ofDuration(Mode.CEILING, Duration.ofHours(1).toMillis(), null);
+        return timeRounder::round;
     }
 }

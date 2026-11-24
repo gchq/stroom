@@ -16,6 +16,12 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.UserTimeZone;
+
+import org.junit.jupiter.api.Test;
+
+import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -23,6 +29,8 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TestCeilingDay extends AbstractFunctionTest<CeilingDay> {
 
@@ -75,5 +83,18 @@ class TestCeilingDay extends AbstractFunctionTest<CeilingDay> {
                         ValLong.create(timeTokyo.toEpochMilli()))
         );
     }
-}
 
+    @Test
+    void dayAfterAMidnightThatIsSkipped() throws ParseException {
+        // On 31 March 2024 the clocks in Beirut went from 00:00 to 01:00. The next day starts at 00:00.
+        final ExpressionContext beirut = ExpressionContext.builder()
+                .dateTimeSettings(DateTimeSettings.builder()
+                        .timeZone(UserTimeZone.fromId("Asia/Beirut"))
+                        .build())
+                .build();
+
+        assertThat(DateFunctionTestUtil.eval(
+                beirut, "ceilingDay(${field})", ValDate.create(Instant.parse("2024-03-31T10:00:00Z").toEpochMilli())))
+                .isEqualTo(ValDate.create(Instant.parse("2024-03-31T21:00:00Z").toEpochMilli()));
+    }
+}

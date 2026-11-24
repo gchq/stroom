@@ -16,6 +16,8 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.language.functions.TimeRounder.Mode;
+
 @FunctionDef(
         name = FloorTime.NAME,
         commonCategory = FunctionCategory.DATE,
@@ -23,22 +25,39 @@ package stroom.query.language.functions;
         commonDescription = "Floors the supplied time to the nearest duration.",
         commonReturnType = ValDate.class,
         commonReturnDescription = "The result date and time.",
-        signatures =
-        @FunctionSignature(
-                description = "Floors the supplied time to the nearest duration.",
-                args = {
-                        @FunctionArg(
-                                name = "time",
-                                description = "The time to floor.",
-                                argType = ValDate.class),
-                        @FunctionArg(
-                                name = "duration",
-                                description = "The duration to floor by in ISO-8601 format " +
-                                              "(e.g., 'PT5M' for 5 minutes). Multiples of it are " +
-                                              "counted from midnight in the query's time zone.",
-                                argType = ValString.class)
-                })
-)
+        signatures = {
+                @FunctionSignature(
+                        description = "Floors the supplied time to the nearest duration. Multiples of it are " +
+                                "counted from " +
+                                      "midnight in the query's time zone.",
+                        args = {
+                                @FunctionArg(
+                                        name = "time",
+                                        description = "The time to floor.",
+                                        argType = ValDate.class),
+                                @FunctionArg(
+                                        name = "duration",
+                                        description = "The duration to floor by, e.g. 15m, or 'PT15M' in ISO-8601 " +
+                                                      "format.",
+                                        argType = Val.class)}),
+                @FunctionSignature(
+                        description = "Floors the supplied time to the nearest duration. Multiples of it are " +
+                                "counted from " +
+                                      "the origin.",
+                        args = {
+                                @FunctionArg(
+                                        name = "time",
+                                        description = "The time to floor.",
+                                        argType = ValDate.class),
+                                @FunctionArg(
+                                        name = "duration",
+                                        description = "The duration to floor by, e.g. 15m, or 'PT15M' in ISO-8601 " +
+                                                      "format.",
+                                        argType = Val.class),
+                                @FunctionArg(
+                                        name = "origin",
+                                        description = "The time to count multiples of the duration from.",
+                                        argType = ValDate.class)})})
 class FloorTime extends AbstractRoundTimeToDuration {
 
     static final String NAME = "floorTime";
@@ -48,7 +67,7 @@ class FloorTime extends AbstractRoundTimeToDuration {
     }
 
     @Override
-    long adjust(final long millis, final long durationMillis) {
-        return millis - remainder(millis, durationMillis);
+    Mode getMode() {
+        return Mode.FLOOR;
     }
 }

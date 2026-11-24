@@ -52,11 +52,11 @@ public class Tokeniser {
     private static final String JOIN_PATTERN = createJoinPattern();
     // 'as' at the end of plain text, which makes the next word an alias.
     private static final Pattern ENDS_WITH_AS = Pattern.compile("(?:^|\\s)as\\s+$", Pattern.CASE_INSENSITIVE);
-    // An ISO 8601 date and time with optional fractional seconds and offset. The four digits of an offset with
-    // no colon can't go on to be something else, such as the '0100s' of a duration or the year of another date.
+    // An ISO 8601 date and time with optional fractional seconds and offset. The digits of an offset with no
+    // colon can't go on to be something else, such as the '0100s' of a duration or the year of another date.
     private static final String DATE_TIME_PATTERN =
             "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,9})?"
-            + "(?:Z|[+-]\\d{2}:?\\d{2}(?![\\w.:]|-\\d{2}-))?";
+            + "(?:Z|[+-](?:0\\d|1[0-8])(?::?\\d{2})?(?![\\w.:]|-\\d{2}-))?";
 
     private List<Token> tokens;
 

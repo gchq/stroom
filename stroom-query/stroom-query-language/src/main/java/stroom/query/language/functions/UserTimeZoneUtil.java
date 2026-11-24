@@ -72,9 +72,20 @@ public class UserTimeZoneUtil {
         return getZoneId(NullSafe.get(expressionContext, ExpressionContext::getDateTimeSettings));
     }
 
+    /// Gets a time zone that a function is given.
+    ///
+    /// @param val The name or offset of the time zone.
+    /// @return The time zone.
+    /// @throws DateTimeException If there is no name or it is not known.
+    static ZoneId getZoneId(final Val val) {
+        return parseZoneId(val.type().isValue()
+                ? val.toString()
+                : null);
+    }
+
     private static ZoneId parseZoneId(final String id) {
         if (NullSafe.isBlankString(id)) {
-            throw new DateTimeException("No time zone has been chosen");
+            throw new DateTimeException("There is no time zone");
         }
         try {
             return ZoneId.of(id, ZONE_ALIASES);

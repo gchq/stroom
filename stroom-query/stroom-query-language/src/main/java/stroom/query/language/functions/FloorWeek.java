@@ -16,8 +16,9 @@
 
 package stroom.query.language.functions;
 
-import java.time.DayOfWeek;
-import java.time.ZonedDateTime;
+import stroom.query.language.functions.TimeRounder.Mode;
+
+import java.time.Period;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -42,15 +43,7 @@ class FloorWeek extends AbstractRoundDateTime {
 
     @Override
     protected DateTimeAdjuster getAdjuster() {
-        return FloorWeek::floor;
-    }
-
-    public static ZonedDateTime floor(final ZonedDateTime zonedDateTime) {
-        final DayOfWeek day = zonedDateTime.getDayOfWeek();
-        return zonedDateTime.minusDays(day.getValue() - 1)
-                .withHour(0)
-                .withMinute(0)
-                .withSecond(0)
-                .withNano(0);
+        final TimeRounder timeRounder = TimeRounder.ofPeriod(Mode.FLOOR, Period.ofWeeks(1), null);
+        return timeRounder::round;
     }
 }

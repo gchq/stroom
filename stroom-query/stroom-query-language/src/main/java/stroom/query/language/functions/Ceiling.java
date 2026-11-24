@@ -16,12 +16,14 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.language.functions.TimeRounder.Mode;
+
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Ceiling.NAME,
         commonCategory = FunctionCategory.MATHEMATICS,
         commonSubCategories = AbstractRoundingFunction.ROUND_SUB_CATEGORY,
-        commonReturnType = ValDouble.class,
+        commonReturnType = Val.class,
         commonReturnDescription = "The rounded value.",
         signatures = {
                 @FunctionSignature(
@@ -43,13 +45,77 @@ package stroom.query.language.functions;
                                         name = "decimalPlaces",
                                         argType = ValInteger.class,
                                         description = "The maximum number of decimal places to round to.")}
-                )})
+                ),
+                @FunctionSignature(
+                        description = "Rounds the supplied date or duration up to a multiple of a duration or " +
+                                "period. " +
+                                "Multiples of a date are counted in the time zone of the query. Weeks start on a " +
+                                "Monday, as does any whole number of weeks, such as 7d.",
+                        args = {
+                                @FunctionArg(
+                                        name = "value",
+                                        argType = Val.class,
+                                        description = "The date or duration to round."),
+                                @FunctionArg(
+                                        name = "by",
+                                        argType = Val.class,
+                                        description = "The duration or period to round to a multiple of, e.g. " +
+                                                "15m, 1d or 3M.")}),
+                @FunctionSignature(
+                        description = "Rounds the supplied date up to a multiple of a duration or period, " +
+                                "counted from the " +
+                                "origin in the time zone of the query.",
+                        args = {
+                                @FunctionArg(
+                                        name = "value",
+                                        argType = Val.class,
+                                        description = "The date to round."),
+                                @FunctionArg(
+                                        name = "by",
+                                        argType = Val.class,
+                                        description = "The duration or period to round to a multiple of, e.g. " +
+                                                "15m, 1d or 3M."),
+                                @FunctionArg(
+                                        name = "origin",
+                                        argType = ValDate.class,
+                                        description = "The date to count multiples from, or null() for the " +
+                                                "default.")}),
+                @FunctionSignature(
+                        description = "Rounds the supplied date up to a multiple of a duration or period, " +
+                                "counted from the " +
+                                "origin in the supplied time zone.",
+                        args = {
+                                @FunctionArg(
+                                        name = "value",
+                                        argType = Val.class,
+                                        description = "The date to round."),
+                                @FunctionArg(
+                                        name = "by",
+                                        argType = Val.class,
+                                        description = "The duration or period to round to a multiple of, e.g. " +
+                                                "15m, 1d or 3M."),
+                                @FunctionArg(
+                                        name = "origin",
+                                        argType = ValDate.class,
+                                        description = "The date to count multiples from, or null() for the " +
+                                                "default. Quote a date with no offset, e.g. " +
+                                                "'2024-04-01T00:00:00', for it to be in the timezone."),
+                                @FunctionArg(
+                                        name = "timezone",
+                                        argType = ValString.class,
+                                        description = "The time zone to count multiples in, e.g. " +
+                                                "'Europe/London'.")})})
 class Ceiling extends AbstractRoundingFunction {
 
     static final String NAME = "ceiling";
 
-    public Ceiling(final String name) {
-        super(name);
+    public Ceiling(final ExpressionContext expressionContext, final String name) {
+        super(expressionContext, name);
+    }
+
+    @Override
+    Mode getMode() {
+        return Mode.CEILING;
     }
 
     @Override

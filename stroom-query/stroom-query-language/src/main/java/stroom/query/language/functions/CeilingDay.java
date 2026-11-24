@@ -16,7 +16,9 @@
 
 package stroom.query.language.functions;
 
-import java.time.ZonedDateTime;
+import stroom.query.language.functions.TimeRounder.Mode;
+
+import java.time.Period;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -42,12 +44,7 @@ class CeilingDay extends AbstractRoundDateTime {
 
     @Override
     protected DateTimeAdjuster getAdjuster() {
-        return zonedDateTime -> {
-            ZonedDateTime result = FloorDay.floor(zonedDateTime);
-            if (zonedDateTime.isAfter(result)) {
-                result = result.plusDays(1);
-            }
-            return result;
-        };
+        final TimeRounder timeRounder = TimeRounder.ofPeriod(Mode.CEILING, Period.ofDays(1), null);
+        return timeRounder::round;
     }
 }

@@ -62,7 +62,7 @@ class TestUserTimeZoneUtil {
     void missingNameIsReported(final String id) {
         assertThatThrownBy(() -> UserTimeZoneUtil.getZoneId(zone(id), null))
                 .isInstanceOf(DateTimeException.class)
-                .hasMessage("No time zone has been chosen");
+                .hasMessage("There is no time zone");
     }
 
     @Test

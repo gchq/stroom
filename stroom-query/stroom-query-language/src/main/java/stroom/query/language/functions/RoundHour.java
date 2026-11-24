@@ -16,7 +16,9 @@
 
 package stroom.query.language.functions;
 
-import java.time.ZonedDateTime;
+import stroom.query.language.functions.TimeRounder.Mode;
+
+import java.time.Duration;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -41,12 +43,7 @@ class RoundHour extends AbstractRoundDateTime {
 
     @Override
     protected DateTimeAdjuster getAdjuster() {
-        return zonedDateTime -> {
-            ZonedDateTime result = FloorHour.floor(zonedDateTime);
-            if (zonedDateTime.isAfter(result.plusMinutes(30))) {
-                result = result.plusHours(1);
-            }
-            return result;
-        };
+        final TimeRounder timeRounder = TimeRounder.ofDuration(Mode.ROUND, Duration.ofHours(1).toMillis(), null);
+        return timeRounder::round;
     }
 }

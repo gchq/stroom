@@ -31,7 +31,7 @@ package stroom.floormap.client.playback;
 /// because `setHistogramData` takes the array's length as its bin count.
 ///
 /// **Every width is a uniform duration**, including the largest. A calendar month would be the
-/// natural top of the ladder, but `floorTime` takes an ISO-8601 `Duration`, which has no
+/// natural top of the ladder, but `floorTime` is given an ISO-8601 `Duration`, which has no
 /// month — and a variable-width bucket cannot be indexed by division, which is how counts are placed.
 /// Thirty days reads as "about a month" at a range where the distinction does not signify.
 ///

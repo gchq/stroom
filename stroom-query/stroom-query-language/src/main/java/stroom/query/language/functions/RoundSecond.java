@@ -42,11 +42,8 @@ class RoundSecond extends AbstractRoundDateTime {
     @Override
     protected DateTimeAdjuster getAdjuster() {
         return zonedDateTime -> {
-            ZonedDateTime result = FloorSecond.floor(zonedDateTime);
-            if (zonedDateTime.isAfter(result.plusNanos(500000000))) {
-                result = result.plusSeconds(1);
-            }
-            return result;
+            final ZonedDateTime floor = FloorSecond.floor(zonedDateTime);
+            return TimeRounder.nearest(zonedDateTime, floor, floor.plusSeconds(1));
         };
     }
 }

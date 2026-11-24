@@ -77,6 +77,8 @@ class TestParamFactory {
             "2024-07-01T09:00:00.5Z,2024-07-01T09:00:00.500Z",
             "2024-07-01T09:00:00+01:00,2024-07-01T08:00:00Z",
             "2024-07-01T09:00:00.000-0530,2024-07-01T14:30:00Z",
+            "2024-07-01T09:00:00.000+10,2024-06-30T23:00:00Z",
+            "2024-07-01T09:00:00-05,2024-07-01T14:00:00Z",
             // A date with no offset is in the time zone of the query, which is an hour ahead of UTC in July.
             "2024-07-01T09:00:00.000,2024-07-01T08:00:00Z",
             "2024-07-01T09:00:00,2024-07-01T08:00:00Z",
@@ -92,6 +94,19 @@ class TestParamFactory {
         assertThat(tokens).extracting(Token::getTokenType)
                 .containsExactly(TokenType.DATE_TIME, TokenType.MINUS, TokenType.DATE_TIME);
         assertThat(tokens.getFirst().getText()).isEqualTo("2024-07-02T00:00:00");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "2024-07-01T09:00:00-12h", "2024-07-01T09:00:00-12h30m", "2024-07-01T09:00:00Z-10",
+            "2024-07-01T09:00:00+100", "2024-07-01T09:00:00-1d", "2024-07-01T09:00:00-30",
+            "2024-07-01T09:00:00-19", "2024-07-01T09:00:00-1900"})
+    void testDateLessAnAmount(final String text) {
+        final List<Token> tokens = Tokeniser.parse(text);
+
+        assertThat(tokens).hasSize(3);
+        assertThat(tokens.getFirst().getTokenType()).isEqualTo(TokenType.DATE_TIME);
+        assertThat(tokens.getFirst().getText()).startsWith("2024-07-01T09:00:00").hasSizeLessThan(21);
     }
 
     @Test
