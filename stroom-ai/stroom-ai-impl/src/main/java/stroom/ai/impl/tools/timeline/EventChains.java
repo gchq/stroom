@@ -44,14 +44,14 @@ public final class EventChains {
     /// The section's heading, as a skill's sections are keyed (lower case).
     public static final String SECTION = "event chains";
     /// The roles a line may give a type.
-    public static final List<String> ROLES = List.of("active", "idle", "open", "close", "action", "ignore");
+    public static final List<String> ROLES = List.of("active", "idle", "focus", "open", "close", "action", "ignore");
     /// The source of a line for every source.
     public static final String ANY = "any";
     private static final Pattern PAIR = Pattern.compile(
             "^\\s*[-*]\\s*(.+?):\\s*pair\\s+(.+?)\\s*->\\s*(.+?)(?:\\s+by\\s+(\\S+))?(?:\\s+label\\s+(\\S+))?\\s*$",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern ROLE = Pattern.compile(
-            "^\\s*[-*]\\s*(.+?):\\s*(.+?)\\s+is\\s+(active|idle|open|close|action|ignore)\\b.*$",
+            "^\\s*[-*]\\s*(.+?):\\s*(.+?)\\s+is\\s+(active|idle|focus|open|close|action|ignore)\\b.*$",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern BULLET = Pattern.compile("^\\s*[-*]\\s+\\S.*$");
     private static final Pattern SECTION_HEADING = Pattern.compile("^##\\s+event chains\\s*#*\\s*$",

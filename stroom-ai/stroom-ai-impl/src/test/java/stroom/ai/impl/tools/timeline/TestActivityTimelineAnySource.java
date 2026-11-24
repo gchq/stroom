@@ -275,6 +275,59 @@ class TestActivityTimelineAnySource {
     }
 
     @Test
+    void aCodeClassifiedAsAFocusMakesFocusSessionsAndIsNeverPartOfAnInferredPair() {
+        // Eval case 77 with no roles: a window's focus and its loss alternate by the window, but the focus is the
+        // focus sessions', so no pair is inferred from it and the sessions are by the application.
+        final String[][] windows = {{"09:00", "09:20", "WINWORD.EXE"}, {"09:30", "09:50", "chrome.exe"},
+                {"10:00", "10:20", "WINWORD.EXE"}, {"10:30", "10:50", "EXCEL.EXE"}};
+        for (final String[] window : windows) {
+            codes.add(new LinkedHashMap<>(Map.of("@timestamp", at(window[0]), "user", "pat", "code", "win-focus",
+                    "client", window[2])));
+            codes.add(new LinkedHashMap<>(Map.of("@timestamp", at(window[1]), "user", "pat", "code", "win-blur",
+                    "client", window[2])));
+        }
+        Mockito.when(agentInstructions.fieldsRuled(Mockito.any(), Mockito.eq(CODES))).thenReturn(Map.of(
+                InstructionRules.EVENT_TYPE_FIELD, new FieldRule(List.of("code"), "/")));
+        final List<String> instructions = new ArrayList<>();
+        final ModelSideCalls model = new ModelSideCalls() {
+            @Override
+            public boolean available() {
+                return true;
+            }
+
+            @Override
+            public String via() {
+                return "a stub";
+            }
+
+            @Override
+            public Answer ask(final Question question) {
+                instructions.add(question.system());
+                return new Answer("{\"win-focus\": {\"role\": \"focus\"}, \"win-blur\": {\"role\": \"action\", "
+                                  + "\"kind\": \"focus lost\"}}", 1, 1);
+            }
+        };
+        final Questions questions = new Questions(Map.of("use", ActivityTimelineTool.USE_CODES));
+        final Map<String, Object> arguments = arguments(Map.of("sources", List.of(Map.of("index", "Codes", "user",
+                "user", "process", "client"))));
+
+        tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(arguments, false)),
+                chat(questions, model));
+        final Map<String, Object> result = json(mcp(), arguments);
+
+        assertThat(instructions).singleElement().asString().contains("\"focus\" (a window or application came to "
+                                                                    + "the front");
+        assertThat(questions.intros).singleElement().asString().contains("win-focus: focus");
+        assertThat(result).containsEntry("session_count", 4L);
+        assertThat((List<Map<String, Object>>) result.get("pairs"))
+                .noneSatisfy(pair -> assertThat(pair.get("start")).isEqualTo("win-focus"));
+        assertThat((List<List<Object>>) result.get("rows")).extracting(row -> row.get(1))
+                .contains("WINWORD.EXE", "chrome.exe", "EXCEL.EXE");
+        assertThat(files.content(FOLDER + ActivityTimelineTool.SPANS_FILE).orElseThrow())
+                .contains(",WINWORD.EXE,focus: focus lost ×1,");
+    }
+
+    @Test
     void aSourceWritingTheUserWithADomainAndInCapitalsIsReadWithoutThem() {
         code("09:00", "CORP\\PAT", "A-101");
         code("09:05", "CORP\\PAT", "A-101");

@@ -117,7 +117,7 @@ final class SkillChecks {
             findings.add(Finding.problem("event_chains", "Event chains line '" + line + "' isn't an entry, so the "
                                                          + "timeline leaves it out.",
                     "Write it as '- <index>: pair <start type> -> <end type> by <key path>' or '- <index>: <type> "
-                    + "is active|idle|open|close|action|ignore'."));
+                    + "is active|idle|focus|open|close|action|ignore'."));
         }
         final List<EventChains.Entry> usable = new ArrayList<>();
         for (final Map.Entry<String, List<EventChains.Entry>> source : parsed.bySource().entrySet()) {

@@ -182,8 +182,13 @@ final class TimelineClassification {
         final String window = c.role() == Role.OPEN || c.role() == Role.CLOSE
                 ? firstNonNull(c.keys().get("ProcessId"), c.application())
                 : null;
-        return new Event(event.time(), event.source(), event.id(), c.role(), c.kind(), host, c.application(), null,
-                window, event.object() != null
+        // The index's own application, title and window where the call names their fields: a code or an index
+        // field says what an event was, not its application (eval case 77 with no roles: focus sessions with none).
+        final String application = event.process() != null
+                ? event.process()
+                : c.application();
+        return new Event(event.time(), event.source(), event.id(), c.role(), c.kind(), host, application,
+                event.title(), firstNonNull(window, event.window()), event.object() != null
                 ? event.object()
                 : c.object(), event.text(), event.streamId(), event.eventId());
     }

@@ -428,7 +428,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                                             + "destination.domain (session ids are found)."))
                 .addProperty(TYPE_ROLES_KEY, ObjectSchema.builder()
                         .description("Optional: the user's corrections, an event type's role: {\"<type>\": "
-                                     + "\"active|idle|open|close|action|ignore\"}.")
+                                     + "\"active|idle|focus|open|close|action|ignore\"}.")
                         .build())
                 .required(INDEX_KEY)
                 .build();
@@ -945,7 +945,10 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 found(context, doc, InstructionRules.ELEMENT_FIELD, spec.get(ELEMENT_FIELD_KEY), mapping, types),
                 found(context, doc, InstructionRules.ACTION_FIELD, spec.get(ACTION_FIELD_KEY), mapping, types),
                 found(context, doc, InstructionRules.EVENT_TYPE_FIELD, spec.get(EVENT_TYPE_FIELD_KEY), mapping,
-                        types), checked(spec.get(OBJECT_KEY), mapping, types, what, doc), transforms(spec.get(
+                        types), checked(spec.get(OBJECT_KEY), mapping, types, what, doc),
+                new Described(checked(spec.get(PROCESS_KEY), mapping, types, what, doc), checked(spec.get(TITLE_KEY),
+                        mapping, types, what, doc), checked(spec.get(WINDOW_KEY), mapping, types, what, doc),
+                        checked(spec.get(TEXT_KEY), mapping, types, what, doc)), transforms(spec.get(
                 TRANSFORM_KEY), what), scope.usable()
                         ? scope.by()
                         : PersonScope.By.LOGON, scope.usable()
@@ -1423,14 +1426,17 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                && USE_CODES.equals(String.valueOf(NullSafe.map(answer.content()).get("use")));
     }
 
-    // The automatic sources' classified events as pairs are inferred by.
+    // The automatic sources' classified events as pairs (and keys bounding spans) are inferred by: never a focus,
+    // which the focus sessions use, so a focus and its loss aren't inferred as a pair that takes the sessions'
+    // events (eval case 77 with no roles). The user going idle or coming back stays: a vendor's connect and
+    // disconnect are a session's pair.
     private static List<Typed> typed(final TimelineClassification.Result classification,
                                      final Map<String, Event> byId,
                                      final Options options) {
         final List<Typed> out = new ArrayList<>();
         classification.byId().forEach((id, c) -> {
             final Event event = byId.get(id);
-            if (event != null && c.type() != null) {
+            if (event != null && c.type() != null && event.role() != Role.FOCUS) {
                 out.add(new Typed(id, event.source(), event.time(), TimelineSpans.lane(event, options), c.type(),
                         c.schemaType(), c.keys()));
             }
@@ -1526,6 +1532,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         return switch (role) {
             case IDLE_END -> "active";
             case IDLE_START -> "idle";
+            case FOCUS -> "focus";
             case OPEN -> "open";
             case CLOSE -> "close";
             default -> "action";
@@ -2061,6 +2068,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                              String action,
                              String eventType,
                              String object,
+                             Described described,
                              List<Transform> transforms,
                              PersonScope.By by,
                              List<String> values,
@@ -2068,15 +2076,18 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
 
         Automatic withUser(final Found found) {
             return new Automatic(name, doc, mapping, types, found, host, element, action, eventType, object,
-                    transforms, by, values, leftOut);
+                    described, transforms, by, values, leftOut);
         }
 
         Source source(final List<Transform> sourceTransforms, final List<String> extraFields) {
             final boolean ids = mapping.containsKey(EqlSequenceResults.STREAM_ID)
                                 && mapping.containsKey(EqlSequenceResults.EVENT_ID);
+            // The call's own fields for the application, title, window and text: a code or an index field says
+            // what an event was, not these (eval case 77 with no roles: focus sessions with no application).
             return new Source(name, doc, user.field(), JoinKeys.kind(mapping.get(user.field()).nativeType()),
-                    sourceTransforms, host, null, null, null, object, null, ids, List.of(new RoleRead(Role.ACTION,
-                    null, null)), true, extraFields, values, by);
+                    sourceTransforms, host, described.process(), described.title(), described.window(), object,
+                    described.text(), ids, List.of(new RoleRead(Role.ACTION, null, null)), true, extraFields, values,
+                    by);
         }
 
         Fields fields(final String detectedElement) {
@@ -2084,6 +2095,16 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                     ? element
                     : detectedElement, action, eventType);
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // The fields the call names for an automatic source's events' application, window title, window and text, each
+    // null if not named.
+    private record Described(String process, String title, String window, String text) {
+
     }
 
 

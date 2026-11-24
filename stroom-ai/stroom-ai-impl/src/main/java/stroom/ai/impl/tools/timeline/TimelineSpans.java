@@ -354,7 +354,8 @@ final class TimelineSpans {
             final Map<String, List<Event>> byValue = new LinkedHashMap<>();
             for (final Event event : sorted) {
                 final Classified c = classified.get(event.id());
-                final String value = c == null || event.source() != key.source()
+                // A focus is the focus sessions'.
+                final String value = c == null || event.source() != key.source() || event.role() == Role.FOCUS
                         ? null
                         : c.keys().get(key.path());
                 if (value != null && !value.isBlank()) {
