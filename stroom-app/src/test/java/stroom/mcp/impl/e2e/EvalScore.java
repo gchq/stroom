@@ -1230,7 +1230,8 @@ final class EvalScore {
     /// * `expected.findings`: of a tool whose result has `findings` (each a map with `kind`, `feature`, `window`,
     ///   `evidence`) and `source_wide` (each a line), as compare_activity's: `must_include` and `must_not_include`,
     ///   each a list of matchers ([#findingMatches]), each matched against the answer call's findings (with
-    ///   `source_wide: true`, against its source-wide lines); `answer_must_not_say` (none of these words in the
+    ///   `source_wide: true`, against its source-wide lines; with `done_to_them: true`, against the findings of what
+    ///   was done to the person, its `done_to_them.findings`); `answer_must_not_say` (none of these words in the
     ///   reply) and `answer_must_say_one_of` (at least one), checked only when the reply is given.
     ///
     /// @param evalCase The case.
@@ -1351,15 +1352,19 @@ final class EvalScore {
             given.stream().filter(Map.class::isInstance).forEach(finding -> findings.add(maps(finding)));
         }
         final List<String> sourceWide = strings(call.result().get("source_wide"));
+        final List<Map<String, Object>> doneToThem = new ArrayList<>();
+        if (maps(call.result().get("done_to_them")).get("findings") instanceof final List<?> given) {
+            given.stream().filter(Map.class::isInstance).forEach(finding -> doneToThem.add(maps(finding)));
+        }
         for (final Object matcher : listOf(expected.get("must_include"))) {
             final Map<String, Object> wanted = maps(matcher);
-            questionCheck("finding " + wanted, anyFinding(wanted, findings, sourceWide), "no finding matched "
-                                                                                        + wanted);
+            questionCheck("finding " + wanted, anyFinding(wanted, findings, sourceWide, doneToThem),
+                    "no finding matched " + wanted);
         }
         for (final Object matcher : listOf(expected.get("must_not_include"))) {
             final Map<String, Object> unwanted = maps(matcher);
-            questionCheck("no finding " + unwanted, !anyFinding(unwanted, findings, sourceWide), "a finding matched "
-                                                                                                + unwanted);
+            questionCheck("no finding " + unwanted, !anyFinding(unwanted, findings, sourceWide, doneToThem),
+                    "a finding matched " + unwanted);
         }
         final List<String> mustNot = strings(expected.get("answer_must_not_say"));
         final List<String> oneOf = strings(expected.get("answer_must_say_one_of"));
@@ -1383,11 +1388,14 @@ final class EvalScore {
 
     private static boolean anyFinding(final Map<String, Object> matcher,
                                       final List<Map<String, Object>> findings,
-                                      final List<String> sourceWide) {
+                                      final List<String> sourceWide,
+                                      final List<Map<String, Object>> doneToThem) {
         if (Boolean.TRUE.equals(matcher.get("source_wide"))) {
             return sourceWide.stream().anyMatch(line -> sourceWideMatches(matcher, line));
         }
-        return findings.stream().anyMatch(finding -> findingMatches(matcher, finding));
+        return (Boolean.TRUE.equals(matcher.get("done_to_them"))
+                ? doneToThem
+                : findings).stream().anyMatch(finding -> findingMatches(matcher, finding));
     }
 
     /// Whether a finding matches: each of the matcher's keys given must hold. `kind`, `feature` and `window`: equal

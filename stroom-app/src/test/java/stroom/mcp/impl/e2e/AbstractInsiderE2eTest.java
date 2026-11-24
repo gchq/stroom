@@ -41,8 +41,8 @@ import java.util.Map;
 /// [Options#reduced]) and puts each source's events in an Elasticsearch index of its own on the test node (ECS
 /// fields, the person id as `user.id`, the account normalised as `user.name`; [InsiderRecords#document]) and in an
 /// Events stream in Stroom (each event's XML, its EventId its place in the stream, as the index's StreamId and EventId
-/// say), with an Elastic Index doc per source named `E2E insider <source> <index>`. The indexes are removed after
-/// each test.
+/// say), with an Elastic Index doc per source named `E2E insider <source> <index>`; the events done to people by
+/// others ([InsiderDataset#targetActs]) after each source's own. The indexes are removed after each test.
 ///
 /// The node is [ElasticTestNode]'s (`STROOM_TEST_ELASTIC_URL`): skipped without one unless
 /// `STROOM_TEST_ELASTIC_REQUIRED=true`.
@@ -67,7 +67,9 @@ abstract class AbstractInsiderE2eTest extends AbstractE2eTest {
         final Map<Source, DocRef> indexes = new EnumMap<>(Source.class);
         final Map<Source, Long> streams = new EnumMap<>(Source.class);
         for (final Source source : Source.values()) {
-            final List<Act> acts = dataset.acts(source);
+            // The source's own events, then those done to people by others, numbered on after them.
+            final List<Act> acts = new ArrayList<>(dataset.acts(source));
+            acts.addAll(dataset.targetActs(source));
             if (acts.isEmpty()) {
                 continue;
             }

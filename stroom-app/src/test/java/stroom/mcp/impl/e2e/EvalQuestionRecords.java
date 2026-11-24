@@ -55,7 +55,9 @@ final class EvalQuestionRecords {
     ///               people (default 5) and `scale` of the routine actions (default 0.3), its days `from` to `to`
     ///               (inclusive, in the dataset's zone), the `sources` named (default all), every source's events
     ///               in one table, by time ([InsiderRecords#flat]); with `streams: true`, their Events XML is stored
-    ///               in a stream the index's StreamId and EventId lead to ([#insiderEventXml]).
+    ///               in a stream the index's StreamId and EventId lead to ([#insiderEventXml]); with
+    ///               `targets: true`, the events done to people by others too ([InsiderDataset#targetActs], with
+    ///               `TargetPersonId` and `TargetUserName`), after the rest.
     /// @return The records, each its values by column.
     static List<Map<String, String>> generate(final Map<String, Object> spec) {
         final String kind = String.valueOf(spec.get("kind"));
@@ -100,7 +102,12 @@ final class EvalQuestionRecords {
                 "scale", 0.3)).doubleValue(), List.of(new InsiderDataset.Period(LocalDate.parse(String.valueOf(
                 spec.get("from"))), LocalDate.parse(String.valueOf(spec.get("to")))))));
         final List<String> sources = (List<String>) spec.getOrDefault("sources", List.of());
-        return dataset.acts().stream()
+        final List<InsiderDataset.Act> acts = new ArrayList<>(dataset.acts());
+        if (Boolean.TRUE.equals(spec.get("targets"))) {
+            // After the rest, so each record's place (its EventId) is the same with or without them.
+            acts.addAll(dataset.targetActs());
+        }
+        return acts.stream()
                 .filter(act -> sources.isEmpty() || sources.contains(act.source().key()))
                 .toList();
     }

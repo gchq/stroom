@@ -232,6 +232,94 @@ class TestInsiderDataset {
                 InsiderDataset.DRIFT);
     }
 
+    @Test
+    void theEventsDoneToPeopleAreAStreamOfTheirOwnWhereTheKnownAnswerSays() {
+        final InsiderDataset reduced = InsiderDataset.generate(Options.reduced());
+        // None of them is among the people's own events, and the reduced days hold every day's of them.
+        assertThat(everyDay.acts()).noneSatisfy(act -> assertThat(act.fields()).containsKey("target_person"));
+        assertThat(reduced.targetActs().stream().map(TestInsiderDataset::withoutNumber).toList())
+                .isEqualTo(everyDay.targetActs().stream()
+                        .filter(act -> Options.reduced().keeps(day(act)))
+                        .map(TestInsiderDataset::withoutNumber)
+                        .toList());
+        // Numbered on after their source's own events, so every own event keeps its number.
+        final long cloud = reduced.acts(Source.CLOUD).size();
+        assertThat(reduced.targetActs(Source.CLOUD)).extracting(Act::number).containsExactlyElementsOf(
+                java.util.stream.LongStream.rangeClosed(cloud + 1, cloud + reduced.targetActs().size()).boxed()
+                        .map(Long::intValue).toList());
+
+        // The leaver: a privileged group granted by an administrator, 11 days before the leaving date.
+        assertThat(reduced.targetActs()).filteredOn(act -> InsiderDataset.LEAVER.equals(act.field("target_person")))
+                .singleElement().satisfies(act -> {
+                    assertThat(act.type()).isEqualTo("group.add");
+                    assertThat(act.personId()).isEqualTo(InsiderDataset.GRANTING_ADMIN);
+                    assertThat(day(act)).isEqualTo(InsiderDataset.GRANT_DAY);
+                    assertThat(act.field("group")).isEqualTo(InsiderDataset.PRIVILEGED_GROUP);
+                });
+        // The compromised account: failed logons against it (no account acted), then a reset and an MFA device
+        // added by the service desk, in the night, while its owner is on leave.
+        final List<Act> takeover = reduced.targetActs().stream()
+                .filter(act -> InsiderDataset.COMPROMISED.equals(act.field("target_person")))
+                .toList();
+        assertThat(takeover).extracting(Act::type).containsExactly("signin.failed", "signin.failed",
+                "signin.failed", "signin.failed", "signin.failed", "signin.failed", "password.reset", "mfa.add");
+        assertThat(takeover).allSatisfy(act -> {
+            assertThat(day(act)).isEqualTo(InsiderDataset.TAKEOVER_DAY);
+            assertThat(local(act).getHour()).isLessThan(6);
+            assertThat(act.personId()).isNull();
+        });
+        assertThat(takeover.stream().filter(act -> act.account() != null).map(Act::account).distinct())
+                .containsExactly(InsiderDataset.SERVICE_DESK);
+        // The noise: the service desk's resets of background people only.
+        assertThat(everyDay.targetActs()).filteredOn(act -> InsiderDataset.SERVICE_DESK.equals(act.account())
+                                                            && !InsiderDataset.COMPROMISED.equals(
+                act.field("target_person"))).isNotEmpty().allSatisfy(act -> {
+                    assertThat(act.type()).isEqualTo("password.reset");
+                    assertThat(act.field("target_person")).startsWith("P2");
+                });
+        final Map<String, Object> answer = everyDay.knownAnswer();
+        assertThat((List<Map<String, Object>>) answer.get("targets")).extracting(plant -> plant.get("person_id"),
+                plant -> plant.get("kind")).containsExactly(
+                org.assertj.core.groups.Tuple.tuple(InsiderDataset.LEAVER, "privileged group granted"),
+                org.assertj.core.groups.Tuple.tuple(InsiderDataset.COMPROMISED, "account taken over"));
+        assertThat((List<Map<String, Object>>) answer.get("target_noise")).hasSize((int) everyDay.targetActs()
+                .stream().filter(act -> act.field("target_person").startsWith("P2")).count());
+        assertThat(answer).containsEntry("target_events", everyDay.targetActs().size());
+    }
+
+    @Test
+    void theEventsDoneToPeopleRenderWithWhomTheyWereDoneTo() throws Exception {
+        final InsiderDataset reduced = InsiderDataset.generate(Options.reduced());
+        final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        for (final Act act : reduced.targetActs()) {
+            factory.newDocumentBuilder().parse(new InputSource(new StringReader(InsiderRecords.eventXml(act))));
+            final Map<String, Object> doc = InsiderRecords.document(act, 7);
+            assertThat(InsiderRecords.mapping(act.source())).containsKeys(doc.keySet().stream()
+                    .filter(key -> !"_id".equals(key)).toArray(String[]::new));
+            assertThat(doc).containsEntry("user.target.id", act.field("target_person"))
+                    .containsEntry("user.target.name", InsiderRecords.normalised(act.field("target_account")));
+            assertThat(InsiderRecords.flat(act)).containsEntry("TargetPersonId", act.field("target_person"))
+                    .doesNotContainValue(null);
+        }
+        final Act grant = reduced.targetActs().stream().filter(act -> "group.add".equals(act.type())).findFirst()
+                .orElseThrow();
+        assertThat(InsiderRecords.document(grant, 7)).containsEntry("user.id", InsiderDataset.GRANTING_ADMIN)
+                .containsEntry("event.action", "AddGroup").containsEntry("group.name",
+                        InsiderDataset.PRIVILEGED_GROUP);
+        assertThat(InsiderRecords.eventXml(grant)).contains("<Authorise><User><Id>dana.whitfield@corp.example</Id>"
+                                                            + "<UserDetails><Id>P10001</Id></UserDetails></User>"
+                                                            + "<Action>Modify</Action><AddGroups><Group><Name>"
+                                                            + InsiderDataset.PRIVILEGED_GROUP);
+        final Act failed = reduced.targetActs().stream().filter(act -> "signin.failed".equals(act.type()))
+                .findFirst().orElseThrow();
+        assertThat(InsiderRecords.document(failed, 7)).doesNotContainKeys("user.id", "user.name")
+                .containsEntry("event.action", "Logon");
+        assertThat(InsiderRecords.eventXml(failed)).contains("</Generator><Client><IPAddress>")
+                .contains("<Outcome><Success>false</Success>");
+        assertThat(InsiderRecords.eventXml(failed).substring(0, InsiderRecords.eventXml(failed)
+                .indexOf("</EventSource>"))).doesNotContain("<User>");
+    }
+
     // Writes the full dataset's raw files for the dev node, a month at a time: opt-in, as it writes a lot.
     @Test
     @EnabledIfEnvironmentVariable(named = "INSIDER_DATASET_DIR", matches = ".+")

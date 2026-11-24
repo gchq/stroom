@@ -656,7 +656,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
             final boolean hasIds = fields.containsKey(EqlSequenceResults.STREAM_ID)
                                    && fields.containsKey(EqlSequenceResults.EVENT_ID);
             final Targeted targeted = targets
-                    ? targeted(request, context, doc, person, logonIds, scope, fields)
+                    ? targeted(request, context, doc, person, logonIds, scope, fields, userFields, personFields)
                     : null;
             planned.add(new Planned(doc, source, new Scope(scope.field().field(), scope.values()),
                     new Fields(sumFields, breadthFields), scope.by().label() + " (" + scope.field().field() + " from "
@@ -688,7 +688,9 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                               final String person,
                               final List<String> logonIds,
                               final PersonScope.Scope scope,
-                              final Map<String, QueryField> fields) {
+                              final Map<String, QueryField> fields,
+                              final List<String> userFields,
+                              final List<String> personFields) {
         final PersonScope.Target target = PersonScope.target(timelineFields, context.session(), doc, person,
                 logonIds, optionalList(stringArg(request, TARGET_PERSON_FIELD_ARG)),
                 optionalList(stringArg(request, TARGET_USER_FIELD_ARG)), scope, fields::containsKey);
@@ -704,9 +706,9 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                         .orElse(null);
             }
         }
-        final String actor = timelineFields.find(context.session(), doc, InstructionRules.USER_FIELD, List.of(),
+        final String actor = timelineFields.find(context.session(), doc, InstructionRules.USER_FIELD, userFields,
                         fields::containsKey)
-                .or(() -> timelineFields.find(context.session(), doc, InstructionRules.PERSON_FIELD, List.of(),
+                .or(() -> timelineFields.find(context.session(), doc, InstructionRules.PERSON_FIELD, personFields,
                         fields::containsKey))
                 .map(TimelineFields.Found::field)
                 .orElse(null);

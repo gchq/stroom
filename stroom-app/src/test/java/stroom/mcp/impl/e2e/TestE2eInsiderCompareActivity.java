@@ -36,7 +36,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// September at a low scale, so the baselines are continuous): the scenario people's plants found (the leaver's new
 /// destinations and breadth before the leaving date, the drift to later hours, the curious viewer above their Finance
 /// peers, read from the Event XML's Organisation) and the decoys not flagged (the source-wide pipeline change told as
-/// the source's, the approved migration given as an exception).
+/// the source's, the approved migration given as an exception); and, with `includeTargets`, what was done to them
+/// as its own findings group (the leaver's privileged group, the compromised account's failed logons, reset and MFA
+/// device), the person's own findings the same with or without it.
 @SuppressWarnings("unchecked")
 class TestE2eInsiderCompareActivity extends AbstractInsiderE2eTest {
 
@@ -111,6 +113,45 @@ class TestE2eInsiderCompareActivity extends AbstractInsiderE2eTest {
         dump("compromised", compromised);
         final String compromisedFindings = file(compromised, 2);
         assertThat(compromisedFindings).contains(",location,country:new,RO,").contains(",country:on_leave,");
+    }
+
+    @Test
+    void whatWasDoneToThemIsItsOwnGroupTheirOwnFindingsTheSame() {
+        final Loaded loaded = load(OPTIONS);
+        final String admin = InsiderRecords.normalised(loaded.dataset().person(InsiderDataset.GRANTING_ADMIN)
+                .logon(Source.CLOUD));
+        final Map<String, Object> leaverOwn = compare(loaded, InsiderDataset.LEAVER, "2026-08-31", "2026-09-26",
+                "week", List.of(Source.CLOUD), List.of(), List.of(), Map.of("peers", false));
+        final Map<String, Object> leaver = compare(loaded, InsiderDataset.LEAVER, "2026-08-31", "2026-09-26",
+                "week", List.of(Source.CLOUD), List.of(), List.of(), Map.of("peers", false, "includeTargets", true));
+        dump("leaver, done to them", leaver);
+        assertThat(leaverOwn).doesNotContainKey("done_to_them");
+        assertThat(leaver.get("findings")).isEqualTo(leaverOwn.get("findings"));
+        assertThat((List<Map<String, Object>>) leaver.get("findings")).noneSatisfy(finding -> assertThat(
+                String.valueOf(finding.get("feature"))).startsWith("done_to_them:"));
+        final Map<String, Object> leaverDone = (Map<String, Object>) leaver.get("done_to_them");
+        assertThat((List<Map<String, Object>>) leaverDone.get("findings")).anySatisfy(finding -> {
+            assertThat(finding).containsEntry("feature", "done_to_them:type:AddGroup")
+                    .containsEntry("window", "2026-09-14 to 2026-09-20");
+            assertThat(String.valueOf(finding.get("alternative"))).contains("check who did it and why");
+        });
+        assertThat((List<Map<String, Object>>) leaverDone.get("sources")).singleElement().satisfies(source ->
+                assertThat(source).containsEntry("in_window", Map.of("AddGroup", 1L))
+                        .containsEntry("new_actors", List.of(admin)));
+
+        final Map<String, Object> compromised = compare(loaded, InsiderDataset.COMPROMISED, "2026-04-06",
+                "2026-04-20", "week", List.of(Source.CLOUD), List.of(), List.of(), Map.of("peers", false,
+                        "leave", List.of("2026-04-06..2026-04-17"), "includeTargets", true));
+        dump("compromised, done to them", compromised);
+        final Map<String, Object> done = (Map<String, Object>) compromised.get("done_to_them");
+        // Scored on leave too: things done to an account while its owner is away are the point.
+        assertThat((List<Map<String, Object>>) done.get("findings")).extracting(finding -> finding.get("feature"))
+                .contains("done_to_them:type:Logon", "done_to_them:type:ResetPassword",
+                        "done_to_them:type:AddMfaDevice", "done_to_them:new_actors");
+        assertThat((List<Map<String, Object>>) done.get("sources")).singleElement().satisfies(source ->
+                assertThat(source).containsEntry("in_window", Map.of("Logon", 6L, "ResetPassword", 1L,
+                        "AddMfaDevice", 1L)).containsEntry("new_actors", List.of(InsiderRecords.normalised(
+                        InsiderDataset.SERVICE_DESK))));
     }
 
     // The dates of the change findings of a feature in a findings file, the source's own or the person's.

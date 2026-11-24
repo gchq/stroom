@@ -85,6 +85,18 @@ final class InsiderDataset {
     static final String WEBMAIL_CATEGORY = "Webmail";
     /// The tool the disgruntled admin had never used before.
     static final String NEW_TOOL = "netdump64.exe";
+    /// The day an administrator grants the leaver a privileged group, 11 days before they leave (done to them).
+    static final LocalDate GRANT_DAY = LocalDate.of(2026, 9, 14);
+    /// The privileged group granted.
+    static final String PRIVILEGED_GROUP = "Finance Data Admins";
+    /// The background administrator who grants it.
+    static final String GRANTING_ADMIN = "P20002";
+    /// The night of the compromised account's takeover: failed logons against it, a reset and an MFA device added.
+    static final LocalDate TAKEOVER_DAY = LocalDate.of(2026, 4, 8);
+    /// The service desk's account, of no person: it resets passwords and registers MFA devices.
+    static final String SERVICE_DESK = "servicedesk@" + MAIL_DOMAIN;
+    /// The MFA device added to the compromised account.
+    static final String MFA_DEVICE = "Authenticator app (SM-A146)";
 
     private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
     private static final int MINUTE = 60_000;
@@ -100,6 +112,9 @@ final class InsiderDataset {
     private final Options options;
     private final List<Person> people = new ArrayList<>();
     private final List<Act> acts = new ArrayList<>();
+    private final List<Act> targetActs = new ArrayList<>();
+    private final List<Map<String, Object>> targetPlants = new ArrayList<>();
+    private final List<Map<String, Object>> targetNoise = new ArrayList<>();
     private final List<Map<String, Object>> plants = new ArrayList<>();
     private final List<Map<String, Object>> decoys = new ArrayList<>();
     private final List<Map<String, Object>> oneOffs = new ArrayList<>();
@@ -117,6 +132,7 @@ final class InsiderDataset {
         final InsiderDataset dataset = new InsiderDataset(options);
         dataset.makePeople();
         dataset.makeActs();
+        dataset.makeTargets();
         dataset.describePlants();
         return dataset;
     }
@@ -146,6 +162,22 @@ final class InsiderDataset {
     /// @return Its events, in time order.
     List<Act> acts(final Source source) {
         return acts.stream().filter(act -> act.source() == source).toList();
+    }
+
+    /// The events done to people by others (a group granted, a password reset, an MFA device added, failed logons
+    /// against an account), drawn from a stream of their own so every event of [#acts] is the same with or without
+    /// them: each with its actor (a person, the service desk's account of no person, or none for a failed logon) and
+    /// whom it was done to (`target_person`, `target_account`), numbered on from the last of its source's [#acts].
+    ///
+    /// @return Them, in time order.
+    List<Act> targetActs() {
+        return targetActs;
+    }
+
+    /// @param source A source.
+    /// @return Its events done to people by others, in time order.
+    List<Act> targetActs(final Source source) {
+        return targetActs.stream().filter(act -> act.source() == source).toList();
     }
 
     /// The known answer: the people (their ids, accounts, organisation, dates), each planted behaviour and decoy with
@@ -191,6 +223,9 @@ final class InsiderDataset {
                         decoy.get("from"), "to", decoy.get("to")))
                 .toList());
         map.put("tasks", tasks);
+        map.put("targets", targetPlants);
+        map.put("target_noise", targetNoise);
+        map.put("target_events", targetActs.size());
         final Map<String, Object> counts = new LinkedHashMap<>();
         for (final Source source : Source.values()) {
             counts.put(source.key(), acts.stream().filter(act -> act.source() == source).count());
@@ -277,6 +312,77 @@ final class InsiderDataset {
         }
         acts.clear();
         acts.addAll(numbered);
+    }
+
+    // The events done to people by others, a stream of their own (its own seeded draw a person-day, so the reduced
+    // form keeps exactly the full form's on its days): the leaver's privileged group granted by an administrator,
+    // the compromised account's takeover (failed logons against it, then a reset and an MFA device added by the
+    // service desk's account), and the service desk's routine resets of background people's passwords as noise.
+    private void makeTargets() {
+        final List<Act> made = new ArrayList<>();
+        for (int p = 0; p < people.size(); p++) {
+            final Person person = people.get(p);
+            for (LocalDate day = FIRST_DAY; day.isBefore(END_DAY); day = day.plusDays(1)) {
+                if (!options.keeps(day) || day.isBefore(person.start())
+                    || (person.leaving() != null && day.isAfter(person.leaving()))) {
+                    continue;
+                }
+                final SeededRandom random = new SeededRandom(Math.floorMod(options.seed() * 7_000_003L + p * 10_009L
+                                                                           + day.toEpochDay() * 37L + 5_848L,
+                        4_294_967_296L));
+                final long midnight = ZonedDateTime.of(day, LocalTime.MIDNIGHT, ZONE).toInstant().toEpochMilli();
+                if (LEAVER.equals(person.id()) && GRANT_DAY.equals(day)
+                    && people.stream().anyMatch(one -> one.id().equals(GRANTING_ADMIN))) {
+                    final Person admin = person(GRANTING_ADMIN);
+                    made.add(targetAct(midnight + (10 * 60 + random.randint(30, 50)) * (long) MINUTE,
+                            admin.id(), admin.logon(Source.CLOUD), admin.organisationOn(day), "group.add", person,
+                            Map.of("group", PRIVILEGED_GROUP, "app", "Directory")));
+                }
+                if (COMPROMISED.equals(person.id()) && TAKEOVER_DAY.equals(day)) {
+                    final String ip = "185.220.101." + random.randint(10, 200);
+                    final long first = midnight + (60 + random.randint(15, 25)) * (long) MINUTE;
+                    for (int i = 0; i < 6; i++) {
+                        made.add(targetAct(first + i * 50_000L, null, null, null, "signin.failed", person,
+                                Map.of("country", "RO", "ip", ip, "reason", "Invalid password")));
+                    }
+                    made.add(targetAct(first + 12L * MINUTE, null, SERVICE_DESK, null, "password.reset", person,
+                            Map.of("app", "Directory")));
+                    made.add(targetAct(first + 16L * MINUTE, null, SERVICE_DESK, null, "mfa.add", person,
+                            Map.of("device", MFA_DEVICE, "app", "Directory")));
+                }
+                final boolean weekend = day.getDayOfWeek() == DayOfWeek.SATURDAY
+                                        || day.getDayOfWeek() == DayOfWeek.SUNDAY;
+                if (person.scenario() == null && !weekend && !person.onLeave(day) && random.random() < 0.02) {
+                    made.add(targetAct(midnight + (9 * 60 + random.randint(0, 420)) * (long) MINUTE, null,
+                            SERVICE_DESK, null, "password.reset", person, Map.of("app", "Directory")));
+                    targetNoise.add(Map.of("person_id", person.id(), "date", day.toString(), "what",
+                            "a password reset by the service desk"));
+                }
+            }
+        }
+        made.sort(Comparator.comparingLong(Act::time).thenComparing(Act::source).thenComparing(Act::type)
+                .thenComparing(act -> act.field("target_person")));
+        final Map<Source, Integer> numbers = new LinkedHashMap<>();
+        for (final Source source : Source.values()) {
+            numbers.put(source, (int) acts.stream().filter(act -> act.source() == source).count());
+        }
+        for (final Act act : made) {
+            targetActs.add(act.numbered(numbers.merge(act.source(), 1, Integer::sum)));
+        }
+    }
+
+    // A cloud event done to a person by an actor (null fields for none), whom it was done to in its fields.
+    private static Act targetAct(final long time,
+                                 final String actorId,
+                                 final String actorAccount,
+                                 final String actorOrganisation,
+                                 final String type,
+                                 final Person target,
+                                 final Map<String, String> more) {
+        final Map<String, String> fields = new LinkedHashMap<>(more);
+        fields.put("target_person", target.id());
+        fields.put("target_account", target.logon(Source.CLOUD));
+        return new Act(time, Source.CLOUD, actorId, actorAccount, null, type, fields, actorOrganisation, 0);
     }
 
     // One person's day: their working pattern, the scenario's plants on it, and the decoys'.
@@ -858,6 +964,20 @@ final class InsiderDataset {
         decoys.add(decoy(null, "source-wide pipeline change", PIPELINE_CHANGE.toString(), END_DAY.minusDays(1)
                 .toString(), "the proxy also logs each tunnel (CONNECT) from this day: everyone's proxy volume "
                              + "steps up about twofold", null));
+        targetPlants.add(plant(LEAVER, "privileged group granted", GRANT_DAY.toString(), GRANT_DAY.toString(),
+                List.of("the privileged group '" + PRIVILEGED_GROUP + "' granted to the leaver's account by an "
+                        + "administrator (" + GRANTING_ADMIN + ") on " + GRANT_DAY + ", 11 days before the leaving "
+                        + "date: done to them, not their own act"), Map.of("group", PRIVILEGED_GROUP, "by",
+                        GRANTING_ADMIN, "day", GRANT_DAY.toString())));
+        targetPlants.add(plant(COMPROMISED, "account taken over", TAKEOVER_DAY.toString(), TAKEOVER_DAY.toString(),
+                List.of("6 failed logons against the account from RO in the night of " + TAKEOVER_DAY + " (no "
+                        + "account acted)", "its password reset by the service desk's account (" + SERVICE_DESK
+                                            + ") minutes later, while its owner is on leave", "an MFA device ("
+                                                                                              + MFA_DEVICE
+                                                                                              + ") added by the "
+                                                                                              + "same account"),
+                Map.of("day", TAKEOVER_DAY.toString(), "failed_logons", 6, "by", SERVICE_DESK, "device",
+                        MFA_DEVICE)));
         oneOffs.add(Map.of("person_id", "P20003", "date", "2026-02-14", "what", "a short weekend session"));
         oneOffs.add(Map.of("person_id", "P20004", "date", "2026-07-08", "what", "80 downloads in one day"));
         oneOffs.add(Map.of("person_id", "P20005", "date", "2026-10-07", "what", "late-night browsing from 23:20"));

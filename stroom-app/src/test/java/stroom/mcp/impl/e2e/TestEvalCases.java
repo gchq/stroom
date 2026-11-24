@@ -304,6 +304,36 @@ class TestEvalCases {
                                                                               + migration.get("exception"));
     }
 
+    @Test
+    void theDoneToThemCaseIsTheGeneratorsKnownAnswer() {
+        final Map<String, Object> evalCase = EvalCases.load("87_compare_done_to_leaver_before_leaving");
+        final Map<String, Object> grant = ((List<Map<String, Object>>) InsiderDataset.generate(
+                        InsiderDataset.Options.reduced()).knownAnswer().get("targets")).stream()
+                .filter(plant -> InsiderDataset.LEAVER.equals(plant.get("person_id")))
+                .findFirst()
+                .orElseThrow();
+        final String day = String.valueOf(((Map<String, Object>) grant.get("facts")).get("day"));
+
+        // The grant, done to her by the administrator, is in the case's records, and its matchers are of its day.
+        assertThat(matcher(evalCase, "must_include", 0)).containsEntry("done_to_them", true)
+                .containsEntry("near", day);
+        assertThat(matcher(evalCase, "must_include", 1)).containsEntry("feature", "done_to_them:new_actors")
+                .containsEntry("near", day);
+        final List<Map<String, String>> records = EvalCases.table((Map<String, Object>) evalCase.get(
+                "elastic_index")).records();
+        assertThat(records).filteredOn(record -> InsiderDataset.LEAVER.equals(record.get("TargetPersonId")))
+                .singleElement().satisfies(record -> {
+                    assertThat(record).containsEntry("PersonId", InsiderDataset.GRANTING_ADMIN)
+                            .containsEntry("Action", "AddGroup");
+                    assertThat(record.get("EventTime")).startsWith("2026-09-14T00:");
+                });
+        // Her own events are there too, and none done to her among them.
+        assertThat(records).anySatisfy(record -> assertThat(record).containsEntry("PersonId", InsiderDataset.LEAVER)
+                .doesNotContainKey("TargetPersonId"));
+        assertThat((Map<String, Object>) ((Map<String, Object>) evalCase.get("reference")).get("compare_activity"))
+                .containsEntry("includeTargets", true).containsEntry("targetPersonField", "TargetPersonId");
+    }
+
     // One of a compare case's finding matchers.
     private static Map<String, Object> matcher(final Map<String, Object> evalCase, final String list, final int at) {
         return (Map<String, Object>) ((List<?>) ((Map<String, Object>) ((Map<String, Object>) evalCase.get(

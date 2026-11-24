@@ -1533,6 +1533,32 @@ class TestEvalScore {
     }
 
     @Test
+    void aFindingOfWhatWasDoneToThePersonIsMatchedAgainstThoseFindingsOnly() {
+        final Map<String, Object> question = Map.of("kind", "question", "expected", Map.of("answer", Map.of("tool",
+                "compare_activity"), "findings", Map.of(
+                "must_include", List.of(ordered("done_to_them", true, "feature", "done_to_them:events", "near",
+                        "2026-09-14")),
+                "must_not_include", List.of(ordered("feature", "done_to_them:events")))));
+        final Map<String, Object> found = Map.of("findings", List.of(), "source_wide", List.of(), "done_to_them",
+                Map.of("findings", List.of(finding("week", "done_to_them:events", "2026-09-14 to 2026-09-20",
+                        "Events done to them 1 in the week from 2026-09-14"))));
+
+        final EvalScore passed = new EvalScore("q");
+        passed.scoreQuestion(question, List.of(new EvalScore.ToolUse("compare_activity", false, found, "ok")));
+        assertThat(passed.passed()).as(passed.summary()).isTrue();
+
+        // Among the person's own findings, it is no finding of what was done to them.
+        final EvalScore own = new EvalScore("q");
+        own.scoreQuestion(question, List.of(new EvalScore.ToolUse("compare_activity", false, Map.of("findings",
+                List.of(finding("week", "done_to_them:events", "2026-09-14 to 2026-09-20", "x")), "source_wide",
+                List.of()), "ok")));
+        assertThat(own.passed()).isFalse();
+        assertThat(own.summary()).contains("no finding matched {done_to_them=true, feature=done_to_them:events, "
+                                           + "near=2026-09-14}")
+                .contains("a finding matched {feature=done_to_them:events}");
+    }
+
+    @Test
     void aFindingMatchesOnEachKeyGiven() {
         final Map<String, Object> peers = finding("peers", "events_vs_peers", "2026-06-01 to 2026-06-26",
                 "46 events per day against a median of 2.7 for 5 peers in Organisation 'Finance'");

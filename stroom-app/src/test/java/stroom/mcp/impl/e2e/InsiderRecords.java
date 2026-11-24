@@ -34,6 +34,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -59,7 +60,7 @@ final class InsiderRecords {
             "text", "UserName", "text", "Account", "text", "HostName", "text", "EventDetail", "text", "Action",
             "text", "EventCode", "text", "Process", "text", "WindowTitle", "text", "WindowId", "text", "Object",
             "text", "Destination", "text", "Category", "text", "BytesOut", "long", "SessionId", "text", "Country",
-            "text", "Site", "text");
+            "text", "Site", "text", "TargetPersonId", "text", "TargetUserName", "text");
 
     /// The fields every source's documents have, by their Elasticsearch type.
     private static final Map<String, String> COMMON = linked(
@@ -82,7 +83,8 @@ final class InsiderRecords {
             Source.VPN, linked("session.id", "keyword", "source.ip", "ip", "source.geo.country_iso_code", "keyword",
                     "source.bytes", "long", "destination.bytes", "long"),
             Source.CLOUD, linked("source.ip", "ip", "source.geo.country_iso_code", "keyword", "file.name", "keyword",
-                    "file.size", "long", "cloud.site", "keyword", "record.id", "keyword", "cloud.app", "keyword"),
+                    "file.size", "long", "cloud.site", "keyword", "record.id", "keyword", "cloud.app", "keyword",
+                    "user.target.id", "keyword", "user.target.name", "keyword", "group.name", "keyword"),
             Source.PAM, linked("session.id", "keyword", "destination.domain", "keyword", "network.protocol",
                     "keyword", "secret.name", "keyword"));
     private static final DateTimeFormatter NETSCALER = DateTimeFormatter.ofPattern("MM/dd/yyyy:HH:mm:ss 'GMT'")
@@ -136,8 +138,12 @@ final class InsiderRecords {
         final Map<String, Object> doc = new LinkedHashMap<>();
         doc.put("_id", String.valueOf(act.number()));
         doc.put("@timestamp", Instant.ofEpochMilli(act.time()).toString());
-        doc.put("user.id", act.personId());
-        doc.put("user.name", normalised(act.account()));
+        // Who acted: none for a failed logon against an account; an account of no person (the service desk's) has
+        // no person id.
+        put(doc, "user.id", act.personId());
+        if (act.account() != null) {
+            doc.put("user.name", normalised(act.account()));
+        }
         if (act.host() != null) {
             doc.put("host.name", act.host());
         }
@@ -187,6 +193,12 @@ final class InsiderRecords {
                 put(doc, "cloud.site", act.field("site"));
                 put(doc, "record.id", act.field("record"));
                 put(doc, "cloud.app", act.field("app"));
+                // Whom it was done to, where it was done to someone by someone else.
+                put(doc, "user.target.id", act.field("target_person"));
+                if (act.field("target_account") != null) {
+                    doc.put("user.target.name", normalised(act.field("target_account")));
+                }
+                put(doc, "group.name", act.field("group"));
             }
             case PAM -> {
                 put(doc, "session.id", act.field("session"));
@@ -219,9 +231,11 @@ final class InsiderRecords {
         final Map<String, String> record = new LinkedHashMap<>();
         record.put("EventTime", FLAT_TIME.format(Instant.ofEpochMilli(act.time())));
         record.put("Source", act.source().key());
-        record.put("PersonId", act.personId());
-        record.put("UserName", normalised(act.account()));
-        record.put("Account", act.account());
+        putText(record, "PersonId", act.personId());
+        putText(record, "UserName", act.account() == null
+                ? null
+                : normalised(act.account()));
+        putText(record, "Account", act.account());
         putText(record, "HostName", act.host());
         record.put("EventDetail", element(act.type()));
         record.put("Action", action(act));
@@ -239,6 +253,10 @@ final class InsiderRecords {
         putText(record, "SessionId", act.field("session"));
         putText(record, "Country", act.field("country"));
         putText(record, "Site", act.field("site"));
+        putText(record, "TargetPersonId", act.field("target_person"));
+        putText(record, "TargetUserName", act.field("target_account") == null
+                ? null
+                : normalised(act.field("target_account")));
         return record;
     }
 
@@ -247,7 +265,9 @@ final class InsiderRecords {
     static String element(final String type) {
         return switch (type) {
             case "logon", "logoff", "lock", "unlock", "signin", "vpn.login", "vpn.logout", "pam.session.start",
-                 "pam.session.end" -> "Authenticate";
+                 "pam.session.end", "signin.failed", "password.reset" -> "Authenticate";
+            case "group.add" -> "Authorise";
+            case "mfa.add" -> "Update";
             case "proc.start", "proc.stop" -> "Process";
             case "file.write" -> "Update";
             case "file.archive", "usb.insert" -> "Create";
@@ -276,10 +296,16 @@ final class InsiderRecords {
         if (act.field("ip") != null && act.source() != Source.PROXY) {
             sb.append("<Client><IPAddress>").append(act.field("ip")).append("</IPAddress></Client>");
         }
-        sb.append("<User><Id>").append(escape(act.account())).append("</Id><UserDetails><Id>").append(act.personId())
-                .append("</Id><Organisation>").append(escape(act.organisation()))
-                .append("</Organisation></UserDetails></User></EventSource><EventDetail><TypeId>").append(act.type())
-                .append("</TypeId>");
+        // Who acted: none for a failed logon against an account, no UserDetails for an account of no person.
+        if (act.account() != null) {
+            sb.append("<User><Id>").append(escape(act.account())).append("</Id>");
+            if (act.personId() != null) {
+                sb.append("<UserDetails><Id>").append(act.personId()).append("</Id><Organisation>")
+                        .append(escape(act.organisation())).append("</Organisation></UserDetails>");
+            }
+            sb.append("</User>");
+        }
+        sb.append("</EventSource><EventDetail><TypeId>").append(act.type()).append("</TypeId>");
         sb.append(detail(act));
         return sb.append("</EventDetail></Event>").toString();
     }
@@ -327,8 +353,24 @@ final class InsiderRecords {
                                   + "</Type></Resource>" + data(act, List.of("app")) + "</View>";
             case "pam.checkout" -> "<View><Object><Type>Secret</Type><Name>" + escape(act.field("secret"))
                                    + "</Name></Object>" + data(act, List.of("session")) + "</View>";
+            case "signin.failed" -> "<Authenticate><Action>Logon</Action>" + targetUser(act)
+                                    + "<Outcome><Success>false</Success><Description>" + escape(act.field("reason"))
+                                    + "</Description></Outcome>" + data(act, List.of("country")) + "</Authenticate>";
+            case "password.reset" -> "<Authenticate><Action>ResetPassword</Action>" + targetUser(act)
+                                     + data(act, List.of("app")) + "</Authenticate>";
+            case "group.add" -> "<Authorise>" + targetUser(act) + "<Action>Modify</Action><AddGroups><Group><Name>"
+                                + escape(act.field("group")) + "</Name></Group></AddGroups>"
+                                + data(act, List.of("app")) + "</Authorise>";
+            case "mfa.add" -> "<Update><After>" + targetUser(act) + "</After>" + data(act, List.of("device", "app"))
+                              + "</Update>";
             default -> throw new IllegalArgumentException("No XML for " + act.type());
         };
+    }
+
+    // The User an event was done to, with their person id.
+    private static String targetUser(final Act act) {
+        return "<User><Id>" + escape(act.field("target_account")) + "</Id><UserDetails><Id>"
+               + escape(act.field("target_person")) + "</Id></UserDetails></User>";
     }
 
     private static String authenticate(final String action, final Act act, final List<String> data) {
@@ -404,7 +446,10 @@ final class InsiderRecords {
                     final Path path = folder.resolve(source.key() + "-" + month.toString().substring(0, 7)
                                                      + extension(source));
                     final int offset = offsets.getOrDefault(source, 0);
-                    final List<Act> acts = dataset.acts(source);
+                    // The events done to people (the cloud's) among the source's own, in time order.
+                    final List<Act> acts = new ArrayList<>(dataset.acts(source));
+                    acts.addAll(dataset.targetActs(source));
+                    acts.sort(Comparator.comparingLong(Act::time));
                     try (final BufferedWriter out = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
                         if (source == Source.PROXY) {
                             out.write(String.join(",", header));
@@ -452,6 +497,7 @@ final class InsiderRecords {
                     tasks.put(person, new LinkedHashMap<>(days)));
             first.put("tasks", tasks);
             first.put("events", new LinkedHashMap<>((Map<String, Object>) month.get("events")));
+            first.put("target_noise", new ArrayList<>((List<Object>) month.get("target_noise")));
             return first;
         }
         final Map<String, Object> tasks = (Map<String, Object>) before.get("tasks");
@@ -460,6 +506,9 @@ final class InsiderRecords {
         final Map<String, Object> events = (Map<String, Object>) before.get("events");
         ((Map<String, Object>) month.get("events")).forEach((source, count) -> events.merge(source, count,
                 (a, b) -> ((Number) a).longValue() + ((Number) b).longValue()));
+        ((List<Object>) before.get("target_noise")).addAll((List<Object>) month.get("target_noise"));
+        before.put("target_events", ((Number) before.get("target_events")).longValue()
+                                    + ((Number) month.get("target_events")).longValue());
         return before;
     }
 
@@ -619,10 +668,37 @@ final class InsiderRecords {
                 event.put("EntityName", "account");
                 event.put("RecordId", act.field("record"));
             }
+            case "signin.failed" -> {
+                record.put("Operation", "UserLoginFailed");
+                record.put("RecordType", 15);
+                record.put("Workload", "AzureActiveDirectory");
+                event.put("Country", act.field("country"));
+                event.put("LogonError", act.field("reason"));
+            }
+            case "password.reset", "group.add", "mfa.add" -> {
+                record.put("Operation", switch (act.type()) {
+                    case "password.reset" -> "Reset user password.";
+                    case "group.add" -> "Add member to group.";
+                    default -> "User registered security info";
+                });
+                record.put("RecordType", 8);
+                record.put("Workload", "AzureActiveDirectory");
+                if (act.field("group") != null) {
+                    event.put("GroupName", act.field("group"));
+                }
+                if (act.field("device") != null) {
+                    event.put("AuthenticationMethod", act.field("device"));
+                }
+            }
             default -> throw new IllegalArgumentException("No cloud record for " + act.type());
         }
+        if (act.field("target_account") != null) {
+            record.put("ObjectId", act.field("target_account"));
+        }
         record.put("OrganizationId", "11111111-2222-3333-4444-555555555555");
-        record.put("UserId", act.account());
+        record.put("UserId", act.account() == null
+                ? act.field("target_account")
+                : act.account());
         if (act.field("ip") != null) {
             record.put("ClientIP", act.field("ip"));
         }
@@ -675,6 +751,10 @@ final class InsiderRecords {
             case "vpn.logout" -> "Disconnect";
             case "proc.start" -> "Execute";
             case "proc.stop" -> "Terminate";
+            case "signin.failed" -> "Logon";
+            case "password.reset" -> "ResetPassword";
+            case "group.add" -> "AddGroup";
+            case "mfa.add" -> "AddMfaDevice";
             default -> act.type();
         };
     }

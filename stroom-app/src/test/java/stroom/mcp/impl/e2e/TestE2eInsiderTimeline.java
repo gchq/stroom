@@ -35,7 +35,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// source; the fallback by logon id, each account counted, with close variants offered but never merged; the first
 /// and last events where the period has none; and the leaver's week of 2026-09-14: the VPN's sessions (a pair keyed
 /// only by a session id), a window's focus to its loss (a vendor's pair) placed in activities, and the proxy's periods
-/// labelled by their destination.
+/// labelled by their destination; and, with `includeTargets`, what was done to them (the leaver's privileged group,
+/// the compromised account's failed logons, reset and MFA device) apart, never in their activity.
 @SuppressWarnings("unchecked")
 class TestE2eInsiderTimeline extends AbstractInsiderE2eTest {
 
@@ -144,6 +145,63 @@ class TestE2eInsiderTimeline extends AbstractInsiderE2eTest {
             assertThat(row.get(5)).isEqualTo("activity");
             assertThat(row.get(3)).isEqualTo(InsiderDataset.PERSONAL_CLOUD);
         });
+    }
+
+    @Test
+    void theLeaversPrivilegedGroupIsDoneToThemOnlyWithIncludeTargetsAndNeverInTheirActivity() {
+        final Map<String, Object> without = json("activity_timeline", timeline(Map.of("person",
+                InsiderDataset.LEAVER), "2026-09-14T00:00:00+10:00", "2026-09-15T00:00:00+10:00"));
+        final String spansWithout = read("/outputs/timelines/" + InsiderDataset.LEAVER + "/spans.csv");
+        final Map<String, Object> with = json("activity_timeline", timeline(Map.of("person",
+                InsiderDataset.LEAVER, "includeTargets", true), "2026-09-14T00:00:00+10:00",
+                "2026-09-15T00:00:00+10:00"));
+        dump("activity_timeline, the leaver's 14 September with what was done to them", with);
+
+        assertThat(without).doesNotContainKey("done_to_them");
+        // Their own activity is the same either way.
+        assertThat(with.get("sources")).isEqualTo(without.get("sources"));
+        assertThat(with.get("events_read")).isEqualTo(without.get("events_read"));
+        assertThat(with.get("spans")).isEqualTo(without.get("spans"));
+        assertThat(with.get("rows")).isEqualTo(without.get("rows"));
+        final String admin = InsiderRecords.normalised(loaded.dataset().person(InsiderDataset.GRANTING_ADMIN)
+                .logon(Source.CLOUD));
+        final Map<String, Object> done = (Map<String, Object>) with.get("done_to_them");
+        assertThat(((Number) done.get("events")).longValue()).isEqualTo(1L);
+        assertThat((List<Map<String, Object>>) done.get("sources")).filteredOn(source -> name(Source.CLOUD)
+                .equals(source.get("source"))).singleElement().satisfies(source -> {
+                    assertThat(source).containsEntry("kinds", Map.of("AddGroup", 1L))
+                            .containsEntry("done_by", List.of(admin));
+                    assertThat((String) source.get("by")).startsWith("done to them, by target person id "
+                                                                     + "(user.target.id");
+                });
+        // The sources with no target field are said, not read.
+        assertThat((List<Map<String, Object>>) done.get("left_out")).extracting(left -> left.get("source"))
+                .contains(name(Source.ENDPOINT), name(Source.PROXY));
+        final String spans = read("/outputs/timelines/" + InsiderDataset.LEAVER + "/spans.csv");
+        assertThat(spans).contains(",AddGroup by " + admin + ",done to them: " + name(Source.CLOUD) + ",target,");
+        assertThat(spans.lines().filter(line -> !line.endsWith(",target")).toList())
+                .isEqualTo(spansWithout.lines().toList());
+    }
+
+    @Test
+    void theCompromisedAccountsFailedLogonsResetAndMfaDeviceAreDoneToThem() {
+        final Map<String, Object> result = json("activity_timeline", timeline(Map.of("person",
+                InsiderDataset.COMPROMISED, "includeTargets", true), "2026-04-08T00:00:00+10:00",
+                "2026-04-09T00:00:00+10:00"));
+        dump("activity_timeline, the compromised account's night", result);
+
+        final Map<String, Object> done = (Map<String, Object>) result.get("done_to_them");
+        assertThat((List<Map<String, Object>>) done.get("sources")).filteredOn(source -> name(Source.CLOUD)
+                .equals(source.get("source"))).singleElement().satisfies(source -> {
+                    assertThat(source).containsEntry("kinds", Map.of("Logon", 6L, "AddMfaDevice", 1L,
+                            "ResetPassword", 1L));
+                    assertThat((List<String>) source.get("done_by")).containsExactly("no account",
+                            InsiderRecords.normalised(InsiderDataset.SERVICE_DESK));
+                });
+        // Their own night (the sign-in from RO and the downloads) is theirs; what was done to them isn't in it.
+        assertThat(((Number) result.get("events_read")).longValue()).isPositive();
+        assertThat((List<Map<String, Object>>) done.get("listed")).extracting(event -> event.get("type"))
+                .startsWith("Logon").contains("ResetPassword", "AddMfaDevice");
     }
 
     // ------------------------------------------------------------------------------------------------
