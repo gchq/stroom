@@ -63,6 +63,7 @@ public final class ToolSummaries {
             Map.entry("sequence_query", "Finds ordered sequences of events, with EQL or a StroomQL windowed join."),
             Map.entry("activity_timeline", "Builds a user's activity timeline from several sources, and what they "
                                            + "were working on."),
+            Map.entry("compare_activity", "Compares a person's activity with their own baseline and peers."),
             Map.entry("propose_timeline_dashboard", "Offers to put a timeline on a dashboard, as a CSV Data "
                                                     + "Connection with a timeline chart."),
             Map.entry("esql_query", "Runs an ES|QL query on an Elasticsearch index: totals, top N and groups."),

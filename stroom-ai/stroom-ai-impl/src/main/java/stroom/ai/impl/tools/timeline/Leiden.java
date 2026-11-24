@@ -32,7 +32,7 @@ import java.util.TreeMap;
 /// time, rather than Leiden's random one, so the same network always gives the same clusters); and each part
 /// becomes one node of a smaller network, starting in its cluster, until no node moves. Links are taken either way
 /// round, weighted by their value.
-final class Leiden {
+public final class Leiden {
 
     /// The most levels the network is folded.
     static final int MAX_LEVELS = 30;
@@ -45,7 +45,7 @@ final class Leiden {
     /// @param names The nodes, in a fixed order.
     /// @param links The links between them, by name.
     /// @return Each node's cluster (by its place in names), numbered from 0 in order of first appearance.
-    static int[] clusters(final List<String> names, final List<Link> links) {
+    public static int[] clusters(final List<String> names, final List<Link> links) {
         final Map<String, Integer> index = new HashMap<>();
         for (int i = 0; i < names.size(); i++) {
             index.put(names.get(i), i);
@@ -133,7 +133,7 @@ final class Leiden {
     /// @param links    The links.
     /// @param clusters Each node's cluster, as [#clusters] gives them.
     /// @return The modularity, from -0.5 to 1; 0 with no links.
-    static double modularity(final List<String> names, final List<Link> links, final int[] clusters) {
+    public static double modularity(final List<String> names, final List<Link> links, final int[] clusters) {
         final Map<String, Integer> of = new HashMap<>();
         for (int i = 0; i < names.size(); i++) {
             of.put(names.get(i), clusters[i]);
@@ -302,7 +302,7 @@ final class Leiden {
     /// @param source One node.
     /// @param target The other.
     /// @param value  Its weight; a link of no weight is left out.
-    record Link(String source, String target, double value) {
+    public record Link(String source, String target, double value) {
 
     }
 

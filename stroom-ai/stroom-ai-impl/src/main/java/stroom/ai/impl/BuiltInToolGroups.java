@@ -129,6 +129,7 @@ public final class BuiltInToolGroups {
             // never build a timeline. Offered only to a user who can use an Elastic Index (StroomTool#isUsable).
             TIMELINES, List.of(
                     "activity_timeline",
+                    "compare_activity",
                     "propose_timeline_dashboard"),
             // Asked for by name, or turned on when a skill fits: the list of skills is in the prompt already.
             SKILLS, List.of(
@@ -198,7 +199,8 @@ public final class BuiltInToolGroups {
                                        + "and then not Y)");
         purposes.put(TIMELINES, "build a user's (or entity's) activity timeline from several sources: sessions "
                                 + "of active use of each application, the actions in each, missing events "
-                                + "flagged, and what they were working on");
+                                + "flagged, and what they were working on; or compare a person's activity "
+                                + "with their own baseline and peers");
         purposes.put(SKILLS, "find, check and save skills: saved, parameterised procedures (a hunt, a timeline) "
                              + "to read whole and follow, or to write from a chat or a template");
         return Collections.unmodifiableMap(purposes);

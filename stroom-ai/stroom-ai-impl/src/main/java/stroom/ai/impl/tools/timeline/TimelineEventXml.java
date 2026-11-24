@@ -44,7 +44,7 @@ import java.util.function.IntConsumer;
 /// EventId (the event's segment of its stream), a stream at a time, its events in the order they are stored, as the
 /// user (the stream store checks they may view each stream's feed; the View Data permission is checked here, as the
 /// data viewer needs it). What was read is audited as streams viewed.
-class TimelineEventXml {
+public class TimelineEventXml {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TimelineEventXml.class);
 
@@ -56,7 +56,7 @@ class TimelineEventXml {
     /// @param securityContextProvider Checks the user may view data.
     /// @param auditLog                Audits the streams read.
     @Inject
-    TimelineEventXml(final Provider<Store> storeProvider,
+    public TimelineEventXml(final Provider<Store> storeProvider,
                      final Provider<SecurityContext> securityContextProvider,
                      final AiAuditLog auditLog) {
         this.storeProvider = storeProvider;
@@ -73,11 +73,31 @@ class TimelineEventXml {
     /// @param progress Told how many events have been read so far.
     /// @return Each event's XML (its stream's header and footer around it), by `streamId:eventId`, and how many
     ///         couldn't be read and why.
-    Read read(final ToolSession session,
-              final Map<Long, List<Long>> ids,
-              final int maxBytes,
-              final BooleanSupplier stopped,
-              final IntConsumer progress) {
+    public Read read(final ToolSession session,
+                     final Map<Long, List<Long>> ids,
+                     final int maxBytes,
+                     final BooleanSupplier stopped,
+                     final IntConsumer progress) {
+        return read(session, ids, maxBytes, stopped, progress, "for an activity timeline (activity_timeline)");
+    }
+
+    /// Reads events' XML, saying in the audit log what for.
+    ///
+    /// @param session  The session, for the audit log.
+    /// @param ids      The events wanted: each stream's event ids.
+    /// @param maxBytes The largest event read.
+    /// @param stopped  True once the user has stopped the call.
+    /// @param progress Told how many events have been read so far.
+    /// @param purpose  What they were read for, as the audit log says it, e.g. "for an activity timeline
+    ///                 (activity_timeline)".
+    /// @return Each event's XML (its stream's header and footer around it), by `streamId:eventId`, and how many
+    ///         couldn't be read and why.
+    public Read read(final ToolSession session,
+                     final Map<Long, List<Long>> ids,
+                     final int maxBytes,
+                     final BooleanSupplier stopped,
+                     final IntConsumer progress,
+                     final String purpose) {
         final int wanted = ids.values().stream().mapToInt(List::size).sum();
         if (!canViewData()) {
             return new Read(Map.of(), 0, 0, wanted, false);
@@ -125,8 +145,7 @@ class TimelineEventXml {
         }
         if (!streams.isEmpty()) {
             auditLog.streamsViewed(session, streams, "Read the Events XML of " + xml.size() + " event(s) from "
-                                                     + streams.size() + " stream(s) for an activity timeline "
-                                                     + "(activity_timeline)");
+                                                     + streams.size() + " stream(s) " + purpose);
         }
         return new Read(xml, missing, unreadable, 0, true);
     }
@@ -152,10 +171,10 @@ class TimelineEventXml {
     /// @param unreadable  Events larger than the limit.
     /// @param notAllowed  Events not read as the user may not view data.
     /// @param canViewData False if the user may not view data, so none was read.
-    record Read(Map<String, String> xml, int missing, int unreadable, int notAllowed, boolean canViewData) {
+    public record Read(Map<String, String> xml, int missing, int unreadable, int notAllowed, boolean canViewData) {
 
         /// Copies the map.
-        Read {
+        public Read {
             xml = Map.copyOf(xml);
         }
     }

@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.chat.AskUserTool;
 import stroom.ai.impl.tools.chat.ReadTurnTool;
 import stroom.ai.impl.tools.chat.SearchHistoryTool;
 import stroom.ai.impl.tools.chat.TaskListTool;
+import stroom.ai.impl.tools.compare.CompareActivityTool;
 import stroom.ai.impl.tools.config.ConfigPropertiesTool;
 import stroom.ai.impl.tools.documents.DocumentAnalyses;
 import stroom.ai.impl.tools.documents.DocumentDocumentationTool;
@@ -123,6 +124,7 @@ public class BuiltInToolsModule extends AbstractModule {
                 .addBinding(EsqlQueryTool.class)
                 .addBinding(SequenceQueryTool.class)
                 .addBinding(ActivityTimelineTool.class)
+                .addBinding(CompareActivityTool.class)
                 .addBinding(ProposeTimelineDashboardTool.class)
                 .addBinding(SummariseColumnTool.class)
                 .addBinding(DocumentInfoTool.class)
