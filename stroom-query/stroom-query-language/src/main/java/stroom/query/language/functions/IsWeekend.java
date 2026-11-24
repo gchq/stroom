@@ -63,7 +63,9 @@ class IsWeekend extends AbstractDateTimeFunction {
             public Val eval(final StoredValues storedValues,
                             final Supplier<ChildData> childDataSupplier) {
                 final Val value = childGenerator.eval(storedValues, childDataSupplier);
-                return calc(value);
+                return value.type().isValue()
+                        ? calc(value)
+                        : value;
             }
 
             @Override

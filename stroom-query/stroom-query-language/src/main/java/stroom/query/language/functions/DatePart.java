@@ -62,6 +62,8 @@ class DatePart extends AbstractCalendarFunction {
     void checkConstant(final int pos, final Val val) {
         if (pos == 1) {
             DateField.fromName(val.toString());
+        } else {
+            DateReader.check(val);
         }
     }
 

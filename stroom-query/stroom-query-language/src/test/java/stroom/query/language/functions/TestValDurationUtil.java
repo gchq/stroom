@@ -218,6 +218,42 @@ class TestValDurationUtil {
                 .build();
     }
 
+    @TestFactory
+    Stream<DynamicTest> parseExactMilliseconds() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(Long.class)
+                .withSingleArgTestFunction(ValDurationUtil::parseExactMilliseconds)
+                .withSimpleEqualityAssertion()
+                .withNameFunction(TestValDurationUtil::getTestName)
+                .addCase("2000", 2_000L)
+                .addCase("P1D", Duration.ofDays(1).toMillis())
+                .addCase("1h30m", 5_400_000L)
+                // These would be a millisecond out as doubles.
+                .addCase("0.7d", Duration.ofHours(16).plusMinutes(48).toMillis())
+                .addCase("0.29h", 1_044_000L)
+                .addCase("1.4 d", 120_960_000L)
+                .addCase("2.05M", 123_000L)
+                .addCase(" 4.35s ", 4_350L)
+                .addCase("9007199254740993", 9007199254740993L)
+                .addCase("-1.5h", -5_400_000L)
+                .addCase("- 0.7 d", -60_480_000L)
+                .addCase("-2h", -7_200_000L)
+                .addCase("1.9", 1L)
+                .addCase("1.s", 1_000L)
+                .addCase(".5S", 500L)
+                .addThrowsCase("-5M", DateTimeParseException.class)
+                .addThrowsCase("-1.5H", DateTimeParseException.class)
+                .addThrowsCase("-5", DateTimeParseException.class)
+                .addThrowsCase("--1.5h", DateTimeParseException.class)
+                .addThrowsCase("99999999999999999999.5d", DateTimeParseException.class)
+                .addThrowsCase("-99999999999999999999.5d", DateTimeParseException.class)
+                .addThrowsCase("99999999999999999999", DateTimeParseException.class)
+                .addThrowsCase("1.2.3s", DateTimeParseException.class)
+                .addThrowsCase("soon", DateTimeParseException.class)
+                .build();
+    }
+
     private static void getTestAssertions(final TestOutcome<?, ?> testOutcome) {
         if (testOutcome.getExpectedOutput() instanceof final ValErr valErrExpected) {
             assertThat(testOutcome.getActualOutput())

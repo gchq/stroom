@@ -94,23 +94,23 @@ class FormatDate extends AbstractFunction {
     public void setParams(final Param[] params) throws ParseException {
         super.setParams(params);
 
-        if (params.length >= 2) {
-            final String pattern = ParamParseUtil.parseStringParam(params, 1, name);
-            formatter = FormatterCache.getFormatter(pattern, Mode.FORMAT);
-        }
-        if (params.length >= 3 && params[2] instanceof final Function func) {
-            zoneFunction = func;
-        } else if (params.length >= 3) {
-            zoneId = FormatterCache.getZoneId(ParamParseUtil.parseStringParam(params, 2, name));
-        } else if (params.length == 2 && FormatterCache.isMarkedUtc(params[1].toString())) {
-            // The text says that it is in UTC, so the time must be.
-            zoneId = ZoneOffset.UTC;
-        } else {
-            try {
-                zoneId = UserTimeZoneUtil.getZoneId(expressionContext);
-            } catch (final DateTimeException e) {
-                throw new ParseException(e.getMessage(), 0);
+        try {
+            if (params.length >= 2) {
+                final String pattern = ParamParseUtil.parseStringParam(params, 1, name);
+                formatter = FormatterCache.getFormatter(pattern, Mode.FORMAT);
             }
+            if (params.length >= 3 && params[2] instanceof final Function func) {
+                zoneFunction = func;
+            } else if (params.length >= 3) {
+                zoneId = FormatterCache.getZoneId(ParamParseUtil.parseStringParam(params, 2, name));
+            } else if (params.length == 2 && FormatterCache.isMarkedUtc(params[1].toString())) {
+                // The text says that it is in UTC, so the time must be.
+                zoneId = ZoneOffset.UTC;
+            } else {
+                zoneId = UserTimeZoneUtil.getZoneId(expressionContext);
+            }
+        } catch (final DateTimeException | IllegalArgumentException | ArithmeticException e) {
+            throw new ParseException(e.getMessage(), 0);
         }
 
         final Param param = params[0];

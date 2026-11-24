@@ -61,6 +61,11 @@ class PeriodBetween extends AbstractCalendarFunction {
     }
 
     @Override
+    void checkConstant(final int pos, final Val val) {
+        DateReader.check(val);
+    }
+
+    @Override
     Val evaluate(final Val[] vals, final Supplier<ZoneId> zone) {
         final ZoneId zoneId = zone.get();
         final ZonedDateTime start = DateReader.read(vals[0], zoneId);

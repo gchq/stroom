@@ -72,6 +72,9 @@ class TestDateReader {
                 ValDouble.create(Double.POSITIVE_INFINITY),
                 ValDouble.create(Double.NEGATIVE_INFINITY),
                 ValFloat.create(Float.NaN),
+                ValDouble.create(1e300),
+                ValDouble.create(-1e300),
+                ValDouble.create(0x1p63),
                 ValDuration.create(5),
                 ValPeriod.create(0, 0, 1),
                 ValBoolean.TRUE)) {
@@ -79,6 +82,13 @@ class TestDateReader {
                     .isInstanceOf(DateTimeException.class)
                     .hasMessage("A " + val.type().getName() + " is not a date");
         }
+    }
+
+    @Test
+    void numberInTextThatIsTooLarge() {
+        assertThatThrownBy(() -> DateReader.readMillis(ValString.create("12345678901234567890"), NOT_NEEDED))
+                .isInstanceOf(DateTimeException.class)
+                .hasMessage("'12345678901234567890' is too large to be a date");
     }
 
     @ParameterizedTest

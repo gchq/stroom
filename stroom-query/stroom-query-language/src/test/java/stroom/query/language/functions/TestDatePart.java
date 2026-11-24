@@ -95,8 +95,6 @@ class TestDatePart {
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
             "getYear(${field})|'soon' is not a date",
-            "getYear(1h)|A duration is not a date",
-            "getYear(1M)|A period is not a date",
             "getYear(power(10, 400))|A double is not a date",
             "datePart(2024-01-01T00:00:00Z, ${field})|Unknown part of a date 'soon'. Use one of year, quarter",
             "getYear(2024-01-01T00:00:00Z, ${field})|Unknown time zone 'soon'"})
@@ -120,7 +118,9 @@ class TestDatePart {
             "datePart(${field}, 'Year')|Unknown part of a date 'Year'",
             "getYear(${field}, 'Mars/Base')|Unknown time zone 'Mars/Base'",
             "getYear(${field}, '')|There is no time zone",
-            "datePart(${field}, 'year', 'Mars/Base')|Unknown time zone 'Mars/Base'"})
+            "datePart(${field}, 'year', 'Mars/Base')|Unknown time zone 'Mars/Base'",
+            "getYear(1h)|A duration is not a date",
+            "getYear(1M)|A period is not a date"})
     void mistakesThatAreReportedWhenTheExpressionIsParsed(final String expression, final String message) {
         assertThatThrownBy(() -> eval(expression)).hasMessageContaining(message);
     }

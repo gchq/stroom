@@ -53,6 +53,11 @@ class GetWeekOfYear extends AbstractCalendarFunction {
     }
 
     @Override
+    void checkConstant(final int pos, final Val val) {
+        DateReader.check(val);
+    }
+
+    @Override
     Val evaluate(final Val[] vals, final Supplier<ZoneId> zone) {
         return DateField.WEEK_OF_YEAR.get(DateReader.read(vals[0], zone.get()));
     }

@@ -57,16 +57,22 @@ class FromEpoch extends AbstractCalendarFunction {
     void checkConstant(final int pos, final Val val) {
         if (pos == 1) {
             EpochUnit.fromName(val.toString());
+        } else {
+            toNumber(val);
         }
     }
 
     @Override
     Val evaluate(final Val[] vals, final Supplier<ZoneId> zone) {
+        return ValDate.create(EpochUnit.fromName(vals[1].toString()).toMillis(toNumber(vals[0])));
+    }
+
+    private static BigDecimal toNumber(final Val val) {
         // There is no text for a number that is infinite or is not a number.
-        final String amount = NullSafe.string(vals[0].toString()).trim();
+        final String amount = NullSafe.string(val.toString()).trim();
         if (!TimeRounder.isNumber(amount)) {
             throw new IllegalArgumentException("'" + amount + "' is not a number");
         }
-        return ValDate.create(EpochUnit.fromName(vals[1].toString()).toMillis(new BigDecimal(amount)));
+        return new BigDecimal(amount);
     }
 }

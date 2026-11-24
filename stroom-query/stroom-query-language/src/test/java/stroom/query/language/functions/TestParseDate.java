@@ -25,6 +25,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -79,15 +80,69 @@ public class TestParseDate extends AbstractFunctionTest<ParseDate> {
         assertThat(evalInLondon(expression, ValNull.INSTANCE).toString()).contains("There is no time zone");
     }
 
+    // Without a pattern a number is milliseconds, but a pattern is of text.
     @Test
-    void constantsThatHaveNoZoneIgnoreTheZoneOfEachRow() throws ParseException {
+    void numbers() throws ParseException {
         final ValDate date = ValDate.create(Instant.parse("2024-07-01T08:00:00Z").toEpochMilli());
-        for (final String zone : new String[]{"'UTC'", "${field}"}) {
-            final ValString field = ValString.create("UTC");
-            assertThat(evalInLondon("parseDate(2024-07-01T08:00:00Z, 'yyyy MM dd', " + zone + ")", field))
-                    .isEqualTo(date);
-            assertThat(evalInLondon("parseDate(1719820800000, 'yyyy MM dd', " + zone + ")", field)).isEqualTo(date);
-            assertThat(evalInLondon("parseDate('', 'yyyy MM dd', " + zone + ")", field)).isEqualTo(ValNull.INSTANCE);
+        assertThat(evalInLondon("parseDate(1719820800000)", ValNull.INSTANCE)).isEqualTo(date);
+        assertThat(evalInLondon("parseDate(2024-07-01T08:00:00Z)", ValNull.INSTANCE)).isEqualTo(date);
+        assertThat(evalInLondon("parseDate(${field})", ValLong.create(1719820800000L))).isEqualTo(date);
+        assertThat(evalInLondon("parseDate(${field})", date)).isEqualTo(date);
+
+        final ValDate day = ValDate.create(Instant.parse("2024-06-30T23:00:00Z").toEpochMilli());
+        assertThat(evalInLondon("parseDate(20240701, 'yyyyMMdd')", ValNull.INSTANCE)).isEqualTo(day);
+        assertThat(evalInLondon("parseDate(${field}, 'yyyyMMdd')", ValLong.create(20240701))).isEqualTo(day);
+    }
+
+    @Test
+    void valuesThatAreNotDates() throws ParseException {
+        for (final String pattern : new String[]{"", ", 'yyyy'", ", 'yyyy', 'UTC'"}) {
+            for (final Val val : List.of(ValDuration.create(2024), ValPeriod.create(0, 0, 1),
+                    ValDouble.create(Double.NaN), ValBoolean.TRUE)) {
+                assertThat(evalInLondon("parseDate(${field}" + pattern + ")", val).type())
+                        .as(val + pattern)
+                        .isEqualTo(Type.ERR);
+            }
+            for (final String literal : new String[]{"2h", "1d"}) {
+                assertThatThrownBy(() -> evalInLondon("parseDate(" + literal + pattern + ")", ValNull.INSTANCE))
+                        .as(literal + pattern)
+                        .hasMessageContaining(" is not a date");
+            }
+            for (final String literal : new String[]{"2h", "1d", "'soon'"}) {
+                assertThatThrownBy(() -> evalInLondon("parseDate(" + literal + pattern + ")", ValNull.INSTANCE))
+                        .as(literal + pattern)
+                        .isInstanceOf(TokenException.class);
+            }
+        }
+    }
+
+    @Test
+    void blanks() throws ParseException {
+        for (final String params : new String[]{"", ", 'yyyy'", ", 'yyyy', 'UTC'", ", 'yyyy', ${field}"}) {
+            assertThat(evalInLondon("parseDate(' '" + params + ")", ValString.create("Mars/Base")))
+                    .isEqualTo(ValNull.INSTANCE);
+            assertThat(evalInLondon("parseDate(${field}" + params + ")", ValString.create(" ")))
+                    .isEqualTo(ValNull.INSTANCE);
+        }
+    }
+
+    // Not as a mistake by the query's author.
+    @Test
+    void faultIsNotHidden() {
+        assertThatThrownBy(() -> new ParseDate(DateFunctionTestUtil.LONDON, "parseDate").setParams(new Param[]{null}))
+                .isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> new FormatDate(DateFunctionTestUtil.LONDON, "formatDate").setParams(new Param[]{null}))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void badPatternOrZoneIsReportedWithAPosition() {
+        for (final String params : new String[]{"'qqqqqq'", "'yyyy', 'BST'", "'yyyy', 'Mars/Base'"}) {
+            for (final String name : new String[]{"parseDate", "formatDate"}) {
+                assertThatThrownBy(() -> evalInLondon(name + "(${field}, " + params + ")", ValNull.INSTANCE))
+                        .as(name + params)
+                        .isInstanceOf(TokenException.class);
+            }
         }
     }
 

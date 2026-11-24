@@ -55,6 +55,11 @@ class TimeOfDay extends AbstractCalendarFunction {
     }
 
     @Override
+    void checkConstant(final int pos, final Val val) {
+        DateReader.check(val);
+    }
+
+    @Override
     Val evaluate(final Val[] vals, final Supplier<ZoneId> zone) {
         return ValDuration.create(DateReader.read(vals[0], zone.get()).get(ChronoField.MILLI_OF_DAY));
     }

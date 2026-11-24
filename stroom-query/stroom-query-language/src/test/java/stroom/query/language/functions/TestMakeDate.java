@@ -97,10 +97,8 @@ class TestMakeDate {
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
-            "makeDate(2024, 13, 1)|MonthOfYear",
             "makeDate(2023, 2, 29)|February 29",
-            "makeDate(2024, 1, 1, 24)|HourOfDay",
-            "makeDate(2024, 1, 1, 0, 0, 0, 1000)|MilliOfSecond",
+            "makeDate(2024, 20 - 7, 1)|MonthOfYear",
             "makeDate(2024, ${field}, 1)|The month '1.5' is not a whole number"})
     void errors(final String expression, final String message) throws ParseException {
         final Val val = eval(expression, ValDouble.create(1.5));
@@ -110,6 +108,9 @@ class TestMakeDate {
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
+            "makeDate(2024, 13, 1)|MonthOfYear",
+            "makeDate(2024, 1, 1, 24)|HourOfDay",
+            "makeDate(2024, 1, 1, 0, 0, 0, 1000)|MilliOfSecond",
             "makeDate(2024, 1.5, 1)|The month '1.5' is not a whole number",
             "makeDate(2024, 1, 1, 9h)|The hour '9h' is not a whole number",
             "makeDate(2024, 1, 1, 'Mars/Base')|Unknown time zone 'Mars/Base'",

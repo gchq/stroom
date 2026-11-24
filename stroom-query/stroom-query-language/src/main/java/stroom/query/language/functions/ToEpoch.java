@@ -55,6 +55,8 @@ class ToEpoch extends AbstractCalendarFunction {
     void checkConstant(final int pos, final Val val) {
         if (pos == 1) {
             EpochUnit.fromName(val.toString());
+        } else {
+            DateReader.check(val);
         }
     }
 

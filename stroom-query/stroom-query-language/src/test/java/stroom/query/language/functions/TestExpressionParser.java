@@ -27,6 +27,7 @@ import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.time.DateTimeException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1980,5 +1981,26 @@ class TestExpressionParser extends AbstractExpressionParserTest {
                         })
                 .isInstanceOf(TokenException.class)
                 .hasMessageContainingAll("Unknown function", "foo");
+    }
+
+    @Test
+    void testUnknownTimeZoneIsReportedWithAPosition() {
+        for (final String expression : new String[]{"floorDay(${field})", "isWeekend(${field})", "day()"}) {
+            Assertions.assertThatThrownBy(() -> DateFunctionTestUtil.eval(
+                    DateFunctionTestUtil.UNKNOWN_ZONE, expression, ValNull.INSTANCE))
+                    .as(expression)
+                    .isInstanceOf(TokenException.class)
+                    .hasMessageContaining("Unknown time zone 'Mars/Base'")
+                    .hasCauseInstanceOf(DateTimeException.class);
+        }
+    }
+
+    @Test
+    void testFaultInMakingAFunctionIsNotShownAsAMistake() {
+        // There are no date time settings, which is not the fault of the query's author.
+        Assertions.assertThatThrownBy(() -> DateFunctionTestUtil.eval(
+                DateFunctionTestUtil.NO_SETTINGS.copy().dateTimeSettings(null).build(), "day()", ValNull.INSTANCE))
+                .isInstanceOf(NullPointerException.class)
+                .hasMessageContaining("dateTimeSettings not set");
     }
 }

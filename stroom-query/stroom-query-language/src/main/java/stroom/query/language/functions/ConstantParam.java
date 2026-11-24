@@ -68,7 +68,9 @@ final class ConstantParam {
     /// @param param The parameter.
     /// @return The reason.
     static String whyNotConstant(final Param param) {
-        if (param instanceof final Function function
+        // A field has a constant generator until the fields are known.
+        if (!isPerRow(param)
+            && param instanceof final Function function
             && function.createGenerator() instanceof final StaticValueGen staticValueGen) {
             return staticValueGen.getValue() instanceof final ValErr valErr
                     ? valErr.getMessage()
@@ -90,7 +92,8 @@ final class ConstantParam {
         if (val == null) {
             throw new IllegalArgumentException("Invalid origin: " + param + " - " + whyNotConstant(param));
         }
-        if (val instanceof ValDate || (val.type().isNumber() && !(val instanceof ValDuration))) {
+        if (val instanceof ValDate
+            || (val.type().isNumber() && !(val instanceof ValDuration) && DateReader.isLong(val))) {
             final Instant instant = Instant.ofEpochMilli(val.toLong());
             return zone -> instant.atZone(zone).toLocalDateTime();
         }

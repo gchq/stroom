@@ -54,6 +54,10 @@ final class TimeRounder {
     private static final LocalDateTime FIRST_MONDAY = LocalDate.of(1970, 1, 5).atStartOfDay();
     private static final Pattern NUMBER_PATTERN =
             Pattern.compile("[+-]?(?:\\d++(?:\\.\\d*+)?|\\.\\d++)(?:[eE][+-]?\\d{1,3})?");
+    private static final Pattern SPACED_LITERAL_PATTERN =
+            Pattern.compile("\\s*+(?:\\d++(?:\\.\\d++)?\\s*+[A-Za-z]++\\s*+)++");
+    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s++");
+    private static final Pattern FRACTION_PATTERN = Pattern.compile("\\d++\\.\\d++(?:ms|[smhd])");
     private static final int DAYS_PER_WEEK = 7;
     private static final long MILLIS_PER_DAY = Duration.ofDays(1).toMillis();
 
@@ -119,19 +123,22 @@ final class TimeRounder {
         return new TimeRounder(mode, 0, period.toTotalMonths(), period.getDays(), origin);
     }
 
-    /// Reads a duration or period to round to from text, such as `15m`, `PT15M`, `3M` or `P3M`.
+    /// Reads a duration or period from text, such as `15m`, `1h 30m`, `1.5h`, `PT15M`, `3M` or `P3M`.
     ///
     /// @param text The text.
     /// @return A duration or period.
     /// @throws DateTimeException   If the text is not a duration or period.
     /// @throws ArithmeticException If it is too long.
     static Val parseMultiple(final String text) {
-        final String trimmed = text.trim();
+        final String trimmed = removeSpaces(text);
         final String upper = trimmed.toUpperCase(Locale.ROOT);
         if (upper.startsWith("P") || upper.startsWith("-P")) {
             return upper.contains("T")
                     ? ValDuration.create(Duration.parse(trimmed))
                     : ValPeriod.create(Period.parse(trimmed));
+        }
+        if (FRACTION_PATTERN.matcher(trimmed).matches()) {
+            return ValDuration.create(ValDurationUtil.parseExactMilliseconds(trimmed));
         }
         final List<SimpleDuration> parts = TimeLiteral.parseCompound(trimmed);
         if (parts.stream().allMatch(TimeLiteral::isPeriod)) {
@@ -144,23 +151,29 @@ final class TimeRounder {
         return ValDuration.create(TimeLiteral.parseCompoundMillis(trimmed));
     }
 
+    /// Removes the spaces around the numbers and units of text such as `1 d` or `1h 30m`. Text that isn't like that is
+    /// only trimmed, so that `1 5m` is not read as `15m`.
+    ///
+    /// @param text The text.
+    /// @return The text without the spaces.
+    static String removeSpaces(final String text) {
+        return SPACED_LITERAL_PATTERN.matcher(text).matches()
+                ? WHITESPACE_PATTERN.matcher(text).replaceAll("")
+                : text.trim();
+    }
+
     /// Rounds a value.
     ///
     /// @param val  A duration, or a date or any value that can be used as one.
     /// @param zone The time zone to count the multiples of a date in.
-    /// @return The rounded value, a null if the value can't be used as a date, or an error.
+    /// @return The rounded value, a null if it is blank text, or an error.
     Val round(final Val val, final ZoneId zone) {
         try {
             return switch (val) {
                 case final ValPeriod ignored -> ValErr.create("Can't round a period");
                 case final ValDuration duration -> ValDuration.create(roundDuration(duration.toLong()));
                 case final ValString text -> roundText(text.toString().trim(), zone);
-                default -> {
-                    final Long millis = val.toLong();
-                    yield millis == null
-                            ? ValNull.INSTANCE
-                            : roundDate(millis, zone);
-                }
+                default -> roundDate(DateReader.readMillis(val, () -> zone), zone);
             };
         } catch (final RuntimeException e) {
             return ValErr.create(e.getMessage());

@@ -46,6 +46,10 @@ public class TestFormatDuration extends AbstractFunctionTest<FormatDuration> {
                         ValErr.create(ValDurationUtil.PARSE_ERROR_MESSAGE),
                         Val.create("P1D foo")),
                 TestCase.of(
+                        "1E3",
+                        ValErr.create(ValDurationUtil.PARSE_ERROR_MESSAGE),
+                        Val.create("1E3")),
+                TestCase.of(
                         "1h",
                         ValString.create("1h"),
                         ValDuration.create(Duration.ofHours(1).toMillis())),

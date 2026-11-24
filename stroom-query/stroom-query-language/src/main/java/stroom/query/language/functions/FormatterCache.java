@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
+import java.time.DateTimeException;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -130,7 +131,7 @@ final class FormatterCache {
             try {
                 return new CachedZoneId(DateUtil.getTimeZone(k));
             } catch (final ParseException e) {
-                return new CachedZoneId(new RuntimeException(e.getMessage(), e));
+                return new CachedZoneId(new DateTimeException(e.getMessage(), e));
             } catch (final RuntimeException e) {
                 return new CachedZoneId(e);
             }

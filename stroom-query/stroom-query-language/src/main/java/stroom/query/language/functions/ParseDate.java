@@ -18,7 +18,6 @@ package stroom.query.language.functions;
 
 import stroom.query.language.functions.FormatterCache.Mode;
 import stroom.query.language.functions.ref.StoredValues;
-import stroom.util.shared.NullSafe;
 
 import java.text.ParseException;
 import java.time.DateTimeException;
@@ -79,6 +78,7 @@ class ParseDate extends AbstractFunction {
 
     private final ExpressionContext expressionContext;
     private DateTimeFormatter formatter = DateUtil.DEFAULT_ISO_PARSER;
+    private boolean hasPattern;
     private Supplier<ZoneId> zone;
     private Function zoneFunction;
 
@@ -95,58 +95,62 @@ class ParseDate extends AbstractFunction {
     public void setParams(final Param[] params) throws ParseException {
         super.setParams(params);
 
-        if (params.length >= 2) {
-            final String pattern = ParamParseUtil.parseStringParam(params, 1, name);
-            formatter = FormatterCache.getFormatter(pattern, Mode.PARSE);
-        }
-        if (params.length >= 3 && params[2] instanceof final Function func) {
-            zoneFunction = func;
-        } else if (params.length >= 3) {
-            final ZoneId zoneId = FormatterCache.getZoneId(ParamParseUtil.parseStringParam(params, 2, name));
-            zone = () -> zoneId;
-        } else if (params.length == 2 && FormatterCache.isMarkedUtc(params[1].toString())) {
-            // The text says that it is in UTC, so the time must be.
-            zone = () -> ZoneOffset.UTC;
-        } else {
-            zone = new QueryZone(expressionContext);
-        }
-
-        final Param param = params[0];
-        if (param instanceof Function) {
-            function = (Function) param;
-            hasAggregate = function.hasAggregate();
-
-        } else if (zoneFunction != null && param instanceof ValString && !NullSafe.isBlankString(param.toString())) {
-            // The time zone may be different in each row.
-            function = new StaticValueFunction((Val) param);
-        } else if (param instanceof ValNull) {
-            // This is consistent with ParseDuration
-            gen = new StaticValueFunction(ValNull.INSTANCE).createGenerator();
-        } else if (param instanceof ValString) {
-            final String string = param.toString();
-            final Val val;
-            if (!NullSafe.isBlankString(string)) {
-                val = ValDate.create(parseConstant(string));
+        try {
+            if (params.length >= 2) {
+                hasPattern = true;
+                final String pattern = ParamParseUtil.parseStringParam(params, 1, name);
+                formatter = FormatterCache.getFormatter(pattern, Mode.PARSE);
+            }
+            if (params.length >= 3 && params[2] instanceof final Function func) {
+                zoneFunction = func;
+            } else if (params.length >= 3) {
+                final ZoneId zoneId = FormatterCache.getZoneId(ParamParseUtil.parseStringParam(params, 2, name));
+                zone = () -> zoneId;
+            } else if (params.length == 2 && FormatterCache.isMarkedUtc(params[1].toString())) {
+                // The text says that it is in UTC, so the time must be.
+                zone = () -> ZoneOffset.UTC;
             } else {
-                val = ValNull.INSTANCE;
+                zone = new QueryZone(expressionContext);
             }
-            gen = new StaticValueFunction(val).createGenerator();
 
-        } else {
-            final Long millis = ((Val) param).toLong();
-            if (millis == null) {
-                throw new ParseException("Unable to convert first argument of '" + name + "' function to long", 0);
+            final Param param = params[0];
+            if (param instanceof Function) {
+                function = (Function) param;
+                hasAggregate = function.hasAggregate();
+            } else {
+                // Report a mistake now, rather than as an error in every row.
+                final Val val = parse((Val) param, formatter, hasPattern, zoneFunction == null
+                        ? zone
+                        : () -> ZoneOffset.UTC);
+                if (zoneFunction == null || !val.type().isValue()) {
+                    gen = new StaticValueFunction(val).createGenerator();
+                } else {
+                    // The time zone may be different in each row.
+                    function = new StaticValueFunction((Val) param);
+                }
             }
-            gen = new StaticValueFunction(ValDate.create(millis)).createGenerator();
+        } catch (final DateTimeException | IllegalArgumentException | ArithmeticException e) {
+            throw new ParseException(e.getMessage(), 0);
         }
     }
 
-    private long parseConstant(final String string) throws ParseException {
-        try {
-            return DateUtil.parse(string, formatter, zone);
-        } catch (final DateTimeException e) {
-            throw new ParseException(e.getMessage(), 0);
+    // Reads a value as a date. Without a pattern it can be a date or a number of milliseconds. A pattern is of text.
+    private static Val parse(final Val val,
+                             final DateTimeFormatter formatter,
+                             final boolean hasPattern,
+                             final Supplier<ZoneId> zone) {
+        if (!val.type().isValue()) {
+            return val;
         }
+        final String text = val.toString();
+        if (val instanceof ValDuration || val instanceof ValPeriod || text == null) {
+            throw new DateTimeException("A " + val.type().getName() + " is not a date");
+        } else if (text.isBlank()) {
+            return ValNull.INSTANCE;
+        } else if (!hasPattern && val instanceof ValNumber) {
+            return ValDate.create(DateReader.readMillis(val, zone));
+        }
+        return ValDate.create(DateUtil.parse(text, formatter, zone));
     }
 
     @Override
@@ -157,8 +161,11 @@ class ParseDate extends AbstractFunction {
 
         final Generator childGenerator = function.createGenerator();
         return zoneFunction == null
-                ? new Gen(new Generator[]{childGenerator}, formatter, zone)
-                : new Gen(new Generator[]{childGenerator, zoneFunction.createGenerator()}, formatter, null);
+                ? new Gen(new Generator[]{childGenerator}, formatter, hasPattern, zone)
+                : new Gen(new Generator[]{childGenerator, zoneFunction.createGenerator()},
+                        formatter,
+                        hasPattern,
+                        null);
     }
 
     @Override
@@ -175,11 +182,16 @@ class ParseDate extends AbstractFunction {
     private static final class Gen extends AbstractManyChildGenerator {
 
         private final DateTimeFormatter formatter;
+        private final boolean hasPattern;
         private final Supplier<ZoneId> zone;
 
-        Gen(final Generator[] childGenerators, final DateTimeFormatter formatter, final Supplier<ZoneId> zone) {
+        Gen(final Generator[] childGenerators,
+            final DateTimeFormatter formatter,
+            final boolean hasPattern,
+            final Supplier<ZoneId> zone) {
             super(childGenerators);
             this.formatter = formatter;
+            this.hasPattern = hasPattern;
             this.zone = zone;
         }
 
@@ -188,6 +200,8 @@ class ParseDate extends AbstractFunction {
             final Val val = childGenerators[0].eval(storedValues, childDataSupplier);
             if (!val.type().isValue()) {
                 return val;
+            } else if (val instanceof ValString && val.toString().isBlank()) {
+                return ValNull.INSTANCE;
             }
 
             Supplier<ZoneId> rowZone = zone;
@@ -205,8 +219,7 @@ class ParseDate extends AbstractFunction {
             }
 
             try {
-                return ValDate.create(DateUtil.parse(
-                        val.toString(), formatter, rowZone));
+                return parse(val, formatter, hasPattern, rowZone);
             } catch (final RuntimeException e) {
                 return ValErr.create(e.getMessage());
             }

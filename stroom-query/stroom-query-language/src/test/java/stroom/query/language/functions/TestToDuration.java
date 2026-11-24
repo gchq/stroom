@@ -16,6 +16,8 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.api.token.TokenException;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -23,6 +25,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.text.ParseException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestToDuration {
 
@@ -36,6 +39,10 @@ class TestToDuration {
             "toDuration('PT1M')|60000",
             "toDuration('1m')|60000",
             "toDuration('100MS')|100",
+            "toDuration('-1.5h')|-5400000",
+            "toDuration('0.7d')|60480000",
+            "toDuration('9007199254740993')|9007199254740993",
+            "toDuration('1.9')|1",
             "toDuration(1d)|86400000"})
     void durations(final String expression, final long expected) throws ParseException {
         assertThat(eval(expression)).isEqualTo(ValDuration.create(expected));
@@ -50,12 +57,6 @@ class TestToDuration {
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
             "toDuration(${field})|Text cannot be parsed to a Duration",
-            "toDuration(2024-01-01T00:00:00Z)|A date is not a duration",
-            "toDuration(1M)|can't be used as a duration",
-            "toDuration('1M')|can't be used as a duration",
-            "toDuration(' -1 M ')|can't be used as a duration",
-            "toDuration('1.5M')|can't be used as a duration",
-            "toDuration('1y')|Text cannot be parsed to a Duration",
             "toDuration(isNull(1))|A boolean is not a duration"})
     void errors(final String expression, final String message) throws ParseException {
         final Val val = eval(expression, ValString.create("soon"));
@@ -65,12 +66,27 @@ class TestToDuration {
 
     @Test
     void numbersThatAreNotFinite() throws ParseException {
-        for (final double number : new double[]{Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NaN}) {
+        for (final double number : new double[]{Double.POSITIVE_INFINITY, Double.NaN, 1e300, -1e300}) {
             for (final String name : new String[]{"toDuration", "parseDuration"}) {
                 assertThat(eval(name + "(${field})", ValDouble.create(number)))
-                        .isEqualTo(ValErr.create("A double that is not finite is not a duration"));
+                        .isEqualTo(ValErr.create("A double that is too large or not finite is not a duration"));
             }
         }
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "toDuration(2024-01-01T00:00:00Z)|A date is not a duration",
+            "toDuration(1M)|can't be used as a duration",
+            "toDuration('1M')|can't be used as a duration",
+            "toDuration(' -1 M ')|can't be used as a duration",
+            "toDuration('1.5M')|can't be used as a duration",
+            "toDuration('99999999999999999999')|Text cannot be parsed to a Duration",
+            "toDuration('1y')|Text cannot be parsed to a Duration"})
+    void mistakesThatAreReportedWhenTheExpressionIsParsed(final String expression, final String message) {
+        assertThatThrownBy(() -> eval(expression))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining(message);
     }
 
     // In a query whose time zone is Europe/London.

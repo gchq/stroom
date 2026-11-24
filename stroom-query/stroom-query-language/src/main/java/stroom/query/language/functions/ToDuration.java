@@ -51,19 +51,30 @@ class ToDuration extends AbstractCalendarFunction {
     }
 
     @Override
+    void checkConstant(final int pos, final Val val) {
+        toDuration(val);
+    }
+
+    @Override
     Val evaluate(final Val[] vals, final Supplier<ZoneId> zone) {
-        if (Type.DATE.equals(vals[0].type())) {
+        return toDuration(vals[0]);
+    }
+
+    private static Val toDuration(final Val val) {
+        if (Type.DATE.equals(val.type())) {
             throw new IllegalArgumentException("A date is not a duration");
         }
         // parseDuration would read it as minutes.
-        if (vals[0] instanceof ValString && isMonths(vals[0].toString())) {
+        if (val instanceof ValString && isMonths(val.toString())) {
             throw new IllegalArgumentException("A period of months or years can't be used as a duration");
         }
-        final Val duration = ValDurationUtil.parseDuration(vals[0]);
-        if (duration instanceof ValDuration || duration.type().isError()) {
+        final Val duration = ValDurationUtil.parseDuration(val);
+        if (duration instanceof ValDuration) {
             return duration;
         }
-        throw new IllegalArgumentException("A " + vals[0].type().getName() + " is not a duration");
+        throw new IllegalArgumentException(duration instanceof final ValErr err
+                ? err.getMessage()
+                : "A " + val.type().getName() + " is not a duration");
     }
 
     private static boolean isMonths(final String text) {

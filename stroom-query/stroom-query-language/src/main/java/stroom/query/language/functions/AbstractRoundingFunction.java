@@ -32,6 +32,8 @@ abstract class AbstractRoundingFunction extends AbstractManyChildFunction {
 
     static final String ROUND_SUB_CATEGORY = "Rounding";
     private static final int BY_POS = 1;
+    // Ten to the power of any more than this is infinite.
+    private static final int MAX_PRECISION = 308;
     private static final int ORIGIN_POS = 2;
     private static final int ZONE_POS = 3;
 
@@ -113,10 +115,16 @@ abstract class AbstractRoundingFunction extends AbstractManyChildFunction {
             throw new IllegalArgumentException("'" + name + "' can only have an origin and time zone if its second "
                                                + "argument is a duration or period");
         }
+        if (by instanceof ValDate) {
+            throw new IllegalArgumentException("Second argument of '" + name + "' can't be a date");
+        }
         final Integer precision = by.toInteger();
         if (precision == null || precision <= 0) {
             throw new IllegalArgumentException(
                     "Precision argument of '" + name + "' must be positive number if specified");
+        }
+        if (precision > MAX_PRECISION) {
+            throw new IllegalArgumentException("Precision argument of '" + name + "' is too large");
         }
         return createNumberRounder((double) precision);
     }
@@ -148,16 +156,10 @@ abstract class AbstractRoundingFunction extends AbstractManyChildFunction {
             if (Type.PERIOD.equals(val.type())) {
                 return ValErr.create("Can't round a period");
             }
-            // A date or duration keeps its type.
-            final Val rounded = calculator.calc(val);
-            if (rounded.type().isNumber()) {
-                if (Type.DATE.equals(val.type())) {
-                    return ValDate.create(rounded.toLong());
-                } else if (Type.DURATION.equals(val.type())) {
-                    return ValDuration.create(rounded.toLong());
-                }
-            }
-            return rounded;
+            // A date or duration is a whole number of milliseconds.
+            return val instanceof ValDate || val instanceof ValDuration
+                    ? val
+                    : calculator.calc(val);
         };
     }
 

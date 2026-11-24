@@ -29,6 +29,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.text.ParseException;
+import java.time.DateTimeException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -203,7 +204,15 @@ public class ExpressionParser {
         LOGGER.trace(() -> "getFunction() - " + functionName);
 
         // Create the function.
-        final Function function = FunctionFactory.create(expressionContext, functionName);
+        final Function function;
+        try {
+            function = FunctionFactory.create(expressionContext, functionName);
+        } catch (final DateTimeException e) {
+            // The time zone of the query is not known.
+            final TokenException tokenException = new TokenException(token, e.getMessage());
+            tokenException.initCause(e);
+            throw tokenException;
+        }
         if (function == null) {
             if (REMOVED_PERIOD_FUNCTION.equalsIgnoreCase(functionName)) {
                 throw new TokenException(token, "The 'period' function has been removed. Use lag() for the "

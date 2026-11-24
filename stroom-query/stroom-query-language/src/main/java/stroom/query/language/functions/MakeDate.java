@@ -77,6 +77,14 @@ class MakeDate extends AbstractCalendarFunction {
     static final String NAME = "makeDate";
     private static final int MIN_PARTS = 3;
     private static final String[] PART_NAMES = {"year", "month", "day", "hour", "minute", "second", "millisecond"};
+    private static final ChronoField[] PART_FIELDS = {
+            ChronoField.YEAR,
+            ChronoField.MONTH_OF_YEAR,
+            ChronoField.DAY_OF_MONTH,
+            ChronoField.HOUR_OF_DAY,
+            ChronoField.MINUTE_OF_HOUR,
+            ChronoField.SECOND_OF_MINUTE,
+            ChronoField.MILLI_OF_SECOND};
 
     public MakeDate(final ExpressionContext expressionContext, final String name) {
         super(expressionContext, name, 3, 8);
@@ -114,7 +122,7 @@ class MakeDate extends AbstractCalendarFunction {
 
     @Override
     void checkConstant(final int pos, final Val val) {
-        toInt(val, PART_NAMES[pos]);
+        PART_FIELDS[pos].checkValidIntValue(toInt(val, PART_NAMES[pos]));
     }
 
     @Override

@@ -23,9 +23,13 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.format.DateTimeParseException;
+import java.util.Locale;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ValDurationUtil {
@@ -33,13 +37,19 @@ public class ValDurationUtil {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ValDurationUtil.class);
     // Numbers and exact units such as 1d2h30m, -12h or 1h 30m, as a duration is shown.
     private static final Pattern EXACT_PATTERN = Pattern.compile("\\s*-?\\s*(?:\\d++(?:ms|[wdhms])\\s*+)++");
+    // A number with one of the units that ModelStringUtil knows, or none for milliseconds. Only lower case units can be
+    // negative, as they can in EXACT_PATTERN.
+    private static final Pattern NUMBER_PATTERN = Pattern.compile(
+            "\\s*+(\\d++(?:\\.\\d*+)?|\\.\\d++)\\s*+(ms|s|m|h|d|)\\s*+", Pattern.CASE_INSENSITIVE);
+    private static final Pattern NEGATIVE_PATTERN = Pattern.compile(
+            "\\s*+-\\s*+(\\d++(?:\\.\\d*+)?|\\.\\d++)\\s*+(ms|s|m|h|d)\\s*+");
     static final String PARSE_ERROR_MESSAGE = "Text cannot be parsed to a Duration";
 
     public static Val formatDuration(final Val value) {
         if (value == null) {
             return ValNull.INSTANCE;
-        } else if (value.hasNumericValue()) {
-            // This covers strings too
+        } else if (value.hasNumericValue() && value.toLong() != null) {
+            // This covers strings too, but not those with an exponent
             final long milliseconds = value.toLong();
             return ValString.create(ModelStringUtil.formatDurationString(milliseconds, true));
         } else if (Type.STRING.equals(value.type())) {
@@ -89,9 +99,9 @@ public class ValDurationUtil {
     public static Val parseDuration(final Val val) {
         if (Type.STRING == val.type()) {
             return parseDuration(val.toString());
-        } else if (val instanceof ValNumber && !Double.isFinite(val.toDouble())) {
+        } else if (!DateReader.isLong(val)) {
             // It would become a long that has nothing to do with it.
-            return ValErr.create("A " + val.type().getName() + " that is not finite is not a duration");
+            return ValErr.create("A " + val.type().getName() + " that is too large or not finite is not a duration");
         } else if (isDuration(val)) {
             if (Type.DURATION == val.type()) {
                 return val;
@@ -113,8 +123,7 @@ public class ValDurationUtil {
             return ValNull.INSTANCE;
         } else {
             try {
-                final long millis = parseToMilliseconds(value);
-                return ValDuration.create(millis);
+                return ValDuration.create(parseExactMilliseconds(value));
             } catch (final Exception e) {
                 return exceptionToValErr(e);
             }
@@ -214,5 +223,46 @@ public class ValDurationUtil {
         } catch (final Exception e) {
             throw new DateTimeParseException(PARSE_ERROR_MESSAGE, value, 0);
         }
+    }
+
+    /// Reads text as a duration, as parseToMilliseconds does, but reads fractions exactly, can read negative fractions
+    /// and refuses a number that is too large.
+    ///
+    /// Any text that is used as a number is read by parseToMilliseconds, so what that reads can't be changed without
+    /// changing text that has nothing to do with durations, such as IDs.
+    ///
+    /// @param value The text.
+    /// @return The duration in milliseconds.
+    /// @throws DateTimeParseException If the text is not a duration or is too long.
+    static long parseExactMilliseconds(final String value) {
+        try {
+            final Matcher matcher = NUMBER_PATTERN.matcher(value);
+            if (matcher.matches()) {
+                return toMillis(matcher.group(1), matcher.group(2));
+            }
+            final Matcher negativeMatcher = NEGATIVE_PATTERN.matcher(value);
+            if (negativeMatcher.matches()) {
+                return Math.negateExact(toMillis(negativeMatcher.group(1), negativeMatcher.group(2)));
+            }
+        } catch (final ArithmeticException e) {
+            throw new DateTimeParseException(PARSE_ERROR_MESSAGE, value, 0, e);
+        }
+        return parseToMilliseconds(value);
+    }
+
+    // ModelStringUtil would use a double, so would be a millisecond out for some fractions and large numbers, and turn
+    // a number that is too large into the largest there is.
+    private static long toMillis(final String number, final String unit) {
+        final long unitMillis = switch (unit.toLowerCase(Locale.ROOT)) {
+            case "s" -> Duration.ofSeconds(1).toMillis();
+            case "m" -> Duration.ofMinutes(1).toMillis();
+            case "h" -> Duration.ofHours(1).toMillis();
+            case "d" -> Duration.ofDays(1).toMillis();
+            default -> 1;
+        };
+        return new BigDecimal(number)
+                .multiply(BigDecimal.valueOf(unitMillis))
+                .setScale(0, RoundingMode.DOWN)
+                .longValueExact();
     }
 }

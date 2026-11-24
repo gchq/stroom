@@ -170,8 +170,7 @@ class TestDateDiff {
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
             "dateDiff(${field}, 2024-01-01T00:00:00Z, 2024-01-01T00:00:00Z)|Unknown unit 'soon'. Use one of year",
-            "dateDiff('day', ${field}, 2024-01-01T00:00:00Z)|'soon' is not a date",
-            "dateDiff('day', 1d, 2024-01-01T00:00:00Z)|A period is not a date"})
+            "dateDiff('day', ${field}, 2024-01-01T00:00:00Z)|'soon' is not a date"})
     void errors(final String expression, final String message) throws ParseException {
         final Val val = eval(expression, ValString.create("soon"));
         assertThat(val.type()).as(val.toString()).isEqualTo(Type.ERR);
@@ -181,7 +180,8 @@ class TestDateDiff {
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
             "dateDiff('days', ${field}, ${field})|Unknown unit 'days'",
-            "dateDiff('day', ${field}, ${field}, 'Mars/Base')|Unknown time zone"})
+            "dateDiff('day', ${field}, ${field}, 'Mars/Base')|Unknown time zone",
+            "dateDiff('day', 1d, 2024-01-01T00:00:00Z)|A period is not a date"})
     void mistakesThatAreReportedWhenTheExpressionIsParsed(final String expression, final String message) {
         assertThatThrownBy(() -> eval(expression)).hasMessageContaining(message);
     }

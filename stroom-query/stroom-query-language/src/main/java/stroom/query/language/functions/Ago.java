@@ -22,7 +22,6 @@ import stroom.util.shared.NullSafe;
 import java.time.ZoneId;
 import java.util.Locale;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -42,9 +41,6 @@ import java.util.regex.Pattern;
 class Ago extends AbstractCalendarFunction {
 
     static final String NAME = "ago";
-    private static final Pattern SPACED_LITERAL_PATTERN = Pattern.compile("(?:\\d++\\s*+[A-Za-z]++\\s*+)++");
-    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s++");
-    private static final Pattern FRACTION_PATTERN = Pattern.compile("\\d++\\.\\d++(?:ms|[smhd])");
 
     private final ExpressionContext expressionContext;
 
@@ -68,20 +64,10 @@ class Ago extends AbstractCalendarFunction {
         final String unsigned = negative
                 ? text.substring(1).trim()
                 : text;
-        final Val amount = parseUnsigned(unsigned);
+        final Val amount = TimeRounder.parseMultiple(unsigned);
         return negative
                 ? DateArithmetic.negate(amount)
                 : amount;
-    }
-
-    private static Val parseUnsigned(final String text) {
-        // Spaces can be anywhere in a literal but inside a number or unit, as in '1 d' or '1h 30m'.
-        if (SPACED_LITERAL_PATTERN.matcher(text).matches()) {
-            return TimeRounder.parseMultiple(WHITESPACE_PATTERN.matcher(text).replaceAll(""));
-        } else if (FRACTION_PATTERN.matcher(text).matches()) {
-            return ValDurationUtil.parseDuration(text);
-        }
-        return TimeRounder.parseMultiple(text);
     }
 
     private static Val toAmount(final Val val) {

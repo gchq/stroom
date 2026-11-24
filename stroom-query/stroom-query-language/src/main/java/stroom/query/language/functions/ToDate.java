@@ -49,6 +49,11 @@ class ToDate extends AbstractCalendarFunction {
     }
 
     @Override
+    void checkConstant(final int pos, final Val val) {
+        DateReader.check(val);
+    }
+
+    @Override
     Val evaluate(final Val[] vals, final Supplier<ZoneId> zone) {
         return ValDate.create(DateReader.readMillis(vals[0], zone));
     }

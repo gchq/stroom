@@ -52,7 +52,7 @@ final class ValPeriodUtil {
             return ValNull.INSTANCE;
         }
         try {
-            return ValPeriod.create(parse(text.trim()));
+            return ValPeriod.create(parse(TimeRounder.removeSpaces(text)));
         } catch (final DateTimeException | ArithmeticException e) {
             return ValErr.create(e.getMessage());
         }

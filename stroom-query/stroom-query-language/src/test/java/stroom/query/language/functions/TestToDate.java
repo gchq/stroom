@@ -16,6 +16,8 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.api.token.TokenException;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -24,6 +26,7 @@ import java.text.ParseException;
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestToDate {
 
@@ -65,13 +68,22 @@ class TestToDate {
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
             "toDate(${field})|'soon' is not a date",
-            "toDate(1h)|A duration is not a date",
-            "toDate(1d)|A period is not a date",
+            "toDate(power(10, 300))|A double is not a date",
             "toDate(isNull(1))|A boolean is not a date"})
     void errors(final String expression, final String message) throws ParseException {
         final Val val = eval(expression, ValString.create("soon"));
         assertThat(val.type()).as(val.toString()).isEqualTo(Type.ERR);
         assertThat(val.toString()).contains(message);
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "toDate(1h)|A duration is not a date",
+            "toDate(1d)|A period is not a date"})
+    void mistakesThatAreReportedWhenTheExpressionIsParsed(final String expression, final String message) {
+        assertThatThrownBy(() -> eval(expression))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining(message);
     }
 
     // In a query whose time zone is Europe/London.

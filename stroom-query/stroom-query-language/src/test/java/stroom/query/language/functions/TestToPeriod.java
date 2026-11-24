@@ -16,6 +16,8 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.api.token.TokenException;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -24,6 +26,7 @@ import java.text.ParseException;
 import java.time.Period;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestToPeriod {
 
@@ -37,7 +40,9 @@ class TestToPeriod {
             "1y2M3d,P1Y2M3D",
             "2w,P14D",
             "1d1d,P2D",
-            "' 3M ',P3M"})
+            "' 3M ',P3M",
+            "1 d,P1D",
+            "1y 2M 3 d,P1Y2M3D"})
     void texts(final String text, final String expected) throws ParseException {
         final Val period = ValPeriod.create(Period.parse(expected));
 
@@ -62,6 +67,10 @@ class TestToPeriod {
 
         assertThat(val.type()).isEqualTo(Type.ERR);
         assertThat(val.toString()).contains(message);
+        assertThatThrownBy(() -> DateFunctionTestUtil.eval(
+                DateFunctionTestUtil.LONDON, "toPeriod('" + text + "')", ValNull.INSTANCE))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining(message);
     }
 
     @Test

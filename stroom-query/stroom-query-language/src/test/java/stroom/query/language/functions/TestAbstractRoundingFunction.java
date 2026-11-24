@@ -21,7 +21,9 @@ import stroom.query.language.functions.ref.ValueReferenceIndex;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvFileSource;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.text.ParseException;
 import java.time.Instant;
@@ -57,6 +59,14 @@ class TestAbstractRoundingFunction {
             // Origins.
             "floor(2024-03-15T10:00:00Z, 1y, 2024-04-01T00:00:00Z)|2023-04-01T00:00:00Z",
             "floor(2024-03-15T10:00:00Z, 1y, '2024-04-01T00:00:00')|2023-03-31T23:00:00Z",
+            // Spaces and fractions.
+            "floor(2024-05-15T10:20:00Z, '1 M')|2024-04-30T23:00:00Z",
+            "floor(2024-05-15T10:20:00Z, ' 1 h ')|2024-05-15T10:00:00Z",
+            // A multiple of 0.7 days since 1970, as 0.7 days is not 16h47m59s999ms.
+            "floor(1970-01-08T00:00:00, '0.7d')|1970-01-07T23:00:00Z",
+            "floor(2024-05-15T10:20:00Z, '0.5h')|2024-05-15T10:00:00Z",
+            "floorTime(2024-05-15T10:20:00Z, '1 h')|2024-05-15T10:00:00Z",
+            "floorTime(2024-05-15T10:20:00Z, '0.25 h')|2024-05-15T10:15:00Z",
             // A date with no time is midnight in the zone of the call.
             "floor(2024-03-15T10:00:00Z, 1y, '2024-04-01')|2023-03-31T23:00:00Z",
             "floor(2024-03-15T10:00:00Z, 1y, ' 2024-04-01 ', 'America/New_York')|2023-04-01T04:00:00Z",
@@ -116,15 +126,40 @@ class TestAbstractRoundingFunction {
         assertThat(eval(expression, Map.of(), ValNull.INSTANCE)).isEqualTo(ValDouble.create(expected));
     }
 
+    // Recorded before dates and durations could be rounded, as nothing about numbers was meant to change.
+    @ParameterizedTest
+    @CsvFileSource(resources = "TestAbstractRoundingFunction_numbers.csv")
+    void numbersAreRoundedAsTheyWere(final String function, final double number, final double expected)
+            throws ParseException {
+        assertThat(eval(function.replace("{}", "${field}"), Map.of(), ValDouble.create(number)))
+                .isEqualTo(ValDouble.create(expected));
+    }
+
+    // They are whole milliseconds.
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "floor({})", "ceiling({})", "round({})", "floor({}, 1)", "ceiling({}, 6)", "round({}, 8)", "floor({}, 20)",
+            "round({}, 308)"})
+    void datesAndDurationsHaveNoDecimalPlaces(final String function) throws ParseException {
+        final String expression = function.replace("{}", "${field}");
+        for (final long millis : new long[]{0, 1788713250100L, 31041600, 1719820800001L, -1, Long.MAX_VALUE}) {
+            assertThat(eval(expression, Map.of(), ValDate.create(millis))).isEqualTo(ValDate.create(millis));
+            assertThat(eval(expression, Map.of(), ValDuration.create(millis))).isEqualTo(ValDuration.create(millis));
+        }
+    }
+
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
             "floor(100m, 1M)|Can't round a duration by a period of months or years",
+            "floor(power(10, 300), 1d)|A double is not a date",
+            "floor(power(10, 400), 1d)|A double is not a date",
+            "floor(isNull(1), 1d)|A boolean is not a date",
             "floor(100m, 1h, 2024-01-01T00:00:00Z)|An origin can only be used to round a date",
             "floor(1d, 1h)|Can't round a period",
             "floor(${field}, param('missing'))|no value was supplied for it",
             "floor(${field}, parseDuration('15mm'))|Text cannot be parsed to a Duration",
             "floorTime(${field}, parseDuration('soon'))|Text cannot be parsed to a Duration",
-            "floor('1e300', 1d)|Overflow",
+            "floor('1e300', 1d)|'1e300' is too large to be a date",
             "floorTime(${field}, 0h)|it must be at least one millisecond",
             "floorTime(${field}, 1M, 5m)|Invalid origin",
             "floorTime(${field}, 1M, 'soon')|Invalid origin"})
@@ -142,15 +177,20 @@ class TestAbstractRoundingFunction {
             "floor(${field}, count())|expected to be a numeric or time period",
             "floor(${field}, 1h, day() + ${field})|not something computed per row",
             "floor(${field}, 0)|must be positive",
+            "floor(${field}, 309)|is too large",
+            "floor(${field}, 1719820800000)|is too large",
+            "floor(${field}, '1E3')|is too large",
+            "floor(${field}, 2024-01-01T00:00:00Z)|can't be a date",
             "floor(${field}, 0h)|it must be at least one millisecond",
             "floor(${field}, 0M)|it must be more than zero",
             "floor(${field}, 'P1M2D')|it must only have one of years, months and days",
             "floor(${field}, 'soon')|is not a number of decimal places, a duration or a period: soon",
             "floor(${field}, 2, day())|can only have an origin and time zone if",
-            "floor(${field}, 1d, ${field})|Invalid origin",
+            "floor(${field}, 1d, ${field})|not something computed per row",
             "floor(${field}, 1d, 5m)|Invalid origin: 5m - it must be a date",
             "floor(${field}, 1d, 'soon')|Invalid origin",
             "floor(${field}, 1d, '2024-02-30')|Invalid origin",
+            "floor(${field}, 1d, 99999999999999999999)|Invalid origin",
             "floor(${field}, 1d, null(), 'Mars/Base')|Unknown time zone 'Mars/Base'",
             "floor(${field}, 1d, null(), 'BST')|Unknown time zone 'BST'. Use a name such as Europe/London",
             "floor(${field}, 1d, null(), '')|There is no time zone"})

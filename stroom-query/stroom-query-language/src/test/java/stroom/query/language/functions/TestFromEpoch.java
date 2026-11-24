@@ -64,7 +64,6 @@ class TestFromEpoch {
     @CsvSource(delimiter = '|', value = {
             "fromEpoch(${field}, 's')|'soon' is not a number",
             "fromEpoch(1, ${field})|Unknown unit 'soon'. Use one of s, ms, us, ns",
-            "fromEpoch(1h, 's')|is not a number",
             "fromEpoch('1e300', 's')|Overflow"})
     void errors(final String expression, final String message) throws ParseException {
         final Val val = eval(expression, ValString.create("soon"));
@@ -74,7 +73,8 @@ class TestFromEpoch {
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
-            "fromEpoch(${field}, 'sec')|Unknown unit 'sec'"})
+            "fromEpoch(${field}, 'sec')|Unknown unit 'sec'",
+            "fromEpoch(1h, 's')|is not a number"})
     void mistakesThatAreReportedWhenTheExpressionIsParsed(final String expression, final String message) {
         assertThatThrownBy(() -> eval(expression)).hasMessageContaining(message);
     }

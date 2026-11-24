@@ -69,6 +69,8 @@ class DateDiff extends AbstractCalendarFunction {
     void checkConstant(final int pos, final Val val) {
         if (pos == 0) {
             DateDiffUnit.fromName(val.toString());
+        } else {
+            DateReader.check(val);
         }
     }
 

@@ -16,6 +16,8 @@
 
 package stroom.query.language.functions;
 
+import java.text.ParseException;
+
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = ToPeriod.NAME,
@@ -36,6 +38,16 @@ class ToPeriod extends AbstractCast {
 
     public ToPeriod(final String name) {
         super(name);
+    }
+
+    @Override
+    public void setParams(final Param[] params) throws ParseException {
+        super.setParams(params);
+
+        // Report what can be seen to be wrong now, rather than as an error in every row.
+        if (params[0] instanceof final Val val && ValPeriodUtil.parsePeriod(val) instanceof final ValErr err) {
+            throw new ParseException(err.getMessage(), 0);
+        }
     }
 
     @Override

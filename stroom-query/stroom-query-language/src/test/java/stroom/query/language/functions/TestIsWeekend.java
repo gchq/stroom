@@ -141,6 +141,10 @@ class TestIsWeekend extends AbstractFunctionTest<IsWeekend> {
                         ValBoolean.create(true),
                         ValDate.create(saturdayUTCMinus8.toEpochMilli())),
                 TestCase.of(
+                        "Error",
+                        ValErr.create("bad"),
+                        ValErr.create("bad")),
+                TestCase.of(
                         "Null input",
                         ValNull.INSTANCE,
                         ValNull.INSTANCE)

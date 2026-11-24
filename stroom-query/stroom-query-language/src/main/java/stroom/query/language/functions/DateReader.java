@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
@@ -29,6 +30,8 @@ import java.util.function.Supplier;
 /// Reads values as dates. The time zone is only asked for if it is needed, so that a date that doesn't depend on it can
 /// be read even if it is not a known time zone.
 final class DateReader {
+
+    private static final double MAX_LONG = 0x1p63;
 
     private DateReader() {
         // Static methods only.
@@ -39,8 +42,7 @@ final class DateReader {
     /// @param val  A date, a number of milliseconds since the epoch, or text of either.
     /// @param zone Gets the time zone of text that has no offset.
     /// @return The milliseconds since the epoch.
-    /// @throws DateTimeException   If the value is not a date. The message is fit to show the query's author.
-    /// @throws ArithmeticException If the value is too large.
+    /// @throws DateTimeException If the value is not a date. The message is fit to show the query's author.
     static long readMillis(final Val val, final Supplier<ZoneId> zone) {
         final Long millis = switch (val) {
             case final ValDate date -> date.toLong();
@@ -62,17 +64,41 @@ final class DateReader {
     /// @param val  A date, a number of milliseconds since the epoch, or text of either.
     /// @param zone The time zone of text that has no offset, and of the date that is returned.
     /// @return The date.
-    /// @throws DateTimeException   If the value is not a date. The message is fit to show the query's author.
-    /// @throws ArithmeticException If the value is too large.
+    /// @throws DateTimeException If the value is not a date. The message is fit to show the query's author.
     static ZonedDateTime read(final Val val, final ZoneId zone) {
         return Instant.ofEpochMilli(readMillis(val, () -> zone)).atZone(zone);
     }
 
-    // A number that is infinite or is not a number would become a long that has nothing to do with it.
     private static boolean isNumber(final Val val) {
         return val instanceof ValNumber
                && !(val instanceof ValDuration)
-               && Double.isFinite(val.toDouble());
+               && isLong(val);
+    }
+
+    /// Tells whether a number can be turned into a long. One that is too large, is infinite or is not a number would
+    /// become a long that has nothing to do with it.
+    ///
+    /// @param val The number.
+    /// @return True if it can.
+    static boolean isLong(final Val val) {
+        return switch (val) {
+            case final ValDouble number -> isLong(number.toDouble());
+            case final ValFloat number -> isLong(number.toDouble());
+            default -> true;
+        };
+    }
+
+    private static boolean isLong(final double number) {
+        // False for NaN too.
+        return Math.abs(number) < MAX_LONG;
+    }
+
+    /// Checks that a constant can be read as a date, whatever the time zone.
+    ///
+    /// @param val The constant.
+    /// @throws DateTimeException If it is not a date. The message is fit to show the query's author.
+    static void check(final Val val) {
+        readMillis(val, () -> ZoneOffset.UTC);
     }
 
     /// Reads text as a date.
@@ -80,10 +106,14 @@ final class DateReader {
     /// @param text An ISO 8601 date with an optional time and offset, or a number of milliseconds since the epoch.
     /// @param zone Gets the time zone of text that has no offset.
     /// @return The milliseconds since the epoch, or `null` if the text is not a date.
-    /// @throws ArithmeticException If the number is too large.
+    /// @throws DateTimeException If it is a number that is too large.
     static Long parse(final String text, final Supplier<ZoneId> zone) {
         if (TimeRounder.isNumber(text)) {
-            return TimeRounder.parseMillis(text);
+            try {
+                return TimeRounder.parseMillis(text);
+            } catch (final ArithmeticException e) {
+                throw new DateTimeException("'" + text + "' is too large to be a date", e);
+            }
         }
         try {
             return parseDateTime(text, zone);
