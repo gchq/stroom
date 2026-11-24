@@ -16,6 +16,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.lmdb.LmdbLibrary;
 import stroom.lmdb.LmdbLibraryConfig;
@@ -45,6 +46,7 @@ import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
+import stroom.util.io.ByteSize;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
@@ -62,11 +64,13 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -86,6 +90,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestLmdbDataStore.class);
 
     private ErrorConsumerImpl lastErrorConsumer;
+    private ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
 
     private Path tempDir;
     private ExecutorService executorService;
@@ -147,7 +152,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 dataStoreSettings,
                 () -> executorService,
                 errorConsumer,
-                new ByteBufferFactoryImpl(),
+                byteBufferFactory,
                 new ExpressionPredicateFactory(),
                 AnnotationMapperFactory.NO_OP,
                 //TODO: DS
@@ -1098,6 +1103,60 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .containsExactlyInAnyOrder(
                         List.of("a", "150", "150", "400"),
                         List.of("b", "1", "1", "200"));
+    }
+
+    // The row that can't be stored must not keep its buffer.
+    @Test
+    void rowBufferIsReleasedWhenTheStoreIsFull() throws InterruptedException {
+        final Set<ByteBuffer> large = Collections.synchronizedSet(Collections.newSetFromMap(new IdentityHashMap<>()));
+        byteBufferFactory = new ByteBufferFactoryImpl() {
+            @Override
+            public ByteBuffer acquire(final int size) {
+                final ByteBuffer byteBuffer = super.acquire(size);
+                // Only merged rows are as large as this.
+                if (size > 10_000) {
+                    large.add(byteBuffer);
+                }
+                return byteBuffer;
+            }
+
+            @Override
+            public void release(final ByteBuffer byteBuffer) {
+                large.remove(byteBuffer);
+                super.release(byteBuffer);
+            }
+        };
+        final SearchResultStoreConfig config = new SearchResultStoreConfig(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                ResultStoreLmdbConfig.builder()
+                        .localDir("search_results")
+                        .maxStoreSize(ByteSize.ofMebibytes(1))
+                        .build(),
+                null,
+                null,
+                null);
+        final DataStore dataStore = record(create(
+                SearchRequestSource.createBasic(),
+                new QueryKey("full"),
+                "0",
+                countUniqueTable(),
+                config,
+                DataStoreSettings.createBasicSearchResultStoreSettings(),
+                "full"));
+        for (int i = 0; i < 2_000; i++) {
+            dataStore.accept(Val.of(ValString.create("a"), ValString.create(i + "x".repeat(900))));
+        }
+        dataStore.getCompletionState().signalComplete();
+        dataStore.getCompletionState().awaitCompletion();
+
+        assertThat(lastErrorConsumer.getErrorMessages().toString()).contains("max capacity");
+        assertThat(large).isEmpty();
     }
 
     // The grouped table of a rule must be grouped by a time, which is put first.

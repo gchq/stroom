@@ -851,8 +851,12 @@ public class LmdbDataStore implements DataStore {
                             }
                         });
 
-                        final boolean ok = put(writeTxn, db, lmdbKV.key(), newValueBuffer);
-                        bufferFactory.release(newValueBuffer);
+                        final boolean ok;
+                        try {
+                            ok = put(writeTxn, db, lmdbKV.key(), newValueBuffer);
+                        } finally {
+                            bufferFactory.release(newValueBuffer);
+                        }
 
                         if (!ok) {
                             LOGGER.debug(() -> "Unable to update");

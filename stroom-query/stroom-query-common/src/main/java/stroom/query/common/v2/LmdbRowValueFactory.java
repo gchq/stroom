@@ -34,8 +34,8 @@ public class LmdbRowValueFactory {
 
     private static final int MIN_BUFFER_SIZE = 128;
 
-    // The size that new rows have needed. Merged rows can be far larger so are not included, as there can be a great
-    // many new rows waiting to be stored.
+    // The size that recent new rows have needed. Merged rows can be far larger so are not included, as there can be a
+    // great many new rows waiting to be stored. This can be changed by many threads at once, but it is only a guess.
     private int newRowBufferSize = MIN_BUFFER_SIZE;
 
     public LmdbRowValueFactory(final ByteBufferFactory byteBufferFactory,
@@ -46,7 +46,7 @@ public class LmdbRowValueFactory {
         this.writerFactory = writerFactory;
     }
 
-    /// Creates a row value from what is written to an output.
+    /// Creates a row value from what is written to an output. If writing fails then there is nothing to release.
     ///
     /// @param expectedSize How many bytes are expected to be written, though more can be.
     /// @param consumer     Writes to the output.
@@ -54,8 +54,13 @@ public class LmdbRowValueFactory {
     public ByteBuffer useOutput(final int expectedSize, final Consumer<ByteBufferPoolOutput> consumer) {
         try (final ByteBufferPoolOutput output = new ByteBufferPoolOutput(
                 byteBufferFactory, Math.max(MIN_BUFFER_SIZE, expectedSize), -1)) {
-            consumer.accept(output);
-            return output.getByteBuffer().flip();
+            try {
+                consumer.accept(output);
+                return output.getByteBuffer().flip();
+            } catch (final RuntimeException | Error e) {
+                byteBufferFactory.release(output.getByteBuffer());
+                throw e;
+            }
         }
     }
 
@@ -65,7 +70,9 @@ public class LmdbRowValueFactory {
                 write(storedValues, writer);
             }
         });
-        newRowBufferSize = Math.max(newRowBufferSize, byteBuffer.capacity());
+        // Round up, as rows vary in size, and come back down over a few rows after a large one.
+        final int size = Integer.highestOneBit(byteBuffer.remaining()) << 1;
+        newRowBufferSize = Math.max(MIN_BUFFER_SIZE, Math.max(size, newRowBufferSize / 2));
         return byteBuffer;
     }
 
