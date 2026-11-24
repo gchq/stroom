@@ -4557,7 +4557,11 @@ e.g. `Process-SOAPService`). A proposed or changed event type is `proposed` what
 confirms it; a change of any event type puts a confirmed catch-all back to the user. `basis: user_confirmed` is
 refused (only the user's form gives it), but for `drop: true`, the user's word relayed by the agent, which is still
 put to them in the form. Each proposal that can't be applied is in `refused` (its place, TypeId and why: not
-Verb-Object, an add of a TypeId there already, a change or remove of one not there); the rest are applied. The event
+Verb-Object, an add of a TypeId there already, a change or remove of one not there); the rest are applied. A condition
+written as text is refused saying what a condition is, and, for text reading as `name=value` or `name!=value`, the
+condition it would be (`"evt=logon" is {"field": "evt", "equals": "logon"}`; chat 194: all 11 proposals refused on
+`when: ["evt=logon"]`, and the agent read the mapping guide to find the form). The text isn't taken as the condition:
+the mapping's other readers of `when` take only objects (`Condition.textHint`). The event
 types are kept more specific first (more conditions before fewer, `CatalogueOrder`), the catch-all last. Then the
 whole catalogue is checked; problems the proposals bring (not those it had already) record nothing
 (`recorded: false`), and the hint says to correct and send again.
@@ -5273,7 +5277,10 @@ promotion and returns the plan's `next`.
   characters), and as they apply `hint`, `stopped_early`, `record` and `next`. With a catalogue, for an events
   pipeline: `stepped_by_event_type` (records stepped of each event type stepped, by TypeId, in the catalogue's
   order) and `not_stepped` (`type_id`, `title`, `why`: `not in the sample: ...` when every stream was stepped to its
-  end, else `not found within the limit: ...` with the limit met).
+  end, else `not found within the limit: ...` with the limit met); a group of fields no rule reads has `unread_in`, a
+  line a field: the records stepped holding it, by event type (`uncatalogued records` for the catch-all's), to map it
+  in those rules, not every one (`SteppedEventTypes.addUnreadIn`; chat 194: `app`, held by the focus events, added to
+  all 12 rules).
 * **Refuses**: no `pipeline_uuid` or empty `stream_ids`; `max_records` or `records_per_stream` below 1 or not a
   whole number; a pipeline that looks up reference data from a feed with no stream of
   that type yet (`PipelineStepping.refuseUnloadedReferences`): a step then finds no reference data, and Stroom keeps
@@ -5973,7 +5980,10 @@ and streams it reads · Classes: `DraftTranslationMappingTool`, `DraftMapping`, 
 A starting translation mapping drafted from the sample, so the agent edits a valid mapping rather than writing one
 from nothing (a model asked to write one tends to send back the field inventory). `DraftMapping.draft` gives the
 input kind and layout from the profile, the obvious event-logging homes for fields by name (time with its pattern,
-host, client and server addresses and ports, user, event type, message: `FieldHomes`), its own rules (before the
+host, client and server addresses and ports, user, event type, message: `FieldHomes`; a field for
+EventSource/Generator, which the schema requires, only when it is filled in the sample records of every catalogued
+event type, else the constant stands and a note names the event types without it: chat 194's `app`, the focus events'
+window, drafted as the Generator of 11 event types and filled in 2), its own rules (before the
 source is catalogued, one per value of the naming field: the catalogue's seed), a text field's key/value pairs read
 as one extract entry a key, every other field carried as Data, and notes on what is left to decide (the action element
 per rule, System Name and Environment, a time zone). A quoted value's escapes that Stroom's Data Splitter keeps are
@@ -6309,7 +6319,12 @@ through the model. A call runs in this order:
    no source, say) is not remembered as last sent, and the refusal says so: later `changes` still apply to the mapping
    before it (seen in testing: refused changes became the base, and the agent's next changes, written against the
    mapping before them, were refused as removing what "the mapping does not have"). One that parses but fails its
-   checks is remembered, for `changes` to fix.
+   checks is remembered, for `changes` to fix. A field a change writes as it is to an element (`{path, field}` and
+   nothing else, not Data) takes its Data copies with it (`PlacedCopies`): its `{path, field, data_name}` entries
+   named after it, and its place in a rule's `data`, from every rule a common entry reaches (not one writing the element
+   from another field) or the rule of a rule's entry, and from common for a common entry; a Data entry given in the
+   same changes is kept on purpose, and `changes_applied` says what was removed (chat 194: `prefix2` placed at
+   Device/HostName stayed Data in all 12 rules, and took four more builds to remove).
 2. **The version**: a saved XSLT's own (kept with it), else `EventVersions.target`.
 3. **Generation** (`TranslationBuilds.generated`): `XsltGenerator.generate` with the imports standing instructions
    require added, then compiled as Stroom compiles it (`XsltCompileCheck`): one that doesn't compile is a problem
@@ -7959,7 +7974,11 @@ is on the index; seen in chat 177: `<base> -VERIFY`, named by the agent, then `<
 column, one per line, never cut (`Consent.Listed`; seen in chat 177: the list cut with "…"). An existing dashboard is laid out again
 if needed, and its columns changed once the user confirms. The dashboard is the build's when the index is, or when
 `pipeline_uuid` is the build's own pipeline writing to it (seen in production: a new version's verification left no
-dashboard to promote); any other index is searched through an unsaved dashboard.
+dashboard to promote); any other index is searched through an unsaved dashboard. The columns to suggest are the plan's
+own fields for the time, user, host, address, event type and outcome (`BuildFacts.suggestedColumns`, in build_status's
+`next`, said to be the index's own and that no name it lacks is offered; with no plan, the index's fields as
+describe_data_source lists them): chat 194's agent offered the user ECS `event.type`, which the plan didn't have (it
+had `event.code`), and lost a dozen calls over it.
 
 Then the test searches (`IndexChecks.runTestSearches`), each of the sample's streams only and unsorted, as the
 index may hold millions of other documents (a check of the whole index answered for them, and sorting made Stroom
@@ -8505,7 +8524,9 @@ pipeline would, in `stroom-ai-impl`:
     each). Rules' warnings alike are merged, an element only some rules name followed by `(element: rule1, rule2
     only)`;
   * Data entries reading fields none of the rule's records hold, as a warning (`dataNotHeld`; seen: a SecretServer
-    launch rule's rpc_account, target and duration_ms, in none of its records);
+    launch rule's rpc_account, target and duration_ms, in none of its records), naming the rules whose sample records
+    do hold each, with how many, where any does (chat 194: step_sample's "in 59 records no rule reads" and this
+    warning, of different records, were taken for a contradiction);
   * value maps none of whose keys is a value the records give the field, so every record gets the default or nothing,
     as a warning naming the keys and the values held (`mapKeysNotHeld`; seen in testing: iptables' `PROTO=TCP`
     mapped by protocol number, 6, 17 and 1, so every dropped packet's TransportProtocol was Other);
