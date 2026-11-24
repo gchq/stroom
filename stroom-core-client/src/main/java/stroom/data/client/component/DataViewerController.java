@@ -46,6 +46,7 @@ import stroom.util.shared.DataRange;
 import stroom.util.shared.HasItems;
 import stroom.util.shared.Location;
 import stroom.util.shared.Marker;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
@@ -77,7 +78,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -105,6 +105,9 @@ public class DataViewerController
     private static final String RECORD_PAGER_UNIT = "Record";
     private static final String PAGE_PAGER_UNIT = "Page";
     private static final String PART_PAGER_UNIT = "Part";
+
+    // How long to wait before fetching while the user moves through records, parts or streams
+    private static final int FETCH_DELAY_MILLIS = 100;
 
     private final TabData errorTab = new TabDataImpl(ERROR_TAB_NAME);
     private final TabData dataTab = new TabDataImpl(DATA_PREVIEW_TAB_NAME);
@@ -143,12 +146,25 @@ public class DataViewerController
     // This is the child stream type, e.g. meta, context
     // but may also be Info which is not really
     private String effectiveChildStreamType;
+    // The child stream types of the stream and part last asked about, or null if not known
     private Set<String> currentAvailableStreamTypes = null;
+    private Long availableStreamTypesMetaId;
+    private long availableStreamTypesPartIndex;
     private DataType curDataType;
     private SourceLocation currentSourceLocation;
     private AbstractFetchDataResult lastResult;
-    private List<FetchDataRequest> actionQueue;
+    // The id of the last fetch begun, so that a reply to an earlier one isn't shown
+    private int lastFetchId;
+    // Likewise of the Info last asked for, and the stream it is for
+    private int lastInfoId;
+    private Long infoMetaId;
+    // Likewise of the stream's details last asked for, for a location
+    private int lastLocationId;
+    // Begins the fetch that is waiting, if one is
     private Timer delayedFetchDataTimer;
+    // Whether the user has chosen View as Hex, which the option itself doesn't say: it is off on tabs
+    // that can't show hex
+    private boolean viewAsHex;
     private String data;
     private AceEditorMode editorMode = AceEditorMode.XML;
     private List<Marker> markers;
@@ -210,8 +226,12 @@ public class DataViewerController
 
         textPane.setOnBeginStepping(this::beginStepping);
         textPane.setWrapLines(true);
-        textPane.getOptions().getViewAsHexOption().setChangeHandler((isOn) ->
-                update(false));
+        textPane.getOptions().getViewAsHexOption().setChangeHandler((isOn) -> {
+            if (!ignoreActions) {
+                viewAsHex = isOn;
+                update(false);
+            }
+        });
 
         userHasPipelineSteppingPermission = securityContext.hasAppPermission(AppPermission.STEPPING_PERMISSION);
 
@@ -325,16 +345,18 @@ public class DataViewerController
                 textPane.setText(null);
 
                 if (INFO_TAB_NAME.equals(tab.getLabel())) {
-                    setActiveTab(infoTab, null);
+                    ignoringActions(() -> setActiveTab(infoTab, null));
                     effectiveChildStreamType = INFO_PSEUDO_STREAM_TYPE;
+                    lastTabName = tab.getLabel();
                     showHtmlController();
-                    fetchMetaInfoData(getCurrentMetaId());
                     dataView.setSourceLinkVisible(false, false);
                     setNavigationControlsVisible(false);
                     setProgressInView(false);
                     itemNavigator.refreshNavigator();
                     refreshProgressBar(false);
                     refreshTextControllerContent();
+                    // Shows the Info, and the tabs if the stream's aren't known yet
+                    update(true);
                 } else {
                     setNavigationControlsVisible(true);
                     setProgressInView(true);
@@ -361,6 +383,18 @@ public class DataViewerController
         }
     }
 
+    // Runs something that changes the tab or the editor's options, which mustn't fetch as it does when
+    // the user changes them (e.g. View as Hex is turned off on Info)
+    private void ignoringActions(final Runnable runnable) {
+        final boolean wasIgnoringActions = ignoreActions;
+        ignoreActions = true;
+        try {
+            runnable.run();
+        } finally {
+            ignoreActions = wasIgnoringActions;
+        }
+    }
+
     private void updateEditorDisplay() {
 
         // Determine the syntax highlighting mode
@@ -381,7 +415,7 @@ public class DataViewerController
         // see hex of this sub-set when the sub-set location is reliant on chars being decodeable.
         if (INFO_TAB_NAME.equals(currentTabName)
             || ERROR_TAB_NAME.equals(currentTabName)
-            || currentSourceLocation.getDataRange() != null) {
+            || NullSafe.nonNull(currentSourceLocation, SourceLocation::getDataRange)) {
             textPane.getOptions().getViewAsHexOption().setOff();
             textPane.getOptions().getViewAsHexOption().setUnavailable();
         } else {
@@ -390,6 +424,7 @@ public class DataViewerController
 
         if (lastResult != null && lastResult.hasErrors()) {
             showErrors(lastResult);
+            textPane.setControlsVisible(playButtonVisible);
         } else {
             final boolean shouldFormatData = lastResult != null
                                              && FetchDataRequest.DisplayMode.TEXT.equals(lastResult.getDisplayMode())
@@ -399,9 +434,20 @@ public class DataViewerController
                     .setOn(FetchDataRequest.DisplayMode.HEX.equals(lastResult != null
                             ? lastResult.getDisplayMode()
                             : FetchDataRequest.DisplayMode.TEXT));
-            textPane.setMode(editorMode);
-            textPane.setText(data, shouldFormatData);
+            showText(shouldFormatData);
             textPane.setControlsVisible(playButtonVisible);
+        }
+    }
+
+    // Puts the data in the text pane, unless Info is shown: the text isn't then, and another tab
+    // clears it as it fetches its own
+    private void showText(final boolean format) {
+        if (!INFO_TAB_NAME.equals(currentTabName)) {
+            textPane.setMode(editorMode);
+            textPane.setText(data, format);
+            // The data may be a range of the stream, so number its lines from the range's first
+            // line, as SourceViewerController does (a highlight is placed by these numbers)
+            textPane.setFirstLineNumber(getFirstLineNo(lastResult));
         }
     }
 
@@ -474,15 +520,12 @@ public class DataViewerController
 
     /// Clears what is shown.
     public void clear() {
-        clear(true);
-    }
-
-    private void clear(final boolean fireEvents) {
-        // Set response to null.
-        if (actionQueue != null) {
-            actionQueue.clear();
-        }
-        setPageResponse(null, fireEvents);
+        // Set response to null, and drop the reply to any fetch
+        beginFetch(false);
+        itemNavigator.setRefreshing(false);
+        lastLocationId++;
+        currentAvailableStreamTypes = null;
+        setPageResponse(null);
         currentSourceLocation = null;
     }
 
@@ -498,26 +541,31 @@ public class DataViewerController
 
     private void fetchDataForCurrentStreamNo(final String childDataType) {
         effectiveChildStreamType = childDataType;
-        currentSourceLocation = currentSourceLocation.copy()
-                .withChildStreamType(childDataType)
-                .build();
-        update(true, currentStreamType);
+        // There is none once cleared, e.g. with no stream chosen
+        if (currentSourceLocation != null) {
+            currentSourceLocation = currentSourceLocation.copy()
+                    .withChildStreamType(childDataType)
+                    .build();
+        }
+        update(true);
     }
 
     public void fetchData(final SourceLocation sourceLocation) {
         // We know the location but not what type of data we are fetching so first get the meta
+        lastLocationId++;
+        final int locationId = lastLocationId;
         restFactory
                 .create(META_RESOURCE)
                 .method(res -> res.fetch(sourceLocation.getMetaId()))
                 .onSuccess(meta -> {
-                    fetchData(meta, sourceLocation, false);
+                    if (locationId == lastLocationId) {
+                        fetchData(meta, sourceLocation, false);
+                    }
                 })
                 .onFailure(caught -> {
-                    showErrors(
-                            sourceLocation,
-                            sourceLocation.getOptChildType().orElse(null),
-                            null,
-                            Collections.singletonList(caught.getMessage()));
+                    if (locationId == lastLocationId) {
+                        showFetchError(sourceLocation, caught.getMessage());
+                    }
                 })
                 .owner(this)
                 .taskMonitorFactory(dataView.getSpinner())
@@ -525,7 +573,7 @@ public class DataViewerController
     }
 
     public void fetchData(final Meta meta) {
-
+        lastLocationId++;
         fetchData(meta, SourceLocation.builder(meta.getId()).build(), true);
     }
 
@@ -534,12 +582,8 @@ public class DataViewerController
                            final boolean fireEvents) {
         if (meta != null) {
             if (meta.getId() != sourceLocation.getMetaId()) {
-                showErrors(
-                        sourceLocation,
-                        sourceLocation.getOptChildType().orElse(null),
-                        null,
-                        Collections.singletonList(
-                                "Meta ID mismatch, " + meta.getId() + " vs " + sourceLocation.getMetaId()));
+                showFetchError(sourceLocation,
+                        "Meta ID mismatch, " + meta.getId() + " vs " + sourceLocation.getMetaId());
             } else {
                 currentStreamType = meta.getTypeName();
 
@@ -564,7 +608,8 @@ public class DataViewerController
                     currentSourceLocation = sourceLocation;
                     markerList.resetExpandedSeverities();
 
-                    update(fireEvents, currentStreamType);
+                    // The user may be moving through a list of streams
+                    update(fireEvents, true);
                 } else {
                     // Same location as before so just refresh any markers/highlights, e.g. in stepping
                     refreshHighlights(lastResult);
@@ -574,74 +619,139 @@ public class DataViewerController
 
             if (initDataViewType != null) {
                 if (initDataViewType.equals(DataViewType.INFO)) {
-                    setActiveTab(infoTab, currentStreamType);
+                    ignoringActions(() -> setActiveTab(infoTab, currentStreamType));
                     onNewTabSelected(infoTab);
                 } else if (initDataViewType.equals(DataViewType.PREVIEW)) {
-                    setActiveTab(dataTab, currentStreamType);
+                    ignoringActions(() -> setActiveTab(dataTab, currentStreamType));
                     onNewTabSelected(dataTab);
                 }
                 setInitDataViewType(null);
             }
         } else {
             // Null meta
-            showErrors(
-                    sourceLocation,
-                    sourceLocation.getOptChildType().orElse(null),
-                    null,
-                    Collections.singletonList(
-                            "Stream does not exist or you do not have permission to view it"));
+            showFetchError(sourceLocation,
+                    "Stream does not exist or you do not have permission to view it");
         }
+    }
+
+    // Shows why a stream can't be fetched, forgetting the one before, so that a late reply for it isn't
+    // shown instead
+    private void showFetchError(final SourceLocation sourceLocation, final String message) {
+        if (currentSourceLocation != null) {
+            clear();
+        }
+        showErrors(
+                sourceLocation,
+                sourceLocation.getOptChildType().orElse(null),
+                null,
+                Collections.singletonList(message));
     }
 
     public void setDisplayMode(final DisplayMode displayMode) {
         this.displayMode = displayMode;
     }
 
+    /// Fetches what is shown again, at once.
+    ///
+    /// @param fireEvents Whether the request says to fire events.
     public void update(final boolean fireEvents) {
-        update(fireEvents, currentStreamType);
+        update(fireEvents, false);
     }
 
-    private void update(final boolean fireEvents,
-                        final String streamTypeName) {
+    // Fetches what is shown, after a delay if the user may be moving through records, parts or streams,
+    // so that they can without sending requests for each
+    private void update(final boolean fireEvents, final boolean delayed) {
         // No point in updating if a currentSourceLocation has not been set
         if (!ignoreActions && currentSourceLocation != null) {
-            if (isSameStreamAndPartAsLastTime() && currentAvailableStreamTypes != null) {
-                // Same stream/part so we know this type is available and
-                // therefore no need to update tabs as
+            final Fetch fetch = beginFetch(fireEvents);
 
-                update(fireEvents, streamTypeName, currentAvailableStreamTypes);
+            // Don't show one stream's Info for another
+            if (!Objects.equals(infoMetaId, getCurrentMetaId())) {
+                clearInfo();
+            }
+
+            if (delayed) {
+                itemNavigator.setRefreshing(true);
+                delayedFetchDataTimer = new Timer() {
+                    @Override
+                    public void run() {
+                        update(fetch);
+                    }
+                };
+                delayedFetchDataTimer.schedule(FETCH_DELAY_MILLIS);
             } else {
-                // Different stream/part so we need to check which child stream types are available
-                // and pick an appropriate one.
-                currentAvailableStreamTypes = null;
-
-                final Long currentMetaId = getCurrentMetaId();
-                if (currentMetaId != null && currentMetaId >= 0) {
-                    restFactory
-                            .create(DATA_RESOURCE)
-                            .method(res -> res.getChildStreamTypes(
-                                    currentSourceLocation.getMetaId(),
-                                    currentSourceLocation.getPartIndex()))
-                            .onSuccess(availableChildStreamTypes -> {
-                                currentAvailableStreamTypes = availableChildStreamTypes;
-                                update(fireEvents, streamTypeName, availableChildStreamTypes);
-                            })
-                            .onFailure(caught -> {
-                                itemNavigator.setRefreshing(false);
-                                showSimpleError(caught.getMessage());
-                                final Set<String> availableChildStreamTypes = Collections.emptySet();
-                                currentAvailableStreamTypes = availableChildStreamTypes;
-                                update(fireEvents, streamTypeName, availableChildStreamTypes);
-                            })
-                            .owner(this)
-                            .taskMonitorFactory(dataView.getSpinner())
-                            .exec();
-                } else {
-                    showInvalidStreamErrorMsg();
-                    itemNavigator.setRefreshing(false);
-                }
+                update(fetch);
             }
         }
+    }
+
+    private void update(final Fetch fetch) {
+        if (areAvailableStreamTypesKnown()) {
+            // Same stream/part so we know which child stream types are available
+            update(fetch, currentAvailableStreamTypes);
+        } else {
+            // Different stream/part so we need to check which child stream types are available
+            // and pick an appropriate one.
+            currentAvailableStreamTypes = null;
+
+            final Long currentMetaId = getCurrentMetaId();
+            if (currentMetaId != null && currentMetaId >= 0) {
+                final long partIndex = currentSourceLocation.getPartIndex();
+                restFactory
+                        .create(DATA_RESOURCE)
+                        .method(res -> res.getChildStreamTypes(currentMetaId, partIndex))
+                        .onSuccess(availableChildStreamTypes -> {
+                            if (isLatest(fetch)) {
+                                setAvailableStreamTypes(currentMetaId, partIndex, availableChildStreamTypes);
+                                update(fetch, availableChildStreamTypes);
+                            }
+                        })
+                        .onFailure(caught -> {
+                            if (isLatest(fetch)) {
+                                itemNavigator.setRefreshing(false);
+                                showSimpleError(caught.getMessage());
+                                // Known not to be available, so as not to ask, and fail, with each tab;
+                                // the data's reply may know better
+                                setAvailableStreamTypes(currentMetaId, partIndex, Collections.emptySet());
+                                update(fetch, currentAvailableStreamTypes);
+                            }
+                        })
+                        .owner(this)
+                        .taskMonitorFactory(dataView.getSpinner())
+                        .exec();
+            } else {
+                showInvalidStreamErrorMsg();
+                itemNavigator.setRefreshing(false);
+            }
+        }
+    }
+
+    private void setAvailableStreamTypes(final Long metaId,
+                                         final long partIndex,
+                                         final Set<String> availableChildStreamTypes) {
+        currentAvailableStreamTypes = availableChildStreamTypes;
+        availableStreamTypesMetaId = metaId;
+        availableStreamTypesPartIndex = partIndex;
+    }
+
+    // Begins a fetch, so that a request that is waiting isn't sent, and the reply to one that has been
+    // isn't shown
+    private Fetch beginFetch(final boolean fireEvents) {
+        if (delayedFetchDataTimer != null) {
+            delayedFetchDataTimer.cancel();
+        }
+        lastFetchId++;
+        return new Fetch(lastFetchId, fireEvents);
+    }
+
+    private boolean isLatest(final Fetch fetch) {
+        return fetch.id() == lastFetchId;
+    }
+
+    private boolean areAvailableStreamTypesKnown() {
+        return currentAvailableStreamTypes != null
+               && Objects.equals(getCurrentMetaId(), availableStreamTypesMetaId)
+               && getCurrentPartIndex() == availableStreamTypesPartIndex;
     }
 
     private void showInvalidStreamErrorMsg() {
@@ -661,20 +771,27 @@ public class DataViewerController
         showTextController();
     }
 
-    private void update(final boolean fireEvents,
-                        final String streamTypeName,
+    private void update(final Fetch fetch,
                         final Set<String> availableChildStreamTypes) {
         if (INFO_PSEUDO_STREAM_TYPE.equals(effectiveChildStreamType)) {
-            updateAvailableAndSelectedTabs(streamTypeName, availableChildStreamTypes);
-            refreshMetaInfoControllerContent(currentSourceLocation.getMetaId());
-            refreshProgressBar(false);
             // As we are not hitting the rest service we need to clear this out else it will
             // think we are on a strm/part that we are not.
-            lastResult = null;
+            if (!isSameStreamAndPartAsLastTime()) {
+                // Nor is the classification known, until the Info's reply: show none, rather than another
+                // stream's
+                if (!isSameStreamAsLastTime()) {
+                    dataView.setClassification("");
+                }
+                lastResult = null;
+            }
+            ignoringActions(() -> updateAvailableAndSelectedTabs(currentStreamType, availableChildStreamTypes));
+            refreshMetaInfoControllerContent(currentSourceLocation.getMetaId());
+            refreshProgressBar(false);
+            itemNavigator.setRefreshing(false);
         } else {
             // Tabs will be updated by updateFromResource
-            setEffectiveChildStreamType(streamTypeName, availableChildStreamTypes);
-            updateFromResource(fireEvents, currentSourceLocation);
+            setEffectiveChildStreamType(currentStreamType, availableChildStreamTypes);
+            updateFromResource(fetch);
         }
     }
 
@@ -701,10 +818,14 @@ public class DataViewerController
         }
     }
 
-    private void updateFromResource(final boolean fireEvents, final SourceLocation sourceLocation) {
+    private void updateFromResource(final Fetch fetch) {
         final Severity[] expandedSeverities = markerList.getExpandedSeverities();
 
         doWithConfig(sourceConfig -> {
+            if (!isLatest(fetch)) {
+                return;
+            }
+
             final DataRange dataRange;
             // Error markers are a bit different
             if (StreamTypeNames.ERROR.equals(currentStreamType)) {
@@ -734,85 +855,70 @@ public class DataViewerController
                 && isInErrorMarkerMode()) {
                 request.setDisplayMode(FetchDataRequest.DisplayMode.MARKER);
             } else {
-                if (textPane.getOptions().getViewAsHexOption().isOnAndAvailable()) {
+                // A range of the data can't be shown as hex (updateEditorDisplay)
+                if (viewAsHex && currentSourceLocation.getDataRange() == null) {
                     request.setDisplayMode(FetchDataRequest.DisplayMode.HEX);
                 } else {
                     request.setDisplayMode(FetchDataRequest.DisplayMode.TEXT);
                 }
             }
             request.setExpandedSeverities(expandedSeverities);
-            request.setFireEvents(fireEvents);
-            doFetch(request, fireEvents);
+            request.setFireEvents(fetch.fireEvents());
+            doFetch(request, fetch);
         });
     }
 
     private boolean isSameStreamAndPartAsLastTime() {
-        if (lastResult != null) {
-            final Long lastId = Optional.ofNullable(lastResult)
-                    .flatMap(result -> Optional.ofNullable(result.getSourceLocation()))
-                    .map(SourceLocation::getMetaId)
-                    .orElse(null);
-            final Long lastPartNo = Optional.ofNullable(lastResult)
-                    .flatMap(result -> Optional.ofNullable(result.getSourceLocation()))
-                    .map(SourceLocation::getPartIndex)
-                    .orElse(null);
-
-            final boolean isSame = Objects.equals(getCurrentMetaId(), lastId)
-                                   && Objects.equals(getCurrentPartIndex(), lastPartNo);
-            return isSame;
-        } else {
-            return false;
-        }
+        return isSameStreamAsLastTime()
+               && getCurrentPartIndex() == lastResult.getSourceLocation().getPartIndex();
     }
 
-    private void doFetch(final FetchDataRequest request, final boolean fireEvents) {
-        if (getCurrentMetaId() != null) {
-            itemNavigator.setRefreshing(true);
-
-            // Create the action queue and delayed refresh timer if we haven't
-            // already. This allows the user to hit the next/prev btn multiple times without
-            // sending a request for each. The downside is that is makes the page slower
-            ensureActionQueue();
-
-            // Add the action and schedule the timer.
-            actionQueue.add(request);
-            delayedFetchDataTimer.cancel();
-            delayedFetchDataTimer.schedule(100);
-        } else {
-            clear(fireEvents);
-        }
+    private boolean isSameStreamAsLastTime() {
+        final SourceLocation lastLocation = NullSafe.get(lastResult, AbstractFetchDataResult::getSourceLocation);
+        return lastLocation != null && Objects.equals(getCurrentMetaId(), lastLocation.getMetaId());
     }
 
-    private void ensureActionQueue() {
-        if (actionQueue == null) {
-            actionQueue = new ArrayList<>();
-            delayedFetchDataTimer = new Timer() {
-                @Override
-                public void run() {
-                    if (actionQueue.size() > 0) {
-                        final FetchDataRequest request = actionQueue.get(actionQueue.size() - 1);
-                        actionQueue.clear();
-
-                        restFactory
-                                .create(DATA_RESOURCE)
-                                .method(res -> res.fetch(request))
-                                .onSuccess(result -> {
-                                    // If we are queueing more actions then don't
-                                    // update the text.
-                                    if (actionQueue.size() == 0) {
-                                        setPageResponse(result, request.isFireEvents());
-                                        itemNavigator.setRefreshing(false);
-                                    }
-                                })
-                                .onFailure(caught ->
-                                        itemNavigator.setRefreshing(false))
-                                .owner(DataViewerController.this)
-                                .taskMonitorFactory(dataView.getSpinner())
-                                .exec();
+    private void doFetch(final FetchDataRequest request, final Fetch fetch) {
+        itemNavigator.setRefreshing(true);
+        restFactory
+                .create(DATA_RESOURCE)
+                .method(res -> res.fetch(request))
+                .onSuccess(result -> {
+                    if (isLatest(fetch)) {
+                        setPageResponse(result);
+                        itemNavigator.setRefreshing(false);
                     }
-                }
-            };
+                })
+                .onFailure(caught -> {
+                    if (isLatest(fetch)) {
+                        showFetchFailure(caught.getMessage());
+                    }
+                })
+                .owner(this)
+                .taskMonitorFactory(dataView.getSpinner())
+                .exec();
+    }
+
+    // Shows why the data couldn't be fetched, in the tab chosen and in place of the data before, with the
+    // navigator able to fetch it again
+    private void showFetchFailure(final String message) {
+        itemNavigator.setRefreshing(false);
+        if (!isSameStreamAsLastTime()) {
+            // Neither the classification nor how many records there are is known
+            dataView.setClassification("");
+            navigatorData.updateStateForOneItemPerPage(
+                    Count.of(0L, false),
+                    this::setCurrentRecordIndex,
+                    this::getCurrentRecordIndex,
+                    RECORD_PAGER_UNIT);
         }
+        lastResult = null;
+        data = "";
+        markers = null;
+        ignoringActions(() -> updateAvailableAndSelectedTabs(currentStreamType, currentAvailableStreamTypes));
+        setNavigationControlsVisible(true);
+        refreshProgressBar(false);
+        showSimpleError(message);
     }
 
     private void setPagers(final AbstractFetchDataResult result) {
@@ -860,9 +966,11 @@ public class DataViewerController
         setCurrentRecordIndex(pageOffset * SourceLocation.MAX_ERRORS_PER_PAGE);
     }
 
-    private void setPageResponse(final AbstractFetchDataResult result,
-                                 final boolean fireEvents) {
-        ignoreActions = true;
+    private void setPageResponse(final AbstractFetchDataResult result) {
+        ignoringActions(() -> showPageResponse(result));
+    }
+
+    private void showPageResponse(final AbstractFetchDataResult result) {
         this.lastResult = result;
 
         if (result == null || result.getStreamTypeName() == null || steppingSource) {
@@ -903,6 +1011,12 @@ public class DataViewerController
                 }
             }
 
+            if (result.getAvailableChildStreamTypes() != null && result.getSourceLocation() != null) {
+                setAvailableStreamTypes(result.getSourceLocation().getMetaId(),
+                        result.getSourceLocation().getPartIndex(),
+                        result.getAvailableChildStreamTypes());
+            }
+
             // Let the classification handler know that the classification has
             // changed.
             dataView.setClassification(result.getClassification());
@@ -917,7 +1031,6 @@ public class DataViewerController
             refresh(result);
             updateAvailableAndSelectedTabs(null, null);
         }
-        ignoreActions = false;
     }
 
     private void updateAvailableAndSelectedTabs(final String streamType,
@@ -1003,8 +1116,10 @@ public class DataViewerController
     }
 
     private void refresh(final AbstractFetchDataResult result) {
-
-        refreshTextControllerContent();
+        // Choosing the tab shows the text, in the tab's mode, but none is chosen without a stream type
+        if (result == null || result.getStreamTypeName() == null) {
+            refreshTextControllerContent();
+        }
         refreshMetaInfoControllerContent(result != null
                 ? result.getSourceLocation().getMetaId()
                 : null);
@@ -1049,11 +1164,7 @@ public class DataViewerController
                                              && FetchDataRequest.DisplayMode.TEXT.equals(lastResult.getDisplayMode())
                                              && AceEditorMode.XML.equals(editorMode);
 
-            textPane.setMode(editorMode);
-            textPane.setText(data, shouldFormatData);
-            // The data may be a range of the stream, so number its lines from the range's first
-            // line, as SourceViewerController does (a highlight is placed by these numbers)
-            textPane.setFirstLineNumber(getFirstLineNo(lastResult));
+            showText(shouldFormatData);
             textPane.setControlsVisible(playButtonVisible);
             // Resets the context menu states to default
             textPane.setOptionsToDefaultAvailability();
@@ -1082,8 +1193,15 @@ public class DataViewerController
         if (metaId != null && INFO_TAB_NAME.equals(lastTabName)) {
             fetchMetaInfoData(metaId);
         } else {
-            htmlPane.setHtml(null);
+            clearInfo();
         }
+    }
+
+    // Clears the Info, and drops any reply to come
+    private void clearInfo() {
+        lastInfoId++;
+        infoMetaId = null;
+        htmlPane.setHtml(null);
     }
 
     private void refreshHighlights(final AbstractFetchDataResult result) {
@@ -1166,10 +1284,17 @@ public class DataViewerController
 
     private void fetchMetaInfoData(final Long metaId) {
         if (metaId != null) {
+            lastInfoId++;
+            infoMetaId = metaId;
+            final int infoId = lastInfoId;
             restFactory
                     .create(DATA_RESOURCE)
                     .method(res -> res.viewInfo(metaId))
-                    .onSuccess(this::handleMetaInfoResult)
+                    .onSuccess(result -> {
+                        if (infoId == lastInfoId) {
+                            handleMetaInfoResult(result);
+                        }
+                    })
                     .owner(this)
                     .taskMonitorFactory(dataView.getSpinner())
                     .exec();
@@ -1177,6 +1302,17 @@ public class DataViewerController
     }
 
     private void handleMetaInfoResult(final List<DataInfoSection> dataInfoSections) {
+        // The stream's data, which its classification otherwise comes with, may not have been shown
+        for (final DataInfoSection section : dataInfoSections) {
+            if (DataInfoSection.STREAM.equals(section.getTitle())) {
+                for (final DataInfoSection.Entry entry : section.getEntries()) {
+                    if (DataInfoSection.CLASSIFICATION.equals(entry.getKey())) {
+                        dataView.setClassification(entry.getValue());
+                    }
+                }
+            }
+        }
+
         final HtmlTableBuilder tableBuilder = new HtmlTableBuilder();
         for (final DataInfoSection section : dataInfoSections) {
             // Add the section header.
@@ -1299,6 +1435,13 @@ public class DataViewerController
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    // A fetch of what is shown: its id, and whether its request says to fire events
+    private record Fetch(int id, boolean fireEvents) {
+
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     private static class NoNavigatorData implements HasItems {
 
         @Override
@@ -1387,12 +1530,20 @@ public class DataViewerController
         @Override
         public void setItemNo(final long itemNo) {
             itemNoFromConsumer.accept(itemNo);
-            update(false, currentStreamType);
+            // The user may be paging
+            update(false, true);
         }
 
         @Override
         public Count<Long> getTotalItemsCount() {
             return totalItemCount;
+        }
+
+        @Override
+        public boolean isLastPage() {
+            // With no idea how many there are, as the first fetch failed, there are none to move to
+            return (!totalItemCount.isExact() && totalItemCount.getCount() == 0)
+                   || HasItems.super.isLastPage();
         }
 
         @Override
@@ -1440,7 +1591,7 @@ public class DataViewerController
 
         @Override
         public void refresh() {
-            update(false, currentStreamType);
+            update(false);
         }
     }
 }
