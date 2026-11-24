@@ -177,6 +177,29 @@ final class VersionNames {
         return next(name, held);
     }
 
+    /// A document's name for another version, where it is named for one version: its version token (its last
+    /// outside the names held, as [#token(String, Collection)] finds it) where that is `from`, any case, replaced by
+    /// `to`. Seen in chat 192: a group's XSLT saved under its pipeline's V1.0 name went with the pipeline's V1.1 into
+    /// the V1.1 folder, still named V1.0.
+    ///
+    /// @param name A document's name, e.g. `Acme-V1.0-EVENTS Messaging V1.0`.
+    /// @param from The version it is named for, e.g. `V1.0`.
+    /// @param to   The version it is to be named for, e.g. `V1.1`.
+    /// @param held The names it may hold whose tokens are theirs, never changed.
+    /// @return The name for version `to` (`Acme-V1.0-EVENTS Messaging V1.1`); empty when its version token isn't
+    /// `from`, or either version is missing or they are the same.
+    static Optional<String> retokened(final String name,
+                                      final String from,
+                                      final String to,
+                                      final Collection<String> held) {
+        if (name == null || from == null || to == null || from.equalsIgnoreCase(to)) {
+            return Optional.empty();
+        }
+        return last(name, held)
+                .filter(matcher -> matcher.group().equalsIgnoreCase(from))
+                .map(matcher -> name.substring(0, matcher.start()) + to + name.substring(matcher.end()));
+    }
+
     /// A shared module's version, from its name: the version token after its last space (`ACME common V1.1`), else
     /// [#FIRST_MODULE_VERSION] (the first version's name has none).
     ///

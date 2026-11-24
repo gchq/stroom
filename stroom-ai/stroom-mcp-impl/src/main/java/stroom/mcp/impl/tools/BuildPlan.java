@@ -1199,7 +1199,7 @@ public class BuildPlan {
             shown.put("step", nextStep);
             shown.put("do", next.get("what"));
             shown.put("call", call.call());
-            shown.put("then", call.then());
+            shown.put("then", call.then() + documentationAfterStep(nextStep, translation, documented));
             shown.put("progress", progress(steps, nextStep));
             result.put("next", shown);
         } else if (onlyExistingData) {
@@ -1213,6 +1213,17 @@ public class BuildPlan {
             result.put("next", shown);
         }
         return result;
+    }
+
+    // An events pipeline documented before its XSLT was saved again: stepping is to do again, and its documentation
+    // after it (seen in chat 192: the doc described the XSLT the save replaced, and nothing said so).
+    private static String documentationAfterStep(final String nextStep,
+                                                 final List<Map<String, Object>> translation,
+                                                 final Set<String> documented) {
+        return "stepped".equals(nextStep) && !translation.isEmpty() && allNamed(translation, documented)
+                ? "; then update its documentation (write_documentation change=<what changed>): it was written "
+                  + "before the XSLT was saved again, and describes the XSLT as it was"
+                : "";
     }
 
     /// The step's first call, with the arguments the build already gives and `<...>` for those still to decide, and

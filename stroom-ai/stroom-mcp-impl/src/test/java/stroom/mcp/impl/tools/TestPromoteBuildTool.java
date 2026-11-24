@@ -18,7 +18,13 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.ToolOutputs;
 import stroom.ai.impl.tools.ToolCallContext;
+import stroom.ai.impl.tools.ToolCaller;
+import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.generation.MappingFacts;
+import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
+import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardDoc;
@@ -59,6 +65,7 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -674,6 +681,32 @@ class TestPromoteBuildTool {
         assertThat(String.valueOf(moved.get("hint"))).contains("changed since");
         assertThat(approvalForm(Map.of("Pipeline", "/Feeds/Elsewhere"), moved.get("review_id")))
                 .containsEntry("status", "needs_approval");
+    }
+
+    @Test
+    void aLayoutShownInTheChatAndUnchangedIsApprovedWithoutItsReviewId() {
+        // Seen in chat 192: the layout was shown, the user said "confirmed", and the agent had to search the chat's
+        // history for its review_id before promote_build would take it.
+        listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null));
+        final SessionWorkspace workspace = memoryWorkspace();
+        final Map<String, Object> destinations = Map.of("Pipeline", "/Feeds/Acme");
+
+        final Map<String, Object> shown = docs.call(tool, inChat(UserQuestions.NONE, workspace),
+                DocumentationWorld.args(args(destinations, null)));
+        assertThat(shown).containsEntry("status", "needs_review");
+
+        // reviewed left out: the layout shown, unchanged, goes to the short approval form.
+        final BuildToolCalls.FormUser user = BuildToolCalls.declining();
+        assertThat(docs.refusal(tool, inChat(user, workspace), DocumentationWorld.args(args(destinations, null))))
+                .startsWith("The user did not agree to: Promote build");
+        assertThat(user.forms()).hasSize(1);
+
+        // Changed since (another folder): shown again, saying so.
+        final Map<String, Object> moved = docs.call(tool, inChat(UserQuestions.NONE, workspace),
+                DocumentationWorld.args(args(Map.of("Pipeline", "/Feeds/Elsewhere"), null)));
+        assertThat(moved).containsEntry("status", "needs_review");
+        assertThat(String.valueOf(moved.get("hint"))).contains("has changed since: show this",
+                String.valueOf(shown.get("review_id")));
     }
 
     @Test
@@ -1307,8 +1340,8 @@ class TestPromoteBuildTool {
         final PromotionProcessing.FollowOn followOn = new PromotionProcessing.FollowOn(cef, reading,
                 new DocRef(PipelineDoc.TYPE, "ev1", "ACME-V1.0-Events"), version);
         Mockito.when(processing.followOns(any(), any())).thenReturn(List.of(followOn));
-        Mockito.when(processing.createPromotionFilters(any(), any(), any())).thenReturn(List.of(new LinkedHashMap<>(
-                Map.of("filter_id", 40, "pipeline", "ACME-V1.1-Events", "enabled", false))));
+        Mockito.when(processing.createPromotionFilters(any(), any(), any(), any())).thenReturn(List.of(
+                new LinkedHashMap<>(Map.of("filter_id", 40, "pipeline", "ACME-V1.1-Events", "enabled", false))));
         Mockito.when(processing.createFollowOnFilters(any(), any(), any())).thenReturn(List.of(new LinkedHashMap<>(
                 Map.of("filter_id", 41, "pipeline", "ACME-CEF", "reads", "ACME-V1.1-Events", "in_place_of",
                         "ACME-V1.0-Events", "copied_from", 5, "enabled", false))));
@@ -1338,6 +1371,41 @@ class TestPromoteBuildTool {
     }
 
     @Test
+    void aNewVersionsFilterReadsWhatTheUserChoosesAtPromotion() {
+        // Decided by the user (2026-11-24, after chat 192): enabled, a new version's filter reading everything
+        // reprocesses the whole feed, so both versions' Events exist for its old data; asked each time.
+        world.add(PipelineDoc.TYPE, "Azure-Audit-V1.0-EVENTS Messaging V1.0",
+                world.folder("System/Feeds/Azure/Messaging/Events/V1.0").uuid, "ev1");
+        final DocRef version = world.inBuild(BUILD, PipelineDoc.TYPE, "Azure-Audit-V1.0-EVENTS Messaging V1.1",
+                "ev2");
+        world.records().update(BUILD, version, entry -> entry.put("version_of", "ev1"));
+        final Map<String, Object> listed = FakeBuildFacts.doc(PipelineDoc.TYPE, "ev2",
+                "Azure-Audit-V1.0-EVENTS Messaging V1.1", "version_of", "ev1");
+        listed.put("role", "Events");
+        docs.facts.docs.add(listed);
+        Mockito.when(processing.promotionProcessing(any(), any(), any(), any())).thenReturn(List.of(
+                new PromotionProcessing.Entry(version, "Azure-Audit-V1.0-EVENTS", "Raw Events", List.of())));
+        final Map<String, Object> destinations = Map.of();
+        final Map<String, Object> shown = call(destinations, null);
+
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true, "choice",
+                "From now on (recommended): streams arriving after promotion"));
+        final long before = System.currentTimeMillis();
+        final Map<String, Object> promoted = docs.call(tool, user.context(),
+                DocumentationWorld.args(args(destinations, shown.get("review_id"))));
+
+        assertThat(user.shown()).anySatisfy(form -> assertThat(form).contains("Which streams does the new "
+                                                                              + "version's filter read?"));
+        @SuppressWarnings("unchecked")
+        final ArgumentCaptor<Map<String, Long>> since = ArgumentCaptor.forClass(Map.class);
+        Mockito.verify(processing).createPromotionFilters(any(), any(), any(), since.capture());
+        assertThat(since.getValue()).containsOnlyKeys("ev2");
+        assertThat(since.getValue().get("ev2")).isBetween(before, System.currentTimeMillis());
+        assertThat(String.valueOf(promoted.get("new_version_reads"))).contains("streams arriving from promotion "
+                                                                               + "on", "as the user chose");
+    }
+
+    @Test
     void aFollowOnIndexingTheNewEventsTwiceIsPassedOverAndSaidInTheReviewTheFormAndTheResult() {
         // Seen in an eval (case 61): the production indexing pipeline gained a follow-on filter reading the V1.1
         // Events while the build's own indexing pipeline indexed them into the same index.
@@ -1357,7 +1425,7 @@ class TestPromoteBuildTool {
                             + "of 'ACME-V1.1-Events' into the same index";
         Mockito.when(processing.withoutDoubleIndexing(any(), any(), any())).thenReturn(
                 new PromotionProcessing.Followed(List.of(), List.of(said)));
-        Mockito.when(processing.createPromotionFilters(any(), any(), any())).thenReturn(List.of());
+        Mockito.when(processing.createPromotionFilters(any(), any(), any(), any())).thenReturn(List.of());
         final Map<String, Object> destinations = Map.of();
 
         final Map<String, Object> shown = call(destinations, null);
@@ -1504,6 +1572,34 @@ class TestPromoteBuildTool {
     }
 
     // A call from a client without forms: the layout to review, or the refusal to promote without a form.
+    // A call's context in one chat, its workspace the one given (what the chat remembers between calls).
+    private static ToolCallContext inChat(final UserQuestions questions, final SessionWorkspace workspace) {
+        return ToolCallContext.builder(new ToolSession(ToolSession.Kind.MCP, "mcp-session-1",
+                        new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "A test client")))
+                .userQuestions(questions)
+                .workspace(workspace)
+                .build();
+    }
+
+    // A chat's workspace, its files kept in memory.
+    private static SessionWorkspace memoryWorkspace() {
+        final Map<String, String> files = new LinkedHashMap<>();
+        final ChatWorkspace chat = Mockito.mock(ChatWorkspace.class);
+        Mockito.when(chat.write(Mockito.anyInt(), any(WorkspacePath.class), Mockito.anyString(), any()))
+                .thenAnswer(inv -> {
+                    files.put(String.valueOf((Object) inv.getArgument(1)), inv.getArgument(2));
+                    return files.size();
+                });
+        Mockito.when(chat.find(Mockito.anyInt(), any(WorkspacePath.class))).thenAnswer(inv ->
+                files.containsKey(String.valueOf((Object) inv.getArgument(1)))
+                        ? Optional.of(1)
+                        : Optional.empty());
+        Mockito.when(chat.readLines(Mockito.anyInt(), any(WorkspacePath.class), Mockito.anyLong(),
+                Mockito.anyInt())).thenAnswer(inv ->
+                List.of(files.get(String.valueOf((Object) inv.getArgument(1))).split("\n", -1)));
+        return new SessionWorkspace(chat, 1);
+    }
+
     private Map<String, Object> call(final Map<String, Object> destinations, final Object reviewed) {
         return docs.call(tool, BuildToolCalls.context(), DocumentationWorld.args(args(destinations, reviewed)));
     }

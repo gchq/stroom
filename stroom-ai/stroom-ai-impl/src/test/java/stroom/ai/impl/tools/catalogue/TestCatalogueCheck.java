@@ -74,6 +74,38 @@ class TestCatalogueCheck {
     }
 
     @Test
+    void aDescriptionNamingItsRecordCountOrTheScopesIsAProblem() {
+        // Seen in chat 192: the agent's descriptions ended "...; 214 in-scope records", a note about the build that
+        // the translation wrote into every event's EventDetail/Description.
+        final List<String> lines = new ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            lines.add(line(event("Exchange", "Workload", "ExchangeOnline", "Operation", "Send")));
+        }
+        for (int i = 0; i < 3; i++) {
+            lines.add(line(event("Teams", "Workload", "MicrosoftTeams", "Operation", "MessageSent")));
+        }
+        final EventType send = described("Send-MailMessage", "A message was sent from a mailbox; 12 in-scope "
+                                                             + "records.", equalsTo("event.Operation", "Send"));
+        final EventType post = described("Send-TeamMessage", "A message was posted in Teams (1,500 a day, 15 in "
+                                                             + "the sample).",
+                equalsTo("event.Operation", "MessageSent"));
+
+        final CatalogueCheckResult check = check(catalogue(send, post), lines);
+
+        assertThat(said(check)).anySatisfy(problem -> assertThat(problem).contains("Send-MailMessage",
+                        "names 12, its record count in the sample", "written into every event"))
+                .anySatisfy(problem -> assertThat(problem).contains("Send-TeamMessage",
+                        "names 15, the scope's record count"));
+        assertThat(check.refused()).isTrue();
+
+        // What happened, with numbers of its own (under ten, or not a count), is no problem.
+        final EventType plain = described("Send-MailMessage", "A message was sent from a mailbox to 2 or more "
+                                                              + "recipients (Exchange 2019).",
+                equalsTo("event.Operation", "Send"));
+        assertThat(check(catalogue(plain), lines).problems()).isEmpty();
+    }
+
+    @Test
     void aWayOfRecognisingIsCountedOnItsOwnAndTwoWaysOfOneTypeMayOverlap() {
         final EventType soap = type("Process-SOAPService", "SOAP message", EventType.AGENT_KNOWLEDGE,
                 way(equalsTo("event.logger_name", SOAP)),
@@ -773,6 +805,11 @@ class TestCatalogueCheck {
     private static EventType type(final String typeId, final String title, final String basis, final Way... ways) {
         return new EventType(typeId, title, null, "Process", null, null, null, null, null, List.of(ways), false,
                 basis, "high", null, EventType.PROPOSED);
+    }
+
+    private static EventType described(final String typeId, final String description, final Condition condition) {
+        return new EventType(typeId, typeId, description, "Process", null, null, null, null, null,
+                List.of(way(condition)), false, EventType.AGENT_KNOWLEDGE, "high", null, EventType.PROPOSED);
     }
 
     private static Way way(final Condition... conditions) {

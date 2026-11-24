@@ -103,6 +103,8 @@ is a later build's, after this one is promoted.
 * A group's XSLT is the XSLT of a pipeline of its own: it writes the Events, translates its source types' records
   (the registry's rows tried in order) and passes over every other record, counted.
 * A group's XSLT translates each of its source types; within them, its rules tell the event types apart.
+* A group's events come only from its own source types: a value naming one of the feed's other source types (a
+  Device or System Name, say) doesn't belong in its translation.
 * The first group of a feed makes `<feed> common` (the wrapper's or record's shared Event parts: time, System,
   Generator, Device, and the site's shared calls) and `<feed> helpers`; later groups reuse them and keep only what
   differs, said in `group.notes` (a shared call of a later group's is added to the common module). A group writes

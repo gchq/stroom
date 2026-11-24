@@ -60,6 +60,9 @@ class PromotionLayout {
     /// An aggregated feed's shared modules' folders, each a role of its own beside [WriteGuard#ROLES], always under
     /// the feed's folder: `<feed>/Common/V1.0`, `<feed>/Helpers/V1.0`.
     static final List<String> MODULE_ROLES = List.of("Common", "Helpers");
+    /// A step's document's key naming what it is called now, where promotion renames it as it moves it: named for
+    /// another version than the pipeline it goes with ([#layOut]).
+    static final String RENAMED_FROM = "renamed_from";
     /// The version folder of a pipeline whose name holds no version token (with a warning in the layout).
     static final String FIRST_VERSION = "V1.0";
     /// The most production pipelines of sibling feeds read for their roles, a promotion.
@@ -328,13 +331,40 @@ class PromotionLayout {
                     ? feedFolder
                     : step.target();
             if (with.isPresent()) {
-                plan.set(i, step.withTarget(with.get().target()));
+                plan.set(i, forVersion(step, with.get(), withGroup(held, group), warnings)
+                        .withTarget(with.get().target()));
             } else if (base != null) {
                 plan.set(i, step.withTarget(rolePath(base, rootByRole.get(role), group, role,
                         VersionNames.token(name, withGroup(held, group)).orElse(FIRST_VERSION))));
             }
         }
         return warnings;
+    }
+
+    // A document going with a pipeline of one version but named for another (seen in chat 192: a group's XSLT named
+    // 'Messaging V1.0' went with pipeline 'Messaging V1.1' into its V1.1 folder, beside production's XSLT of that
+    // name): promoted under the name for the pipeline's version, said in the layout's warnings. The step keeps the
+    // name it has now as RENAMED_FROM, for promotion to rename it as it moves it.
+    private static Step forVersion(final Step step,
+                                   final LaidPipeline with,
+                                   final Collection<String> held,
+                                   final List<String> warnings) {
+        final String name = String.valueOf(step.doc().get("name"));
+        final Optional<String> token = VersionNames.token(name, held);
+        if (token.isEmpty()) {
+            return step;
+        }
+        final Optional<String> renamed = VersionNames.retokened(name, token.get(), with.version(), held);
+        if (renamed.isEmpty()) {
+            return step;
+        }
+        warnings.add(step.doc().get("type") + " '" + name + "' is named for " + token.get() + " but goes with "
+                     + "pipeline '" + with.name() + "' (" + with.version() + "): promoted as '" + renamed.get()
+                     + "'.");
+        final Map<String, Object> doc = new LinkedHashMap<>(step.doc());
+        doc.put("name", renamed.get());
+        doc.put(RENAMED_FROM, name);
+        return new Step(doc, step.action(), step.target(), step.role());
     }
 
     // The names held, with the group's (when there is one).

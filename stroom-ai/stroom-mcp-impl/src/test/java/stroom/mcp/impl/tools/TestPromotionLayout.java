@@ -53,6 +53,34 @@ class TestPromotionLayout {
     }
 
     @Test
+    void aDocumentNamedForAnotherVersionThanItsPipelinesIsPromotedUnderTheNameForItsVersion() {
+        // Seen in chat 192: the Messaging group's XSLT, named for V1.0 (production's XSLT's name too), went with the
+        // group's V1.1 pipeline into its V1.1 folder still named V1.0.
+        final String feed = "System/MCP Testing/Azure/Azure-Audit-V1.0-EVENTS";
+        world.add(PipelineDoc.TYPE, "Azure-Audit-V1.0-EVENTS Messaging V1.0",
+                world.folder(feed + "/Messaging/Events/V1.0").uuid, "before");
+        final List<PromotionLayout.Step> plan = new ArrayList<>(List.of(
+                new PromotionLayout.Step(FakeBuildFacts.doc(PipelineDoc.TYPE, "p11",
+                        "Azure-Audit-V1.0-EVENTS Messaging V1.1", "version_of", "before"), PromotionLayout.MOVE,
+                        feed, "Events"),
+                new PromotionLayout.Step(FakeBuildFacts.doc(XsltDoc.TYPE, "x11",
+                        "Azure-Audit-V1.0-EVENTS Messaging V1.0", "version_of", "x10"), PromotionLayout.MOVE, feed,
+                        "Events")));
+
+        final List<String> warnings = layout.layOut(plan, Map.of(), feed, "Messaging", step -> "Messaging",
+                List.of("Azure-Audit-V1.0-EVENTS"));
+
+        assertThat(plan.get(1).target()).isEqualTo(feed + "/Messaging/Events/V1.1");
+        // Promoted under the name for its version, the feed's own V1.0 left; the layout says so.
+        assertThat(plan.get(1).doc()).containsEntry("name", "Azure-Audit-V1.0-EVENTS Messaging V1.1")
+                .containsEntry(PromotionLayout.RENAMED_FROM, "Azure-Audit-V1.0-EVENTS Messaging V1.0");
+        assertThat(warnings).singleElement().asString().contains("named for V1.0",
+                "promoted as 'Azure-Audit-V1.0-EVENTS Messaging V1.1'");
+        // The pipeline itself is named for its version already.
+        assertThat(plan.getFirst().doc()).doesNotContainKey(PromotionLayout.RENAMED_FROM);
+    }
+
+    @Test
     void aRootThatIsTheFeedsOwnFolderIsTheFeedsOwnRoot() {
         // Seen in a user test (2026-11-18): the feed in a folder named after it, its own folder given as the role's
         // root, gave <feed>/<feed>/V1.0, Events and Indexing together with no role folders.

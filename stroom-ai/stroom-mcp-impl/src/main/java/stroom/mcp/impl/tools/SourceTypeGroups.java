@@ -62,6 +62,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -99,6 +100,15 @@ class SourceTypeGroups {
     private static final String COMMON_KEY = "common";
     // The UUID in an import's href.
     private static final Pattern HREF_UUID = Pattern.compile("uuid='([^']+)'");
+    /// How the question begins that puts a value naming another source type of the feed to the user.
+    static final String OTHER_SOURCE_TYPE_QUESTION = "A value names another source type of the feed";
+    /// The user's answer: the value changes (the XSLT isn't saved with it).
+    static final String CHANGE_IT = "Change it";
+    /// The user's answer: the value is kept as it is.
+    static final String KEEP_IT = "Keep it";
+    private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^a-z0-9]");
+    // What follows `<feed> <group>` in its pipeline's name: nothing, or a version token after a separator.
+    private static final Pattern GROUP_PIPELINE_VERSION = Pattern.compile("(?:[ _-][vV]\\d+(?:\\.\\d+)*)?");
     // The kept mapping's rule of the common module, which has none of its own.
     private static final String COMMON_RULE = "common";
     private static final String SYSTEM_NAME = "EventSource/System/Name";
@@ -781,6 +791,144 @@ class SourceTypeGroups {
                 .findFirst();
     }
 
+    /// The constant values a group's translation writes (its common parts and its rules': a Device or System Name,
+    /// a Generator) that name one of the feed's source types outside the group, compared without case, spaces or
+    /// punctuation ('Azure Active Directory' names `AzureActiveDirectory`). A group's events come only from its own
+    /// source types (seen in chat 192: a parked source type's name offered as the Messaging group's Device/Name).
+    ///
+    /// @param mapping What the group writes, as one translation's mapping.
+    /// @param plan    The group's plan: its source types and the feed's registry.
+    /// @return Each such value, once per path and value.
+    static List<OtherSourceType> namingOtherSourceTypes(final TranslationMapping mapping, final Plan plan) {
+        final Map<String, String> others = new LinkedHashMap<>();
+        JsonValues.maps(plan.registry().found().state().get("rows")).stream()
+                .map(row -> JsonValues.text(row.get("name")))
+                .filter(name -> !name.isBlank() && !plan.sourceTypes().contains(name))
+                .forEach(name -> others.putIfAbsent(comparable(name), name));
+        final Set<OtherSourceType> out = new LinkedHashSet<>();
+        for (final FieldMapping entry : mapping.allEntries()) {
+            if (entry.value() == null || entry.field() != null) {
+                continue;
+            }
+            final String named = others.get(comparable(entry.value()));
+            if (named != null) {
+                out.add(new OtherSourceType(entry.strippedPath(), entry.value(), named));
+            }
+        }
+        return List.copyOf(out);
+    }
+
+    // A name as it is compared with a source type's: lower case, letters and digits only.
+    private static String comparable(final String name) {
+        return NON_ALPHANUMERIC.matcher(NullSafe.string(name).toLowerCase(Locale.ROOT)).replaceAll("");
+    }
+
+    /// @param registry A feed's registry.
+    /// @param group    A source type group.
+    /// @return True if the registry says where the group runs: one of its rows names its pipeline.
+    static boolean placed(final Registry registry, final String group) {
+        return groupPlacement(registry.found().state(), group).isPresent();
+    }
+
+    /// @param plan A group's plan.
+    /// @return The pipeline the registry's rows of the group name (`name`, and `uuid` once made); empty for a group
+    /// none of whose rows is placed.
+    static Map<String, Object> placedPipeline(final Plan plan) {
+        return groupPlacement(plan.registry().found().state(), plan.group())
+                .map(row -> JsonValues.mapOrEmpty(row.get(PIPELINE)))
+                .orElse(Map.of());
+    }
+
+    /// @param pipelineUuid A pipeline's UUID.
+    /// @return True if it is outside every build: promoted, or made outside the tools.
+    boolean isPromoted(final String pipelineUuid) {
+        return guard.buildOf(new DocRef(PipelineDoc.TYPE, pipelineUuid)).isEmpty();
+    }
+
+    /// Whether a pipeline's name is a source type group's ([#pipelineName]): `<feed> <group>`, alone or followed by a
+    /// version token (any case, after a space, `-` or `_`).
+    ///
+    /// @param name  A pipeline's name.
+    /// @param feed  The aggregated feed's name.
+    /// @param group The group's name.
+    /// @return True if it names the group's pipeline, of any version.
+    static boolean isGroupPipelineName(final String name, final String feed, final String group) {
+        if (name == null || NullSafe.isBlankString(feed) || NullSafe.isBlankString(group)) {
+            return false;
+        }
+        final String base = feed + " " + group;
+        if (name.length() < base.length() || !name.substring(0, base.length()).equalsIgnoreCase(base)) {
+            return false;
+        }
+        return GROUP_PIPELINE_VERSION.matcher(name.substring(base.length())).matches();
+    }
+
+    /// The registry with a promoted group's placement recovered from its pipeline, where the registry has none for
+    /// it (seen in chat 192: the folder holding the feed's registry was deleted, the build's new registry had no
+    /// row placed for 'Messaging', and the user was asked where the Events of a "new" group go, though its
+    /// promoted pipeline translated the feed). The group's rows (the source types given, else the scope's) name the
+    /// pipeline, its XSLT and its output feed, as a promoted group's do: the change goes to a new version of it.
+    /// Only in memory: the save writes it to the registry.
+    ///
+    /// @param build       The build.
+    /// @param registry    The feed's registry.
+    /// @param group       The group.
+    /// @param sourceTypes The source types given, or none for the scope's.
+    /// @param found       The group's pipeline translating the feed now.
+    /// @return The registry recovered, and what to say of it; empty where the registry places the group already,
+    /// or no row of the registry is the group's.
+    Optional<Recovered> recoveredPlacement(final String build,
+                                           final Registry registry,
+                                           final String group,
+                                           final List<String> sourceTypes,
+                                           final CurrentTranslations.GroupPipeline found) {
+        final Map<String, Object> state = JsonValues.deepCopy(registry.found().state());
+        if (groupPlacement(state, group).isPresent()) {
+            return Optional.empty();
+        }
+        final Set<String> types = NullSafe.isEmptyCollection(sourceTypes)
+                ? scopedGroup(build, state).filter(group::equals).isPresent()
+                        ? scopedSourceTypes(build, state).orElse(Set.of())
+                        : Set.of()
+                : new LinkedHashSet<>(sourceTypes);
+        final List<Map<String, Object>> rows = new ArrayList<>();
+        final List<String> placedNow = new ArrayList<>();
+        for (final Map<String, Object> given : JsonValues.maps(state.get("rows"))) {
+            final Map<String, Object> row = new LinkedHashMap<>(given);
+            final String other = JsonValues.text(row.get("group"));
+            if (types.contains(JsonValues.text(row.get("name"))) && (other.isEmpty() || other.equals(group))) {
+                row.put("group", group);
+                final Map<String, Object> pipeline = new LinkedHashMap<>();
+                pipeline.put("name", found.name());
+                pipeline.put("uuid", found.uuid());
+                row.put(PIPELINE, pipeline);
+                row.put(GROUP_XSLT, Map.of("uuid", found.xsltUuid(), "name", NullSafe.string(found.xsltName())));
+                if (found.outputFeed() == null) {
+                    row.remove(OUTPUT_FEED);
+                } else {
+                    row.put(OUTPUT_FEED, found.outputFeed());
+                }
+                placedNow.add(JsonValues.text(row.get("name")));
+            }
+            rows.add(row);
+        }
+        if (placedNow.isEmpty()) {
+            return Optional.empty();
+        }
+        state.put("rows", rows);
+        final Registry recovered = new Registry(registry.feed(), new SourceTypeRegistries.Found(
+                registry.found().doc(), registry.found().promoted(), state));
+        return Optional.of(new Recovered(recovered, "The registry placed no row of group '" + group + "', but its "
+                                                    + "promoted pipeline '" + found.name() + "' (" + found.uuid()
+                                                    + ") translates the feed: its placement is taken from it, not "
+                                                    + "asked as for a new group, and recorded in the registry for "
+                                                    + ToolText.list(placedNow) + " with this save. Its Events go "
+                                                    + (found.outputFeed() == null
+                ? "into the feed's Events"
+                : "to its output feed '" + found.outputFeed() + "'") + "; its XSLT '" + found.xsltName() + "'. A "
+                                                    + "change to it goes to a new version of it."));
+    }
+
     /// The group's pipeline, when it is promoted and the build changes the group for the first time: the change then
     /// goes to a new version of it, nothing asked. Empty once the build has a copy of the group's XSLT (a new
     /// version's, made by a change or by copy_pipeline).
@@ -1145,13 +1293,16 @@ class SourceTypeGroups {
     /// @param build    The build.
     /// @param group    The group.
     /// @param pipeline The pipeline made.
+    /// @param renamed  The build's documents renamed for the pipeline's version, by UUID: the group's XSLT among
+    ///                 them is named so in the rows too.
     /// @return The source types it translates.
     List<String> pipelineMade(final ToolCallContext context,
                               final String build,
                               final String group,
-                              final DocRef pipeline) {
+                              final DocRef pipeline,
+                              final Map<String, DocRef> renamed) {
         return movePipeline(context, build, row -> group.equals(JsonValues.text(row.get("group"))), pipeline,
-                Map.of());
+                NullSafe.map(renamed));
     }
 
     /// A new version of a group's promoted pipeline copied into the build (copy_pipeline): the group's rows move to
@@ -2214,6 +2365,24 @@ class SourceTypeGroups {
     /// @param helpers The helpers, or null.
     /// @param common  The common module, or null.
     record Modules(Module helpers, Module common) {
+
+    }
+
+    /// A constant value a group writes that names one of the feed's other source types
+    /// ([#namingOtherSourceTypes]).
+    ///
+    /// @param path       Where it is written, e.g. `EventSource/Device/Name`.
+    /// @param value      The value.
+    /// @param sourceType The source type it names.
+    record OtherSourceType(String path, String value, String sourceType) {
+
+    }
+
+    /// A registry with a promoted group's placement recovered from its pipeline ([#recoveredPlacement]).
+    ///
+    /// @param registry The registry, the group's rows placed.
+    /// @param note     What to say of it.
+    record Recovered(Registry registry, String note) {
 
     }
 

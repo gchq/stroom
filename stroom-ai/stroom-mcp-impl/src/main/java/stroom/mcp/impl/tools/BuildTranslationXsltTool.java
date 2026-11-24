@@ -139,6 +139,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     static final String OWN_OUTPUT_FEED_ARG = "own_output_feed";
     // The block of UnsavedChoices that keeps where a new group's Events go, by group.
     private static final String PLACEMENT_CHOSEN = "placement chosen";
+    // The values naming another source type of the feed the user chose to keep, by path and value.
+    private static final String OTHER_SOURCE_TYPES_KEPT = "other source types kept";
     static final String REFERENCES_ARG = "references";
     static final String DOMAIN_SPLIT_ARG = "domain_split";
     /// The argument giving an aggregated feed's own Generator, as the user said it in the chat.
@@ -584,6 +586,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         dropAnswered(b);
         checkAgainstNotes(b);
         checkSystem(b);
+        checkOtherSourceTypes(call, context, b);
+        warnBrokenProduction(b);
         checkLookups(b);
         jsonProperties(b);
         fieldMapping(context, b);
@@ -842,7 +846,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         final List<String> keptTypes = kept == null
                 ? List.of()
                 : NullSafe.list(kept.sourceTypes());
-        final SourceTypeGroups.Registry registry = groups.registry(build, request.feeds());
+        final SourceTypeGroups.Registry registry = recovered(build, groups.registry(build, request.feeds()), group,
+                request.sourceTypes(), b);
         final TranslationMapping given = b.mapping.withModule(null).withSeenSourceTypes(null);
         final String target = "feed:" + build + "/" + registry.feed();
         final String generator = NullSafe.isNonBlankString(request.feedGenerator())
@@ -922,6 +927,27 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 : ModuleEdits.DISCARD_CHOICE;
         UnsavedChoices.remember(context, target, MODULE_EDIT_CHOSEN, Map.of(edit.answerKey(), answer));
         return answer;
+    }
+
+    // The registry with the group's placement recovered from its promoted pipeline, where the registry places none
+    // of its rows but a pipeline named for the group translates the feed (found as a next version finds the
+    // pipeline it follows): said in the group's notes, never asked as for a new group (seen in chat 192).
+    private SourceTypeGroups.Registry recovered(final String build,
+                                                final SourceTypeGroups.Registry registry,
+                                                final String group,
+                                                final List<String> sourceTypes,
+                                                final Build b) {
+        if (SourceTypeGroups.placed(registry, group)) {
+            return registry;
+        }
+        final Optional<SourceTypeGroups.Recovered> recovered = currentTranslations
+                .groupPipeline(registry.feed(), group, groups::isPromoted)
+                .flatMap(found -> groups.recoveredPlacement(build, registry, group, sourceTypes, found));
+        if (recovered.isEmpty()) {
+            return registry;
+        }
+        b.placementNotes.add(recovered.get().note());
+        return recovered.get().registry();
     }
 
     // The build the call is in: the one it names, else the one holding the saved XSLT it changes; null for neither
@@ -1226,6 +1252,63 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                                                      + "and environment (unless the standing instructions give "
                                                      + "them), then set the value; if they don't know, a value "
                                                      + "they agree to, such as Unknown");
+            b.result.put("ok", false);
+            b.result.put("xslt", null);
+        }
+    }
+
+    // The group's promoted pipeline, where its XSLTs import a module that no longer exists: it fails until the
+    // module is restored, whatever this build does; said plainly for the user (seen in chat 192: production's V1.0
+    // imported the feed's common module, deleted with its folder, and the build made a new one saying nothing).
+    private void warnBrokenProduction(final Build b) {
+        if (b.group == null) {
+            return;
+        }
+        final Map<String, Object> pipeline = SourceTypeGroups.placedPipeline(b.group);
+        final String uuid = JsonValues.text(pipeline.get("uuid"));
+        if (uuid.isEmpty() || !groups.isPromoted(uuid)) {
+            return;
+        }
+        currentTranslations.brokenImports(uuid).forEach(line -> TranslationBuilds.warnings(b.result).add(
+                "Production pipeline '" + JsonValues.text(pipeline.get("name")) + "': " + line + ". Tell the user."));
+    }
+
+    // A constant a group writes naming one of the feed's source types outside the group (its Device or System
+    // Name, say): a group's events come only from its own source types (seen in chat 192: a parked source type's
+    // name offered as the Messaging group's Device/Name). Put to the user in a form, as placeholders are: changed, it
+    // is a problem and nothing is saved; kept, it isn't asked again in the session. Without a form, a warning to
+    // check with the user.
+    private void checkOtherSourceTypes(final ToolCall call, final ToolCallContext context, final Build b) {
+        if (b.group == null || !ok(b)) {
+            return;
+        }
+        final String target = placementTarget(b);
+        final Map<String, String> kept = UnsavedChoices.recalled(context, target, OTHER_SOURCE_TYPES_KEPT);
+        final List<SourceTypeGroups.OtherSourceType> found = SourceTypeGroups.namingOtherSourceTypes(checked(b),
+                b.group).stream()
+                .filter(other -> !SourceTypeGroups.KEEP_IT.equals(kept.get(other.path() + "=" + other.value())))
+                .toList();
+        for (final SourceTypeGroups.OtherSourceType other : found) {
+            final String said = other.path() + " is '" + other.value() + "', which names " + other.sourceType()
+                                + ", a source type of " + b.group.feed() + " outside group '" + b.group.group()
+                                + "'. A group's events come only from its own source types";
+            if (!context.userQuestions().canAsk()) {
+                TranslationBuilds.warnings(b.result).add(said + ": check with the user that it belongs in this "
+                                                         + "group's events, or change it.");
+                continue;
+            }
+            final Optional<String> chosen = consent.choose(call, context, NAME,
+                    SourceTypeGroups.OTHER_SOURCE_TYPE_QUESTION + ": " + said + ". Keep it, or change it?",
+                    List.of(SourceTypeGroups.CHANGE_IT, SourceTypeGroups.KEEP_IT),
+                    "Keep '" + other.value() + "' as " + other.path() + "?");
+            if (chosen.filter(SourceTypeGroups.KEEP_IT::equals).isPresent()) {
+                UnsavedChoices.remember(context, target, OTHER_SOURCE_TYPES_KEPT, Map.of(other.path() + "="
+                                                                                         + other.value(),
+                        SourceTypeGroups.KEEP_IT));
+                continue;
+            }
+            TranslationBuilds.problems(b.result).add(said + ": the user chose to change it. Ask them for the value, "
+                                                     + "then call again with it.");
             b.result.put("ok", false);
             b.result.put("xslt", null);
         }

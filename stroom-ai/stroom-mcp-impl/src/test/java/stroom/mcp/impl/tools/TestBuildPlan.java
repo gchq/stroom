@@ -461,6 +461,26 @@ class TestBuildPlan {
         assertThat(((Map<?, ?>) decided.get("next")).get("step")).isNotEqualTo("unmapped");
     }
 
+    @Test
+    void anXsltSavedAfterItsPipelineWasDocumentedReopensSteppingThenTheDocumentation() {
+        // Seen in chat 192: the documentation was written after a clean step, then the XSLT rebuilt and stepped
+        // again; nothing said the documentation described the XSLT the save replaced.
+        elasticStatus(true, true, List.of());
+        facts.stepped = false;
+        facts.checks = List.of("Pipeline 'ACME-Events': no clean step_sample or step_records of its current code is "
+                               + "recorded", "Pipeline 'ACME-Events': the documentation's Field mapping predates the "
+                                            + "current mapping or XSLT (write_documentation ...)"
+                                            + BuildChecks.BLOCKS);
+
+        final Map<String, Object> status = plan.status("b", null);
+
+        assertThat(states(status)).containsEntry("stepped", "to do").containsEntry("documented", "to do");
+        final Map<?, ?> next = (Map<?, ?>) status.get("next");
+        assertThat(next.get("step")).isEqualTo("stepped");
+        assertThat(String.valueOf(next.get("then"))).contains("then update its documentation",
+                "describes the XSLT as it was");
+    }
+
     // The plan of an Elasticsearch build with an events pipeline, an index doc and an indexing pipeline, both
     // stepped clean, its events processed and documented.
     private Map<String, Object> elasticStatus(final boolean indexingVerified,

@@ -156,6 +156,32 @@ class BuildDocumentation {
         return new Placed(name, copyOf, inBuild, named(inBuild, DocumentationDoc.TYPE, name), beside);
     }
 
+    /// Why a build's events pipeline isn't documented yet: it stepped clean before, but its current code (its latest
+    /// saved XSLT) hasn't, so the documentation would describe code that may still change (seen in chat 192: written
+    /// after one clean step, then the XSLT rebuilt and stepped again, nothing marking the doc out of date). A pipeline
+    /// never stepped clean is left to the build's other checks: documenting it is how the user accepts errors its
+    /// steps leave, and a copy compared rather than stepped is documented before its first step.
+    ///
+    /// @param pipelineUuid A pipeline.
+    /// @return The refusal; empty for a pipeline outside a build, one whose current code stepped clean, or one never
+    /// stepped clean.
+    Optional<String> notSteppedClean(final String pipelineUuid) {
+        final DocRef ref = new DocRef(PipelineDoc.TYPE, pipelineUuid);
+        final Optional<String> build = guard.buildOf(ref);
+        if (build.isEmpty()
+            || JsonValues.strings(buildRecords.entry(build.get(), pipelineUuid).get(BuildRecords.STEPPED)).isEmpty()) {
+            return Optional.empty();
+        }
+        final BuildRecords.Passed passed = buildRecords.steppedCleanCheck(ref);
+        if (passed.passed()) {
+            return Optional.empty();
+        }
+        return Optional.of("Not written: the pipeline's XSLT was saved after its last clean step, so its current "
+                           + "code hasn't stepped clean. step_sample pipeline_uuid='" + pipelineUuid + "' over the "
+                           + "sample streams first, then write the documentation: it describes the XSLT as it runs."
+                           + passed.said());
+    }
+
     /// The streams the build's record says the pipeline last stepped clean on.
     ///
     /// @param pipelineUuid A pipeline.

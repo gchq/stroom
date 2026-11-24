@@ -75,6 +75,32 @@ class TestWriteDocumentationTool {
     }
 
     @Test
+    void anEventsPipelineWhoseLatestXsltHasntSteppedCleanIsNotDocumented() {
+        // Seen in chat 192: documentation written after a clean step, then the XSLT rebuilt and stepped again, the
+        // doc describing the XSLT the save replaced.
+        final DocRef pipeline = world.pipeline(BUILD, "Acme", "p");
+        Mockito.when(world.keptMappings.keptXslt("p")).thenReturn(Optional.of(kept("translation",
+                Map.of("mapping", Map.of()))));
+        Mockito.when(world.sections.fieldMappingSection(any(), anyString(), any(), any(), any(), anyString(), any()))
+                .thenReturn("The generated section.");
+        // The XSLT saved since its clean step: the record's clean step is of other code.
+        world.world.records().update(BUILD, pipeline, entry -> entry.put(BuildRecords.STEPPED,
+                List.of("0000000000000000")));
+        final Map<String, Object> args = new LinkedHashMap<>(Map.of("build", BUILD, "pipeline_uuid", "p",
+                "markdown", "## Purpose and data\n\nDoors.\n", "stream_ids", List.of(5), "change", "Created"));
+
+        assertThat(world.refusal(tool, context, DocumentationWorld.args(args)))
+                .startsWith("Not written: the pipeline's XSLT was saved after its last clean step")
+                .contains("step_sample pipeline_uuid='p'");
+        assertThat(world.world.created).noneMatch(made -> made.startsWith(DocumentationDoc.TYPE + ":")
+                                                          && !made.endsWith(BuildRecords.NAME));
+
+        // Stepped clean again: written.
+        world.world.records().recordPassed(pipeline, BuildRecords.STEPPED, null, null);
+        assertThat(world.call(tool, context, DocumentationWorld.args(args))).containsEntry("written", "created");
+    }
+
+    @Test
     void aTranslationXsltWrittenByHandIsDocumentedFromTheEventsItWrites() {
         // Seen in testing: the agent's own section for an XSLT written by hand had the common fields and no event
         // type's own; the section is generated (asked for by the user), replacing any the markdown has.

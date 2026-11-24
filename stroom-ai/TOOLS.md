@@ -3346,6 +3346,13 @@ it asks whether to keep the edit). A check ending `(promotion waits for this)` b
   version's Events before promotion, which gives each a new filter, disabled, reading them
   (`BuildStatusTool.followOnReview`, 2026-11-17).
 
+Since 2026-11-24 (chat 192): an events pipeline documented before its XSLT was saved again has `stepped` to do, and
+`next.then` adds "then update its documentation (write_documentation change=...): it was written before the XSLT was
+saved again" (`BuildPlan.documentationAfterStep`); `documented` reopens as before, through the Field mapping digest.
+`before_promotion` names a production pipeline a new version replaces whose own XSLTs import a module that no longer
+exists (`BuildChecks.brokenPredecessor`, `PipelineShapes.brokenImports`: hrefs by `ModuleChecks.hrefs`, resolved as
+Stroom's URI resolver does by `XsltImports.resolve`): "it fails until it is restored"; informational, never blocking.
+
 ### `promote_build`
 
 Content · write · checks View, Edit and Delete on what it moves, writes back and deletes; documents are moved, copied,
@@ -3627,6 +3634,25 @@ feed the build works from, the survey doc and the build record.
   it holds yet, beside what it holds; and that where the new version's own filter translates streams an earlier
   version translated and the index holds already, their events are indexed again: the user decides with the admin
   whether that is meant, or limits that filter in Stroom to the streams arriving from now on. No button.
+
+Since 2026-11-24 (chat 192):
+
+* A document going with a pipeline of one version but named for another (its version token, the feed's and group's
+  names held, isn't the pipeline's) is promoted under the name for the pipeline's version: the layout shows the new
+  name and warns `XSLT '<name V1.0>' is named for V1.0 but goes with pipeline '<V1.1>' (V1.1): promoted as '<name
+  V1.1>'` (`PromotionLayout.forVersion`, `renamed_from`); the rename (`WriteGuard.rename`) is made as it is moved, so
+  the review id doesn't change between the review and the approval.
+* `reviewed` left out after a `needs_review` in the same chat (its review id and a digest of everything it showed but
+  its hint kept in the chat's workspace, `UnsavedChoices`, `promotion:<build>`): where nothing shown has changed
+  (layout, warnings, processing, index and pipeline changes, follow-ons, tidy-up), the approval form comes as if that
+  id were given, the result's `reviewed` saying so; otherwise the review is shown again, its hint saying what was
+  shown before has changed.
+* A new version replacing a promoted pipeline: before the approval form, the user chooses which streams its new filter
+  reads: "From now on (recommended)" (a minimum stream create time of the moment the filter is made), "Everything
+  (backfill)" (none, as before), or "From a date" (asked next, yyyy-MM-dd, UTC midnight); the filter is still made
+  disabled, its `reads_from` and the enable button saying the bound, the approval form listing the choice and the
+  result's `new_version_reads` saying it. Without a form: from now on, said so. A first version's filter is unchanged
+  (`PromoteBuildTool.backfill`, `PromotionProcessing.createPromotionFilters(..., since)`).
 
 ## Samples, surveys and feeds
 
@@ -4454,6 +4480,11 @@ catalogue by hand. Once started from it, every set's summary (and the listing's 
 * **Notes**: a Data Splitter part is a line format, not an event type: event types within a format are told by
   conditions, never by a splitter part each (chat 166; the hint and the guide say so). The description stays short;
   the conditions, evidence and checks are in the mapping guide (stroom://guide/mapping, Event type catalogue).
+
+Since 2026-11-24 (chat 192): a proposal's `description` is described as written into every event of the type
+(EventDetail/Description): what happened, never counts or notes about the build. The check (`CatalogueCheck`) has a
+problem for a description holding a number that is the event type's record count in the sample or the scope's record
+count (counts of 10 or more; `1,444` read as 1444): proposals bringing it are refused, as other problems are.
 
 ### `record_source_notes`
 
@@ -5455,6 +5486,12 @@ version's catalogue of event types starts from the promoted one (`source_notes` 
   the user declining the form, or a session that can't show one (`Consent`).
 * **Notes**: Stroom can't load a template: `Stroom can't load the pipeline: ...` (`PipelineUnreadableException`).
 
+Since 2026-11-24 (chat 192): with `version_of`, each build document the new version runs in place of the previous
+one's (its XSLT, say) whose version token is the previous pipeline's (the build's source feeds' and the group's names
+held) is renamed for the new version (`VersionNames.retokened`, `WriteGuard.rename`): `Azure-Audit-V1.0-EVENTS
+Messaging V1.0` becomes `... V1.1`, the feed's V1.0 left; `renamed` says so and the registry's rows name the XSLT so.
+The result's `production_imports_broken` names the previous version's XSLT imports that no longer exist.
+
 ### `copy_pipeline`
 
 Content · write · checks View on the pipeline and the XSLTs and text converters it owns, Create in the build
@@ -6284,6 +6321,22 @@ rows' pipeline), `output_feed`, `registry` (`uuid`, `name`, `translated`) and `g
     to repeat it, rather than reporting that the user declined.
   * After a save, what was saved is what the next `changes=` start from (`SentMappings.remember` by uuid).
 
+Since 2026-11-24 (chat 192):
+
+* A group the registry places nowhere (its folder deleted, say), whose promoted pipeline named for it (`<feed> <group>`,
+  with or without a version token: `SourceTypeGroups.isGroupPipelineName`) reads the feed (found as a next version
+  finds its predecessor: `CurrentTranslations.groupPipeline`, pipelines whose processor filters read the raw feed, not
+  in a build), is placed from that pipeline: its rows name the pipeline, its XSLT and its output feed (a stream
+  appender `feed` naming another feed), never asked as a new group; the change goes to a new version as for any
+  promoted group, and `group.notes` says it was recovered and recorded with the save
+  (`SourceTypeGroups.recoveredPlacement`).
+* A constant (common or a rule's: Device or System Name, Generator) naming one of the feed's source types outside the
+  group (compared without case, spaces or punctuation) is put to the user in a form (`A value names another source
+  type of the feed: ...`): "Change it" is a problem, nothing saved; "Keep it" is remembered for the chat. Without a
+  form, a warning to check with the user (`SourceTypeGroups.namingOtherSourceTypes`).
+* The group's promoted pipeline whose XSLTs import a module that no longer exists is said in `warnings`
+  ("Production pipeline '...': its XSLT '...' imports '...' (uuid), which no longer exists ...").
+
 ### `rebuild_mapping`
 
 content · write · unlocked by Stepping; checks View and Edit (the XSLT, its pipeline and the XSLTs it imports are
@@ -6861,6 +6914,12 @@ the Azure audit sample: mail bodies' HTML, an XSLT fragment and a CDATA section 
   * Stepping is within the session's time limit for a long call, and audited; cut short, the section is of the
     records stepped by then.
 
+Since 2026-11-24 (chat 192): an events pipeline in a build that stepped clean before but whose current code (its
+latest saved XSLT) hasn't is refused: `Not written: the pipeline's XSLT was saved after its last clean step ...
+step_sample ... first` (`BuildDocumentation.notSteppedClean`). One never stepped clean is not: documenting it is how
+the user accepts errors its steps leave (`accept_errors`), and a copy compared rather than stepped is documented
+before its first step; promotion still waits for a clean step.
+
 ### `draft_cef_mapping`
 
 content · write; read-only for a call that saves nothing (no `build` and `name`, no `uuid`) · requires View Data;
@@ -7054,6 +7113,9 @@ is reported with its error, not allowed to hide the others.
   * Error streams are read until the session's time limit for a long call: `progress.continue_from` is then the
     last stream read and `stopped_early` says why. It reports progress as it goes and stops at once when its thread
     is interrupted.
+
+Since 2026-11-24 (chat 192): each follow-on pipeline whose own XSLTs import a module that no longer exists has
+`imports_broken`, to tell the user.
 
 ## Indexing
 

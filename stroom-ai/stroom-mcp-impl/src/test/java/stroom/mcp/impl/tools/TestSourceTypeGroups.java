@@ -69,6 +69,8 @@ import static org.mockito.ArgumentMatchers.isNull;
 class TestSourceTypeGroups {
 
     private static final String BUILD = "pega-v1";
+    // Chat 192's aggregated feed.
+    private static final String AZURE = "Azure-Audit-V1.0-EVENTS";
     private static final String WRAPPER = """
             [{"path": "EventTime/TimeCreated", "field": "timestamp"},
              {"path": "EventSource/System/Name", "value": "PEGA"},
@@ -945,6 +947,75 @@ class TestSourceTypeGroups {
     }
 
     @Test
+    void aPromotedGroupTheRegistryHasNoRecordOfIsRecoveredFromItsPipelineNotAskedAsNew() {
+        // Seen in chat 192: the user deleted the folder holding the feed's registry; the build's new one placed no
+        // row of 'Messaging', so the save asked where the Events of a "new" group go and saved its XSLT under the
+        // promoted V1.0 pipeline's name, though that pipeline translated the feed.
+        final List<String> azure = messagingFeed();
+        Mockito.when(world.currentTranslations.groupPipeline(eq(AZURE), eq("Messaging"), any()))
+                .thenReturn(Optional.of(new CurrentTranslations.GroupPipeline("p10", AZURE + " Messaging V1.0",
+                        "x10", AZURE + " Messaging V1.0", null)));
+        world.forms = true;
+
+        final Map<String, Object> saved = world.call(tool, messagingArgs(messaging("Microsoft M365")));
+
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        assertThat(world.asked).noneMatch(form -> form.contains("is new. It gets a pipeline"));
+        // A new version of the promoted XSLT, named for the pipeline's next version, the feed's V1.0 left.
+        assertThat(xsltsInBuild()).containsKey(AZURE + " Messaging V1.1").doesNotContainKey(AZURE
+                                                                                            + " Messaging V1.0");
+        final Map<String, Object> row = rowNamed(azure.getLast(), "ExchangeOnline");
+        assertThat(JsonValues.mapOrEmpty(row.get("pipeline"))).containsEntry("uuid", "p10")
+                .containsEntry("new_version", true);
+        assertThat(row).doesNotContainKey("output_feed");
+        assertThat(JsonValues.mapOrEmpty(rowNamed(azure.getLast(), "MicrosoftTeams").get("pipeline")))
+                .containsEntry("uuid", "p10");
+        assertThat(rowNamed(azure.getLast(), "AzureActiveDirectory")).doesNotContainKey("pipeline");
+        assertThat(JsonValues.strings(JsonValues.mapOrEmpty(saved.get("group")).get("notes")))
+                .anySatisfy(note -> assertThat(note).contains("promoted pipeline '" + AZURE + " Messaging V1.0'",
+                        "recorded in the registry", "into the feed's Events"));
+    }
+
+    @Test
+    void aGroupsPipelineIsToldByItsNameOfAnyVersion() {
+        assertThat(SourceTypeGroups.isGroupPipelineName(AZURE + " Messaging V1.0", AZURE, "Messaging")).isTrue();
+        assertThat(SourceTypeGroups.isGroupPipelineName(AZURE + " messaging-v2", AZURE, "Messaging")).isTrue();
+        assertThat(SourceTypeGroups.isGroupPipelineName(AZURE + " Messaging", AZURE, "Messaging")).isTrue();
+        assertThat(SourceTypeGroups.isGroupPipelineName(AZURE + " Messaging V1.0-Indexing", AZURE, "Messaging"))
+                .isFalse();
+        assertThat(SourceTypeGroups.isGroupPipelineName(AZURE + " Messaging Archive", AZURE, "Messaging"))
+                .isFalse();
+    }
+
+    @Test
+    void aValueNamingAnotherSourceTypeOfTheFeedIsPutToTheUser() {
+        // Seen in chat 192: the agent offered 'Azure Active Directory', a parked source type of the feed outside
+        // group 'Messaging', as the group's Device/Name.
+        messagingFeed();
+        world.forms = true;
+        world.answers.put("Source type group 'Messaging'", "Into the same feed (" + AZURE + ")");
+        world.answers.put(SourceTypeGroups.OTHER_SOURCE_TYPE_QUESTION, SourceTypeGroups.CHANGE_IT);
+
+        final Map<String, Object> refused = world.call(tool, messagingArgs(messaging("Azure Active Directory")));
+
+        assertThat(world.asked).anySatisfy(form -> assertThat(form).contains("'Azure Active Directory'",
+                "AzureActiveDirectory", "group 'Messaging'"));
+        assertThat(String.valueOf(refused.get("problems"))).contains("EventSource/Device/Name",
+                "'Azure Active Directory'", "AzureActiveDirectory");
+        assertThat(xsltsInBuild()).doesNotContainKey(AZURE + " Messaging V1.0");
+
+        // Kept, as the user said: saved, and not asked again.
+        world.asked.clear();
+        world.answers.put(SourceTypeGroups.OTHER_SOURCE_TYPE_QUESTION, SourceTypeGroups.KEEP_IT);
+        final Map<String, Object> saved = world.call(tool, messagingArgs(messaging("Azure Active Directory")));
+        assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
+        assertThat(xsltsInBuild()).containsKey(AZURE + " Messaging V1.0");
+        world.asked.clear();
+        world.call(tool, messagingArgs(messaging("Azure Active Directory")));
+        assertThat(world.asked).noneMatch(form -> form.startsWith(SourceTypeGroups.OTHER_SOURCE_TYPE_QUESTION));
+    }
+
+    @Test
     void aGroupsChangeToThePromotedCommonModuleMakesANewVersionOfItThatOnlyThatGroupImports() {
         // Decided by the user (2026-11-17): a promoted module is never changed in place. The group's new version
         // imports the common module's new version; the feed's other group keeps importing the one it imports.
@@ -1090,7 +1161,7 @@ class TestSourceTypeGroups {
         world.call(tool, args(security(), "PEGA security", List.of("PegaSecurityEvent")));
 
         final List<String> types = world.groups.pipelineMade(world.context(), BUILD, "PEGA security",
-                new DocRef("Pipeline", "p1", "PEGA-Security-Events"));
+                new DocRef("Pipeline", "p1", "PEGA-Security-Events"), Map.of());
 
         assertThat(types).containsExactly("PegaSecurityEvent");
         assertThat(JsonValues.mapOrEmpty(rowNamed(written.getLast(), "PegaSecurityEvent").get("pipeline")))
@@ -1250,6 +1321,78 @@ class TestSourceTypeGroups {
             }
         }));
         return uuid;
+    }
+
+    // Chat 192's aggregated feed, held by the build: Workload tells its source types apart; the build's scope is group
+    // 'Messaging' (ExchangeOnline, MicrosoftTeams), the rest parked; its promoted V1.0 pipeline and XSLT beside the
+    // feed. The registry's texts as written, newest last.
+    private List<String> messagingFeed() {
+        final List<String> azure = new ArrayList<>();
+        final Map<String, Object> state = new LinkedHashMap<>();
+        state.put("feed", AZURE);
+        state.put("field", "Workload");
+        state.put("environment", "Test");
+        state.put("rows", List.of(row("SharePoint", null), row("ExchangeOnline", null),
+                row("AzureActiveDirectory", null), row("MicrosoftTeams", null), row("OneDrive", null)));
+        state.put("scope", Map.of("build", BUILD, "group", "Messaging", "source_types", List.of("ExchangeOnline",
+                "MicrosoftTeams"), "by", "user", "at", "2026-11-23T00:00:00Z"));
+        azure.add(SourceTypeRegistry.render(state));
+        Mockito.when(world.registries.registry(eq(BUILD), eq(AZURE))).thenAnswer(inv -> Optional.of(
+                new SourceTypeRegistries.Found(new SurveyRecord("az", AZURE + " source types", azure.getLast()),
+                        false, SourceTypeRegistry.read(azure.getLast()))));
+        Mockito.when(world.registries.writeRegistry(any(), eq(BUILD), eq(AZURE), any(), anyString()))
+                .thenAnswer(inv -> {
+                    azure.add(inv.getArgument(4));
+                    return new SurveyRecord("az", AZURE + " source types", inv.getArgument(4));
+                });
+        sample = """
+                {"CreationTime": "2026-11-10T00:00:15.000Z", "Workload": "ExchangeOnline", "Operation": "Send", \
+                "UserName": "sam.taylor"}
+                {"CreationTime": "2026-11-10T00:00:16.000Z", "Workload": "MicrosoftTeams", "Operation": "MessageSent", \
+                "UserName": "li.wei"}
+                {"CreationTime": "2026-11-10T00:00:17.000Z", "Workload": "AzureActiveDirectory", "Operation": \
+                "UserLoggedIn", "UserName": "li.wei"}
+                """;
+        final String folder = world.world.folder("System/MCP Testing/Azure/" + AZURE + "/Messaging/Events/V1.0")
+                .uuid;
+        world.world.add(XsltDoc.TYPE, AZURE + " Messaging V1.0", folder, "x10");
+        world.world.docs.put("x10", XsltDoc.builder().uuid("x10").name(AZURE + " Messaging V1.0")
+                .data("<xsl:stylesheet/>").version("v0").build());
+        world.world.add("Pipeline", AZURE + " Messaging V1.0", folder, "p10");
+        world.world.docs.put("p10", stroom.pipeline.shared.PipelineDoc.builder().uuid("p10")
+                .name(AZURE + " Messaging V1.0").version("v0").build());
+        return azure;
+    }
+
+    // The build's call saving group 'Messaging': its group and source types the scope's.
+    private static Map<String, Object> messagingArgs(final Map<String, Object> mapping) {
+        final Map<String, Object> args = new LinkedHashMap<>();
+        args.put("mapping", mapping);
+        args.put("schema_version", TranslationWorld.VERSION);
+        args.put("build", BUILD);
+        args.put("feeds", List.of(AZURE));
+        args.put("group", "Messaging");
+        return args;
+    }
+
+    // The Messaging group's mapping, its Device/Name the value given.
+    private static Map<String, Object> messaging(final String deviceName) {
+        return mapping("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventTime/TimeCreated", "field": "CreationTime"},
+                            {"path": "EventSource/System/Name", "value": "Microsoft 365"},
+                            {"path": "EventSource/System/Environment", "value": "Test"},
+                            {"path": "EventSource/Generator", "value": "Microsoft 365 audit"},
+                            {"path": "EventSource/Device/Name", "value": "%s"}],
+                 "events": [{"name": "send", "when": [{"field": "Operation", "equals": "Send"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Send-MailMessage"},
+                                        {"path": "EventDetail/Authenticate/Action", "value": "Logon"},
+                                        {"path": "EventDetail/Authenticate/User/Id", "field": "UserName"}]},
+                            {"name": "post", "when": [{"field": "Operation", "equals": "MessageSent"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Send-TeamMessage"},
+                                        {"path": "EventDetail/Authenticate/Action", "value": "Logon"},
+                                        {"path": "EventDetail/Authenticate/User/Id", "field": "UserName"}]}]}"""
+                .formatted(deviceName));
     }
 
     // The security and integration groups as a first build promoted them: their XSLTs and pipelines, and the feed's

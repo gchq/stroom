@@ -896,6 +896,13 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
     private void promote(final String build, final Map<String, Object> destinations, final boolean tidyUp) {
         final Map<String, Object> review = json("promote_build", args("build", build, "destinations",
                 destinations, "tidy_up", tidyUp));
+        if (review.containsKey("reviewed")) {
+            // The same layout shown in this chat just before, nothing it showed changed since: taken as reviewed
+            // (chat 192), the user approving it in the form.
+            dump("promote_build " + build, review);
+            assertThat(review).as("promoted: %s", review).containsKey("promoted");
+            return;
+        }
         assertThat(review).as("the layout first: %s", review).containsEntry("status", "needs_review");
         final Map<String, Object> promoted = json("promote_build", args("build", build, "destinations",
                 destinations, "reviewed", review.get("review_id"), "tidy_up", tidyUp));

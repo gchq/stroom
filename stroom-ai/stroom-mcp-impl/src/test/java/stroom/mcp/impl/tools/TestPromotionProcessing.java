@@ -32,6 +32,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -209,6 +210,28 @@ class TestPromotionProcessing {
         // fresh.
         assertThat(made.getFirst()).doesNotContainKey("except_processed_in_build");
         assertThat(String.valueOf(made.getFirst().get("pipeline_link"))).endsWith("docUuid=ip");
+    }
+
+    @Test
+    void aNewVersionsFilterReadsOnlyStreamsCreatedFromTheTimeTheUserChose() {
+        // Decided by the user (2026-11-24, after chat 192): enabled, a new version's filter reading everything
+        // reprocesses the whole feed, so both versions' Events exist for old data; the user chooses each time.
+        w.pipeline(TP, true, null);
+        w.layers(TP.getUuid(), w.layer(TP.getUuid(), "xsltFilter", "XSLTFilter"));
+        w.feedAt("System/Feeds/Azure", "Azure-Audit-V1.0-EVENTS", "azure", "Raw Events");
+        final PromotionProcessing.Entry entry = new PromotionProcessing.Entry(TP, "Azure-Audit-V1.0-EVENTS",
+                "Raw Events", List.of());
+        final long from = Instant.parse("2026-11-24T00:00:00Z").toEpochMilli();
+
+        final List<Map<String, Object>> made = w.promotion.createPromotionFilters(StroomLinks.CHAT, List.of(entry),
+                Set.of(), Map.of(TP.getUuid(), from));
+
+        assertThat(w.created.getLast().getMinMetaCreateTimeMs()).isEqualTo(from);
+        assertThat(w.created.getLast().isEnabled()).isFalse();
+        assertThat(made.getFirst()).containsEntry("reads_from", "2026-11-24T00:00:00Z");
+        assertThat(String.valueOf(made.getFirst().get("user_actions"))).contains("streams created from "
+                                                                                 + "2026-11-24T00:00:00Z on")
+                .doesNotContain("existing data included");
     }
 
     @Test

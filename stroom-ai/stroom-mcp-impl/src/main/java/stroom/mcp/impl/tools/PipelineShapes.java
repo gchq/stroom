@@ -20,6 +20,7 @@ import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.AiPipelineStageConfig;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.generation.ModuleChecks;
 import stroom.ai.impl.tools.processing.MergedPipeline;
 import stroom.ai.impl.tools.processing.MergedPipeline.ElementProperty;
 import stroom.ai.impl.tools.processing.MergedPipeline.TranslationDoc;
@@ -139,6 +140,47 @@ class PipelineShapes {
     Shape shape(final String uuid) {
         final MergedPipeline merged = merged(uuid);
         return shape(merged, markers(), () -> writesCef(merged, uuid));
+    }
+
+    /// The imports and includes of a pipeline's own XSLTs (not its template's) that name no XSLT, found as Stroom's
+    /// URI resolver finds them: a module deleted (seen in chat 192: production's V1.0 XSLT imported the feed's common
+    /// module, deleted with its folder, and the build said nothing), or one the user may not read.
+    ///
+    /// @param uuid A pipeline's UUID.
+    /// @return A line for each, naming the XSLT and the module it imports; none when every import resolves, or the
+    /// pipeline can't be read.
+    List<String> brokenImports(final String uuid) {
+        try {
+            final DocumentAccess documentAccess = documentAccessProvider.get();
+            final List<XsltDoc> own = new ArrayList<>();
+            merged(uuid).translationDocs(uuid).stream()
+                    .filter(doc -> !doc.inheritedFromTemplate() && XsltDoc.TYPE.equals(doc.doc().getType()))
+                    .forEach(doc -> documentAccess.read(doc.doc(), XsltDoc.class).ifPresent(own::add));
+            return brokenImports(own, href -> XsltImports.resolve(docFinderProvider.get(), documentAccess, href));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to read the imports of pipeline {}: {}", uuid,
+                    e.getMessage()), e);
+            return List.of();
+        }
+    }
+
+    /// As [#brokenImports(String)], over the XSLTs given.
+    ///
+    /// @param xslts    A pipeline's own XSLTs.
+    /// @param imported Finds the XSLT an import's href names, or empty if none can be.
+    /// @return A line for each import that names none.
+    static List<String> brokenImports(final List<XsltDoc> xslts,
+                                      final Function<String, Optional<XsltDoc>> imported) {
+        final List<String> out = new ArrayList<>();
+        for (final XsltDoc xslt : xslts) {
+            for (final String href : ModuleChecks.hrefs(xslt.getData())) {
+                if (imported.apply(href).isEmpty()) {
+                    out.add("its XSLT '" + xslt.getName() + "' imports " + XsltImports.named(href) + ", which no "
+                            + "longer exists (deleted?) or can't be read: the pipeline fails until it is restored");
+                }
+            }
+        }
+        return out;
     }
 
     /// Whether a pipeline's XSLTs write CEF lines: one of them (its own or inherited, or one they import or

@@ -44,6 +44,7 @@ import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -54,6 +55,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /// The catalogue's check (`catalogue_event_types` `proposals=`): the whole catalogue against every record of the
@@ -74,7 +76,8 @@ import java.util.regex.Pattern;
 ///   depends on processing's string cut; an event type recognised by every record of a line format that shares it;
 ///   an `equals` or `one_of` naming a value that differs from at least [#UNIQUE_WRITTEN_VALUES] of the field's
 ///   values only in a part that varies (an id, a number, an address, a quoted string: [Shapes#mask]), with
-///   `starts_with` or a `matches` with a named group suggested.
+///   `starts_with` or a `matches` with a named group suggested; a description naming the event type's record count
+///   or the scope's (a note about the build, written into every event's Description: seen in chat 192).
 /// * **Order**: the catalogue's ([CatalogueOrder]).
 ///
 /// Each tested field is read once a record and each condition tested once a distinct value ([RecordIndex]), so
@@ -106,6 +109,11 @@ public final class CatalogueCheck {
     private static final String META = ".\\?*+{}()[]|^$";
     // A part Shapes.mask puts in place of a variable one.
     private static final Pattern MASKED_PART = ToolText.re("<(?:s|email|ip|uuid|hex|n)>");
+    // A whole number in text, with or without thousands separators (214, 1,444), not part of a word or a decimal.
+    private static final Pattern NUMBER = Pattern.compile("(?<![\\w.,])\\d{1,3}(?:,\\d{3})+(?![\\w,]|\\.\\d)"
+                                                          + "|(?<![\\w.,])\\d+(?![\\w,]|\\.\\d)");
+    // The smallest record count a description is checked for: a smaller number is as likely the event's own.
+    private static final int MIN_COUNT_SAID = 10;
     private static final String ESCAPABLE = ".\\?*+{}()[]|^$-";
 
     private CatalogueCheck() {
@@ -303,6 +311,19 @@ public final class CatalogueCheck {
     // --------------------------------------------------------------------------------
 
 
+    // The whole numbers a text holds, separators taken out.
+    private static Set<Long> numbersIn(final String text) {
+        final Set<Long> out = new HashSet<>();
+        final Matcher matcher = NUMBER.matcher(NullSafe.string(text));
+        while (matcher.find()) {
+            final String digits = matcher.group().replace(",", "");
+            if (digits.length() <= 18) {
+                out.add(Long.parseLong(digits));
+            }
+        }
+        return out;
+    }
+
     /// The event types whose TypeId's verb (the part before its first `-`) is itself the name of an action element
     /// of the schema (a child of EventDetail), but not the one its records are written as (seen in chat 182:
     /// `Move-MailToDeletedItems` written as Update). Worth a look only, never refused: a verb may be the source's
@@ -418,6 +439,7 @@ public final class CatalogueCheck {
                 counts.put(key, new Count(all.cardinality(), ways.stream().map(BitSet::cardinality).toList()));
             }
             problems.addAll(soleOfLineFormat());
+            problems.addAll(countsInDescriptions(counts));
             final List<Problem> unplaced = new ArrayList<>();
             final Map<String, CatalogueCheckResult.Typing> typing = new LinkedHashMap<>();
             final List<Problem> worthALook = new ArrayList<>();
@@ -431,6 +453,35 @@ public final class CatalogueCheck {
                     distinct(problems), distinct(notChecked),
                     CatalogueOrder.ordered(types).stream().map(EventType::typeId).toList(), distinct(unplaced),
                     typing, distinct(worthALook));
+        }
+
+        // A description holding a number that is the event type's record count in the sample or the scope's: a note
+        // about the build, not what happened, and the description is written into every event of the type (seen in
+        // chat 192: "... 214 in-scope records" in every event's EventDetail/Description). Counts under
+        // MIN_COUNT_SAID are passed over: a small number is as likely the event's own (2-step, 3 attempts).
+        private List<Problem> countsInDescriptions(final Map<String, Count> counts) {
+            final List<Problem> out = new ArrayList<>();
+            for (int t = 0; t < types.size(); t++) {
+                final EventType type = types.get(t);
+                final Count count = counts.get(keys.get(t));
+                final Set<Long> said = numbersIn(type.description());
+                final List<String> named = new ArrayList<>();
+                if (count != null && count.records() >= MIN_COUNT_SAID && said.contains((long) count.records())) {
+                    named.add(count.records() + ", its record count in the sample");
+                }
+                if (size >= MIN_COUNT_SAID && said.contains((long) size)
+                    && (count == null || count.records() != size)) {
+                    named.add(size + ", the scope's record count");
+                }
+                if (!named.isEmpty()) {
+                    out.add(new Problem(type.typeId(), -1, "its description names " + String.join(" and ", named)
+                                                           + ": it is written into every event of the type "
+                                                           + "(EventDetail/Description), so it says what happened, "
+                                                           + "never counts or notes about the build (those go in "
+                                                           + "basis)"));
+                }
+            }
+            return out;
         }
 
         // Each event type's placements checked against the schema and its records, the elements the schema

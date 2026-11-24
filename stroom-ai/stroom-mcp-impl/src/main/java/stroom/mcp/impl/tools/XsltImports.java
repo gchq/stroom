@@ -40,8 +40,25 @@ final class XsltImports {
     // A doc ref string's UUID, `uuid='…'` (or in double quotes), as Stroom's resolver reads it first.
     private static final Pattern UUID_PART = Pattern.compile("uuid=(['\"])([^'\"]+)\\1");
 
+    // A doc ref string's name, `name='…'` (or in double quotes).
+    private static final Pattern NAME_PART = Pattern.compile("name=(['\"])([^'\"]+)\\1");
+
     private XsltImports() {
         // Static only.
+    }
+
+    /// @param href An import's href.
+    /// @return It as said to the user: the name it gives, quoted, with its UUID where it gives one
+    /// (`'ACME common' (u-1)`); else the href, quoted.
+    static String named(final String href) {
+        final Matcher name = NAME_PART.matcher(NullSafe.string(href));
+        if (!name.find()) {
+            return "'" + NullSafe.string(href) + "'";
+        }
+        final Matcher uuid = UUID_PART.matcher(NullSafe.string(href));
+        return uuid.find()
+                ? "'" + name.group(2) + "' (" + uuid.group(2) + ")"
+                : "'" + name.group(2) + "'";
     }
 
     /// @param docFinder      Finds XSLT documents by name.

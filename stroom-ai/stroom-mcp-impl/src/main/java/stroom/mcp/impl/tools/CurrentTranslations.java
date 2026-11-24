@@ -30,6 +30,7 @@ import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -48,6 +49,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -60,6 +62,8 @@ class CurrentTranslations {
 
     private static final Pattern LOOKUP_MAP = Pattern.compile("stroom:lookup\\(\\s*'([^']+)'");
     private static final int MAX_NAMED = 6;
+    // A stream appender's property naming the feed its streams go to.
+    private static final String OUTPUT_FEED_PROPERTY = "feed";
 
     private final Provider<BuildPlan> planProvider;
     private final BuildFacts facts;
@@ -139,6 +143,69 @@ class CurrentTranslations {
             return Optional.of(result);
         }
         return Optional.of(described(pipeline, own, references, maps, uses));
+    }
+
+    /// @param pipelineUuid A pipeline.
+    /// @return The imports of its own XSLTs that name no XSLT ([PipelineShapes#brokenImports(String)]).
+    List<String> brokenImports(final String pipelineUuid) {
+        return pipelineShapes.brokenImports(pipelineUuid);
+    }
+
+    /// A source type group's pipeline translating its aggregated feed now, found as the build's next version finds
+    /// the pipeline it follows (its processor filters read the feed's raw data), by its name: the group's pipeline
+    /// name ([SourceTypeGroups#isGroupPipelineName]). Its translation XSLT and where its Events go are read from it.
+    ///
+    /// @param feed   The aggregated feed.
+    /// @param group  The source type group.
+    /// @param wanted Whether a pipeline, by its UUID, is one to take: a promoted one, say.
+    /// @return The pipeline, its XSLT and its output feed; empty when no such pipeline translates the feed, or it
+    /// can't be read.
+    Optional<GroupPipeline> groupPipeline(final String feed, final String group, final Predicate<String> wanted) {
+        if (NullSafe.isBlankString(feed) || NullSafe.isBlankString(group)) {
+            return Optional.empty();
+        }
+        final List<Map<String, Object>> found;
+        try {
+            found = facts.translating(List.of(feed));
+        } catch (final RuntimeException e) {
+            // Advice: never a reason for the call that asks to fail.
+            LOGGER.debug(() -> LogUtil.message("The pipelines translating {} weren't read: {}", feed,
+                    e.getMessage()));
+            return Optional.empty();
+        }
+        for (final Map<String, Object> pipeline : found) {
+            final String name = ToolText.str(pipeline.get("name"));
+            final String uuid = ToolText.str(pipeline.get("uuid"));
+            if (!SourceTypeGroups.isGroupPipelineName(name, feed, group) || !wanted.test(uuid)) {
+                continue;
+            }
+            try {
+                final PipelineDoc doc = pipelineDocs.read(uuid);
+                final Optional<DocRef> xslt = pipelineShapes.merged(uuid).translationDocs(uuid).stream()
+                        .filter(entry -> !entry.inheritedFromTemplate() && XsltDoc.TYPE.equals(entry.doc().getType()))
+                        .map(TranslationDoc::doc)
+                        .findFirst();
+                if (xslt.isEmpty()) {
+                    continue;
+                }
+                // Where its Events go: a stream appender's feed naming a feed other than the aggregated one is the
+                // group's own output feed; none, or the feed itself, is the feed's own Events.
+                final String outputFeed = PipelineDocs.addedProperties(doc).stream()
+                        .filter(property -> OUTPUT_FEED_PROPERTY.equals(property.getName()))
+                        .map(property -> NullSafe.get(property.getValue(), PipelinePropertyValue::getEntity))
+                        .filter(entity -> entity != null && NullSafe.isNonBlankString(entity.getName())
+                                          && !entity.getName().equalsIgnoreCase(feed))
+                        .map(DocRef::getName)
+                        .findFirst()
+                        .orElse(null);
+                return Optional.of(new GroupPipeline(uuid, NullSafe.nonBlankStringElse(doc.getName(), name),
+                        xslt.get().getUuid(), xslt.get().getName(), outputFeed));
+            } catch (final ToolRefusal | PipelineUnreadableException e) {
+                LOGGER.debug(() -> LogUtil.message("Pipeline {} of group {} wasn't read: {}", uuid, group,
+                        e.getMessage()));
+            }
+        }
+        return Optional.empty();
     }
 
     /// @param current What [#current(String)] gave, or null.
@@ -327,5 +394,17 @@ class CurrentTranslations {
 
     private static List<Map<?, ?>> first(final List<Map<?, ?>> entries) {
         return entries.subList(0, Math.min(MAX_NAMED, entries.size()));
+    }
+
+    /// A source type group's pipeline translating its feed now.
+    ///
+    /// @param uuid       The pipeline's UUID.
+    /// @param name       Its name.
+    /// @param xsltUuid   Its translation XSLT's UUID.
+    /// @param xsltName   Its translation XSLT's name.
+    /// @param outputFeed The feed its Events go to where it is one of the group's own, else null (the feed's own
+    ///                   Events).
+    record GroupPipeline(String uuid, String name, String xsltUuid, String xsltName, String outputFeed) {
+
     }
 }

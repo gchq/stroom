@@ -323,6 +323,11 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                                         .addStringProperty(CatalogueProposals.OP, "add, change or remove.")
                                         .addStringProperty(CatalogueProposals.TYPE_ID, "Verb-Object, e.g. "
                                                                                        + "Update-Password.")
+                                        .addStringProperty("description", "Written into every event of the "
+                                                                          + "type (EventDetail/Description): what "
+                                                                          + "happened, in a sentence. Never counts "
+                                                                          + "or notes about the build (those go in "
+                                                                          + "basis).")
                                         .required(CatalogueProposals.OP)
                                         .build())
                                 .build())

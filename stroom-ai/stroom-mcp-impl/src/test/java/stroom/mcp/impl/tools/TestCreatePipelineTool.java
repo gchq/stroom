@@ -339,7 +339,8 @@ class TestCreatePipelineTool {
                 List.of(row));
         Mockito.when(groups.groupNamed(BUILD, "ACME mail")).thenReturn(mail);
         Mockito.when(groups.groupOf(BUILD, "g1")).thenReturn(Optional.of(mail));
-        Mockito.when(groups.pipelineMade(Mockito.any(), Mockito.eq(BUILD), Mockito.eq("ACME mail"), Mockito.any()))
+        Mockito.when(groups.pipelineMade(Mockito.any(), Mockito.eq(BUILD), Mockito.eq("ACME mail"), Mockito.any(),
+                Mockito.any()))
                 .thenReturn(List.of("MailIn"));
 
         // No name, no XSLT given: the group's, named for it (two group XSLTs in the build, so none is guessed).
@@ -362,7 +363,7 @@ class TestCreatePipelineTool {
             assertThat(property.getValue().getEntity().getUuid()).isEqualTo("f-mail");
         });
         Mockito.verify(groups).pipelineMade(Mockito.any(), Mockito.eq(BUILD), Mockito.eq("ACME mail"),
-                Mockito.eq(new DocRef(PipelineDoc.TYPE, doc.getUuid(), "ACME ACME mail V1.0")));
+                Mockito.eq(new DocRef(PipelineDoc.TYPE, doc.getUuid(), "ACME ACME mail V1.0")), Mockito.any());
 
         // One pipeline a group: a second running its XSLT is refused.
         final ToolResult again = call("{\"build\": \"acme-v1\", \"name\": \"Another\", \"group\": \"ACME mail\", "
@@ -387,7 +388,8 @@ class TestCreatePipelineTool {
         final SourceTypeGroups.GroupRun mail = new SourceTypeGroups.GroupRun("ACME", "ACME mail", "g1",
                 List.of(row));
         Mockito.when(groups.groupOf(BUILD, "g1")).thenReturn(Optional.of(mail));
-        Mockito.when(groups.pipelineMade(Mockito.any(), Mockito.eq(BUILD), Mockito.eq("ACME mail"), Mockito.any()))
+        Mockito.when(groups.pipelineMade(Mockito.any(), Mockito.eq(BUILD), Mockito.eq("ACME mail"), Mockito.any(),
+                Mockito.any()))
                 .thenReturn(List.of("MailIn"));
         final String arguments = "{\"build\": \"acme-v1\", \"name\": \"Acme-V1-Events\", \"template_uuid\": \""
                                  + TEMPLATE + "\"}";
@@ -421,7 +423,8 @@ class TestCreatePipelineTool {
         final SourceTypeGroups.GroupRun mail = new SourceTypeGroups.GroupRun("ACME", "ACME mail", "g1",
                 List.of(row));
         Mockito.when(groups.groupOf(BUILD, "g1")).thenReturn(Optional.of(mail));
-        Mockito.when(groups.pipelineMade(Mockito.any(), Mockito.eq(BUILD), Mockito.eq("ACME mail"), Mockito.any()))
+        Mockito.when(groups.pipelineMade(Mockito.any(), Mockito.eq(BUILD), Mockito.eq("ACME mail"), Mockito.any(),
+                Mockito.any()))
                 .thenReturn(List.of("MailIn"));
 
         // No pipeline in the registry yet: named as build_translation_xslt names it, then changed by the user.
@@ -458,7 +461,7 @@ class TestCreatePipelineTool {
         assertThat(refused.text()).contains("output feed of its own, not made yet", "create_feed",
                 "group='ACME mail'");
         Mockito.verify(groups, Mockito.never()).pipelineMade(Mockito.any(), Mockito.any(), Mockito.any(),
-                Mockito.any());
+                Mockito.any(), Mockito.any());
     }
 
     // An XSLT as the generator writes an aggregated feed's module: its marker.
@@ -640,6 +643,43 @@ class TestCreatePipelineTool {
 
         assertThat(made).doesNotContainKey("reference_data").containsEntry("version_of", "FG-V1.2");
         assertThat(pipelines.pipelineNamed("FG-V1.3").getPipelineData().getAddedPipelineReferences()).isEmpty();
+    }
+
+    @Test
+    void aNextVersionRenamesTheBuildsXsltNamedForThePreviousVersion() {
+        // Seen in chat 192: the Messaging group's XSLT was saved under its promoted V1.0 pipeline's name,
+        // 'Azure-Audit-V1.0-EVENTS Messaging V1.0', production's XSLT's too; create_pipeline version_of= made
+        // 'Messaging V1.1', and promotion filed an XSLT named V1.0 in the V1.1 folder beside production's.
+        textTemplate();
+        final String folder = pipelines.world.folder("System/Feeds/Azure").uuid;
+        pipelines.world.add("TextConverter", "Azure-Audit splitter", folder, "tc10");
+        pipelines.world.add("XSLT", "Azure-Audit-V1.0-EVENTS Messaging V1.0", folder, "x10");
+        pipelines.world.add(PipelineDoc.TYPE, "Azure-Audit-V1.0-EVENTS Messaging V1.0", folder, "p10");
+        pipelines.world.docs.put("p10", PipelineDoc.builder().uuid("p10").name("Azure-Audit-V1.0-EVENTS Messaging "
+                                                                               + "V1.0").version("v0")
+                .parentPipeline(new DocRef(PipelineDoc.TYPE, TEMPLATE, "Event Data (Text)"))
+                .pipelineData(new PipelineDataBuilder(PipelineLayers.layer("p10")
+                        .property("dsParser", "textConverter", new DocRef("TextConverter", "tc10",
+                                "Azure-Audit splitter"))
+                        .property("translationFilter", "xslt", new DocRef("XSLT", "x10",
+                                "Azure-Audit-V1.0-EVENTS Messaging V1.0"))
+                        .data()).build())
+                .build());
+        pipelines.xslt("x11", "Azure-Audit-V1.0-EVENTS Messaging V1.0", Map.of());
+
+        final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"acme-v1\", \"name\": "
+                                                                 + "\"Azure-Audit-V1.0-EVENTS Messaging V1.1\", "
+                                                                 + "\"version_of\": \"p10\"}",
+                BuildToolCalls.answering(Map.of())));
+
+        assertThat(made).containsEntry("version_of", "Azure-Audit-V1.0-EVENTS Messaging V1.0");
+        // The build's XSLT takes the new version's name; the feed's own V1.0 is the feed's, left as it is.
+        assertThat(pipelines.world.documentAccess.findDocRef("x11")).map(DocRef::getName)
+                .contains("Azure-Audit-V1.0-EVENTS Messaging V1.1");
+        assertThat(made.get("renamed")).asString().contains("Azure-Audit-V1.0-EVENTS Messaging V1.1");
+        // Production's is left as it is.
+        assertThat(pipelines.world.documentAccess.findDocRef("x10")).map(DocRef::getName)
+                .contains("Azure-Audit-V1.0-EVENTS Messaging V1.0");
     }
 
     // FG-V1.2 in production, a child of the template given (or of none): its own converter, XSLT and stream type,

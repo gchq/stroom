@@ -925,6 +925,12 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
         final Map<String, Object> out = new LinkedHashMap<>(entry);
         out.put("stage", shape.stage());
         out.put("backend", shape.backend());
+        // A follow-on importing a module that no longer exists fails whatever the change (seen in chat 192).
+        final List<String> broken = pipelineShapes.brokenImports(uuid);
+        if (!broken.isEmpty()) {
+            out.put("imports_broken", broken.stream().map(line -> "Production pipeline '" + entry.get("name")
+                                                                  + "': " + line + ". Tell the user.").toList());
+        }
         if (kept.isPresent() && XsltSaves.CEF.equals(kept.get().kind())) {
             final CefPlan plan = CefPlan.fromJson(kept.get().payload());
             final CefDraft.Extended extended = events.isEmpty()

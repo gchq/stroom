@@ -103,6 +103,7 @@ class BuildChecks {
         if (doc.get("working_copy_of") == null && !documented.containsKey(name)) {
             problems.add(said + "no documentation (write_documentation)");
         }
+        brokenPredecessor(doc, name, problems);
         try {
             final String stage = pipelineShapes.shape(uuid).stage();
             if ("indexing".equals(stage) || "discovery".equals(stage)) {
@@ -154,6 +155,22 @@ class BuildChecks {
             // lost): one problem said, the build's other checks still made.
             problems.add(said + "Stroom can't load it: " + e.getMessage());
         }
+    }
+
+    // The production pipeline a new version replaces, where its XSLTs import a module that no longer exists: it
+    // fails until the module is restored, whatever the build does (seen in chat 192: production's V1.0 imported the
+    // feed's common module, deleted with its folder, and nothing said so).
+    private void brokenPredecessor(final Map<String, Object> doc, final String name, final List<String> problems) {
+        if (doc.get("version_of") == null) {
+            return;
+        }
+        final String previous = String.valueOf(doc.get("version_of"));
+        final String previousName = documentAccess.findDocRef(previous)
+                .map(DocRef::getName)
+                .orElse(previous);
+        pipelineShapes.brokenImports(previous).forEach(line -> problems.add("Production pipeline '" + previousName
+                                                                            + "', which '" + name + "' replaces: "
+                                                                            + line));
     }
 
     private boolean steppedClean(final DocRef ref) {

@@ -16,8 +16,10 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
@@ -70,6 +72,44 @@ class TestBuildChecks {
         assertThat(checks(Mockito.mock(GeneratedDrift.class)).checks(docs)).containsExactly(
                 "Pipeline 'Acme': no documentation (write_documentation)",
                 "Pipeline 'Other': no clean step_sample or step_records of its current code is recorded");
+    }
+
+    @Test
+    void aProductionVersionImportingADeletedModuleIsSaid() {
+        // Seen in chat 192: production's 'Messaging V1.0' XSLT imported the feed's common module, deleted with its
+        // folder by the user; the build made a new one for V1.1 and nothing said V1.0 would fail.
+        final String common = "2033ac23-1111-4222-8333-944455556666";
+        final String folder = world.folder("System/Feeds/Azure").uuid;
+        world.add(XsltDoc.TYPE, "Azure-Audit-V1.0-EVENTS Messaging V1.0", folder, "x10");
+        world.docs.put("x10", XsltDoc.builder().uuid("x10").name("Azure-Audit-V1.0-EVENTS Messaging V1.0")
+                .data("<xsl:stylesheet><xsl:import href=\"uuid='" + common + "', name='Azure-Audit-V1.0-EVENTS "
+                      + "common'\"/></xsl:stylesheet>").build());
+        world.add(PipelineDoc.TYPE, "Azure-Audit-V1.0-EVENTS Messaging V1.0", folder, "p10");
+        PipelineLayers.given(world.pipelineService, "p10", PipelineLayers.of(
+                PipelineLayers.layer("t").chain("dsParser", "DSParser", "translationFilter", "XSLTFilter"),
+                PipelineLayers.layer("p10").property("translationFilter", "xslt", new DocRef(XsltDoc.TYPE, "x10",
+                        "Azure-Audit-V1.0-EVENTS Messaging V1.0"))));
+        world.records().recordPassed(new DocRef(PipelineDoc.TYPE, "p", "Acme"), BuildRecords.STEPPED, null, null);
+        final List<Map<String, Object>> docs = List.of(FakeBuildFacts.doc(PipelineDoc.TYPE, "p", "Acme",
+                "version_of", "p10"), FakeBuildFacts.doc(DocumentationDoc.TYPE, "d", "Acme"));
+
+        // The pipelines' XSLTs read as the user reads them.
+        final PipelineShapes shapes = PipelineLayers.shapes(world.pipelineService, new AiConfig(),
+                world.documentAccess, Mockito.mock(DocFinder.class));
+        final BuildChecks checks = new BuildChecks(world.records(), shapes, agreements, keptMappings,
+                world.documentAccess, Mockito.mock(GeneratedDrift.class));
+
+        assertThat(checks.checks(docs)).singleElement().asString()
+                .contains("Production pipeline 'Azure-Audit-V1.0-EVENTS Messaging V1.0', which 'Acme' replaces",
+                        "imports 'Azure-Audit-V1.0-EVENTS common' (" + common + ")",
+                        "fails until it is restored")
+                .doesNotEndWith(BuildChecks.BLOCKS);
+
+        // Restored: nothing to say.
+        world.add(XsltDoc.TYPE, "Azure-Audit-V1.0-EVENTS common", folder, common);
+        world.docs.put(common, XsltDoc.builder().uuid(common).name("Azure-Audit-V1.0-EVENTS common")
+                .data("<xsl:stylesheet/>").build());
+        assertThat(checks.checks(docs)).isEmpty();
     }
 
     @Test

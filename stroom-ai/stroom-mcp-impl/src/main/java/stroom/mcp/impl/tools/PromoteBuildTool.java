@@ -55,8 +55,10 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -67,6 +69,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -94,6 +97,15 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     private static final String KEEP = "keep";
     // The status of the result once promoted: content for the user to see as it is.
     private static final String NEEDS_SHOWING = "needs_showing";
+    // What the chat remembers of the latest layout shown for a build: its review id.
+    private static final String LAYOUT_SHOWN = "layout shown";
+    // What a new version's filter reads, the recommended first.
+    private static final List<String> BACKFILL_OPTIONS = List.of("From now on (recommended): streams arriving "
+                                                                 + "after promotion",
+            "Everything (backfill): existing streams too", "From a date: I'll give it");
+    private static final String REVIEW_ID = "review_id";
+    // And the digest of everything that review showed but its hint.
+    private static final String SHOWN = "shown";
     // What becomes of a build's test feed.
     private static final String TEST_FEED_KEPT = "left in the workspace: the build's test feed, never promoted";
     private static final String TEST_INDEX_KEPT = "left in the workspace: the build's test index, never promoted";
@@ -282,7 +294,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                                          + "been shown its layout in the chat and confirmed it: they "
                                                          + "then approve it in a short form. Not true: a layout "
                                                          + "that changes (other destinations) gets a new id, to "
-                                                         + "show again.")
+                                                         + "show again. Left out, the layout last shown in this "
+                                                         + "chat, if unchanged.")
                         .addBooleanProperty(PromotionTidyUp.TIDY_UP, "False keeps the build's test feeds, test "
                                                                      + "indexes and their dashboards in the "
                                                                      + "workspace after promotion (default true: "
@@ -439,48 +452,66 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         // Shown with the tidy-up's counts, bound to its items alone (found in review, 2026-11-18).
         final String tree = laidOut + PromotionTidyUp.layoutNote(plan, testFeeds, tidy, true);
         final String bound = laidOut + PromotionTidyUp.layoutNote(plan, testFeeds, tidy, false);
-        if (!Consent.wasReviewed(reviewed, bound)) {
-            final Map<String, Object> review = review(build, tree, bound, warnings, processed, roots, reviewed);
-            if (!followOnSaid.isEmpty()) {
-                review.put("follow_on_filters", followOnSaid);
-                review.put("hint", review.get("hint") + " Say the follow_on_filters too: each promoted pipeline "
-                                   + "reading the earlier version's Events gains a new filter, disabled, reading the "
-                                   + "new version's; its own filters are left as they are.");
-            }
-            if (!followed.passedOver().isEmpty()) {
-                review.put("follow_on_filters_passed_over", followed.passedOver());
-                review.put("hint", review.get("hint") + " Say the follow_on_filters_passed_over too: no filter is "
-                                   + "made where it would index the new Events into an index a promoted pipeline "
-                                   + "indexes them into already.");
-            }
-            if (!pipelineChanges.isEmpty()) {
-                review.put("pipeline_changes", pipelineChanges);
-                review.put("hint", review.get("hint") + " Say the pipeline_changes too: the reference data each "
-                                   + "pipeline gains for its source type group's lookups.");
-            }
-            if (!indexSaid.isEmpty()) {
-                review.put("index_changes", indexSaid);
-                review.put("hint", review.get("hint") + " Say the index_changes too: each production index the "
-                                   + "build's indexing changes (for an aggregated feed, its source type group's: its "
-                                   + "own, unless the user chose to share one) and the fields this build adds to it "
-                                   + "(forward only).");
-            }
-            if (!changedSaid.isEmpty()) {
-                review.put("changed_in_production", changedSaid);
-                review.put("hint", review.get("hint") + " Say the changed_in_production too: each is overwritten "
-                                   + "by its working copy, its production version kept as a backup.");
-            }
-            final List<String> notPromoted = notUsed(plan);
-            if (!notPromoted.isEmpty()) {
-                review.put("not_promoted", notPromoted);
-                review.put("hint", review.get("hint") + " Say the not_promoted too: nothing the build promotes "
-                                   + "uses them, so they stay in the build as they are (a folder given by a "
-                                   + "document's uuid promotes it all the same).");
-            }
-            if (!tidy.items().isEmpty()) {
-                review.put("tidy_up", tidy.said());
-                review.put("hint", review.get("hint") + " Say the tidy_up too: once promoted, the build's test data "
-                                   + "listed is tidied up, unless the user unticks it in the approval.");
+        // Everything the review shows, whether or not it is shown now: a layout shown in this chat and confirmed
+        // there is taken without its review_id only where nothing it showed has changed since.
+        final Map<String, Object> review = review(build, tree, bound, warnings, processed, roots, reviewed);
+        if (!followOnSaid.isEmpty()) {
+            review.put("follow_on_filters", followOnSaid);
+            review.put("hint", review.get("hint") + " Say the follow_on_filters too: each promoted pipeline "
+                               + "reading the earlier version's Events gains a new filter, disabled, reading the "
+                               + "new version's; its own filters are left as they are.");
+        }
+        if (!followed.passedOver().isEmpty()) {
+            review.put("follow_on_filters_passed_over", followed.passedOver());
+            review.put("hint", review.get("hint") + " Say the follow_on_filters_passed_over too: no filter is "
+                               + "made where it would index the new Events into an index a promoted pipeline "
+                               + "indexes them into already.");
+        }
+        if (!pipelineChanges.isEmpty()) {
+            review.put("pipeline_changes", pipelineChanges);
+            review.put("hint", review.get("hint") + " Say the pipeline_changes too: the reference data each "
+                               + "pipeline gains for its source type group's lookups.");
+        }
+        if (!indexSaid.isEmpty()) {
+            review.put("index_changes", indexSaid);
+            review.put("hint", review.get("hint") + " Say the index_changes too: each production index the "
+                               + "build's indexing changes (for an aggregated feed, its source type group's: its "
+                               + "own, unless the user chose to share one) and the fields this build adds to it "
+                               + "(forward only).");
+        }
+        if (!changedSaid.isEmpty()) {
+            review.put("changed_in_production", changedSaid);
+            review.put("hint", review.get("hint") + " Say the changed_in_production too: each is overwritten "
+                               + "by its working copy, its production version kept as a backup.");
+        }
+        final List<String> notPromoted = notUsed(plan);
+        if (!notPromoted.isEmpty()) {
+            review.put("not_promoted", notPromoted);
+            review.put("hint", review.get("hint") + " Say the not_promoted too: nothing the build promotes "
+                               + "uses them, so they stay in the build as they are (a folder given by a "
+                               + "document's uuid promotes it all the same).");
+        }
+        if (!tidy.items().isEmpty()) {
+            review.put("tidy_up", tidy.said());
+            review.put("hint", review.get("hint") + " Say the tidy_up too: once promoted, the build's test data "
+                               + "listed is tidied up, unless the user unticks it in the approval.");
+        }
+        // Left out after the layout was shown in this chat and confirmed there: the latest shown's id, where
+        // nothing it showed has changed since (seen in chat 192: the user said "confirmed", and the agent searched
+        // the chat's history for the review_id).
+        final String shown = shownDigest(review);
+        final Map<String, String> shownBefore = reviewed == null
+                ? UnsavedChoices.recalled(context, shownTarget(build), LAYOUT_SHOWN)
+                : Map.of();
+        final boolean shownUnchanged = shownBefore.get(REVIEW_ID) != null
+                                       && Consent.wasReviewed(shownBefore.get(REVIEW_ID), bound)
+                                       && shown.equals(shownBefore.get(SHOWN));
+        if (!shownUnchanged && !Consent.wasReviewed(reviewed, bound)) {
+            UnsavedChoices.remember(context, shownTarget(build), LAYOUT_SHOWN, Map.of(REVIEW_ID,
+                    Consent.reviewId(bound), SHOWN, shown));
+            if (shownBefore.get(REVIEW_ID) != null) {
+                review.put("hint", "What was shown before (review_id '" + shownBefore.get(REVIEW_ID) + "') has "
+                                   + "changed since: show this. " + review.get("hint"));
             }
             return review;
         }
@@ -520,9 +551,21 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (!followed.passedOver().isEmpty()) {
             shortForm.put("follow-on filters not made", followed.passedOver());
         }
-        final List<String> notPromoted = notUsed(plan);
         if (!notPromoted.isEmpty()) {
             shortForm.put("not promoted (nothing uses them)", notPromoted);
+        }
+        // A new version replacing a promoted one: how much its filter reads is asked each time (decided by the
+        // user, 2026-11-24).
+        final List<String> replacing = processing.stream()
+                .map(entry -> entry.pipeline().getUuid())
+                .filter(predecessors::containsKey)
+                .distinct()
+                .toList();
+        final Backfill backfill = replacing.isEmpty()
+                ? null
+                : backfill(call, context, build);
+        if (backfill != null) {
+            shortForm.put("new version's filter reads", backfill.said());
         }
         // The tidy-up, a choice in the form, ticked to start: the user unticks it to keep the test data.
         consent.require(call, context, tidy.offeredIn(Consent.Request.approval(NAME,
@@ -599,14 +642,29 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 .filter(p -> PromotionLayout.MOVE.equals(p.action()))
                 .map(p -> String.valueOf(p.doc().get("uuid")))
                 .collect(Collectors.toSet());
+        final Map<String, Long> since = new LinkedHashMap<>();
+        if (backfill != null && !backfill.everything()) {
+            final long from = backfill.fromMs() == null
+                    ? System.currentTimeMillis()
+                    : backfill.fromMs();
+            replacing.forEach(uuid -> since.put(uuid, from));
+        }
         final List<Map<String, Object>> filters = promotionProcessing.createPromotionFilters(context.links(),
-                processing, moved);
+                processing, moved, since);
         final List<Map<String, Object>> followOnFilters = followOns.isEmpty()
                 ? List.of()
                 : promotionProcessing.createFollowOnFilters(context.links(), followOns, filters);
         final Map<String, Object> result = promoted(context, build, plan, folders, tree, done, warnings, filters,
                 followOnFilters, predecessors);
         tidy.report(result, tidying, tidied);
+        if (backfill != null) {
+            result.put("new_version_reads", backfill.said() + ". Its filter is made disabled, as every filter "
+                                            + "promotion makes: say so to the user.");
+        }
+        if (shownUnchanged) {
+            result.put("reviewed", "Taken as the layout shown in this chat (review_id '"
+                                   + shownBefore.get(REVIEW_ID) + "'), unchanged since: reviewed was left out.");
+        }
         if (!followed.passedOver().isEmpty()) {
             result.put("follow_on_filters_passed_over", followed.passedOver());
         }
@@ -1495,6 +1553,55 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         return NullSafe.nonBlankStringElse(NullSafe.get(term.getDocRef(), DocRef::getName), "?");
     }
 
+    // What a new version's filter reads, as the user chooses at its promotion: from now on (the default, and
+    // without a form), everything (a backfill: enabled, it reprocesses the whole feed, so both versions' Events
+    // exist for old data), or from a date they give.
+    private Backfill backfill(final ToolCall call, final ToolCallContext context, final String build) {
+        final Optional<String> chosen = consent.choose(call, context, NAME, "Build '" + build + "' promotes a new "
+                                                                            + "version of a promoted pipeline. "
+                                                                            + "Enabled, a filter reading "
+                                                                            + "everything reprocesses the whole "
+                                                                            + "feed, so both versions' Events "
+                                                                            + "exist for its old data. Which "
+                                                                            + "streams does the new version's "
+                                                                            + "filter read?",
+                BACKFILL_OPTIONS, "Which streams the new version's filter reads");
+        if (chosen.isEmpty() || BACKFILL_OPTIONS.getFirst().equals(chosen.get())) {
+            return new Backfill(false, null, "streams arriving from promotion on" + (chosen.isEmpty()
+                    ? " (no form could be shown: the default)"
+                    : " (as the user chose)"));
+        }
+        if (BACKFILL_OPTIONS.get(1).equals(chosen.get())) {
+            return new Backfill(true, null, "every stream of the feed, existing ones too (a backfill, as the user "
+                                            + "chose)");
+        }
+        final String given = consent.answer(call, context, NAME, "From which date does the new version's filter "
+                                                                 + "read streams (UTC, yyyy-MM-dd)?", "From date",
+                        LocalDate.now(ZoneOffset.UTC).toString())
+                .orElseThrow(() -> new ToolRefusal("Not promoted: ask the user from which date (yyyy-MM-dd) the new "
+                                                   + "version's filter reads, then call again"));
+        final LocalDate date;
+        try {
+            date = LocalDate.parse(given.strip());
+        } catch (final DateTimeParseException e) {
+            throw new ToolRefusal("Not promoted: '" + given + "' is not a date (yyyy-MM-dd). Nothing was done.");
+        }
+        return new Backfill(false, date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+                "streams created from " + date + " (UTC) on, as the user chose");
+    }
+
+    // The digest of everything a review shows but its hint (which says what to do next).
+    private static String shownDigest(final Map<String, Object> review) {
+        final Map<String, Object> shown = new TreeMap<>(review);
+        shown.remove("hint");
+        return Consent.reviewId(ToolJson.dumpsSortedKeys(shown));
+    }
+
+    // What the latest layout shown for a build is remembered under, in the chat's workspace.
+    private static String shownTarget(final String build) {
+        return "promotion:" + build;
+    }
+
     // Shown in the chat first: a list of moves crammed into a form was hard to read, and where things would go
     // wasn't plain (asked for by the user). Passed on only with this layout's id (seen: reviewed=true on the first
     // call, and the user approved a form whose layout was never shown).
@@ -1636,11 +1743,18 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                         : "deleted working-copy pipeline '" + ref.getName() + "'";
             }
             case PromotionLayout.MOVE -> {
+                final String renamed = step.doc().get(PromotionLayout.RENAMED_FROM) == null
+                        ? ""
+                        : " (renamed from '" + step.doc().get(PromotionLayout.RENAMED_FROM) + "', named for the "
+                          + "version it goes with)";
+                if (!renamed.isEmpty()) {
+                    guard.rename(ref, ref.getName());
+                }
                 guard.moveTo(ref, folders.get(step.target()));
                 // Now production content: the agent may no longer change it directly. mcp-generated stays, so it
                 // is still known as the server's own.
                 guard.untag(List.of(ref), Set.of(WriteGuard.MANAGED));
-                yield "moved " + ref.getType() + " '" + ref.getName() + "' to " + step.target();
+                yield "moved " + ref.getType() + " '" + ref.getName() + "' to " + step.target() + renamed;
             }
             default -> writeBack(ref, step.target());
         };
@@ -1935,6 +2049,12 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     /// @param name The group's name: its folder's.
     /// @param docs The documents of its own placed beside the feed (its XSLT, its output feed), by UUID.
     private record GroupPlace(String name, Set<String> docs) {
+
+    }
+
+    // What a new version's filter reads: everything, else streams created from fromMs on (null: from the moment it
+    // is made); said as the result says it.
+    private record Backfill(boolean everything, Long fromMs, String said) {
 
     }
 }

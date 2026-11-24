@@ -228,6 +228,16 @@ final class BuildWorld {
                     }
                     return new BulkActionResult(made, "");
                 });
+        Mockito.when(explorerService.rename(any(), anyString())).thenAnswer(inv -> {
+            final ExplorerNode renaming = inv.getArgument(0);
+            final String name = inv.getArgument(1);
+            final Node node = nodes.get(renaming.getUuid());
+            node.name = name;
+            if (docs.get(node.uuid) instanceof final AbstractDoc doc) {
+                docs.put(node.uuid, renamed(doc, node.uuid, name));
+            }
+            return node.explorerNode();
+        });
         Mockito.when(explorerService.move(any(), any(), any(PermissionInheritance.class))).thenAnswer(inv -> {
             final List<ExplorerNode> moved = inv.getArgument(0);
             final ExplorerNode destination = inv.getArgument(1);
@@ -362,7 +372,8 @@ final class BuildWorld {
 
         final String type;
         final String uuid;
-        final String name;
+        // Renamed as Stroom's explorer renames a document.
+        String name;
         final Set<String> tags = new LinkedHashSet<>();
         final List<String> children = new ArrayList<>();
         String parent;

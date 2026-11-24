@@ -485,6 +485,15 @@ public class WriteGuard {
                 PermissionInheritance.DESTINATION);
     }
 
+    /// Renames a document, as the user (Stroom checks they may): a build's document named for another version than
+    /// the one it goes with. Its UUID stays, so pipelines and imports naming it keep working.
+    ///
+    /// @param ref  The document.
+    /// @param name Its new name.
+    public void rename(final DocRef ref, final String name) {
+        explorerServiceProvider.get().rename(node(ref), name);
+    }
+
     /// Copies a document into a folder under another name, as the user: promotion's backup of a production
     /// document before its working copy is written over it.
     ///

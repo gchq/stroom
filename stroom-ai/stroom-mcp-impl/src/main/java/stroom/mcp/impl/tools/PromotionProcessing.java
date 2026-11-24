@@ -31,6 +31,7 @@ import stroom.util.shared.NullSafe;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -429,6 +430,23 @@ class PromotionProcessing {
     List<Map<String, Object>> createPromotionFilters(final StroomLinks links,
                                                      final List<Entry> plan,
                                                      final Set<String> promoted) {
+        return createPromotionFilters(links, plan, promoted, Map.of());
+    }
+
+    /// As [#createPromotionFilters(StroomLinks, List, Set)], a new version's filter reading only the streams
+    /// created from a time on, as the user chose at promotion (decided by the user, 2026-11-24: enabled, a filter
+    /// reading everything reprocesses the whole feed, and both versions' Events then exist for old data).
+    ///
+    /// @param links    How the caller links to Stroom.
+    /// @param plan     What [#promotionProcessing] planned.
+    /// @param promoted The UUIDs of the documents the promotion moved out of the build.
+    /// @param since    The earliest stream create time each pipeline's new filter reads, by pipeline UUID (a new
+    ///                 version's, where the user bounded it); a pipeline not given reads everything.
+    /// @return What was made for each entry, in order.
+    List<Map<String, Object>> createPromotionFilters(final StroomLinks links,
+                                                     final List<Entry> plan,
+                                                     final Set<String> promoted,
+                                                     final Map<String, Long> since) {
         final List<Map<String, Object>> made = new ArrayList<>();
         for (final Entry entry : plan) {
             final String link = links.documentTarget(entry.pipeline());
@@ -448,14 +466,21 @@ class PromotionProcessing {
             }
             children.add(ProcessorFilterWrites.term(MetaFields.FIELD_TYPE, entry.streamType()));
             children.addAll(entry.extraTerms());
+            final Long from = NullSafe.map(since).get(entry.pipeline().getUuid());
             final ProcessorFilter created = filterWrites.createFilter(entry.pipeline(),
                     ProcessorFilterWrites.allOf(children), ProcessorFilterWrites.DEFAULT_PRIORITY,
-                    ProcessorFilterWrites.MAX_FEED_FILTER_TASKS, null, false);
+                    ProcessorFilterWrites.MAX_FEED_FILTER_TASKS, from, false);
             final BeforeEnabling before = beforePromotedIndexing(links, entry, promoted);
+            final String data = from == null
+                    ? "existing data included"
+                    : "streams created from " + Instant.ofEpochMilli(from) + " on";
             final String selects = entry.feed() != null
-                    ? "processes feed " + entry.feed() + " (" + entry.streamType() + "), existing data included"
-                    : "processes " + entry.streamType() + " from its source pipeline, existing data included";
+                    ? "processes feed " + entry.feed() + " (" + entry.streamType() + "), " + data
+                    : "processes " + entry.streamType() + " from its source pipeline, " + data;
             final Map<String, Object> result = entryFor(created.getId(), entry, false);
+            if (from != null) {
+                result.put("reads_from", Instant.ofEpochMilli(from).toString());
+            }
             if (before.what() != null) {
                 result.put("before_enabling", before.what());
             }

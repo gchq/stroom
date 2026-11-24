@@ -515,9 +515,9 @@ class CreatePipelineTool extends AbstractBuiltInTool {
             }
             return pipelineDocs.write(child);
         }, false, role);
-        if (previous != null) {
-            recordVersion(build, doc.asDocRef(), previous, toSet);
-        }
+        final Map<String, DocRef> renamed = previous == null
+                ? Map.of()
+                : recordVersion(build, doc.asDocRef(), previous, toSet, group);
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("type", PipelineDoc.TYPE);
         result.put("uuid", doc.getUuid());
@@ -527,13 +527,27 @@ class CreatePipelineTool extends AbstractBuiltInTool {
             // The registry names the pipeline for the group.
             result.put("group", group.get().group());
             result.put("source_types", groupsProvider.get().pipelineMade(context, build, group.get().group(),
-                    new DocRef(PipelineDoc.TYPE, doc.getUuid(), doc.getName())));
+                    new DocRef(PipelineDoc.TYPE, doc.getUuid(), doc.getName()), renamed));
             if (replaced != null && proposed.equals(name)) {
                 result.put("name_note", groupNameNote(group.get(), proposed, replaced));
             }
         }
+        if (!renamed.isEmpty()) {
+            result.put("renamed", renamed.values().stream()
+                    .map(named -> named.getType() + " now '" + named.getName() + "', named for this version as "
+                                  + "the pipeline is")
+                    .toList());
+        }
         if (previous != null) {
             result.put("version_of", previous.getName());
+            // Said plainly: a production version importing a module that no longer exists fails, whatever this
+            // build does (seen in chat 192).
+            final List<String> broken = pipelineShapes.brokenImports(previous.getUuid()).stream()
+                    .map(line -> "Production pipeline '" + previous.getName() + "': " + line + ". Tell the user.")
+                    .toList();
+            if (!broken.isEmpty()) {
+                result.put("production_imports_broken", broken);
+            }
             if (catalogueNotesProvider != null && guard.buildOf(previous.asDocRef()).isEmpty()) {
                 // A next version of a promoted pipeline starts from the promoted catalogue of event types.
                 catalogueNotesProvider.get().carryInto(build, previous.asDocRef())
@@ -976,12 +990,26 @@ class CreatePipelineTool extends AbstractBuiltInTool {
     }
 
     // The new pipeline as the next version of the previous one, and each build document it runs in the place of
-    // one the previous version runs (its XSLT for V1.2's), so promotion puts them beside their predecessors.
-    private void recordVersion(final String build,
-                               final DocRef ref,
-                               final PipelineDoc previous,
-                               final List<PropertyValue> properties) {
+    // one the previous version runs (its XSLT for V1.2's), so promotion puts them beside their predecessors. Such a
+    // document named for the previous version is renamed for this one (seen in chat 192: a group's XSLT saved as
+    // 'Messaging V1.0', production's name, ran in 'Messaging V1.1' and was promoted into its V1.1 folder so named).
+    // Returns the documents renamed, by UUID.
+    private Map<String, DocRef> recordVersion(final String build,
+                                              final DocRef ref,
+                                              final PipelineDoc previous,
+                                              final List<PropertyValue> properties,
+                                              final Optional<SourceTypeGroups.GroupRun> group) {
         records.update(build, ref, entry -> entry.put("version_of", previous.getUuid()));
+        // A version token of a feed's or the group's own name is theirs, never the pipeline's.
+        final List<String> held = new ArrayList<>(JsonValues.strings(records.load(build).get(
+                BuildRecords.SOURCE_FEEDS)));
+        group.ifPresent(run -> {
+            held.add(run.feed());
+            held.add(run.group());
+        });
+        final String from = VersionNames.token(previous.getName(), held).orElse(null);
+        final String to = VersionNames.token(ref.getName(), held).orElse(null);
+        final Map<String, DocRef> renamed = new LinkedHashMap<>();
         final Map<String, DocRef> before = new LinkedHashMap<>();
         PipelineDocs.addedProperties(previous).forEach(property -> {
             final DocRef entity = NullSafe.get(property.getValue(), PipelinePropertyValue::getEntity);
@@ -995,8 +1023,34 @@ class CreatePipelineTool extends AbstractBuiltInTool {
                 && was.getType().equals(property.docType()) && !was.getUuid().equals(property.docUuid())) {
                 records.update(build, new DocRef(property.docType(), property.docUuid()),
                         entry -> entry.put("version_of", was.getUuid()));
+                renameForVersion(build, property, from, to, held).ifPresent(named ->
+                        renamed.put(named.getUuid(), named));
             }
         }
+        return renamed;
+    }
+
+    // A build document named for the previous version (its token `from`), renamed for the new one (`to`); empty for
+    // one named otherwise, or whose new name the build has for its type already.
+    private Optional<DocRef> renameForVersion(final String build,
+                                              final PropertyValue property,
+                                              final String from,
+                                              final String to,
+                                              final List<String> held) {
+        final DocRef doc = new DocRef(property.docType(), property.docUuid());
+        final Optional<WriteGuard.BuildDoc> inBuild = guard.folderContents(build).stream()
+                .filter(each -> each.uuid().equals(property.docUuid()))
+                .findFirst();
+        if (inBuild.isEmpty()) {
+            return Optional.empty();
+        }
+        final Optional<String> name = VersionNames.retokened(inBuild.get().name(), from, to, held);
+        if (name.isEmpty() || guard.folderContents(build).stream()
+                .anyMatch(each -> each.type().equals(property.docType()) && each.name().equals(name.get()))) {
+            return Optional.empty();
+        }
+        guard.rename(doc, name.get());
+        return Optional.of(new DocRef(property.docType(), property.docUuid(), name.get()));
     }
 
     // The new pipeline with the description given, if one was.

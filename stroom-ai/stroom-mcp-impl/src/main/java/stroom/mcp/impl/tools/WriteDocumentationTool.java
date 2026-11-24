@@ -443,6 +443,12 @@ class WriteDocumentationTool extends AbstractBuiltInTool {
                                     && "translation".equals(pipelineShapes.shape(pipelineUuid).stage());
         final boolean translation = handWritten
                                     || kept != null && KeptMapping.TRANSLATION.equals(kept.kept().kind());
+        if (translation) {
+            // Documented once its latest XSLT has stepped clean, never before (seen in chat 192).
+            docs.notSteppedClean(pipelineUuid).ifPresent(why -> {
+                throw new ToolRefusal(why);
+            });
+        }
         List<Long> streamIds = request.streamIds();
         if (translation && !streamIds.isEmpty()) {
             // An events pipeline's own Events output, given in place of its raw sample (seen in VS Code): the raw
