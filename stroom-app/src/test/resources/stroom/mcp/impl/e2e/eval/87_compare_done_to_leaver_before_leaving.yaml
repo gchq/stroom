@@ -45,7 +45,7 @@ reference:
     targetPersonField: TargetPersonId
     sources: [Insider events]
     windowFrom: '2026-08-24'
-    windowTo: '2026-09-26'
+    windowTo: '2026-09-25'
     baselineFrom: '2026-06-01'
     unit: week
     peers: false

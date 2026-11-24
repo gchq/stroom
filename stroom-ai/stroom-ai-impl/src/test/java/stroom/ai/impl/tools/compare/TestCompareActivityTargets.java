@@ -220,7 +220,7 @@ class TestCompareActivityTargets {
         final Map<String, Object> arguments = new LinkedHashMap<>();
         arguments.put(CompareActivityTool.PERSON_ARG, "p1");
         arguments.put(CompareActivityTool.WINDOW_FROM_ARG, WINDOW_FROM.toString());
-        arguments.put(CompareActivityTool.WINDOW_TO_ARG, WINDOW_TO.toString());
+        arguments.put(CompareActivityTool.WINDOW_TO_ARG, WINDOW_TO.minusDays(1).toString());
         arguments.put(CompareActivityTool.BASELINE_FROM_ARG, FROM.toString());
         arguments.put(CompareActivityTool.PEERS_ARG, false);
         arguments.put("timeZone", ZONE.getId());

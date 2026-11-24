@@ -17,7 +17,6 @@ was acted on. The comparison gives indicators with evidence, never a verdict on 
 - alert_day (required): the alert's day, yyyy-MM-dd, in the person's zone.
 - timeline_from (required): two hours before the alert's time, ISO 8601.
 - timeline_to (required): two hours after the alert's time, ISO 8601.
-- next_day (default the day after alert_day): yyyy-MM-dd.
 - baseline_start (default 8 weeks before alert_day): yyyy-MM-dd.
 - logon_ids (default none): the person's accounts, for sources with no person field, separated by commas.
 
@@ -25,7 +24,7 @@ was acted on. The comparison gives indicators with evidence, never a verdict on 
 
 1. Compare the alert's day with the same weekdays before it and with the person's peers:
    ```json
-   {"tool": "compare_activity", "arguments": {"person": "{person}", "logonIds": "{logon_ids}", "windowFrom": "{alert_day}", "windowTo": "{next_day}", "baselineFrom": "{baseline_start}", "unit": "day", "sources": "[[the indexes the alert's activity would show in, by name]]", "breadthFields": "[[fields for breadth and new values: hosts, destinations, applications]]", "includeTargets": true}}
+   {"tool": "compare_activity", "arguments": {"person": "{person}", "logonIds": "{logon_ids}", "windowFrom": "{alert_day}", "windowTo": "{alert_day}", "baselineFrom": "{baseline_start}", "unit": "day", "sources": "[[the indexes the alert's activity would show in, by name]]", "breadthFields": "[[fields for breadth and new values: hosts, destinations, applications]]", "includeTargets": true}}
    ```
 2. Build the timeline of the hours around the alert with activity_timeline: entity the person's logon id, timeFrom
    {timeline_from}, timeTo {timeline_to} and includeTargets true.

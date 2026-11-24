@@ -39,7 +39,7 @@ reference:
     personField: PersonId
     sources: [Insider events]
     windowFrom: '2026-06-01'
-    windowTo: '2026-06-27'
+    windowTo: '2026-06-26'
     baselineFrom: '2026-02-02'
     unit: week
     location: false

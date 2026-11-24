@@ -83,6 +83,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -123,6 +124,15 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     static final String COUNTRY_SUFFIX = ".geo.country_iso_code";
     /// The end of a geo point field, as the ECS geo fields are named (`source.geo.location`).
     static final String POINT_SUFFIX = ".geo.location";
+    /// The flat profile's country field (a country code, e.g. where a sign-in came from).
+    static final String FLAT_COUNTRY = "Country";
+    /// The flat profile's category field (the source's own category of what an event reached).
+    static final String FLAT_CATEGORY = "Category";
+    /// The end of an ECS-style category field (`url.category`).
+    static final String CATEGORY_SUFFIX = ".category";
+    /// ECS's category of the event itself (authentication, network...), not of what it reached: never a category
+    /// field here.
+    static final String EVENT_CATEGORY = "event.category";
     static final String PEER_ELEMENT_ARG = "peerElement";
     static final String INCLUDE_TARGETS_ARG = "includeTargets";
     static final String TARGET_PERSON_FIELD_ARG = "targetPersonField";
@@ -145,8 +155,8 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     static final String CACHE_FILE = "aggregates.json";
     static final String PEERS_FORM = "compare-peers";
     private static final Pattern DATE = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
-    private static final Pattern RANGE = Pattern.compile("\\s*(\\d{4}-\\d{2}-\\d{2})\\s*(?:(?:\\.\\.|/|\\s+to\\s+)"
-                                                         + "\\s*(\\d{4}-\\d{2}-\\d{2}))?\\s*");
+    private static final Pattern RANGE = Pattern.compile("\\s*(\\d{4}-\\d{2}-\\d{2})\\s*(?:(?:\\.\\.|/|\\s+to\\s+|"
+                                                         + "\\s+[-\u2013]\\s+)\\s*(\\d{4}-\\d{2}-\\d{2}))?\\s*");
     private static final Pattern UNSAFE = Pattern.compile("[^A-Za-z0-9._-]+");
     private static final String READ_FIRST = "Read the groups of the first " + MAX_PEOPLE;
     private static final String NO_PEERS = "Compare without peers";
@@ -255,7 +265,11 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                  + "a month, and CSV files of the daily profile and monthly rollup. Give person "
                                  + "(the person id) or logonIds where there is none. includeTargets scores what was "
                                  + "done to the person apart (a group granted, a reset, MFA changed, failed "
-                                 + "logons against them; about 2 more queries a month per source).")
+                                 + "logons against them; about 2 more queries a month per source). Categories and "
+                                 + "location are on by default where a source has a category or country field "
+                                 + "(about 1 more query a month each per source); peers and accessField are "
+                                 + "asked for. A date alone is a whole day in timeZone: windowFrom 2026-06-01 "
+                                 + "and windowTo 2026-06-30 are all of June.")
                         .chatOnly(" Drill into flagged days with activity_timeline.")
                         .build())
                 .parameters(ObjectSchema.builder()
@@ -266,14 +280,19 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                         .addStringProperty(PERSON_FIELD_ARG, "Optional: the person field, where the AGENTS doc's "
                                                              + "## Fields or the convention don't give it.")
                         .addStringProperty(USER_FIELD_ARG, "Optional: the user (logon id) field, likewise.")
-                        .addStringProperty(WINDOW_FROM_ARG, "The window's start: a date (yyyy-MM-dd) or Stroom's "
-                                                            + "now()-30d (default " + DEFAULT_WINDOW_DAYS
+                        .addStringProperty(WINDOW_FROM_ARG, "The window's first day: a date (yyyy-MM-dd, from "
+                                                            + "the start of that day), an ISO 8601 time or "
+                                                            + "Stroom's now()-30d (default " + DEFAULT_WINDOW_DAYS
                                                             + " days before windowTo).")
-                        .addStringProperty(WINDOW_TO_ARG, "The window's end, exclusive (default now()).")
-                        .addStringProperty(BASELINE_FROM_ARG, "The baseline's start (default "
+                        .addStringProperty(WINDOW_TO_ARG, "The window's last day: a date (yyyy-MM-dd) is "
+                                                          + "included, to the end of that day; a time or "
+                                                          + "expression is the exclusive end (default now()).")
+                        .addStringProperty(BASELINE_FROM_ARG, "The baseline's first day, likewise (default "
                                                               + DEFAULT_BASELINE_DAYS + " days before "
                                                               + "baselineTo).")
-                        .addStringProperty(BASELINE_TO_ARG, "The baseline's end, exclusive (default windowFrom).")
+                        .addStringProperty(BASELINE_TO_ARG, "The baseline's last day, as windowTo (default the "
+                                                            + "day before windowFrom; windowFrom's own date is "
+                                                            + "read as ending there).")
                         .addEnumProperty(UNIT_ARG, List.of("day", "week", "month"), "What the window is compared "
                                                                                    + "in (default week).")
                         .addProperty(SOURCES_ARG, stringArraySchema("The indexes by name or uuid (default: every "
@@ -294,12 +313,14 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                                                        + "skill or AGENTS doc: not scored."))
                         .addBooleanProperty(PEERS_ARG, "Compare with peers (default true).")
                         .addBooleanProperty(CATEGORIES_ARG, "Add events a day by category (personal cloud "
-                                                            + "storage, webmail, job search...) of the first "
-                                                            + "breadth field's values: from categoryField where the "
-                                                            + "index has one, else classified by the model (marked "
-                                                            + "inferred). Default false.")
+                                                            + "storage, webmail, job search...): from the index's "
+                                                            + "category field (categoryField, AGENTS 'category:', "
+                                                            + "Category or *.category), on by default where it has "
+                                                            + "one. true with no such field: the first breadth "
+                                                            + "field's values classified by the model (marked "
+                                                            + "inferred; model calls). false: off.")
                         .addStringProperty(CATEGORY_FIELD_ARG, "Optional: the index's own category field, e.g. a "
-                                                               + "proxy's URL category.")
+                                                               + "proxy's URL category, where it isn't found.")
                         .addProperty(CATEGORY_LIST_ARG, stringArraySchema("The site's own categories, each "
                                                                           + "value=category (from the AGENTS doc "
                                                                           + "or skill): override the rest."))
@@ -309,10 +330,11 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                                              + "the window's access outside the person's cluster "
                                                              + "found.")
                         .addBooleanProperty(LOCATION_ARG, "Look for new countries, impossible travel and activity "
-                                                          + "abroad on leave, from the index's geo fields (default "
-                                                          + "true where it has them).")
-                        .addStringProperty(COUNTRY_FIELD_ARG, "Optional: the country field, where it isn't a "
-                                                              + "*.geo.country_iso_code field.")
+                                                          + "abroad on leave, from the index's country field "
+                                                          + "(countryField, AGENTS 'country:', "
+                                                          + "*.geo.country_iso_code or Country): on by default "
+                                                          + "where it has one; false: off.")
+                        .addStringProperty(COUNTRY_FIELD_ARG, "Optional: the country field, where it isn't found.")
                         .addProperty(CATEGORY_CORRECTIONS_ARG, stringArraySchema("Corrections of categories "
                                                                                  + "inferred, each "
                                                                                  + "value=category: kept for "
@@ -360,14 +382,19 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                 periods.windowTo(), unit, leave, zone.zone(), exceptions(stringListArg(request, EXCEPTIONS_ARG)));
         final String element = peerElement(stringArg(request, PEER_ELEMENT_ARG));
         final boolean peers = booleanArg(request, PEERS_ARG, true);
-        final boolean categories = booleanArg(request, CATEGORIES_ARG, false);
-        final boolean location = booleanArg(request, LOCATION_ARG, true);
+        // Categories and location: as asked, else on where the source has the field (said in the notes); the model
+        // classifies values only when categories are asked for.
+        final Boolean categoriesAsked = optionalBooleanArg(request, CATEGORIES_ARG);
+        final Boolean locationAsked = optionalBooleanArg(request, LOCATION_ARG);
         final boolean targets = booleanArg(request, INCLUDE_TARGETS_ARG, false);
         final Map<String, String> siteList = pairs(stringListArg(request, CATEGORY_LIST_ARG), CATEGORY_LIST_ARG);
         final Map<String, String> corrections = pairs(stringListArg(request, CATEGORY_CORRECTIONS_ARG),
                 CATEGORY_CORRECTIONS_ARG);
 
-        final List<Planned> planned = plan(request, context, person, logonIds, targets);
+        final List<String> notes = new ArrayList<>(periods.notes());
+        final List<Planned> planned = plan(request, context, person, logonIds, targets, categoriesAsked,
+                locationAsked);
+        planned.stream().filter(Planned::usable).forEach(source -> notes.addAll(source.defaults()));
         final String folder = FOLDER + safe(NullSafe.isBlankString(person)
                 ? String.join("_", logonIds)
                 : person) + "/";
@@ -391,7 +418,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                 queries.add(ActivityProfiles.seen(source.source(), source.scope(), field, from, to));
             }
             final Map<String, Integer> offsets = new LinkedHashMap<>();
-            if (categories && !source.fields().breadth().isEmpty()) {
+            if (source.categories() && (source.categoryField() != null || !source.fields().breadth().isEmpty())) {
                 offsets.put(CATEGORIES_ARG, queries.size() - start);
                 queries.add(categoryQuery(source, from, to));
             }
@@ -402,7 +429,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                 queries.add(ActivityAccess.window(source.source(), source.scope(), source.accessField(),
                         periods.windowFrom().atStartOfDay(zone.zone()).toInstant(), to));
             }
-            if (location && source.countryField() != null) {
+            if (source.location() && source.countryField() != null) {
                 offsets.put(LOCATION_ARG, queries.size() - start);
                 queries.add(ActivityLocation.hourly(source.source(), source.scope(), source.countryField(),
                         source.pointField(), from, to));
@@ -436,7 +463,6 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
             at.add(new int[]{start, queries.size() - start});
         }
         final List<Table> tables = runner.run(queries, runContext);
-        final List<String> notes = new ArrayList<>();
         final List<SourceData> data = new ArrayList<>();
         final Map<Integer, List<String>> peerMembers = new LinkedHashMap<>();
         final Map<Integer, String> peerGroupNames = new LinkedHashMap<>();
@@ -495,8 +521,8 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                           + "can't be read from their events: compared without peers.");
             }
             Map<String, SortedMap<LocalDate, Double>> extra = Map.of();
-            if (categories) {
-                if (source.fields().breadth().isEmpty()) {
+            if (source.categories()) {
+                if (source.categoryField() == null && source.fields().breadth().isEmpty()) {
                     notes.add(source.source().name() + ": no breadth field whose values to put in categories.");
                 } else {
                     extra = categorised(context, workspace, source,
@@ -554,8 +580,9 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                         own.get(offsets.get(LOCATION_ARG)), source.pointField() != null);
                 more.addAll(located.findings());
                 notes.addAll(located.notes());
-            } else if (location) {
-                notes.add(source.source().name() + ": location isn't available: it has no geo fields.");
+            } else if (Boolean.TRUE.equals(locationAsked)) {
+                notes.add(source.source().name() + ": location isn't available: it has no country field "
+                          + "(countryField, or a ## Fields 'country:' line, names one).");
             }
             more.sort(Comparator.comparingDouble(ActivityScoring.Finding::score).reversed());
             scored.add(new Scored(one.source(), more, one.status(), one.features(), one.months(), one.notes(),
@@ -603,7 +630,9 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                final ToolCallContext context,
                                final String person,
                                final List<String> logonIds,
-                               final boolean targets) {
+                               final boolean targets,
+                               final Boolean categoriesAsked,
+                               final Boolean locationAsked) {
         final List<String> given = NullSafe.list(stringListArg(request, SOURCES_ARG));
         final List<DocRef> docs = new ArrayList<>();
         if (given.isEmpty()) {
@@ -628,9 +657,9 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         final List<String> userFields = optionalList(stringArg(request, USER_FIELD_ARG));
         final List<String> sums = NullSafe.list(stringListArg(request, SUM_FIELDS_ARG));
         final List<String> breadth = NullSafe.list(stringListArg(request, BREADTH_FIELDS_ARG));
-        final String categoryField = stringArg(request, CATEGORY_FIELD_ARG);
+        final List<String> categoryFields = optionalList(stringArg(request, CATEGORY_FIELD_ARG));
         final String accessField = stringArg(request, ACCESS_FIELD_ARG);
-        final String countryField = stringArg(request, COUNTRY_FIELD_ARG);
+        final List<String> countryFields = optionalList(stringArg(request, COUNTRY_FIELD_ARG));
         final List<Planned> planned = new ArrayList<>();
         for (final DocRef doc : docs) {
             final Optional<QueryField> time = dataSourceAccess.timeField(doc);
@@ -658,17 +687,24 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
             final Targeted targeted = targets
                     ? targeted(request, context, doc, person, logonIds, scope, fields, userFields, personFields)
                     : null;
+            final Optional<TimelineFields.Found> category = categoryField(context, doc, categoryFields, fields,
+                    elastic);
+            final Optional<TimelineFields.Found> country = countryField(context, doc, countryFields, fields);
+            final List<String> defaults = new ArrayList<>();
+            final boolean categories = onByDefault(categoriesAsked, category, doc.getName(), "categories",
+                    "category", CATEGORIES_ARG, defaults);
+            final boolean location = onByDefault(locationAsked, country, doc.getName(), "location", "country",
+                    LOCATION_ARG, defaults);
             planned.add(new Planned(doc, source, new Scope(scope.field().field(), scope.values()),
                     new Fields(sumFields, breadthFields), scope.by().label() + " (" + scope.field().field() + " from "
                                                           + scope.field().from() + ")", hasIds, null,
-                    categoryField != null && fields.containsKey(categoryField)
-                            ? categoryField
-                            : null, accessField != null && fields.containsKey(accessField)
+                    category.map(TimelineFields.Found::field).orElse(null),
+                    accessField != null && fields.containsKey(accessField)
                             ? accessField
-                            : null, countryField(countryField, fields), elastic
+                            : null, country.map(TimelineFields.Found::field).orElse(null), elastic
                             ? fields.keySet().stream().filter(name -> name.endsWith(POINT_SUFFIX)).sorted()
                                     .findFirst().orElse(null)
-                            : null, targeted));
+                            : null, targeted, categories, location, defaults));
         }
         if (planned.stream().noneMatch(Planned::usable)) {
             throw new WorkspaceException("No source can be compared: " + String.join("; ", planned.stream()
@@ -718,10 +754,12 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     }
 
     // The person's events by day and value of the first breadth field (and the index's category field, where it
-    // has one).
+    // has one; by that alone where there is no breadth field).
     private static AggregateQuery categoryQuery(final Planned source, final Instant from, final Instant to) {
         final List<String> groups = new ArrayList<>();
-        groups.add(source.fields().breadth().getFirst());
+        if (!source.fields().breadth().isEmpty()) {
+            groups.add(source.fields().breadth().getFirst());
+        }
         if (source.categoryField() != null) {
             groups.add(source.categoryField());
         }
@@ -730,7 +768,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                 ActivityProfiles.MAX_ROWS);
     }
 
-    // Each category's events a day: the values' categories from the index's category field, else the model's; the
+    // Each category's events a day: from the index's category field, else the values' categories by the model; the
     // site's list and the corrections over both. The categories are written to a file, said in the notes.
     private Map<String, SortedMap<LocalDate, Double>> categorised(final ToolCallContext context,
                                                                            final SessionWorkspace workspace,
@@ -740,10 +778,93 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                                                            final Map<String, String> corrections,
                                                                            final String folder,
                                                                            final List<String> notes) {
+        if (table.cutShort()) {
+            notes.add(source.source().name() + ": the events by " + (source.fields().breadth().isEmpty()
+                    ? source.categoryField()
+                    : source.fields().breadth().getFirst()) + " were cut short at " + ActivityProfiles.MAX_ROWS
+                      + " rows a month: the categories' counts are approximate.");
+        }
+        final List<List<String>> rows = new ArrayList<>();
+        final Map<String, SortedMap<LocalDate, Double>> daily = source.categoryField() != null
+                ? fromField(source, table, siteList, corrections, rows, notes)
+                : classified(context, workspace, source, table, siteList, corrections, rows, notes);
+        final WorkspacePath path = WorkspacePath.parse(folder + safe(source.source().name()) + "-" + CATEGORIES_FILE);
+        ToolTables.write(workspace, path, List.of("field", "value", "category", "origin", "events"), rows,
+                source.doc().getUuid());
+        notes.add(source.source().name() + ": each value's category is in " + path.path() + ".");
+        final Map<String, SortedMap<LocalDate, Double>> extra = new LinkedHashMap<>();
+        daily.forEach((category, days) -> extra.put(ActivityScoring.CATEGORY + category, days));
+        return extra;
+    }
+
+    // Each category's events a day from the index's category field, row by row (a value may be of more than one
+    // category), the site's list and the corrections of a value over its field's category; the categories file's
+    // rows added, a value and category a row.
+    private static Map<String, SortedMap<LocalDate, Double>> fromField(final Planned source,
+                                                                       final Table table,
+                                                                       final Map<String, String> siteList,
+                                                                       final Map<String, String> corrections,
+                                                                       final List<List<String>> rows,
+                                                                       final List<String> notes) {
+        final boolean byValue = !source.fields().breadth().isEmpty();
+        final String field = byValue
+                ? source.fields().breadth().getFirst()
+                : source.categoryField();
+        final Map<String, SortedMap<LocalDate, Double>> daily = new TreeMap<>();
+        final Map<List<String>, Long> counts = new TreeMap<>(Comparator.comparing((List<String> key) -> key.get(0))
+                .thenComparing(key -> key.get(1)).thenComparing(key -> key.get(2)));
+        for (final Map<String, String> row : table.rows()) {
+            final String bucket = row.get(AggregateQuery.BUCKET_COLUMN);
+            final String value = row.get(AggregateQuery.groupColumn(0));
+            final String fieldCategory = byValue
+                    ? row.get(AggregateQuery.groupColumn(1))
+                    : value;
+            if (NullSafe.isBlankString(bucket)) {
+                continue;
+            }
+            // A row with no value but a category (an event without the breadth field) still counts in it.
+            final String key = NullSafe.string(value).toLowerCase(Locale.ROOT);
+            final ActivityCategories.Category category;
+            if (byValue && siteList.containsKey(key)) {
+                category = new ActivityCategories.Category(siteList.get(key), ActivityCategories.Origin.SITE);
+            } else if (byValue && corrections.containsKey(key)) {
+                category = new ActivityCategories.Category(corrections.get(key), ActivityCategories.Origin.CORRECTED);
+            } else if (NullSafe.isNonBlankString(fieldCategory)) {
+                category = new ActivityCategories.Category(fieldCategory, ActivityCategories.Origin.FIELD);
+            } else {
+                continue;
+            }
+            final double events = ActivityProfiles.number(row.get(ActivityProfiles.EVENTS));
+            counts.merge(List.of(NullSafe.string(value), category.name(),
+                            category.origin().name().toLowerCase(Locale.ROOT)),
+                    (long) events, Long::sum);
+            if (!ActivityCategories.OTHER.equals(category.name())) {
+                daily.computeIfAbsent(category.name(), k -> new TreeMap<>()).merge(LocalDate.parse(bucket), events,
+                        Double::sum);
+            }
+        }
+        counts.forEach((key, events) -> rows.add(List.of(field, key.get(0), key.get(1), key.get(2),
+                String.valueOf(events))));
+        notes.add(source.source().name() + ": categories from its field " + source.categoryField()
+                  + (byValue && !(siteList.isEmpty() && corrections.isEmpty())
+                ? ", the site's list and corrections over it"
+                : "") + ".");
+        return daily;
+    }
+
+    // Each category's events a day, the first breadth field's values classified by the model (the site's list and
+    // corrections over it); the categories file's rows added, a value a row.
+    private static Map<String, SortedMap<LocalDate, Double>> classified(final ToolCallContext context,
+                                                                        final SessionWorkspace workspace,
+                                                                        final Planned source,
+                                                                        final Table table,
+                                                                        final Map<String, String> siteList,
+                                                                        final Map<String, String> corrections,
+                                                                        final List<List<String>> rows,
+                                                                        final List<String> notes) {
         final String field = source.fields().breadth().getFirst();
         final SortedMap<LocalDate, Map<String, Double>> byDay = new TreeMap<>();
         final Map<String, Long> counts = new LinkedHashMap<>();
-        final Map<String, String> fromField = new LinkedHashMap<>();
         for (final Map<String, String> row : table.rows()) {
             final String value = row.get(AggregateQuery.groupColumn(0));
             final String bucket = row.get(AggregateQuery.BUCKET_COLUMN);
@@ -754,65 +875,83 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
             byDay.computeIfAbsent(LocalDate.parse(bucket), k -> new LinkedHashMap<>()).merge(value, events,
                     Double::sum);
             counts.merge(value, (long) events, Long::sum);
-            final String category = row.get(AggregateQuery.groupColumn(1));
-            if (NullSafe.isNonBlankString(category)) {
-                fromField.putIfAbsent(value, category);
-            }
         }
-        if (table.cutShort()) {
-            notes.add(source.source().name() + ": the events by " + field + " were cut short at "
-                      + ActivityProfiles.MAX_ROWS + " rows a month: the categories' counts are approximate.");
-        }
-        final Map<String, ActivityCategories.Category> categories = new TreeMap<>();
-        if (source.categoryField() != null) {
-            fromField.forEach((value, category) -> categories.put(value, new ActivityCategories.Category(
-                    category, ActivityCategories.Origin.FIELD)));
-            counts.keySet().forEach(value -> {
-                final String key = value.toLowerCase(Locale.ROOT);
-                if (siteList.containsKey(key)) {
-                    categories.put(value, new ActivityCategories.Category(siteList.get(key),
-                            ActivityCategories.Origin.SITE));
-                } else if (corrections.containsKey(key)) {
-                    categories.put(value, new ActivityCategories.Category(corrections.get(key),
-                            ActivityCategories.Origin.CORRECTED));
-                }
-            });
-            notes.add(source.source().name() + ": categories from its field " + source.categoryField()
-                      + (siteList.isEmpty() && corrections.isEmpty()
-                              ? ""
-                              : ", the site's list and corrections over it") + ".");
-        } else {
-            final ActivityCategories.Classified classified = ActivityCategories.classify(workspace, field, counts,
-                    siteList, corrections, context.sideCalls());
-            categories.putAll(classified.categories());
-            classified.notes().forEach(note -> notes.add(source.source().name() + ": " + note));
-        }
-        final List<List<String>> rows = new ArrayList<>();
+        final ActivityCategories.Classified classified = ActivityCategories.classify(workspace, field, counts,
+                siteList, corrections, context.sideCalls());
+        final Map<String, ActivityCategories.Category> categories = new TreeMap<>(classified.categories());
+        classified.notes().forEach(note -> notes.add(source.source().name() + ": " + note));
         categories.forEach((value, category) -> rows.add(List.of(field, value, category.name(),
                 category.origin().name().toLowerCase(Locale.ROOT), String.valueOf(counts.getOrDefault(value, 0L)))));
-        final WorkspacePath path = WorkspacePath.parse(folder + safe(source.source().name()) + "-" + CATEGORIES_FILE);
-        ToolTables.write(workspace, path, List.of("field", "value", "category", "origin", "events"), rows,
-                source.doc().getUuid());
-        notes.add(source.source().name() + ": each value's category is in " + path.path() + ".");
-        final Map<String, SortedMap<LocalDate, Double>> extra = new LinkedHashMap<>();
-        ActivityCategories.daily(byDay, categories).forEach((category, daily) ->
-                extra.put(ActivityScoring.CATEGORY + category, daily));
-        return extra;
+        return ActivityCategories.daily(byDay, categories);
     }
 
-    // The country field given, else a *.geo.country_iso_code field the index has (source.* first, as sign-ins
-    // record where they came from there).
-    private static String countryField(final String given, final Map<String, QueryField> fields) {
-        if (given != null) {
-            return fields.containsKey(given)
-                    ? given
-                    : null;
+    // The category field: the call's, the AGENTS doc's ## Fields 'category:', else the flat profile's Category or
+    // an ECS-style *.category field (not ECS's event.category, the event's own kind), of a type that can be grouped
+    // by.
+    private Optional<TimelineFields.Found> categoryField(final ToolCallContext context,
+                                                         final DocRef doc,
+                                                         final List<String> given,
+                                                         final Map<String, QueryField> fields,
+                                                         final boolean elastic) {
+        final Predicate<String> usable = name -> countable(fields.get(name), elastic);
+        return timelineFields.find(context.session(), doc, InstructionRules.CATEGORY_FIELD, given, usable)
+                .or(() -> fields.keySet().stream()
+                        .filter(usable)
+                        .filter(name -> name.equals(FLAT_CATEGORY)
+                                        || (name.endsWith(CATEGORY_SUFFIX) && !name.equals(EVENT_CATEGORY)))
+                        .min(Comparator.comparing((String name) -> !name.equals(FLAT_CATEGORY))
+                                .thenComparing(name -> name))
+                        .map(name -> new TimelineFields.Found(name, TimelineFields.Origin.CONVENTION,
+                                name.equals(FLAT_CATEGORY)
+                                        ? "flat"
+                                        : "*" + CATEGORY_SUFFIX)));
+    }
+
+    // The country field: the call's, the AGENTS doc's ## Fields 'country:', else a *.geo.country_iso_code field
+    // (source.* first, as sign-ins record where they came from there), else the flat profile's Country.
+    private Optional<TimelineFields.Found> countryField(final ToolCallContext context,
+                                                        final DocRef doc,
+                                                        final List<String> given,
+                                                        final Map<String, QueryField> fields) {
+        return timelineFields.find(context.session(), doc, InstructionRules.COUNTRY_FIELD, given,
+                        fields::containsKey)
+                .or(() -> fields.keySet().stream()
+                        .filter(name -> name.endsWith(COUNTRY_SUFFIX))
+                        .min(Comparator.comparing((String name) -> !name.startsWith("source."))
+                                .thenComparing(name -> name))
+                        .map(name -> new TimelineFields.Found(name, TimelineFields.Origin.CONVENTION,
+                                "ECS *" + COUNTRY_SUFFIX)))
+                .or(() -> fields.containsKey(FLAT_COUNTRY)
+                        ? Optional.of(new TimelineFields.Found(FLAT_COUNTRY, TimelineFields.Origin.CONVENTION,
+                        "flat"))
+                        : Optional.empty());
+    }
+
+    /// Whether a feature that needs a field (categories, location) is on for a source: as asked, else on where the
+    /// source has the field. What was on by default, and why, is added to the notes.
+    ///
+    /// @param asked    The call's true or false, or null where it wasn't given.
+    /// @param field    The source's field for it, if it has one.
+    /// @param source   The source's name.
+    /// @param feature  The feature, as the notes say it (`categories`).
+    /// @param what     What the field holds, as the notes say it (`category`).
+    /// @param arg      The argument that turns it off.
+    /// @param defaults The notes of what was on by default, added to.
+    /// @return True if it is on.
+    static boolean onByDefault(final Boolean asked,
+                               final Optional<TimelineFields.Found> field,
+                               final String source,
+                               final String feature,
+                               final String what,
+                               final String arg,
+                               final List<String> defaults) {
+        if (asked != null) {
+            return asked;
         }
-        return fields.keySet().stream()
-                .filter(name -> name.endsWith(COUNTRY_SUFFIX))
-                .min(Comparator.comparing((String name) -> !name.startsWith("source."))
-                        .thenComparing(name -> name))
-                .orElse(null);
+        field.ifPresent(found -> defaults.add(source + ": " + feature + " on by default, as it has a " + what
+                                              + " field (" + found.field() + " from " + found.from() + "); "
+                                              + arg + ": false turns it off."));
+        return field.isPresent();
     }
 
     private static Map<String, String> pairs(final List<String> values, final String arg) {
@@ -902,7 +1041,15 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         final LocalDate windowTo = endDate(stringArg(request, WINDOW_TO_ARG), zone, now, null);
         final LocalDate windowFrom = startDate(stringArg(request, WINDOW_FROM_ARG), zone, now,
                 windowTo.minusDays(DEFAULT_WINDOW_DAYS));
-        final LocalDate baselineTo = endDate(stringArg(request, BASELINE_TO_ARG), zone, now, windowFrom);
+        final String baselineToArg = stringArg(request, BASELINE_TO_ARG);
+        LocalDate baselineTo = endDate(baselineToArg, zone, now, windowFrom);
+        final List<String> notes = new ArrayList<>();
+        if (isDate(baselineToArg) && baselineTo.equals(windowFrom.plusDays(1))) {
+            // The window's own first day given as the baseline's end: read as the end the window starts at.
+            baselineTo = windowFrom;
+            notes.add("baselineTo " + baselineToArg.strip() + " is the window's first day, so the baseline ends "
+                      + "the day before.");
+        }
         final LocalDate baselineFrom = startDate(stringArg(request, BASELINE_FROM_ARG), zone, now,
                 baselineTo.minusDays(DEFAULT_BASELINE_DAYS));
         if (!windowFrom.isBefore(windowTo)) {
@@ -920,7 +1067,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         if (baselineFrom.plusDays(MAX_DAYS).isBefore(windowTo)) {
             throw new WorkspaceException("The baseline and window together may be at most " + MAX_DAYS + " days.");
         }
-        return new Periods(baselineFrom, baselineTo, windowFrom, windowTo);
+        return new Periods(baselineFrom, baselineTo, windowFrom, windowTo, notes);
     }
 
     /// A start: a date as given, or the day a time falls on in the zone.
@@ -937,7 +1084,8 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         return ZonedDateTime.ofInstant(instant(value, zone, now), zone.zone()).toLocalDate();
     }
 
-    /// An exclusive end: a date as given, or the day after the one a time falls in (its own day if at midnight).
+    /// An exclusive end: the day after a date given alone (the date is included, to its end), or the day after the
+    /// one a time falls in (its own day if at midnight: a time is the exclusive end).
     ///
     /// @param value The argument, or null.
     /// @param zone  The person's zone.
@@ -950,10 +1098,18 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                     ? other
                     : ZonedDateTime.ofInstant(Instant.ofEpochMilli(now), zone.zone()).toLocalDate().plusDays(1);
         }
+        if (isDate(value)) {
+            return LocalDate.parse(value.strip()).plusDays(1);
+        }
         final ZonedDateTime time = ZonedDateTime.ofInstant(instant(value, zone, now), zone.zone());
         return time.toLocalTime().toSecondOfDay() == 0
                 ? time.toLocalDate()
                 : time.toLocalDate().plusDays(1);
+    }
+
+    // True for a date given alone (yyyy-MM-dd).
+    private static boolean isDate(final String value) {
+        return value != null && DATE.matcher(value.strip()).matches();
     }
 
     private static Instant instant(final String value, final ToolTimeZone zone, final long now) {
@@ -1051,6 +1207,13 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                      + "Nationality).");
     }
 
+    // A true/false argument, or null where it wasn't given.
+    private Boolean optionalBooleanArg(final ToolCall request, final String name) {
+        return NullSafe.isBlankString(stringArg(request, name))
+                ? null
+                : booleanArg(request, name, false);
+    }
+
     private static List<String> optionalList(final String value) {
         return NullSafe.isBlankString(value)
                 ? List.of()
@@ -1080,7 +1243,17 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     /// @param baselineTo   The day after its last.
     /// @param windowFrom   The window's first day.
     /// @param windowTo     The day after its last.
-    record Periods(LocalDate baselineFrom, LocalDate baselineTo, LocalDate windowFrom, LocalDate windowTo) {
+    /// @param notes        What the result says of how the periods were read.
+    record Periods(LocalDate baselineFrom,
+                   LocalDate baselineTo,
+                   LocalDate windowFrom,
+                   LocalDate windowTo,
+                   List<String> notes) {
+
+        /// Copies the list.
+        Periods {
+            notes = NullSafe.list(notes).stream().toList();
+        }
 
         /// @return The periods in words.
         String describe() {
@@ -1107,6 +1280,9 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     /// @param countryField  The country field, or null.
     /// @param pointField    The geo point field (Elastic only), or null.
     /// @param targeted      What was done to the person, how it is read (`includeTargets`); null if not asked.
+    /// @param categories    True if its events are counted by category.
+    /// @param location      True if its countries are looked at.
+    /// @param defaults      What was on by default, and why, as the notes say it.
     record Planned(DocRef doc,
                    Source source,
                    Scope scope,
@@ -1118,13 +1294,22 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                    String accessField,
                    String countryField,
                    String pointField,
-                   Targeted targeted) {
+                   Targeted targeted,
+                   boolean categories,
+                   boolean location,
+                   List<String> defaults) {
+
+        /// Copies the list.
+        Planned {
+            defaults = NullSafe.list(defaults).stream().toList();
+        }
 
         /// @param doc The index.
         /// @param why Why it can't be read.
         /// @return It, left out.
         static Planned leftOut(final DocRef doc, final String why) {
-            return new Planned(doc, null, null, null, null, false, why, null, null, null, null, null);
+            return new Planned(doc, null, null, null, null, false, why, null, null, null, null, null, false, false,
+                    List.of());
         }
 
         /// @return True if it can be read.

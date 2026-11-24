@@ -148,7 +148,7 @@ class TestE2eCompareActivity extends AbstractE2eTest {
     private Map<String, Object> compare(final DocRef index, final String personField, final String breadthField) {
         return json("compare_activity", args("person", "p1", "personField", personField, "sources",
                 List.of(index.getUuid()), "breadthFields", List.of(breadthField), "windowFrom",
-                WINDOW_FROM.toString(), "windowTo", WINDOW_TO.toString(), "baselineFrom", FROM.toString(),
+                WINDOW_FROM.toString(), "windowTo", WINDOW_TO.minusDays(1).toString(), "baselineFrom", FROM.toString(),
                 "timeZone", ZONE.getId(), "peers", false));
     }
 

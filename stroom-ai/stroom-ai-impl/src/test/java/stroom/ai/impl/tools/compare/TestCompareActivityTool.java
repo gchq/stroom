@@ -19,6 +19,7 @@ package stroom.ai.impl.tools.compare;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.FakeTabWorkspace;
+import stroom.ai.impl.tools.ModelSideCalls;
 import stroom.ai.impl.tools.SessionLimits;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -31,6 +32,7 @@ import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.ai.impl.tools.query.DataSourceAccess;
+import stroom.ai.impl.tools.time.ToolTimeZone;
 import stroom.ai.impl.tools.timeline.PersonScope;
 import stroom.ai.impl.tools.timeline.TimelineEventXml;
 import stroom.ai.impl.tools.timeline.TimelineFields;
@@ -163,7 +165,7 @@ class TestCompareActivityTool {
         json(mcp(), arguments());
         final int first = fixtures.aggregates().ran().size();
         final Map<String, Object> later = arguments();
-        later.put(CompareActivityTool.WINDOW_TO_ARG, "2026-06-08");
+        later.put(CompareActivityTool.WINDOW_TO_ARG, "2026-06-07");
         later.put(CompareActivityTool.BASELINE_FROM_ARG, FROM.toString());
         final Map<String, Object> json = json(mcp(), later);
 
@@ -227,6 +229,146 @@ class TestCompareActivityTool {
         assertThat(files.content(FOLDER + "Proxy-categories.csv").orElseThrow())
                 .contains("destination.domain,drive.example,Personal Cloud Storage,field,")
                 .contains("destination.domain,intranet.example,work,site,");
+    }
+
+    @Test
+    void categoriesAndLocationAreOnByDefaultWhereTheIndexHasTheirFields() {
+        fields.add(QueryField.createKeyword("source.geo.country_iso_code"));
+        for (LocalDate date = FROM; date.isBefore(WINDOW_TO); date = date.plusDays(1)) {
+            if (date.getDayOfWeek().getValue() <= 5) {
+                fixtures.hours("p1", date, 10, 11, 1, Map.of("url.category", "Business",
+                        "source.geo.country_iso_code", "AU", "host.name", "ws-1"));
+                if (!date.isBefore(STEP)) {
+                    fixtures.hours("p1", date, 14, 15, 6, Map.of("url.category", "Job Search",
+                            "source.geo.country_iso_code", "AU", "host.name", "ws-1"));
+                }
+            }
+        }
+        final ModelSideCalls model = Mockito.mock(ModelSideCalls.class);
+        final Map<String, Object> json = json(mcp(model), arguments());
+
+        // Neither asked for: on, as the index has a category field and a country field, and said so.
+        assertThat(String.valueOf(json.get("notes")))
+                .contains("Proxy: categories on by default, as it has a category field (url.category from the field "
+                          + "convention (*.category)); categories: false turns it off.")
+                .contains("Proxy: location on by default, as it has a country field (source.geo.country_iso_code "
+                          + "from the field convention (ECS *.geo.country_iso_code)); location: false turns it off.")
+                .contains("categories from its field url.category.");
+        assertThat(list(json, "findings")).anySatisfy(finding -> assertThat(finding)
+                .containsEntry("feature", "category:Job Search"));
+        // Counted row by row from the field: the model isn't asked.
+        assertThat(files.content(FOLDER + "Proxy-categories.csv").orElseThrow())
+                .contains("host.name,ws-1,Business,field,")
+                .contains("host.name,ws-1,Job Search,field,");
+        Mockito.verifyNoInteractions(model);
+
+        // Turned off.
+        final Map<String, Object> off = arguments();
+        off.put(CompareActivityTool.CATEGORIES_ARG, false);
+        off.put(CompareActivityTool.LOCATION_ARG, false);
+        final Map<String, Object> offJson = json(mcp(model), off);
+        assertThat(String.valueOf(offJson.get("notes"))).doesNotContain("on by default")
+                .doesNotContain("categories from its field");
+        assertThat(list(offJson, "findings")).noneSatisfy(finding -> assertThat(String.valueOf(
+                finding.get("feature"))).startsWith("category:"));
+    }
+
+    @Test
+    void theFlatProfilesCategoryAndCountryFieldsAndTheAgentsDocsAreFound() {
+        fields.removeIf(field -> field.getFldName().equals("url.category"));
+        fields.add(QueryField.createKeyword("Category"));
+        fields.add(QueryField.createKeyword("Country"));
+        fields.add(QueryField.createKeyword("SiteCategory"));
+        fields.add(QueryField.createKeyword("event.category"));
+        final Map<String, Object> flat = json(mcp(), arguments());
+        assertThat(String.valueOf(flat.get("notes")))
+                .contains("categories on by default, as it has a category field (Category from the field convention "
+                          + "(flat))")
+                .contains("location on by default, as it has a country field (Country from the field convention "
+                          + "(flat))");
+
+        // The AGENTS doc's ## Fields names them where no convention would.
+        fields.removeIf(field -> field.getFldName().equals("Category") || field.getFldName().equals("Country"));
+        fields.add(QueryField.createKeyword("SignInCountry"));
+        Mockito.when(agentInstructions.fieldsRuled(Mockito.any(), Mockito.any())).thenReturn(Map.of(
+                InstructionRules.PERSON_FIELD, new FieldRule(List.of("user.id"), "/Security"),
+                InstructionRules.HOST_FIELD, new FieldRule(List.of("host.name"), "/Security"),
+                InstructionRules.CATEGORY_FIELD, new FieldRule(List.of("SiteCategory"), "/Security"),
+                InstructionRules.COUNTRY_FIELD, new FieldRule(List.of("SignInCountry"), "/Security")));
+        final Map<String, Object> ruled = json(mcp(), arguments());
+        assertThat(String.valueOf(ruled.get("notes")))
+                .contains("categories on by default, as it has a category field (SiteCategory from the AGENTS doc's "
+                          + "## Fields (/Security))")
+                .contains("location on by default, as it has a country field (SignInCountry from the AGENTS doc's "
+                          + "## Fields (/Security))");
+
+        // ECS's event.category is the event's own kind, never a category of what it reached: no default.
+        fields.removeIf(field -> field.getFldName().equals("SiteCategory")
+                                 || field.getFldName().equals("SignInCountry"));
+        final Map<String, Object> none = json(mcp(), arguments());
+        assertThat(String.valueOf(none.get("notes"))).doesNotContain("on by default")
+                .doesNotContain("location isn't available");
+    }
+
+    @Test
+    void categoriesAskedForWithNoCategoryFieldAreTheModels() {
+        fields.removeIf(field -> field.getFldName().equals("url.category"));
+        final ModelSideCalls model = Mockito.mock(ModelSideCalls.class);
+        Mockito.when(model.available()).thenReturn(true);
+        Mockito.when(model.via()).thenReturn("a test model");
+        Mockito.when(model.ask(Mockito.any())).thenReturn(new ModelSideCalls.Answer("{\"ws-1\": \"other\"}", 10,
+                5));
+
+        // Not asked for: no field, so no categories and no model call.
+        json(mcp(model), arguments());
+        Mockito.verify(model, Mockito.never()).ask(Mockito.any());
+
+        // Asked for: the values are the model's.
+        final Map<String, Object> asked = arguments();
+        asked.put(CompareActivityTool.CATEGORIES_ARG, true);
+        json(mcp(model), asked);
+        Mockito.verify(model, Mockito.atLeastOnce()).ask(Mockito.any());
+        assertThat(files.content(FOLDER + "Proxy-categories.csv").orElseThrow())
+                .contains("host.name,ws-1,other,inferred,");
+    }
+
+    @Test
+    void aDateAloneIsAWholeDayInTheTimeZone() {
+        final ToolTimeZone zone = new ToolTimeZone(ZONE, ToolTimeZone.Source.GIVEN, null);
+        final long now = WINDOW_TO.atStartOfDay(ZONE).toInstant().toEpochMilli();
+        // A start date is from the start of that day; an end date is included, to the start of the next day.
+        assertThat(CompareActivityTool.startDate("2026-06-01", zone, now, null)).isEqualTo(LocalDate.of(2026, 6, 1));
+        assertThat(CompareActivityTool.endDate("2026-06-30", zone, now, null)).isEqualTo(LocalDate.of(2026, 7, 1));
+        assertThat(CompareActivityTool.endDate(" 2026-06-30 ", zone, now, null)).isEqualTo(LocalDate.of(2026, 7, 1));
+        // A time is the exclusive end: its own day at midnight, else the day after.
+        assertThat(CompareActivityTool.endDate("2026-07-01T00:00:00+10:00", zone, now, null))
+                .isEqualTo(LocalDate.of(2026, 7, 1));
+        assertThat(CompareActivityTool.endDate("2026-06-30T09:00:00+10:00", zone, now, null))
+                .isEqualTo(LocalDate.of(2026, 7, 1));
+        // A time in UTC is read in the zone: 14:00 UTC on 31 May is midnight on 1 June in Sydney.
+        assertThat(CompareActivityTool.startDate("2026-05-31T14:00:00Z", zone, now, null))
+                .isEqualTo(LocalDate.of(2026, 6, 1));
+
+        // A one-day window given as two equal dates, and a baseline ending on the window's first day.
+        final Map<String, Object> oneDay = arguments();
+        oneDay.put(CompareActivityTool.WINDOW_FROM_ARG, "2026-05-12");
+        oneDay.put(CompareActivityTool.WINDOW_TO_ARG, "2026-05-12");
+        oneDay.put(CompareActivityTool.BASELINE_TO_ARG, "2026-05-12");
+        oneDay.put(CompareActivityTool.UNIT_ARG, "day");
+        final Map<String, Object> json = json(mcp(), oneDay);
+        assertThat(json.get("window")).isEqualTo(Map.of("from", "2026-05-12", "to", "2026-05-12"));
+        assertThat(json.get("baseline")).isEqualTo(Map.of("from", FROM.toString(), "to", "2026-05-11"));
+        assertThat(String.valueOf(json.get("notes"))).contains("baselineTo 2026-05-12 is the window's first day, so "
+                                                               + "the baseline ends the day before.");
+
+        // Leave and exceptions take dates alone and ranges written with a dash.
+        assertThat(CompareActivityTool.leave(List.of("2026-04-06 - 2026-04-17", "2026-04-20", "2026-04-21 to "
+                                                                                            + "2026-04-22")))
+                .extracting(range -> range[0] + ".." + range[1])
+                .containsExactly("2026-04-06..2026-04-17", "2026-04-20..2026-04-20", "2026-04-21..2026-04-22");
+        assertThat(CompareActivityTool.exceptions(List.of("2026-05-11 \u2013 2026-05-15: approved migration")))
+                .singleElement().satisfies(excepted -> assertThat(excepted.from() + ".." + excepted.to())
+                        .isEqualTo("2026-05-11..2026-05-15"));
     }
 
     @Test
@@ -311,7 +453,8 @@ class TestCompareActivityTool {
         final Map<String, Object> arguments = new LinkedHashMap<>();
         arguments.put(CompareActivityTool.PERSON_ARG, "p1");
         arguments.put(CompareActivityTool.WINDOW_FROM_ARG, WINDOW_FROM.toString());
-        arguments.put(CompareActivityTool.WINDOW_TO_ARG, WINDOW_TO.toString());
+        // A date alone is included: the window's last day is the day before WINDOW_TO.
+        arguments.put(CompareActivityTool.WINDOW_TO_ARG, WINDOW_TO.minusDays(1).toString());
         arguments.put(CompareActivityTool.BASELINE_FROM_ARG, FROM.toString());
         arguments.put("timeZone", ZONE.getId());
         return arguments;
@@ -344,11 +487,16 @@ class TestCompareActivityTool {
     }
 
     private ToolCallContext mcp() {
+        return mcp(ModelSideCalls.NONE);
+    }
+
+    private ToolCallContext mcp(final ModelSideCalls sideCalls) {
         return ToolCallContext.builder(new ToolSession(ToolSession.Kind.MCP, "mcp-1",
                         new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "A client")))
                 .workspace(new SessionWorkspace(files.workspace(), CHAT))
                 .userQuestions(UserQuestions.NONE)
                 .limits(SessionLimits.lookedUp(AiWorkspaceConfig::new))
+                .sideCalls(sideCalls)
                 .build();
     }
 

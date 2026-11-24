@@ -53,7 +53,7 @@ class TestE2eInsiderCompareActivity extends AbstractInsiderE2eTest {
         dump("acts", Map.of("count", loaded.dataset().acts().size()));
 
         // The leaver: job-site browsing from 1 July, personal cloud uploads, sites outside the usual.
-        final Map<String, Object> leaver = compare(loaded, InsiderDataset.LEAVER, "2026-06-27", "2026-09-26", "week",
+        final Map<String, Object> leaver = compare(loaded, InsiderDataset.LEAVER, "2026-06-27", "2026-09-25", "week",
                 List.of(Source.PROXY, Source.ENDPOINT, Source.CLOUD), List.of("destination.domain"),
                 List.of("source.bytes"), Map.of("categories", true, "categoryField", "url.category",
                         "accessField", "cloud.site"));
@@ -78,13 +78,13 @@ class TestE2eInsiderCompareActivity extends AbstractInsiderE2eTest {
         assertThat((List<String>) leaver.get("flagged_days")).isNotEmpty();
 
         // The drift to later hours.
-        final Map<String, Object> drift = compare(loaded, InsiderDataset.DRIFT, "2026-05-01", "2026-09-01", "month",
+        final Map<String, Object> drift = compare(loaded, InsiderDataset.DRIFT, "2026-05-01", "2026-08-31", "month",
                 List.of(Source.ENDPOINT), List.of(), List.of(), Map.of("peers", false));
         dump("drift", drift);
         assertThat(file(drift, 2)).contains(",drift,first_activity,");
 
         // The pipeline change, for someone with nothing else going on: listed as the source's, not theirs.
-        final Map<String, Object> pipeline = compare(loaded, "P20003", "2026-06-01", "2026-07-13", "week",
+        final Map<String, Object> pipeline = compare(loaded, "P20003", "2026-06-01", "2026-07-12", "week",
                 List.of(Source.PROXY), List.of(), List.of(), Map.of("peers", false));
         dump("pipeline decoy", pipeline);
         assertThat((List<Map<String, Object>>) pipeline.get("findings")).noneSatisfy(finding -> {
@@ -98,7 +98,7 @@ class TestE2eInsiderCompareActivity extends AbstractInsiderE2eTest {
                 InsiderDataset.PIPELINE_CHANGE, LocalDate.of(2026, 7, 13)));
 
         // The approved migration, given as an exception: none of its days flagged.
-        final Map<String, Object> migration = compare(loaded, "P20001", "2026-05-04", "2026-05-25", "day",
+        final Map<String, Object> migration = compare(loaded, "P20001", "2026-05-04", "2026-05-24", "day",
                 List.of(Source.values()), List.of(), List.of(), Map.of("peers", false, "exceptions",
                         List.of("2026-05-11..2026-05-15: approved data-centre migration")));
         dump("migration decoy", migration);
@@ -107,7 +107,7 @@ class TestE2eInsiderCompareActivity extends AbstractInsiderE2eTest {
         assertThat(String.valueOf(migration.get("notes"))).contains("approved data-centre migration");
 
         // The curious viewer, above their Finance peers (Organisation read from one event each).
-        final Map<String, Object> viewer = compare(loaded, InsiderDataset.VIEWER, "2026-06-01", "2026-06-27", "week",
+        final Map<String, Object> viewer = compare(loaded, InsiderDataset.VIEWER, "2026-06-01", "2026-06-26", "week",
                 List.of(Source.CLOUD), List.of(), List.of(), Map.of());
         dump("viewer", viewer);
         assertThat((List<Map<String, Object>>) viewer.get("findings")).anySatisfy(finding -> {
@@ -120,7 +120,7 @@ class TestE2eInsiderCompareActivity extends AbstractInsiderE2eTest {
 
         // The compromised account: a new country, on leave.
         final Map<String, Object> compromised = compare(loaded, InsiderDataset.COMPROMISED, "2026-04-06",
-                "2026-04-20", "week", List.of(Source.CLOUD, Source.VPN), List.of(), List.of(), Map.of("peers", false,
+                "2026-04-19", "week", List.of(Source.CLOUD, Source.VPN), List.of(), List.of(), Map.of("peers", false,
                         "leave", List.of("2026-04-06..2026-04-17")));
         dump("compromised", compromised);
         final String compromisedFindings = file(compromised, 2);
@@ -132,9 +132,9 @@ class TestE2eInsiderCompareActivity extends AbstractInsiderE2eTest {
         final Loaded loaded = load(OPTIONS);
         final String admin = InsiderRecords.normalised(loaded.dataset().person(InsiderDataset.GRANTING_ADMIN)
                 .logon(Source.CLOUD));
-        final Map<String, Object> leaverOwn = compare(loaded, InsiderDataset.LEAVER, "2026-08-31", "2026-09-26",
+        final Map<String, Object> leaverOwn = compare(loaded, InsiderDataset.LEAVER, "2026-08-31", "2026-09-25",
                 "week", List.of(Source.CLOUD), List.of(), List.of(), Map.of("peers", false));
-        final Map<String, Object> leaver = compare(loaded, InsiderDataset.LEAVER, "2026-08-31", "2026-09-26",
+        final Map<String, Object> leaver = compare(loaded, InsiderDataset.LEAVER, "2026-08-31", "2026-09-25",
                 "week", List.of(Source.CLOUD), List.of(), List.of(), Map.of("peers", false, "includeTargets", true));
         dump("leaver, done to them", leaver);
         assertThat(leaverOwn).doesNotContainKey("done_to_them");
@@ -152,7 +152,7 @@ class TestE2eInsiderCompareActivity extends AbstractInsiderE2eTest {
                         .containsEntry("new_actors", List.of(admin)));
 
         final Map<String, Object> compromised = compare(loaded, InsiderDataset.COMPROMISED, "2026-04-06",
-                "2026-04-20", "week", List.of(Source.CLOUD), List.of(), List.of(), Map.of("peers", false,
+                "2026-04-19", "week", List.of(Source.CLOUD), List.of(), List.of(), Map.of("peers", false,
                         "leave", List.of("2026-04-06..2026-04-17"), "includeTargets", true));
         dump("compromised, done to them", compromised);
         final Map<String, Object> done = (Map<String, Object>) compromised.get("done_to_them");
