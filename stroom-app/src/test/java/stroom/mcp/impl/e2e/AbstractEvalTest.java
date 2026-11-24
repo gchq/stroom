@@ -472,9 +472,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     /// have left it); the user who chats (`user`: the administrator, unless it names another, e.g. `{name: analyst,
     /// edit_skills: false}`: a user with every tool and View Data, View on the case's data (with the feed of its
     /// Events XML), Use on its models, and View only on the skills docs and their folders); a chat of theirs on a
-    /// scripted model ([FakeModelServer]); and the case's earlier turns (`chat`, each an `ask`, the `calls` the scripted model makes, its `answer`, and with `apply: true` the
-    /// user applying the turn's proposal and saving it), asked in that chat, so the turn the case scores has them as
-    /// its history, as a user's chat would.
+    /// scripted model ([FakeModelServer]); and the case's earlier turns (`chat`, each an `ask`, the `calls` the
+    /// scripted model makes, its `answer`, and with `apply: true` the user applying the turn's proposal and saving
+    /// it), asked in that chat, so the turn the case scores has them as its history, as a user's chat would.
     ///
     /// @param evalCase The case.
     /// @return What the setup left; [SkillSetup#close] it once the case is done.
