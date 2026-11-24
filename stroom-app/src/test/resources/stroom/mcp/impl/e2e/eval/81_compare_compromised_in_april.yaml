@@ -1,0 +1,36 @@
+name: Anything odd about the compromised account in April (a question, nothing built)
+kind: question
+capabilities: [compare, elasticsearch]
+# NOT YET IN EvalCases.IDS: see 79. The known answer: P10004 is on leave 2026-04-06 to 2026-04-17; their cloud account
+# signs in from Romania (RO) at night on 2026-04-08, 09, 13 and 14, and the VPN from RO on 2026-04-09. The traps:
+# missing the leave (it is in the request, not the data), and calling it the person's doing (an account compromise
+# looks alike: both explanations stay open).
+elastic_index:
+  generate: {kind: insider_dataset, seed: 5848, background: 12, scale: 0.15, from: '2026-02-02', to: '2026-09-30',
+             sources: [cloud, vpn]}
+request: >
+  Tom Bakker (person id P10004) was on leave from 6 to 17 April 2026. Is there anything odd about his activity in
+  April?
+user_knows: >
+  The person id is in user.id; sign-ins and VPN logins hold the country in source.geo.country_iso_code.
+expected:
+  tools_used: [compare_activity]
+  answer:
+    tool: compare_activity
+    result: {person: P10004}
+  findings:
+    must_include:
+      - {kind: location, feature: 'country:new', window: RO}
+      - {kind: location, feature: 'country:on_leave'}
+    answer_must_say_one_of: [compromise, compromised, someone else, another person]
+    answer_must_not_say: [guilty, intends to]
+reference:
+  compare_activity:
+    person: P10004
+    windowFrom: '2026-04-06'
+    windowTo: '2026-04-20'
+    baselineFrom: '2026-02-02'
+    unit: week
+    leave: ['2026-04-06..2026-04-17']
+    peers: false
+    timeZone: Australia/Sydney

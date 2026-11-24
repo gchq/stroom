@@ -1,0 +1,35 @@
+name: The decoys are not flagged (a question, nothing built)
+kind: question
+capabilities: [compare, elasticsearch]
+# NOT YET IN EvalCases.IDS: see 79. The decoys: P20001's approved data-centre migration (bulk transfers 2026-05-11 to
+# 2026-05-15, an approved exception the request names) and the proxy's pipeline change on 2026-06-15 (everyone's
+# volume doubles). Neither may be reported as the person's: the exception's days aren't scored, and the pipeline's
+# step is listed as the source's.
+elastic_index:
+  generate: {kind: insider_dataset, seed: 5848, background: 12, scale: 0.15, from: '2026-02-02', to: '2026-09-30',
+             sources: [proxy, endpoint, cloud]}
+request: >
+  Review Ava Hart's (person id P20001) activity from 4 May to 26 June 2026 against her earlier months. The
+  data-centre migration she worked on from 11 to 15 May 2026 was approved.
+user_knows: >
+  The person id is in user.id on every index.
+expected:
+  tools_used: [compare_activity]
+  answer:
+    tool: compare_activity
+    result: {person: P20001}
+  findings:
+    must_not_include:
+      - {window_in: ['2026-05-11', '2026-05-15']}
+      - {kind: change, feature: events, near: '2026-06-15', days: 5, source_wide: false}
+    answer_must_say_one_of: [approved, exception, migration]
+reference:
+  compare_activity:
+    person: P20001
+    windowFrom: '2026-05-04'
+    windowTo: '2026-06-27'
+    baselineFrom: '2026-02-02'
+    unit: week
+    exceptions: ['2026-05-11..2026-05-15: approved data-centre migration']
+    peers: false
+    timeZone: Australia/Sydney

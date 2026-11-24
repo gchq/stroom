@@ -1,0 +1,31 @@
+name: Is the curious viewer unusual compared with their team (a question, nothing built)
+kind: question
+capabilities: [compare, elasticsearch]
+# NOT YET IN EvalCases.IDS: see 79. The known answer: P10003 (Finance) looks up 30 to 60 records a working day in June
+# 2026 in the cloud audit, where Finance peers make a few; peers are found from each person's Organisation, read from
+# one of their events' Event XML. The trap: grouping peers by anything else (the index has no Organisation field).
+elastic_index:
+  generate: {kind: insider_dataset, seed: 5848, background: 12, scale: 0.15, from: '2026-02-02', to: '2026-09-30',
+             sources: [cloud, endpoint]}
+request: >
+  Is Priya Raman (person id P10003) unusual compared with her team in June 2026?
+user_knows: >
+  The person id is in user.id on every index; a person's team is the Organisation on their events.
+expected:
+  tools_used: [compare_activity]
+  answer:
+    tool: compare_activity
+    result: {person: P10003}
+  findings:
+    must_include:
+      - {kind: peers, evidence_contains: "Organisation 'Finance'"}
+      - {kind: change, feature: events, near: '2026-06-01', days: 3}
+    answer_must_not_say: [guilty, intends to, malicious]
+reference:
+  compare_activity:
+    person: P10003
+    windowFrom: '2026-06-01'
+    windowTo: '2026-06-27'
+    baselineFrom: '2026-02-02'
+    unit: week
+    timeZone: Australia/Sydney

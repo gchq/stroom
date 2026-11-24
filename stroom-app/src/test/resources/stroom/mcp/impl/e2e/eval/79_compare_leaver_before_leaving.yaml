@@ -1,0 +1,48 @@
+name: Has the leaver's behaviour changed in the 90 days before they left (a question, nothing built)
+kind: question
+capabilities: [compare, elasticsearch]
+# NOT YET IN EvalCases.IDS: it needs an `insider_dataset` generate kind (InsiderDataset, written by lane T, loaded as
+# AbstractInsiderE2eTest#load does: an Elastic Index per source and each source's Events stream, so the peers'
+# Organisation can be read) and EvalScore checking `expected.findings`. The known answer is InsiderDataset's: the
+# leaver (P10001, Finance, leaving 2026-09-25) browses job sites from 2026-07-01, reaches sites outside the usual from
+# 2026-08-10, downloads in bulk from 2026-09-08 and uploads to a personal cloud domain. The traps: the proxy's
+# pipeline change on 2026-06-15 (everyone's volume doubles: the source's, not the leaver's), stating intent, and
+# reading the leaver's own events one by one rather than comparing aggregates.
+elastic_index:
+  generate: {kind: insider_dataset, seed: 5848, background: 12, scale: 0.15, from: '2026-02-02', to: '2026-09-30',
+             sources: [proxy, endpoint, cloud]}
+request: >
+  Dana Whitfield (person id P10001) left on 25 September 2026. Has her behaviour changed in the 90 days before she
+  left, compared with her own earlier months and her team?
+user_knows: >
+  The person id is in user.id on every index. The proxy's url.category holds each site's category. The cloud audit's
+  cloud.site is the SharePoint-style site a file came from. Her leaving date is 25 September 2026; she had no leave in
+  the period.
+expected:
+  tools_used: [compare_activity]
+  answer:
+    tool: compare_activity
+    result: {person: P10001}
+  # Proposed (EvalScore doesn't score these yet): findings the answer call's result or findings file must hold,
+  # change points within `days` of the date, and those it must not.
+  findings:
+    must_include:
+      - {kind: change, feature: events, near: '2026-07-01', days: 3}
+      - {feature: 'category:Job Search'}
+      - {kind: access, feature: 'access:cloud.site'}
+    must_not_include:
+      - {kind: change, feature: events, near: '2026-06-15', days: 5, source_wide: false}
+    answer_must_not_say: [guilty, intends to, malicious, stole]
+reference:
+  compare_activity:
+    person: P10001
+    windowFrom: '2026-06-27'
+    windowTo: '2026-09-26'
+    baselineFrom: '2026-02-02'
+    unit: week
+    breadthFields: [destination.domain]
+    sumFields: [source.bytes]
+    categories: true
+    categoryField: url.category
+    accessField: cloud.site
+    timeZone: Australia/Sydney
