@@ -34,9 +34,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// and messages), the event type field named and no roles: with no model to classify the codes the tool asks the
 /// calling model for them (typeRoles). The user's domain-qualified form the logons write (`CORP\jsmith`) is
 /// offered, never read unasked (another domain's account may be someone else's): given in logonIds, the logons'
-/// locks and unlocks are read too and, with the codes' roles, the week's focus sessions are the plan's. Case 78's Sonnet mapped the process to the source
-/// column (`proxy`) for a user seen only in web proxy events: still no session (only a focus starts one), the
-/// activity periods by site. Both models first gave dates alone, which are whole days in the call's zone.
+/// locks and unlocks are read too and, with the codes' roles, the week's focus sessions are the plan's. Case 78's
+/// Sonnet mapped the process to the source column (`proxy`) for a user seen only in web proxy events: still no
+/// session (only a focus starts one), the activity periods by site. Both models first gave dates alone, which are whole days in the call's zone.
 ///
 /// Skipped without an Elasticsearch node unless `STROOM_TEST_ELASTIC_REQUIRED=true`.
 @SuppressWarnings("unchecked")
