@@ -110,7 +110,9 @@ class TestProposeTimelineDashboardTool {
 
         assertThat(result.text()).contains("'Create Data Connection and dashboard…' button",
                 "writes Data Connection 'Timeline jsmith 2026-11-09 to 2026-11-13 (spans)' in folder "
-                + "'/Investigations/Case 12': the 2 rows of spans.csv", "label label, lane lane, colour kind",
+                + "'/Investigations/Case 12': the 2 rows of spans.csv",
+                "label label, lane lane (titled 'Device host name (host.name)'), colour kind",
+                "drawn from its own unfiltered table, in a hidden tab behind it",
                 "anyone who can view folder '/Investigations/Case 12' can read it");
         final Map<String, Object> action = result.userActions().getFirst().toMap();
         assertThat(action).containsEntry("action", UserActions.CREATE_TIMELINE_DASHBOARD)
@@ -278,7 +280,8 @@ class TestProposeTimelineDashboardTool {
         workspace.write(WorkspacePath.parse(SPANS), spans, null);
         new TimelineSnapshot("jsmith", Instant.parse("2026-11-09T00:00:00Z").toEpochMilli(),
                 Instant.parse("2026-11-14T00:00:00Z").toEpochMilli(), "UTC", "detail", null,
-                List.of("Endpoint", "Proxy"), false, Instant.parse("2026-11-24T10:00:00Z").toEpochMilli())
+                List.of("Endpoint", "Proxy"), false, Instant.parse("2026-11-24T10:00:00Z").toEpochMilli(),
+                Map.of(TimelineDataConnection.SPANS, "Device host name (host.name)"))
                 .write(workspace, "/outputs/timelines/jsmith/");
     }
 

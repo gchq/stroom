@@ -201,8 +201,9 @@ public class TimelineDashboards {
         final DocRef target = existing != null
                 ? existing
                 : create(VisualisationDoc.TYPE, name, folderNode);
-        final String settings = EChartsTemplate.settingsJson(ChartKind.TIMELINE, plan.mappings(),
-                VisualisationPlan.normaliseStyle(ChartKind.TIMELINE, Map.of()),
+        final String settings = EChartsTemplate.settingsJson(ChartKind.TIMELINE,
+                TimelineDashboardConfig.chartMappings(plan),
+                VisualisationPlan.normaliseStyle(ChartKind.TIMELINE, TimelineDashboardConfig.chartStyle(plan)),
                 VisualisationPlan.normaliseOptions(null, ChartLibrary.ECHARTS));
         try {
             final VisualisationDoc doc = store.readDocument(target);

@@ -210,7 +210,9 @@ public enum ChartKind {
                     new ChartRole("lane", "Lane (Optional)", false, ChartRole.Values.ANY,
                             "a lane of bars per value of this column, e.g. a host or a day; one lane if not given"),
                     new ChartRole("colour", "Colour (Optional)", false, ChartRole.Values.ANY,
-                            "colours the bars by this column, shown in the legend; by label if not given")),
+                            "colours the bars by this column, shown in the legend; by label if not given"),
+                    new ChartRole("detail", "Detail (Optional)", false, ChartRole.Values.ANY,
+                            "more about each bar, shown in its tooltip, e.g. what happened and how many events")),
             List.of(StyleSetting.X_AXIS_NAME, StyleSetting.Y_AXIS_NAME, StyleSetting.LEGEND,
                     StyleSetting.LEGEND_CLICK, StyleSetting.ZOOM_SLIDER_ON, StyleSetting.MAX_CATEGORIES,
                     StyleSetting.MAX_VALUES));

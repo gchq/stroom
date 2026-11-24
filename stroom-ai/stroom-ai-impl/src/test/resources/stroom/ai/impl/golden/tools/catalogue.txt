@@ -3074,6 +3074,10 @@ Plans a chart of a table on the dashboard, or of the StroomQL query, the user at
           "description" : "The column for date.",
           "type" : "string"
         },
+        "detail" : {
+          "description" : "The column for detail.",
+          "type" : "string"
+        },
         "end" : {
           "description" : "The column for end.",
           "type" : "string"

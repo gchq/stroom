@@ -611,7 +611,7 @@ class TestUserActions {
 
     private static TimelineDashboardPlan timelinePlan(final DocRef replace) {
         return new TimelineDashboardPlan("jsmith", "spans", "/outputs/timelines/jsmith/spans.csv", "abc", 2, 0L, 1L,
-                "A snapshot.", Map.of("start", "start", "end", "end", "label", "label"), replace);
+                "A snapshot.", Map.of("start", "start", "end", "end", "label", "label"), replace, null);
     }
 
     @Test

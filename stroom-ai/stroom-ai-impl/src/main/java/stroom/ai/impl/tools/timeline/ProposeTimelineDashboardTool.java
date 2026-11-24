@@ -280,7 +280,8 @@ public class ProposeTimelineDashboardTool extends AbstractWorkspaceTool {
                 TimelineDataConnection.zone(snapshot.zone()), table);
         final TimelineDashboardPlan plan = new TimelineDashboardPlan(snapshot.entity(), table, path.toString(),
                 ProposeCodeChangeTool.sha256(rows.csv()), rows.count(), snapshot.fromMs(), snapshot.toMs(),
-                TimelineDataConnection.description(snapshot, table), mappings, replace);
+                TimelineDataConnection.description(snapshot, table), mappings, replace,
+                snapshot.laneTitles().get(table));
 
         final Map<String, Object> arguments = new LinkedHashMap<>();
         arguments.put("doc", ProposeCodeChangeTool.docRefMap(folder));
@@ -322,10 +323,15 @@ public class ProposeTimelineDashboardTool extends AbstractWorkspaceTool {
                 .append(snapshot.built()).append(" (its description says so, and from which sources), typed (start "
                                                  + "and end Date), its time field start; and beside it Visualisation '")
                 .append(name).append("', a timeline of start to end, label ").append(mappings.get("label"))
-                .append(", lane ").append(mappings.get("lane")).append(", colour ").append(mappings.get("colour"))
-                .append(". Then Stroom's New Dashboard dialog opens in that folder for a dashboard of a query of the "
-                        + "Data Connection over the timeline's period, the chart, and a table of its columns in time "
-                        + "order, which a click on a bar filters to the rows starting within the bar's interval.");
+                .append(", lane ").append(mappings.get("lane")).append(NullSafe.getOrElse(
+                        snapshot.laneTitles().get(table), title -> " (titled '" + title + "')", ""))
+                .append(", colour ").append(mappings.get("colour"))
+                .append(", each bar's tooltip saying what happened. Then Stroom's New Dashboard dialog opens in "
+                        + "that folder for a dashboard of a query of the Data Connection over the timeline's period, "
+                        + "the chart (drawn from its own unfiltered table, in a hidden tab behind it), and a table of "
+                        + "its columns in time order, which a click on a bar filters to the rows starting within the "
+                        + "bar's interval; a click on the bar again, or on the chart's background, shows every row "
+                        + "again.");
         if (!canCreateDashboard) {
             sb.append(" The user can't create a dashboard in that folder: they choose another in the dialog.");
         }

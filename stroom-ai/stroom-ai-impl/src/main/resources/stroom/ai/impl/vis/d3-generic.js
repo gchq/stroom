@@ -5235,7 +5235,8 @@ if (!window.visualisations) {
                 rawLabel: rawLabel,
                 lane: fields.has("lane") ? fields.label(row, "lane", prefs) : "",
                 rawLane: fields.has("lane") ? fields.value(row, "lane") : null,
-                colour: fields.has("colour") ? fields.label(row, "colour", prefs) : label
+                colour: fields.has("colour") ? fields.label(row, "colour", prefs) : label,
+                detail: fields.has("detail") ? fields.label(row, "detail", prefs) : null
             });
         });
         addDropped(report, "start or end not a date", notDates);
@@ -5347,11 +5348,15 @@ if (!window.visualisations) {
         return selection;
     }
 
-    // A bar's tooltip: its label, lane and colour (where mapped), start, end and duration; a marker's time.
-    function timelineTooltip(fields, bar, prefs) {
+    // A bar's tooltip: its label, its detail (what happened, where mapped), its lane (named as the lane axis is)
+    // and colour (where mapped), start, end and duration; a marker's time.
+    function timelineTooltip(fields, bar, prefs, laneName) {
         var lines = [bar.label];
+        if (bar.detail !== null && bar.detail !== undefined && String(bar.detail).trim() !== "") {
+            lines.push(String(bar.detail));
+        }
         if (fields.has("lane")) {
-            lines.push((fields.column("lane") || "lane") + ": " + bar.lane);
+            lines.push((laneName || fields.column("lane") || "lane") + ": " + bar.lane);
         }
         if (fields.has("colour") && bar.colour !== bar.label) {
             lines.push((fields.column("colour") || "colour") + ": " + bar.colour);
@@ -5431,7 +5436,7 @@ if (!window.visualisations) {
             }
             var selection = timelineSelection(fields, bar);
             outline(node, ctx, ctx.isSelected(selection));
-            ctx.mark(node, selection, timelineTooltip(fields, bar, ctx.prefs).join(" · "));
+            ctx.mark(node, selection, timelineTooltip(fields, bar, ctx.prefs, laneName).join(" · "));
         });
         if (hasLanes) {
             drawCategoryAxis(groups.axes, timeline.lanes, band, false, plot, ctx.style, laneName);

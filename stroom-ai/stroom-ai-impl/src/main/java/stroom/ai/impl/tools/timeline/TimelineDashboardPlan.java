@@ -37,6 +37,8 @@ import java.util.Map;
 /// @param mappings    The column the timeline chart draws for each of its roles, by role id.
 /// @param replace     The Data Connection of an earlier run for the same entity and table that it replaces (and
 ///                    renames), or null to write a new one.
+/// @param laneTitle   What the lanes are, the chart's lane axis title and the table's lane column header (e.g.
+///                    `Device host name (host.name)`), or null for the lane column's name.
 public record TimelineDashboardPlan(String entity,
                                     String table,
                                     String path,
@@ -46,7 +48,8 @@ public record TimelineDashboardPlan(String entity,
                                     long toMs,
                                     String description,
                                     Map<String, String> mappings,
-                                    DocRef replace) {
+                                    DocRef replace,
+                                    String laneTitle) {
 
     /// Copies the mappings.
     public TimelineDashboardPlan {

@@ -331,7 +331,7 @@ class TestUserActionService {
 
     private static TimelineDashboardPlan timelinePlan() {
         return new TimelineDashboardPlan("jsmith", "spans", "/outputs/timelines/jsmith/spans.csv", "abc", 2, 0L, 1L,
-                "A snapshot.", Map.of("start", "start", "end", "end", "label", "label"), null);
+                "A snapshot.", Map.of("start", "start", "end", "end", "label", "label"), null, null);
     }
 
     private static UserActionRecord timelineDashboard(final DocRef folder, final TimelineDashboardPlan plan) {

@@ -211,6 +211,7 @@ class TestTimelineDashboards {
     private static TimelineDashboardPlan plan(final String csv, final DocRef replace) {
         return new TimelineDashboardPlan("jsmith", TimelineDataConnection.SPANS, SPANS,
                 ProposeCodeChangeTool.sha256(csv), 1, 0L, 1L, "A snapshot.",
-                TimelineDashboardConfig.mappings(TimelineDataConnection.SPANS, null, false), replace);
+                TimelineDashboardConfig.mappings(TimelineDataConnection.SPANS, null, false), replace,
+                "Device host name (host.name)");
     }
 }

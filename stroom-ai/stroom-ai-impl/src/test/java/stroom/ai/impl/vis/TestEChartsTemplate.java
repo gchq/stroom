@@ -152,12 +152,12 @@ class TestEChartsTemplate {
         assertThat(controls).containsKeys("xAxisName", "yAxisName", "legend", "legendClick")
                 .doesNotContainKeys("units", "trendLine", "autoInterval");
         assertThat(controls.get("kind")).containsEntry("defaultValue", "timeline");
-        assertThat(controls.get("fields")).containsEntry("defaultValue", "start,end,label,lane,colour");
+        assertThat(controls.get("fields")).containsEntry("defaultValue", "start,end,label,lane,colour,detail");
         // Stroom gives the adapter a row per table row, its values in that order.
         final VisSettings visSettings = JsonUtil.readValue(json, VisSettings.class);
         assertThat(visSettings.getData().getStructure().getValues().getFields())
                 .extracting(VisSettings.Field::getId)
-                .containsExactly("${start}", "${end}", "${label}", "${lane}", "${colour}");
+                .containsExactly("${start}", "${end}", "${label}", "${lane}", "${colour}", "${detail}");
         assertThat(EChartsTemplate.rebuilt(json)).contains(json);
         assertThat(ChartKind.find("Gantt chart")).contains(ChartKind.TIMELINE);
         assertThat(ChartKind.find("timeline")).contains(ChartKind.TIMELINE);

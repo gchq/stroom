@@ -3408,7 +3408,8 @@ if (!window.visualisations) {
                 rawLabel: rawLabel,
                 lane: fields.has("lane") ? fields.label(row, "lane", prefs) : "",
                 rawLane: fields.has("lane") ? fields.value(row, "lane") : null,
-                colour: fields.has("colour") ? fields.label(row, "colour", prefs) : label
+                colour: fields.has("colour") ? fields.label(row, "colour", prefs) : label,
+                detail: fields.has("detail") ? fields.label(row, "detail", prefs) : null
             });
         });
         addDropped(report, "start or end not a date", notDates);
@@ -3520,11 +3521,15 @@ if (!window.visualisations) {
         return selection;
     }
 
-    // A bar's tooltip: its label, lane and colour (where mapped), start, end and duration; a marker's time.
-    function timelineTooltip(fields, bar, prefs) {
+    // A bar's tooltip: its label, its detail (what happened, where mapped), its lane (named as the lane axis is)
+    // and colour (where mapped), start, end and duration; a marker's time.
+    function timelineTooltip(fields, bar, prefs, laneName) {
         var lines = [bar.label];
+        if (bar.detail !== null && bar.detail !== undefined && String(bar.detail).trim() !== "") {
+            lines.push(String(bar.detail));
+        }
         if (fields.has("lane")) {
-            lines.push((fields.column("lane") || "lane") + ": " + bar.lane);
+            lines.push((laneName || fields.column("lane") || "lane") + ": " + bar.lane);
         }
         if (fields.has("colour") && bar.colour !== bar.label) {
             lines.push((fields.column("colour") || "colour") + ": " + bar.colour);
@@ -3563,8 +3568,8 @@ if (!window.visualisations) {
         });
         var legendShown = timeline.groups.length > 1;
         var hasLanes = fields.has("lane");
-        var yAxis = merge(categoryAxis(textSetting(settings, "yAxisName") || (hasLanes ? fields.column("lane") : ""),
-            timeline.lanes, style), {inverse: true, axisTick: {show: false}});
+        var laneName = textSetting(settings, "yAxisName") || (hasLanes ? fields.column("lane") : "");
+        var yAxis = merge(categoryAxis(laneName, timeline.lanes, style), {inverse: true, axisTick: {show: false}});
         yAxis.splitLine = {show: true, lineStyle: {color: style.border, opacity: 0.6}};
         if (!hasLanes) {
             yAxis.axisLabel.show = false;
@@ -3581,7 +3586,7 @@ if (!window.visualisations) {
                 trigger: "item",
                 formatter: function (params) {
                     var bar = bySeries[params.seriesIndex] && bySeries[params.seriesIndex][params.dataIndex];
-                    return bar ? timelineTooltip(fields, bar, prefs).map(escapeHtml).join("<br/>") : "";
+                    return bar ? timelineTooltip(fields, bar, prefs, laneName).map(escapeHtml).join("<br/>") : "";
                 }
             },
             xAxis: xAxis,

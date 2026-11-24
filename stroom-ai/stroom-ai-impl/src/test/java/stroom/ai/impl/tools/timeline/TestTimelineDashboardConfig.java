@@ -22,6 +22,9 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.QueryComponentSettings;
+import stroom.dashboard.shared.SplitLayoutConfig;
+import stroom.dashboard.shared.TabConfig;
+import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dataconnection.shared.DataConnectionDoc;
@@ -78,10 +81,11 @@ class TestTimelineDashboardConfig {
         final Map<String, String> mappings = TimelineDashboardConfig.mappings(TimelineDataConnection.SPANS, null,
                 true);
         final List<List<String>> rows = List.of(
-                List.of("s1", "2026-11-10T09:00:00Z", "2026-11-10T09:20:00Z", "WINWORD.EXE", "ws-01", "focus",
-                        "a1", "Q3 finance proposal", "ws-01", "Endpoint", "4", "focus", "", "actor"),
-                List.of("p1", "2026-11-10T09:05:00Z", "2026-11-10T09:05:00Z", "locked", "ws-01", "pair", "", "",
-                        "ws-01", "Logons", "2", "pair", "", "actor"));
+                List.of("s1", "2026-11-10T09:00:00Z", "2026-11-10T09:20:00Z", "WINWORD.EXE", "focus", "ws-01",
+                        "focus", "a1", "Q3 finance proposal", "ws-01", "Endpoint", "4", "focus", "", "actor"),
+                List.of("p1", "2026-11-10T09:05:00Z", "2026-11-10T09:05:00Z", "locked",
+                        "Authenticate ScreenLock to ScreenUnlock", "ws-01", "pair", "", "", "ws-01", "Logons", "2",
+                        "pair", "", "actor"));
 
         final ChartCheck.Result check = ChartCheck.check(ChartKind.TIMELINE, mappings, Map.of(),
                 TimelineDashboardConfig.chartColumns(TimelineDataConnection.SPANS),
@@ -104,20 +108,55 @@ class TestTimelineDashboardConfig {
         assertThat(config.getComponents()).extracting(ComponentConfig::getType, ComponentConfig::getId)
                 .containsExactly(tuple("query", TimelineDashboardConfig.QUERY_ID),
                         tuple("vis", TimelineDashboardConfig.CHART_ID),
-                        tuple("table", TimelineDashboardConfig.TABLE_ID));
+                        tuple("table", TimelineDashboardConfig.TABLE_ID),
+                        tuple("table", TimelineDashboardConfig.CHART_TABLE_ID));
         final QueryComponentSettings query = (QueryComponentSettings) component(config, "query").getSettings();
         assertThat(query.getDataSource()).isEqualTo(DATA_CONNECTION);
         assertThat(query.getAutomate().isOpen()).isTrue();
     }
 
     @Test
-    void theChartDrawsTheTableWithEachRolesColumn() {
-        final VisComponentSettings chart = (VisComponentSettings) component(build(), "vis").getSettings();
+    void theChartDrawsItsOwnUnfilteredTableWithEachRolesColumnItsLaneAxisTitledByWhatTheLanesAre() {
+        final DashboardConfig config = build();
+        final VisComponentSettings chart = (VisComponentSettings) component(config, "vis").getSettings();
 
-        assertThat(chart.getTableId()).isEqualTo(TimelineDashboardConfig.TABLE_ID);
+        // Chat 195: drawn from the filtered table, a click narrowed the chart's own data and its axis.
+        assertThat(chart.getTableId()).isEqualTo(TimelineDashboardConfig.CHART_TABLE_ID);
         assertThat(chart.getVisualisation()).isEqualTo(VISUALISATION);
         assertThat(JsonUtil.readValue(chart.getJson(), Map.class)).isEqualTo(Map.of("start", "start",
-                "end", "end", "label", "label", "lane", "lane", "colour", "activity_label"));
+                "end", "end", "label", "label", "lane", "lane", "colour", "activity_label", "detail", "detail",
+                "yAxisName", "Device host name (host.name)"));
+
+        final TableComponentSettings own = (TableComponentSettings) config.getComponents().stream()
+                .filter(component -> TimelineDashboardConfig.CHART_TABLE_ID.equals(component.getId()))
+                .findFirst()
+                .orElseThrow()
+                .getSettings();
+        assertThat(own.getQueryId()).isEqualTo(TimelineDashboardConfig.QUERY_ID);
+        assertThat(own.getDataSourceRef()).isEqualTo(DATA_CONNECTION);
+        assertThat(own.getSelectionFilter()).isNullOrEmpty();
+        assertThat(own.getColumns()).extracting(Column::getName)
+                .containsExactly("start", "end", "label", "lane", "activity_label", "detail");
+        assertThat(own.getColumns().getLast().getExpression())
+                .isEqualTo("concat(${action}, ' · ', ${events}, ' event(s)')");
+
+        // In a hidden tab behind the chart.
+        final TabLayoutConfig chartPane = (TabLayoutConfig) ((SplitLayoutConfig) config.getLayout()).getChildren()
+                .get(1);
+        assertThat(chartPane.getTabs()).extracting(TabConfig::getId, TabConfig::getVisible)
+                .containsExactly(tuple(TimelineDashboardConfig.CHART_ID, true),
+                        tuple(TimelineDashboardConfig.CHART_TABLE_ID, false));
+        assertThat(chartPane.getSelected()).isZero();
+    }
+
+    @Test
+    void theActivitiesChartsTooltipGivesTheirActionsAndActiveTime() {
+        assertThat(TimelineDashboardConfig.detailExpression(TimelineDataConnection.ACTIVITIES))
+                .isEqualTo("concat(${actions}, ' · ', ${active_minutes}, ' active minutes')");
+        assertThat(TimelineDashboardConfig.chartStyle(new TimelineDashboardPlan("jsmith",
+                TimelineDataConnection.ACTIVITIES, "/a.csv", "hash", 1, FROM, TO, "A snapshot.",
+                TimelineDashboardConfig.mappings(TimelineDataConnection.ACTIVITIES, null, true), null, null)))
+                .isEmpty();
     }
 
     @Test
@@ -127,7 +166,14 @@ class TestTimelineDashboardConfig {
         assertThat(table.getQueryId()).isEqualTo(TimelineDashboardConfig.QUERY_ID);
         assertThat(table.getDataSourceRef()).isEqualTo(DATA_CONNECTION);
         assertThat(table.extractValues()).isFalse();
-        assertThat(table.getColumns()).extracting(Column::getName).isEqualTo(TimelineTables.SPAN_COLUMNS);
+        // The lane column headed by what the lanes are; the rest by their names.
+        assertThat(table.getColumns()).extracting(Column::getName).isEqualTo(TimelineTables.SPAN_COLUMNS.stream()
+                .map(name -> "lane".equals(name)
+                        ? "Device host name (host.name)"
+                        : name)
+                .toList());
+        assertThat(table.getColumns()).filteredOn(column -> "lane".equals(column.getId()))
+                .extracting(Column::getExpression).containsExactly("${lane}");
         assertThat(table.getColumns()).filteredOn(column -> column.getFormat().getType() != Type.TEXT)
                 .extracting(Column::getName, column -> column.getFormat().getType())
                 .containsExactly(tuple("start", Type.DATE_TIME), tuple("end", Type.DATE_TIME),
@@ -168,7 +214,8 @@ class TestTimelineDashboardConfig {
     private static TimelineDashboardPlan plan(final int rows) {
         return new TimelineDashboardPlan("jsmith", TimelineDataConnection.SPANS,
                 "/outputs/timelines/jsmith/spans.csv", "hash", rows, FROM, TO, "A snapshot.",
-                TimelineDashboardConfig.mappings(TimelineDataConnection.SPANS, null, true), null);
+                TimelineDashboardConfig.mappings(TimelineDataConnection.SPANS, null, true), null,
+                "Device host name (host.name)");
     }
 
     private static ComponentConfig component(final DashboardConfig config, final String type) {
