@@ -137,14 +137,19 @@ public class RuleSetEditor extends TabbedController<ReceiveDataRules> {
         this.onDirtyChange = Objects.requireNonNull(onDirtyChange, "onDirtyChange");
     }
 
-    /// Saves the rules, and reads them back.
+    /// Saves the rules, and reads them back, unless they were changed while being saved.
     public void save() {
         final ReceiveDataRules updated = write();
         if (updated != null) {
             restFactory.create(RULES_RESOURCE)
                     .method(resource -> resource.update(updated))
                     .onSuccess(persistedRules -> {
-                        read(persistedRules);
+                        // What was changed while they were being saved is kept
+                        if (hasChangedSince(updated)) {
+                            keepChanges(persistedRules.asDocRef(), persistedRules);
+                        } else {
+                            read(persistedRules);
+                        }
                         onChange();
                     })
                     .onFailure(error -> AlertEvent.fireError(

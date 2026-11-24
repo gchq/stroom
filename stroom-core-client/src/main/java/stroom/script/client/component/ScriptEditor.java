@@ -86,11 +86,20 @@ public class ScriptEditor extends DocumentEditor<ScriptDoc> {
     protected void onRead(final DocRef docRef, final ScriptDoc doc) {
         readCount++;
         if (readCount > 1) {
-            // Remove the script function from the cache so dashboards reload it
-            ClearScriptCacheEvent.fire(this, docRef);
-            // This script might be used by any visualisation so clear the vis function cache so
-            // that scripts are requested again if needed
-            ClearFunctionCacheEvent.fire(this);
+            clearCaches(docRef);
         }
+    }
+
+    @Override
+    protected void onKeepChanges(final DocRef docRef, final ScriptDoc saved) {
+        clearCaches(docRef);
+    }
+
+    private void clearCaches(final DocRef docRef) {
+        // Remove the script function from the cache so dashboards reload it
+        ClearScriptCacheEvent.fire(this, docRef);
+        // This script might be used by any visualisation so clear the vis function cache so
+        // that scripts are requested again if needed
+        ClearFunctionCacheEvent.fire(this);
     }
 }

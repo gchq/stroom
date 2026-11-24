@@ -230,6 +230,14 @@ public class PipelineStructureController extends Controller {
                && !Objects.equals(readDoc, write(readDoc));
     }
 
+    /// Says what was saved, when it isn't read again as the structure was changed meanwhile, so that
+    /// whether the structure is changed ([#isDirty()]) is worked out from it.
+    ///
+    /// @param saved The pipeline, as saved.
+    public void setSavedDoc(final PipelineDoc saved) {
+        this.readDoc = saved;
+    }
+
     /// Shows a pipeline's structure. Its model comes separately ([#setPipelineModel(PipelineModel)]).
     ///
     /// @param docRef   The pipeline.

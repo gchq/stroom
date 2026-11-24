@@ -23,8 +23,10 @@ import stroom.documentation.shared.DocumentationDoc;
 import stroom.documentation.shared.DocumentationResource;
 import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;
+import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
+import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
@@ -50,13 +52,14 @@ public final class DocumentationEditorStories {
             {"type": "Documentation", "uuid": "documentation-1", "name": "My Notes",
               "data": "# My Notes\\n\\nSome **markdown** documentation."}""";
 
-    private static final RestFixtures FIXTURES = DocEditors.permissionRoutes(RestFixtures.builder())
-            .get("/documentation/v1/documentation-1", RestReply.json(DOC))
-            // Save, which gives back the document saved
-            .put("/documentation/v1/documentation-1", DocumentationEditorStories::echo)
-            .post("/documentation/v1/download", RestReply.json(
-                    "{\"resourceKey\": {\"key\": \"k1\", \"name\": \"my-notes.md\"}, \"messageList\": []}"))
-            .build();
+    private static final String DOC_PATH = "/documentation/v1/documentation-1";
+    // What is typed during a slow Save, whose own Save isn't slow
+    private static final String NEWER_TEXT = "Second";
+    // How long a slow Save takes
+    private static final int SLOW_SAVE_MILLIS = 2000;
+
+    private static final RestFixtures FIXTURES = fixtures(0);
+    private static final RestFixtures SLOW_SAVE_FIXTURES = fixtures(SLOW_SAVE_MILLIS);
 
     // The preview is an iframe with no title, identified by its id (DocumentationTabController's
     // MARKDOWN_FRAME_ID)
@@ -139,6 +142,35 @@ public final class DocumentationEditorStories {
                     play.expect(play.querySelector(".ace_content")).toHaveTextContent(TextMatch.containing("More"));
                     DocEditors.expectNoProblems(play);
                 })
+                // What is typed between Save and the server's reply stays, still to be saved, rather than
+                // be replaced by what was sent
+                .story("SaveKeepsNewerText", context -> render(context, SLOW_SAVE_FIXTURES, false))
+                .withPlay(play -> {
+                    final Query save = play.findByRole("button", "Save");
+                    play.click(play.getByRole("button", "Edit Documentation"));
+                    play.waitFor(() -> play.expect(play.querySelector(ACE_EDITOR)).toBeVisible());
+                    final Query content = play.querySelector(".ace_content");
+                    play.click(content);
+                    play.waitFor(() -> play.expect(play.querySelector(".ace_text-input")).toHaveFocus());
+                    play.keyboard("First");
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    play.click(save);
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put(DOC_PATH).withBodyContaining("First").toSpyMatcher()));
+                    play.click(content);
+                    play.keyboard(NEWER_TEXT);
+                    play.waitFor(() -> play.expect(content).toHaveTextContent(TextMatch.containing(NEWER_TEXT)));
+                    // Once the reply has been handled
+                    play.sleep(SLOW_SAVE_MILLIS + 500);
+                    play.expect(content).toHaveTextContent(TextMatch.containing(NEWER_TEXT));
+                    play.expect(save).not().toHaveAttribute("aria-disabled");
+                    // Saving again saves both, on top of what was saved, and is then up to date
+                    play.click(save);
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put(DOC_PATH).withBodyContaining(NEWER_TEXT).toSpyMatcher()));
+                    play.waitFor(() -> play.expect(save).toHaveAttribute("aria-disabled", "true"));
+                    DocEditors.expectNoProblems(play);
+                })
                 // Read only (no EDIT permission): the preview shows, the markdown toolbar is hidden
                 // (getDocumentButtons() is empty) and Save is retitled
                 .story("ReadOnly", context -> render(context, true))
@@ -153,13 +185,29 @@ public final class DocumentationEditorStories {
                 });
     }
 
+    private static RestFixtures fixtures(final int saveMillis) {
+        return DocEditors.permissionRoutes(RestFixtures.builder())
+                .get(DOC_PATH, RestReply.json(DOC))
+                // Save, which gives back the document saved
+                .put(DOC_PATH, request -> echo(request).delayed(request.getBody().contains(NEWER_TEXT)
+                        ? 0
+                        : saveMillis))
+                .post("/documentation/v1/download", RestReply.json(
+                        "{\"resourceKey\": {\"key\": \"k1\", \"name\": \"my-notes.md\"}, \"messageList\": []}"))
+                .build();
+    }
+
     private static RestReply echo(final RecordedRequest request) {
         return RestReply.json(request.getBody());
     }
 
     private static Widget render(final StoryContext context, final boolean readOnly) {
+        return render(context, FIXTURES, readOnly);
+    }
+
+    private static Widget render(final StoryContext context, final RestFixtures fixtures, final boolean readOnly) {
         final DocumentationResource resource = GWT.create(DocumentationResource.class);
-        return DocEditors.render(context, FIXTURES, readOnly, (harness, injector) -> DocEditors.open(harness,
+        return DocEditors.render(context, fixtures, readOnly, (harness, injector) -> DocEditors.open(harness,
                 DOC_REF,
                 injector.getDocumentationEditor(),
                 DocResource.of(

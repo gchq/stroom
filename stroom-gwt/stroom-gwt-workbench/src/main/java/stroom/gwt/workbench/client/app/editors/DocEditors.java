@@ -195,6 +195,16 @@ public final class DocEditors {
             }
 
             @Override
+            public boolean hasChangedSince(final D written) {
+                return host.hasChangedSince(written);
+            }
+
+            @Override
+            public void readSaved(final DocRef docRef, final D saved, final boolean changed) {
+                host.readSaved(docRef, saved, changed);
+            }
+
+            @Override
             public D write(final D document) {
                 return host.write(document);
             }
@@ -237,6 +247,17 @@ public final class DocEditors {
             @Override
             public void read(final DocRef docRef, final D document) {
                 tab.read(docRef, document);
+            }
+
+            @Override
+            public boolean hasChangedSince(final D written) {
+                // A tab on its own has no Save
+                return false;
+            }
+
+            @Override
+            public void readSaved(final DocRef docRef, final D saved, final boolean changed) {
+                tab.read(docRef, saved);
             }
 
             @Override
@@ -333,10 +354,14 @@ public final class DocEditors {
         if (editor.isDirty()) {
             final D document = editor.write(editor.getEntity());
             if (document != null) {
-                final Consumer<D> afterSave = saved -> editor.read(docRef, saved);
                 final BiConsumer<D, Consumer<D>> postSaveCallback = editor.getPostSaveCallback();
                 resource.update(harness.getRestFactory(), document)
                         .onSuccess(saved -> {
+                            // What is typed while the document is being saved is kept
+                            final boolean changed = editor.hasChangedSince(document);
+                            final D writtenSince = editor.write(editor.getEntity());
+                            final Consumer<D> afterSave = doc -> editor.readSaved(docRef, doc,
+                                    changed || editor.hasChangedSince(writtenSince));
                             // As the plugins with a post save callback (VisualisationPlugin) do
                             if (postSaveCallback != null) {
                                 postSaveCallback.accept(saved, afterSave);
@@ -466,6 +491,17 @@ public final class DocEditors {
         void setReadOnly(boolean readOnly);
 
         void read(DocRef docRef, D document);
+
+        /// @param written The document as it was written to be saved.
+        /// @return Whether the editor has been changed since.
+        boolean hasChangedSince(D written);
+
+        /// Takes the document saved as the one being edited.
+        ///
+        /// @param docRef  The document's reference.
+        /// @param saved   The document, as saved.
+        /// @param changed Whether the editor was changed while it was being saved.
+        void readSaved(DocRef docRef, D saved, boolean changed);
 
         D write(D document);
 

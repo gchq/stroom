@@ -49,6 +49,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -315,10 +317,22 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                         return;
                     }
                     final D finalDocument = document;
+                    // What is typed while the document is being saved is kept
+                    final BiConsumer<D, Consumer<D>> postSaveCallback = controller.getPostSaveCallback();
+                    final AtomicBoolean changed = new AtomicBoolean();
+                    final AtomicReference<D> writtenSince = new AtomicReference<>(finalDocument);
                     save(getDocRef(document), document,
-                            controller.getPostSaveCallback(),
+                            postSaveCallback == null
+                                    ? null
+                                    : (doc, next) -> {
+                                        // It may take a while too
+                                        changed.set(controller.hasChangedSince(finalDocument));
+                                        writtenSince.set(controller.write(controller.getEntity()));
+                                        postSaveCallback.accept(doc, next);
+                                    },
                             doc -> {
-                                controller.read(getDocRef(doc), doc);
+                                controller.readSaved(getDocRef(doc), doc,
+                                        changed.get() || controller.hasChangedSince(writtenSince.get()));
                                 onComplete.run();
                             },
                             throwable -> {

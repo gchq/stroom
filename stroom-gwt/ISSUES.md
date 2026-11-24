@@ -1253,15 +1253,15 @@ shows one), and the app itself.
 | A dialog's New shows its busy spinner on Cancel | **Fixed** (19 November 2026): the pressed button shows it (`DialogFrame`), as the entry below |
 | The API key dialog and the start-up activity chooser can't hear a failed config fetch | Still open (`UiConfigCache.java:129-132`) |
 | Wave 11's dialogs with no story | In part: Batch Change All, Copy and Move, and the attachment data dialog have stories now; Chat History, the floor map's Track and the credential picker's empty OK and Cancel don't |
-| Solr fields mark the document changed on key down | Still open |
+| Solr fields mark the document changed on key down | **Fixed** (23 November 2026): they tell of a change on key up and when left; nor is it changed by any other key, as it was because what isn't set (e.g. no ZooKeeper hosts) was written back as a blank (`SolrIndexEditor` `TypingMarksChanged`) |
 | Wave 12's screens with no story | In part: the data generator's Execution grids have checks; the traces store's Settings tab and the permissions filter's help don't |
 | Classes wave 12 left un-BEM'd | **Done**: none of them is named anywhere |
-| Others still read `READ_ONLY` once | Still open (`QueryEditorController`, `StreamingProcessingController`, `DuplicateManagementListController`, `PathwayEditorController`; Solr's expression editor and pipeline) |
-| Templates given `SafeHtml.asString()` for a `title` | Still open: `ExplorerCell.java:150`, so a name with an apostrophe shows `&#39;` in its tooltip; the others weren't traced |
+| Others still read `READ_ONLY` once | **Checked, kept** (23 November 2026): it only changes just before the document is read (`DocumentPlugin`: opening, and Save As), which is when these read it, so nothing shows. Open: the Processors list makes its columns once (`ProcessorListController.setAllowUpdate`), so after Save As from a read-only pipeline its Enabled ticks and priorities can't be changed until it is opened again |
+| Templates given `SafeHtml.asString()` for a `title` | **Fixed** (23 November 2026): the explorer's (`ExplorerTree` `TooltipIsTheName`) and a table column heading's (`TestColumnHeaderHtmlUtil`), the only two found |
 | Server Tasks as a tree is 20px wider than its pane | **Fixed** (`TreeRowHandler.java:68`, `ServerTasksScreenStories`), as the entry under Fixed |
 | The 22px tick box column clips its box | **Fixed** (23 November 2026), as the entry below |
 | Ask Stroom AI's dock type offers only Dialog and Dock | Still so; nothing handles Tab or Float, so it looks deliberate |
-| Solr's ZooKeeper Path is a text area; Plan B's Bucket Granularity shows enum names | Solr's still open; Plan B's **Fixed** (19 November 2026): `BucketGranularity` has display names |
+| Solr's ZooKeeper Path is a text area; Plan B's Bucket Granularity shows enum names | Solr's **Fixed** (23 November 2026), a single-line box; Plan B's **Fixed** (19 November 2026): `BucketGranularity` has display names |
 | Elastic's rerank suffix tooltip `$\{BaseField.score\}` | **Gone** (checked 19 November 2026): the rerank settings moved, and the tooltip went with them |
 | The dashboard table filter dialog's focus on open | **Fixed** (19 November 2026): `ColumnFilterEditorController` is a `Focus`; `TableFilterFocusesItsEditor` |
 | `ColumnFilterEditorController`'s changed test can't be true; time preferences' Id, offset and Custom Format edits don't mark it changed; Table Builder's settings not read on switching; email recipients changed only on key up | **Fixed** (19 November 2026), each as its entry below |
@@ -1659,7 +1659,8 @@ to delete them by hand.~~
   and second groups.~~ Fixed in wave 4: `TimePicker.setHourVisible` hides the hour's form group.
 * Ask Stroom AI's dock type offers only Dialog and Dock, though Tab and Float exist; the view
   defaults to Dialog while the config default is Dock.
-* Solr's ZooKeeper Path is a single value shown in a multi-line text area.
+* ~~Solr's ZooKeeper Path is a single value shown in a multi-line text area.~~ **Fixed** (23 November
+  2026): it is a text box.
 * ~~Plan B's Bucket Granularity list shows the enum names in capitals (HOUR, DAY, WEEK), as
   `BucketGranularity` has no display names.~~ **Fixed** (19 November 2026): it has display names
   (Hour, Day, Week); stored documents keep the enum names. Play: `App/Editors/PlanBEditor` `Trace`
@@ -1804,10 +1805,26 @@ to delete them by hand.~~
     **Fixed** (23 November 2026): `setText` chooses the mode only the first time, and `setReadOnly`
     changes it only to the preview, or to the editor for blank documentation that has become
     editable. Play: `App/Editors/DocumentationEditor` `SaveKeepsEditing` (failed before).
-    **Open decision** (second review, 23 November 2026, from the code; older, and every document
-    editor's): what is typed between Save and the server's reply is lost, as `DocumentPlugin.save`
-    reads the reply into the editor (`DocumentEditorHost.read`) and nothing stops typing meanwhile.
-    Either editing waits for the save, or the reply leaves what has changed since it was sent.
+    Second review (23 November 2026; older, and every document editor's): what was typed between Save
+    and the server's reply was lost, as `DocumentPlugin.save` read the reply into the editor and nothing
+    stops typing meanwhile. **Decided** (23 November 2026, the user's decision): the reply leaves what
+    has changed since it was sent. **Fixed** (23 November 2026): if the tabs would write something else
+    than was sent, the reply becomes the document they are written over, and they aren't read again
+    (`DocumentEditorHost.readSaved`, `TabbedController.keepChanges`), so the document stays dirty;
+    Data Receipt Rules, which saves itself, too. Plays: `App/Editors/DocumentationEditor`
+    `SaveKeepsNewerText` and `App/Main/DataReceiptRulesScreen` `SaveKeepsNewerRule`; `TestDocumentPlugin`.
+    From its code review (23 November 2026): tabs that only show what is read (e.g. the assets and the
+    effective words) are read again even then; changes are looked for again after the assets or facts
+    are saved; and what was written is never a live list (a Solr index's fields, a script's
+    dependencies, a table's columns moved by dragging), whose later changes were missed. The review
+    also found, older: a script's dependencies added to some it has didn't make it dirty; a Solr
+    index's retention expression didn't alone, as `SolrIndexDoc.equals` left it out; and saving only a
+    pipeline's documentation opened the picker with nothing in it (`PipelineEditor`
+    `SaveDocumentationOnly`). `TabbedController` has no unit test, as `LinkTabPanel` can't be loaded
+    without a browser.
+    **Open:** saving again before the first save's reply sends the old version, which the server should
+    refuse (`StoreImpl.update`); older too, and not tried. A save that only sends assets or floor map
+    facts still marks the document unchanged when more were changed meanwhile.
 * ~~`XPathFilterEditor` sets Equals as the default condition, but new filters use Exists; harmless, as
   the controller overwrites it.~~ **Fixed** (23 November 2026): it starts with
   `XPathFilter.DEFAULT_MATCH_TYPE` (Exists), with the value fields hidden to match, and decides

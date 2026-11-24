@@ -36,6 +36,7 @@ import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -82,12 +83,83 @@ class TestDocumentPlugin {
         assertThat(hosts).hasSize(2);
     }
 
+    @Test
+    void aDocumentSavedIsReadBack() {
+        final DocumentEditorHost<Object> host = dirtyHost();
+
+        plugin.save(host);
+        plugin.saves.get(0).accept("saved");
+
+        Mockito.verify(host).readSaved(DOC_REF, "saved", false);
+    }
+
+    @Test
+    void aDocumentChangedWhileItIsSavedKeepsItsChanges() {
+        final DocumentEditorHost<Object> host = dirtyHost();
+
+        plugin.save(host);
+        Mockito.when(host.hasChangedSince("written")).thenReturn(true);
+        plugin.saves.get(0).accept("saved");
+
+        Mockito.verify(host).readSaved(DOC_REF, "saved", true);
+    }
+
+    @Test
+    void changesMadeBeforeWhatRunsAfterASaveAreKept() {
+        final DocumentEditorHost<Object> host = dirtyHost();
+        Mockito.when(host.getPostSaveCallback()).thenReturn((saved, next) -> next.accept(saved));
+
+        plugin.save(host);
+        Mockito.when(host.hasChangedSince("written")).thenReturn(true);
+        Mockito.when(host.write("read")).thenReturn("written since");
+        plugin.saves.get(0).accept("saved");
+
+        Mockito.verify(host).readSaved(DOC_REF, "saved", true);
+    }
+
+    @Test
+    void changesMadeDuringWhatRunsAfterASaveAreKept() {
+        final DocumentEditorHost<Object> host = dirtyHost();
+        Mockito.when(host.getPostSaveCallback()).thenReturn((saved, next) -> {
+            Mockito.when(host.hasChangedSince("written")).thenReturn(true);
+            next.accept(saved);
+        });
+
+        plugin.save(host);
+        plugin.saves.get(0).accept("saved");
+
+        Mockito.verify(host).readSaved(DOC_REF, "saved", true);
+    }
+
+    @Test
+    void whatRunsAfterASaveIsNotAChange() {
+        final DocumentEditorHost<Object> host = dirtyHost();
+        Mockito.when(host.getPostSaveCallback()).thenReturn((saved, next) -> next.accept(saved));
+
+        plugin.save(host);
+        plugin.saves.get(0).accept("saved");
+
+        Mockito.verify(host).readSaved(DOC_REF, "saved", false);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static DocumentEditorHost<Object> dirtyHost() {
+        final DocumentEditorHost<Object> host = Mockito.mock(DocumentEditorHost.class);
+        Mockito.when(host.isDirty()).thenReturn(true);
+        Mockito.when(host.getEntity()).thenReturn("read");
+        Mockito.when(host.write("read")).thenReturn("written");
+        return host;
+    }
+
 
     // --------------------------------------------------------------------------------
 
 
     // A document type whose documents can't be loaded
     private class TestPlugin extends DocumentPlugin<Object> {
+
+        // What each save's reply is given to
+        private final List<Consumer<Object>> saves = new ArrayList<>();
 
         TestPlugin(final EventBus eventBus) {
             super(eventBus,
@@ -117,6 +189,19 @@ class TestDocumentPlugin {
                          final Consumer<Object> resultConsumer,
                          final RestErrorHandler errorHandler,
                          final TaskMonitorFactory taskMonitorFactory) {
+            saves.add(resultConsumer);
+        }
+
+        @Override
+        public void save(final DocRef docRef,
+                         final Object document,
+                         final BiConsumer<Object, Consumer<Object>> postSaveCallback,
+                         final Consumer<Object> resultConsumer,
+                         final RestErrorHandler errorHandler,
+                         final TaskMonitorFactory taskMonitorFactory) {
+            saves.add(postSaveCallback == null
+                    ? resultConsumer
+                    : saved -> postSaveCallback.accept(saved, resultConsumer));
         }
 
         @Override

@@ -117,6 +117,35 @@ public abstract class TabbedController<D> extends Controller implements RefusesI
         }
     }
 
+    /// Says whether the tabs have been changed since something was written, e.g. while it was being
+    /// saved.
+    ///
+    /// @param written What was written ([#write()]).
+    /// @return Whether the tabs would now write something else, or a field holds input that can't be
+    /// kept.
+    protected final boolean hasChangedSince(final D written) {
+        return hasInvalidInput() || !Objects.equals(written, write());
+    }
+
+    /// Takes what was saved as what is shown, without reading it into the tabs that write, as they were
+    /// changed after what was saved was written ([#hasChangedSince(Object)]). What they show stays, to
+    /// be written over what was saved. The tabs that only show what is read are read into.
+    ///
+    /// @param docRef The reference of what was saved.
+    /// @param saved  What was saved.
+    protected final void keepChanges(final DocRef docRef, final D saved) {
+        this.docRef = docRef;
+        this.document = Objects.requireNonNull(saved, "saved");
+        view.setAccessibleName(tabsName(docRef));
+        for (final Tab<?> tab : allTabs) {
+            if (tab.writer == null) {
+                tab.read(docRef, saved);
+            }
+        }
+        onKeepChanges(docRef, saved);
+        afterKeepChanges();
+    }
+
     /// @return What is shown, as the tabs show it (e.g. to save it), or null before it is read.
     public final D write() {
         return write(document);
@@ -227,7 +256,7 @@ public abstract class TabbedController<D> extends Controller implements RefusesI
     protected final <C extends HasControllerNode & IsWidget> void addTab(final TabData tab,
                                                                       final Supplier<C> make,
                                                                       final TabReader<C, D> reader) {
-        addTab(tab, make, reader, (content, document) -> document);
+        addTab(tab, make, reader, null);
     }
 
     /// Adds a tab that shows and changes part of what is read.
@@ -255,7 +284,7 @@ public abstract class TabbedController<D> extends Controller implements RefusesI
     protected final <C extends HasControllerNode & IsWidget> void addOwnedTab(final TabData tab,
                                                                            final C content,
                                                                            final TabReader<C, D> reader) {
-        addOwnedTab(tab, content, reader, (owned, document) -> document);
+        addOwnedTab(tab, content, reader, null);
     }
 
     /// Adds a tab that shows and changes part of what is read, with content this has made and owns
@@ -470,6 +499,21 @@ public abstract class TabbedController<D> extends Controller implements RefusesI
         // Nothing by default
     }
 
+    /// Called instead of [#onRead(DocRef, Object)] when what is shown was saved but not read again, as
+    /// the tabs had been changed meanwhile, e.g. to have what uses it fetched again.
+    ///
+    /// @param docRef The reference of what was saved.
+    /// @param saved  What was saved.
+    protected void onKeepChanges(final DocRef docRef, final D saved) {
+        // Nothing by default
+    }
+
+    /// Called after [#onKeepChanges(DocRef, Object)], for [DocumentEditor] to work out whether it is
+    /// dirty.
+    void afterKeepChanges() {
+        // Nothing by default
+    }
+
     /// Called after [#onRead(DocRef, Object)], for [DocumentEditor] to enable its buttons.
     void afterRead() {
         // Nothing by default
@@ -499,6 +543,7 @@ public abstract class TabbedController<D> extends Controller implements RefusesI
 
         private final Supplier<C> make;
         private final TabReader<C, D> reader;
+        // Null for a tab that only shows what is read
         private final BiFunction<C, D, D> writer;
         // Whether the tab owns its content once it is made, rather than this owning it already
         private final boolean owns;
@@ -540,7 +585,7 @@ public abstract class TabbedController<D> extends Controller implements RefusesI
         }
 
         private D write(final D document) {
-            return content == null
+            return content == null || writer == null
                     ? document
                     : writer.apply(content, document);
         }

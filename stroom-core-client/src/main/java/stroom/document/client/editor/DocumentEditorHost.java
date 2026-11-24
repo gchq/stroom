@@ -128,6 +128,38 @@ public class DocumentEditorHost<D>
         }
     }
 
+    /// Says whether the editor has been changed since the document was written to be saved.
+    ///
+    /// @param written The document as it was written.
+    /// @return Whether it has.
+    public final boolean hasChangedSince(final D written) {
+        return editor.hasChangedSince(written);
+    }
+
+    /// Takes the document saved as the one being edited: reads it into the editor, unless the editor
+    /// was changed while it was being saved, when what the editor shows stays and is still to be
+    /// saved.
+    ///
+    /// @param docRef  The document's reference.
+    /// @param saved   The document, as saved.
+    /// @param changed Whether the editor was changed while it was being saved
+    ///                ([#hasChangedSince(Object)]).
+    public final void readSaved(final DocRef docRef, final D saved, final boolean changed) {
+        if (!changed) {
+            read(docRef, saved);
+        } else {
+            this.document = saved;
+            documentContext.set(docRef);
+            this.docRef = docRef;
+            editor.keepChanges(docRef, saved);
+            if (!(editor instanceof DocumentEditor<D>)) {
+                onChange();
+            }
+            // The name may have changed
+            refreshTabIfLabelChanged();
+        }
+    }
+
     /// Writes what the editor shows into a document, which for Save As is the new one.
     ///
     /// @param document The document to write into.

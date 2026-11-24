@@ -179,6 +179,11 @@ public abstract class DocumentEditor<D> extends TabbedController<D> {
         setDirty(false);
     }
 
+    @Override
+    void afterKeepChanges() {
+        onChange();
+    }
+
     private void setDirty(final boolean dirty) {
         saveButton.setEnabled(dirty);
         if (this.dirty != dirty) {

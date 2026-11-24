@@ -225,8 +225,14 @@ public class SolrIndexFieldListController extends Controller {
             }
         });
         return document.copy()
-                .fields(fields)
-                .deletedFields(new ArrayList<>(toDelete.values()))
+                // A copy, as editing changes the list, which would change what was written with it
+                .fields(fields == null
+                        ? null
+                        : new ArrayList<>(fields))
+                // None is written as it was read, so that showing the fields doesn't change them
+                .deletedFields(toDelete.isEmpty() && document.getDeletedFields() == null
+                        ? null
+                        : new ArrayList<>(toDelete.values()))
                 .build();
     }
 }

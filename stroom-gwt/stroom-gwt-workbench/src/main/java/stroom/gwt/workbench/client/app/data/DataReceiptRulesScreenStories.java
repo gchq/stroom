@@ -78,10 +78,13 @@ public final class DataReceiptRulesScreenStories {
               ]
             }""";
 
-    private static final RestFixtures FIXTURES = RestFixtures.builder()
-            .get(RULES_PATH, RestReply.json(RULES))
-            .put(RULES_PATH, request -> RestReply.json(request.getBody()))
-            .build();
+    // The rule added during a slow Save, whose own Save isn't slow
+    private static final String NEWER_RULE = "Newer rule";
+    // How long a slow Save takes
+    private static final int SLOW_SAVE_MILLIS = 5000;
+
+    private static final RestFixtures FIXTURES = fixtures(0);
+    private static final RestFixtures SLOW_SAVE_FIXTURES = fixtures(SLOW_SAVE_MILLIS);
 
     // The extended UI config (as StartupFixtures builds it) with Feed obfuscated
     private static final String OBFUSCATING_UI_CONFIG = "{\"uiConfig\":" + StartupFixtures.DEFAULT_UI_CONFIG
@@ -160,6 +163,25 @@ public final class DataReceiptRulesScreenStories {
                                     .withBody("'Drop everything else' as rule 1",
                                             DataReceiptRulesScreenStories::hasNewFirstRule)
                                     .toSpyMatcher()));
+                    expectNoProblems(play);
+                })
+                // A rule added between Save and the server's reply stays, still to be saved
+                .story("SaveKeepsNewerRule", context -> render(context, SLOW_SAVE_FIXTURES, false, false, false))
+                .withPlay(play -> {
+                    play.findByText("Reject test feeds");
+                    addRule(play, "Sent rule");
+                    final Query save = play.getByRole("button", SAVE);
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    play.click(save);
+                    addRule(play, NEWER_RULE);
+                    // Once the reply has been handled
+                    play.sleep(SLOW_SAVE_MILLIS + 500);
+                    play.expect(play.getByText(NEWER_RULE)).toBeInTheDocument();
+                    play.expect(save).not().toHaveAttribute("aria-disabled");
+                    play.click(save);
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put(RULES_PATH).withBodyContaining(NEWER_RULE).toSpyMatcher()));
+                    play.waitFor(() -> play.expect(save).toHaveAttribute("aria-disabled", "true"));
                     expectNoProblems(play);
                 })
                 // Saving another document (with changes) leaves the rules alone: they were once saved
@@ -470,6 +492,24 @@ public final class DataReceiptRulesScreenStories {
         play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
     }
 
+    private static RestFixtures fixtures(final int saveMillis) {
+        return RestFixtures.builder()
+                .get(RULES_PATH, RestReply.json(RULES))
+                .put(RULES_PATH, request -> RestReply.json(request.getBody())
+                        .delayed(request.getBody().contains(NEWER_RULE)
+                                ? 0
+                                : saveMillis))
+                .build();
+    }
+
+    private static void addRule(final Play play, final String name) {
+        play.click(play.getByTitle("New Rule"));
+        final Play dialog = dialog(play.screen(), "Edit Rule");
+        play.type(dialog.querySelector("#ruleRuleName"), name);
+        play.click(dialog.getByRole("button", StroomDom.button("OK")));
+        play.findByText(name);
+    }
+
     private static Widget render(final StoryContext context, final boolean obfuscateFeed) {
         // A UI config with obfuscated fields; the confirmation is Stroom's real dialog
         return render(context, obfuscateFeed, obfuscateFeed, false);
@@ -479,8 +519,16 @@ public final class DataReceiptRulesScreenStories {
                                  final boolean obfuscateFeed,
                                  final boolean realAlerts,
                                  final boolean readOnly) {
+        return render(context, FIXTURES, obfuscateFeed, realAlerts, readOnly);
+    }
+
+    private static Widget render(final StoryContext context,
+                                 final RestFixtures fixtures,
+                                 final boolean obfuscateFeed,
+                                 final boolean realAlerts,
+                                 final boolean readOnly) {
         final ProcessingScreenGinjector injector = GWT.create(ProcessingScreenGinjector.class);
-        final ScreenHarness.Builder builder = ScreenHarness.builder(context, FIXTURES)
+        final ScreenHarness.Builder builder = ScreenHarness.builder(context, fixtures)
                 .injector(injector);
         if (obfuscateFeed) {
             builder.startup(startup -> startup.extendedUiConfig(OBFUSCATING_UI_CONFIG));
