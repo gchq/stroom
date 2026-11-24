@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [v8.0]
+
+* `countUnique()` now stops counting at a limit, which is 10,000 unique values for each group by default. The
+  count of a group that has more unique values stays at the limit. Previously there was no limit, so a group
+  with a great many unique values made results very large and slow to create.
+
+  **Review queries, rules and reports that use `countUnique()` where a group can have more than 10,000 unique
+  values.** In particular, **a rule that looks for a count above the limit, e.g. more than 20,000 users, will
+  never match.** Either use the new `countUniqueApprox()`, which has no limit and estimates the count with a
+  standard error of 0.8%, or change the limit with these properties:
+
+  * `stroom.search.resultStore.maxCountUniqueValues` for searches.
+
+  * `stroom.analytics.resultStore.maxCountUniqueValues` for rules and reports. A table builder rule keeps the
+    limit that its store was opened with until the node is restarted.
+
+  A search that reaches the limit gives a warning with its results. **A report or a CSV search shows the limit
+  as the count with no warning.** A warning is logged on the node for a report or a rule, but not for a CSV
+  search.
+
+  **If you change a table builder rule to use `countUniqueApprox()` then also rename the rule**, which gives it a
+  new, empty store. The values that the rule has already stored for `countUnique()` can't be read by
+  `countUniqueApprox()`.
+
 ## [v7.14]
 
 * Wildcard values for Elasticsearch `keyword` fields are now matched **case-sensitively**, so `Admin*` no

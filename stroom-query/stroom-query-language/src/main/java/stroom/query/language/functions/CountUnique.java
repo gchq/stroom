@@ -33,7 +33,10 @@ import java.util.function.Supplier;
         commonReturnDescription = "The number of unique values",
         signatures = @FunctionSignature(
                 category = FunctionCategory.AGGREGATE,
-                description = "Determines the number of unique values across all grouped records.",
+                description = "Determines the number of unique values across all grouped records, up to a limit " +
+                        "that is 10,000 unless an administrator has changed it. The count of a group that has more " +
+                        "unique values stays at the limit, with a warning. Use " + CountUniqueApprox.NAME +
+                        " to estimate higher counts.",
                 args = @FunctionArg(
                         name = "values",
                         description = "Grouped field or the result of another function",

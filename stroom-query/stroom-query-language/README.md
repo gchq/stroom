@@ -59,3 +59,20 @@ g.eval
 ```
 > 3
 ```
+
+`countUnique` stores every value that it counts, so it stops at a limit (10,000 for each group by default). Use `countUniqueApprox` to estimate higher counts, which takes about 12 kilobytes for each group at most unless it is given a higher precision:
+``` java
+FieldIndexMap fim = FieldIndexMap.forFields("name", "age", "occupation")
+Generator g = parseExpression("countUniqueApprox(${name})")
+
+g.addData("JDoe", 45, "Butcher")
+g.addData("JBloggs", 23, "Butcher")
+g.addData("JSmith", 34, "Butcher")
+g.addData("JSmith", 24, "Butcher")
+
+g.eval
+```
+
+```
+> 3
+```

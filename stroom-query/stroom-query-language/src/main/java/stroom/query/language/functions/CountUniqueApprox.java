@@ -38,7 +38,7 @@ import java.util.function.Supplier;
                         description = "Estimates the number of unique values across all grouped records. The " +
                                 "estimate is exact or within a few of it up to about five thousand values, and has " +
                                 "a standard error of 0.8% above that. Use " + CountUnique.NAME + " for an exact " +
-                                "count.",
+                                "count, which has a limit.",
                         args = @FunctionArg(
                                 name = "values",
                                 description = "Grouped field or the result of another function.",
