@@ -30,7 +30,10 @@ import java.util.function.Supplier;
         commonReturnDescription = "The parsed duration.",
         signatures = {
                 @FunctionSignature(
-                        description = "Parses the supplied value as a duration",
+                        description = "Parses the supplied value as a duration. It can be numbers with the units w, " +
+                                      "d, h, m, s, ms, us and ns, e.g. 1d 2h or 1.5h, ISO 8601, e.g. PT1H30M, or a " +
+                                      "number of milliseconds. A day is 24 hours. Use parsePeriod for months and " +
+                                      "years.",
                         args = @FunctionArg(
                                 name = "value",
                                 argType = ValString.class,
@@ -56,11 +59,8 @@ class ParseDuration extends AbstractFunction {
         if (param instanceof Function) {
             function = (Function) param;
             hasAggregate = function.hasAggregate();
-        } else if (ValDurationUtil.isAmount(param)) {
-            gen = new StaticValueFunction(ValDurationUtil.parseDuration((Val) param)).createGenerator();
         } else {
-            final String durationString = param.toString();
-            gen = new StaticValueFunction(ValDurationUtil.parseDuration(durationString)).createGenerator();
+            gen = new StaticValueFunction(ValDurationUtil.toDuration((Val) param)).createGenerator();
         }
     }
 
@@ -105,7 +105,7 @@ class ParseDuration extends AbstractFunction {
         @Override
         public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
             final Val val = childGenerator.eval(storedValues, childDataSupplier);
-            return ValDurationUtil.parseDuration(val);
+            return ValDurationUtil.toDuration(val);
         }
     }
 }

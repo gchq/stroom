@@ -16,10 +16,8 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.api.DurationPattern;
 import stroom.query.language.token.TimeLiteral;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 
@@ -28,166 +26,142 @@ import java.math.RoundingMode;
 import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.format.DateTimeParseException;
-import java.util.Locale;
+import java.util.function.LongFunction;
+import java.util.function.ToLongFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ValDurationUtil {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ValDurationUtil.class);
     // Numbers and exact units such as 1d2h30m, -12h or 1h 30m, as a duration is shown.
     private static final Pattern EXACT_PATTERN = Pattern.compile("\\s*-?\\s*(?:\\d++(?:ms|[wdhms])\\s*+)++");
-    // A number with one of the units that ModelStringUtil knows, or none for milliseconds. Only lower case units can be
-    // negative, as they can in EXACT_PATTERN.
-    private static final Pattern NUMBER_PATTERN = Pattern.compile(
-            "\\s*+(\\d++(?:\\.\\d*+)?|\\.\\d++)\\s*+(ms|s|m|h|d|)\\s*+", Pattern.CASE_INSENSITIVE);
-    private static final Pattern NEGATIVE_PATTERN = Pattern.compile(
-            "\\s*+-\\s*+(\\d++(?:\\.\\d*+)?|\\.\\d++)\\s*+(ms|s|m|h|d)\\s*+");
+    private static final Pattern ISO_PATTERN = Pattern.compile("[+-]?[Pp][-+\\dTt].*");
+    // ISO 8601 text that has months or years, with or without the time that makes it neither a period nor a duration.
+    private static final Pattern ISO_MONTHS_PATTERN = Pattern.compile(
+            "[+-]?P(?:[+-]?\\d++[WD])*+[+-]?\\d++[YM](?:[+-]?\\d++[YMWD])*+(?:T(?:[+-]?\\d++(?:\\.\\d++)?[HMS])++)?+",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern UNITS_PATTERN = Pattern.compile(
+            "([+-]?)\\s*+((?:(?:\\d++(?:\\.\\d*+)?|\\.\\d++)\\s*+[A-Za-z]++\\s*+)++)");
+    private static final Pattern UNIT_PATTERN = Pattern.compile("([\\d.]++)\\s*+([A-Za-z]++)");
+    private static final Pattern QUOTED_PATTERN = Pattern.compile("['\"]?+(.*?)['\"]?");
     static final String PARSE_ERROR_MESSAGE = "Text cannot be parsed to a Duration";
 
-    public static Val formatDuration(final Val value) {
-        if (value == null) {
-            return ValNull.INSTANCE;
-        } else if (value.hasNumericValue() && value.toLong() != null) {
-            // This covers strings too, but not those with an exponent
-            final long milliseconds = value.toLong();
-            return ValString.create(ModelStringUtil.formatDurationString(milliseconds, true));
-        } else if (Type.STRING.equals(value.type())) {
-            return formatDuration(value.toString());
-        }
-        return checkPeriod(value);
-    }
-
-    public static Val formatDuration(final String value) {
-        if (NullSafe.isBlankString(value)) {
-            return ValNull.INSTANCE;
-        } else {
-            try {
-                final long milliseconds = parseToMilliseconds(value);
-                return ValString.create(ModelStringUtil.formatDurationString(milliseconds, true));
-            } catch (final Exception e) {
-                return exceptionToValErr(e);
-            }
-        }
-    }
-
-    public static Val formatISODuration(final Val value) {
-        if (value == null) {
-            return ValNull.INSTANCE;
-        } else if (isDuration(value)) {
-            final long milliseconds = value.toLong();
-            return ValString.create(Duration.ofMillis(milliseconds).toString());
-        } else if (Type.STRING.equals(value.type())) {
-            return formatISODuration(value.toString());
-        }
-        return checkPeriod(value);
-    }
-
-    public static Val formatISODuration(final String value) {
-        if (NullSafe.isBlankString(value)) {
-            return ValNull.INSTANCE;
-        } else {
-            try {
-                final long milliseconds = parseToMilliseconds(value);
-                return ValString.create(Duration.ofMillis(milliseconds).toString());
-            } catch (final Exception e) {
-                return exceptionToValErr(e);
-            }
-        }
-    }
-
-    public static Val parseDuration(final Val val) {
-        if (Type.STRING == val.type()) {
-            return parseDuration(val.toString());
-        } else if (!DateReader.isLong(val)) {
-            // It would become a long that has nothing to do with it.
-            return ValErr.create("A " + val.type().getName() + " that is too large or not finite is not a duration");
-        } else if (isDuration(val)) {
-            if (Type.DURATION == val.type()) {
-                return val;
-            }
-            final Long milliseconds = val.toLong();
-            if (milliseconds != null) {
-                return ValDuration.create(milliseconds);
-            } else {
-                // Should never have a numeric type with null toLong
-                throw new RuntimeException(LogUtil.message("Numeric type {} has a null long value",
-                        val.getClass().getSimpleName()));
-            }
-        }
-        return checkPeriod(val);
-    }
-
-    public static Val parseDuration(final String value) {
-        if (NullSafe.isBlankString(value)) {
-            return ValNull.INSTANCE;
-        } else {
-            try {
-                return ValDuration.create(parseExactMilliseconds(value));
-            } catch (final Exception e) {
-                return exceptionToValErr(e);
-            }
-        }
-    }
-
-    public static Val parseISODuration(final Val val) {
-        if (Type.STRING.equals(val.type())) {
-            return parseISODuration(val.toString());
-        } else if (isDuration(val)) {
-            if (Type.DURATION.equals(val.type())) {
-                return val;
-            }
-            final Long milliseconds = val.toLong();
-            if (milliseconds != null) {
-                return ValDuration.create(milliseconds);
-            } else {
-                // Should never have a numeric type with null toLong
-                throw new RuntimeException(LogUtil.message("Numeric type {} has a null long value",
-                        val.getClass().getSimpleName()));
-            }
-        }
-        return checkPeriod(val);
-    }
-
-    public static Val parseISODuration(final String value) {
-        if (NullSafe.isBlankString(value)) {
-            return ValNull.INSTANCE;
-        } else {
-            try {
-                return ValDuration.create(Duration.parse(value).toMillis());
-            } catch (final Exception e) {
-                return exceptionToValErr(e);
-            }
-        }
-    }
-
-    private static Val checkPeriod(final Val val) {
-        return val instanceof ValPeriod
-                ? ValErr.create("A period of months or years can't be used as a duration")
-                : val;
-    }
-
-    /// Tells whether a constant parameter is already a length of time, so should be used as it is and not read
-    /// from its text.
+    /// Formats a duration in its largest unit, with a decimal place if it is less than ten of them.
     ///
-    /// @param param The parameter.
-    /// @return True if it is a duration or period.
-    static boolean isAmount(final Param param) {
-        return param instanceof ValDuration || param instanceof ValPeriod;
+    /// @param value A duration, or any value that can be read as one.
+    /// @return The text, such as `1.5h`, or whatever [#toDuration(Val)] gives if it is not a duration.
+    public static Val formatDuration(final Val value) {
+        return format(value, ValDurationUtil::formatLargestUnit);
     }
 
-    // A period of only days can stand in for a duration.
-    private static boolean isDuration(final Val val) {
-        return val.type().isNumber()
-               || (val instanceof final ValPeriod period && period.hasOnlyDays());
+    /// Formats a duration with a pattern.
+    ///
+    /// @param value   A duration, or any value that can be read as one.
+    /// @param pattern The pattern.
+    /// @return The text, or whatever [#toDuration(Val)] gives if it is not a duration.
+    public static Val formatDuration(final Val value, final DurationPattern pattern) {
+        return format(value, pattern::format);
+    }
+
+    /// Formats a duration as ISO 8601 text.
+    ///
+    /// @param value A duration, or any value that can be read as one.
+    /// @return The text, such as `PT1H30M`, or whatever [#toDuration(Val)] gives if it is not a duration.
+    public static Val formatISODuration(final Val value) {
+        return format(value, millis -> Duration.ofMillis(millis).toString());
+    }
+
+    private static Val format(final Val value, final LongFunction<String> formatter) {
+        final Val duration = toDuration(value);
+        return duration instanceof ValDuration
+                ? ValString.create(formatter.apply(duration.toLong()))
+                : duration;
+    }
+
+    private static String formatLargestUnit(final long millis) {
+        if (millis >= 0) {
+            return ModelStringUtil.formatDurationString(millis, true);
+        }
+        // ModelStringUtil would only use milliseconds. The lowest long has no positive equivalent, but is only a
+        // millisecond from one that does.
+        return "-" + ModelStringUtil.formatDurationString(-Math.max(millis, -Long.MAX_VALUE), true);
+    }
+
+    /// Reads a value as a duration.
+    ///
+    /// @param val A duration, a period of only days, a number of milliseconds or text of a duration.
+    /// @return A duration, or an error if the value is not one. A null or an error is returned as it is and blank
+    ///         text gives null.
+    public static Val toDuration(final Val val) {
+        return toDuration(val, ValDurationUtil::parseMilliseconds);
+    }
+
+    /// Reads a value as the milliseconds of a duration.
+    ///
+    /// @param val A duration, or any value that [#toDuration(Val)] can read as one.
+    /// @return The milliseconds, or `null` if it is not a duration.
+    public static Long toMillis(final Val val) {
+        if (val instanceof ValString) {
+            try {
+                return readMilliseconds(val.toString());
+            } catch (final DateTimeParseException e) {
+                return null;
+            }
+        }
+        return toDuration(val) instanceof final ValDuration duration
+                ? duration.toLong()
+                : null;
+    }
+
+    /// Reads a value as a duration, as [#toDuration(Val)] does except that text must be in ISO 8601 format.
+    ///
+    /// @param val A duration, a period of only days, a number of milliseconds or ISO 8601 text of a duration.
+    /// @return A duration, or an error if the value is not one. A null or an error is returned as it is and blank
+    ///         text gives null.
+    public static Val parseISODuration(final Val val) {
+        return toDuration(val, ValDurationUtil::parseIsoMilliseconds);
+    }
+
+    private static Val toDuration(final Val val, final ToLongFunction<String> textReader) {
+        return switch (val) {
+            case null -> ValNull.INSTANCE;
+            case final ValDuration duration -> duration;
+            case final ValPeriod period -> period.hasOnlyDays()
+                    ? ValDuration.create(period.toLong())
+                    : ValErr.create("A period of months or years can't be used as a duration");
+            case final ValString text -> toDuration(text.toString(), textReader);
+            case final ValDate ignored -> ValErr.create("A date is not a duration");
+            case final ValNumber number -> DateReader.isLong(number)
+                    ? ValDuration.create(number.toLong())
+                    : ValErr.create("A " + number.type().getName()
+                                    + " that is too large or not finite is not a duration");
+            default -> val.type().isValue()
+                    ? ValErr.create("A " + val.type().getName() + " is not a duration")
+                    : val;
+        };
+    }
+
+    private static Val toDuration(final String text, final ToLongFunction<String> textReader) {
+        if (NullSafe.isBlankString(text)) {
+            return ValNull.INSTANCE;
+        }
+        try {
+            return ValDuration.create(textReader.applyAsLong(text));
+        } catch (final RuntimeException e) {
+            return exceptionToValErr(e);
+        }
     }
 
     private static ValErr exceptionToValErr(final Exception e) {
         if (e instanceof final DateTimeParseException dtpe) {
-            String msg = e.getMessage().stripTrailing();
+            // Not for text that isn't in the format asked for.
+            final String advice = e.getCause() instanceof DateTimeException && isPeriod(dtpe.getParsedString())
+                    ? ". Use parsePeriod to read it"
+                    : "";
+            String msg = e.getMessage().stripTrailing() + advice;
             msg = msg.endsWith(".")
-                    ? e.getMessage()
-                    : e.getMessage() + ".";
+                    ? msg
+                    : msg + ".";
             msg = msg + " Text: '" + dtpe.getParsedString() + "'.";
             return ValErr.create(msg);
         } else {
@@ -195,9 +169,13 @@ public class ValDurationUtil {
         }
     }
 
-    /**
-     * @throws DateTimeParseException if value is null or can't be parsed for any reason.
-     */
+    /// Reads the text of any value that is used as a number, so what it reads can't be changed without changing text
+    /// that has nothing to do with durations, such as IDs. Text that is meant to be a duration is read by
+    /// [#parseMilliseconds(String)].
+    ///
+    /// @param value The text.
+    /// @return The duration in milliseconds.
+    /// @throws DateTimeParseException If the text is null or can't be parsed for any reason.
     public static long parseToMilliseconds(final String value) {
         if (value == null) {
             throw new DateTimeParseException(PARSE_ERROR_MESSAGE, "null", 0);
@@ -225,44 +203,125 @@ public class ValDurationUtil {
         }
     }
 
-    /// Reads text as a duration, as parseToMilliseconds does, but reads fractions exactly, can read negative fractions
-    /// and refuses a number that is too large.
+    /// Reads text as a duration.
     ///
-    /// Any text that is used as a number is read by parseToMilliseconds, so what that reads can't be changed without
-    /// changing text that has nothing to do with durations, such as IDs.
+    /// It can be in ISO 8601 format, a number of milliseconds, or numbers with the units `w`, `d`, `h`, `m`, `s`, `ms`,
+    /// `us` and `ns`, such as `1d 2h`, `-1.5h` and `1500us`. A day is 24 hours and a week is 7 of those. Any part of a
+    /// millisecond is dropped.
     ///
     /// @param value The text.
     /// @return The duration in milliseconds.
-    /// @throws DateTimeParseException If the text is not a duration or is too long.
-    static long parseExactMilliseconds(final String value) {
-        try {
-            final Matcher matcher = NUMBER_PATTERN.matcher(value);
-            if (matcher.matches()) {
-                return toMillis(matcher.group(1), matcher.group(2));
-            }
-            final Matcher negativeMatcher = NEGATIVE_PATTERN.matcher(value);
-            if (negativeMatcher.matches()) {
-                return Math.negateExact(toMillis(negativeMatcher.group(1), negativeMatcher.group(2)));
-            }
-        } catch (final ArithmeticException e) {
-            throw new DateTimeParseException(PARSE_ERROR_MESSAGE, value, 0, e);
+    /// @throws DateTimeParseException If the text is not a duration or is too long. The message is fit to show the
+    ///                                query's author.
+    public static long parseMilliseconds(final String value) {
+        final Long millis = readMilliseconds(value);
+        if (millis == null) {
+            throw new DateTimeParseException(PARSE_ERROR_MESSAGE, value, 0);
         }
-        return parseToMilliseconds(value);
+        return millis;
     }
 
-    // ModelStringUtil would use a double, so would be a millisecond out for some fractions and large numbers, and turn
-    // a number that is too large into the largest there is.
-    private static long toMillis(final String number, final String unit) {
-        final long unitMillis = switch (unit.toLowerCase(Locale.ROOT)) {
-            case "s" -> Duration.ofSeconds(1).toMillis();
-            case "m" -> Duration.ofMinutes(1).toMillis();
-            case "h" -> Duration.ofHours(1).toMillis();
-            case "d" -> Duration.ofDays(1).toMillis();
-            default -> 1;
+    // Returns null if the text is nothing like a duration, which is quicker than an exception.
+    private static Long readMilliseconds(final String value) {
+        final String text = removeQuotes(value.trim());
+        try {
+            if (ISO_MONTHS_PATTERN.matcher(text).matches()) {
+                throw createPeriodException(text);
+            } else if (ISO_PATTERN.matcher(text).matches()) {
+                return parseIso(text);
+            } else if (TimeRounder.isNumber(text)) {
+                return TimeRounder.parseMillis(text);
+            }
+            final Matcher matcher = UNITS_PATTERN.matcher(text);
+            if (matcher.matches()) {
+                final BigDecimal millis = sumUnits(text, matcher.group(2));
+                return toLong("-".equals(matcher.group(1))
+                        ? millis.negate()
+                        : millis);
+            }
+        } catch (final ArithmeticException e) {
+            throw createTooLongException(value, e);
+        } catch (final DateTimeParseException e) {
+            throw e;
+        } catch (final DateTimeException e) {
+            throw new DateTimeParseException(e.getMessage(), value, 0, e);
+        }
+        return null;
+    }
+
+    // Some sources quote their text.
+    private static String removeQuotes(final String text) {
+        final Matcher matcher = QUOTED_PATTERN.matcher(text);
+        return matcher.matches()
+                ? matcher.group(1).trim()
+                : text;
+    }
+
+    private static long parseIsoMilliseconds(final String value) {
+        try {
+            return parseIso(value.trim());
+        } catch (final ArithmeticException e) {
+            throw createTooLongException(value, e);
+        }
+    }
+
+    private static DateTimeParseException createTooLongException(final String value, final ArithmeticException e) {
+        return new DateTimeParseException("The duration is too long", value, 0, e);
+    }
+
+    private static long parseIso(final String text) {
+        try {
+            return Duration.parse(text).toMillis();
+        } catch (final DateTimeParseException e) {
+            if (e.getCause() != null) {
+                // It is a duration but one of its numbers is too large.
+                throw new ArithmeticException(e.getMessage());
+            }
+            throw e;
+        }
+    }
+
+    private static BigDecimal sumUnits(final String text, final String unsigned) {
+        BigDecimal millis = BigDecimal.ZERO;
+        final Matcher matcher = UNIT_PATTERN.matcher(unsigned);
+        while (matcher.find()) {
+            millis = millis.add(new BigDecimal(matcher.group(1)).multiply(getUnitMillis(text, matcher.group(2))));
+        }
+        return millis;
+    }
+
+    private static BigDecimal getUnitMillis(final String text, final String unit) {
+        return switch (unit) {
+            case "ns" -> new BigDecimal("0.000001");
+            case "us" -> new BigDecimal("0.001");
+            case "ms" -> BigDecimal.ONE;
+            case "s" -> toBigDecimal(Duration.ofSeconds(1));
+            case "m" -> toBigDecimal(Duration.ofMinutes(1));
+            case "h" -> toBigDecimal(Duration.ofHours(1));
+            case "d" -> toBigDecimal(Duration.ofDays(1));
+            case "w" -> toBigDecimal(Duration.ofDays(7));
+            case "M", "y" -> throw createPeriodException(text);
+            default -> throw new DateTimeException(
+                    "Unknown unit '" + unit + "' in a duration. Use ns, us, ms, s, m, h, d or w");
         };
-        return new BigDecimal(number)
-                .multiply(BigDecimal.valueOf(unitMillis))
-                .setScale(0, RoundingMode.DOWN)
-                .longValueExact();
+    }
+
+    private static BigDecimal toBigDecimal(final Duration duration) {
+        return BigDecimal.valueOf(duration.toMillis());
+    }
+
+    private static DateTimeException createPeriodException(final String text) {
+        return new DateTimeException("'" + text + "' " + (isPeriod(text)
+                ? "is a period of months or years"
+                : "has months or years")
+                                     + ", so is not a duration");
+    }
+
+    private static boolean isPeriod(final String text) {
+        return ValPeriodUtil.parsePeriod(ValString.create(text)) instanceof ValPeriod;
+    }
+
+    private static long toLong(final BigDecimal millis) {
+        return millis.setScale(0, RoundingMode.DOWN).longValueExact();
     }
 }

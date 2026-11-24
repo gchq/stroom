@@ -79,9 +79,8 @@ final class DateReader {
     ///
     /// @param val  A date, a number of milliseconds since the epoch, or text of either.
     /// @param zone The time zone of text that has no offset, and of the date that is returned.
-    /// @return The date, or `null` if the value is null, blank or text that is not a date, such as of a number that is
-    ///         too large to be one.
-    /// @throws DateTimeException If the value is anything else that is not a date, which includes text of a duration.
+    /// @return The date, or `null` if the value is null, blank or text that is not a date.
+    /// @throws DateTimeException If the value is anything else that is not a date, such as a duration.
     static ZonedDateTime readIfDate(final Val val, final ZoneId zone) {
         if (isBlank(val)) {
             return null;
@@ -89,16 +88,11 @@ final class DateReader {
         try {
             return read(val, zone);
         } catch (final DateTimeException e) {
-            if (val instanceof ValString && !isDuration(val)) {
+            if (val instanceof ValString) {
                 return null;
             }
             throw e;
         }
-    }
-
-    // Text of a plain number can be read as a duration, but is meant to be a date.
-    private static boolean isDuration(final Val text) {
-        return !TimeRounder.isNumber(text.toString().trim()) && text.toLong() != null;
     }
 
     /// Tells whether a value has nothing to read.

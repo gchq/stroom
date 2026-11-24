@@ -335,7 +335,9 @@ public class SelectionHandlersController extends SettingsTabController implement
         final Format format = column.getFormat();
         if (format != null && format.getType() != null) {
             switch (format.getType()) {
-                case NUMBER: {
+                // The number of a duration is its milliseconds.
+                case NUMBER:
+                case DURATION: {
                     return FieldType.LONG;
                 }
                 case DATE_TIME: {

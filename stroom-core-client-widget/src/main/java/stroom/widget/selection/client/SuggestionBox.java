@@ -18,6 +18,7 @@ package stroom.widget.selection.client;
 
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.AccessibleName;
+import stroom.widget.form.client.InvalidInputs;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.util.client.CssProperties;
 
@@ -46,6 +47,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
 /// A text field that suggests what to type, e.g. the values an expression term's field holds: a
 /// WAI-ARIA editable combobox with list autocomplete. Its value is the field's text; the suggestions
@@ -206,6 +208,15 @@ public class SuggestionBox extends Component implements Focus, HasValueChangeHan
         AccessibleName.set(input, name);
     }
 
+    /// Checks the field's text, as a text box does ([TextBox#setInvalidReason(Function)]): while it
+    /// fails the check, a dialog's OK and a document's Save refuse, and once the field is left the
+    /// reason is said under it.
+    ///
+    /// @param invalidReason Given the text, says why it can't be kept, or gives null if it can.
+    public void setInvalidReason(final Function<String, String> invalidReason) {
+        input.setInvalidReason(invalidReason);
+    }
+
     /// @param enabled Whether the field can be used.
     public void setEnabled(final boolean enabled) {
         input.setEnabled(enabled);
@@ -353,6 +364,8 @@ public class SuggestionBox extends Component implements Focus, HasValueChangeHan
         final String text = suggestions.get(index);
         hideList();
         setText(text);
+        // A suggestion may put right what was typed
+        InvalidInputs.showReason(input);
         ValueChangeEvent.fire(this, text);
     }
 

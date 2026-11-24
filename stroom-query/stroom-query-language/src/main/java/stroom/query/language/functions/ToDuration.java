@@ -18,7 +18,6 @@ package stroom.query.language.functions;
 
 import java.time.ZoneId;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -28,8 +27,7 @@ import java.util.regex.Pattern;
         commonReturnDescription = "The value as the duration type.",
         signatures = @FunctionSignature(
                 description = "Converts the supplied value to a duration (if it can be). A " +
-                              "number is milliseconds, and text is as parseDuration reads it, except that 1M is a " +
-                              "month and so is not a duration.",
+                              "number is milliseconds, and text is as parseDuration reads it.",
                 args = {
                         @FunctionArg(
                                 name = "value",
@@ -38,8 +36,6 @@ import java.util.regex.Pattern;
 class ToDuration extends AbstractCalendarFunction {
 
     static final String NAME = "toDuration";
-    // A number and M, which is months everywhere but in an ISO 8601 duration such as PT1M.
-    private static final Pattern MONTHS_PATTERN = Pattern.compile("\\d\\s*+M(?![A-Za-z])");
 
     public ToDuration(final ExpressionContext expressionContext, final String name) {
         super(expressionContext, name, 1, 1);
@@ -61,23 +57,10 @@ class ToDuration extends AbstractCalendarFunction {
     }
 
     private static Val toDuration(final Val val) {
-        if (Type.DATE.equals(val.type())) {
-            throw new IllegalArgumentException("A date is not a duration");
+        final Val duration = ValDurationUtil.toDuration(val);
+        if (duration instanceof final ValErr err) {
+            throw new IllegalArgumentException(err.getMessage());
         }
-        // parseDuration would read it as minutes.
-        if (val instanceof ValString && isMonths(val.toString())) {
-            throw new IllegalArgumentException("A period of months or years can't be used as a duration");
-        }
-        final Val duration = ValDurationUtil.parseDuration(val);
-        if (duration instanceof ValDuration) {
-            return duration;
-        }
-        throw new IllegalArgumentException(duration instanceof final ValErr err
-                ? err.getMessage()
-                : "A " + val.type().getName() + " is not a duration");
-    }
-
-    private static boolean isMonths(final String text) {
-        return !text.contains("P") && MONTHS_PATTERN.matcher(text).find();
+        return duration;
     }
 }

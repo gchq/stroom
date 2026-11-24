@@ -61,6 +61,23 @@ class TestComparatorFactory {
                 ValString.create("Banana")));
     }
 
+    // As they do in a general column. Reading text as a duration is too slow to do for each comparison.
+    @Test
+    void durationColumn() {
+        final Column column = Column.builder().format(Format.DURATION).build();
+        assertSorted(column, List.of(
+                ValDuration.create(-5),
+                ValLong.create(1_000L),
+                ValString.create("5s"),
+                ValDuration.create(9_000L),
+                ValDuration.create(10_000L),
+                ValString.create("PT1H"),
+                ValPeriod.create(0, 0, 1),
+                ValString.create("apple"),
+                ValString.create("Banana")));
+        assertThat(ComparatorFactory.create(column)).isSameAs(ComparatorFactory.create(Column.builder().build()));
+    }
+
     @Test
     void otherValuesSortAsBefore() {
         assertSorted(Column.builder().build(), List.of(

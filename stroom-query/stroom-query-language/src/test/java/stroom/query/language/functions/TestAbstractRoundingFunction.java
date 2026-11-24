@@ -118,7 +118,8 @@ class TestAbstractRoundingFunction {
 
     // So that a saved dashboard doesn't show errors, or group by them.
     @ParameterizedTest
-    @ValueSource(strings = {"N/A", "06/07/2024", "2024-07-06 12:00:00", "-12345678901234567890", "true", " "})
+    @ValueSource(strings = {"N/A", "06/07/2024", "2024-07-06 12:00:00", "-12345678901234567890", "true", " ", "2h",
+            "+2h", "PT1H", "1M", "1H"})
     void textThatIsNotADateIsNull(final String text) throws ParseException {
         for (final String expression : new String[]{"floorDay(${field})", "ceilingMonth(${field})",
                 "roundHour(${field})", "floorTime(${field}, 1h)", "isWeekend(${field})"}) {
@@ -153,6 +154,30 @@ class TestAbstractRoundingFunction {
         assertThat(eval(expression, Map.of(), ValNull.INSTANCE)).isEqualTo(ValDouble.create(expected));
     }
 
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "floor(${field}, 1s)|0.7d|60480000",
+            "floor(${field}, 1h)|-1.5h|-7200000",
+            "ceiling(${field}, 1h)|-PT1H30M|-3600000",
+            "round(${field}, 1s)|1h 30m|5400000"})
+    void textOfADurationIsReadAsParseDurationDoes(final String expression, final String text, final long expected)
+            throws ParseException {
+        assertThat(eval(expression, Map.of(), ValString.create(text))).isEqualTo(ValDuration.create(expected));
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "soon|'soon' is not a date or a duration",
+            "1H|'1H' is not a date or a duration: Unknown unit 'H' in a duration. Use ns, us, ms, s, m, h, d or w",
+            // Not that parsePeriod can read it, as periods can't be rounded.
+            "1M|'1M' is not a date or a duration: '1M' is a period of months or years, so is not a duration",
+            "P1M|'P1M' is not a date or a duration: 'P1M' is a period of months or years, so is not a duration",
+            "PT99999999999999999H|'PT99999999999999999H' is not a date or a duration: The duration is too long",
+            "99999999999999h|'99999999999999h' is not a date or a duration: The duration is too long"})
+    void textThatIsNotADateOrDuration(final String text, final String message) throws ParseException {
+        assertThat(eval("floor(${field}, 1h)", Map.of(), ValString.create(text))).isEqualTo(ValErr.create(message));
+    }
+
     // Recorded before dates and durations could be rounded, as nothing about numbers was meant to change, except that
     // decimal places are now exact.
     @ParameterizedTest
@@ -185,11 +210,10 @@ class TestAbstractRoundingFunction {
             "floor(100m, 1h, 2024-01-01T00:00:00Z)|An origin can only be used to round a date",
             "floor(1d, 1h)|Can't round a period",
             "floor(${field}, param('missing'))|no value was supplied for it",
-            "floor(${field}, parseDuration('15mm'))|Text cannot be parsed to a Duration",
+            "floor(${field}, parseDuration('15mm'))|Unknown unit 'mm' in a duration",
             "floorTime(${field}, parseDuration('soon'))|Text cannot be parsed to a Duration",
             "floor('1e300', 1d)|'1e300' is too large to be a date",
             "floorTime(100m, 1h)|Use floor, ceiling or round to round a duration",
-            "floorDay('2h')|'2h' is not a date",
             "roundYear(1d)|A period is not a date",
             "ceilingMonth(isNull(1))|A boolean is not a date",
             "floorTime(${field}, 0h)|it must be at least one millisecond",

@@ -29,6 +29,8 @@ import stroom.query.api.token.TokenException;
 import stroom.query.language.filter.SimpleStringExpressionParser;
 import stroom.query.language.filter.SimpleStringExpressionParser.FieldProvider;
 import stroom.query.language.filter.SingleFieldProvider;
+import stroom.query.language.functions.ValDurationUtil;
+import stroom.query.language.functions.ValString;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.CompareUtil;
@@ -39,17 +41,21 @@ import jakarta.inject.Inject;
 import java.math.BigDecimal;
 import java.time.DateTimeException;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.LongPredicate;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -418,6 +424,15 @@ public class ExpressionPredicateFactory {
             return NotPredicate.create(IsNullPredicate.create(term, valueFunctionFactory.createNullCheck()));
         }
 
+        final Optional<Function<T, Long>> durationExtractor = valueFunctionFactory.createDurationExtractor();
+        if (durationExtractor.isPresent()) {
+            return createDurationTermPredicate(
+                    term,
+                    valueFunctionFactory,
+                    durationExtractor.get(),
+                    wordListProvider);
+        }
+
         // Create a query based on the field type and condition.
         final FieldType fieldType = valueFunctionFactory.getFieldType();
         if (FieldType.DATE.equals(fieldType)) {
@@ -501,6 +516,51 @@ public class ExpressionPredicateFactory {
         };
     }
 
+    // Durations are compared by their length, and other values as text.
+    private <T> Optional<ScoringPredicate<T>> createDurationTermPredicate(
+            final ExpressionTerm term,
+            final ValueFunctionFactory<T> valueFunctionFactory,
+            final Function<T, Long> durationExtractor,
+            final WordListProvider wordListProvider) {
+
+        // A dictionary may be given as a document instead.
+        if (term.getValue() == null && !Condition.IN_DICTIONARY.equals(term.getCondition())) {
+            return Optional.empty();
+        }
+
+        return switch (term.getCondition()) {
+            case EQUALS, NOT_EQUALS -> {
+                final Long duration = ValDurationUtil.toMillis(ValString.create(term.getValue()));
+                if (duration == null) {
+                    yield createTextTermPredicate(term, valueFunctionFactory, wordListProvider);
+                }
+                final ScoringPredicate<T> equals = new DurationPredicate<>(
+                        term, durationExtractor, val -> val == duration);
+                yield Condition.EQUALS.equals(term.getCondition())
+                        ? Optional.of(equals)
+                        : NotPredicate.create(equals);
+            }
+            case GREATER_THAN -> DurationPredicate.create(term, durationExtractor, (val, other) -> val > other);
+            case GREATER_THAN_OR_EQUAL_TO -> DurationPredicate.create(
+                    term, durationExtractor, (val, other) -> val >= other);
+            case LESS_THAN -> DurationPredicate.create(term, durationExtractor, (val, other) -> val < other);
+            case LESS_THAN_OR_EQUAL_TO -> DurationPredicate.create(
+                    term, durationExtractor, (val, other) -> val <= other);
+            case BETWEEN -> DurationPredicate.createBetween(term, durationExtractor);
+            // Not split at spaces, as a duration can have them.
+            case IN -> DurationIn.create(term, valueFunctionFactory, durationExtractor,
+                    Arrays.stream(term.getValue().split(DELIMITER))
+                            .map(String::trim)
+                            .filter(value -> !value.isEmpty())
+                            .toArray(String[]::new));
+            case IN_DICTIONARY -> DurationIn.create(term, valueFunctionFactory, durationExtractor,
+                    term.getDocRef() != null
+                            ? wordListProvider.getWords(term.getDocRef())
+                            : loadDictionary(wordListProvider, term.getValue()));
+            default -> createTextTermPredicate(term, valueFunctionFactory, wordListProvider);
+        };
+    }
+
     @SuppressWarnings("checkstyle:LineLength")
     private <T> Optional<ScoringPredicate<T>> createTextTermPredicate(
             final ExpressionTerm term,
@@ -545,6 +605,16 @@ public class ExpressionPredicateFactory {
             throw new MatchException(
                     "Expected a numeric value for field \"" + term.getField() +
                     "\" but was given string \"" + value + "\"");
+        }
+    }
+
+    private static long getTermDuration(final ExpressionTerm term, final String value) {
+        try {
+            return ValDurationUtil.parseMilliseconds(value);
+        } catch (final DateTimeParseException e) {
+            throw new MatchException(
+                    "Expected a duration for field \"" + term.getField() +
+                    "\" but was given string \"" + value + "\": " + e.getMessage());
         }
     }
 
@@ -778,6 +848,14 @@ public class ExpressionPredicateFactory {
 
         Function<T, Double> createNumberExtractor();
 
+        /// Gets what reads values as durations, if that is how they are shown.
+        ///
+        /// @return Gives the milliseconds of a value, or null if it is not a duration. Empty if the values are not
+        ///         shown as durations.
+        default Optional<Function<T, Long>> createDurationExtractor() {
+            return Optional.empty();
+        }
+
         FieldType getFieldType();
     }
 
@@ -960,6 +1038,101 @@ public class ExpressionPredicateFactory {
         @Override
         public boolean test(final T values) {
             return nullCheckFunction.apply(values);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class DurationPredicate<T> extends ExpressionTermPredicate<T> {
+
+        private final Function<T, Long> extractionFunction;
+        private final LongPredicate predicate;
+
+        private DurationPredicate(final ExpressionTerm term,
+                                  final Function<T, Long> extractionFunction,
+                                  final LongPredicate predicate) {
+            super(term);
+            this.extractionFunction = extractionFunction;
+            this.predicate = predicate;
+        }
+
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final Function<T, Long> extractionFunction,
+                                                                final BiPredicate<Long, Long> comparison) {
+            return ifValue(term, () -> {
+                final long duration = getTermDuration(term, term.getValue());
+                return new DurationPredicate<>(term, extractionFunction, val -> comparison.test(val, duration));
+            });
+        }
+
+        private static <T> Optional<ScoringPredicate<T>> createBetween(final ExpressionTerm term,
+                                                                       final Function<T, Long> extractionFunction) {
+            return ifValue(term, () -> {
+                final String[] values = term.getValue().split(DELIMITER);
+                if (values.length != 2) {
+                    throw new MatchException("2 durations needed for between query");
+                }
+                final long from = getTermDuration(term, values[0].trim());
+                final long to = getTermDuration(term, values[1].trim());
+                if (from >= to) {
+                    throw new MatchException("From duration must be lower than to duration");
+                }
+                return new DurationPredicate<>(term, extractionFunction, val -> val >= from && val <= to);
+            });
+        }
+
+        @Override
+        public boolean test(final T values) {
+            final Long val = extractionFunction.apply(values);
+            return val != null && predicate.test(val);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // Matches any of some durations and text. A value is only read as a duration once, as that is slow for text.
+    private static class DurationIn<T> extends ExpressionTermPredicate<T> {
+
+        private final Function<T, Long> durationExtractor;
+        private final Function<T, String> stringExtractor;
+        private final Set<Long> durations = new HashSet<>();
+        private final Set<String> texts = new HashSet<>();
+
+        private DurationIn(final ExpressionTerm term,
+                           final Function<T, Long> durationExtractor,
+                           final Function<T, String> stringExtractor,
+                           final String[] values) {
+            super(term);
+            this.durationExtractor = durationExtractor;
+            this.stringExtractor = stringExtractor;
+            for (final String value : values) {
+                final Long duration = ValDurationUtil.toMillis(ValString.create(value));
+                if (duration != null) {
+                    durations.add(duration);
+                } else {
+                    texts.add(value);
+                }
+            }
+        }
+
+        private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
+                                                                final ValueFunctionFactory<T> valueFunctionFactory,
+                                                                final Function<T, Long> durationExtractor,
+                                                                final String[] values) {
+            return Optional.of(new DurationIn<>(
+                    term, durationExtractor, valueFunctionFactory.createStringExtractor(), values));
+        }
+
+        @Override
+        public boolean test(final T values) {
+            final Long duration = durationExtractor.apply(values);
+            return duration != null
+                    ? durations.contains(duration)
+                    : texts.contains(stringExtractor.apply(values));
         }
     }
 

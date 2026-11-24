@@ -136,10 +136,10 @@ public class ExcelTarget implements SearchResultWriter.Target {
             cell.setCellValue(heading);
             cell.setCellStyle(headingStyle);
 
-            // Auto-size datetime and numeric columns
+            // Auto-size datetime, duration and numeric columns
             if (column.getFormat() != null) {
                 final Format.Type fieldType = column.getFormat().getType();
-                if (fieldType == Type.DATE_TIME || fieldType == Type.NUMBER) {
+                if (fieldType == Type.DATE_TIME || fieldType == Type.NUMBER || fieldType == Type.DURATION) {
                     sheet.trackColumnForAutoSizing(fieldIndex);
                 }
             }

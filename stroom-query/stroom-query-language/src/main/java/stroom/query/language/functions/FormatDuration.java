@@ -16,6 +16,7 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.api.DurationPattern;
 import stroom.query.language.functions.ref.StoredValues;
 
 import java.text.ParseException;
@@ -30,38 +31,68 @@ import java.util.function.Supplier;
         commonReturnDescription = "A duration formatted as a string.",
         signatures = {
                 @FunctionSignature(
-                        description = "Formats the supplied duration as a string",
+                        description = "Formats the supplied duration as a string in its largest unit, e.g. 1.5h.",
                         args = @FunctionArg(
                                 name = "value",
-                                argType = ValString.class,
-                                description = "The duration as a string."))
-        })
+                                argType = Val.class,
+                                description = "The duration, a number of milliseconds or text that parseDuration " +
+                                              "can read.")),
+                @FunctionSignature(
+                        description = "Formats the supplied duration as a string using the supplied pattern.",
+                        args = {
+                                @FunctionArg(
+                                        name = "value",
+                                        argType = Val.class,
+                                        description = "The duration, a number of milliseconds or text that " +
+                                                      "parseDuration can read."),
+                                @FunctionArg(
+                                        name = "pattern",
+                                        argType = ValString.class,
+                                        description = "The pattern, e.g. 'd.hh:mm:ss', of d (days), h or hh (hours), " +
+                                                      "m or mm (minutes), s or ss (seconds), f, ff or fff " +
+                                                      "(fractions of a second) and other text, whose letters must " +
+                                                      "be in single quotes. Each unit has what the larger ones " +
+                                                      "in the pattern leave, so 2 days and 90 minutes is 49:30 " +
+                                                      "with 'hh:mm'.")})})
 class FormatDuration extends AbstractFunction {
 
     static final String NAME = "formatDuration";
 
+    // Null to format in the largest unit.
+    private DurationPattern pattern;
     private Generator gen;
     private Function function;
     private boolean hasAggregate;
 
     public FormatDuration(final String name) {
-        super(name, 1, 1);
+        super(name, 1, 2);
     }
 
     @Override
     public void setParams(final Param[] params) throws ParseException {
         super.setParams(params);
 
+        if (params.length > 1) {
+            try {
+                pattern = DurationPattern.parse(ParamParseUtil.parseStringParam(params, 1, name));
+            } catch (final IllegalArgumentException e) {
+                throw new ParseException(e.getMessage(), 0);
+            }
+        }
+
         final Param param = params[0];
         if (param instanceof Function) {
             function = (Function) param;
             hasAggregate = function.hasAggregate();
-        } else if (ValDurationUtil.isAmount(param)) {
-            gen = new StaticValueFunction(ValDurationUtil.formatDuration((Val) param)).createGenerator();
         } else {
-            final String durationString = param.toString();
-            gen = new StaticValueFunction(ValDurationUtil.formatDuration(durationString)).createGenerator();
+            gen = new StaticValueFunction(format((Val) param, pattern)).createGenerator();
         }
+    }
+
+    private static Val format(final Val val, final DurationPattern pattern) {
+        return pattern == null
+                ? ValDurationUtil.formatDuration(val)
+                : ValDurationUtil.formatDuration(val, pattern);
     }
 
     @Override
@@ -71,7 +102,7 @@ class FormatDuration extends AbstractFunction {
         }
 
         final Generator childGenerator = function.createGenerator();
-        return new Gen(childGenerator);
+        return new Gen(childGenerator, pattern);
     }
 
     @Override
@@ -89,8 +120,11 @@ class FormatDuration extends AbstractFunction {
 
     private static final class Gen extends AbstractSingleChildGenerator {
 
-        Gen(final Generator childGenerator) {
+        private final DurationPattern pattern;
+
+        Gen(final Generator childGenerator, final DurationPattern pattern) {
             super(childGenerator);
+            this.pattern = pattern;
         }
 
         @Override
@@ -101,7 +135,7 @@ class FormatDuration extends AbstractFunction {
         @Override
         public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
             final Val val = childGenerator.eval(storedValues, childDataSupplier);
-            return ValDurationUtil.formatDuration(val);
+            return format(val, pattern);
         }
     }
 }

@@ -315,7 +315,8 @@ public class ConditionalFormattingRulesController extends LayerController implem
 
         try {
             return switch (colType) {
-                case NUMBER -> QueryField.createLong(column.getName());
+                // The number of a duration is its milliseconds.
+                case NUMBER, DURATION -> QueryField.createLong(column.getName());
                 case DATE_TIME -> QueryField.createDate(column.getName());
                 default -> QueryField
                         .builder()

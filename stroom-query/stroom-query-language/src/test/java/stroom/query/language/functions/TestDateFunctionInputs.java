@@ -211,14 +211,20 @@ class TestDateFunctionInputs {
                     "ceilingTime(" + DATE + ", 1h, {})")
             .map(Argument::new)
             .toList();
+    // These give an error in every row for a mistake in a constant, as they always have.
+    private static final List<Argument> DURATION_ARGUMENTS = Stream.of(
+                    "parseDuration({})",
+                    "formatDuration({})",
+                    "formatDuration({}, 'd.hh:mm:ss')",
+                    "formatISODuration({})")
+            .map(Argument::new)
+            .toList();
     // These must be text, or don't treat fields and constants the same.
     private static final List<Argument> VARIED_ARGUMENTS = Stream.of(
                     "formatDate(" + DATE + ", {})",
                     "parseDate('2024', {})",
-                    "parseDuration({})",
+                    // A number that is written is text that isn't in ISO format.
                     "parseISODuration({})",
-                    "formatDuration({})",
-                    "formatISODuration({})",
                     // The last can be an hour or a time zone.
                     "makeDate(2024, 7, 1, {})")
             .map(Argument::new)
@@ -232,7 +238,7 @@ class TestDateFunctionInputs {
 
     static Stream<Argument> allArguments() {
         return Stream.of(DATE_ARGUMENTS, OLDER_DATE_ARGUMENTS, PARSE_DATE_ARGUMENTS, DATE_OR_DURATION_ARGUMENTS,
-                        OTHER_ARGUMENTS, CONSTANT_ARGUMENTS, VARIED_ARGUMENTS, NUMBER_ARGUMENTS)
+                        OTHER_ARGUMENTS, DURATION_ARGUMENTS, CONSTANT_ARGUMENTS, VARIED_ARGUMENTS, NUMBER_ARGUMENTS)
                 .flatMap(List::stream);
     }
 
@@ -248,13 +254,17 @@ class TestDateFunctionInputs {
         return OLDER_DATE_ARGUMENTS.stream();
     }
 
+    static Stream<Argument> durationArguments() {
+        return DURATION_ARGUMENTS.stream();
+    }
+
     static Stream<Argument> dateOrDurationArguments() {
         return DATE_OR_DURATION_ARGUMENTS.stream();
     }
 
     static Stream<Argument> fieldArguments() {
         return Stream.of(DATE_ARGUMENTS, OLDER_DATE_ARGUMENTS, PARSE_DATE_ARGUMENTS, DATE_OR_DURATION_ARGUMENTS,
-                        OTHER_ARGUMENTS)
+                        OTHER_ARGUMENTS, DURATION_ARGUMENTS)
                 .flatMap(List::stream);
     }
 
@@ -369,11 +379,11 @@ class TestDateFunctionInputs {
     void datesAreReadTheSameByOlderFunctions(final Argument argument) {
         final List<Input> notDates = Stream.of(DURATIONS, PERIODS, ERRORS).flatMap(List::stream).toList();
         assertDates(argument, notDates.stream()
-                .filter(input -> !isTextOfNothing(input))
+                .filter(input -> !isText(input))
                 .toList());
 
         // They have always given a null for this, so saved dashboards may have it.
-        for (final Input input : notDates.stream().filter(TestDateFunctionInputs::isTextOfNothing).toList()) {
+        for (final Input input : notDates.stream().filter(TestDateFunctionInputs::isText).toList()) {
             assertThat(argument.evalField(LONDON, input).getSummary()).as(input.name).isEqualTo(NO_VALUE);
         }
     }
@@ -406,8 +416,24 @@ class TestDateFunctionInputs {
         }
     }
 
-    private static boolean isTextOfNothing(final Input input) {
-        return input.val instanceof ValString && input.val.toLong() == null;
+    @ParameterizedTest
+    @MethodSource("durationArguments")
+    void durationsAreReadTheSame(final Argument argument) {
+        final List<String> problems = new ArrayList<>();
+        for (final Input input : ALL) {
+            // The same as it would be for the duration itself.
+            final Val duration = new Argument("toDuration({})").evalField(LONDON, input).val;
+            final String expected = argument.evalField(LONDON, field("duration", duration)).getSummary();
+            final String actual = argument.evalField(LONDON, input).getSummary();
+            if (!actual.equals(expected)) {
+                problems.add(input + " gives " + actual + " not " + expected);
+            }
+        }
+        assertThat(problems).isEmpty();
+    }
+
+    private static boolean isText(final Input input) {
+        return input.val instanceof ValString;
     }
 
     @ParameterizedTest

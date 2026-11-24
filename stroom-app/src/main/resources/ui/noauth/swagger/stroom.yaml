@@ -14242,6 +14242,24 @@ components:
           type: boolean
         suppressDuplicateNotifications:
           type: boolean
+    DurationFormatSettings:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/FormatSettings"
+      - type: object
+        properties:
+          pattern:
+            type: string
+            description: "The pattern to use if the style is PATTERN, such as d.hh:mm:ss,\
+              \ of the units d, h, m, s and f (fractions of a second)"
+          style:
+            type: string
+            description: How the duration is written. Defaults to EXACT
+            enum:
+            - EXACT
+            - ISO
+            - PATTERN
+      description: The string formatting to apply to a duration value
     DurationSetting:
       type: object
       properties:
@@ -16305,6 +16323,7 @@ components:
           - GENERAL
           - NUMBER
           - DATE_TIME
+          - DURATION
           - TEXT
           example: NUMBER
         wrap:
@@ -16336,6 +16355,7 @@ components:
       discriminator:
         mapping:
           date: "#/components/schemas/DateTimeFormatSettings"
+          duration: "#/components/schemas/DurationFormatSettings"
           number: "#/components/schemas/NumberFormatSettings"
         propertyName: type
       properties:

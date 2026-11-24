@@ -18,6 +18,8 @@ package stroom.query.client.result.component;
 
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeFormatSettings;
+import stroom.query.api.DurationFormatSettings;
+import stroom.query.api.DurationFormatSettings.Style;
 import stroom.query.api.Format;
 import stroom.query.api.Format.Type;
 import stroom.query.api.FormatSettings;
@@ -105,19 +107,28 @@ public class ColumnFormatController extends Controller {
                 : null;
         setNumberSettings(settings);
         setDateTimeSettings(settings);
+        setDurationSettings(settings);
         view.setType(format == null || format.getType() == null
                 ? Type.GENERAL
                 : format.getType());
         view.setWrap(format != null && format.getWrap() != null && format.getWrap());
     }
 
-    private Format write() {
+    /// Makes the format that the dialog shows.
+    ///
+    /// @return The format.
+    Format write() {
         final Type type = view.getType();
         FormatSettings settings = null;
         if (Type.NUMBER.equals(type)) {
             settings = new NumberFormatSettings(view.getDecimalPlaces(), view.isUseSeparator());
         } else if (Type.DATE_TIME.equals(type)) {
             settings = new DateTimeFormatSettings(view.isUsePreferences(), view.getPattern(), getTimeZone());
+        } else if (Type.DURATION.equals(type)) {
+            final Style style = view.getDurationStyle();
+            settings = new DurationFormatSettings(style, Style.PATTERN.equals(style)
+                    ? view.getDurationPattern()
+                    : null);
         }
         final Boolean wrap = view.isWrap()
                 ? true
@@ -150,6 +161,16 @@ public class ColumnFormatController extends Controller {
             view.setPattern(null);
         }
         setTimeZone(timeZone);
+    }
+
+    private void setDurationSettings(final FormatSettings settings) {
+        if (settings instanceof final DurationFormatSettings durationFormatSettings) {
+            view.setDurationStyle(durationFormatSettings.getStyle());
+            view.setDurationPattern(durationFormatSettings.getPattern());
+        } else {
+            view.setDurationStyle(Style.EXACT);
+            view.setDurationPattern(null);
+        }
     }
 
     private UserTimeZone getTimeZone() {

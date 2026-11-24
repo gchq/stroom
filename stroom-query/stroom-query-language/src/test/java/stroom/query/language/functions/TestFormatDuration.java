@@ -16,8 +16,18 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.api.token.TokenException;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+
+import java.text.ParseException;
 import java.time.Duration;
 import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class TestFormatDuration extends AbstractFunctionTest<FormatDuration> {
 
@@ -47,7 +57,7 @@ public class TestFormatDuration extends AbstractFunctionTest<FormatDuration> {
                         Val.create("P1D foo")),
                 TestCase.of(
                         "1E3",
-                        ValErr.create(ValDurationUtil.PARSE_ERROR_MESSAGE),
+                        ValString.create("1s"),
                         Val.create("1E3")),
                 TestCase.of(
                         "1h",
@@ -62,5 +72,45 @@ public class TestFormatDuration extends AbstractFunctionTest<FormatDuration> {
                         ValString.create("5m"),
                         ValDuration.create(Duration.ofMinutes(5).toMillis()))
         );
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', quoteCharacter = '"', value = {
+            "formatDuration(${field}, 'd.hh:mm:ss')|2.01:30:05",
+            "formatDuration(${field}, 'hh:mm')|49:30",
+            "formatDuration(${field})|2.1d",
+            "formatDuration(49h, 'h:mm:ss')|49:00:00",
+            "formatDuration('1.5h', 'h:mm')|1:30",
+            "formatDuration('-1.5h', 'h:mm')|-1:30",
+            "formatDuration(5000, 's.fff')|5.000",
+            "formatDuration(2d, 'hh:mm')|48:00"})
+    void patterns(final String expression, final String expected) throws ParseException {
+        final Val field = ValDuration.create(Duration.ofDays(2).plusMinutes(90).plusSeconds(5));
+        assertThat(DateFunctionTestUtil.eval(DateFunctionTestUtil.LONDON, expression, field))
+                .isEqualTo(ValString.create(expected));
+    }
+
+    @Test
+    void valuesThatAreNotDurations() throws ParseException {
+        final String expression = "formatDuration(${field}, 'hh:mm')";
+        assertThat(DateFunctionTestUtil.eval(DateFunctionTestUtil.LONDON, expression, ValNull.INSTANCE))
+                .isEqualTo(ValNull.INSTANCE);
+        assertThat(DateFunctionTestUtil.eval(DateFunctionTestUtil.LONDON, expression, ValErr.create("bad")))
+                .isEqualTo(ValErr.create("bad"));
+        assertThat(DateFunctionTestUtil.eval(DateFunctionTestUtil.LONDON, expression, ValBoolean.TRUE))
+                .isEqualTo(ValErr.create("A boolean is not a duration"));
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "formatDuration(1h, 'HH:mm')|has a letter 'H' that is not a unit",
+            "formatDuration(1h, '')|A duration pattern is needed",
+            "formatDuration(1h, null())|String expected as second argument",
+            "formatDuration(1h, ${field})|String expected as second argument"})
+    void badPatternsAreReportedWhenTheExpressionIsParsed(final String expression, final String message) {
+        assertThatThrownBy(() -> DateFunctionTestUtil.eval(
+                DateFunctionTestUtil.LONDON, expression, ValNull.INSTANCE))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining(message);
     }
 }

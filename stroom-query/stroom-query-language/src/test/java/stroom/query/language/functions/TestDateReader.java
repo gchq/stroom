@@ -90,11 +90,12 @@ class TestDateReader {
                 .isEqualTo(Instant.parse("2024-07-01T08:00:00Z").atZone(LONDON));
         for (final Val val : List.of(ValNull.INSTANCE, ValErr.create("bad"), ValString.create(" "),
                 ValString.create("soon"), ValString.create("-12345678901234567890"),
-                ValString.create("12345678901234567890"), ValString.create("+999999999-01-01"))) {
+                ValString.create("12345678901234567890"), ValString.create("+999999999-01-01"),
+                ValString.create("2h"), ValString.create("+2h"), ValString.create("1.5h 30m"),
+                ValString.create("-PT1H"), ValString.create("1M"), ValString.create("1H"))) {
             assertThat(DateReader.readIfDate(val, LONDON)).as(val.toString()).isNull();
         }
-        for (final Val val : List.of(ValString.create("2h"), ValDuration.create(5), ValBoolean.TRUE,
-                ValDouble.create(Double.NaN))) {
+        for (final Val val : List.of(ValDuration.create(5), ValBoolean.TRUE, ValDouble.create(Double.NaN))) {
             assertThatThrownBy(() -> DateReader.readIfDate(val, LONDON)).isInstanceOf(DateTimeException.class);
         }
     }

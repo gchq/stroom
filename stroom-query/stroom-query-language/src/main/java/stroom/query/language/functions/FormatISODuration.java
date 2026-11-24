@@ -56,11 +56,8 @@ class FormatISODuration extends AbstractFunction {
         if (param instanceof Function) {
             function = (Function) param;
             hasAggregate = function.hasAggregate();
-        } else if (ValDurationUtil.isAmount(param)) {
-            gen = new StaticValueFunction(ValDurationUtil.formatISODuration((Val) param)).createGenerator();
         } else {
-            final String durationString = param.toString();
-            gen = new StaticValueFunction(ValDurationUtil.formatISODuration(durationString)).createGenerator();
+            gen = new StaticValueFunction(ValDurationUtil.formatISODuration((Val) param)).createGenerator();
         }
     }
 

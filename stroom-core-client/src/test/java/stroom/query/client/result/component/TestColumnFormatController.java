@@ -17,6 +17,8 @@
 package stroom.query.client.result.component;
 
 import stroom.query.api.DateTimeFormatSettings;
+import stroom.query.api.DurationFormatSettings;
+import stroom.query.api.DurationFormatSettings.Style;
 import stroom.query.api.Format;
 import stroom.query.api.Format.Type;
 import stroom.query.api.NumberFormatSettings;
@@ -30,6 +32,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TestColumnFormatController {
 
@@ -84,5 +88,54 @@ class TestColumnFormatController {
         Mockito.verify(view).setDecimalPlaces(2);
         Mockito.verify(view).setUseSeparator(true);
         Mockito.verify(view).setType(Type.NUMBER);
+    }
+
+    @Test
+    void read_durationFormat() {
+        controller.read(new Format(
+                Type.DURATION, new DurationFormatSettings(Style.PATTERN, "hh:mm"), null));
+
+        Mockito.verify(view).setDurationStyle(Style.PATTERN);
+        Mockito.verify(view).setDurationPattern("hh:mm");
+        Mockito.verify(view).setType(Type.DURATION);
+    }
+
+    @Test
+    void read_noFormatAfterADurationFormat() {
+        controller.read(new Format(
+                Type.DURATION, new DurationFormatSettings(Style.PATTERN, "hh:mm"), null));
+        Mockito.clearInvocations(view);
+
+        controller.read(null);
+
+        Mockito.verify(view).setDurationStyle(Style.EXACT);
+        Mockito.verify(view).setDurationPattern(null);
+    }
+
+    @Test
+    void write_durationFormat() {
+        Mockito.when(view.getType()).thenReturn(Type.DURATION);
+        Mockito.when(view.getDurationStyle()).thenReturn(Style.PATTERN);
+        Mockito.when(view.getDurationPattern()).thenReturn("hh:mm");
+
+        assertThat(controller.write()).isEqualTo(new Format(
+                Type.DURATION, new DurationFormatSettings(Style.PATTERN, "hh:mm"), null));
+    }
+
+    @Test
+    void write_durationFormatWithNoPattern() {
+        Mockito.when(view.getType()).thenReturn(Type.DURATION);
+        Mockito.when(view.getDurationStyle()).thenReturn(Style.ISO);
+        Mockito.when(view.getDurationPattern()).thenReturn("hh:mm");
+
+        assertThat(controller.write()).isEqualTo(new Format(
+                Type.DURATION, new DurationFormatSettings(Style.ISO, null), null));
+    }
+
+    @Test
+    void durationPatternsSuggestedCanBeUsed() {
+        assertThat(ColumnFormat.STANDARD_DURATION_PATTERNS)
+                .allSatisfy(pattern -> assertThat(ColumnFormat.getInvalidDurationPatternReason(pattern)).isNull());
+        assertThat(ColumnFormat.getInvalidDurationPatternReason("HH:mm")).contains("'H' that is not a unit");
     }
 }

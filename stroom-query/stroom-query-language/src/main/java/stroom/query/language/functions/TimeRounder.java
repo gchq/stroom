@@ -138,7 +138,7 @@ final class TimeRounder {
                     : ValPeriod.create(Period.parse(trimmed));
         }
         if (FRACTION_PATTERN.matcher(trimmed).matches()) {
-            return ValDuration.create(ValDurationUtil.parseExactMilliseconds(trimmed));
+            return ValDuration.create(ValDurationUtil.parseMilliseconds(trimmed));
         }
         final List<SimpleDuration> parts = TimeLiteral.parseCompound(trimmed);
         if (parts.stream().allMatch(TimeLiteral::isPeriod)) {
@@ -195,9 +195,12 @@ final class TimeRounder {
         }
         final long millis;
         try {
-            millis = ValDurationUtil.parseToMilliseconds(text);
+            millis = ValDurationUtil.parseMilliseconds(text);
         } catch (final DateTimeParseException e) {
-            throw new IllegalArgumentException("'" + text + "' is not a date or a duration", e);
+            final String reason = e.getMessage().startsWith(ValDurationUtil.PARSE_ERROR_MESSAGE)
+                    ? ""
+                    : ": " + e.getMessage();
+            throw new IllegalArgumentException("'" + text + "' is not a date or a duration" + reason, e);
         }
         return ValDuration.create(roundDuration(millis));
     }

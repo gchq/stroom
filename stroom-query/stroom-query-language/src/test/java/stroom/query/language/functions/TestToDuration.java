@@ -38,7 +38,11 @@ class TestToDuration {
             "toDuration(90m)|5400000",
             "toDuration('PT1M')|60000",
             "toDuration('1m')|60000",
-            "toDuration('100MS')|100",
+            "toDuration(' PT1H ')|3600000",
+            "toDuration('-PT1H')|-3600000",
+            "toDuration('-5')|-5",
+            "toDuration('1E3')|1000",
+            "toDuration(' 1h  30m ')|5400000",
             "toDuration('-1.5h')|-5400000",
             "toDuration('0.7d')|60480000",
             "toDuration('9007199254740993')|9007199254740993",
@@ -78,11 +82,12 @@ class TestToDuration {
     @CsvSource(delimiter = '|', value = {
             "toDuration(2024-01-01T00:00:00Z)|A date is not a duration",
             "toDuration(1M)|can't be used as a duration",
-            "toDuration('1M')|can't be used as a duration",
-            "toDuration(' -1 M ')|can't be used as a duration",
-            "toDuration('1.5M')|can't be used as a duration",
-            "toDuration('99999999999999999999')|Text cannot be parsed to a Duration",
-            "toDuration('1y')|Text cannot be parsed to a Duration"})
+            "toDuration('1M')|'1M' is a period of months or years",
+            "toDuration(' -1 M ')|'-1 M' has months or years",
+            "toDuration('1.5M')|has months or years",
+            "toDuration('100MS')|Unknown unit 'MS'",
+            "toDuration('99999999999999999999')|The duration is too long",
+            "toDuration('1y')|is a period of months or years"})
     void mistakesThatAreReportedWhenTheExpressionIsParsed(final String expression, final String message) {
         assertThatThrownBy(() -> eval(expression))
                 .isInstanceOf(TokenException.class)

@@ -6,8 +6,8 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="formatType" label="Type"
-                        helpText="How values in this column are formatted: General, Number, Date Time or Text. Number and Date Time show further options."
-                        screenReaderText="General, Number, Date Time or Text.">
+                        helpText="How values in this column are formatted: General, Number, Date Time, Duration or Text. Number, Date Time and Duration show further options."
+                        screenReaderText="General, Number, Date Time, Duration or Text.">
             <i:SelectionBox ui:field="type" addStyleNames="w-100"/>
         </form:FormGroup>
 
@@ -62,6 +62,18 @@
                 <valuespinner:ValueSpinner ui:field="timeZoneOffsetMinutes" minValue="0" maxValue="59"
                                            minStep="30" maxStep="30" ariaLabel="Minutes"/>
             </g:FlowPanel>
+        </form:FormGroup>
+
+        <!-- Duration settings -->
+        <form:FormGroup ui:field="formatDurationStyle" identity="formatDurationStyle" label="Style"
+                        helpText="How durations are written: Exact (every unit needed, e.g. 2d1h30m), ISO 8601 (e.g. PT49H30M) or Pattern (your own layout, e.g. 2.01:30:00). A number is taken as milliseconds, and a value that is not a duration is shown as it is. Default is Exact."
+                        screenReaderText="Exact, ISO 8601 or Pattern.">
+            <i:SelectionBox ui:field="durationStyle" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="formatDurationPattern" identity="formatDurationPattern" label="Pattern"
+                        helpText="Layout of a duration, e.g. d.hh:mm:ss, of d (days), h or hh (hours), m or mm (minutes), s or ss (seconds), f, ff or fff (fractions of a second) and other text, whose letters must be in single quotes. Each unit has what the larger ones in the pattern leave, so 2 days and 90 minutes is 49:30 with hh:mm."
+                        screenReaderText="e.g. d.hh:mm:ss.">
+            <i:SuggestionBox ui:field="durationPattern" addStyleNames="w-100"/>
         </form:FormGroup>
 
         <form:FormGroup helpText="Wraps long values in this column onto several lines, so the whole value shows. When not ticked, values stay on one line and are cut off at the column edge. Default is not ticked.">
