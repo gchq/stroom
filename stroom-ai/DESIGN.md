@@ -1731,6 +1731,20 @@ identities, and holds it as Stroom reference data)
   accounts. Its field per index comes from the skill, then the AGENTS doc's `## Fields`, then convention, as the
   user field does; `activity_timeline`, `compare_activity` and `sequence_query` take a person field beside the user
   field. An index without it falls back to its user field, and the result says so.
+* **Fallback: a logon id** (user, 2026-11-24), e.g. `user.name`, where there is no person id: every tool takes it
+  instead (its field per index found as the user field is), and the result is by account, saying so ("by logon id"
+  or "by person id"), with the accounts covered per source and the sources where nothing matched.
+  * **Several ids at once** approximate a person (`alex.chen`, `adm-achen`, `alex.chen@corp.example`): filtered on
+    all, each account kept visible in the results.
+  * **Other accounts drop out** unless named: a person's admin or service-account use, where privilege misuse
+    usually happens; the result says other accounts aren't included unless named.
+  * **Forms differ by source** (`alex.chen`, `CORP\achen`, `alex.chen@corp.example`): matched counts per source;
+    for a source with none, close variants found in its index (domain added or removed, case) are offered, merged
+    only on the user's confirmation.
+  * **Renames and new accounts** split a history: flagged as an account stopping where a similar one starts, not
+    joined.
+  * **Shared accounts** (several hosts or `Organisation` values at once) are flagged; their baselines mean less.
+  * **Peers** by logon id, each counted once, the accounts named for the person under review left out.
 * **Peers by `EventSource/User/UserDetails/Organisation`** (user, 2026-11-24), which processing decorates in the
   Event XML only, not the index, so it can't be grouped by in an aggregate. Peers are found in two steps: the
   people active in the window, from the index (one aggregate by the person or user field); then one event of each
