@@ -30,6 +30,28 @@ class TestMin extends AbstractFunctionTest<Min> {
     @Override
     Stream<TestCase> getTestCases() {
         return Stream.of(
+                TestCase.ofAggregate(
+                        "aggregate with a null",
+                        ValInteger.create(3),
+                        ValInteger.create(5),
+                        ValNull.INSTANCE,
+                        ValInteger.create(3)),
+                TestCase.ofAggregate(
+                        "aggregate ending with a null",
+                        ValInteger.create(5),
+                        ValInteger.create(5),
+                        ValNull.INSTANCE),
+                TestCase.ofAggregate(
+                        "aggregate of nulls",
+                        ValNull.INSTANCE,
+                        ValNull.INSTANCE,
+                        ValNull.INSTANCE),
+                TestCase.of(
+                        "basic with a null",
+                        ValInteger.create(3),
+                        ValInteger.create(5),
+                        ValNull.INSTANCE,
+                        ValInteger.create(3)),
                 TestCase.of(
                         "basic int",
                         ValInteger.create(1),

@@ -18,6 +18,7 @@ package stroom.query.language.functions;
 
 import stroom.query.language.functions.ref.StoredValues;
 
+import java.time.ZoneId;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
@@ -25,10 +26,11 @@ import java.util.function.Supplier;
         name = Add.NAME,
         aliases = Add.ALIAS,
         commonCategory = FunctionCategory.MATHEMATICS,
-        commonReturnType = ValDouble.class,
+        commonReturnType = Val.class,
         commonReturnDescription = "The sum of all values",
         commonDescription = "Adds the value of all arguments together. Minimum of two arguments. Can be expressed as " +
-                            "'${field1}+${field2}'.",
+                            "'${field1}+${field2}'. A duration, e.g. 2h, or a period, e.g. 1M, can be added to a " +
+                            "date. A period is added in the time zone of the query.",
         signatures = @FunctionSignature(
                 args = @FunctionArg(
                         name = "arg",
@@ -40,12 +42,12 @@ class Add extends NumericFunction {
 
     static final String NAME = "add";
     static final String ALIAS = "+";
-    private static final Calculator CALC = new Calc();
 
-    private boolean durationMode;
+    private final Calculator calculator;
 
-    public Add(final String name) {
+    public Add(final ExpressionContext expressionContext, final String name) {
         super(name, 2, Integer.MAX_VALUE);
+        calculator = Calc.create(expressionContext);
     }
 
     @Override
@@ -55,33 +57,47 @@ class Add extends NumericFunction {
 
     @Override
     protected Calculator getCalculator() {
-        return CALC;
+        return calculator;
     }
 
     static class Calc extends Calculator {
 
+        private final Supplier<ZoneId> zone;
+        private final boolean summing;
+
+        private Calc(final Supplier<ZoneId> zone, final boolean summing) {
+            this.zone = zone;
+            this.summing = summing;
+        }
+
+        /// Creates a calculator for an expression that adds values together.
+        ///
+        /// @param expressionContext The context of the expression, whose time zone periods are added in.
+        /// @return The calculator.
+        static Calc create(final ExpressionContext expressionContext) {
+            return new Calc(new QueryZone(expressionContext), false);
+        }
+
+        /// Creates a calculator for a function that totals the values of a column, which can be dates as an
+        /// average is worked out from a total.
+        ///
+        /// @param expressionContext The context of the expression, whose time zone periods are added in.
+        /// @return The calculator.
+        static Calc createForSum(final ExpressionContext expressionContext) {
+            return new Calc(new QueryZone(expressionContext), true);
+        }
+
         @Override
         Val calc(final Val current, final Val value) {
+            if (!current.type().isValue() || !value.type().isValue()
+                || (summing && Type.DATE.equals(current.type()) && Type.DATE.equals(value.type()))) {
+                return super.calc(current, value);
+            }
             try {
-                if (Type.DURATION.equals(value.type())) {
-                    if (value.type().isError() ||
-                        current.type().isNull()) {
-                        return value;
-                    } else if (current.type().isError()) {
-                        return current;
-                    }
-
-                    final long milliseconds = value.toLong();
-                    final long diff = current.toLong() + milliseconds;
-                    if (Type.DATE.equals(current.type())) {
-                        return ValDate.create(diff);
-                    } else {
-                        return ValDuration.create(diff);
-                    }
-                } else {
-                    return super.calc(current, value);
-                }
-
+                final Val result = DateArithmetic.add(current, value, zone);
+                return result != null
+                        ? result
+                        : super.calc(current, value);
             } catch (final RuntimeException e) {
                 return ValErr.create(e.getMessage());
             }
@@ -105,6 +121,8 @@ class Add extends NumericFunction {
         @Override
         public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
             boolean concat = false;
+            boolean hasNull = false;
+            boolean hasAmount = false;
             final Val[] vals = new Val[childGenerators.length];
             for (int i = 0; i < vals.length; i++) {
                 final Val val = childGenerators[i].eval(storedValues, childDataSupplier);
@@ -113,6 +131,8 @@ class Add extends NumericFunction {
                 } else if (val instanceof ValString) {
                     concat = true;
                 }
+                hasNull |= val.type().isNull();
+                hasAmount |= Type.DURATION.equals(val.type()) || Type.PERIOD.equals(val.type());
 
                 vals[i] = val;
             }
@@ -126,6 +146,11 @@ class Add extends NumericFunction {
                     }
                 }
                 return ValString.create(sb.toString());
+            }
+
+            // A date that is missing stays missing, as it does when a duration or period is subtracted from it.
+            if (hasNull && hasAmount) {
+                return ValNull.INSTANCE;
             }
 
             Val value = ValNull.INSTANCE;

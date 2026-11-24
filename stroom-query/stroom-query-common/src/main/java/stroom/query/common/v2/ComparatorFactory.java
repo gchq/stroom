@@ -45,14 +45,14 @@ public class ComparatorFactory {
             // Pure string comparison, no comparing as doubles first.
             return ValComparators.AS_CASE_INSENSITIVE_STRING_COMPARATOR;
         } else if (Type.NUMBER == formatType) {
-            return ValComparators.AS_DOUBLE_COMPARATOR;
+            return ValComparators.SORT_AS_DOUBLE_COMPARATOR;
         } else if (Type.DATE_TIME == formatType) {
             return ValComparators.AS_LONG_COMPARATOR;
         } else {
             // Even if we have numbers mixed in with words, we want the numbers
             // sorted numerically, i.e. 3, 20, 100, foo
             // rather than 100, 20, 3, foo
-            return ValComparators.AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR;
+            return ValComparators.SORT_AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR;
         }
     }
 }

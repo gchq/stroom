@@ -87,6 +87,7 @@ class TestValSerialiser {
                 .addCase(ValString.create(""), ValString.EMPTY)
                 .addCase(ValErr.create("Bad things happened"), ValErr.create("Bad things happened"))
                 .addCase(ValDuration.create(123), ValDuration.create(123))
+                .addCase(ValPeriod.create(1, -2, 3), ValPeriod.create(1, -2, 3))
                 .withNameFunction(testCase ->
                         testCase.getInput().getClass().getSimpleName()
                                 + "(" + testCase.getInput().toString() + ")")

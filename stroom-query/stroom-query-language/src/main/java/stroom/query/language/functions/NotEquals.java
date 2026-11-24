@@ -51,6 +51,11 @@ class NotEquals extends AbstractEqualityFunction {
         return EVALUATOR;
     }
 
+    @Override
+    boolean isOrdering() {
+        return false;
+    }
+
 
     // --------------------------------------------------------------------------------
 

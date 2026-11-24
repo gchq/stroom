@@ -19,6 +19,7 @@ package stroom.query.language.functions;
 import stroom.query.api.token.Token;
 import stroom.query.api.token.TokenException;
 import stroom.query.language.token.TimeLiteral;
+import stroom.util.shared.time.SimpleDuration;
 
 import java.util.Map;
 
@@ -55,7 +56,10 @@ public class ParamFactory {
                             UserTimeZoneUtil.getZoneId(expressionContext)));
 
                 case DURATION:
-                    return ValDuration.create(TimeLiteral.toExactMillis(TimeLiteral.parse(token.getText())));
+                    final SimpleDuration literal = TimeLiteral.parse(token.getText());
+                    return TimeLiteral.isPeriod(literal)
+                            ? ValPeriod.create(TimeLiteral.toPeriod(literal))
+                            : ValDuration.create(TimeLiteral.toExactMillis(literal));
 
                 case NUMBER:
                     return ValDouble.create(Double.parseDouble(token.getText()));

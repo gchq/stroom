@@ -16,17 +16,22 @@
 
 package stroom.query.language.functions;
 
+import java.time.ZoneId;
+import java.util.function.Supplier;
+
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = Subtract.NAME,
         aliases = Subtract.ALIAS,
         commonCategory = FunctionCategory.MATHEMATICS,
-        commonReturnType = ValDouble.class,
+        commonReturnType = Val.class,
         commonReturnDescription = "The result of subtracting each argument from the last argument or result of the " +
                 "last subtraction.",
         commonDescription = "Subtracts arg2 from arg1. Minimum of two arguments. If more than two arguments are " +
                 "supplied then each argument is subtracted from the previous result, e.g. subtract(10, 5, 2) returns " +
-                "3. Can be expressed as '${field1}-${field2}'.",
+                "3. Can be expressed as '${field1}-${field2}'. A date minus a date is a duration. A duration, " +
+                "e.g. 2h, or a period, e.g. 1M, can be subtracted from a date. A period is subtracted in the time " +
+                "zone of the query.",
         signatures = @FunctionSignature(
                 args = @FunctionArg(
                         name = "arg",
@@ -38,10 +43,12 @@ class Subtract extends NumericFunction {
 
     static final String NAME = "-";
     static final String ALIAS = "subtract";
-    private static final Calculator CALC = new Calc();
 
-    public Subtract(final String name) {
+    private final Calculator calculator;
+
+    public Subtract(final ExpressionContext expressionContext, final String name) {
         super(name, 2, Integer.MAX_VALUE);
+        calculator = new Calc(expressionContext);
     }
 
     @Override
@@ -51,29 +58,27 @@ class Subtract extends NumericFunction {
 
     @Override
     protected Calculator getCalculator() {
-        return CALC;
+        return calculator;
     }
 
-    static class Calc extends Calculator {
+    private static final class Calc extends Calculator {
+
+        private final Supplier<ZoneId> zone;
+
+        private Calc(final ExpressionContext expressionContext) {
+            zone = new QueryZone(expressionContext);
+        }
 
         @Override
         Val calc(final Val current, final Val value) {
+            if (!current.type().isValue() || !value.type().isValue()) {
+                return super.calc(current, value);
+            }
             try {
-                if (Type.DURATION.equals(value.type())) {
-                    if (!current.type().isValue() || value.type().isError()) {
-                        return value;
-                    }
-                    final long milliseconds = value.toLong();
-                    final long diff = current.toLong() - milliseconds;
-                    if (Type.DATE.equals(current.type())) {
-                        return ValDate.create(diff);
-                    } else {
-                        return ValDuration.create(diff);
-                    }
-                } else {
-                    return super.calc(current, value);
-                }
-
+                final Val result = DateArithmetic.subtract(current, value, zone);
+                return result != null
+                        ? result
+                        : super.calc(current, value);
             } catch (final RuntimeException e) {
                 return ValErr.create(e.getMessage());
             }

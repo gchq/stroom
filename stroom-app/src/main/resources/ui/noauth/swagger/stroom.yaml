@@ -24116,6 +24116,7 @@ components:
           long: "#/components/schemas/ValLong"
           "null": "#/components/schemas/ValNull"
           number: "#/components/schemas/ValNumber"
+          period: "#/components/schemas/ValPeriod"
           short: "#/components/schemas/ValShort"
           string: "#/components/schemas/ValString"
           xml: "#/components/schemas/ValXml"
@@ -24212,6 +24213,21 @@ components:
       type: object
       allOf:
       - $ref: "#/components/schemas/Val"
+    ValPeriod:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          days:
+            type: integer
+            format: int32
+          months:
+            type: integer
+            format: int32
+          years:
+            type: integer
+            format: int32
     ValShort:
       type: object
       allOf:

@@ -1198,7 +1198,7 @@ select comp
       "fields" : [ {
         "id" : "comp-1",
         "name" : "comp",
-        "expression" : "max(toFloat(day()-240h))",
+        "expression" : "max(toFloat(day()-10d))",
         "width" : 200,
         "visible" : true,
         "special" : false

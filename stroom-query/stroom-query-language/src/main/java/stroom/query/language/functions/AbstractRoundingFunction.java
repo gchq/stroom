@@ -60,7 +60,23 @@ abstract class AbstractRoundingFunction extends AbstractFunction {
     @Override
     public Generator createGenerator() {
         final Generator childGenerator = function.createGenerator();
-        return new RoundGenerator(childGenerator, calculator);
+        return new RoundGenerator(childGenerator, this::round);
+    }
+
+    // Rounds a value, keeping the type of a date or duration.
+    private Val round(final Val val) {
+        if (Type.PERIOD.equals(val.type())) {
+            return ValErr.create("Can't round a period");
+        }
+        final Val rounded = calculator.calc(val);
+        if (rounded.type().isNumber()) {
+            if (Type.DATE.equals(val.type())) {
+                return ValDate.create(rounded.toLong());
+            } else if (Type.DURATION.equals(val.type())) {
+                return ValDuration.create(rounded.toLong());
+            }
+        }
+        return rounded;
     }
 
     protected abstract RoundCalculator createCalculator(Double decimalPlaces);

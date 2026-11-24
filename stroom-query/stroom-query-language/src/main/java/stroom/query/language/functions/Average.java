@@ -51,13 +51,14 @@ class Average extends AbstractManyChildFunction implements AggregateFunction {
 
     static final String NAME = "average";
     static final String ALIAS = "mean";
-    private final Add.Calc calculator = new Add.Calc();
+    private final Add.Calc calculator;
 
     private ValReference valReference;
     private CountReference countReference;
 
-    public Average(final String name) {
+    public Average(final ExpressionContext expressionContext, final String name) {
         super(name, 1, Integer.MAX_VALUE);
+        calculator = Add.Calc.createForSum(expressionContext);
     }
 
     @Override
@@ -126,7 +127,11 @@ class Average extends AbstractManyChildFunction implements AggregateFunction {
                     return ValNull.INSTANCE;
                 }
             }
-            return ValDouble.create(current.toDouble() / count);
+            final Double total = current.toDouble();
+            if (total == null) {
+                return ValErr.create("Can't average a " + current.type().getName());
+            }
+            return ValDouble.create(total / count);
         }
 
         @Override
@@ -165,7 +170,9 @@ class Average extends AbstractManyChildFunction implements AggregateFunction {
             }
             final Double val = value.toDouble();
             if (val == null) {
-                return value;
+                return Type.PERIOD.equals(value.type())
+                        ? ValErr.create("Can't average a " + value.type().getName())
+                        : value;
             }
             return ValDouble.create(val / childGenerators.length);
         }

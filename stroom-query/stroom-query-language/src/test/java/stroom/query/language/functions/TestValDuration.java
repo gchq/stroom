@@ -104,6 +104,11 @@ class TestValDuration {
                 .addCase(ValDuration.create(1_000L), "1s")
                 .addCase(ValDuration.create(60_000L), "1m")
                 .addCase(ValDuration.create(Duration.ofDays(1)), "1d")
+                .addCase(ValDuration.create(61_000L), "1m1s")
+                .addCase(ValDuration.create(Duration.ofMinutes(329)), "5h29m")
+                .addCase(ValDuration.create(Duration.ofHours(-12)), "-12h")
+                .addCase(ValDuration.create(90_061_001L), "1d1h1m1s1ms")
+                .addCase(ValDuration.create(Long.MIN_VALUE), "-9223372036854775808ms")
                 .build();
     }
 }

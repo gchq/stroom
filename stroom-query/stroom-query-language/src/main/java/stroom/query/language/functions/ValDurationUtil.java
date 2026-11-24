@@ -16,18 +16,23 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.language.token.TimeLiteral;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 
+import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.format.DateTimeParseException;
+import java.util.regex.Pattern;
 
 public class ValDurationUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ValDurationUtil.class);
+    // Numbers and exact units such as 1d2h30m, -12h or 1h 30m, as a duration is shown.
+    private static final Pattern EXACT_PATTERN = Pattern.compile("\\s*-?\\s*(?:\\d++(?:ms|[wdhms])\\s*+)++");
     static final String PARSE_ERROR_MESSAGE = "Text cannot be parsed to a Duration";
 
     public static Val formatDuration(final Val value) {
@@ -40,7 +45,7 @@ public class ValDurationUtil {
         } else if (Type.STRING.equals(value.type())) {
             return formatDuration(value.toString());
         }
-        return value;
+        return checkPeriod(value);
     }
 
     public static Val formatDuration(final String value) {
@@ -59,13 +64,13 @@ public class ValDurationUtil {
     public static Val formatISODuration(final Val value) {
         if (value == null) {
             return ValNull.INSTANCE;
-        } else if (value.type().isNumber()) {
+        } else if (isDuration(value)) {
             final long milliseconds = value.toLong();
             return ValString.create(Duration.ofMillis(milliseconds).toString());
         } else if (Type.STRING.equals(value.type())) {
             return formatISODuration(value.toString());
         }
-        return value;
+        return checkPeriod(value);
     }
 
     public static Val formatISODuration(final String value) {
@@ -84,7 +89,7 @@ public class ValDurationUtil {
     public static Val parseDuration(final Val val) {
         if (Type.STRING == val.type()) {
             return parseDuration(val.toString());
-        } else if (val.type().isNumber()) {
+        } else if (isDuration(val)) {
             if (Type.DURATION == val.type()) {
                 return val;
             }
@@ -97,7 +102,7 @@ public class ValDurationUtil {
                         val.getClass().getSimpleName()));
             }
         }
-        return val;
+        return checkPeriod(val);
     }
 
     public static Val parseDuration(final String value) {
@@ -116,7 +121,7 @@ public class ValDurationUtil {
     public static Val parseISODuration(final Val val) {
         if (Type.STRING.equals(val.type())) {
             return parseISODuration(val.toString());
-        } else if (val.type().isNumber()) {
+        } else if (isDuration(val)) {
             if (Type.DURATION.equals(val.type())) {
                 return val;
             }
@@ -129,7 +134,7 @@ public class ValDurationUtil {
                         val.getClass().getSimpleName()));
             }
         }
-        return val;
+        return checkPeriod(val);
     }
 
     public static Val parseISODuration(final String value) {
@@ -142,6 +147,27 @@ public class ValDurationUtil {
                 return exceptionToValErr(e);
             }
         }
+    }
+
+    private static Val checkPeriod(final Val val) {
+        return val instanceof ValPeriod
+                ? ValErr.create("A period of months or years can't be used as a duration")
+                : val;
+    }
+
+    /// Tells whether a constant parameter is already a length of time, so should be used as it is and not read
+    /// from its text.
+    ///
+    /// @param param The parameter.
+    /// @return True if it is a duration or period.
+    static boolean isAmount(final Param param) {
+        return param instanceof ValDuration || param instanceof ValPeriod;
+    }
+
+    // A period of only days can stand in for a duration.
+    private static boolean isDuration(final Val val) {
+        return val.type().isNumber()
+               || (val instanceof final ValPeriod period && period.hasOnlyDays());
     }
 
     private static ValErr exceptionToValErr(final Exception e) {
@@ -172,10 +198,16 @@ public class ValDurationUtil {
                 // This is ISO 8601 format so use Duration to parse it
                 return Duration.parse(value).toMillis();
             }
+            if (EXACT_PATTERN.matcher(value).matches()) {
+                return TimeLiteral.parseCompoundMillis(value);
+            }
             // Not ISO 8601 so have a go with our ModelStringUtil format
             return ModelStringUtil.parseDurationString(value);
         } catch (final DateTimeParseException e) {
             throw e;
+        } catch (final DateTimeException e) {
+            // This says what is wrong in words that are fit for the query's author.
+            throw new DateTimeParseException(e.getMessage(), value, 0, e);
         } catch (final Exception e) {
             throw new DateTimeParseException(PARSE_ERROR_MESSAGE, value, 0);
         }

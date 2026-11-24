@@ -20,6 +20,7 @@ import stroom.query.language.functions.ref.DataReader;
 import stroom.query.language.functions.ref.DataWriter;
 import stroom.util.logging.LogUtil;
 
+import java.time.Period;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -74,6 +75,14 @@ public final class ValSerialiser {
         SERIALISERS[Type.XML.getId()] = new Serialiser(
                 input -> ValXml.create(input.readBytes()),
                 (output, value) -> output.writeBytes(((ValXml) value).getBytes()));
+        SERIALISERS[Type.PERIOD.getId()] = new Serialiser(
+                input -> ValPeriod.create(input.readInt(), input.readInt(), input.readInt()),
+                (output, value) -> {
+                    final Period period = ((ValPeriod) value).toPeriod();
+                    output.writeInt(period.getYears());
+                    output.writeInt(period.getMonths());
+                    output.writeInt(period.getDays());
+                });
     }
 
     public static Val read(final DataReader reader) {

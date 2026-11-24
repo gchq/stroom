@@ -79,7 +79,7 @@ public abstract class NumericFunction extends AbstractManyChildFunction {
 
                 if (!val.type().isValue()) {
                     return val;
-                } else if (!val.type().isNumber()) {
+                } else if (!val.type().isNumber() && !Type.PERIOD.equals(val.type())) {
                     return ValErr.INSTANCE;
                 }
 

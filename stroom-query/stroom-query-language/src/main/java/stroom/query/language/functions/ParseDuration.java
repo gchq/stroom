@@ -56,6 +56,8 @@ class ParseDuration extends AbstractFunction {
         if (param instanceof Function) {
             function = (Function) param;
             hasAggregate = function.hasAggregate();
+        } else if (ValDurationUtil.isAmount(param)) {
+            gen = new StaticValueFunction(ValDurationUtil.parseDuration((Val) param)).createGenerator();
         } else {
             final String durationString = param.toString();
             gen = new StaticValueFunction(ValDurationUtil.parseDuration(durationString)).createGenerator();

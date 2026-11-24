@@ -30,6 +30,7 @@ import stroom.query.language.functions.ValFloat;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.ValPeriod;
 import stroom.query.language.functions.ValShort;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValXml;
@@ -37,6 +38,7 @@ import stroom.util.shared.NullSafe;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.time.Period;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -162,6 +164,17 @@ public class ValSerdeUtil {
                     return function.apply(byteBuffer);
                 });
             }
+            case PERIOD -> byteBuffers.use(len + 3 * Integer.BYTES, byteBuffer -> {
+                final Period period = ((ValPeriod) val).toPeriod();
+                prefix.getConsumer().accept(byteBuffer);
+                byteBuffer.put(type.getId());
+                byteBuffer.putInt(period.getYears());
+                byteBuffer.putInt(period.getMonths());
+                byteBuffer.putInt(period.getDays());
+                suffix.getConsumer().accept(byteBuffer);
+                byteBuffer.flip();
+                return function.apply(byteBuffer);
+            });
             case XML -> {
                 final byte[] bytes = ((ValXml) val).getBytes();
                 yield byteBuffers.use(len + bytes.length, byteBuffer -> {
@@ -190,6 +203,7 @@ public class ValSerdeUtil {
             case DOUBLE -> ValDouble.create(byteBuffer.getDouble());
             case DATE -> ValDate.create(byteBuffer.getLong());
             case DURATION -> ValDuration.create(byteBuffer.getLong());
+            case PERIOD -> ValPeriod.create(byteBuffer.getInt(), byteBuffer.getInt(), byteBuffer.getInt());
             case STRING -> ValString.create(ByteBufferUtils.toString(byteBuffer));
             case XML -> ValXml.create(ByteBufferUtils.getBytes(byteBuffer));
             case ERR -> ValErr.create(ByteBufferUtils.toString(byteBuffer));

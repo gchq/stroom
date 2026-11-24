@@ -21,11 +21,12 @@ package stroom.query.language.functions;
         name = Divide.NAME,
         aliases = Divide.ALIAS,
         commonCategory = FunctionCategory.MATHEMATICS,
-        commonReturnType = ValDouble.class,
+        commonReturnType = Val.class,
         commonReturnDescription = "The value of arg1 divided by arg2.",
         commonDescription = "The value of arg1 divided by arg2. If more than two arguments are supplied then " +
                 "it will divide by each argument in turn, e.g. divide(1000, 10, 5, 2) returns 10. " +
-                "Can be expressed as '${field1}/${field2}'.",
+                "Can be expressed as '${field1}/${field2}'. A duration divided by a number is a duration and a " +
+                "duration divided by a duration is a number, e.g. '${elapsed}/1h' is a number of hours.",
         signatures = @FunctionSignature(
                 args = @FunctionArg(
                         name = "arg",
@@ -49,6 +50,21 @@ class Divide extends NumericFunction {
     }
 
     static class Calc extends Calculator {
+
+        @Override
+        Val calc(final Val current, final Val value) {
+            if (!current.type().isValue() || !value.type().isValue()) {
+                return super.calc(current, value);
+            }
+            try {
+                final Val result = DateArithmetic.divide(current, value);
+                return result != null
+                        ? result
+                        : super.calc(current, value);
+            } catch (final RuntimeException e) {
+                return ValErr.create(e.getMessage());
+            }
+        }
 
         @Override
         double op(final double cur, final double val) {

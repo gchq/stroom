@@ -25,6 +25,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.DateTimeException;
+import java.time.Period;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -92,6 +93,82 @@ class TestTimeLiteral {
             "1w,604800000"})
     void testToExactMillis(final String text, final long expected) {
         assertThat(TimeLiteral.toExactMillis(TimeLiteral.parse(text))).isEqualTo(expected);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "1d,P1D,1d",
+            "2w,P14D,14d",
+            "18M,P18M,18M",
+            "1y,P1Y,1y",
+            "0d,P0D,0d",
+            "0M,P0D,0d"})
+    void testToPeriod(final String text, final String expected, final String expectedLiteral) {
+        assertThat(TimeLiteral.isPeriod(TimeLiteral.parse(text))).isTrue();
+        final Period period = TimeLiteral.toPeriod(TimeLiteral.parse(text));
+        assertThat(period).isEqualTo(Period.parse(expected));
+        assertThat(TimeLiteral.formatPeriod(period)).isEqualTo(expectedLiteral);
+    }
+
+    @Test
+    void testFormatMixedPeriod() {
+        assertThat(TimeLiteral.formatPeriod(Period.of(1, 2, 0))).isNull();
+        assertThat(TimeLiteral.formatPeriod(Period.of(0, 2, 3))).isNull();
+        assertThat(TimeLiteral.formatPeriod(Period.of(1, 0, 3))).isNull();
+        assertThat(TimeLiteral.formatPeriod(Period.ofMonths(-3))).isEqualTo("-3M");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"1ns", "1ms", "1s", "1m", "1h"})
+    void testNotAPeriod(final String text) {
+        assertThat(TimeLiteral.isPeriod(TimeLiteral.parse(text))).isFalse();
+        assertThatThrownBy(() -> TimeLiteral.toPeriod(TimeLiteral.parse(text)))
+                .isInstanceOf(DateTimeException.class)
+                .hasMessageContaining("'" + text + "' is not a period");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"2147483648d", "2147483647w", "2147483648M", "2147483648y"})
+    void testPeriodTooLong(final String text) {
+        assertThatThrownBy(() -> TimeLiteral.toPeriod(TimeLiteral.parse(text)))
+                .isInstanceOf(DateTimeException.class)
+                .hasMessageContaining("too long");
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "0,0ms",
+            "61000,1m1s",
+            "-43200000,-12h",
+            "-90061001,-1d1h1m1s1ms",
+            "604800000,7d",
+            "9223372036854775807,106751991167d7h12m55s807ms"})
+    void testCompoundMillis(final long millis, final String expected) {
+        assertThat(TimeLiteral.formatCompoundMillis(millis)).isEqualTo(expected);
+        assertThat(TimeLiteral.parseCompoundMillis(expected)).isEqualTo(millis);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "1h 30m,5400000",
+            "' - 1h  30m ',-5400000",
+            "1w1d,691200000",
+            "1s1s,2000"})
+    void testParseCompoundMillis(final String text, final long expected) {
+        assertThat(TimeLiteral.parseCompoundMillis(text)).isEqualTo(expected);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "1M2d,months and years vary",
+            "106751991167d8h,too long",
+            "1h-2m,is not a number and a unit",
+            "1 5m,is not a number and a unit",
+            "1m s,is not a number and a unit"})
+    void testBadCompoundMillis(final String text, final String message) {
+        assertThatThrownBy(() -> TimeLiteral.parseCompoundMillis(text))
+                .isInstanceOf(DateTimeException.class)
+                .hasMessageContaining(message);
     }
 
     @ParameterizedTest

@@ -31,6 +31,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.text.ParseException;
 import java.time.Instant;
+import java.time.Period;
 import java.util.List;
 import java.util.Map;
 
@@ -52,8 +53,6 @@ class TestParamFactory {
             "1s,1000",
             "1m,60000",
             "1h,3600000",
-            "1d,86400000",
-            "1w,604800000",
             "1000000ns,1"})
     void testDuration(final String literal, final long expected) {
         assertThat(create(literal)).isEqualTo(ValDuration.create(expected));
@@ -61,8 +60,7 @@ class TestParamFactory {
 
     @ParameterizedTest
     @CsvSource({
-            "1M,months and years vary in length",
-            "1y,months and years vary in length",
+            "99999999999d,too long",
             "1ns,held to the millisecond",
             "1H,Unknown unit 'H'",
             "1D,Unknown unit 'D'"})
@@ -116,10 +114,20 @@ class TestParamFactory {
                 .hasMessageContaining("is not one number and one unit");
     }
 
+    @ParameterizedTest
+    @CsvSource({
+            "1d,P1D",
+            "1w,P7D",
+            "3M,P3M",
+            "2y,P2Y"})
+    void testPeriod(final String literal, final String expected) {
+        assertThat(create(literal)).isEqualTo(ValPeriod.create(Period.parse(expected)));
+    }
+
     // A column of a query is compiled from the text of the expression that was parsed, not from what the
     // query's author wrote.
     @ParameterizedTest
-    @ValueSource(strings = {"5ms", "1500ms", "61s", "90s", "90m", "3661s", "36h", "1d", "1w"})
+    @ValueSource(strings = {"5ms", "1500ms", "61s", "90s", "90m", "3661s", "36h", "1d", "1w", "18M", "1y"})
     void testDurationIsKeptWhenItsExpressionIsParsedAgain(final String literal) throws ParseException {
         final String text = parse("${a}+" + literal);
 

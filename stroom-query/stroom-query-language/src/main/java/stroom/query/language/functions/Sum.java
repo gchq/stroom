@@ -43,7 +43,7 @@ class Sum extends AbstractAggregateFunction {
 
     static final String NAME = "sum";
 
-    public Sum(final String name) {
-        super(name, new Add.Calc());
+    public Sum(final ExpressionContext expressionContext, final String name) {
+        super(name, Add.Calc.createForSum(expressionContext));
     }
 }

@@ -439,6 +439,7 @@ public class ExpressionParser {
                                                     final ValDuration valDuration = (ValDuration) param;
                                                     yield ValDuration.create(-valDuration.toLong());
                                                 }
+                                                case PERIOD -> DateArithmetic.negate(val);
                                                 default -> throw new TokenException(signToken,
                                                         "Illegal negation of " + val.type().getName());
                                             };

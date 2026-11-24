@@ -65,6 +65,12 @@ public class ValComparators {
             "ValAsCaseSensitiveString",
             Comparator.comparing(Val::toString, Comparator.nullsLast(String::compareTo)));
 
+    // Only for comparing two periods.
+    static final Comparator<Val> AS_PERIOD_COMPARATOR = CompareUtil.name(
+            "ValAsPeriod",
+            // Not a reference to the comparator itself, as ValPeriod needs this class in order to create it.
+            (val1, val2) -> ValPeriod.PERIOD_COMPARATOR.compare((ValPeriod) val1, (ValPeriod) val2));
+
     // String is an odd one. If both values are numeric then we want to compare them as numbers
     public static final Comparator<Val> AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR = CompareUtil.name(
             "ValAsDoubleThenCaseInsensitiveString",
@@ -79,6 +85,15 @@ public class ValComparators {
     public static final Comparator<Val> AS_LONG_THEN_CASE_SENSITIVE_STRING_COMPARATOR = CompareUtil.name(
             "ValAsLongThenCaseSensitiveString",
             AS_LONG_COMPARATOR.thenComparing(AS_CASE_SENSITIVE_STRING_COMPARATOR));
+
+    // For sorting a column, where every value needs a place even if it can't be compared with the others. A
+    // period goes where its estimated length does.
+    public static final Comparator<Val> SORT_AS_DOUBLE_COMPARATOR = CompareUtil.name(
+            "ValSortAsDouble",
+            Comparator.comparing(ValComparators::toSortDouble, Comparator.nullsLast(Double::compareTo)));
+    public static final Comparator<Val> SORT_AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR = CompareUtil.name(
+            "ValSortAsDoubleThenCaseInsensitiveString",
+            SORT_AS_DOUBLE_COMPARATOR.thenComparing(AS_CASE_INSENSITIVE_STRING_COMPARATOR));
 
     private static final ValComparatorFactory AS_STRING_COMPARATOR_FACTORY = DualValComparatorFactory.create(
             AS_CASE_SENSITIVE_STRING_COMPARATOR, AS_CASE_INSENSITIVE_STRING_COMPARATOR);
@@ -107,6 +122,7 @@ public class ValComparators {
         SORT_COMPARATORS_BY_TYPE_MAP.put(Type.FLOAT, AS_FLOAT_COMPARATOR);
         SORT_COMPARATORS_BY_TYPE_MAP.put(Type.DATE, AS_LONG_COMPARATOR);
         SORT_COMPARATORS_BY_TYPE_MAP.put(Type.DURATION, AS_LONG_COMPARATOR);
+        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.PERIOD, AS_PERIOD_COMPARATOR);
         SORT_COMPARATORS_BY_TYPE_MAP.put(Type.STRING, AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR);
         SORT_COMPARATORS_BY_TYPE_MAP.put(Type.XML, AS_CASE_INSENSITIVE_STRING_COMPARATOR);
         SORT_COMPARATORS_BY_TYPE_MAP.put(Type.ERR, AS_CASE_INSENSITIVE_STRING_COMPARATOR); // always prefixed with Err:
@@ -166,6 +182,12 @@ public class ValComparators {
 
     private ValComparators() {
         // Statics only
+    }
+
+    private static Double toSortDouble(final Val val) {
+        return val instanceof final ValPeriod period
+                ? Double.valueOf(period.estimateMillis())
+                : val.toDouble();
     }
 
     /**

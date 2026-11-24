@@ -17,7 +17,6 @@
 package stroom.query.language.functions;
 
 import stroom.query.language.token.TimeLiteral;
-import stroom.util.shared.ModelStringUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -77,7 +76,7 @@ public final class ValDuration implements ValNumber {
 
     @Override
     public String toString() {
-        return ModelStringUtil.formatDurationString(milliseconds, true);
+        return TimeLiteral.formatCompoundMillis(milliseconds);
     }
 
     @Override
