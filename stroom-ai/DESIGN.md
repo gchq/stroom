@@ -1671,6 +1671,123 @@ To settle with the product owner before building; listed in [Open questions](#op
 13. ~~Over `/mcp` with no Stroom model~~: MCP sampling (the client's model, approved there), else strong links only,
     the result saying the loose items weren't classified (decided 2026-11-23).
 
+### Insider risk: patterns, anomalies and a record per person (proposed 2026-11-24)
+
+Proposed, not built. The use case the timeline, comparison and skills work serves: detecting and monitoring insider
+risk behaviours for one person or a small group, over days to a year. Findings are indicators with evidence for an
+analyst to weigh, never a verdict on a person.
+
+**Behaviours and their traces**
+
+| Behaviour | Indicators | Data |
+| --- | --- | --- |
+| Data theft before leaving | job-search browsing; breadth widening (shares, repositories, sites outside the usual set); bulk downloads; archiving; uploads to personal cloud or webmail; USB; activity moving out of hours; concentrated before the leaving date | proxy, cloud audit, endpoint |
+| Misuse of privilege | administration outside tickets; new privileged sessions; shared or service accounts; logging disabled | privileged sessions, authentication, endpoint |
+| Sabotage | out-of-hours admin sessions; mass deletes or changes; tools never used before; logs cleared | endpoint processes, admin sessions, audit |
+| Unauthorised viewing, fraud | records looked up with no business reason; volume above peers; access outside a caseload | application audit |
+| Evading controls | anonymisers; VPN bypass; new cloud apps; files renamed before upload; encryption tools | proxy (app, category), endpoint |
+| A compromised account (looks alike) | new host or country; impossible travel; a rhythm unlike the person's; activity while on leave | authentication, VPN, cloud sign-ins |
+
+The same features find an insider and a compromised account, so findings keep both explanations open.
+
+**Capabilities**
+
+* **Comparing activity across windows (`compare_activity`, a tool; the investigation a template skill)**: works from
+  aggregates only (ES|QL `STATS` by day per source, StroomQL aggregates in monthly slices for other indexes), never
+  fetched events, so 12 months is a few thousand numbers. Daily features: volume (events, active hours, sums of a
+  numeric field such as bytes out), rhythm (first and last of the day in the person's zone, an hour-of-week profile
+  per month), breadth (distinct hosts, destinations, apps, processes), novelty (first seen per value, by `MIN` per
+  value then counted per day, so high-cardinality fields stay at a row a day). Checked first: coverage per source
+  and month (retention), source-wide shifts (everyone's daily volume, so a pipeline change isn't the person's), the
+  user field per index (skill, AGENTS, convention). Scored: robust z-scores against a rolling same-weekday baseline;
+  change points (date and size of a lasting shift); Theil-Sen slopes; month-to-month rhythm distance; values started
+  or stopped; leave and holidays from AGENTS or the skill, else long quiet runs reported, not scored. Refuses a
+  score on fewer than about five baseline windows. The model gets at most about 20 ranked findings and a line a
+  month; the daily profile and monthly rollup are workspace files (charts by the CSV Data Connection route), kept
+  for re-runs, which add only new days. Drill-down is `activity_timeline` on the flagged days only.
+* **Peers**: by role and team from reference data (never by anything else), the group's daily median; findings
+  where one person parts from it. Groups capped, asked past the cap. Population-scale learned baselines stay with
+  ML products; their scores could come in as one more signal.
+* **Sequences of acts** (`sequence_query`): sensitive files, then an archive, then an upload to a personal domain
+  within an hour; a control disabled, an act, the control re-enabled; a privileged logon, mass deletes, a log
+  cleared.
+* **Sessions and following the data**: spans bounded by a key (agreed 2026-11-24: first to last event sharing a
+  session id or a field value) and wider correlation keys (every leaf of an event, `Data[...]` by name, index
+  fields) tie acts to one VPN, privileged or cloud session; file name, hash or size as keys follow a file from
+  endpoint to proxy to cloud.
+* **Categories**: personal cloud, webmail, job sites, anonymisers, archive and encryption tools, remote access: a
+  category field the source has first; else the model classifies the distinct values once (cached, correctable,
+  marked inferred, as activity characterisation does), the site's own list in reference data overriding both.
+* **Access graph**: people and the resources they touch, clustered (Leiden, as for charts and characterisation):
+  access outside one's cluster, or a resource reached from a new cluster; also peer groups learned from access.
+* **Location**: impossible travel and new countries from sign-in, VPN and cloud locations with the GeoLite2
+  reference data; activity abroad while on leave.
+
+**Context, from reference data** (user, 2026-11-24: the site's reference environment already resolves a person's
+identities, and holds it as Stroom reference data)
+
+* A person's accounts, role, team, manager, privileged accounts, start and leaving dates, leave, approved
+  exceptions and sensitive assets are read from reference data, so the tools work per person, not per account:
+  `activity_timeline`, `compare_activity` and `sequence_query` take a person and expand it to their accounts.
+* Gap: the agent can list reference data maps (`find_reference_data`) but not read a value by key; a lookup by map
+  and key (and a person's entries across maps) is needed, read-only, within the user's permissions.
+* Change points are read against these dates ("breadth up threefold from 12 April, 41 days before the leaving
+  date").
+
+**The record per person**
+
+* **Findings ledger, as events**: each finding (person, date, indicator, weight, evidence links to streams and events,
+  the query and parameters that produced it, who or what raised it) is an Events XML record in a findings feed, a
+  pipeline and an index. Append-only: a verdict, an exception or a withdrawal is another event against the finding.
+  Stroom's stream ids, retention and permissions give the custody; dashboards, StroomQL, `compare_activity` and
+  later analytic rules read it. Written by a narrow tool (`record_finding`: fixed fields, the site's findings feed
+  only), each write approved by the analyst in the chat.
+* **Risk score, a query over the ledger** at read time (weights times decay, summed per person), never stored, so it
+  is always current and breaks down into its findings.
+* **Cases in annotations** (user, 2026-11-24: annotations are the case system): a case per person (subject, status,
+  assignee, labels, a collection per investigation, comments, history, retention), linked to the ledger's and the
+  source's events; opened when a person crosses a threshold or by an analyst, the agent proposing it and the analyst
+  applying it ("Review and apply").
+* **Exceptions and verdicts** ("approved migration, until 2026-12-31", "confirmed benign") are ledger events that
+  suppress or down-weight matching findings, so a false positive isn't raised every week.
+* **Not Data Connections for the record**: JDBC and Athena Data Connections are read-only by design (a read-only
+  pool, read-only statements), and an agent writing SQL is the larger risk; kept that way.
+
+**Workflow, as skills**: a leaver review (the 90 days before a leaving date: compare against the person's year and
+team, the exfiltration sequences, a timeline of flagged days, an evidence summary); a privileged user review
+(sessions against tickets, new admin tools, logging changes); an alert triage (the person's baseline, peers, a
+timeline around the alert). Later run unattended by analytic rules ([Skills run by analytic
+rules](#skills-run-by-analytic-rules-future-2026-11-24)).
+
+**Safeguards**
+
+* Its tools sit behind their own tool policy, granted to the insider risk team.
+* Aggregates and findings first; events fetched only for flagged windows.
+* Findings are worded as indicators with evidence and an alternative explanation; the model never states intent or
+  guilt (the guide and `check_skill`).
+* No profiling by protected characteristics; peers by role from reference data only.
+* The chat, its calls and files, the ledger and the case are the record of what was looked at and why.
+* No tool acts against an account or a person.
+* Not built: sentiment or "disgruntlement" analysis of communications (intrusive, often unlawful without grounds,
+  unreliable); a grievance comes in as an HR date in reference data. Pseudonymised views (reveal with a reason,
+  audited) are recommended but a core Stroom feature, for the Stroom developers.
+* Findings may carry tags from a published insider-risk framework (CERT's indicators, MITRE's insider threat work),
+  as text in the skill.
+
+**Testing**: the timeline dataset generator (one invented endpoint format, loaded both through dev-node feeds and
+straight into the e2e Elasticsearch, user 2026-11-24) runs 12 months for a few people with a written known answer:
+a leaver (breadth widening, bulk downloads, personal cloud uploads, then the date); a disgruntled administrator
+(out-of-hours sessions, a new tool, logs cleared); a curious viewer (lookups above peers); a compromised account
+(new country and rhythm while on leave); a role change in month 5; a slow drift to later hours; two weeks' leave;
+and decoys that must not be flagged (an approved migration with bulk transfers, an on-call week, a source-wide
+pipeline change in month 8). Evals check findings against the known answer, change points within a few days. CMU's
+CERT insider threat datasets are an external benchmark to add after checking their licence, off this branch as the
+threat-hunting evals are.
+
+**Proposed order**: the Network object fix and the empty-window hint; the dataset generator; wider correlation keys,
+spans bounded by a key, activities for pairs; the reference data lookup; `compare_activity` and its template skills;
+categories; the findings ledger, risk score and annotation cases; the access graph; location.
+
 ### Stop and Elasticsearch errors (built 2026-11-16)
 
 * **Stop reaches the query.** Stop sets the run's flag (`AiChatRunManager.LocalRun.requestStop`), which the agent
@@ -5870,3 +5987,4 @@ behaviour; the settled ones are listed here with the section that records them.
 | An Elasticsearch TLS node in CI | Open | The TLS tests skip without one. |
 | HTML bodies to plain text (`html_text` transform) | Future (2026-11-23) | See [HTML bodies to plain text](#html-bodies-to-plain-text-future-2026-11-23). |
 | Skills run by analytic rules (per detection or scheduled; typed parameters, declared output) | Future (2026-11-24) | See [Skills run by analytic rules](#skills-run-by-analytic-rules-future-2026-11-24). |
+| Insider risk: comparison across windows, findings ledger, annotation cases | Proposed (2026-11-24) | See [Insider risk](#insider-risk-patterns-anomalies-and-a-record-per-person-proposed-2026-11-24). |
