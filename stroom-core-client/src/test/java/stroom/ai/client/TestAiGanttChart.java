@@ -54,6 +54,19 @@ class TestAiGanttChart {
     }
 
     @Test
+    void aChartInTheChatIsDrawnAtTheWidthItHasRoomForButNoNarrowerThanTheLeast() {
+        // As wide as the chat gives it, narrower or wider than the width first drawn at.
+        assertThat(AiGanttChart.fitWidth(600)).isEqualTo(600);
+        assertThat(AiGanttChart.fitWidth(1400)).isEqualTo(1400);
+        // Below the least, drawn at the least and scaled down to fit, so its labels don't crowd.
+        assertThat(AiGanttChart.fitWidth(300)).isEqualTo(AiGanttChart.MIN_WIDTH);
+        assertThat(AiGanttChart.fitWidth(AiGanttChart.MIN_WIDTH)).isEqualTo(AiGanttChart.MIN_WIDTH);
+        // No room known (the chat hidden, say): left as drawn.
+        assertThat(AiGanttChart.fitWidth(0)).isZero();
+        assertThat(AiGanttChart.fitWidth(-5)).isZero();
+    }
+
+    @Test
     void timesAreFormattedWithTheAxisFormatsTokens() {
         final long time = MermaidGantt.wallClock(2026, 1, 5, 7, 3, 9, 0);
 

@@ -24,6 +24,7 @@ import stroom.widget.util.client.MouseUtil;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -98,6 +99,25 @@ final class AiGanttInteraction {
                 reset.setAttribute("hidden", "");
             } else {
                 reset.removeAttribute("hidden");
+            }
+        }
+    }
+
+    /// Draws each chart in an element again at the width it has room for ([AiGanttChart#fitWidth]), keeping the
+    /// span it shows; one already drawn at that width, or with no room known, is left as it is.
+    ///
+    /// @param root The element the charts are in, e.g. the conversation or one message.
+    static void fit(final Element root) {
+        if (root == null) {
+            return;
+        }
+        final NodeList<Element> charts = charts(root, "." + AiMermaidCharts.CHART_CLASS);
+        for (int i = 0; i < charts.getLength(); i++) {
+            final Element chart = charts.getItem(i);
+            final int width = AiGanttChart.fitWidth(chart.getClientWidth());
+            if (width > 0 && width != widthOf(chart)) {
+                chart.setAttribute(AiMermaidCharts.WIDTH_ATTRIBUTE, String.valueOf(width));
+                draw(chart, viewOf(chart), width);
             }
         }
     }
@@ -281,6 +301,10 @@ final class AiGanttInteraction {
             return 0;
         }
     }
+
+    private static native NodeList<Element> charts(Element root, String selector) /*-{
+        return root.querySelectorAll(selector);
+    }-*/;
 
     private static native double boxLeft(Element element) /*-{
         return element.getBoundingClientRect().left;

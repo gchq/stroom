@@ -217,6 +217,8 @@ public class AskStroomAiPresenter
     };
     private static final DockBehaviour DEFAULT_DOCK_BEHAVIOUR = new DockBehaviour(DockType.DOCK, DockLocation.RIGHT);
     private static final int DEFAULT_DOCK_WIDTH = 350;
+    // How long a resize of the conversation must settle before its charts are drawn again at its width.
+    private static final int CHART_FIT_DELAY_MS = 150;
     private static final int DEFAULT_DOCK_HEIGHT = 250;
     // As the server keeps; where the title is shown, it is cut short to fit with an ellipsis.
     private static final int MAX_TITLE_LENGTH = 200;
@@ -368,6 +370,14 @@ public class AskStroomAiPresenter
         @Override
         public void run() {
             runChatSearch();
+        }
+    };
+    // Draws the conversation's charts again at its width once a resize (e.g. a drag of the panel's splitter) settles,
+    // not at every step of it.
+    private final Timer chartFitTimer = new Timer() {
+        @Override
+        public void run() {
+            AiGanttInteraction.fit(getView().getMarkdownContainer().getElement());
         }
     };
     private long statusVersion;
@@ -4934,6 +4944,7 @@ public class AskStroomAiPresenter
         while (holder.getFirstChild() != null) {
             markdownContainer.appendChild(holder.getFirstChild());
         }
+        AiGanttInteraction.fit(markdownContainer);
         scrollToBottom();
     }
 
@@ -5061,6 +5072,8 @@ public class AskStroomAiPresenter
             appendDayDivider(markdownContainer, msg.getCreateTimeMs(), nowMs);
             markdownContainer.appendChild(messageElement);
         }
+        // Its charts at the conversation's width, now it is in place to measure.
+        AiGanttInteraction.fit(messageElement);
         if (isWaitingForAnswer(msg)) {
             watchPrompt(messageElement);
         } else if (existing != null && existing == watchedPrompt) {
@@ -5313,6 +5326,7 @@ public class AskStroomAiPresenter
         if (container.getClientHeight() == 0) {
             return;
         }
+        chartFitTimer.schedule(CHART_FIT_DELAY_MS);
         // The view getting shorter leaves the scroll position where it was, which hides the latest messages
         // behind the bottom of the view rather than pushing them up. And shown again (e.g. back from another
         // Stroom tab), the browser has put it back at the top: it goes straight to where the user left it.
@@ -5919,6 +5933,7 @@ public class AskStroomAiPresenter
         final Element content = ElementUtil.findChild(live, "ai-message-content");
         if (content != null) {
             content.setInnerHTML(html.asString());
+            AiGanttInteraction.fit(content);
         }
         keepProgressInPlace(markdownContainer);
     }

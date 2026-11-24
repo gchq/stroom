@@ -35,7 +35,8 @@ import java.util.List;
 /// attributes, for [AiGanttInteraction] to map the pointer to times, and a hidden band it shows while dragging.
 final class AiGanttChart {
 
-    /// The width the chart is drawn at in the chat; it is scaled down to fit a narrower chat.
+    /// The width a chart is first drawn at in the chat, before it is drawn again at the width it has room for
+    /// ([#fitWidth]).
     static final int WIDTH = 720;
     /// The least width a chart is drawn at, e.g. in a small dialog.
     static final int MIN_WIDTH = 480;
@@ -103,6 +104,16 @@ final class AiGanttChart {
 
     private AiGanttChart() {
         // Static only.
+    }
+
+    /// @param available The width, in pixels, a chart has room for in the chat; 0 or less when it isn't known
+    ///                  (the chat hidden, say).
+    /// @return The width to draw it at: the room it has, but at least [#MIN_WIDTH] (scaled down to fit below that,
+    /// so its labels don't crowd); 0 when the room isn't known, to leave it as drawn.
+    static int fitWidth(final int available) {
+        return available <= 0
+                ? 0
+                : Math.max(MIN_WIDTH, available);
     }
 
     /// @param gantt A chart of the subset.
