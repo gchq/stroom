@@ -62,7 +62,7 @@ class TestActivityScoring {
                 WINDOW_TO, List.of()));
 
         final Finding change = only(scored, Kind.CHANGE, ActivityScoring.EVENTS);
-        assertThat(Math.abs(ChronoUnit.DAYS.between(LocalDate.parse(change.window()), STEP))).isLessThanOrEqualTo(3);
+        assertThat(change.window()).isEqualTo(STEP.toString());
         // Weekly means a day, the weekends' zeros in them: 40 and 160 on weekdays.
         assertThat(change.baseline()).isCloseTo(40 * 5 / 7.0, within(1e-9));
         assertThat(change.value()).isCloseTo(160 * 5 / 7.0, within(1e-9));

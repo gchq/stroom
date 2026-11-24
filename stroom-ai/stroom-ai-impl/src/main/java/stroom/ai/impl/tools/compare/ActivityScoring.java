@@ -497,14 +497,31 @@ final class ActivityScoring {
         final Shift shift = weekly.get();
         final LocalDate around = weeks.get(shift.index()).from();
         final double direction = Math.signum(shift.after() - shift.before());
-        LocalDate best = around;
-        double bestDifference = Double.NEGATIVE_INFINITY;
+        final Map<LocalDate, Double> differences = new TreeMap<>();
         for (LocalDate d = around.minusDays(6); !d.isAfter(around.plusDays(6)); d = d.plusDays(1)) {
             final Double after = aggregate(EVENTS, series, new Block(d, d.plusDays(7)));
             final Double before = aggregate(EVENTS, series, new Block(d.minusDays(7), d));
-            if (after != null && before != null && direction * (after - before) > bestDifference) {
-                bestDifference = direction * (after - before);
-                best = d;
+            if (after != null && before != null) {
+                differences.put(d, direction * (after - before));
+            }
+        }
+        if (differences.isEmpty()) {
+            return Optional.of(new Dated(around, shift));
+        }
+        final double most = differences.values().stream().mapToDouble(Double::doubleValue).max().orElseThrow();
+        // Of the days that differ most (a quiet weekend before a step ties with the step's own day), the first whose
+        // own value is already on the new side.
+        LocalDate best = null;
+        for (final Map.Entry<LocalDate, Double> difference : differences.entrySet()) {
+            if (difference.getValue() >= most - 1e-9) {
+                final Double value = series.get(difference.getKey());
+                if (best == null) {
+                    best = difference.getKey();
+                }
+                if (value != null && direction * (value - shift.before()) > 0) {
+                    best = difference.getKey();
+                    break;
+                }
             }
         }
         return Optional.of(new Dated(best, shift));

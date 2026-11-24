@@ -114,8 +114,8 @@ class TestActivityStatistics {
 
     @Test
     void changePointOfACleanStep() {
-        // At split 4 both sides are constant (score 10); split 3 or 5 leaves one odd value on a side, which then has
-        // a mean absolute deviation of 0.8, so scores about 5.
+        // Split 4 leaves no deviation on either side; split 3 or 5 leaves one odd value (a deviation of 4). Between
+        // two constant sides the shift is sized 10.
         final Shift shift = ActivityStatistics.changePoint(new double[]{1, 1, 1, 1, 5, 5, 5, 5}, 2).orElseThrow();
         assertThat(shift.index()).isEqualTo(4);
         assertThat(shift.before()).isEqualTo(1.0);
@@ -125,13 +125,27 @@ class TestActivityStatistics {
 
     @Test
     void changePointOfANoisyStep() {
-        // Split 5: medians 10 and 30, each side's MAD 1, so 20 / 1.4826.
+        // Split 5 leaves deviations of 4 on each side (8); splits 4 and 6 leave 28. Medians 10 and 30, each side's
+        // MAD 1, so sized 20 / 1.4826.
         final Shift shift = ActivityStatistics.changePoint(
                 new double[]{10, 12, 11, 9, 10, 30, 31, 29, 32, 30}, 3).orElseThrow();
         assertThat(shift.index()).isEqualTo(5);
         assertThat(shift.before()).isEqualTo(10.0);
         assertThat(shift.after()).isEqualTo(30.0);
         assertThat(shift.score()).isCloseTo(20 / 1.4826, within(TOLERANCE));
+    }
+
+    @Test
+    void changePointPrefersTheCleanSplitToAnOffByOne() {
+        // 17 weeks at 11.43 then 3 at 47.86: the split after one stray week would size larger (its side has a small
+        // spread) than the clean one (sized 10), but leaves more deviation, so isn't chosen.
+        final double[] weeks = new double[20];
+        for (int i = 0; i < weeks.length; i++) {
+            weeks[i] = i < 17
+                    ? 11.43
+                    : 47.86;
+        }
+        assertThat(ActivityStatistics.changePoint(weeks, 2).map(Shift::index)).contains(17);
     }
 
     @Test

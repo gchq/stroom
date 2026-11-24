@@ -118,9 +118,11 @@ final class ActivityStatistics {
         return median(slopes.stream().mapToDouble(Double::doubleValue).toArray());
     }
 
-    /// The most lasting shift in a series: the split with the largest difference between the medians before and
-    /// after it, in units of the two sides' pooled (MAD-estimated) spread; each side at least `minSide` values long.
-    /// A series whose two sides are each constant (pooled spread 0) but differ scores [#CONSTANT_BASELINE_Z].
+    /// The most lasting shift in a series: the split that leaves the least absolute deviation of each side from its
+    /// own median (a robust binary segmentation: a clean step leaves none), each side at least `minSide` values
+    /// long and the medians differing; sized as the difference of the medians in units of the two sides' pooled
+    /// (MAD-estimated) spread. A shift between two constant sides (pooled spread 0) is sized
+    /// [#CONSTANT_BASELINE_Z].
     ///
     /// @param series  The values in time order.
     /// @param minSide The fewest values on each side of a split.
@@ -129,22 +131,29 @@ final class ActivityStatistics {
         if (minSide < 1 || series.length < 2 * minSide) {
             return Optional.empty();
         }
-        Shift best = null;
+        int best = -1;
+        double bestCost = Double.POSITIVE_INFINITY;
         for (int split = minSide; split <= series.length - minSide; split++) {
             final double[] before = Arrays.copyOfRange(series, 0, split);
             final double[] after = Arrays.copyOfRange(series, split, series.length);
-            final double medianBefore = median(before);
-            final double medianAfter = median(after);
-            final double difference = medianAfter - medianBefore;
-            if (difference == 0) {
+            if (median(after) == median(before)) {
                 continue;
             }
-            final double score = shiftScore(before, after, Math.abs(difference));
-            if (best == null || score > best.score()) {
-                best = new Shift(split, medianBefore, medianAfter, score);
+            final double cost = meanAd(before) * before.length + meanAd(after) * after.length;
+            if (cost < bestCost) {
+                bestCost = cost;
+                best = split;
             }
         }
-        return Optional.ofNullable(best);
+        if (best < 0) {
+            return Optional.empty();
+        }
+        final double[] before = Arrays.copyOfRange(series, 0, best);
+        final double[] after = Arrays.copyOfRange(series, best, series.length);
+        final double medianBefore = median(before);
+        final double medianAfter = median(after);
+        return Optional.of(new Shift(best, medianBefore, medianAfter, shiftScore(before, after,
+                Math.abs(medianAfter - medianBefore))));
     }
 
     /// The total variation distance between two profiles (e.g. events by hour of the week), each normalised to
