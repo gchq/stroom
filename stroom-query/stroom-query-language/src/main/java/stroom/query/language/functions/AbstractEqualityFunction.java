@@ -38,7 +38,9 @@ abstract class AbstractEqualityFunction extends AbstractManyChildFunction {
 
     abstract Evaluator createEvaluator();
 
-    // Whether the function tests which value is the greater, rather than whether they are equal.
+    /// Tells whether the function tests which value is the greater, rather than whether they are equal.
+    ///
+    /// @return True if it does.
     boolean isOrdering() {
         return true;
     }

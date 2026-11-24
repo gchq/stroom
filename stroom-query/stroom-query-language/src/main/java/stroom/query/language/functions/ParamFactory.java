@@ -50,10 +50,8 @@ public class ParamFactory {
                     return createRef(token.getUnescapedText(), fieldIndex);
 
                 case DATE_TIME:
-                    return ValDate.create(DateUtil.parse(
-                            token.getText(),
-                            DateUtil.DEFAULT_ISO_PARSER,
-                            UserTimeZoneUtil.getZoneId(expressionContext)));
+                    return ValDate.create(DateReader.parseDateTime(
+                            token.getText(), new QueryZone(expressionContext)));
 
                 case DURATION:
                     final SimpleDuration literal = TimeLiteral.parse(token.getText());

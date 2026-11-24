@@ -161,6 +161,13 @@ public class TestDateUtil {
                 .addCase(
                         Tuple.of("20100101 235959123+0200", DateTimeFormatter.ofPattern("yyyyMMdd HHmmssSSSXX"), null),
                         "2010-01-01T21:59:59.123")
+                // A date with an offset but no time.
+                .addCase(
+                        Tuple.of("20100101 +02", DateTimeFormatter.ofPattern("yyyyMMdd X"), ZoneOffset.UTC),
+                        "2009-12-31T22:00:00.000")
+                .addCase(
+                        Tuple.of("20100101", DateTimeFormatter.ofPattern("yyyyMMdd"), ZoneOffset.ofHours(2)),
+                        "2010-01-01T00:00:00.000")
                 .addCase(
                         Tuple.of("20100101 235959123",
                                 DateTimeFormatter.ofPattern("yyyyMMdd HHmmssSSS"),

@@ -16,6 +16,8 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.api.token.TokenException;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -24,6 +26,7 @@ import java.text.ParseException;
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestFormatDate {
 
@@ -47,6 +50,48 @@ class TestFormatDate {
                 .isEqualTo(ValString.create(expected));
         assertThat(evalInLondon("formatDate(${field}" + params + ")", ValDate.create(millis)))
                 .isEqualTo(ValString.create(expected));
+    }
+
+    @Test
+    void zoneOfEachRow() throws ParseException {
+        final String expression = "formatDate(2024-07-01T08:00:00Z, 'HH:mm', ${field})";
+
+        assertThat(evalInLondon(expression, ValString.create("America/New_York"))).isEqualTo(ValString.create("04:00"));
+        assertThat(evalInLondon(expression, ValString.create("+0530"))).isEqualTo(ValString.create("13:30"));
+        assertThat(evalInLondon(expression, ValString.create("Mars/Base")).toString())
+                .contains("Unknown time zone 'Mars/Base'");
+        assertThat(evalInLondon(expression, ValString.create("")).toString()).contains("There is no time zone");
+    }
+
+    @Test
+    void errorOfTheZoneIsKept() throws ParseException {
+        assertThat(evalInLondon("formatDate(2024-07-01T08:00:00Z, 'HH:mm', ${field})", ValErr.create("lookup failed")))
+                .isEqualTo(ValErr.create("lookup failed"));
+    }
+
+    @Test
+    void zoneNames() throws ParseException {
+        assertThat(evalInLondon("formatDate(2024-07-01T08:00:00Z, 'HH:mm', '')", ValNull.INSTANCE))
+                .isEqualTo(ValString.create("08:00"));
+        // A short name is refused, whether it is written or comes from a field.
+        assertThatThrownBy(() -> evalInLondon("formatDate(2024-07-01T08:00:00Z, 'HH:mm', 'BST')", ValNull.INSTANCE))
+                .hasMessageContaining("Unknown time zone 'BST'");
+        assertThat(evalInLondon("formatDate(2024-07-01T08:00:00Z, 'HH:mm', ${field})", ValString.create("BST"))
+                .toString())
+                .contains("Unknown time zone 'BST'");
+    }
+
+    @Test
+    void mistakesThatAreReportedWhenTheExpressionIsParsed() {
+        for (final String zone : new String[]{"'UTC'", "${field}"}) {
+            assertThatThrownBy(() -> evalInLondon("formatDate('abc', 'HH', " + zone + ")", ValString.create("UTC")))
+                    .isInstanceOf(TokenException.class)
+                    .hasMessageContaining("Unable to convert first argument");
+        }
+        assertThatThrownBy(() -> DateFunctionTestUtil.eval(
+                DateFunctionTestUtil.UNKNOWN_ZONE, "formatDate(${field})", ValDate.create(0)))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining("Unknown time zone 'Mars/Base'");
     }
 
     @Test

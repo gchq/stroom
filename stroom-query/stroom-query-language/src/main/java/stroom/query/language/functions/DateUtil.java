@@ -29,7 +29,9 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
+import java.time.temporal.TemporalQueries;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public final class DateUtil {
 
@@ -120,23 +122,29 @@ public final class DateUtil {
     public static long parse(final String value,
                              final DateTimeFormatter formatter,
                              final ZoneId zoneId) {
-        final ZonedDateTime dateTime = parseInternal(value, formatter, zoneId);
-        if (dateTime == null) {
-            throw new IllegalArgumentException("Unable to parse date: \"" + value + '"');
-        }
+        return parse(value, formatter, () -> zoneId);
+    }
 
-        return dateTime.toInstant().toEpochMilli();
+    /// Reads text as a date.
+    ///
+    /// @param value     The text.
+    /// @param formatter The format of the text, or `null` for ISO 8601 with a time.
+    /// @param zone      Gets the time zone of text that has no offset, which is UTC if it is `null`. It is not asked
+    ///                  for if the text has an offset.
+    /// @return The milliseconds since the epoch.
+    /// @throws DateTimeException If the text is not a date in the format.
+    public static long parse(final String value,
+                             final DateTimeFormatter formatter,
+                             final Supplier<ZoneId> zone) {
+        return parseInternal(value, formatter, zone).toInstant().toEpochMilli();
     }
 
     public static LocalDateTime parseLocal(final String value,
                                            final DateTimeFormatter formatter,
                                            final ZoneId zoneId) {
-        final ZonedDateTime dateTime = parseInternal(value, formatter, zoneId);
-        if (dateTime == null) {
-            throw new IllegalArgumentException("Unable to parse date: \"" + value + '"');
-        }
-
-        return dateTime.toLocalDateTime();
+        return parseInternal(value, formatter, () -> zoneId)
+                .withZoneSameInstant(Objects.requireNonNullElse(zoneId, ZoneOffset.UTC))
+                .toLocalDateTime();
     }
 
     public static String format(final Long value,
@@ -150,19 +158,31 @@ public final class DateUtil {
 
     private static ZonedDateTime parseInternal(final String value,
                                                final DateTimeFormatter formatter,
-                                               final ZoneId zoneId) {
+                                               final Supplier<ZoneId> zone) {
         final TemporalAccessor temporalAccessor = Objects.requireNonNullElse(formatter, DEFAULT_ISO_PARSER)
                 .parseBest(value,
                         ZonedDateTime::from,
                         LocalDateTime::from,
-                        LocalDate::from);
+                        DateUtil::toDate);
 
-        final ZoneId zoneId2 = Objects.requireNonNullElse(zoneId, ZoneOffset.UTC);
         return switch (temporalAccessor) {
-            case final ZonedDateTime zonedDateTime -> zonedDateTime.withZoneSameInstant(zoneId2);
-            case final LocalDateTime localDateTime -> localDateTime.atZone(zoneId2);
-            case final LocalDate localDate -> localDate.atStartOfDay(zoneId2);
+            case final ZonedDateTime zonedDateTime -> zonedDateTime;
+            case final LocalDateTime localDateTime -> localDateTime.atZone(getZone(zone));
+            case final LocalDate localDate -> localDate.atStartOfDay(getZone(zone));
             default -> throw new RuntimeException("Unexpected type " + temporalAccessor.getClass().getName());
         };
+    }
+
+    // A date with no time can still have an offset.
+    private static TemporalAccessor toDate(final TemporalAccessor temporalAccessor) {
+        final LocalDate localDate = LocalDate.from(temporalAccessor);
+        final ZoneId zoneId = temporalAccessor.query(TemporalQueries.zone());
+        return zoneId == null
+                ? localDate
+                : localDate.atStartOfDay(zoneId);
+    }
+
+    private static ZoneId getZone(final Supplier<ZoneId> zone) {
+        return Objects.requireNonNullElse(zone.get(), ZoneOffset.UTC);
     }
 }

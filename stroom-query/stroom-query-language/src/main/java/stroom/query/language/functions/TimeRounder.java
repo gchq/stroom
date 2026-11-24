@@ -176,13 +176,9 @@ final class TimeRounder {
         if (text.isEmpty()) {
             return ValNull.INSTANCE;
         }
-        try {
-            return roundDate(DateUtil.parse(text, DateUtil.DEFAULT_ISO_PARSER, zone), zone);
-        } catch (final DateTimeParseException e) {
-            // Not a date.
-        }
-        if (isNumber(text)) {
-            return roundDate(parseMillis(text), zone);
+        final Long date = DateReader.parse(text, () -> zone);
+        if (date != null) {
+            return roundDate(date, zone);
         }
         final long millis;
         try {

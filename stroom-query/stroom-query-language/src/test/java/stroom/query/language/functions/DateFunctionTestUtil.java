@@ -33,6 +33,11 @@ final class DateFunctionTestUtil {
                     .timeZone(UserTimeZone.builder().use(Use.ID).id("Europe/London").build())
                     .build())
             .build();
+    static final ExpressionContext UNKNOWN_ZONE = ExpressionContext.builder()
+            .dateTimeSettings(DateTimeSettings.builder()
+                    .timeZone(UserTimeZone.builder().use(Use.ID).id("Mars/Base").build())
+                    .build())
+            .build();
     // With no date time settings at all.
     static final ExpressionContext NO_SETTINGS = ExpressionContext.builder().build();
 
@@ -42,12 +47,21 @@ final class DateFunctionTestUtil {
 
     // Evaluates an expression on a row with one field, named 'field'.
     static Val eval(final ExpressionContext expressionContext,
-                            final String input,
-                            final Val field) throws ParseException {
+                    final String input,
+                    final Val field) throws ParseException {
+        return eval(expressionContext, input, Map.of(), field);
+    }
+
+    // Evaluates an expression with query parameters on a row with one field, named 'field'.
+    static Val eval(final ExpressionContext expressionContext,
+                    final String input,
+                    final Map<String, String> params,
+                    final Val field) throws ParseException {
         final FieldIndex fieldIndex = new FieldIndex();
         fieldIndex.create("field");
         final Expression expression = new ExpressionParser(new ParamFactory(Map.of()))
                 .parse(expressionContext, fieldIndex, input);
+        expression.setStaticMappedValues(params);
         final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
         expression.addValueReferences(valueReferenceIndex);
         final StoredValues storedValues = valueReferenceIndex.createStoredValues();

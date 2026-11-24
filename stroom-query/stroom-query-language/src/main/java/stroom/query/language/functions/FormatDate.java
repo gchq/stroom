@@ -20,6 +20,7 @@ import stroom.query.language.functions.FormatterCache.Mode;
 import stroom.query.language.functions.ref.StoredValues;
 
 import java.text.ParseException;
+import java.time.DateTimeException;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -67,7 +68,7 @@ import java.util.function.Supplier;
                                 @FunctionArg(
                                         name = "timezone",
                                         argType = ValString.class,
-                                        description = "The timezone, e.g. '+0400'")},
+                                        description = "The timezone, e.g. '+0400', which can be a field.")},
                         returnDescription = "A date string in the supplied date format pattern.",
                         description = "Convert the date to a string using the supplied date format " +
                                 "pattern and timezone.")})
@@ -78,6 +79,7 @@ class FormatDate extends AbstractFunction {
     private final ExpressionContext expressionContext;
     private DateTimeFormatter formatter = DateUtil.DEFAULT_FORMATTER;
     private ZoneId zoneId;
+    private Function zoneFunction;
 
     private Generator gen;
     private Function function;
@@ -96,13 +98,19 @@ class FormatDate extends AbstractFunction {
             final String pattern = ParamParseUtil.parseStringParam(params, 1, name);
             formatter = FormatterCache.getFormatter(pattern, Mode.FORMAT);
         }
-        if (params.length >= 3) {
+        if (params.length >= 3 && params[2] instanceof final Function func) {
+            zoneFunction = func;
+        } else if (params.length >= 3) {
             zoneId = FormatterCache.getZoneId(ParamParseUtil.parseStringParam(params, 2, name));
         } else if (params.length == 2 && FormatterCache.isMarkedUtc(params[1].toString())) {
             // The text says that it is in UTC, so the time must be.
             zoneId = ZoneOffset.UTC;
         } else {
-            zoneId = UserTimeZoneUtil.getZoneId(expressionContext);
+            try {
+                zoneId = UserTimeZoneUtil.getZoneId(expressionContext);
+            } catch (final DateTimeException e) {
+                throw new ParseException(e.getMessage(), 0);
+            }
         }
 
         final Param param = params[0];
@@ -116,8 +124,13 @@ class FormatDate extends AbstractFunction {
                 throw new ParseException("Unable to convert first argument of '" + name + "' function to long", 0);
             }
 
-            final String string = DateUtil.format(millis, formatter, zoneId);
-            gen = new StaticValueFunction(ValString.create(string)).createGenerator();
+            if (zoneFunction != null) {
+                // The time zone may be different in each row.
+                function = new StaticValueFunction((Val) param);
+            } else {
+                final String string = DateUtil.format(millis, formatter, zoneId);
+                gen = new StaticValueFunction(ValString.create(string)).createGenerator();
+            }
         }
     }
 
@@ -128,48 +141,56 @@ class FormatDate extends AbstractFunction {
         }
 
         final Generator childGenerator = function.createGenerator();
-        return new Gen(childGenerator, formatter, zoneId);
+        return zoneFunction == null
+                ? new Gen(new Generator[]{childGenerator}, formatter, zoneId)
+                : new Gen(new Generator[]{childGenerator, zoneFunction.createGenerator()}, formatter, null);
     }
 
     @Override
     public boolean hasAggregate() {
-        return hasAggregate;
+        return hasAggregate || (zoneFunction != null && zoneFunction.hasAggregate());
     }
 
     @Override
     public boolean requiresChildData() {
-        if (function != null) {
-            return function.requiresChildData();
-        }
-        return super.requiresChildData();
+        return (function != null && function.requiresChildData())
+               || (zoneFunction != null && zoneFunction.requiresChildData());
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    private static class Gen extends AbstractSingleChildGenerator {
+    private static class Gen extends AbstractManyChildGenerator {
 
 
         private final DateTimeFormatter formatter;
         private final ZoneId zoneId;
 
-        Gen(final Generator childGenerator, final DateTimeFormatter formatter, final ZoneId zoneId) {
-            super(childGenerator);
+        Gen(final Generator[] childGenerators, final DateTimeFormatter formatter, final ZoneId zoneId) {
+            super(childGenerators);
             this.formatter = formatter;
             this.zoneId = zoneId;
         }
 
         @Override
-        public void set(final Val[] values, final StoredValues storedValues) {
-            childGenerator.set(values, storedValues);
-        }
-
-        @Override
         public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
-            final Val val = childGenerator.eval(storedValues, childDataSupplier);
+            final Val val = childGenerators[0].eval(storedValues, childDataSupplier);
             if (!val.type().isValue()) {
                 return val;
+            }
+
+            ZoneId rowZoneId = zoneId;
+            if (childGenerators.length > 1) {
+                final Val zone = childGenerators[1].eval(storedValues, childDataSupplier);
+                if (zone.type().isError()) {
+                    return zone;
+                }
+                try {
+                    rowZoneId = UserTimeZoneUtil.getZoneId(zone);
+                } catch (final DateTimeException e) {
+                    return ValErr.create(e.getMessage());
+                }
             }
             final Long millis = val.toLong();
             if (millis == null) {
@@ -177,7 +198,8 @@ class FormatDate extends AbstractFunction {
             }
 
             try {
-                return ValString.create(DateUtil.format(millis, formatter, zoneId));
+                return ValString.create(DateUtil.format(
+                        millis, formatter, rowZoneId));
             } catch (final RuntimeException e) {
                 return ValErr.create(e.getMessage());
             }

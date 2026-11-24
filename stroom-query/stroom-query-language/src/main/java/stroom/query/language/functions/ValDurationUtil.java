@@ -89,6 +89,9 @@ public class ValDurationUtil {
     public static Val parseDuration(final Val val) {
         if (Type.STRING == val.type()) {
             return parseDuration(val.toString());
+        } else if (val instanceof ValNumber && !Double.isFinite(val.toDouble())) {
+            // It would become a long that has nothing to do with it.
+            return ValErr.create("A " + val.type().getName() + " that is not finite is not a duration");
         } else if (isDuration(val)) {
             if (Type.DURATION == val.type()) {
                 return val;

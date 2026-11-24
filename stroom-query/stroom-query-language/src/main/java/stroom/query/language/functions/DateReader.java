@@ -1,0 +1,115 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.query.language.functions;
+
+import java.time.DateTimeException;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.TemporalAccessor;
+import java.util.function.Supplier;
+
+/// Reads values as dates. The time zone is only asked for if it is needed, so that a date that doesn't depend on it can
+/// be read even if it is not a known time zone.
+final class DateReader {
+
+    private DateReader() {
+        // Static methods only.
+    }
+
+    /// Reads a value as a date.
+    ///
+    /// @param val  A date, a number of milliseconds since the epoch, or text of either.
+    /// @param zone Gets the time zone of text that has no offset.
+    /// @return The milliseconds since the epoch.
+    /// @throws DateTimeException   If the value is not a date. The message is fit to show the query's author.
+    /// @throws ArithmeticException If the value is too large.
+    static long readMillis(final Val val, final Supplier<ZoneId> zone) {
+        final Long millis = switch (val) {
+            case final ValDate date -> date.toLong();
+            case final ValString text -> parse(text.toString().trim(), zone);
+            default -> isNumber(val)
+                    ? val.toLong()
+                    : null;
+        };
+        if (millis == null) {
+            throw new DateTimeException(val instanceof ValString
+                    ? "'" + val + "' is not a date"
+                    : "A " + val.type().getName() + " is not a date");
+        }
+        return millis;
+    }
+
+    /// Reads a value as a date in a time zone.
+    ///
+    /// @param val  A date, a number of milliseconds since the epoch, or text of either.
+    /// @param zone The time zone of text that has no offset, and of the date that is returned.
+    /// @return The date.
+    /// @throws DateTimeException   If the value is not a date. The message is fit to show the query's author.
+    /// @throws ArithmeticException If the value is too large.
+    static ZonedDateTime read(final Val val, final ZoneId zone) {
+        return Instant.ofEpochMilli(readMillis(val, () -> zone)).atZone(zone);
+    }
+
+    // A number that is infinite or is not a number would become a long that has nothing to do with it.
+    private static boolean isNumber(final Val val) {
+        return val instanceof ValNumber
+               && !(val instanceof ValDuration)
+               && Double.isFinite(val.toDouble());
+    }
+
+    /// Reads text as a date.
+    ///
+    /// @param text An ISO 8601 date with an optional time and offset, or a number of milliseconds since the epoch.
+    /// @param zone Gets the time zone of text that has no offset.
+    /// @return The milliseconds since the epoch, or `null` if the text is not a date.
+    /// @throws ArithmeticException If the number is too large.
+    static Long parse(final String text, final Supplier<ZoneId> zone) {
+        if (TimeRounder.isNumber(text)) {
+            return TimeRounder.parseMillis(text);
+        }
+        try {
+            return parseDateTime(text, zone);
+        } catch (final DateTimeParseException e) {
+            // Not a date and time.
+        }
+        final LocalDate date;
+        try {
+            date = LocalDate.parse(text);
+        } catch (final DateTimeParseException e) {
+            return null;
+        }
+        return date.atStartOfDay(zone.get()).toInstant().toEpochMilli();
+    }
+
+    /// Reads text as a date and time.
+    ///
+    /// @param text An ISO 8601 date and time with an optional offset.
+    /// @param zone Gets the time zone of text that has no offset.
+    /// @return The milliseconds since the epoch.
+    /// @throws DateTimeParseException If the text is not a date and time.
+    static long parseDateTime(final String text, final Supplier<ZoneId> zone) {
+        final TemporalAccessor temporal = DateUtil.DEFAULT_ISO_PARSER.parseBest(
+                text, ZonedDateTime::from, LocalDateTime::from);
+        return temporal instanceof final LocalDateTime local
+                ? local.atZone(zone.get()).toInstant().toEpochMilli()
+                : Instant.from(temporal).toEpochMilli();
+    }
+}

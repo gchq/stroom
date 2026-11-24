@@ -116,6 +116,17 @@ class TestParamFactory {
     }
 
     @Test
+    void testDateWithAnOffsetDoesNotNeedTheZone() {
+        assertThat(paramFactory.create(DateFunctionTestUtil.UNKNOWN_ZONE, new FieldIndex(),
+                Tokeniser.parse("2024-07-01T09:00:00Z").getFirst()))
+                .isEqualTo(ValDate.create(Instant.parse("2024-07-01T09:00:00Z").toEpochMilli()));
+        assertThatThrownBy(() -> paramFactory.create(DateFunctionTestUtil.UNKNOWN_ZONE, new FieldIndex(),
+                Tokeniser.parse("2024-07-01T09:00:00").getFirst()))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining("Unknown time zone 'Mars/Base'");
+    }
+
+    @Test
     void testBadDate() {
         assertThatThrownBy(() -> create("2024-13-01T09:00:00Z", TokenType.DATE_TIME))
                 .isInstanceOf(TokenException.class)

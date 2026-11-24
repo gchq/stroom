@@ -57,6 +57,9 @@ class TestAbstractRoundingFunction {
             // Origins.
             "floor(2024-03-15T10:00:00Z, 1y, 2024-04-01T00:00:00Z)|2023-04-01T00:00:00Z",
             "floor(2024-03-15T10:00:00Z, 1y, '2024-04-01T00:00:00')|2023-03-31T23:00:00Z",
+            // A date with no time is midnight in the zone of the call.
+            "floor(2024-03-15T10:00:00Z, 1y, '2024-04-01')|2023-03-31T23:00:00Z",
+            "floor(2024-03-15T10:00:00Z, 1y, ' 2024-04-01 ', 'America/New_York')|2023-04-01T04:00:00Z",
             "floor(2024-05-15T10:20:00Z, 1w, parseDate('2024 01 07', 'yyyy MM dd'))|2024-05-11T23:00:00Z",
             "floor(2024-05-15T10:20:00Z, 1d, null())|2024-05-14T23:00:00Z",
             "floor(2024-05-15T10:20:00Z, 1y, 1711929600000)|2024-04-01T00:00:00Z",
@@ -147,6 +150,7 @@ class TestAbstractRoundingFunction {
             "floor(${field}, 1d, ${field})|Invalid origin",
             "floor(${field}, 1d, 5m)|Invalid origin: 5m - it must be a date",
             "floor(${field}, 1d, 'soon')|Invalid origin",
+            "floor(${field}, 1d, '2024-02-30')|Invalid origin",
             "floor(${field}, 1d, null(), 'Mars/Base')|Unknown time zone 'Mars/Base'",
             "floor(${field}, 1d, null(), 'BST')|Unknown time zone 'BST'. Use a name such as Europe/London",
             "floor(${field}, 1d, null(), '')|There is no time zone"})

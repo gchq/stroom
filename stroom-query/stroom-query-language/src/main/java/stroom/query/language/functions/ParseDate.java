@@ -21,6 +21,7 @@ import stroom.query.language.functions.ref.StoredValues;
 import stroom.util.shared.NullSafe;
 
 import java.text.ParseException;
+import java.time.DateTimeException;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -68,7 +69,7 @@ import java.util.function.Supplier;
                                 @FunctionArg(
                                         name = "timezone",
                                         argType = ValString.class,
-                                        description = "The timezone, e.g. '+0400'"),
+                                        description = "The timezone, e.g. '+0400', which can be a field."),
                         },
                         description = "Parse dateString using the supplied date format pattern. If dateString " +
                                       "has no offset then it is in the supplied timezone.")})
@@ -78,7 +79,8 @@ class ParseDate extends AbstractFunction {
 
     private final ExpressionContext expressionContext;
     private DateTimeFormatter formatter = DateUtil.DEFAULT_ISO_PARSER;
-    private ZoneId zoneId;
+    private Supplier<ZoneId> zone;
+    private Function zoneFunction;
 
     private Generator gen;
     private Function function;
@@ -97,13 +99,16 @@ class ParseDate extends AbstractFunction {
             final String pattern = ParamParseUtil.parseStringParam(params, 1, name);
             formatter = FormatterCache.getFormatter(pattern, Mode.PARSE);
         }
-        if (params.length >= 3) {
-            zoneId = FormatterCache.getZoneId(ParamParseUtil.parseStringParam(params, 2, name));
+        if (params.length >= 3 && params[2] instanceof final Function func) {
+            zoneFunction = func;
+        } else if (params.length >= 3) {
+            final ZoneId zoneId = FormatterCache.getZoneId(ParamParseUtil.parseStringParam(params, 2, name));
+            zone = () -> zoneId;
         } else if (params.length == 2 && FormatterCache.isMarkedUtc(params[1].toString())) {
             // The text says that it is in UTC, so the time must be.
-            zoneId = ZoneOffset.UTC;
+            zone = () -> ZoneOffset.UTC;
         } else {
-            zoneId = UserTimeZoneUtil.getZoneId(expressionContext);
+            zone = new QueryZone(expressionContext);
         }
 
         final Param param = params[0];
@@ -111,6 +116,9 @@ class ParseDate extends AbstractFunction {
             function = (Function) param;
             hasAggregate = function.hasAggregate();
 
+        } else if (zoneFunction != null && param instanceof ValString && !NullSafe.isBlankString(param.toString())) {
+            // The time zone may be different in each row.
+            function = new StaticValueFunction((Val) param);
         } else if (param instanceof ValNull) {
             // This is consistent with ParseDuration
             gen = new StaticValueFunction(ValNull.INSTANCE).createGenerator();
@@ -118,8 +126,7 @@ class ParseDate extends AbstractFunction {
             final String string = param.toString();
             final Val val;
             if (!NullSafe.isBlankString(string)) {
-                final long millis = DateUtil.parse(string, formatter, zoneId);
-                val = ValDate.create(millis);
+                val = ValDate.create(parseConstant(string));
             } else {
                 val = ValNull.INSTANCE;
             }
@@ -134,6 +141,14 @@ class ParseDate extends AbstractFunction {
         }
     }
 
+    private long parseConstant(final String string) throws ParseException {
+        try {
+            return DateUtil.parse(string, formatter, zone);
+        } catch (final DateTimeException e) {
+            throw new ParseException(e.getMessage(), 0);
+        }
+    }
+
     @Override
     public Generator createGenerator() {
         if (gen != null) {
@@ -141,47 +156,57 @@ class ParseDate extends AbstractFunction {
         }
 
         final Generator childGenerator = function.createGenerator();
-        return new Gen(childGenerator, formatter, zoneId);
+        return zoneFunction == null
+                ? new Gen(new Generator[]{childGenerator}, formatter, zone)
+                : new Gen(new Generator[]{childGenerator, zoneFunction.createGenerator()}, formatter, null);
     }
 
     @Override
     public boolean hasAggregate() {
-        return hasAggregate;
+        return hasAggregate || (zoneFunction != null && zoneFunction.hasAggregate());
     }
 
     @Override
     public boolean requiresChildData() {
-        if (function != null) {
-            return function.requiresChildData();
-        }
-        return super.requiresChildData();
+        return (function != null && function.requiresChildData())
+               || (zoneFunction != null && zoneFunction.requiresChildData());
     }
 
-    private static final class Gen extends AbstractSingleChildGenerator {
+    private static final class Gen extends AbstractManyChildGenerator {
 
         private final DateTimeFormatter formatter;
-        private final ZoneId zoneId;
+        private final Supplier<ZoneId> zone;
 
-        Gen(final Generator childGenerator, final DateTimeFormatter formatter, final ZoneId zoneId) {
-            super(childGenerator);
+        Gen(final Generator[] childGenerators, final DateTimeFormatter formatter, final Supplier<ZoneId> zone) {
+            super(childGenerators);
             this.formatter = formatter;
-            this.zoneId = zoneId;
-        }
-
-        @Override
-        public void set(final Val[] values, final StoredValues storedValues) {
-            childGenerator.set(values, storedValues);
+            this.zone = zone;
         }
 
         @Override
         public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
-            final Val val = childGenerator.eval(storedValues, childDataSupplier);
+            final Val val = childGenerators[0].eval(storedValues, childDataSupplier);
             if (!val.type().isValue()) {
                 return val;
             }
 
+            Supplier<ZoneId> rowZone = zone;
+            if (childGenerators.length > 1) {
+                final Val zoneVal = childGenerators[1].eval(storedValues, childDataSupplier);
+                if (zoneVal.type().isError()) {
+                    return zoneVal;
+                }
+                try {
+                    final ZoneId rowZoneId = UserTimeZoneUtil.getZoneId(zoneVal);
+                    rowZone = () -> rowZoneId;
+                } catch (final DateTimeException e) {
+                    return ValErr.create(e.getMessage());
+                }
+            }
+
             try {
-                return ValDate.create(DateUtil.parse(val.toString(), formatter, zoneId));
+                return ValDate.create(DateUtil.parse(
+                        val.toString(), formatter, rowZone));
             } catch (final RuntimeException e) {
                 return ValErr.create(e.getMessage());
             }

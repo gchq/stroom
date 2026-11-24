@@ -16,6 +16,8 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.api.token.TokenException;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -26,6 +28,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class TestParseDate extends AbstractFunctionTest<ParseDate> {
 
@@ -61,6 +64,84 @@ public class TestParseDate extends AbstractFunctionTest<ParseDate> {
         assertThat(evalInLondon("typeOf(parseDate('2024-07-01T08:00:00Z'))", ValNull.INSTANCE))
                 .isEqualTo(ValString.create("date"));
         assertThat(evalInLondon("parseDate(" + millis + ")", ValNull.INSTANCE)).isEqualTo(ValDate.create(millis));
+    }
+
+    @Test
+    void zoneOfEachRow() throws ParseException {
+        final String expression = "parseDate('2024 07 01', 'yyyy MM dd', ${field})";
+
+        assertThat(evalInLondon(expression, ValString.create("America/New_York")))
+                .isEqualTo(ValDate.create(Instant.parse("2024-07-01T04:00:00Z").toEpochMilli()));
+        assertThat(evalInLondon(expression, ValString.create("UTC")))
+                .isEqualTo(ValDate.create(Instant.parse("2024-07-01T00:00:00Z").toEpochMilli()));
+        assertThat(evalInLondon(expression, ValString.create("Mars/Base")).toString())
+                .contains("Unknown time zone 'Mars/Base'");
+        assertThat(evalInLondon(expression, ValNull.INSTANCE).toString()).contains("There is no time zone");
+    }
+
+    @Test
+    void constantsThatHaveNoZoneIgnoreTheZoneOfEachRow() throws ParseException {
+        final ValDate date = ValDate.create(Instant.parse("2024-07-01T08:00:00Z").toEpochMilli());
+        for (final String zone : new String[]{"'UTC'", "${field}"}) {
+            final ValString field = ValString.create("UTC");
+            assertThat(evalInLondon("parseDate(2024-07-01T08:00:00Z, 'yyyy MM dd', " + zone + ")", field))
+                    .isEqualTo(date);
+            assertThat(evalInLondon("parseDate(1719820800000, 'yyyy MM dd', " + zone + ")", field)).isEqualTo(date);
+            assertThat(evalInLondon("parseDate('', 'yyyy MM dd', " + zone + ")", field)).isEqualTo(ValNull.INSTANCE);
+        }
+    }
+
+    @Test
+    void errorOfTheZoneIsKept() throws ParseException {
+        assertThat(evalInLondon("parseDate('2024 07 01', 'yyyy MM dd', ${field})", ValErr.create("lookup failed")))
+                .isEqualTo(ValErr.create("lookup failed"));
+    }
+
+    @Test
+    void zoneNames() throws ParseException {
+        final ValDate date = ValDate.create(Instant.parse("2024-07-01T04:00:00Z").toEpochMilli());
+        assertThat(evalInLondon("parseDate('2024 07 01', 'yyyy MM dd', 'America/New_York')", ValNull.INSTANCE))
+                .isEqualTo(date);
+        // A blank that is written is UTC, as it always has been.
+        assertThat(evalInLondon("parseDate('2024 07 01', 'yyyy MM dd', '')", ValNull.INSTANCE))
+                .isEqualTo(ValDate.create(Instant.parse("2024-07-01T00:00:00Z").toEpochMilli()));
+        // A short name is refused, whether it is written or comes from a field.
+        assertThatThrownBy(() -> evalInLondon("parseDate('2024 07 01', 'yyyy MM dd', 'BST')", ValNull.INSTANCE))
+                .hasMessageContaining("Unknown time zone 'BST'");
+        assertThat(evalInLondon("parseDate('2024 07 01', 'yyyy MM dd', ${field})", ValString.create("BST")).toString())
+                .contains("Unknown time zone 'BST'");
+    }
+
+    @Test
+    void offsetOfADateWithNoTime() throws ParseException {
+        final ValDate date = ValDate.create(Instant.parse("2024-06-30T22:00:00Z").toEpochMilli());
+
+        assertThat(evalInLondon("parseDate('2024 07 01 +02', 'yyyy MM dd X')", ValNull.INSTANCE)).isEqualTo(date);
+        assertThat(evalInLondon("parseDate(${field}, 'yyyy MM dd X')", ValString.create("2024 07 01 +02")))
+                .isEqualTo(date);
+        assertThat(evalInLondon(
+                "parseDate('2024 07 01 +02', 'yyyy MM dd X', 'America/New_York')", ValNull.INSTANCE))
+                .isEqualTo(date);
+    }
+
+    @Test
+    void theTimeZoneIsOnlyNeededForTextWithNoOffset() throws ParseException {
+        final ExpressionContext unknown = DateFunctionTestUtil.UNKNOWN_ZONE;
+        final ValDate date = ValDate.create(Instant.parse("2024-07-01T09:00:00Z").toEpochMilli());
+        assertThat(DateFunctionTestUtil.eval(unknown, "parseDate('2024-07-01T09:00:00Z')", ValNull.INSTANCE))
+                .isEqualTo(date);
+        assertThat(DateFunctionTestUtil.eval(
+                unknown, "parseDate(${field})", ValString.create("2024-07-01T09:00:00Z")))
+                .isEqualTo(date);
+        assertThat(DateFunctionTestUtil.eval(
+                unknown, "parseDate(${field})", ValString.create("2024-07-01T09:00:00")).toString())
+                .contains("Unknown time zone 'Mars/Base'");
+        // With a position, as any mistake in a constant has.
+        for (final String text : new String[]{"2024-07-01T09:00:00", "soon"}) {
+            assertThatThrownBy(() -> DateFunctionTestUtil.eval(
+                    unknown, "parseDate('" + text + "')", ValNull.INSTANCE))
+                    .isInstanceOf(TokenException.class);
+        }
     }
 
     @Test
