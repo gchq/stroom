@@ -2092,6 +2092,354 @@ class TestNullSafe {
                 .build();
     }
 
+    @Test
+    void testGetIntWithGetters() {
+        assertThat(NullSafe.getInt(nullLevel1, Level1::getLevelNoAsInt))
+                .isZero();
+        assertThat(NullSafe.getInt(nonNullLevel1, Level1::getLevelNoAsInt))
+                .isEqualTo(1);
+
+        assertThat(NullSafe.getInt(
+                nonNullLevel1,
+                Level1::getNullLevel2,
+                Level2::getLevelNoAsInt))
+                .isZero();
+        assertThat(NullSafe.getInt(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getLevelNoAsInt))
+                .isEqualTo(2);
+
+        assertThat(NullSafe.getInt(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNullLevel3,
+                Level3::getLevelNoAsInt))
+                .isZero();
+        assertThat(NullSafe.getInt(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getLevelNoAsInt))
+                .isEqualTo(3);
+
+        assertThat(NullSafe.getInt(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNullLevel4,
+                Level4::getLevelNoAsInt))
+                .isZero();
+        assertThat(NullSafe.getInt(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNonNullLevel4,
+                Level4::getLevelNoAsInt))
+                .isEqualTo(4);
+    }
+
+    @Test
+    void testGetLongWithGetters() {
+        assertThat(NullSafe.getLong(nullLevel1, level1 -> level1.getLevelNo()))
+                .isZero();
+        assertThat(NullSafe.getLong(nonNullLevel1, level1 -> level1.getLevelNo()))
+                .isEqualTo(1L);
+
+        assertThat(NullSafe.getLong(
+                nonNullLevel1,
+                Level1::getNullLevel2,
+                level2 -> level2.getLevelNo()))
+                .isZero();
+        assertThat(NullSafe.getLong(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                level2 -> level2.getLevelNo()))
+                .isEqualTo(2L);
+
+        assertThat(NullSafe.getLong(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNullLevel3,
+                level3 -> level3.getLevelNo()))
+                .isZero();
+        assertThat(NullSafe.getLong(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                level3 -> level3.getLevelNo()))
+                .isEqualTo(3L);
+
+        assertThat(NullSafe.getLong(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNullLevel4,
+                level4 -> level4.getLevelNo()))
+                .isZero();
+        assertThat(NullSafe.getLong(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNonNullLevel4,
+                level4 -> level4.getLevelNo()))
+                .isEqualTo(4L);
+    }
+
+    @Test
+    void testGetIntOrElse() {
+        assertThat(NullSafe.getIntOrElse(null, 99))
+                .isEqualTo(99);
+        assertThat(NullSafe.getIntOrElse(1, 99))
+                .isEqualTo(1);
+
+        assertThat(NullSafe.getIntOrElse(nullLevel1, Level1::getLevelNoAsInt, 99))
+                .isEqualTo(99);
+        assertThat(NullSafe.getIntOrElse(nonNullLevel1, Level1::getLevelNoAsInt, 99))
+                .isEqualTo(1);
+
+        assertThat(NullSafe.getIntOrElse(
+                nonNullLevel1,
+                Level1::getNullLevel2,
+                Level2::getLevelNoAsInt,
+                99))
+                .isEqualTo(99);
+        assertThat(NullSafe.getIntOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getLevelNoAsInt,
+                99))
+                .isEqualTo(2);
+
+        assertThat(NullSafe.getIntOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNullLevel3,
+                Level3::getLevelNoAsInt,
+                99))
+                .isEqualTo(99);
+        assertThat(NullSafe.getIntOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getLevelNoAsInt,
+                99))
+                .isEqualTo(3);
+
+        assertThat(NullSafe.getIntOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNullLevel4,
+                Level4::getLevelNoAsInt,
+                99))
+                .isEqualTo(99);
+        assertThat(NullSafe.getIntOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNonNullLevel4,
+                Level4::getLevelNoAsInt,
+                99))
+                .isEqualTo(4);
+    }
+
+    @Test
+    void testGetLongOrElse() {
+        assertThat(NullSafe.getLongOrElse(null, 99L))
+                .isEqualTo(99L);
+        assertThat(NullSafe.getLongOrElse(1L, 99L))
+                .isEqualTo(1L);
+
+        assertThat(NullSafe.getLongOrElse(nullLevel1, Level1::getLevelNo, 99L))
+                .isEqualTo(99L);
+        assertThat(NullSafe.getLongOrElse(nonNullLevel1, Level1::getLevelNo, 99L))
+                .isEqualTo(1L);
+
+        assertThat(NullSafe.getLongOrElse(
+                nonNullLevel1,
+                Level1::getNullLevel2,
+                Level2::getLevelNo,
+                99L))
+                .isEqualTo(99L);
+        assertThat(NullSafe.getLongOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getLevelNo,
+                99L))
+                .isEqualTo(2L);
+
+        assertThat(NullSafe.getLongOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNullLevel3,
+                Level3::getLevelNo,
+                99L))
+                .isEqualTo(99L);
+        assertThat(NullSafe.getLongOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getLevelNo,
+                99L))
+                .isEqualTo(3L);
+
+        assertThat(NullSafe.getLongOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNullLevel4,
+                Level4::getLevelNo,
+                99L))
+                .isEqualTo(99L);
+        assertThat(NullSafe.getLongOrElse(
+                nonNullLevel1,
+                Level1::getNonNullLevel2,
+                Level2::getNonNullLevel3,
+                Level3::getNonNullLevel4,
+                Level4::getLevelNo,
+                99L))
+                .isEqualTo(4L);
+    }
+
+    @Test
+    void testGetBoolean() {
+        final AtomicBoolean nullRoot = null;
+        final AtomicBoolean trueValue = new AtomicBoolean(true);
+        final AtomicBoolean falseValue = new AtomicBoolean(false);
+        final AtomicReference<AtomicBoolean> nullChild2 = new AtomicReference<>();
+        final AtomicReference<AtomicBoolean> trueChild2 = new AtomicReference<>(trueValue);
+        final AtomicReference<AtomicReference<AtomicBoolean>> nullChild3 = new AtomicReference<>();
+        final AtomicReference<AtomicReference<AtomicBoolean>> trueChild3 =
+                new AtomicReference<>(trueChild2);
+        final AtomicReference<AtomicReference<AtomicReference<AtomicBoolean>>> nullChild4 =
+                new AtomicReference<>();
+        final AtomicReference<AtomicReference<AtomicReference<AtomicBoolean>>> trueChild4 =
+                new AtomicReference<>(trueChild3);
+
+        assertThat(NullSafe.getBoolean((Boolean) null)).isFalse();
+        assertThat(NullSafe.getBoolean(true)).isTrue();
+        assertThat(NullSafe.getBoolean(false)).isFalse();
+
+        assertThat(NullSafe.getBoolean(nullRoot, AtomicBoolean::get))
+                .isEqualTo(NullSafe.test(nullRoot, AtomicBoolean::get));
+        assertThat(NullSafe.getBoolean(trueValue, AtomicBoolean::get))
+                .isEqualTo(NullSafe.test(trueValue, AtomicBoolean::get));
+
+        assertThat(NullSafe.getBoolean(nullChild2, AtomicReference::get, AtomicBoolean::get))
+                .isEqualTo(NullSafe.test(nullChild2, AtomicReference::get, AtomicBoolean::get));
+        assertThat(NullSafe.getBoolean(trueChild2, AtomicReference::get, AtomicBoolean::get))
+                .isEqualTo(NullSafe.test(trueChild2, AtomicReference::get, AtomicBoolean::get));
+
+        assertThat(NullSafe.getBoolean(nullChild3,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicBoolean::get))
+                .isEqualTo(NullSafe.test(nullChild3,
+                        AtomicReference::get,
+                        AtomicReference::get,
+                        AtomicBoolean::get));
+        assertThat(NullSafe.getBoolean(trueChild3,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicBoolean::get))
+                .isEqualTo(NullSafe.test(trueChild3,
+                        AtomicReference::get,
+                        AtomicReference::get,
+                        AtomicBoolean::get));
+
+        assertThat(NullSafe.getBoolean(nullChild4,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicBoolean::get))
+                .isEqualTo(NullSafe.test(nullChild4,
+                        AtomicReference::get,
+                        AtomicReference::get,
+                        AtomicReference::get,
+                        AtomicBoolean::get));
+        assertThat(NullSafe.getBoolean(trueChild4,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicBoolean::get))
+                .isEqualTo(NullSafe.test(trueChild4,
+                        AtomicReference::get,
+                        AtomicReference::get,
+                        AtomicReference::get,
+                        AtomicBoolean::get));
+
+        assertThat(NullSafe.getBoolean(falseValue, AtomicBoolean::get))
+                .isEqualTo(NullSafe.test(falseValue, AtomicBoolean::get));
+    }
+
+    @Test
+    void testGetBooleanOrElse() {
+        final AtomicBoolean nullRoot = null;
+        final AtomicBoolean trueValue = new AtomicBoolean(true);
+        final AtomicReference<AtomicBoolean> nullChild2 = new AtomicReference<>();
+        final AtomicReference<AtomicBoolean> trueChild2 = new AtomicReference<>(trueValue);
+        final AtomicReference<AtomicReference<AtomicBoolean>> nullChild3 = new AtomicReference<>();
+        final AtomicReference<AtomicReference<AtomicBoolean>> trueChild3 =
+                new AtomicReference<>(trueChild2);
+        final AtomicReference<AtomicReference<AtomicReference<AtomicBoolean>>> nullChild4 =
+                new AtomicReference<>();
+        final AtomicReference<AtomicReference<AtomicReference<AtomicBoolean>>> trueChild4 =
+                new AtomicReference<>(trueChild3);
+
+        assertThat(NullSafe.getBooleanOrElse((Boolean) null, true)).isTrue();
+        assertThat(NullSafe.getBooleanOrElse(true, false)).isTrue();
+        assertThat(NullSafe.getBooleanOrElse(false, true)).isFalse();
+
+        assertThat(NullSafe.getBooleanOrElse(nullRoot, AtomicBoolean::get, true)).isTrue();
+        assertThat(NullSafe.getBooleanOrElse(trueValue, AtomicBoolean::get, false)).isTrue();
+
+        assertThat(NullSafe.getBooleanOrElse(
+                nullChild2,
+                AtomicReference::get,
+                AtomicBoolean::get,
+                true))
+                .isTrue();
+        assertThat(NullSafe.getBooleanOrElse(
+                trueChild2,
+                AtomicReference::get,
+                AtomicBoolean::get,
+                false))
+                .isTrue();
+
+        assertThat(NullSafe.getBooleanOrElse(
+                nullChild3,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicBoolean::get,
+                true))
+                .isTrue();
+        assertThat(NullSafe.getBooleanOrElse(
+                trueChild3,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicBoolean::get,
+                false))
+                .isTrue();
+
+        assertThat(NullSafe.getBooleanOrElse(
+                nullChild4,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicBoolean::get,
+                true))
+                .isTrue();
+        assertThat(NullSafe.getBooleanOrElse(
+                trueChild4,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicReference::get,
+                AtomicBoolean::get,
+                false))
+                .isTrue();
+    }
+
 //    @TestFactory
 //    Stream<DynamicTest> testDuration() {
 //        return TestUtil.buildDynamicTestStream()
@@ -2848,8 +3196,12 @@ class TestNullSafe {
             return nonNullLevel2;
         }
 
-        public Long getLevelNo() {
-            return level;
+        public long getLevelNo() {
+            return Objects.requireNonNull(level);
+        }
+
+        public int getLevelNoAsInt() {
+            return Math.toIntExact(level);
         }
 
         @SuppressWarnings("unused")
@@ -2907,8 +3259,12 @@ class TestNullSafe {
             return nonNullLevel3;
         }
 
-        public Long getLevelNo() {
-            return level;
+        public long getLevelNo() {
+            return Objects.requireNonNull(level);
+        }
+
+        public int getLevelNoAsInt() {
+            return Math.toIntExact(level);
         }
 
         @SuppressWarnings("unused")
@@ -2966,8 +3322,12 @@ class TestNullSafe {
             return nonNullLevel4;
         }
 
-        public Long getLevelNo() {
-            return level;
+        public long getLevelNo() {
+            return Objects.requireNonNull(level);
+        }
+
+        public int getLevelNoAsInt() {
+            return Math.toIntExact(level);
         }
 
         public Long getNullLevelNo() {
@@ -3025,8 +3385,12 @@ class TestNullSafe {
             return nonNullLevel5;
         }
 
-        public Long getLevelNo() {
-            return level;
+        public long getLevelNo() {
+            return Objects.requireNonNull(level);
+        }
+
+        public int getLevelNoAsInt() {
+            return Math.toIntExact(level);
         }
 
         @SuppressWarnings("unused")
@@ -3074,8 +3438,12 @@ class TestNullSafe {
         }
 
         @SuppressWarnings("unused")
-        public Long getLevelNo() {
-            return level;
+        public long getLevelNo() {
+            return Objects.requireNonNull(level);
+        }
+
+        public int getLevelNoAsInt() {
+            return Math.toIntExact(level);
         }
 
         @SuppressWarnings("unused")

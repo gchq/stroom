@@ -12960,12 +12960,18 @@ components:
     CredentialWithPerms:
       type: object
       properties:
+        certificateExpiryTimeMs:
+          type: integer
+          format: int64
         credential:
           $ref: "#/components/schemas/Credential"
         delete:
           type: boolean
         edit:
           type: boolean
+        expiryWarningPeriodMs:
+          type: integer
+          format: int64
     CriteriaFieldSort:
       type: object
       properties:
