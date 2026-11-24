@@ -1692,7 +1692,8 @@ The same features find an insider and a compromised account, so findings keep bo
 
 **Capabilities**
 
-* **Comparing activity across windows (`compare_activity`, a tool; the investigation a template skill)**: works from
+* **Comparing activity across windows (`compare_activity`, a tool; the investigation a template skill; peers in
+  the first version, user 2026-11-24)**: works from
   aggregates only (ES|QL `STATS` by day per source, StroomQL aggregates in monthly slices for other indexes), never
   fetched events, so 12 months is a few thousand numbers. Daily features: volume (events, active hours, sums of a
   numeric field such as bytes out), rhythm (first and last of the day in the person's zone, an hour-of-week profile
