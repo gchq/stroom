@@ -1556,6 +1556,14 @@ by the same user on the same host", "20 failed logons then a success". Structure
   step's doc out). The result adds `scope` (per doc: `index`, `by`, `field`, `field_from`, `values`) and, by logon
   id, `other_accounts`; in text, "Restricted to the person:". Close variants of logon ids are offered by
   `activity_timeline` only.
+* **Acts done to the person** (a step's `role`: `actor`, the default, or `target`, built 2026-11-24): a `target`
+  step is restricted by its doc's target field instead (`PersonScope.target`: the AGENTS doc's `## Fields`
+  `target person:` or `target person id:`, else `target user:` for the logon ids, else the ECS convention's
+  `user.target.id` or `user.target.name`), with the person's own acts on themselves left out (`NOT_IN` on the field
+  they are read by as the actor, where the doc has it), e.g. a privileged group granted to them, then their own
+  bulk download. `scope` lists the doc with `role: target` and its `by` ("done to them, by target person id
+  (...)"). Refused: `target` without `person` or `logonIds`, on a `keysOnly` step or `until`, a role that isn't
+  one, a doc with no target field.
 * **EQL** (`EqlQueryWriter`): `sequence with maxspan=2m [any where stroom_eql_doc == "1" and ...] by a, b ...`,
   `![...]` for missing, `with runs=N`, `until [...]`. EQUALS is `==` (`:` case-insensitive), `like`/`like~` with
   `*`, `cidrMatch` for a CIDR on an IP field; IN `in`/`in~` or `cidrMatch`; CONTAINS/STARTS_WITH/ENDS_WITH like
@@ -1736,6 +1744,18 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
   the index holds (the domain added or removed, another case) are offered in `left_out`'s text, never merged
   without the user. A source with `roles` is read by its `user` field, so by logon ids only (`entity` or
   `logonIds`); with only `person` it is refused.
+* **What was done to them** (`includeTargets`, default false; `TimelineTargets`, built 2026-11-24): one more read of
+  each source (and of those left out for holding none of the person's own events), its events whose target field
+  holds them (`PersonScope.target`: `targetPersonField`, else the AGENTS doc's `## Fields` `target person:`, else
+  ECS `user.target.id`; else, with logon ids, `targetUserField`, `target user:`, ECS `user.target.name`), the
+  person's own acts on themselves left out (`NOT` the actor field holding them; an event with no actor, a failed
+  logon, is kept): a group or access granted, a password reset, MFA changed, a failed logon against the account.
+  Each is labelled by its type (the Action, else the element, else the event code) and who did it (the actor's
+  logon id, else person id, else "no account"), and listed in a lane of its own per source (`done to them:
+  <source>`) in `spans.csv` (an instant each, kind `target`) and `actions.csv`; both tables' `role` column says
+  `actor` or `target`. Never in the person's activity: their sessions, spans, activity periods, pairs,
+  characterisation, counts and `rows` are the same with or without it. Audited as a search of each source. A source
+  with no target field is said in `left_out`, not read.
 * **Classification** (`TimelineClassification`, `EventXmlClassifier`): an automatic source's events by their Events
   XML (`TimelineEventXml`: by StreamId and EventId, as `fetch_events` reads them; View Data checked; audited as
   streams viewed; at most `timelineMaxXmlEvents`, 50,000, in time order): Authenticate Logon, ScreenUnlock, Connect,
@@ -1858,7 +1878,8 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
   `window`, `object`, `text`, `elementField`, `actionField`, `eventTypeField`, `roles` with `focus`, `open`,
   `close`, `idle_start`, `idle_end` as `{where, any_of}` and `actions` as `[{kind, where, any_of}]`, `pairs`,
   `spanBy`, `typeRoles`), `userField`, `timeFrom` (default `now()-7d`), `timeTo` (default `now()`), `idleCap`, `view`,
-  `lanes`, `skill`, `characterise`, `corrections`, `runAnyway`, `timeZone`.
+  `lanes`, `skill`, `characterise`, `corrections`, `runAnyway`, `includeTargets`, `targetPersonField`,
+  `targetUserField`, `timeZone`.
 * **Returns**: in a chat, Markdown (the sources with their user fields and how their events were classified, the
   spans by kind, the pairs and borderline pairs, active time by host or source and application or place, the flags
   with examples, the activities with their evidence, the tables, the view's gantt_chart calls, what was learned);
@@ -1874,9 +1895,12 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
   and activity periods), `data_quality`, `files`, `gantt` (the sessions table), `view`, `characterisation`
   (`activities` each with `label_is: inferred` and `found_by`, `sessions_in_no_activity`, `items`, `items_placed`,
   `model_calls`, `items_asked`, `items_not_classified`, `unclear` with reasons, `modularity`, `notes`, `gantt`),
-  `learned` (`event_chains`, `borderline_to_confirm`, `can_record`, `file`, `offer`), `time_zone`, `derived`,
-  `caveat`. Tables under `/outputs/timelines/<entity>/`, every run: `spans.csv` (span, start, end, label, lane, kind
-  focus/pair/key/activity, activity, activity_label, host, source, events, how, uncertain), `activities.csv` (activity,
+  `learned` (`event_chains`, `borderline_to_confirm`, `can_record`, `file`, `offer`), `done_to_them` (with
+  `includeTargets`: `events`, `note`, `sources` each with `by`, `events`, `kinds` and `done_by`, `left_out`,
+  `ended_early`, `listed`: the first 20 with time, type, by, host, object and ids; in a chat a "Done to them"
+  section), `time_zone`, `derived`, `caveat`. Tables under `/outputs/timelines/<entity>/`, every run: `spans.csv`
+  (span, start, end, label, lane, kind focus/pair/key/activity/target, activity, activity_label, host, source,
+  events, how, uncertain, role), `activities.csv` (activity,
   activity_label, day, start, end, active_minutes, spans, lanes, evidence; header only when not characterised),
   `sessions.csv` (the focus sessions; `gantt_chart` with start, end, label `process`, lane `host` draws it as it
   is), `actions.csv`, `events.csv` (with `type` and `classified_by`), `daily.csv`, `windows.csv`, `quality.csv`,
@@ -2045,10 +2069,25 @@ of its own: the tool policies decide who may compare a person's activity.
   hourly aggregate by country: countries new in the window; impossible travel (over 900 km/h between two places at
   least 500 km apart; with countries only, two countries within 2 hours, said as such); activity from abroad on
   leave. An index with no geo fields: "location isn't available", said. No reference data lookups.
+* **What was done to them** (`includeTargets`, default false; `TargetScoring`, built 2026-11-24): per source with a
+  target field (found as `activity_timeline`'s: `targetPersonField`, `targetUserField`, AGENTS `target person:` /
+  `target user:`, ECS `user.target.id` / `user.target.name`), the events done to the person by others (their own
+  acts on themselves left out: `AggregateQuery.excludes`, ES|QL `(f IS NULL OR f NOT IN (...))`, StroomQL
+  `not (...)`) by day and by type (the Action, element or event code field), and the accounts acting on them (each
+  one's first time, after the 28-day burn-in, is a new actor). Scored like the person's own features (the same
+  weekdays for `unit` day, else the window's total against the baseline's windows, at least 5; robust z ≥ 3.5, a
+  rise of at least 1 and half the baseline; runs merged), rises only; leave is scored (things done to an account
+  while its owner is away are the point), exceptions and days with no source data aren't. The source-wide check is
+  its own: everyone's events done to them by someone else per person (ES|QL only, `AggregateQuery.differing`: the
+  target held and the actor none or another; a non-Elastic index isn't checked, said). Its own findings group
+  (`done_to_them`, features `done_to_them:events`, `done_to_them:type:<type>`, `done_to_them:new_actors`), never
+  ranked with the person's findings, nor in their volume, rhythm, breadth, profile or peers; in `findings.csv`
+  after the rest. Cost: 2 more time-bucketed queries a month per source with a target field (daily by type; the
+  population on Elastic) and 1 for the actors.
 * **Arguments**: `person`, `logonIds`, `personField`, `userField`, `windowFrom`, `windowTo`, `baselineFrom`,
   `baselineTo`, `unit`, `timeZone`, `sources`, `sumFields`, `breadthFields`, `leave`, `exceptions`, `peers`,
   `peerElement`, `categories`, `categoryField`, `categoryList`, `categoryCorrections`, `accessField`, `location`,
-  `countryField`.
+  `countryField`, `includeTargets`, `targetPersonField`, `targetUserField`.
 * **Returns**: in a chat, Markdown (the note, the sources by what, the ranked findings, those explained by the
   source, values started and stopped, a line a month, notes, files, and the `activity_timeline` call for the flagged
   days); over MCP, JSON (also
@@ -2056,7 +2095,9 @@ of its own: the tool policies decide who may compare a person's activity.
   `sources` (`index`, `by`, `values`, `breadth_fields`, `sum_fields`, or `left_out`), `findings` (at most 20,
   ranked: `source`, `kind` day/week/month/change/drift/rhythm/peers/access/location, `feature`, `window`,
   `baseline`, `value`, `score`, `evidence`, `alternative`), `findings_total`, `source_wide`, `months`, `notes`,
-  `files`, `flagged_days` (up to 5, for `activity_timeline`), `queries`. Files under `/outputs/compare/<person>/`
+  `files`, `flagged_days` (up to 5, for `activity_timeline`), `done_to_them` (with `includeTargets`: `note`,
+  `sources` each with `by`, `in_window` by type, `new_actors` and `notes`, `findings` as above, `source_wide`; in a
+  chat a "Done to them" section), `queries`. Files under `/outputs/compare/<person>/`
   (the person id, else the logon ids, made safe): `profile.csv` (the daily features), `monthly.csv`, `findings.csv`
   (every finding), `values.csv` (each field's values started and stopped), and with categories
   `<source>-categories.csv`; charted by the table tool, or a CSV Data Connection by hand.
@@ -2069,9 +2110,10 @@ of its own: the tool policies decide who may compare a person's activity.
   `check_skill` rule against stating intent or guilt (the tool's own wording and the templates only); a tool policy
   of its own for these tools; `propose_timeline_dashboard` for these CSV files (its charts need it extended).
 * **Tests**: JUnit `TestActivityStatistics`, `TestActivityScoring`, `TestAggregateText`, `TestPeerGroups`,
-  `TestActivityCategories`, `TestActivityAccessAndLocation`, `TestCompareActivityTool` (over `InMemoryAggregates`);
-  e2e `TestE2eCompareActivity` (ES|QL and StroomQL agree) and `TestE2eInsiderCompareActivity` (the insider
-  dataset's plants found, its decoys not flagged).
+  `TestActivityCategories`, `TestActivityAccessAndLocation`, `TestCompareActivityTool`, `TestCompareActivityTargets`
+  (over `InMemoryAggregates`); e2e `TestE2eCompareActivity` (ES|QL and StroomQL agree) and
+  `TestE2eInsiderCompareActivity` (the insider dataset's plants found, its decoys not flagged, and what was done to
+  the leaver and the compromised account found apart, the person's own findings the same with or without it).
 
 ### `current_results`
 
