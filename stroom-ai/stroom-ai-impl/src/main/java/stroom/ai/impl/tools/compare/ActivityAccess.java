@@ -147,6 +147,7 @@ final class ActivityAccess {
         final double baseShare = baseOutside / Math.max(1, total(baseline));
         double windowTotal = 0;
         double windowOutside = 0;
+        double windowNew = 0;
         final List<String> outside = new ArrayList<>();
         final List<String> newToCluster = new ArrayList<>();
         for (final Map<String, String> row : window.rows()) {
@@ -163,6 +164,7 @@ final class ActivityAccess {
             }
             if (!clusterReached.contains(resource)) {
                 newToCluster.add(resource);
+                windowNew += events;
             }
         }
         if (!peers.isEmpty()) {
@@ -173,18 +175,31 @@ final class ActivityAccess {
                               : "") + ").");
         }
         final double windowShare = windowOutside / Math.max(1, windowTotal);
-        if (windowOutside < MIN_EVENTS || windowShare < MIN_SHARE || windowShare < 2 * baseShare) {
+        final boolean outsideMore = windowOutside >= MIN_EVENTS && windowShare >= MIN_SHARE
+                                    && windowShare >= 2 * baseShare;
+        // A resource reached from a new cluster: no one in the person's cluster reached it in the baseline.
+        final boolean reachedNew = windowNew >= MIN_EVENTS;
+        if (!outsideMore && !reachedNew) {
+            notes.add(source + ": " + Math.round(100 * windowShare) + "% of the window's " + resourceField
+                      + " events were outside the person's access cluster against " + Math.round(100 * baseShare)
+                      + "% in the baseline, and " + Math.round(windowNew) + " on values no one in it reached before: "
+                      + "not a finding.");
             return new Compared(Optional.empty(), notes, peers);
         }
-        final double score = Math.min(ActivityScoring.MAX_Z, ActivityScoring.Z_THRESHOLD * windowShare
-                                                             / Math.max(baseShare, 0.05));
+        final double score = Math.min(ActivityScoring.MAX_Z, outsideMore
+                ? ActivityScoring.Z_THRESHOLD * windowShare / Math.max(baseShare, 0.05)
+                : ActivityScoring.Z_THRESHOLD * (1 + 10 * windowNew / Math.max(1, windowTotal)));
         final String evidence = Math.round(100 * windowShare) + "% of the window's " + resourceField + " events "
                                 + "were on " + outside.size() + " value(s) outside the person's access cluster ("
                                 + String.join(", ", outside.stream().limit(NAMED).toList())
                                 + (outside.size() > NAMED
                                         ? ", ..."
                                         : "") + ") against " + Math.round(100 * baseShare) + "% in the baseline; "
-                                + newToCluster.size() + " reached by no one in their cluster before";
+                                + newToCluster.size() + " reached by no one in their cluster before ("
+                                + Math.round(windowNew) + " events: " + String.join(", ", newToCluster.stream()
+                                        .limit(NAMED).toList()) + (newToCluster.size() > NAMED
+                                        ? ", ..."
+                                        : "") + ")";
         return new Compared(Optional.of(new Finding(source, FEATURE + ":" + resourceField, windowLabel, baseShare,
                 windowShare, score, evidence, "A new project or role, cover for a colleague, or reorganised "
                                               + "resources.", Kind.ACCESS)), notes, peers);

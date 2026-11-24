@@ -36,6 +36,7 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.IntStream;
 
@@ -123,6 +124,39 @@ class TestActivityScoring {
         assertThat(scored.findings()).filteredOn(finding -> finding.feature().equals(ActivityScoring.EVENTS))
                 .isNotEmpty()
                 .allSatisfy(finding -> assertThat(finding.sourceWide()).isFalse());
+    }
+
+    @Test
+    void aCategoryIsNeverTheSourcesAndNothingDriftsFromNothing() {
+        // Everyone's volume doubles from the step (a pipeline change); the person starts using job sites then.
+        final CompareFixtures fixtures = new CompareFixtures(ZONE);
+        for (int i = 0; i < 10; i++) {
+            fixtures.workdays("other" + i, BASE_FROM, WINDOW_TO, 9, 17, date -> date.isBefore(STEP)
+                    ? 5
+                    : 10, date -> Map.of());
+        }
+        fixtures.workdays("p1", BASE_FROM, WINDOW_TO, 9, 17, date -> date.isBefore(STEP)
+                ? 5
+                : 10, date -> Map.of());
+        final SortedMap<LocalDate, Double> jobs = new TreeMap<>();
+        final SortedMap<LocalDate, Double> none = new TreeMap<>();
+        for (LocalDate date = STEP; date.isBefore(WINDOW_TO); date = date.plusDays(1)) {
+            if (date.getDayOfWeek().getValue() <= 5) {
+                jobs.put(date, 6.0);
+            }
+        }
+        final SourceData data = fixtures.data("p1", NO_FIELDS, BASE_FROM, WINDOW_TO, List.of()).withExtra(Map.of(
+                ActivityScoring.CATEGORY + "job search", jobs, ActivityScoring.CATEGORY + "webmail", none));
+        final Scored scored = ActivityScoring.score(spec(Unit.WEEK), data);
+
+        assertThat(scored.findings()).filteredOn(finding -> finding.feature().equals(ActivityScoring.CATEGORY
+                                                                                     + "job search"))
+                .isNotEmpty()
+                .allSatisfy(finding -> assertThat(finding.sourceWide()).isFalse());
+        assertThat(scored.findings()).noneSatisfy(finding -> assertThat(finding.feature())
+                .isEqualTo(ActivityScoring.CATEGORY + "webmail"));
+        assertThat(scored.findings()).allSatisfy(finding -> assertThat(finding.score())
+                .isBetween(0.0, ActivityScoring.MAX_Z));
     }
 
     @Test

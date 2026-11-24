@@ -323,7 +323,7 @@ final class ActivityScoring {
                                           final LocalDate date,
                                           final double value,
                                           final Score score) {
-        if (!isVolume(feature)) {
+        if (!comparableWithSource(feature)) {
             return false;
         }
         final Double others = population.get(date);
@@ -406,7 +406,7 @@ final class ActivityScoring {
                 }
                 String alternative = alternative(feature.getKey(), score.z());
                 final Double populationValue = aggregate(EVENTS, population, window);
-                final boolean shared = populationValue != null && isVolume(feature.getKey())
+                final boolean shared = populationValue != null && comparableWithSource(feature.getKey())
                                        && ActivityStatistics.robustZ(populationValue, basePopulation)
                                                .map(theirs -> sharedShift(v, score, populationValue, theirs))
                                                .orElse(false);
@@ -499,7 +499,7 @@ final class ActivityScoring {
             String alternative = alternative(feature.getKey(), s.after() - s.before());
             final double size = Math.min(s.score(), MAX_Z);
             boolean shared = false;
-            if (isVolume(feature.getKey()) && sourceShift.isPresent()
+            if (comparableWithSource(feature.getKey()) && sourceShift.isPresent()
                 && Math.abs(ChronoUnit.DAYS.between(sourceShift.get().date(), shift.get().date())) <= SOURCE_SHIFT_DAYS
                 && Math.signum(sourceShift.get().shift().after() - sourceShift.get().shift().before())
                    == Math.signum(s.after() - s.before())
@@ -640,12 +640,13 @@ final class ActivityScoring {
             final double threshold = isTime(feature.getKey())
                     ? 60
                     : Math.max(minimum(feature.getKey()), 0.5 * Math.abs(start));
-            if (Double.isNaN(slope) || Math.abs(total) < threshold) {
+            // A drift needs a scale: from nothing, with no least change, it can't be sized.
+            if (Double.isNaN(slope) || threshold <= 0 || total == 0 || Math.abs(total) < threshold) {
                 continue;
             }
             findings.add(new Finding(data.source(), feature.getKey(), firstMonth + " to "
                                                                      + firstMonth.plusMonths((long) months),
-                    start, start + total, Z_THRESHOLD * Math.abs(total) / threshold,
+                    start, start + total, Math.min(MAX_Z, Z_THRESHOLD * Math.abs(total) / threshold),
                     label(feature.getKey()) + " drifted by " + signed(feature.getKey(), slope) + " a month over "
                     + (long) months + " months (Theil-Sen), " + signed(feature.getKey(), total) + " in all",
                     alternative(feature.getKey(), total), Kind.DRIFT));
@@ -959,7 +960,7 @@ final class ActivityScoring {
             return 10;
         } else if (feature.equals(ACTIVE_HOURS)) {
             return 2;
-        } else if (feature.startsWith(DISTINCT) || feature.startsWith(NOVEL)) {
+        } else if (feature.startsWith(DISTINCT) || feature.startsWith(NOVEL) || feature.startsWith(CATEGORY)) {
             return 1;
         }
         return 0;
@@ -969,9 +970,9 @@ final class ActivityScoring {
         return feature.equals(FIRST) || feature.equals(LAST);
     }
 
-    private static boolean isVolume(final String feature) {
-        return feature.equals(EVENTS) || feature.equals(ACTIVE_HOURS) || feature.startsWith(SUM)
-               || feature.startsWith(CATEGORY);
+    // A feature the whole source's volume (everyone else's events per person) can explain: not a category's share.
+    private static boolean comparableWithSource(final String feature) {
+        return feature.equals(EVENTS) || feature.equals(ACTIVE_HOURS) || feature.startsWith(SUM);
     }
 
     /// @param feature A feature's name.
