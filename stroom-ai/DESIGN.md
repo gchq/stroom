@@ -2035,6 +2035,112 @@ order, the timeline package first, then the comparison package; the record per p
   Characterisation quality on the generated data is poor (clusters such as "Chrome"), the existing behaviour; cloud
   sign-ins have no logoff, so their starts are unpaired.
 
+### Many feeds, shared translations and the timeline's reading (decided 2026-11-25)
+
+Decided with the user (2026-11-25) after a read-only audit of single-feed assumptions (findings below) and a review of
+how `activity_timeline` reads its data. The review page: https://claude.ai/artifact/HbzfSMPawDRqEEsAwviaME. Feeds of
+one source may be split along any line (an organisation, a security boundary); several feeds may go into one index;
+one translation may serve several feeds (a processor filter selecting several, several pipelines naming one XSLT, or
+child pipelines inheriting it); a feed may be translated by successive versions, which can run at once (some agents
+still post to V1.0 while others moved to V1.1); a pipeline may chain several XSLTs.
+
+**Principles**
+
+* **Derive, don't register.** No registry of feeds, pipelines and documents: users move and rename them after
+  promotion. Relationships come live from Stroom's own facts: processor filter expressions (`ProcessorFilters`,
+  `PipelineFeeds`; never Stroom's dependency service, which records only `docRef` terms), stream meta, pipeline
+  properties (effective, inherited included), Explorer by UUID. The build record is the build's history, not the
+  authority on where documents are now.
+* **Data on what it describes.** A translation's mapping is a hidden block in its XSLT's description (as built
+  feeds already have it); its event type catalogue stays in its source notes doc, and the translation XSLT's
+  description holds a hidden link to that doc by UUID (for built and inducted translations alike), so the catalogue
+  is found from the XSLT wherever either is moved. The user's own description text is kept; only the tools' marked
+  blocks are replaced.
+* **Provenance by stream.** An indexed event's feed, producing pipeline and parent come from its StreamId's meta
+  (one batched lookup of the distinct streams in a read), and through the producing pipeline its XSLTs' mapping,
+  catalogue and index plan. Never by feed name or index alone.
+* **Exact by default; no guessing.** Logon ids match exactly; other written forms only by the user's word
+  (`logonForms`), as a transform scripts every event in the period. A person id is the preferred key.
+
+**XSLT stages.** Every pipeline's XSLTFilters are classified by what they read and write: pre-process (records to
+records, e.g. unpacking nested JSON strings), translation (records to Events), decoration (Events to Events, e.g.
+`UserDetails/Id`), indexing (Events to documents). Exactly by stepping one sample record (where the event-logging
+namespace first appears), else by the XSLT's output namespace. Every tool uses it: the existing translation offered
+(`ExistingTranslations` took the first own XSLT, a pre-processor where there is one), `rebuild_mapping`, the survey
+and the catalogue's conditions (read at the translation's input, the pre-processor's output), where kept blocks go
+(translation: mapping and source-notes link; indexing: plan), new versions (the chain kept whole), field provenance
+(decorated fields from the decorator).
+
+**Field lookup** (`TimelineFields` and every tool finding fields): the call or skill, AGENTS `## Fields`, the index
+plans of every feeding pipeline, the index documentation's From column, the field conventions (labelled, with the
+`## Fields` line offered), then per-event Events XML for what is still unmapped. Several pipelines feeding one index
+are all read: where their mappings agree, one field; where they differ, each pipeline's field for its own streams,
+said in the result. Plans are read from effective (inherited) properties.
+
+**Several feeds in one build** (onboarding two or more feeds at once):
+* Every source feed is surveyed (the plan's `next` works through them; "surveyed" needs each); their shapes are
+  merged as a union, and each feed's differences from the others (fields in some only, record kinds, formats, time
+  zones) are shown for the user to confirm; per-feed time zones allowed.
+* Dormant feeds (no stream for a while, by their own dates, never by name) are included like any other, their
+  streams and volume stated.
+* Coverage (survey, `check_events`, `verify_index`) is reported per feed.
+* AGENTS rules from different feeds' folders that conflict for the shared documents are asked about, per conflict.
+* Shared documents go in the feeds' folder where they share one; otherwise the user chooses the first feed's
+  folder or another.
+* One shared index or one per feed: the feeds' read permissions are compared first (a shared Elastic index merges
+  their access); where they differ, one per feed is proposed and merging needs the user's explicit choice with the
+  consequence stated; where they match, asked.
+* An index template for an index fed by several pipelines merges every feeding pipeline's plan; a type conflict
+  between plans is refused, naming both.
+
+**Promotion with shared or concurrent versions**:
+* A new version moves only the build's feeds: the old version keeps the feeds and pipelines outside the build,
+  named in the review; never advise retiring a filter, pipeline or XSLT others still use.
+* Filters cover the build's source feeds (not only those sampled): one filter per pipeline, each feed a
+  `Feed is <feed>` term under OR (tracked dependencies; never text or dictionary terms). Each feed's streams and
+  volume are stated before a filter can run (a new filter reprocesses every matching stream not yet processed).
+* Where old filters select any of the same feeds, the new filter is created disabled and the switch-over is the
+  user's (in-flight tasks make it unsafe for the agent): the next steps say the new filter has been drafted,
+  disabled, and give the order with a link to each step: remove these feeds from these old filters or dictionaries
+  (each linked; a dictionary's other users named), let their in-flight tasks finish, enable the new filter. The
+  tools edit no old filter or dictionary. `build_status` reports any feed selected by two versions or by none, and
+  the old filters' tasks still running. A brand-new feed's filter is enabled as before.
+
+**Induction** (an existing hand-written translation read into a mapping and catalogue without a new version):
+written without asking (only hidden agent blocks change; needs Edit on the XSLT): the mapping and the source-notes
+link in the XSLT's description, a source notes doc beside the pipeline. The survey covers every feed of every
+pipeline using the XSLT; the catalogue records the feeds it was checked against.
+
+**Timeline roles in the catalogue.** `catalogue_event_types` gives each event type a timeline role. Where its
+EventDetail element and Action settle it (the schema's table), filled in and listed; the user is asked only for
+types the schema doesn't (focus, vendor-specific), in the catalogue's set-at-a-time form. The timeline's roles:
+the call or skill, the catalogue of the stream's producing translation, an AGENTS doc, else classified for this run
+and offered as AGENTS lines.
+
+**Timeline reading (replaces 2c's "Classified from the Events XML" first)**: fields mapped once per index as above;
+one scan per source (roles assigned in memory, not a scan per role); roles by event type; content per event (URL,
+path, title, message text, what characterisation classifies) from mapped fields; Events XML only for paths still
+unmapped and only for the events shown or characterised, the result naming the path to add to the plan. Long
+ranges: above the events cap (from the first/last aggregate and a count) a per-day overview by aggregation comes
+first, the user picking days for detail. Sources over MCP: a skill's or AGENTS doc's default, else only the indexes
+holding the user's events and the fields needed, up to about 10, beyond which the model chooses.
+
+**compare_activity over several feeds.** The baseline is the person's activity across every feed of the source;
+coverage is by day across them (a day with no events from any feed is a gap, not quiet); peers by the
+Organisation field, never by feed; each feed's first and last day listed.
+
+**Audit findings** (HEAD ba5e771df6): promotion advised disabling the earlier version's filters while they still
+translated other feeds (`PromoteBuildTool` 780-811), and listed old indexing filters likewise
+(`PromotionProcessing` 112-140, 233-290); new filters covered only the sampled feeds (`PromotionProcessing`
+333-352); an index template came from one pipeline's plan and a same-name one replaced it (`ProposeIndexTemplateTool`
+254-283); the plan surveyed only the first feed and any one survey passed (`BuildPlan` 791-795, 1275-1279); the
+existing translation offered was the first filter match, not the newest, and never said it served other feeds
+(`ExistingTranslations` 127-185); one mapping per field name (`DataSourceDocumentation` 172-182,
+`IndexDocumentation` 157-168, `TimelineFields` 147-152); plans read from added properties only; compare_activity
+judged no-data index-wide; only the first 3 feeds checked for an existing translation (`StroomBuildFacts` 761);
+layout, test feed and format feed from the first feed; the verification dashboard has no stream term. No test
+exercised several feeds into one index, one translation serving several feeds, or successive versions.
+
 ### Stop and Elasticsearch errors (built 2026-11-16)
 
 * **Stop reaches the query.** Stop sets the run's flag (`AiChatRunManager.LocalRun.requestStop`), which the agent
@@ -5924,6 +6030,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-25 | Many feeds, shared translations and the timeline's reading decided with the user after an audit of single-feed assumptions: derive relationships live (no registry); a translation's mapping hidden in its XSLT and a hidden UUID link from it to its source notes (catalogue); provenance by stream; XSLT stages classified (pre-process, translation, decoration, indexing); every feeding pipeline's mapping read; several feeds per build surveyed each, shapes a union with differences shown, dormant feeds included, coverage per feed; promotion moves only the build's feeds, one filter of `Feed is` terms under OR, disabled where old filters overlap with the switch-over advised and linked, never done by the agent; induction writes without asking; timeline index-first with roles by type, one scan per source, XML only where unmapped, a per-day overview past the cap, capped sources over MCP; compare_activity by day across feeds | [Many feeds, shared translations and the timeline's reading](#many-feeds-shared-translations-and-the-timelines-reading-decided-2026-11-25) |
 | 2026-11-25 | Eval cases 77 and 78 as real models (Haiku, Sonnet, over a client that doesn't sample) call `activity_timeline`: a session starts only at a focus, never at an action on a process (a `process` field naming the source column gave a proxy-only user 8 sessions of `proxy`); a source whose events all hold one application has its activity periods labelled by the object's place; where nothing gives any of a source's event codes a role (no model to ask, no skill's or call's `typeRoles`) the call is refused with the codes and counts for the calling model to give `typeRoles` (one source over the whole index, no roles: every event an action, 11 sessions for 63); one user given alone and found as given is read with its close variants too (strip_domain, lowercase) where the index holds them, said in `user_transform` (the logons' `CORP\jsmith` were missed, so no lock ended a session); a date alone is a whole day as compare_activity reads it, an end date included (`CompareActivityTool.dateBound`). `TestE2eTimelineModelCalls` replays the models' calls | Activity timelines, streaming joins and skills; TOOLS.md (activity_timeline) |
 | 2026-11-25 | Chat 195's timeline defects fixed: side calls made as the run's user on any thread (characterisation's parallel batches failed the security check); the summary counts spans of every kind and says when calls failed; a person id alone with only a user field is refused naming `logonIds`, never taken as a logon id unasked; the timeline dashboard's chart draws its own unfiltered table in a hidden tab (a click no longer narrows the chart); spans say what happened (`action`, labels led by it, the chart's tooltip `detail`); lanes titled by what they are (the host field's description, `Source`, `Day (<zone>)`); with no roles given, `focus` is a role of event codes, `typeRoles` and Event chains, an automatic source keeps the call's process, title, window and text fields, and no pair or key span is inferred from a focus (eval case 77) | Activity timelines, streaming joins and skills (2c., "Fixed from chat 195"); TOOLS.md (activity_timeline, compare_activity, propose_timeline_dashboard) |
 | 2026-11-25 | Skill eval cases (88 to 96) run in Stroom's own chat, not over `/mcp` (`propose_skill` is chat-only and `undo` reads the chat), with true earlier turns from a scripted model; the hand-written pipeline case moved into the set as 97 with its setup made in Stroom. A copy of a pipeline whose XSLT keeps no mapping is read back (`rebuild_mapping`) before it is stepped: seen in case 97 on Haiku and Sonnet, copied straight from `start_build`'s advice, `next` said `step_sample` and the agent rewrote the copy's XSLT by hand. Open: `start_build`'s advice for a feed already translated still lets the agent copy before the survey, so the catalogue's start-from-existing offer (and its confirmation) is skipped | [Testing](#testing); Builds and onboarding (start from an existing pipeline); [Skills](#4-skills) |
