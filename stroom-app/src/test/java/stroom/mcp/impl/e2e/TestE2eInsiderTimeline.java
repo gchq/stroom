@@ -87,7 +87,8 @@ class TestE2eInsiderTimeline extends AbstractInsiderE2eTest {
         final String variants = McpTestClient.text(client.call("activity_timeline", timeline(Map.of("logonIds",
                 List.of("CORP\\dwhitfield", "Dana.Whitfield@corp.example")), EVENING_FROM, EVENING_TO)));
         dump("activity_timeline, the leaver's logon ids as the sources wrote them", variants);
-        assertThat(variants).startsWith("Error: No source holds").contains("close variants in its index: dwhitfield (not merged")
+        assertThat(variants).startsWith("Error: No source holds")
+                .contains("close variants in its index: dwhitfield (not merged")
                 .contains("close variants in its index: dana.whitfield (not merged");
     }
 
