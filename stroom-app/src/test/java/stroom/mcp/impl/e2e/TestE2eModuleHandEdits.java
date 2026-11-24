@@ -39,10 +39,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 ///   call to the module: the user is asked before anything is written, keeps the edit, and the module's new version
 ///   (V1.1) holds the edit beside the shared call; the new group's Events and documentation carry the edited value,
 ///   production's module is left as edited;
-/// * a group XSLT's own Generator (its override of the module's part, in a later build's new version of the group)
-///   edited by hand: a generated change to that field asks the user, and kept, is refused, nothing written;
-///   rebuild_mapping carries the edit into the group's mapping, the group's module block and its import of the
-///   common module kept, and the pipeline steps clean.
+/// * a group XSLT's own Generator (its override of the module's part, in a later build's group of one rule, the
+///   integration group: no xsl:choose, the group's own check of unread fields called beside its rule) edited by
+///   hand: a generated change to that field asks the user, and kept, is refused, nothing written; rebuild_mapping
+///   carries the edit into the group's mapping, its one rule read as its rule, the group's module block and its
+///   import of the common module kept, and the pipeline steps clean.
 @SuppressWarnings("unchecked")
 class TestE2eModuleHandEdits extends AbstractE2eTest {
 
@@ -125,20 +126,21 @@ class TestE2eModuleHandEdits extends AbstractE2eTest {
         final String folder = "E2E Feeds/PegaMo";
         final Promoted promoted = securityPromoted(feed, folder, "pega-mo");
 
-        // A later build changes the group to write its own Generator, in its own XSLT in place of the module's part:
-        // a new version of the group's XSLT, run by its pipeline's new version.
+        // A later build's group of one rule writes its own Generator, in its own XSLT in place of the module's part,
+        // run by its own pipeline.
         final String build = "pega-mo-2";
         json("start_build", args("build", build, "feeds", List.of(feed)));
-        client.answeringWith(answering(List.of()));
+        client.answeringWith(answering(List.of("PegaIntegration")));
         json("survey_feed", args("feed", feed, "build", build));
-        recordSourceTypes(build, feed, SECURITY);
-        final Map<String, Object> mapping = withGenerator(TestE2eSourceTypeGroups.securityMapping(),
+        recordSourceTypes(build, feed, INTEGRATION);
+        final Map<String, Object> mapping = withGenerator(TestE2eSourceTypeGroups.integrationMapping(),
                 "Pega integration bus");
-        final Map<String, Object> security = group(build, feed, SECURITY, "PegaSecurityEvent", mapping,
+        final Map<String, Object> integration = group(build, feed, INTEGRATION, "PegaIntegration", mapping,
                 promoted.stream());
-        final String xslt = uuidOf(map(security, "xslt"));
-        final String pipeline = uuidOf(agreed("copy_pipeline", args("build", build, "source_uuid",
-                promoted.pipeline(), "new_name", feed + " " + SECURITY + " v2")));
+        final String xslt = uuidOf(map(integration, "xslt"));
+        final String template = templateUuid("translation", "Event Data (JSON)");
+        final String pipeline = uuidOf(agreed("create_pipeline", args("build", build, "group", INTEGRATION,
+                "template_uuid", template)));
         final String commonCode = readXslt(promoted.common()).getData();
 
         // The user edits the group's own Generator by hand.
@@ -168,7 +170,11 @@ class TestE2eModuleHandEdits extends AbstractE2eTest {
         final Map<String, Object> kept = (Map<String, Object>) KeptMapping.readMapping(readXslt(xslt)
                 .getDescription()).orElseThrow().payload().get("mapping");
         assertThat((Map<String, Object>) kept.get("module")).containsEntry("kind", "group")
-                .containsEntry("name", SECURITY);
+                .containsEntry("name", INTEGRATION);
+        // Its one rule read as its rule, not the group's helper templates.
+        assertThat(String.valueOf(rebuilt.get("rebuilt"))).doesNotContain("no Event written");
+        assertThat((List<Map<String, Object>>) kept.get("events")).singleElement()
+                .satisfies(rule -> assertThat(rule).containsEntry("name", "call"));
         assertThat(String.valueOf(((Map<String, Object>) kept.get("module")).get("common")))
                 .contains(promoted.common());
         assertThat(stepSample(pipeline, List.of(promoted.stream())).get("verdict")).isEqualTo("clean");

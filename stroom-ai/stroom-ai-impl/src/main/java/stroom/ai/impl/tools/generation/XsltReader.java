@@ -63,6 +63,15 @@ public final class XsltReader {
             Pattern.DOTALL | Pattern.UNICODE_CHARACTER_CLASS);
     // The name the template logging a record's kind had in XSLTs saved before it was named mcp_log_kind.
     private static final String EARLIER_LOG_KIND_TEMPLATE = "mcp_kept_unknown";
+    // The generator's named templates that write nothing of the Event, called beside a rule's (or before the rules):
+    // its check of fields no rule reads and its log of a record's kind, as a whole translation names them.
+    private static final List<String> HELPER_TEMPLATES = List.of(XsltGenerator.UNREAD_TEMPLATE,
+            XsltGenerator.LOG_KIND_TEMPLATE, EARLIER_LOG_KIND_TEMPLATE);
+    private static final String SNAKE_CASE = "snake_case";
+    // The mode a for_each mapping's items are handed to, in a whole translation (a group's has its mode before it).
+    private static final String ITEM_MODE = "item";
+    // The mode a whole translation's records are handed to (a group's are handed to its own mode).
+    private static final String EVENT_MODE = "event";
     // The start of the literal a catch-all rule's log line is (XsltGenerator.CAUGHT up to the rule's name, written as
     // XPathText.literal writes it, without its closing quote).
     private static final String CAUGHT_LITERAL = "'" + XsltGenerator.CAUGHT.substring(0,
@@ -227,14 +236,20 @@ public final class XsltReader {
                 : "";
         final String recordMode = apply != null
                 ? apply.get("mode")
-                : "event";
+                : EVENT_MODE;
         XmlElement record = recordMode == null
                 ? null
                 : templates.get(recordMode);
         final List<String> notes = new ArrayList<>(laidOut);
-        if ("event".equals(recordMode) && record != null && record.childElements(XSL, "apply-templates").stream()
-                .anyMatch(child -> "item".equals(child.get("mode")))) {
-            record = templates.get("item");
+        final String itemMode = record == null
+                ? null
+                : record.childElements(XSL, "apply-templates").stream()
+                        .map(child -> child.get("mode"))
+                        .filter(mode -> ownName(mode, ITEM_MODE, recordMode))
+                        .findFirst()
+                        .orElse(null);
+        if (itemMode != null) {
+            record = templates.get(itemMode);
             notes.add("one record, several events (for_each): each item read as the record");
         }
         final Map<String, String> prefixes = new LinkedHashMap<>();
@@ -739,12 +754,43 @@ public final class XsltReader {
 
     // The generator's calls that write nothing of the Event: its check of fields no rule reads
     // (XsltGenerator.UNREAD_TEMPLATE) and its log of a record's kind (XsltGenerator.LOG_KIND_TEMPLATE, or as an
-    // XSLT saved before it was named so wrote it).
+    // XSLT saved before it was named so wrote it). A source type group's are its own, its mode before the name.
     private static boolean unreadCheck(final XmlElement child) {
         final String name = child.get("name");
-        return child.is(XSL, "call-template") && (XsltGenerator.UNREAD_TEMPLATE.equals(name)
-                                                  || XsltGenerator.LOG_KIND_TEMPLATE.equals(name)
-                                                  || EARLIER_LOG_KIND_TEMPLATE.equals(name));
+        return child.is(XSL, "call-template") && truthy(name)
+               && HELPER_TEMPLATES.stream().anyMatch(helper -> helperName(name, helper));
+    }
+
+    /// @param name   A named template's name, as an XSLT calls it.
+    /// @param helper One of the generator's helper templates' names, as a whole translation's XSLT names it
+    ///               (`mcp_unread_fields`, say).
+    /// @return True if the name is the helper's: as it is, or a source type group's own (the group's mode before
+    /// it, in the group's naming, as the generator names whatever a group declares:
+    /// `web_access_mcp_unread_fields` or `webAccessMcpUnreadFields`). Told by the helper's words ending
+    /// the name, so the group's mode need not be known; no template of a mapping's (a rule's is a mode, a shared one
+    /// an import's) ends with the generator's own `mcp` names.
+    static boolean helperName(final String name, final String helper) {
+        if (helper.equals(name)) {
+            return true;
+        }
+        final String words = XsltNames.styleName(name, SNAKE_CASE);
+        return words.endsWith("_" + XsltNames.styleName(helper, SNAKE_CASE));
+    }
+
+    /// @param name A mode's or a template's name, as an XSLT names it.
+    /// @param base The name the generator gives it in a whole translation (`item`, say).
+    /// @param mode The XSLT's record mode: `event` for a whole translation, a source type group's own mode for a
+    ///             group's.
+    /// @return True if the name is the one the generator gives the base in an XSLT of that record mode: as it is,
+    /// or a group's own (its mode before it, in the group's naming).
+    static boolean ownName(final String name, final String base, final String mode) {
+        if (name == null) {
+            return false;
+        }
+        if (mode == null || EVENT_MODE.equals(mode)) {
+            return base.equals(name);
+        }
+        return XsltNames.styleName(name, SNAKE_CASE).equals(XsltNames.styleName(mode + "-" + base, SNAKE_CASE));
     }
 
     // The generator's log of a record a catch-all rule takes: its line starts with XsltGenerator.CAUGHT.
