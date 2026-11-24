@@ -72,7 +72,10 @@ class TestActivityScoring {
         assertThat(scored.findings()).anySatisfy(finding -> {
             assertThat(finding.kind()).isEqualTo(Kind.WEEK);
             assertThat(finding.feature()).isEqualTo(ActivityScoring.EVENTS);
-            assertThat(finding.evidence()).contains("in the week from 2026-05-11");
+            // The three weeks from the step are one finding.
+            assertThat(finding.window()).isEqualTo("2026-05-11 to 2026-05-31");
+            assertThat(finding.evidence()).startsWith("In 3 weeks in a row from 2026-05-11 to 2026-05-31; the "
+                                                      + "largest: ").contains("in the week from 2026-05-11");
         });
         // The week before the step isn't flagged.
         assertThat(scored.findings()).noneSatisfy(finding -> assertThat(finding.window())

@@ -129,7 +129,8 @@ final class ActivityScoring {
         } else {
             switch (spec.unit()) {
                 case DAY -> findings.addAll(dayFindings(spec, data, features, population));
-                case WEEK, MONTH -> findings.addAll(windowFindings(spec, data, features, status, population, notes));
+                case WEEK, MONTH -> findings.addAll(merged(windowFindings(spec, data, features, status, population,
+                        notes), spec.unit()));
             }
             findings.addAll(changePoints(spec, data, features, population));
             findings.addAll(drifts(data, features));
@@ -297,7 +298,7 @@ final class ActivityScoring {
                                                         + " on " + weekday + " " + date + " against a median of "
                                                         + shown(feature.getKey(), score.get().median()) + " on the "
                                                         + score.get().n() + " previous " + weekday + "s (robust z "
-                                                        + zText(score.get().z()) + ")", alternative, Kind.DAY,
+                                                        + robustZText(score.get().z()) + ")", alternative, Kind.DAY,
                         shared));
             }
         }
@@ -358,7 +359,7 @@ final class ActivityScoring {
         return Math.min(Math.abs(z), MAX_Z);
     }
 
-    private static String zText(final double z) {
+    private static String robustZText(final double z) {
         return Math.abs(z) > MAX_Z
                 ? (z > 0
                         ? "over "
@@ -419,7 +420,7 @@ final class ActivityScoring {
                                            + perDay(feature.getKey()) + " in the " + spec.unit().word() + " from "
                                            + window.from() + " against a median of " + shown(feature.getKey(),
                                 score.median()) + " over " + score.n() + " baseline " + spec.unit().word()
-                                           + "s (robust z " + zText(score.z()) + ")", alternative,
+                                           + "s (robust z " + robustZText(score.z()) + ")", alternative,
                         spec.unit() == Unit.WEEK
                                 ? Kind.WEEK
                                 : Kind.MONTH, shared));
@@ -430,6 +431,57 @@ final class ActivityScoring {
                       + "enough data for some features: those weren't scored (a longer baseline, or unit day).");
         }
         return findings;
+    }
+
+    /// Runs of consecutive windows of one feature moving the same way (and alike in being the source's or not),
+    /// merged into one finding each, so a lasting rise is one finding, not one a week: its window the run's, its
+    /// value and score the largest window's.
+    ///
+    /// @param findings The window findings, in window order for each feature.
+    /// @param unit     The unit.
+    /// @return The findings, runs merged.
+    static List<Finding> merged(final List<Finding> findings, final Unit unit) {
+        final List<Finding> out = new ArrayList<>();
+        final Map<String, List<Finding>> byFeature = new LinkedHashMap<>();
+        findings.forEach(finding -> byFeature.computeIfAbsent(finding.feature() + "|" + finding.sourceWide(),
+                k -> new ArrayList<>()).add(finding));
+        for (final List<Finding> feature : byFeature.values()) {
+            feature.sort(Comparator.comparing(Finding::window));
+            List<Finding> run = new ArrayList<>();
+            for (final Finding finding : feature) {
+                if (!run.isEmpty() && !(follows(run.getLast(), finding)
+                                        && Math.signum(run.getLast().value() - run.getLast().baseline())
+                                           == Math.signum(finding.value() - finding.baseline()))) {
+                    out.add(mergeRun(run, unit));
+                    run = new ArrayList<>();
+                }
+                run.add(finding);
+            }
+            if (!run.isEmpty()) {
+                out.add(mergeRun(run, unit));
+            }
+        }
+        return out;
+    }
+
+    // Whether a window finding's window starts the day after another's ends ("from to to" labels).
+    private static boolean follows(final Finding before, final Finding after) {
+        final String[] a = before.window().split(" to ");
+        final String[] b = after.window().split(" to ");
+        return a.length == 2 && b.length == 2 && LocalDate.parse(a[1]).plusDays(1).equals(LocalDate.parse(b[0]));
+    }
+
+    private static Finding mergeRun(final List<Finding> run, final Unit unit) {
+        if (run.size() == 1) {
+            return run.getFirst();
+        }
+        final Finding largest = run.stream().max(Comparator.comparingDouble(Finding::score)).orElseThrow();
+        final String from = run.getFirst().window().split(" to ")[0];
+        final String to = run.getLast().window().split(" to ")[1];
+        return new Finding(largest.source(), largest.feature(), from + " to " + to, largest.baseline(),
+                largest.value(), largest.score(), "In " + run.size() + " " + unit.word() + "s in a row from " + from
+                                                  + " to " + to + "; the largest: " + largest.evidence(),
+                largest.alternative(), largest.kind(), largest.sourceWide());
     }
 
     // A feature over a block: the median of the first and last activity, else the mean per scored day; null if the
@@ -516,7 +568,7 @@ final class ActivityScoring {
                                      + shown(feature.getKey(), s.before()) + " to "
                                      + shown(feature.getKey(), s.after()) + perDay(feature.getKey()) + " from "
                                      + shift.get().date() + " (" + beforeWindow + " days before the window's end; "
-                                     + "size " + zText(s.score()) + ")", alternative, Kind.CHANGE, shared));
+                                     + "size " + robustZText(s.score()) + ")", alternative, Kind.CHANGE, shared));
         }
         return findings;
     }
@@ -702,11 +754,12 @@ final class ActivityScoring {
             final Score score = ActivityStatistics.robustZ(distance, referenceValues).orElseThrow();
             if (score.z() >= Z_THRESHOLD && distance - score.median() >= 0.1) {
                 findings.add(new Finding(data.source(), RHYTHM, month.getKey().toString(), score.median(), distance,
-                        capped(score.z()), "The hour-of-week pattern in " + month.getKey() + " differs from the baseline's "
-                                   + "by " + round(distance) + " (total variation, 0 to 1) against a median of "
-                                   + round(score.median()) + " for the baseline months (robust z " + zText(score.z())
-                                   + "); its busiest hours: " + busiest(month.getValue()) + "; the baseline's: "
-                                   + busiest(total),
+                        capped(score.z()), "The hour-of-week pattern in " + month.getKey()
+                                           + " differs from the baseline's by " + round(distance)
+                                           + " (total variation, 0 to 1) against a median of "
+                                           + round(score.median()) + " for the baseline months (robust z "
+                                           + robustZText(score.z()) + "); its busiest hours: "
+                                           + busiest(month.getValue()) + "; the baseline's: " + busiest(total),
                         "A change of shift, on-call duty, travel or a time zone change; or another person using "
                         + "the account.", Kind.RHYTHM));
             }
@@ -769,7 +822,7 @@ final class ActivityScoring {
                                                    + peers.size() + " peers in " + data.peers().group()
                                                    + " in the week from " + block.from() + ", against "
                                                    + round(score.get().median()) + " times in the baseline weeks "
-                                                   + "(robust z " + zText(score.get().z()) + ")",
+                                                   + "(robust z " + robustZText(score.get().z()) + ")",
                         "A role or workload unlike the group's (e.g. a project, cover for a colleague), or the "
                         + "group in the Event XML out of date.", Kind.PEERS));
             }
@@ -783,12 +836,13 @@ final class ActivityScoring {
         final Optional<Score> overall = ActivityStatistics.robustZ(person, others);
         if (overall.isPresent() && overall.get().z() >= Z_THRESHOLD && person >= 2 * overall.get().median()) {
             findings.add(new Finding(data.source(), PEERS, spec.windowFrom() + " to " + spec.windowTo(),
-                    overall.get().median(), person, capped(overall.get().z()), round(person) + " events per day in the window "
+                    overall.get().median(), person, capped(overall.get().z()), round(person)
+                                                                              + " events per day in the window "
                                                                        + "against a median of "
                                                                        + round(overall.get().median()) + " for "
                                                                        + peers.size() + " peers in "
                                                                        + data.peers().group() + " (robust z "
-                                                                       + zText(overall.get().z()) + ")",
+                                                                       + robustZText(overall.get().z()) + ")",
                     "A role with more of this activity than the group's (e.g. a caseload, a support rota), or the "
                     + "group in the Event XML out of date.", Kind.PEERS));
         }
