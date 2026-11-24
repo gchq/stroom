@@ -52,6 +52,8 @@ import java.util.Map;
 /// @param learned        What was learned for the skill, and the offer to record it.
 /// @param zone           The user's zone.
 /// @param ranges         Where the period has no events, each source's first and last at any time; else empty.
+/// @param targets        What was done to the person (`includeTargets`), kept apart from their activity; null if
+///                       not asked.
 record TimelineRun(String entity,
                    Period period,
                    long capMs,
@@ -70,7 +72,8 @@ record TimelineRun(String entity,
                    String lanes,
                    TimelineLearning.Learned learned,
                    ToolTimeZone zone,
-                   List<EventRange> ranges) {
+                   List<EventRange> ranges,
+                   TimelineTargets.Asked targets) {
 
     /// @param source A source, by its place.
     /// @return Its name.

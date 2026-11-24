@@ -79,9 +79,9 @@ class TestTimelineDashboardConfig {
                 true);
         final List<List<String>> rows = List.of(
                 List.of("s1", "2026-11-10T09:00:00Z", "2026-11-10T09:20:00Z", "WINWORD.EXE", "ws-01", "focus",
-                        "a1", "Q3 finance proposal", "ws-01", "Endpoint", "4", "focus", ""),
+                        "a1", "Q3 finance proposal", "ws-01", "Endpoint", "4", "focus", "", "actor"),
                 List.of("p1", "2026-11-10T09:05:00Z", "2026-11-10T09:05:00Z", "locked", "ws-01", "pair", "", "",
-                        "ws-01", "Logons", "2", "pair", ""));
+                        "ws-01", "Logons", "2", "pair", "", "actor"));
 
         final ChartCheck.Result check = ChartCheck.check(ChartKind.TIMELINE, mappings, Map.of(),
                 TimelineDashboardConfig.chartColumns(TimelineDataConnection.SPANS),

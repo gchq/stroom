@@ -178,6 +178,9 @@ final class TimelineResult {
             NullSafe.consume(run.learned().offer(), offer -> learned.put("offer", offer));
             map.put("learned", learned);
         }
+        if (run.targets() != null) {
+            map.put("done_to_them", TimelineTargets.structured(run.targets(), run.zone().zone()));
+        }
         map.put("time_zone", run.zone().zone().getId());
         map.put("derived", ActivityTimelineTool.DERIVED);
         map.put("caveat", ActivityTimelineTool.CAVEAT);
@@ -515,6 +518,9 @@ final class TimelineResult {
         if (!run.borderline().isEmpty()) {
             sb.append("Borderline pairs (not used; ask the user whether any is a real pair):\n");
             run.learned().borderline().forEach(line -> sb.append("- ").append(line).append('\n'));
+        }
+        if (run.targets() != null) {
+            sb.append(TimelineTargets.markdown(run.targets(), zoneId));
         }
         sb.append("\nActive time by host (or source) and application (or place):\n\n| host | process | sessions | "
                   + "active minutes |\n| --- | --- | --- | --- |\n");

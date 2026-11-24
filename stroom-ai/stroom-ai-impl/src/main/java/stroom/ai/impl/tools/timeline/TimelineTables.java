@@ -47,12 +47,14 @@ import java.util.Set;
 /// sessions, the actions with where each was attached, the events with their StreamId and EventId and how each was
 /// classified, each day's active time, the window lifetimes, the data-quality flags; the two levels drawn as views,
 /// the detail spans (`spans.csv`: focus sessions, pairs and activity periods) and the activities rolled up from them
-/// (`activities.csv`, filled when the run characterises); and the characterisation's items. Times are UTC.
+/// (`activities.csv`, filled when the run characterises); and the characterisation's items. Times are UTC. The spans
+/// and actions say each row's role: `actor` for the person's own, `target` for what was done to them
+/// (`includeTargets`: an instant each, in a lane of its own per source, labelled by its type and who did it).
 final class TimelineTables {
 
     /// The columns of `spans.csv`.
     static final List<String> SPAN_COLUMNS = List.of("span", "start", "end", "label", "lane", "kind", "activity",
-            "activity_label", "host", "source", "events", "how", "uncertain");
+            "activity_label", "host", "source", "events", "how", "uncertain", "role");
     /// The columns of `activities.csv`.
     static final List<String> ACTIVITY_COLUMNS = List.of("activity", "activity_label", "day", "start", "end",
             "active_minutes", "spans", "lanes", "evidence");
@@ -102,11 +104,19 @@ final class TimelineTables {
                             : "s" + action.session(), action.by() == null
                             ? ""
                             : action.by().toString(), run.sourceName(event.source()),
-                    NullSafe.string(event.streamId()), NullSafe.string(event.eventId())));
+                    NullSafe.string(event.streamId()), NullSafe.string(event.eventId()), TimelineTargets.ACTOR));
+        }
+        final List<TimelineTargets.Done> done = run.targets() == null
+                ? List.of()
+                : run.targets().read().events();
+        for (final TimelineTargets.Done event : done) {
+            actionRows.add(List.of(iso(event.time()), NullSafe.string(event.host()), "", event.label(),
+                    NullSafe.string(event.object()), "", "", event.name(), NullSafe.string(event.streamId()),
+                    NullSafe.string(event.eventId()), TimelineTargets.TARGET));
         }
         final WorkspacePath actionsPath = path(folder, ActivityTimelineTool.ACTIONS_FILE);
         ToolTables.write(workspace, actionsPath, List.of("time", "host", "process", "kind", "object", "session", "by",
-                "source", "StreamId", "EventId"), actionRows, sourceDoc);
+                "source", "StreamId", "EventId", "role"), actionRows, sourceDoc);
 
         final List<List<String>> eventRows = new ArrayList<>();
         for (final Event event : run.byId().values().stream()
@@ -164,7 +174,13 @@ final class TimelineTables {
                     span.kind().key(), activity, activity.isEmpty()
                             ? ""
                             : labels.getOrDefault(activity, activity), NullSafe.string(span.host()), span.sources(),
-                    String.valueOf(span.eventIds().size()), span.how(), span.mark()));
+                    String.valueOf(span.eventIds().size()), span.how(), span.mark(), TimelineTargets.ACTOR));
+        }
+        for (int i = 0; i < done.size(); i++) {
+            final TimelineTargets.Done event = done.get(i);
+            spanRows.add(List.of("t" + (i + 1), iso(event.time()), iso(event.time()), event.label(), event.lane(),
+                    TimelineTargets.TARGET, "", "", NullSafe.string(event.host()), event.lane(), "1",
+                    TimelineTargets.LANE, "", TimelineTargets.TARGET));
         }
         final WorkspacePath spansPath = path(folder, ActivityTimelineTool.SPANS_FILE);
         ToolTables.write(workspace, spansPath, SPAN_COLUMNS, spanRows, sourceDoc);

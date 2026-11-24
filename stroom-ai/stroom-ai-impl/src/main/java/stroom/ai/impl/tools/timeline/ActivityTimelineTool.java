@@ -168,6 +168,9 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     static final String VIEW_ARG = "view";
     static final String LANES_ARG = "lanes";
     static final String SKILL_ARG = "skill";
+    static final String INCLUDE_TARGETS_ARG = "includeTargets";
+    static final String TARGET_PERSON_FIELD_ARG = "targetPersonField";
+    static final String TARGET_USER_FIELD_ARG = "targetUserField";
     static final String INDEX_KEY = "index";
     static final String NAME_KEY = "name";
     static final String USER_KEY = "user";
@@ -433,7 +436,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                  + "Action), else the index's fields; the user and time always come from the "
                                  + "index. Each index's user field: userField, the AGENTS doc's ## Fields, a field "
                                  + "convention, the index's documentation, else asked. Data-quality flags for "
-                                 + "missing events. Omit sources to ask the user which (or read all you can use).")
+                                 + "missing events. Omit sources to ask the user which (or read all you can use). "
+                                 + "includeTargets adds what was done to the person, apart from their activity.")
                         .chatOnly(" Its tables draw as timelines with gantt_chart (dashboards group) as they are; "
                                   + "the result gives the arguments for the view.")
                         .build())
@@ -476,6 +480,17 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                                                                                   + "host "
                                                                                                   + "(default) or "
                                                                                                   + "source.")
+                        .addBooleanProperty(INCLUDE_TARGETS_ARG, "True to also list what was done to the person "
+                                                                 + "(their target fields: a group granted, a "
+                                                                 + "password reset, MFA changed, failed logons "
+                                                                 + "against them), in a lane of its own per source "
+                                                                 + "and never in their activity (default false).")
+                        .addStringProperty(TARGET_PERSON_FIELD_ARG, "Optional: the field holding the person an "
+                                                                    + "event was done to (AGENTS ## Fields 'target "
+                                                                    + "person:', ECS user.target.id).")
+                        .addStringProperty(TARGET_USER_FIELD_ARG, "Optional: the field holding the account an "
+                                                                  + "event was done to (AGENTS 'target user:', ECS "
+                                                                  + "user.target.name).")
                         .addStringProperty(SKILL_ARG, "Optional: the name of the skill being run, whose Event "
                                                       + "chains are applied and to which what is learned is "
                                                       + "offered.")
@@ -527,6 +542,9 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             throw new WorkspaceException("You can't use one of the sources' Elastic Indexes: " + e.getMessage());
         }
         audit(context, sources, read, entity, period);
+        final TimelineTargets.Asked targets = booleanArg(request, INCLUDE_TARGETS_ARG, false)
+                ? targets(request, context, who, plan, period, deadline, config)
+                : null;
 
         final XmlOutcome xml = readXml(context, config, sources, read);
         final Map<Integer, Map<String, CodeRole>> codes = codes(request, context, sources, read, plan.fields(),
@@ -581,7 +599,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 : List.of();
         final TimelineRun run = new TimelineRun(entity, period, capMs, sources, plan.notes(), plan.chosen(), read,
                 classification, xml.summary(), timeline, built, byId, inferred.borderline(), characterised, view,
-                lanes, learned, zone, ranges);
+                lanes, learned, zone, ranges, targets);
         final Files files = TimelineTables.write(workspace, folder, run);
         // So its tables can be written elsewhere later, as they are (propose_timeline_dashboard).
         TimelineSnapshot.of(run, now).write(workspace, folder);
@@ -589,6 +607,102 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         return context.session().isChat()
                 ? ToolResult.text(TimelineResult.markdown(run, files)).withStructuredContent(structured)
                 : ToolResult.text(JsonUtil.writeValueAsString(structured, false)).withStructuredContent(structured);
+    }
+
+    // ------------------------------------------------------------------------------------------------
+    // What was done to the person
+
+    // What was done to the person in each source (and in those left out for holding none of their own events): one
+    // more read each, by its target fields, the person's own acts on themselves left out. Kept apart from every
+    // computation of their activity.
+    private TimelineTargets.Asked targets(final ToolCall request,
+                                          final ToolCallContext context,
+                                          final Who who,
+                                          final Plan plan,
+                                          final Period period,
+                                          final Instant deadline,
+                                          final AiWorkspaceConfig config) {
+        final List<String> targetPersonFields = stringListArg(request, TARGET_PERSON_FIELD_ARG);
+        final List<String> targetUserFields = stringListArg(request, TARGET_USER_FIELD_ARG);
+        final List<TimelineTargets.TargetSource> read = new ArrayList<>();
+        final Map<String, String> leftOut = new LinkedHashMap<>();
+        final List<Source> sources = plan.sources();
+        for (int i = 0; i < sources.size() + plan.noneOfTheirs().size(); i++) {
+            final boolean kept = i < sources.size();
+            final String name = kept
+                    ? sources.get(i).name()
+                    : plan.noneOfTheirs().get(i - sources.size()).name();
+            final DocRef doc = kept
+                    ? sources.get(i).doc()
+                    : plan.noneOfTheirs().get(i - sources.size()).doc();
+            final Scope actor = kept
+                    ? new Scope(sources.get(i).by(), new Found(sources.get(i).userField(),
+                    TimelineFields.Origin.CALL, null), sources.get(i).values(), null)
+                    : actorScope(plan.noneOfTheirs().get(i - sources.size()));
+            final Map<String, ElasticEql.Field> mapping = target(doc, name).fields();
+            final PersonScope.Target target = PersonScope.target(timelineFields, context.session(), doc,
+                    who.person(), who.logons(), targetPersonFields, targetUserFields, actor,
+                    field -> userKey(field, mapping) != null);
+            if (!target.usable()) {
+                leftOut.put(name, target.leftOut());
+                continue;
+            }
+            final String key = userKey(target.field().field(), mapping);
+            final PersonScope.Target keyed = new PersonScope.Target(target.by(), new Found(key,
+                    target.field().origin(), target.field().detail()), target.values(), target.actorField(),
+                    target.actorValues(), null);
+            final Fields fields = kept
+                    ? plan.fields().get(i)
+                    : null;
+            final Map<String, FieldType> none = Map.of();
+            read.add(new TimelineTargets.TargetSource(i, name, doc, keyed, JoinKeys.kind(mapping.get(key)
+                    .nativeType()), fields != null && fields.action() != null
+                    ? fields.action()
+                    : found(context, doc, InstructionRules.ACTION_FIELD, null, mapping, none),
+                    fields != null && fields.element() != null
+                            ? fields.element()
+                            : found(context, doc, InstructionRules.ELEMENT_FIELD, null, mapping, none),
+                    fields != null && fields.eventType() != null
+                            ? fields.eventType()
+                            : found(context, doc, InstructionRules.EVENT_TYPE_FIELD, null, mapping, none),
+                    found(context, doc, InstructionRules.USER_FIELD, null, mapping, none),
+                    found(context, doc, InstructionRules.PERSON_FIELD, null, mapping, none),
+                    kept && sources.get(i).hostField() != null
+                            ? sources.get(i).hostField()
+                            : found(context, doc, InstructionRules.HOST_FIELD, null, mapping, none),
+                    kept
+                            ? sources.get(i).objectField()
+                            : null,
+                    mapping.containsKey(EqlSequenceResults.STREAM_ID)
+                    && mapping.containsKey(EqlSequenceResults.EVENT_ID)));
+        }
+        context.progress().report("Reading what was done to " + who.label() + " in " + read.size() + " source(s)");
+        final TimelineTargets.Read done;
+        try {
+            done = TimelineTargets.read(keyStreamsProvider.get(), read, period.timeRange(), new JoinBudget(
+                    config.getTimelineMaxEvents(), Long.MAX_VALUE, deadline, context.stopped()));
+        } catch (final PermissionException e) {
+            throw new WorkspaceException("You can't use one of the sources' Elastic Indexes: " + e.getMessage());
+        }
+        for (int i = 0; i < read.size(); i++) {
+            final TimelineTargets.TargetSource source = read.get(i);
+            auditLog.searched(context.session(), source.doc(), "what was done to " + who.label() + " (" + NAME
+                                                               + ")\ntarget field: " + source.target().field()
+                                                                       .field() + " in " + source.target().values()
+                                                               + "\nleft out: " + TimelineTargets.notTheirOwn(
+                    source.target()) + "\ntime: " + period.timeRange().getFrom() + " to "
+                                                               + period.timeRange().getTo(), i < done.counts().size()
+                    ? done.counts().get(i)
+                    : 0L, "What was done to a person, by the " + NAME + " tool");
+        }
+        return new TimelineTargets.Asked(read, done, leftOut);
+    }
+
+    // The scope an automatic source would have been read by, as the actor's left out of what was done to them.
+    private static Scope actorScope(final Automatic automatic) {
+        return automatic.user() == null
+                ? new Scope(null, null, List.of(), automatic.leftOut())
+                : new Scope(automatic.by(), automatic.user(), automatic.values(), null);
     }
 
     // ------------------------------------------------------------------------------------------------
@@ -656,6 +770,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final List<SourceNote> notes = new ArrayList<>();
         final List<Map<?, ?>> automaticSpecs = new ArrayList<>();
         final List<Prepared> prepared = new ArrayList<>();
+        final List<Automatic> noneOfTheirs = new ArrayList<>();
         for (int i = 0; i < specs.size(); i++) {
             final Map<?, ?> spec = specs.get(i);
             final String what = "Source " + (i + 1);
@@ -700,6 +815,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                     : none + "; close variants in its index: " + String.join(", ", variants)
                                       + " (not merged: give them in " + LOGON_IDS_ARG + " if they are the same "
                                       + "person's)", automatic.by()));
+                    noneOfTheirs.add(automatic);
                     continue;
                 }
                 sources.add(automatic.source(automatic.transforms(), spanFields(one.spec(), automatic.mapping())));
@@ -742,7 +858,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             throw new WorkspaceException(sb.toString());
         }
         return new Plan(sources, notes, chosen, fields, pairsOf(kept, sources, skill), overridesOf(kept, sources,
-                skill), keysOf(kept));
+                skill), keysOf(kept), noneOfTheirs);
     }
 
     // An automatic source's index, its fields, and its user field found (or not yet).
@@ -1867,13 +1983,16 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     /// @param pairs     The pairs given, in the order they are applied.
     /// @param overrides The types given a role, by source.
     /// @param keys      The keys the call gives spans to be bounded by, by source.
+    /// @param noneOfTheirs The automatic sources left out for holding none of the person's events in the period
+    ///                  (things may still have been done to them there).
     private record Plan(List<Source> sources,
                         List<SourceNote> notes,
                         String chosen,
                         Map<Integer, Fields> fields,
                         List<PairRule> pairs,
                         Map<Integer, Map<String, RoleOverride>> overrides,
-                        List<KeyRule> keys) {
+                        List<KeyRule> keys,
+                        List<Automatic> noneOfTheirs) {
 
     }
 

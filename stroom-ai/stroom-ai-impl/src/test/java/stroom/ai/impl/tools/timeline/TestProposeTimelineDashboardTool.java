@@ -72,7 +72,7 @@ class TestProposeTimelineDashboardTool {
     private static final String SPANS = "/outputs/timelines/jsmith/spans.csv";
     private static final String CSV = String.join(",", TimelineTables.SPAN_COLUMNS) + "\r\n"
                                       + "s1,2026-11-10T09:00:00Z,2026-11-10T09:20:00Z,WINWORD.EXE,ws-01,focus,,,"
-                                      + "ws-01,Endpoint,3,focus,\r\n"
+                                      + "ws-01,Endpoint,3,focus,,actor\r\n"
                                       + "a1,2026-11-10T09:25:00Z,2026-11-10T09:27:00Z,research.example.org,ws-01,"
                                       + "activity,,,ws-01,Proxy,2,time,\r\n";
 
