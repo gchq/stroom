@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.ToolOutputs;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolCaller;
@@ -55,6 +56,7 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.shared.ResultPage;
 
+import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -62,10 +64,12 @@ import org.mockito.InOrder;
 import org.mockito.Mockito;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -84,6 +88,8 @@ class TestPromoteBuildTool {
     private static final String NOTES_BY_HAND = "# ACME notes\n\nDoors, v1 by hand.\n";
     // An unchanged XSLT working copy, only discarded.
     private static final String PLAIN_XSLT = "<xsl:stylesheet>plain-v1</xsl:stylesheet>";
+    // The last option of where a role goes.
+    private static final String OTHER = "another folder (type it)";
 
     private final DocumentationWorld docs = new DocumentationWorld();
     private final BuildWorld world = docs.world;
@@ -144,12 +150,14 @@ class TestPromoteBuildTool {
                                                   + "        └── ACME-V1.0-Indexing  (Pipeline)\n\n"
                                                   + "Where each role goes (destinations keyed by the role change "
                                                   + "it):\n"
-                                                  + "- Events: System/Feeds (proposed: the feed's own location)\n"
-                                                  + "- Indexing: System/Feeds (proposed: the feed's own location)");
+                                                  + "- Events: System/Feeds/Acme/Events/V1.0 (proposed: the "
+                                                  + "feed's own location)\n"
+                                                  + "- Indexing: System/Feeds/Acme/Indexing/V1.0 (proposed: the "
+                                                  + "feed's own location)");
         // Without forms, the agent asks in the chat: each role's options, the proposal first.
         assertThat(shown.get("role_locations")).asList().hasSize(2).first().isEqualTo(Map.of("role", "Events",
-                "location", "System/Feeds", "why", "proposed: the feed's own location", "options",
-                List.of("System/Feeds")));
+                "folder", "System/Feeds/Acme/Events/V1.0", "why", "proposed: the feed's own location", "options",
+                List.of("System/Feeds/Acme/Events/V1.0")));
         assertThat(String.valueOf(shown.get("hint"))).contains("where each role's documents go")
                 .contains("destinations keyed by the role");
         assertThat(tool.definition().toString()).doesNotContain("role_subfolders");
@@ -180,7 +188,7 @@ class TestPromoteBuildTool {
                           + "            ├── ACME-V1.0-Index  (ElasticIndex)\n"
                           + "            └── ACME-V1.0-Indexing  (Pipeline)")
                 .contains("Feeds/\n│   └── Acme/\n│       ├── ACME  (Feed)\n│       └── Events/  (new)\n")
-                .contains("- Indexing: System/Elastic Indices (as given)")
+                .contains("- Indexing: System/Elastic Indices/Acme/V1.0 (as given)")
                 .doesNotContain("Acme/Indexing");
         assertThat(elsewhere.get("review_id")).isNotEqualTo(feedsOwn.get("review_id"));
     }
@@ -199,13 +207,15 @@ class TestPromoteBuildTool {
                 null)));
 
         assertThat(user.forms()).hasSize(1);
-        assertThat(String.valueOf(user.forms().getFirst())).contains("Events: System/Feeds",
-                "Indexing: System/Elastic Indices, where the sibling feeds' Indexing pipelines are");
+        assertThat(String.valueOf(user.schemas().getFirst())).contains(
+                "System/Feeds/Acme/Events/V1.0 (the feed's own folder, where the sibling feeds' Events pipelines are)",
+                "System/Elastic Indices/Acme/V1.0 (where the sibling feeds' Indexing pipelines are)",
+                "System/Feeds/Acme/Indexing/V1.0 (the feed's own folder)", OTHER);
         assertThat(String.valueOf(shown.get("layout")))
                 .contains("Custom Indices/  (new)\n    └── Acme/  (new)\n        └── V1.0/  (new)\n"
                           + "            └── ACME-V1.0-Indexing  (Pipeline)")
-                .contains("- Events: System/Feeds (as the user chose)")
-                .contains("- Indexing: System/Custom Indices (as the user chose)");
+                .contains("- Events: System/Feeds/Acme/Events/V1.0 (as the user chose)")
+                .contains("- Indexing: System/Custom Indices/Acme/V1.0 (as the user chose)");
         // Kept: the approval's call lays out what was reviewed, and asks no more.
         final BuildToolCalls.FormUser later = BuildToolCalls.declining();
         assertThat(docs.refusal(tool, later.context(), DocumentationWorld.args(args(destinations,
@@ -221,9 +231,9 @@ class TestPromoteBuildTool {
 
         final Map<String, Object> shown = review(Map.of("Feed", "/Feeds/Acme"));
 
-        assertThat(shown.get("role_locations")).isEqualTo(List.of(Map.of("role", "Indexing", "location",
-                "System/Elastic Indices", "why", "proposed: where the sibling feeds' Indexing pipelines are",
-                "options", List.of("System/Elastic Indices", "System/Feeds"))));
+        assertThat(shown.get("role_locations")).isEqualTo(List.of(Map.of("role", "Indexing", "folder",
+                "System/Elastic Indices/Acme/V1.0", "why", "proposed: where the sibling feeds' Indexing pipelines are",
+                "options", List.of("System/Elastic Indices/Acme/V1.0", "System/Feeds/Acme/Indexing/V1.0"))));
         assertThat(String.valueOf(shown.get("layout"))).contains("└── Elastic Indices/\n    └── Acme/  (new)\n"
                                                                  + "        └── V1.0/  (new)\n"
                                                                  + "            └── ACME-V1.0-Indexing  (Pipeline)");
@@ -245,20 +255,20 @@ class TestPromoteBuildTool {
 
         // Proposed: the feed's own location.
         assertThat(String.valueOf(review(Map.of()).get("layout"))).startsWith(expected)
-                .contains("- Events: System/Feeds and Translations/ABC (proposed: the feed's own location)");
-        // Given in the chat, destinations keyed by the role.
-        assertThat(String.valueOf(review(Map.of("Events", own, "indexing",
-                "/Feeds and Translations/ABC/abc-feed")).get("layout")))
-                .startsWith(expected)
-                .doesNotContain("ABC-FEED/ABC-FEED")
-                .contains("- Events: System/Feeds and Translations/ABC (as given)");
-        // Answered in the form: the same.
+                .contains("- Events: " + own + "/Events/V1.0 (proposed: the feed's own location)");
+        // Answered in the form (a client sending the folder in the choice's field): the same.
         final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("a1", own, "a2", own));
         final Map<String, Object> shown = docs.call(tool, user.context(), DocumentationWorld.args(args(Map.of(),
                 null)));
         assertThat(String.valueOf(shown.get("layout"))).startsWith(expected)
-                .contains("- Indexing: System/Feeds and Translations/ABC (as the user chose)");
+                .contains("- Indexing: " + own + "/Indexing/V1.0 (as the user chose)");
         assertThat(String.valueOf(user.forms().getFirst())).doesNotContain("the feed's Events folders");
+        // Given in the chat, destinations keyed by the role (a destination given replaces the choice recorded).
+        assertThat(String.valueOf(review(Map.of("Events", own, "indexing",
+                "/Feeds and Translations/ABC/abc-feed")).get("layout")))
+                .startsWith(expected)
+                .doesNotContain("ABC-FEED/ABC-FEED")
+                .contains("- Events: " + own + "/Events/V1.0 (as given)");
     }
 
     @Test
@@ -274,12 +284,126 @@ class TestPromoteBuildTool {
         final Map<String, Object> given = review(Map.of("Events", own, "Indexing", own));
 
         assertThat(String.valueOf(proposed.get("layout")))
-                .contains("- Events: System/Feeds and Translations/ABC (proposed: where the sibling feeds' Events "
+                .contains("- Events: System/Feeds and Translations/ABC/ABC-FEED/Events/V1.0 (proposed: where the "
+                          + "sibling feeds' Events "
                           + "pipelines are)")
                 .contains("ABC-FEED/\n├── Events/  (new)\n│   └── V1.0/  (new)\n");
         assertThat(String.valueOf(given.get("layout"))).doesNotContain("ABC-FEED/ABC-FEED")
                 .contains("ABC-FEED/\n├── Events/  (new)\n│   └── V1.0/  (new)\n")
                 .contains("└── Indexing/  (new)\n    └── V1.0/  (new)\n");
+    }
+
+    @Test
+    void eachRolesChoiceShowsItsFullFolderAndATypedAnswerThatIsNoFolderIsAskedAgain() {
+        // Seen in chat 194: the feed in System/Feeds/Endpoint, the form offered "System/Feeds" (the folder holding
+        // the feed's) as a suggestion with a free box; the user typed "feed's location", which was recorded and laid
+        // out as System/feed's location/Endpoint/V1.0.
+        endpointFeed();
+        final SequencedUser user = new SequencedUser(List.of(
+                (schema, intro) -> answerAll(schema, OTHER, "feed's location"),
+                (schema, intro) -> answerAll(schema, null, null)));
+
+        final Map<String, Object> shown = docs.call(tool, asking(user), DocumentationWorld.args(args(Map.of(),
+                null)));
+
+        assertThat(user.schemas()).hasSize(2);
+        final Map<String, Object> first = asMap(asMap(user.schemas().getFirst().get("properties")).get("a1"));
+        assertThat(first.get("enum")).asList().containsExactly(
+                "System/Feeds/Endpoint/Events/V1.0 (the feed's own folder, where the sibling feeds' Events pipelines "
+                + "are)", OTHER);
+        assertThat(String.valueOf(user.schemas().getFirst()) + user.intros().getFirst())
+                .doesNotContain("holding the feed's folder").doesNotContain("root");
+        // Refused and asked again, saying why; never recorded nor laid out.
+        assertThat(user.intros().get(1)).startsWith("Not a folder: Events: 'feed's location' is no folder path");
+        assertThat(String.valueOf(shown.get("layout")))
+                .doesNotContain("feed's location")
+                .startsWith("System/Feeds/Endpoint/\n"
+                            + "├── Events/  (new)\n"
+                            + "│   └── V1.0/  (new)\n"
+                            + "│       └── Endpoint-Logs-V1.0-Events  (Pipeline)\n"
+                            + "└── Indexing/  (new)\n"
+                            + "    └── V1.0/  (new)\n"
+                            + "        └── Endpoint-Logs-V1.0-Indexing  (Pipeline)")
+                .contains("- Events: System/Feeds/Endpoint/Events/V1.0 (as the user chose)")
+                .contains("- Indexing: System/Feeds/Endpoint/Indexing/V1.0 (as the user chose)");
+        assertThat(world.records().promotionRoots(BUILD)).isEqualTo(Map.of("Events", "System/Feeds", "Indexing",
+                "System/Feeds"));
+    }
+
+    @Test
+    void anAnswerThatIsNeverAFolderIsRefusedWithNothingRecorded() {
+        endpointFeed();
+        final SequencedUser user = new SequencedUser(List.of(
+                (schema, intro) -> answerAll(schema, OTHER, "feed's location")));
+
+        final String refused = docs.refusal(tool, asking(user), DocumentationWorld.args(args(Map.of(), null)));
+
+        assertThat(user.schemas()).hasSize(3);
+        assertThat(refused).contains("'feed's location' is no folder path", "nothing was recorded or moved",
+                "destinations keyed by the role (Events, Indexing)", "the feed's own folder "
+                                                                    + "('System/Feeds/Endpoint') under Feed");
+        assertThat(world.records().promotionRoots(BUILD)).isEmpty();
+        // A folder path typed, or the name of a folder in System, is taken.
+        exists("System/Elastic Indices");
+        final SequencedUser typing = new SequencedUser(List.of(
+                (schema, intro) -> answerAll(schema, OTHER, "Elastic Indices")));
+        assertThat(String.valueOf(docs.call(tool, asking(typing), DocumentationWorld.args(args(Map.of(),
+                null))).get("layout"))).contains("- Indexing: System/Elastic Indices/Endpoint/V1.0 (as the user "
+                                                 + "chose)");
+    }
+
+    @Test
+    void theFeedsOwnFolderGivenForTheFeedReplacesEveryRolesRecordedChoice() {
+        // Seen in chat 194: the user said "should be System/Feeds/Endpoint"; the agent passed
+        // {'Feed': '/Feeds/Endpoint'}, and the recorded choices ("feed's location") still placed every role.
+        endpointFeed();
+        world.records().rememberPromotionRoot(BUILD, "Events", "System/feed's location");
+        world.records().rememberPromotionRoot(BUILD, "Indexing", "System/feed's location");
+        assertThat(String.valueOf(review(Map.of()).get("layout"))).contains("feed's location");
+
+        final Map<String, Object> corrected = review(Map.of("Feed", "/Feeds/Endpoint"));
+
+        assertThat(String.valueOf(corrected.get("layout")))
+                .doesNotContain("feed's location")
+                .contains("Events/  (new)\n│   └── V1.0/  (new)\n│       └── Endpoint-Logs-V1.0-Events  (Pipeline)")
+                .contains("- Events: System/Feeds/Endpoint/Events/V1.0 (as given: the feed's own folder)")
+                .contains("- Indexing: System/Feeds/Endpoint/Indexing/V1.0 (as given: the feed's own folder)");
+        assertThat(asMap(asList(corrected.get("role_locations")).getFirst())).containsEntry("folder",
+                "System/Feeds/Endpoint/Events/V1.0");
+        // Recorded in place of the earlier choices: a later call without destinations lays out the same.
+        assertThat(world.records().promotionRoots(BUILD)).isEqualTo(Map.of("Events", "System/Feeds", "Indexing",
+                "System/Feeds"));
+        assertThat(String.valueOf(review(Map.of()).get("layout")))
+                .contains("- Indexing: System/Feeds/Endpoint/Indexing/V1.0 (as the user chose)");
+        // A role's own destination replaces its recorded choice too, the folder the layout showed for it read as
+        // the feed's own; and the hint says which keys change roles.
+        exists("System/Elastic Indices");
+        final Map<String, Object> byRole = review(Map.of("Indexing", "/Elastic Indices/Endpoint/V1.0"));
+        assertThat(String.valueOf(byRole.get("layout")))
+                .contains("- Indexing: System/Elastic Indices/Endpoint/V1.0 (as given)");
+        assertThat(world.records().promotionRoots(BUILD)).containsEntry("Indexing", "System/Elastic Indices");
+        assertThat(String.valueOf(review(Map.of("Indexing", "System/Feeds/Endpoint/Indexing/V1.0")).get("layout")))
+                .contains("- Indexing: System/Feeds/Endpoint/Indexing/V1.0 (as given)");
+        assertThat(String.valueOf(byRole.get("hint"))).contains("destinations keyed by the role (Events, Indexing)",
+                "the feed's own folder ('System/Feeds/Endpoint') under Feed");
+    }
+
+    @Test
+    void aCorrectionSentInsteadOfTheApprovalIsToldTheKeysThatChangeRoles() {
+        // Seen in chat 194: the user said where the documents should go instead of approving.
+        endpointFeed();
+        final Map<String, Object> shown = review(Map.of("Feed", "/Feeds/Endpoint"));
+        final SequencedUser user = new SequencedUser(List.of((schema, intro) -> new ElicitResult(
+                ElicitResult.Action.CANCEL, null, Map.of(McpElicitations.SENT_INSTEAD,
+                "location is wrong. should be: System/Feeds/Endpoint"))));
+
+        final String told = docs.refusal(tool, asking(user), DocumentationWorld.args(args(Map.of("Feed",
+                "/Feeds/Endpoint"), shown.get("review_id"))));
+
+        assertThat(told).contains("sent a message instead", "should be: System/Feeds/Endpoint",
+                "destinations keyed by the role (Events, Indexing)",
+                "the feed's own folder ('System/Feeds/Endpoint') under Feed (or under a role) puts every role it "
+                + "covers in System/Feeds/Endpoint/<Role>/<version>");
     }
 
     @Test
@@ -503,8 +627,10 @@ class TestPromoteBuildTool {
                 + "└── Azure-Audit-V1.0-EVENTS source types  (Documentation)\n\n"
                 + "Left in the workspace: Azure-Audit-V1.0-EVENTS-MCP-TEST (Feed)\n\n"
                 + "Where each role goes (destinations keyed by the role change it):\n"
-                + "- Events: System/Feeds (proposed: the feed's own location)\n"
-                + "- Indexing: System/Feeds (proposed: the feed's own location)\n\n"
+                + "- Events: System/Feeds/Azure-Audit-V1.0-EVENTS/M365 Messaging/Events/V1.0 (proposed: the "
+                + "feed's own location)\n"
+                + "- Indexing: System/Feeds/Azure-Audit-V1.0-EVENTS/M365 Messaging/Indexing/V1.0 (proposed: the "
+                + "feed's own location)\n\n"
                 + "Pipeline 'Azure M365 Messaging' has no version in its name (e.g. -V1.0-): placed in V1.0.\n"
                 + "Pipeline 'Azure M365 Messaging Indexing' has no version in its name (e.g. -V1.0-): placed in "
                 + "V1.0.\n\n"
@@ -1708,6 +1834,56 @@ class TestPromoteBuildTool {
         return Map.of("Feed", "/Feeds/Acme");
     }
 
+    // A call's context from an MCP client whose forms the user given answers.
+    private static ToolCallContext asking(final UserQuestions questions) {
+        return ToolCallContext.builder(new ToolSession(ToolSession.Kind.MCP, "mcp-session-1",
+                        new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "A test client")))
+                .userQuestions(questions)
+                .build();
+    }
+
+    // Chat 194's build: production feed ENDPOINT-LOGS-V1.0-EVENTS in System/Feeds/Endpoint, a sibling feed's
+    // pipelines in its own role folders under System/Feeds, and the build's Events and Indexing pipelines.
+    private void endpointFeed() {
+        final String own = "System/Feeds/Endpoint";
+        world.add(FeedDoc.TYPE, "ENDPOINT-LOGS-V1.0-EVENTS", world.folder(own).uuid, "endpoint");
+        Mockito.when(docs.pipelineIndex.named(FeedDoc.TYPE, "ENDPOINT-LOGS-V1.0-EVENTS", 20))
+                .thenReturn(List.of(new DocRef(FeedDoc.TYPE, "endpoint", "ENDPOINT-LOGS-V1.0-EVENTS")));
+        docs.facts.sources = List.of("ENDPOINT-LOGS-V1.0-EVENTS");
+        exists("System/Feeds/Firewall/Events/V1.0", "System/Feeds/Firewall/Indexing/V1.0");
+        world.add(FeedDoc.TYPE, "FIREWALL", world.folder("System/Feeds/Firewall").uuid, "firewall");
+        Mockito.when(docs.pipelineIndex.read()).thenReturn(Map.of(
+                "fw-ev", new PipelineIndex.Entry("fw-ev", "FIREWALL-V1.0-Events", "System/Feeds/Firewall/Events/V1.0",
+                        "template", null),
+                "fw-ix", new PipelineIndex.Entry("fw-ix", "FIREWALL-V1.0-Indexing",
+                        "System/Feeds/Firewall/Indexing/V1.0", "template", null)));
+        docs.facts.stages.put("fw-ev", "translation");
+        docs.facts.stages.put("fw-ix", "indexing");
+        listed(doc(PipelineDoc.TYPE, "ev", "Endpoint-Logs-V1.0-Events", "Events"),
+                doc(PipelineDoc.TYPE, "ix", "Endpoint-Logs-V1.0-Indexing", "Indexing"));
+    }
+
+    // A form's answer: every choice the option given (the first, for null), every text field the text given.
+    private static ElicitResult answerAll(final Map<String, Object> schema, final String option, final String typed) {
+        final Map<String, Object> content = new LinkedHashMap<>();
+        asMap(schema.get("properties")).forEach((key, field) -> {
+            final Object options = asMap(field).get("enum");
+            if (options instanceof final List<?> list) {
+                content.put(key, option == null
+                        ? list.getFirst()
+                        : option);
+            } else if (typed != null) {
+                content.put(key, typed);
+            }
+        });
+        return new ElicitResult(ElicitResult.Action.ACCEPT, content);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Object> asList(final Object value) {
+        return (List<Object>) value;
+    }
+
     // The folders, made.
     private void exists(final String... folders) {
         for (final String folder : folders) {
@@ -1727,5 +1903,45 @@ class TestPromoteBuildTool {
 
     private static Map<String, Object> doc(final String type, final String uuid, final String name, final String role) {
         return FakeBuildFacts.doc(type, uuid, name, "role", role);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A user of a client that shows forms, answering each form in turn as given (the last answer again after the
+    /// rest), keeping each form's message and fields.
+    private static final class SequencedUser implements UserQuestions {
+
+        private final List<BiFunction<Map<String, Object>, String, ElicitResult>> answers;
+        private final List<String> intros = new ArrayList<>();
+        private final List<Map<String, Object>> schemas = new ArrayList<>();
+
+        private SequencedUser(final List<BiFunction<Map<String, Object>, String, ElicitResult>> answers) {
+            this.answers = answers;
+        }
+
+        List<String> intros() {
+            return intros;
+        }
+
+        List<Map<String, Object>> schemas() {
+            return schemas;
+        }
+
+        @Override
+        public boolean canAsk() {
+            return true;
+        }
+
+        @Override
+        public ElicitResult ask(final String toolName,
+                                final String callId,
+                                final String intro,
+                                final Map<String, Object> form) {
+            intros.add(intro);
+            schemas.add(form);
+            return answers.get(Math.min(answers.size(), intros.size()) - 1).apply(form, intro);
+        }
     }
 }

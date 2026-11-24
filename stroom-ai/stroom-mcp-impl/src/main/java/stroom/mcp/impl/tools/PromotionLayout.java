@@ -151,13 +151,44 @@ class PromotionLayout {
     /// given as the root (the question asked for "the folder holding the feed's Events folders") gave
     /// `<feed>/<feed>/V1.0`, every role together with no role folders.
     ///
+    /// A folder in the feed's (seen in chat 194: a role's folder the layout showed) is read the same way.
+    ///
     /// @param root       A role's root, or null.
     /// @param feedFolder The feed's folder, or null when it isn't known.
-    /// @return The root, the folder holding the feed's where the root is the feed's folder; null for null.
+    /// @return The root, the folder holding the feed's where the root is the feed's folder or one in it; null for
+    /// null.
     static String ownRoot(final String root, final String feedFolder) {
-        return root != null && sameFolder(root, feedFolder)
+        return root != null && feedFolder != null && within(root, feedFolder)
                 ? parentOf(normalised(feedFolder))
                 : root;
+    }
+
+    /// A folder the user (or the agent) gave for a role, read as the role's root: the feed's folder, or one in it
+    /// (`<feed>/Indexing/V1.0`, a folder the layout showed), is the feed's own location; a folder ending in the
+    /// feed's folder's name, with or without its role and version folders (`System/Elastic Indices/Acme/V1.0`), is
+    /// the folder holding it. Seen in chat 194: the user named the full folder they wanted, which read as a root
+    /// would have nested the feed's folder again.
+    ///
+    /// @param given      The folder given, an explorer path.
+    /// @param feedFolder The feed's folder.
+    /// @return The role's root, from System.
+    static String givenRoot(final String given, final String feedFolder) {
+        final String folder = normalised(given);
+        if (within(folder, feedFolder)) {
+            return parentOf(normalised(feedFolder));
+        }
+        final String base = predecessor(folder).base();
+        if (base.contains("/") && lastPart(base).equalsIgnoreCase(lastPart(normalised(feedFolder)))) {
+            return parentOf(base);
+        }
+        return folder;
+    }
+
+    // Whether a folder is another or in it (any case, with or without System).
+    private static boolean within(final String folder, final String outer) {
+        final String inner = normalised(folder).toLowerCase(Locale.ROOT);
+        final String holding = normalised(outer).toLowerCase(Locale.ROOT);
+        return inner.equals(holding) || inner.startsWith(holding + "/");
     }
 
     /// A new version's folder beside its predecessor's (decided by the user, 2026-11-17): a sibling version folder in

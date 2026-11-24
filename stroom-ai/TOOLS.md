@@ -3751,21 +3751,36 @@ Where each document goes (`plan`):
   review: then it is laid out afresh under that root. A new version with no other place is laid out beside its
   predecessor.
 * **Each role's root** (`roleRoots`, `RoleRoot`): a destination keyed by the role (`{"Indexing": "/Elastic
-  Indices"}`), else the user's earlier answer (`promotion_roots` in the build record), else the proposal: a new
-  version's predecessor's root, else where the sibling feeds' production pipelines of that role are
-  (`SourceFolders.siblings`: feeds in the feed's root and the folders there holding a feed; `PromotionLayout.siblingRoots`
-  reads, from `PipelineIndex.read()`, pipelines in a folder named for a sibling, not templates others inherit from nor
-  in the workspace, at most 200, by stage role, and takes the root most are under), else the feed's own root. Options:
-  the proposal, then the feed's own location where it differs; the user may type another. The feed's own folder given
-  (or chosen) as a role's root is the feed's own location (`PromotionLayout.ownRoot`, in `rolePath`, `layOut`'s
-  predecessor check and `roleRoots`): seen in a user test (2026-11-18), the feed in a folder named after it
-  (`.../ABC/ABC-FEED`), its own folder given back for "the folder holding the feed's Events folders", as the question
-  then put it, was read as a root elsewhere, and every role went in `ABC-FEED/ABC-FEED/V1.0` with no role folders. The
-  question now asks for the folder holding the feed's folder, naming the feed's own location. With forms, all roles
-  in one form on the review's call (`Consent.answerEach`: suggested answers as buttons, a blank one taking the
-  proposal), recorded so the approval call lays out what was reviewed; without, the reply's `role_locations` (`role`,
-  `location`, `why`, `options`) for the agent to ask in the chat. The tree ends with `Where each role goes ...: -
-  <Role>: <root> (<why>)`, so the review id and the approval cover them.
+  Indices"}`), else, for a feed already in production, the feed's own folder given under `Feed` (or the feed's name
+  or production uuid) for every role, else the user's earlier answer (`promotion_roots` in the build record), else
+  the proposal: a new version's predecessor's root, else where the sibling feeds' production pipelines of that role
+  are (`SourceFolders.siblings`: feeds in the feed's root and the folders there holding a feed;
+  `PromotionLayout.siblingRoots` reads, from `PipelineIndex.read()`, pipelines in a folder named for a sibling, not
+  templates others inherit from nor in the workspace, at most 200, by stage role, and takes the root most are under),
+  else the feed's own root. A destination given (by role, or the feed's own folder under `Feed`) replaces the choice
+  recorded, and is recorded (chat 194: the user's correction, passed as `{"Feed": "/Feeds/Endpoint"}`, left the
+  recorded choice in place, so no layout could change). A feed the build makes is placed by `Feed`, so there `Feed`
+  says nothing of the roles: role keys do. A folder given for a role is read by `PromotionLayout.givenRoot`: the
+  feed's folder or one in it (a role folder the layout showed) is the feed's own location; a folder ending in the
+  feed's folder's name, with or without its version folder (`/Elastic Indices/Endpoint/V1.0`), is the folder holding
+  it; else the folder as given. The feed's own folder given (or chosen) as a role's root is the feed's own location
+  (`PromotionLayout.ownRoot`, in `rolePath`, `layOut`'s predecessor check and `roleRoots`): seen in a user test
+  (2026-11-18), the feed in a folder named after it (`.../ABC/ABC-FEED`), its own folder given back was read as a root
+  elsewhere, and every role went in `ABC-FEED/ABC-FEED/V1.0` with no role folders. With forms, all roles in one form
+  on the review's call (`Consent.chooseOrTypeEach`): per role, a choice of the folders each option gives, as the
+  layout would put the role's pipeline (`System/Feeds/Endpoint/Events/V1.0 (the feed's own folder, where the sibling
+  feeds' Events pipelines are)`, then the feed's own folder where the proposal differs), ending in `another folder
+  (type it)`, with a text field under it (`a<n>_typed`) for the folder to hold `<feed folder>/<version>`; the user
+  never sees a root. Seen in chat 194: the old form offered `System/Feeds` (the folder holding the feed's) as a
+  suggested answer with a free box, which read as the wrong place; the user typed "feed's location", which was
+  recorded and laid out as `System/feed's location/Endpoint/V1.0`. A typed answer must be a folder path (with a `/`)
+  or the name of a folder in System; otherwise nothing is recorded and the form is asked again saying why (at most
+  3 times in the call, then refused, naming the keys that change roles). Answers are recorded so the approval call
+  lays out what was reviewed; without forms, the reply's `role_locations` (`role`, `folder`: the folder the role's
+  pipeline goes in, `why`, `options`: the folders each option gives) for the agent to ask in the chat. The tree ends
+  with `Where each role goes ...: - <Role>: <folder> (<why>)`, so the review id and the approval cover them. The
+  review's hint, and the reply when the user sends a message instead of approving, name the keys that change roles
+  (each role, and `Feed` for a feed in production: the feed's own folder for all of them).
 * **Only what is used** (`PromotionUses`; decided by the user 2026-11-18, seen in a user test: an older Data Splitter
   the build had replaced was promoted with the rest): promotion moves only what the build's pipelines need. Walked
   from everything always promoted (pipelines, the parent pipelines they inherit from, feeds, indexes, working copies,

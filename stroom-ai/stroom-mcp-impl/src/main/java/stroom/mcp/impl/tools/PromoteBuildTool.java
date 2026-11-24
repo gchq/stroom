@@ -60,6 +60,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -116,6 +117,10 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             .withZone(ZoneOffset.UTC);
     private static final List<String> INDEX_TYPES = List.of(ElasticIndexDoc.TYPE, LuceneIndexDoc.TYPE);
     private static final List<String> INDEXING_STAGES = List.of("indexing", "discovery");
+    // The last option of where a role goes: a folder the user types.
+    private static final String OTHER_FOLDER = "another folder (type it)";
+    // The most times the form of where each role goes is asked in a call, while an answer is no folder.
+    private static final int MAX_ROLE_ASKS = 3;
 
     private final BuildFacts facts;
     private final PromotionLayout layout;
@@ -358,8 +363,12 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         final List<PromotionLayout.Step> plan = plan(docs, destinations, sources, besideFeeds, placed, markers);
         // Role first, then version (decided by the user, 2026-11-17): each role's root chosen, then every document
         // of a role in its version's folder there, and what documents or searches another beside it.
-        final List<RoleRoot> roots = roleRoots(call, context, build, plan, destinations, placed, reviewed == null);
-        final List<String> layoutWarnings = layOut(plan, roots, placed, markers);
+        final List<RoleRoot> chosenRoots = roleRoots(call, context, build, docs, plan, destinations, placed, markers,
+                reviewed == null);
+        final Map<String, String> rootByRole = new LinkedHashMap<>();
+        chosenRoots.forEach(root -> rootByRole.put(root.role(), root.root()));
+        final List<String> layoutWarnings = layOut(plan, rootByRole, placed, markers);
+        final List<RoleRoot> roots = withFolders(chosenRoots, plan);
         besideWhatItDocuments(plan, destinations);
         withWhatItSearches(plan, destinations);
         refuseUnplaced(plan, placed);
@@ -454,7 +463,15 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         final String bound = laidOut + PromotionTidyUp.layoutNote(plan, testFeeds, tidy, false);
         // Everything the review shows, whether or not it is shown now: a layout shown in this chat and confirmed
         // there is taken without its review_id only where nothing it showed has changed since.
-        final Map<String, Object> review = review(build, tree, bound, warnings, processed, roots, reviewed);
+        final String feedFolder = placed.source() == null
+                ? null
+                : placed.source().own();
+        final String rolesHint = roots.isEmpty() || feedFolder == null
+                ? null
+                : roleKeysHint(feedFolder, roots.stream().map(RoleRoot::role).toList(),
+                        feedKeyCoversRoles(docs, placed.source()));
+        final Map<String, Object> review = review(build, tree, bound, warnings, processed, roots, rolesHint,
+                reviewed);
         if (!followOnSaid.isEmpty()) {
             review.put("follow_on_filters", followOnSaid);
             review.put("hint", review.get("hint") + " Say the follow_on_filters too: each promoted pipeline "
@@ -530,7 +547,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         }
         if (!roots.isEmpty()) {
             final List<String> where = new ArrayList<>();
-            roots.forEach(root -> where.add(root.role() + ": " + root.root()));
+            roots.forEach(root -> where.add(root.role() + ": " + root.folder()));
             shortForm.put("role locations", where);
         }
         if (!warnings.isEmpty()) {
@@ -568,8 +585,17 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             shortForm.put("new version's filter reads", backfill.said());
         }
         // The tidy-up, a choice in the form, ticked to start: the user unticks it to keep the test data.
-        consent.require(call, context, tidy.offeredIn(Consent.Request.approval(NAME,
-                "Promote build '" + build + "' as shown in the chat", tidy.inForm(shortForm)).boundTo(bound)));
+        try {
+            consent.require(call, context, tidy.offeredIn(Consent.Request.approval(NAME,
+                    "Promote build '" + build + "' as shown in the chat", tidy.inForm(shortForm)).boundTo(bound)));
+        } catch (final Consent.SentInstead e) {
+            // Seen in chat 194: the user said where a role's documents should go instead of approving, and the
+            // agent's correction ({'Feed': <the feed's folder>}) changed nothing: it is told what does.
+            if (rolesHint == null) {
+                throw e;
+            }
+            throw new ToolRefusal(e.getMessage() + " " + rolesHint);
+        }
         final boolean tidying = !tidy.items().isEmpty() && consent.option(context, PromotionTidyUp.TIDY_UP, true);
         final List<String> done = new ArrayList<>();
         if (groupsProvider != null) {
@@ -770,15 +796,19 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     }
 
     // Each role's root, for a build whose source's folder is known (decided by the user, 2026-11-17): a destination
-    // keyed by the role, else what the user chose in a form before (kept in the build's record, so the approval's
-    // layout is the one reviewed), else asked now in one form on the review's call, else the proposal: a new
-    // version's predecessor's root, else where the sibling feeds' pipelines of the role are, else the feed's own.
+    // keyed by the role, else the feed's own folder given for the feed (seen in chat 194: the user's correction,
+    // passed as {'Feed': <the feed's folder>}, left their earlier choice in place), else what the user chose in a form
+    // before (kept in the build's record, so the approval's layout is the one reviewed), else asked now in one form on
+    // the review's call, else the proposal: a new version's predecessor's root, else where the sibling feeds'
+    // pipelines of the role are, else the feed's own. A destination given replaces the choice recorded.
     private List<RoleRoot> roleRoots(final ToolCall call,
                                      final ToolCallContext context,
                                      final String build,
+                                     final List<Map<String, Object>> docs,
                                      final List<PromotionLayout.Step> plan,
                                      final Map<String, String> destinations,
                                      final Placed placed,
+                                     final Map<String, ModuleChecks.Marker> markers,
                                      final boolean asking) {
         if (placed.source() == null || placed.source().own() == null) {
             return List.of();
@@ -794,9 +824,9 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         }
         final Map<String, String> byPredecessor = predecessorRoots(plan, feedFolder, placed.group());
         Map<String, String> bySiblings = null;
-        final Map<String, Object> recorded = buildRecords.promotionRoots(build);
-        final List<RoleRoot> out = new ArrayList<>();
-        final Map<String, Consent.Question> questions = new LinkedHashMap<>();
+        final Map<String, String> proposals = new LinkedHashMap<>();
+        final Map<String, String> whys = new LinkedHashMap<>();
+        final Map<String, String> feedsOwn = new LinkedHashMap<>();
         for (final String role : roles) {
             String proposed = byPredecessor.get(role);
             String why = "proposed: where its earlier version is";
@@ -811,45 +841,229 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                 proposed = feedRoot;
                 why = "proposed: the feed's own location";
             }
-            final List<String> options = new ArrayList<>(List.of(proposed));
+            proposals.put(role, proposed);
+            whys.put(role, why);
+            feedsOwn.put(role, feedRoot);
+        }
+        // Each option shown as the folder it gives (seen in chat 194: "System/Feeds", the folder holding the feed's,
+        // read as the wrong place), as the layout puts the role's pipeline.
+        final Map<String, String> proposedFolders = trialFolders(plan, proposals, placed, markers);
+        final Map<String, String> ownFolders = trialFolders(plan, feedsOwn, placed, markers);
+        final boolean feedsOwnGiven = feedsOwnFolderGiven(docs, destinations, placed.source());
+        final Map<String, Object> recorded = buildRecords.promotionRoots(build);
+        final List<RoleRoot> out = new ArrayList<>();
+        final Map<String, Consent.OpenQuestion> questions = new LinkedHashMap<>();
+        final Map<String, Map<String, String>> rootByLabel = new LinkedHashMap<>();
+        for (final String role : roles) {
+            final String proposed = proposals.get(role);
+            final Map<String, String> labels = new LinkedHashMap<>();
+            labels.put(optionLabel(proposedFolders.get(role), proposed, feedRoot, whys.get(role)), proposed);
+            final List<String> options = new ArrayList<>(List.of(proposedFolders.get(role)));
             if (!PromotionLayout.sameFolder(proposed, feedRoot)) {
-                options.add(feedRoot);
+                labels.put(optionLabel(ownFolders.get(role), feedRoot, feedRoot, null), feedRoot);
+                options.add(ownFolders.get(role));
             }
             // The feed's own folder given (or chosen) as a role's root is the feed's own location (seen in a user test,
             // 2026-11-18: read as a root elsewhere, it gave <feed>/<feed>/V1.0 with no role folders).
             final String given = roleKeyed(destinations, role);
             final Object chosen = recorded.get(role);
             if (given != null) {
-                out.add(new RoleRoot(role, PromotionLayout.ownRoot(PromotionLayout.normalised(given), feedFolder),
-                        "as given", options, false));
+                final String root = PromotionLayout.givenRoot(given, feedFolder);
+                record(build, role, root, chosen);
+                out.add(new RoleRoot(role, root, "as given", options, false, null));
+            } else if (feedsOwnGiven) {
+                record(build, role, feedRoot, chosen);
+                out.add(new RoleRoot(role, feedRoot, "as given: the feed's own folder", options, false, null));
             } else if (chosen instanceof final String root && !root.isBlank()) {
                 out.add(new RoleRoot(role, PromotionLayout.ownRoot(root, feedFolder), "as the user chose", options,
-                        false));
+                        false, null));
             } else {
-                out.add(new RoleRoot(role, proposed, why, options, true));
+                out.add(new RoleRoot(role, proposed, whys.get(role), options, true, null));
                 if (asking) {
-                    questions.put(role, new Consent.Question("Where " + role + " goes: the folder holding the "
-                                                             + "feed's folder (" + feedRoot + " is the feed's own "
-                                                             + "location; or type another)", options));
+                    final String typedTitle = role + ", if another folder: the folder to hold "
+                                              + PromotionLayout.lastPart(feedFolder) + "/<version>, e.g. "
+                                              + "System/Elastic Indices";
+                    questions.put(role, new Consent.OpenQuestion("Where " + role + " goes",
+                            new ArrayList<>(labels.keySet()), OTHER_FOLDER, typedTitle));
+                    rootByLabel.put(role, labels);
                 }
             }
         }
-        if (!questions.isEmpty()) {
-            final Optional<Map<String, String>> answered = consent.answerEach(call, context, NAME, "Where the "
-                    + "build's documents of each role go: the first is proposed (" + String.join("; ", out.stream()
-                    .filter(RoleRoot::toAsk)
-                    .map(root -> root.role() + ": " + root.root() + ", " + root.why().replace("proposed: ", ""))
-                    .toList()) + "); the feed's own location keeps them in " + feedFolder + "/<role>/<version>.",
-                    questions);
-            answered.ifPresent(answers -> answers.forEach((role, answer) -> {
-                final String root = PromotionLayout.ownRoot(PromotionLayout.normalised(answer), feedFolder);
-                buildRecords.rememberPromotionRoot(build, role, root);
+        askRoleRoots(call, context, build, feedFolder, questions, rootByLabel,
+                feedKeyCoversRoles(docs, placed.source())).forEach((role, root) ->
                 out.replaceAll(each -> each.role().equals(role)
-                        ? new RoleRoot(role, root, "as the user chose", each.options(), false)
-                        : each);
-            }));
-        }
+                        ? new RoleRoot(role, root, "as the user chose", each.options(), false, null)
+                        : each));
         return out;
+    }
+
+    // Each role's root the user chose in a form, recorded; none where the form can't be shown. An answer that is no
+    // folder (seen in chat 194: "feed's location" typed, taken for a folder) is never recorded nor used: the form is
+    // asked again, saying why, and after MAX_ROLE_ASKS the call is refused.
+    private Map<String, String> askRoleRoots(final ToolCall call,
+                                             final ToolCallContext context,
+                                             final String build,
+                                             final String feedFolder,
+                                             final Map<String, Consent.OpenQuestion> questions,
+                                             final Map<String, Map<String, String>> rootByLabel,
+                                             final boolean feedKeyCovers) {
+        if (questions.isEmpty()) {
+            return Map.of();
+        }
+        final String asked = "Where the build's documents of each role go: choose a folder for each (the first is "
+                             + "proposed), or '" + OTHER_FOLDER + "' and type its path.";
+        String intro = asked;
+        for (int n = 1; n <= MAX_ROLE_ASKS; n++) {
+            final Optional<Map<String, String>> answered = consent.chooseOrTypeEach(call, context, NAME, intro,
+                    questions);
+            if (answered.isEmpty()) {
+                return Map.of();
+            }
+            final Map<String, String> chosen = new LinkedHashMap<>();
+            final List<String> problems = new ArrayList<>();
+            answered.get().forEach((role, answer) -> {
+                final String root = rootByLabel.get(role).get(answer);
+                final String problem = root != null
+                        ? null
+                        : typedFolderProblem(answer);
+                if (root != null) {
+                    chosen.put(role, root);
+                } else if (problem == null) {
+                    chosen.put(role, PromotionLayout.givenRoot(answer, feedFolder));
+                } else {
+                    problems.add(role + ": " + problem);
+                }
+            });
+            if (problems.isEmpty()) {
+                chosen.forEach((role, root) -> buildRecords.rememberPromotionRoot(build, role, root));
+                return chosen;
+            }
+            LOGGER.debug(() -> LogUtil.message("Role locations for build {} not folders: {}", build, problems));
+            if (n == MAX_ROLE_ASKS) {
+                throw new ToolRefusal("The user's answers for where the build's documents go are not folders ("
+                                      + String.join("; ", problems) + "): nothing was recorded or moved. Ask the "
+                                      + "user in the chat which folder each role's documents go in. "
+                                      + roleKeysHint(feedFolder, questions.keySet(), feedKeyCovers));
+            }
+            intro = "Not a folder: " + String.join("; ", problems) + ". " + asked + " (Asked again: " + (n + 1)
+                    + " of " + MAX_ROLE_ASKS + ".)";
+        }
+        return Map.of();
+    }
+
+    // Why what the user typed for a role's location can't be used as a folder, or null if it can: a path (with a
+    // '/'), or the name of a folder in System.
+    private String typedFolderProblem(final String typed) {
+        if (OTHER_FOLDER.equals(typed) || NullSafe.isBlankString(typed)) {
+            return "'" + OTHER_FOLDER + "' was chosen, but no folder was typed";
+        }
+        try {
+            if (typed.contains("/") || guard.resolveFolder(typed).missing().isEmpty()) {
+                // A path, or a folder in System.
+                WriteGuard.folderParts(typed);
+                return null;
+            }
+        } catch (final ToolRefusal e) {
+            // No folder: said below.
+        }
+        return "'" + typed + "' is no folder path (e.g. System/Elastic Indices), nor a folder in System";
+    }
+
+    // A role's root recorded, replacing the one recorded before, where it differs.
+    private void record(final String build, final String role, final String root, final Object recorded) {
+        if (!(recorded instanceof final String before) || !PromotionLayout.sameFolder(before, root)) {
+            buildRecords.rememberPromotionRoot(build, role, root);
+        }
+    }
+
+    // An option of where a role goes, as the folder its pipeline goes in, saying what it is.
+    private static String optionLabel(final String folder,
+                                      final String root,
+                                      final String feedRoot,
+                                      final String why) {
+        final String reason = why == null || why.endsWith("the feed's own location")
+                ? null
+                : why.replace("proposed: ", "");
+        final String said = PromotionLayout.sameFolder(root, feedRoot)
+                ? "the feed's own folder" + (reason == null
+                        ? ""
+                        : ", " + reason)
+                : reason;
+        return folder + (said == null
+                ? ""
+                : " (" + said + ")");
+    }
+
+    // The folder each role's (first) pipeline goes in, its root as given: the layout tried on a copy of the plan.
+    private Map<String, String> trialFolders(final List<PromotionLayout.Step> plan,
+                                             final Map<String, String> rootByRole,
+                                             final Placed placed,
+                                             final Map<String, ModuleChecks.Marker> markers) {
+        final List<PromotionLayout.Step> trial = new ArrayList<>(plan);
+        layOut(trial, rootByRole, placed, markers);
+        final Map<String, String> out = new LinkedHashMap<>();
+        rootByRole.forEach((role, root) -> out.put(role, pipelineFolder(trial, role).orElseGet(() ->
+                PromotionLayout.rolePath(placed.source().own(), root, placed.group() == null
+                        ? null
+                        : placed.group().name(), role, PromotionLayout.FIRST_VERSION))));
+        return out;
+    }
+
+    // The folder a role's first pipeline moves to, as laid out.
+    private static Optional<String> pipelineFolder(final List<PromotionLayout.Step> plan, final String role) {
+        return plan.stream()
+                .filter(step -> PromotionLayout.MOVE.equals(step.action()) && role.equals(step.role())
+                                && PipelineDoc.TYPE.equals(step.doc().get("type")) && step.target() != null)
+                .map(PromotionLayout.Step::target)
+                .findFirst();
+    }
+
+    // Each role's root with the folder its pipeline goes in, as laid out.
+    private static List<RoleRoot> withFolders(final List<RoleRoot> roots, final List<PromotionLayout.Step> plan) {
+        return roots.stream()
+                .map(root -> new RoleRoot(root.role(), root.root(), root.why(), root.options(), root.toAsk(),
+                        pipelineFolder(plan, root.role()).orElse(root.root())))
+                .toList();
+    }
+
+    // Whether the feed's own folder is given for a feed already in production: under its type, Feed, its name or
+    // its document's uuid. Such a destination moves nothing, so it can only say where the roles go (seen in chat
+    // 194). A feed the build makes is placed by it, so there it says nothing of the roles: a role key does.
+    private boolean feedsOwnFolderGiven(final List<Map<String, Object>> docs,
+                                        final Map<String, String> destinations,
+                                        final Source source) {
+        if (!feedKeyCoversRoles(docs, source)) {
+            return false;
+        }
+        final Set<String> keys = new LinkedHashSet<>();
+        keys.add(FeedDoc.TYPE.toLowerCase(Locale.ROOT));
+        keys.add(source.name().toLowerCase(Locale.ROOT));
+        places.named(FeedDoc.TYPE, source.name())
+                .forEach(ref -> keys.add(NullSafe.string(ref.getUuid()).toLowerCase(Locale.ROOT)));
+        return destinations.entrySet().stream()
+                .anyMatch(entry -> keys.contains(entry.getKey().strip().toLowerCase(Locale.ROOT))
+                                   && NullSafe.isNonBlankString(entry.getValue())
+                                   && !entry.getValue().strip().equals("/")
+                                   && PromotionLayout.sameFolder(entry.getValue(), source.own()));
+    }
+
+    // Whether the build's source feed is in production, not one the build makes: the Feed key then says where the
+    // roles go.
+    private static boolean feedKeyCoversRoles(final List<Map<String, Object>> docs, final Source source) {
+        return source != null && ofType(docs, FeedDoc.TYPE).stream()
+                .noneMatch(doc -> source.name().equalsIgnoreCase(String.valueOf(doc.get("name"))));
+    }
+
+    // What changes where a role's documents go, for the agent.
+    private static String roleKeysHint(final String feedFolder,
+                                       final Collection<String> roles,
+                                       final boolean feedKeyCovers) {
+        return "To change where a role's documents go, call promote_build again with no reviewed and destinations "
+               + "keyed by the role (" + String.join(", ", roles) + "): the folder to hold "
+               + PromotionLayout.lastPart(feedFolder) + "/<version>, or the folder the layout showed for it; the "
+               + "feed's own folder ('" + feedFolder + "') " + (feedKeyCovers
+                ? "under Feed (or under a role) puts every role it covers"
+                : "under a role puts it") + " in " + feedFolder + "/<Role>/<version>.";
     }
 
     // Whether a role (or null) is one of these.
@@ -917,11 +1131,9 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     // Each document of a role put in its role's and version's folder (PromotionLayout.layOut), each role's root as
     // chosen. What the layout warns of, for the user.
     private List<String> layOut(final List<PromotionLayout.Step> plan,
-                                final List<RoleRoot> roots,
+                                final Map<String, String> rootByRole,
                                 final Placed placed,
                                 final Map<String, ModuleChecks.Marker> markers) {
-        final Map<String, String> rootByRole = new LinkedHashMap<>();
-        roots.forEach(root -> rootByRole.put(root.role(), root.root()));
         // The names a pipeline's name may hold whose version tokens are theirs (found in review, 2026-11-18).
         final List<String> held = Stream.concat(placed.sources().stream(), Stream.ofNullable(placed.source())
                 .map(Source::name)).toList();
@@ -953,7 +1165,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             return "";
         }
         return "\n\nWhere each role goes (destinations keyed by the role change it):\n" + String.join("\n",
-                roots.stream().map(root -> "- " + root.role() + ": " + root.root() + " (" + root.why() + ")")
+                roots.stream().map(root -> "- " + root.role() + ": " + root.folder() + " (" + root.why() + ")")
                         .toList());
     }
 
@@ -1611,6 +1823,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                               final List<String> warnings,
                                               final List<String> processed,
                                               final List<RoleRoot> roots,
+                                              final String rolesHint,
                                               final Object reviewed) {
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("status", "needs_review");
@@ -1627,7 +1840,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         for (final RoleRoot root : roots) {
             final Map<String, Object> location = new LinkedHashMap<>();
             location.put("role", root.role());
-            location.put("location", root.root());
+            location.put("folder", root.folder());
             location.put("why", root.why());
             location.put("options", root.options());
             locations.add(location);
@@ -1643,8 +1856,11 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                            + (asked
                 ? ""
                 : "; and where each role's documents go (role_locations: the first option is proposed, the "
-                  + "others are the feed's own location or a folder the user names): their answer goes in "
+                  + "others are the feed's own folder or a folder the user names): their answer goes in "
                   + "destinations keyed by the role, then show the tree again")
+                           + (rolesHint == null
+                ? ""
+                : ". " + rolesHint.substring(0, rolesHint.length() - 1))
                            + ". Once they confirm it, promote_build again with the same destinations and reviewed='"
                            + Consent.reviewId(bound) + "' (this layout's review_id): they approve it "
                            + "in a short form. If they change something, call again with their changes and no "
@@ -2015,10 +2231,11 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     /// @param role    The role, e.g. `Indexing`.
     /// @param root    The root chosen, from System.
     /// @param why     Where it came from, for the user.
-    /// @param options The roots offered: the proposal first, then the feed's own location where it differs (the user
-    ///                may name another).
+    /// @param options The folders offered, as the role's pipeline would go in each: the proposal first, then the
+    ///                feed's own folder where it differs (the user may name another).
     /// @param toAsk   True if it is the proposal, the user not asked yet.
-    record RoleRoot(String role, String root, String why, List<String> options, boolean toAsk) {
+    /// @param folder  The folder the role's pipeline goes in, as laid out; null until it is.
+    record RoleRoot(String role, String root, String why, List<String> options, boolean toAsk, String folder) {
 
     }
 

@@ -415,14 +415,15 @@ class TestConsent {
 
     @Test
     void eachFormHelperPutAsideByAMessageTellsTheAgentToReplyToIt() {
-        // choose, chooseEach, answerEach, pick and review alike, as answer is (above).
+        // choose, chooseEach, chooseOrTypeEach, pick and review alike, as answer is (above).
         final Map<String, BiFunction<ToolCall, ToolCallContext, Object>> helpers = new LinkedHashMap<>();
         helpers.put("choose", (call, context) -> consent.choose(call, context, "a_tool", "Which one?",
                 List.of("A", "B"), null));
         helpers.put("chooseEach", (call, context) -> consent.chooseEach(call, context, "a_tool", "Choose each",
                 Map.of("x", new Consent.Question("Which x?", List.of("A", "B")))));
-        helpers.put("answerEach", (call, context) -> consent.answerEach(call, context, "a_tool", "Answer each",
-                Map.of("x", new Consent.Question("Which x?", List.of("A", "B")))));
+        helpers.put("chooseOrTypeEach", (call, context) -> consent.chooseOrTypeEach(call, context, "a_tool",
+                "Answer each", Map.of("x", new Consent.OpenQuestion("Which x?", List.of("A", "B"), "another (type it)",
+                        "Another x"))));
         helpers.put("pick", (call, context) -> consent.pick(call, context, "a_tool", "Pick", "Which?",
                 Map.of("A", "a", "B", "b"), "Name", null));
         helpers.put("review", (call, context) -> consent.review(call, context, "a_tool", "Review",

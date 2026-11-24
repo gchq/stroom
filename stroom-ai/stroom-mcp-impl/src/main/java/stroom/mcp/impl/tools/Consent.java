@@ -85,6 +85,8 @@ public class Consent {
     public static final int FORM_MESSAGE_LIMIT = 600;
     /// The key [#review] gives the free text under.
     public static final String REVIEW_TEXT = "_text";
+    /// What [#chooseOrTypeEach] adds to a question's field's key for its text field's, e.g. `a1_typed`.
+    public static final String TYPED_SUFFIX = "_typed";
     // The most a form's message runs to with its documents' links, well inside what a form may hold (2,000).
     private static final int LINKED_MESSAGE_LIMIT = 1_500;
     // Characters of one detail's value in a form.
@@ -393,40 +395,51 @@ public class Consent {
         return Optional.of(chosen);
     }
 
-    /// Several questions put to the user in one form, each with answers suggested (buttons, the proposal first) and
-    /// a box for the user's own: where each role's documents go at promotion, say.
+    /// Several questions put to the user in one form, each a choice of options (the proposal first) ending in one to
+    /// answer another way, with a text field under it for that answer: where each role's documents go at promotion,
+    /// say. Seen in chat 194: suggested answers with a free box under them took "feed's location" for a folder.
     ///
     /// @param call      The call asking.
     /// @param context   The call's context.
     /// @param action    The tool asking, e.g. `promote_build`.
     /// @param intro     What the questions are about, the form's message.
-    /// @param questions The questions by key, each with its suggested answers (the proposal first), in the order
-    ///                  asked.
-    /// @return The answer to each, by its key, trimmed: the proposal where one is left blank; empty when the session
-    /// can't show a form now, or the form would be too large to show (the agent then asks the user).
+    /// @param questions The questions by key, in the order asked.
+    /// @return The answer to each, by its key: what the user typed (trimmed) where they typed anything, else the
+    /// option chosen (the question's [OpenQuestion#other] when they chose it and typed nothing; the proposal when
+    /// they chose none); empty when the session can't show a form now, or the form would be too large to show (the
+    /// agent then asks the user).
     /// @throws ToolRefusal if the user declined the form or closed it unanswered.
-    public Optional<Map<String, String>> answerEach(final ToolCall call,
-                                                    final ToolCallContext context,
-                                                    final String action,
-                                                    final String intro,
-                                                    final Map<String, Question> questions) {
+    public Optional<Map<String, String>> chooseOrTypeEach(final ToolCall call,
+                                                          final ToolCallContext context,
+                                                          final String action,
+                                                          final String intro,
+                                                          final Map<String, OpenQuestion> questions) {
         if (NullSafe.isEmptyMap(questions) || !context.userQuestions().canAsk()) {
             return Optional.empty();
         }
         final Map<String, Object> properties = new LinkedHashMap<>();
         final Map<String, String> fieldKeys = new LinkedHashMap<>();
+        final List<String> required = new ArrayList<>();
         questions.forEach((key, question) -> {
             final String fieldKey = "a" + (fieldKeys.size() + 1);
             fieldKeys.put(fieldKey, key);
-            final Map<String, Object> field = new LinkedHashMap<>();
-            field.put("type", "string");
-            field.put("title", heading(question.text()));
-            // Shown as buttons, with a box for the user's own answer under them.
-            field.put("examples", List.copyOf(question.options()));
-            properties.put(fieldKey, field);
+            final List<String> options = new ArrayList<>(question.options());
+            options.add(question.other());
+            final Map<String, Object> choice = new LinkedHashMap<>();
+            choice.put("type", "string");
+            choice.put("title", heading(question.text()));
+            choice.put("enum", options);
+            choice.put("default", options.getFirst());
+            properties.put(fieldKey, choice);
+            required.add(fieldKey);
+            final Map<String, Object> typed = new LinkedHashMap<>();
+            typed.put("type", "string");
+            typed.put("title", heading(question.typedTitle()));
+            properties.put(fieldKey + TYPED_SUFFIX, typed);
         });
         final Map<String, Object> schema = new LinkedHashMap<>();
         schema.put("type", "object");
+        schema.put("required", required);
         schema.put("properties", properties);
         final String digest = XsltCode.sha256(action + "\n" + intro + "\n" + questions.keySet()).substring(0, 16);
         final Optional<ElicitResult> asked = askShown(call, context, action, intro, "answers-" + digest, intro,
@@ -444,10 +457,12 @@ public class Consent {
         final Map<String, Object> content = NullSafe.map(answer.content());
         final Map<String, String> answers = new LinkedHashMap<>();
         fieldKeys.forEach((fieldKey, key) -> {
-            final String given = NullSafe.trim(NullSafe.get(content.get(fieldKey), String::valueOf));
-            answers.put(key, NullSafe.isBlankString(given)
-                    ? questions.get(key).options().getFirst()
-                    : given);
+            final String typed = NullSafe.trim(NullSafe.get(content.get(fieldKey + TYPED_SUFFIX), String::valueOf));
+            final String chosen = NullSafe.trim(NullSafe.get(content.get(fieldKey), String::valueOf));
+            // A client showing the choice as a text box may send the user's own words in it.
+            answers.put(key, NullSafe.isNonBlankString(typed)
+                    ? typed
+                    : NullSafe.nonBlankStringElse(chosen, questions.get(key).options().getFirst()));
         });
         auditLogProvider.get().processed(context.session(), null, "answer", action + ": " + heading(intro),
                 "answered: " + answers, true);
@@ -1352,6 +1367,17 @@ public class Consent {
     /// @param text    The question.
     /// @param options Its options, the recommended one first.
     public record Question(String text, List<String> options) {
+
+    }
+
+    /// A question asked with [#chooseOrTypeEach].
+    ///
+    /// @param text       The question.
+    /// @param options    Its options, the proposal first.
+    /// @param other      The last option: to answer another way, in the text field under it, e.g. `another folder
+    ///                   (type it)`.
+    /// @param typedTitle The text field's title, saying what to type there.
+    public record OpenQuestion(String text, List<String> options, String other, String typedTitle) {
 
     }
 
