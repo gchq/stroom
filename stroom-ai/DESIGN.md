@@ -1726,11 +1726,20 @@ The same features find an insider and a compromised account, so findings keep bo
 **Context, from reference data** (user, 2026-11-24: the site's reference environment already resolves a person's
 identities, and holds it as Stroom reference data)
 
-* A person's accounts, role, team, manager, privileged accounts, start and leaving dates, leave, approved
-  exceptions and sensitive assets are read from reference data, so the tools work per person, not per account:
-  `activity_timeline`, `compare_activity` and `sequence_query` take a person and expand it to their accounts.
-* Gap: the agent can list reference data maps (`find_reference_data`) but not read a value by key; a lookup by map
-  and key (and a person's entries across maps) is needed, read-only, within the user's permissions.
+* **The person id is on the events** (user, 2026-11-24): processing decorates each event with it, in the index or
+  the Event XML, so the tools work per person by filtering on that field, with no expansion to accounts at query
+  time. Its field per index comes from the skill, then the AGENTS doc's `## Fields`, then convention, as the user
+  field does; `activity_timeline`, `compare_activity` and `sequence_query` take a person field beside the user field.
+* **Indexed for aggregates**: `compare_activity` aggregates in the index, so it needs the person id as an index
+  field; where it is only in the Event XML, the timeline still works (it reads the XML), and the comparison says so
+  and falls back to the user field.
+* **Peers by an indexed group field** where processing decorates one too (team, role): grouped in the same
+  aggregate, no lookup. Otherwise from reference data.
+* **The rest of the context from reference data**: what isn't on events (start and leaving dates, leave, approved
+  exceptions, sensitive assets, a team's members where not decorated). Gap: the agent can list reference data maps
+  (`find_reference_data`) but not read a value by key; a read-only lookup by map, keys and effective time (Stroom's
+  `ReferenceDataService.lookup`, its View Data and loader Use checks), several keys a call, never a map's whole
+  contents, the maps named in the skill or AGENTS doc. Small, as it no longer resolves identities.
 * Change points are read against these dates ("breadth up threefold from 12 April, 41 days before the leaving
   date").
 
