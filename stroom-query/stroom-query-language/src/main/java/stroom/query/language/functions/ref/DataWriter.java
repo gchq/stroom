@@ -38,6 +38,16 @@ public interface DataWriter extends AutoCloseable {
 
     void writeBytes(byte[] bytes);
 
+    /// Writes a number that is not negative in as few bytes as it needs, from one to five.
+    ///
+    /// @param value The number.
+    void writeVarInt(int value);
+
+    /// Writes bytes without their length, so the reader must know it.
+    ///
+    /// @param bytes The bytes.
+    void writeRawBytes(byte[] bytes);
+
     @Override
     void close();
 }

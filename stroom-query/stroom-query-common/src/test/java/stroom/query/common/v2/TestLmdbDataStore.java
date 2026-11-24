@@ -64,6 +64,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -1025,6 +1026,115 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     @Test
     void nestedTest() {
         super.nestedTest();
+    }
+
+    @Test
+    void countUniqueApproxTest() {
+        super.countUniqueApproxTest();
+    }
+
+    @Test
+    void countUniqueApproxOfRowsMergedFromTwoNodes() throws InterruptedException {
+        final TableSettings tableSettings = countUniqueTable();
+        final DataStoreSettings payloadSettings = DataStoreSettings.createPayloadProducerSearchResultStoreSettings();
+        final DataStore node1 = create(tableSettings, payloadSettings);
+        final DataStore node2 = create(tableSettings, payloadSettings);
+        final DataStore merged = createUnlimitedDataStore(tableSettings);
+
+        // Half of the values of each node are also on the other.
+        addCountUniqueRows(node1, 0, 400);
+        addCountUniqueRows(node2, 200, 600);
+        transferPayloads(node1, merged);
+        transferPayloads(node2, merged);
+
+        assertThat(countUniqueRows(merged, tableSettings)).containsExactlyInAnyOrder(
+                List.of("a", "600", "600", "1600"),
+                List.of("b", "1", "1", "800"));
+    }
+
+    // Enough values that the sketch becomes dense in the store.
+    @Test
+    void countUniqueApproxOfManyValues() {
+        final TableSettings tableSettings = TableSettings.builder()
+                .addColumns(Column.builder()
+                        .id("Group")
+                        .name("Group")
+                        .expression(ParamUtil.create("Group"))
+                        .format(Format.TEXT)
+                        .group(0)
+                        .build())
+                .addColumns(Column.builder()
+                        .id("Approx")
+                        .name("Approx")
+                        .expression("countUniqueApprox(${Value})")
+                        .format(Format.NUMBER)
+                        .build())
+                .build();
+        final DataStore dataStore = createUnlimitedDataStore(tableSettings);
+        for (int i = 0; i < 20_000; i++) {
+            dataStore.accept(Val.of(ValString.create("a"), ValString.create("value" + i)));
+        }
+        final List<List<String>> rows = countUniqueRows(dataStore, tableSettings);
+        assertThat(rows).hasSize(1);
+        // Within 3 standard errors.
+        assertThat(Long.parseLong(rows.getFirst().get(1))).isBetween(19_514L, 20_486L);
+    }
+
+    @Test
+    void countUniqueApproxOfARuleAfterReopening() throws InterruptedException {
+        final TableSettings tableSettings = ruleTable(countUniqueTable());
+        final QueryKey queryKey = new QueryKey("rule");
+        final LmdbDataStore first = createRuleStore(queryKey, tableSettings);
+        addRuleRows(first, 0, 100);
+        first.sync();
+        first.getCompletionState().signalComplete();
+        first.getCompletionState().awaitCompletion();
+        first.close();
+
+        final LmdbDataStore second = createRuleStore(queryKey, tableSettings);
+        addRuleRows(second, 50, 150);
+        second.sync();
+        assertThat(getRowValues(second, tableSettings).stream().map(row -> row.subList(1, row.size())))
+                .containsExactlyInAnyOrder(
+                        List.of("a", "150", "150", "400"),
+                        List.of("b", "1", "1", "200"));
+    }
+
+    // The grouped table of a rule must be grouped by a time, which is put first.
+    private TableSettings ruleTable(final TableSettings tableSettings) {
+        final List<Column> columns = new ArrayList<>();
+        columns.add(Column.builder()
+                .id("EventTime")
+                .name("EventTime")
+                .expression(ParamUtil.create("EventTime"))
+                .format(Format.DATE_TIME)
+                .group(0)
+                .build());
+        columns.addAll(tableSettings.getColumns());
+        return tableSettings.copy().columns(columns).build();
+    }
+
+    // As addCountUniqueRows() but with the time of each row.
+    private void addRuleRows(final DataStore dataStore, final int from, final int to) {
+        final Val time = ValDate.create(Instant.parse("2026-03-10T09:14:00Z").toEpochMilli());
+        for (int i = from; i < to; i++) {
+            dataStore.accept(Val.of(time, ValString.create("a"), ValString.create("value" + i)));
+            dataStore.accept(Val.of(time, ValString.create("a"), ValString.create("value" + i)));
+            dataStore.accept(Val.of(time, ValString.create("b"), ValString.create("same")));
+        }
+    }
+
+    // Any earlier store of the rule must be closed first, as only one may have the directory open.
+    private LmdbDataStore createRuleStore(final QueryKey queryKey, final TableSettings tableSettings) {
+        return record((LmdbDataStore) create(
+                SearchRequestSource.builder().sourceType(SourceType.TABLE_BUILDER_ANALYTIC).build(),
+                queryKey,
+                "0",
+                tableSettings,
+                createResultStoreConfig(),
+                // Rows here have no stream or event id.
+                DataStoreSettings.createAnalyticStoreSettings().copy().storeLatestEventReference(false).build(),
+                "rule"));
     }
 
     @Test

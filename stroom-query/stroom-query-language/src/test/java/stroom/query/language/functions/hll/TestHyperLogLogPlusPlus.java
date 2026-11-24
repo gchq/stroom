@@ -30,6 +30,9 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HexFormat;
 import java.util.SplittableRandom;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -37,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TestHyperLogLogPlusPlus {
 
     private static final long SEED = 3502;
-    private static final int DENSE_HASH = -1917866931;
+    private static final int DENSE_HASH = -582415564;
 
     @Test
     void testEmpty() {
@@ -157,7 +160,7 @@ class TestHyperLogLogPlusPlus {
         final HyperLogLogPlusPlus denseFirst = sketch(precision, others);
         assertThat(denseFirst.isSparse()).isFalse();
 
-        final HyperLogLogPlusPlus merged = read(write(denseFirst));
+        final HyperLogLogPlusPlus merged = read(write(denseFirst), precision);
         merged.merge(sparseFirst);
         for (final long hash : others) {
             sparseFirst.addHash(hash);
@@ -186,7 +189,9 @@ class TestHyperLogLogPlusPlus {
         }
 
         final byte[] bytes = write(sketch(precision, hashes));
-        final BitSet registers = BitSet.valueOf(Arrays.copyOfRange(bytes, 7, bytes.length));
+        final int denseByteCount = (1 << precision) * 6 / 8;
+        final BitSet registers = BitSet.valueOf(
+                Arrays.copyOfRange(bytes, bytes.length - denseByteCount, bytes.length));
         final int[] actual = new int[1 << precision];
         for (int register = 0; register < actual.length; register++) {
             for (int bit = 0; bit < 6; bit++) {
@@ -389,18 +394,17 @@ class TestHyperLogLogPlusPlus {
     @ParameterizedTest
     @CsvSource({"10,768", "12,3072", "14,12288", "16,49152"})
     void testTurnsDenseOnceSmaller(final int precision, final int denseByteCount) {
-        final int headerSize = 3 + Integer.BYTES;
         final HyperLogLogPlusPlus sketch = new HyperLogLogPlusPlus(precision);
         final SplittableRandom random = new SplittableRandom(SEED);
         int lastSparseSize = 0;
         while (sketch.isSparse()) {
-            lastSparseSize = write(sketch).length - headerSize;
+            lastSparseSize = sizeWithoutLength(write(sketch));
             assertThat(lastSparseSize).isLessThanOrEqualTo(denseByteCount);
             sketch.addHash(random.nextLong());
         }
         // One more entry can add a few bytes at most.
         assertThat(lastSparseSize).isGreaterThan(denseByteCount - 8);
-        assertThat(write(sketch)).hasSize(headerSize + denseByteCount);
+        assertThat(sizeWithoutLength(write(sketch))).isEqualTo(denseByteCount);
     }
 
     @ParameterizedTest
@@ -415,7 +419,7 @@ class TestHyperLogLogPlusPlus {
     @Test
     void testSerialisedForm() {
         assertThat(HexFormat.of().formatHex(write(new HyperLogLogPlusPlus(14))))
-                .isEqualTo("01" + "0e" + "00" + "00000000");
+                .isEqualTo("00");
 
         final HyperLogLogPlusPlus sparse = new HyperLogLogPlusPlus(14);
         // Index 0, with no 1 bit in the tail, so a rank of 40.
@@ -425,87 +429,178 @@ class TestHyperLogLogPlusPlus {
         // Index 2^24, with the first 1 bit of the tail set, so a rank of 1.
         sparse.addHash((1L << 63) | (1L << 38));
         assertThat(HexFormat.of().formatHex(write(sparse)))
-                .isEqualTo("01" + "0e" + "00" + "08000000"
+                .isEqualTo("08"
                            + "01" + "28"
                            + "02"
                            + "ffffff0f" + "01");
 
         final byte[] dense = write(sketch(10, hashes(10_000)));
-        assertThat(dense).startsWith(1, 10, 1, 0, 3, 0, 0);
-        assertThat(Arrays.hashCode(dense)).isEqualTo(DENSE_HASH);
+        // 769 as a number of variable length, which is one more than the greatest sparse length.
+        assertThat(dense).startsWith(0x81, 0x06).hasSize(2 + 768);
+        assertThat(Arrays.hashCode(Arrays.copyOfRange(dense, 2, dense.length))).isEqualTo(DENSE_HASH);
     }
 
     @ParameterizedTest
     @CsvSource({
-            // Header
-            "00 0e 00 00000000,Unknown sketch format version 0",
-            "02 0e 00 00000000,Unknown sketch format version 2",
-            "01 09 00 00000000,Precision must be from 10 to 16 but was 9",
-            "01 11 00 00000000,Precision must be from 10 to 16 but was 17",
-            "01 ff 00 00000000,Precision must be from 10 to 16 but was -1",
-            "01 0e 02 00000000,unknown type 2",
+            // The length is one more than shows the dense form, the greatest there is, or negative
+            "8260,bad length",
+            "ffffffff07,bad length",
+            "ffffffff0f,bad length",
             // Sparse, where the index is cut short, too long, too big, or repeated
-            "01 0e 00 01000000 80,bad sparse index",
-            "01 0e 00 05000000 8080808001,bad sparse index",
-            "01 0e 00 05000000 8180802001,bad sparse index",
-            "01 0e 00 02000000 0200,bad sparse index",
+            "01 80,bad sparse index",
+            "05 8080808001,bad sparse index",
+            "05 8180802001,bad sparse index",
+            "02 0200,bad sparse index",
             // Sparse, where the rank is missing, 0, too big, not wanted, or wanted
-            "01 0e 00 01000000 01,missing sparse rank",
-            "01 0e 00 02000000 0100,bad sparse rank",
-            "01 0e 00 02000000 0129,bad sparse rank",
-            "01 0e 00 02000000 01ff,bad sparse rank",
-            "01 0e 00 02000000 0301,sparse rank does not fit its index",
-            "01 0e 00 01000000 00,sparse rank does not fit its index",
+            "01 01,missing sparse rank",
+            "02 0100,bad sparse rank",
+            "02 0129,bad sparse rank",
+            "02 01ff,bad sparse rank",
+            "02 0301,sparse rank does not fit its index",
+            "01 00,sparse rank does not fit its index",
             // Sparse, where the index takes more bytes than it needs
-            "01 0e 00 02000000 8200,unexpected sparse length",
-            // Dense
-            "01 0e 01 00000000,unexpected dense length",
-            "01 0e 01 01000000 00,unexpected dense length"})
+            "02 8200,unexpected sparse length"})
     void testReadInvalid(final String hex, final String message) {
         final byte[] bytes = HexFormat.of().parseHex(hex.replace(" ", ""));
-        assertThatThrownBy(() -> read(bytes))
+        assertThatThrownBy(() -> read(bytes, 14))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining(message);
+                .hasMessage("Invalid sketch: " + message);
     }
 
     @ParameterizedTest
     @ValueSource(strings = {
-            // Cut short in the header, the length, the sparse form and the dense form
+            // Cut short in the length, the sparse form and the dense form
             "",
-            "01",
-            "01 0e",
-            "01 0e 00",
-            "01 0e 00 0100",
-            "01 0e 00 02000000 02",
-            "01 0e 01 00300000 00",
-            // Negative length
-            "01 0e 00 ffffffff"})
+            "80",
+            "02 02",
+            "8160 00"})
     void testReadCutShort(final String hex) {
         final byte[] bytes = HexFormat.of().parseHex(hex.replace(" ", ""));
-        assertThatThrownBy(() -> read(bytes))
+        assertThatThrownBy(() -> read(bytes, 14))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Invalid sketch: unable to read it")
                 .hasCauseInstanceOf(RuntimeException.class);
     }
 
     @Test
-    void testReadSparseLargerThanDense() {
-        final byte[] bytes = new byte[7 + 769];
-        // Precision 10, sparse, and a length of 769.
-        System.arraycopy(new byte[]{1, 10, 0, 1, 3, 0, 0}, 0, bytes, 0, 7);
-        assertThatThrownBy(() -> read(bytes))
+    void testReadWithBadPrecision() {
+        assertThatThrownBy(() -> read(new byte[]{0}, 9))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("sparse form is larger than the dense form");
+                .hasMessage("Precision must be from 10 to 16 but was 9");
+    }
+
+    // One thread can estimate while another adds, and must never see a count that is far too low, such as 0, while
+    // the sketch is being changed from one form to another.
+    @Test
+    void testEstimateWhileMerging() throws Exception {
+        final int start = 3_000;
+        final long[] hashes = hashes(8_000);
+        final HyperLogLogPlusPlus[] parts = new HyperLogLogPlusPlus[10];
+        for (int i = 0; i < parts.length; i++) {
+            parts[i] = sketch(14, Arrays.copyOfRange(hashes, start + i * 500, start + (i + 1) * 500));
+        }
+
+        final AtomicReference<HyperLogLogPlusPlus> current =
+                new AtomicReference<>(sketch(14, Arrays.copyOf(hashes, start)));
+        final AtomicBoolean stop = new AtomicBoolean();
+        final AtomicLong lowest = new AtomicLong(Long.MAX_VALUE);
+        final AtomicLong reads = new AtomicLong();
+        final AtomicReference<Throwable> failure = new AtomicReference<>();
+        final Thread reader = new Thread(() -> {
+            try {
+                while (!stop.get()) {
+                    final long estimate = current.get().estimate();
+                    lowest.accumulateAndGet(estimate, Math::min);
+                    reads.incrementAndGet();
+                }
+            } catch (final Throwable e) {
+                failure.set(e);
+            }
+        });
+        reader.start();
+        try {
+            for (int repeat = 0; repeat < 500; repeat++) {
+                final HyperLogLogPlusPlus sketch = sketch(14, Arrays.copyOf(hashes, start));
+                current.set(sketch);
+                for (final HyperLogLogPlusPlus part : parts) {
+                    sketch.merge(part);
+                }
+                assertThat(sketch.isSparse()).isFalse();
+            }
+        } finally {
+            stop.set(true);
+            reader.join();
+        }
+        assertThat(failure.get()).isNull();
+        assertThat(reads.get()).isPositive();
+        assertThat(lowest.get()).isGreaterThan((long) (start * 0.95));
+    }
+
+    // An estimate is kept, but must not be used once the sketch has changed.
+    @Test
+    void testEstimateAfterChange() {
+        final long[] hashes = hashes(40_000);
+        final HyperLogLogPlusPlus sketch = sketch(14, Arrays.copyOf(hashes, 10_000));
+        assertThat(sketch.isSparse()).isFalse();
+        assertThat(sketch.estimate()).isEqualTo(sketch.estimate());
+
+        // Add one at a time.
+        for (int i = 10_000; i < 20_000; i++) {
+            sketch.addHash(hashes[i]);
+        }
+        assertThat(sketch.estimate())
+                .isEqualTo(sketch(14, Arrays.copyOf(hashes, 20_000)).estimate());
+
+        // Merge a dense sketch.
+        sketch.merge(sketch(14, Arrays.copyOfRange(hashes, 20_000, 36_000)));
+        assertThat(sketch.estimate())
+                .isEqualTo(sketch(14, Arrays.copyOf(hashes, 36_000)).estimate());
+
+        // Merge a sparse sketch.
+        sketch.merge(sketch(14, Arrays.copyOfRange(hashes, 36_000, 40_000)));
+        assertThat(sketch.estimate())
+                .isEqualTo(sketch(14, hashes).estimate());
+    }
+
+    // An estimate begun by another thread during a change must not be kept after it.
+    @Test
+    void testLastEstimateAfterMerging() throws Exception {
+        final long[] hashes = hashes(20_000);
+        final long expected = sketch(14, hashes).estimate();
+        final HyperLogLogPlusPlus part = sketch(14, Arrays.copyOfRange(hashes, 10_000, 20_000));
+
+        for (int repeat = 0; repeat < 500; repeat++) {
+            final HyperLogLogPlusPlus sketch = sketch(14, Arrays.copyOf(hashes, 10_000));
+            final AtomicBoolean started = new AtomicBoolean();
+            final AtomicBoolean stop = new AtomicBoolean();
+            final Thread reader = new Thread(() -> {
+                while (!stop.get()) {
+                    sketch.estimate();
+                    started.set(true);
+                }
+            });
+            reader.start();
+            try {
+                while (!started.get() && reader.isAlive()) {
+                    Thread.onSpinWait();
+                }
+                sketch.merge(part);
+            } finally {
+                stop.set(true);
+                reader.join();
+            }
+            assertThat(sketch.estimate()).isEqualTo(expected);
+        }
     }
 
     @Test
     void testReadBadRegister() {
         final byte[] bytes = write(sketch(10, hashes(10_000)));
         // The highest rank at precision 10 is 55, so 56 is too high.
-        bytes[7] = (byte) ((bytes[7] & 0xC0) | 55);
-        assertThat(read(bytes).isSparse()).isFalse();
-        bytes[7] = (byte) ((bytes[7] & 0xC0) | 56);
-        assertThatThrownBy(() -> read(bytes))
+        bytes[2] = (byte) ((bytes[2] & 0xC0) | 55);
+        assertThat(read(bytes, 10).isSparse()).isFalse();
+        bytes[2] = (byte) ((bytes[2] & 0xC0) | 56);
+        assertThatThrownBy(() -> read(bytes, 10))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("bad register");
     }
@@ -550,7 +645,7 @@ class TestHyperLogLogPlusPlus {
 
     private static void assertRoundTrip(final HyperLogLogPlusPlus sketch) {
         final byte[] bytes = write(sketch);
-        final HyperLogLogPlusPlus copy = read(bytes);
+        final HyperLogLogPlusPlus copy = read(bytes, sketch.getPrecision());
         assertThat(write(copy)).isEqualTo(bytes);
         assertThat(copy.estimate()).isEqualTo(sketch.estimate());
         assertThat(copy.getPrecision()).isEqualTo(sketch.getPrecision());
@@ -566,14 +661,23 @@ class TestHyperLogLogPlusPlus {
         assertThat(write(copy)).isEqualTo(write(original));
     }
 
+    // The length at the start has 7 bits in each byte, and the top bit set in all but the last.
+    private static int sizeWithoutLength(final byte[] bytes) {
+        int size = bytes.length - 1;
+        for (int i = 0; bytes[i] < 0; i++) {
+            size--;
+        }
+        return size;
+    }
+
     private static byte[] write(final HyperLogLogPlusPlus sketch) {
         final Output output = new Output(16, -1);
         sketch.write(new KryoDataWriter(output));
         return output.toBytes();
     }
 
-    private static HyperLogLogPlusPlus read(final byte[] bytes) {
-        return HyperLogLogPlusPlus.read(new KryoDataReader(new Input(bytes)));
+    private static HyperLogLogPlusPlus read(final byte[] bytes, final int precision) {
+        return HyperLogLogPlusPlus.read(new KryoDataReader(new Input(bytes)), precision);
     }
 
 

@@ -63,6 +63,11 @@ class TestMapDataStore extends AbstractDataStoreTest {
     }
 
     @Test
+    void countUniqueApproxTest() {
+        super.countUniqueApproxTest();
+    }
+
+    @Test
     void noValuesTest() {
         super.noValuesTest();
     }

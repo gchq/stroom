@@ -34,7 +34,8 @@ import java.util.Objects;
 /// The state depends only on the set of hashes added and not on the order of adding or merging, so the same
 /// set of hashes always gives the same estimate and the same serialised bytes.
 ///
-/// This class is not thread safe.
+/// This class is not thread safe, except that [#estimate()] can be called while another thread adds to the sketch. It
+/// then gives an estimate from some time while it was being added to.
 public class HyperLogLogPlusPlus {
 
     /// The lowest precision a sketch can have.
@@ -43,11 +44,6 @@ public class HyperLogLogPlusPlus {
     public static final int MAX_PRECISION = 16;
     /// The precision to use unless another is asked for.
     public static final int DEFAULT_PRECISION = 14;
-
-    // Change this if the serialised form changes.
-    private static final byte FORMAT_VERSION = 1;
-    private static final byte TYPE_SPARSE = 0;
-    private static final byte TYPE_DENSE = 1;
 
     // The number of leading hash bits that pick a sparse index, and the number of bits left after them.
     private static final int SPARSE_PRECISION = 25;
@@ -73,12 +69,19 @@ public class HyperLogLogPlusPlus {
 
     // The sparse form, ordered by index with one entry per index, and the bytes it takes when serialised.
     // A rank of 0 means the rank can be worked out from the index, see toSparseEntry().
+    // The count is not changed once the sketch is dense, as another thread could be about to estimate from it.
     private int[] sparseEntries = NO_ENTRIES;
     private int sparseCount;
     private int sparseByteCount;
 
-    // The dense form, or null if this sketch is still sparse.
-    private byte[] registers;
+    // The dense form, or null if this sketch is still sparse. It is only set once it holds everything.
+    private volatile byte[] registers;
+
+    // Estimating from the dense form reads every register, so the estimate is kept until the registers are next
+    // changed, e.g. for sorting by it. The count is only raised once a change is complete, so an estimate that another
+    // thread began before then is never used after it.
+    private volatile int denseChangeCount;
+    private volatile DenseEstimate denseEstimate;
 
     /// Create an empty sketch.
     ///
@@ -118,7 +121,8 @@ public class HyperLogLogPlusPlus {
             makeDenseIfSmaller();
         } else {
             final int index = (int) (hash >>> (Long.SIZE - precision));
-            raiseRegister(index, rank(hash << precision, Long.SIZE - precision));
+            raiseRegister(registers, index, rank(hash << precision, Long.SIZE - precision));
+            denseChanged();
         }
     }
 
@@ -148,12 +152,15 @@ public class HyperLogLogPlusPlus {
                 makeDense();
             }
             if (other.isSparse()) {
-                raiseRegisters(other.sparseEntries, other.sparseCount);
+                raiseRegisters(registers, other.sparseEntries, other.sparseCount);
             } else {
+                final byte[] target = registers;
+                final byte[] source = other.registers;
                 for (int i = 0; i < registerCount; i++) {
-                    raiseRegister(i, other.getRegister(i));
+                    raiseRegister(target, i, getRegister(source, i));
                 }
             }
+            denseChanged();
         }
     }
 
@@ -161,36 +168,48 @@ public class HyperLogLogPlusPlus {
     ///
     /// @return The estimate, which is 0 for an empty sketch.
     public long estimate() {
-        return isSparse()
-                ? estimateSparse()
-                : estimateDense();
+        // This must be read before the registers, see denseChangeCount.
+        final int changeCount = denseChangeCount;
+        final byte[] current = registers;
+        if (current == null) {
+            return estimateSparse();
+        }
+
+        final DenseEstimate known = denseEstimate;
+        if (known != null && known.changeCount() == changeCount) {
+            return known.estimate();
+        }
+        final long estimate = estimateDense(current);
+        denseEstimate = new DenseEstimate(changeCount, estimate);
+        return estimate;
     }
 
-    /// Write this sketch so that it can be read by [#read(DataReader)].
+    /// Write this sketch so that it can be read by [#read(DataReader, int)].
+    ///
+    /// This is written for every row of some stores, so it is kept as small as possible. A number gives the length of
+    /// the sparse form, or is one more than the greatest length of the sparse form to show that the dense form
+    /// follows. The precision is not written.
     ///
     /// @param writer The writer to write to.
     public void write(final DataWriter writer) {
-        writer.writeByte(FORMAT_VERSION);
-        writer.writeByte((byte) precision);
         if (isSparse()) {
-            writer.writeByte(TYPE_SPARSE);
-            writer.writeBytes(encodeSparse());
+            writer.writeVarInt(sparseByteCount);
+            writer.writeRawBytes(encodeSparse());
         } else {
-            writer.writeByte(TYPE_DENSE);
-            writer.writeBytes(registers);
+            writer.writeVarInt(denseByteCount + 1);
+            writer.writeRawBytes(registers);
         }
     }
 
     /// Read a sketch that was written by [#write(DataWriter)].
     ///
-    /// @param reader The reader to read from.
+    /// @param reader    The reader to read from.
+    /// @param precision The precision of the sketch that was written.
     /// @return The sketch.
-    /// @throws IllegalArgumentException If the sketch has an unknown format version, is cut short or is not valid.
-    ///                                  The reader allocates the stored length before it can be checked, so a
-    ///                                  corrupt length can also run out of memory.
-    public static HyperLogLogPlusPlus read(final DataReader reader) {
+    /// @throws IllegalArgumentException If the precision is out of range or the sketch is cut short or is not valid.
+    public static HyperLogLogPlusPlus read(final DataReader reader, final int precision) {
         try {
-            return readSketch(reader);
+            return readSketch(reader, precision);
         } catch (final IllegalArgumentException e) {
             throw e;
         } catch (final RuntimeException e) {
@@ -198,19 +217,17 @@ public class HyperLogLogPlusPlus {
         }
     }
 
-    private static HyperLogLogPlusPlus readSketch(final DataReader reader) {
-        final byte version = reader.readByte();
-        if (version != FORMAT_VERSION) {
-            throw new IllegalArgumentException(LogUtil.message(
-                    "Unknown sketch format version {}, expected {}", version, FORMAT_VERSION));
+    private static HyperLogLogPlusPlus readSketch(final DataReader reader, final int precision) {
+        final HyperLogLogPlusPlus sketch = new HyperLogLogPlusPlus(precision);
+        final int length = reader.readVarInt();
+        if (length < 0 || length > sketch.denseByteCount + 1) {
+            throw invalid("bad length");
         }
 
-        final HyperLogLogPlusPlus sketch = new HyperLogLogPlusPlus(reader.readByte());
-        final byte type = reader.readByte();
-        switch (type) {
-            case TYPE_SPARSE -> sketch.decodeSparse(reader.readBytes());
-            case TYPE_DENSE -> sketch.decodeDense(reader.readBytes());
-            default -> throw invalid(LogUtil.message("unknown type {}", type));
+        if (length <= sketch.denseByteCount) {
+            sketch.decodeSparse(reader.readRawBytes(length));
+        } else {
+            sketch.decodeDense(reader.readRawBytes(sketch.denseByteCount));
         }
         return sketch;
     }
@@ -295,9 +312,9 @@ public class HyperLogLogPlusPlus {
         final int[] right = other.sparseEntries;
         final int rightCount = other.sparseCount;
 
-        sparseEntries = new int[leftCount + rightCount];
-        sparseCount = 0;
-        sparseByteCount = 0;
+        // Keep the count of this sketch as it is until the merged one is known.
+        final HyperLogLogPlusPlus merged = new HyperLogLogPlusPlus(precision);
+        merged.sparseEntries = new int[leftCount + rightCount];
 
         int leftPosition = 0;
         int rightPosition = 0;
@@ -308,24 +325,27 @@ public class HyperLogLogPlusPlus {
             final int rightIndex = sparseIndex(rightEntry);
 
             if (leftIndex == rightIndex) {
-                appendSparseEntry(Math.max(leftEntry, rightEntry));
+                merged.appendSparseEntry(Math.max(leftEntry, rightEntry));
                 leftPosition++;
                 rightPosition++;
             } else if (leftIndex < rightIndex) {
-                appendSparseEntry(leftEntry);
+                merged.appendSparseEntry(leftEntry);
                 leftPosition++;
             } else {
-                appendSparseEntry(rightEntry);
+                merged.appendSparseEntry(rightEntry);
                 rightPosition++;
             }
         }
         while (leftPosition < leftCount) {
-            appendSparseEntry(left[leftPosition++]);
+            merged.appendSparseEntry(left[leftPosition++]);
         }
         while (rightPosition < rightCount) {
-            appendSparseEntry(right[rightPosition++]);
+            merged.appendSparseEntry(right[rightPosition++]);
         }
-        sparseEntries = Arrays.copyOf(sparseEntries, sparseCount);
+
+        sparseEntries = Arrays.copyOf(merged.sparseEntries, merged.sparseCount);
+        sparseByteCount = merged.sparseByteCount;
+        sparseCount = merged.sparseCount;
     }
 
     // Linear counting over all the possible sparse indexes.
@@ -373,10 +393,6 @@ public class HyperLogLogPlusPlus {
     }
 
     private void decodeSparse(final byte[] bytes) {
-        if (bytes.length > denseByteCount) {
-            throw invalid("sparse form is larger than the dense form");
-        }
-
         int position = 0;
         int previousIndex = 0;
         while (position < bytes.length) {
@@ -434,21 +450,20 @@ public class HyperLogLogPlusPlus {
     }
 
     private void makeDense() {
-        registers = new byte[denseByteCount];
-        raiseRegisters(sparseEntries, sparseCount);
+        final byte[] target = new byte[denseByteCount];
+        raiseRegisters(target, sparseEntries, sparseCount);
+        registers = target;
         sparseEntries = NO_ENTRIES;
-        sparseCount = 0;
-        sparseByteCount = 0;
     }
 
-    private void raiseRegisters(final int[] entries, final int count) {
+    private void raiseRegisters(final byte[] target, final int[] entries, final int count) {
         final int extraBits = SPARSE_PRECISION - precision;
         for (int i = 0; i < count; i++) {
             final int index = sparseIndex(entries[i]);
             final int rank = indexGivesRank(index)
                     ? rank((long) lowIndexBits(index) << (Long.SIZE - extraBits), extraBits)
                     : extraBits + sparseRank(entries[i]);
-            raiseRegister(index >>> extraBits, rank);
+            raiseRegister(target, index >>> extraBits, rank);
         }
     }
 
@@ -458,34 +473,40 @@ public class HyperLogLogPlusPlus {
         return Math.min(Long.numberOfLeadingZeros(value), bits) + 1;
     }
 
-    private void raiseRegister(final int index, final int rank) {
-        if (rank > getRegister(index)) {
-            setRegister(index, rank);
+    private static void raiseRegister(final byte[] target, final int index, final int rank) {
+        if (rank > getRegister(target, index)) {
+            setRegister(target, index, rank);
         }
     }
 
     // Registers are packed from the lowest bit of each byte up, so one can be spread over two bytes.
-    private int getRegister(final int index) {
+    private static int getRegister(final byte[] source, final int index) {
         final int bit = index * RANK_BITS;
         final int position = bit >>> 3;
         final int shift = bit & 7;
-        int value = (registers[position] & 0xFF) >>> shift;
+        int value = (source[position] & 0xFF) >>> shift;
         if (shift + RANK_BITS > Byte.SIZE) {
-            value |= (registers[position + 1] & 0xFF) << (Byte.SIZE - shift);
+            value |= (source[position + 1] & 0xFF) << (Byte.SIZE - shift);
         }
         return value & RANK_MASK;
     }
 
-    private void setRegister(final int index, final int rank) {
+    private static void setRegister(final byte[] target, final int index, final int rank) {
         final int bit = index * RANK_BITS;
         final int position = bit >>> 3;
         final int shift = bit & 7;
-        registers[position] = (byte) ((registers[position] & ~(RANK_MASK << shift)) | (rank << shift));
+        target[position] = (byte) ((target[position] & ~(RANK_MASK << shift)) | (rank << shift));
         if (shift + RANK_BITS > Byte.SIZE) {
             final int nextShift = Byte.SIZE - shift;
-            registers[position + 1] = (byte) ((registers[position + 1] & ~(RANK_MASK >>> nextShift))
-                                              | (rank >>> nextShift));
+            target[position + 1] = (byte) ((target[position + 1] & ~(RANK_MASK >>> nextShift))
+                                           | (rank >>> nextShift));
         }
+    }
+
+    // Only one thread changes a sketch, so nothing can be lost from the count.
+    @SuppressWarnings("NonAtomicOperationOnVolatileField")
+    private void denseChanged() {
+        denseChangeCount++;
     }
 
     private int maxRank() {
@@ -494,11 +515,12 @@ public class HyperLogLogPlusPlus {
 
     // The improved raw estimator from Ertl, "New cardinality estimation algorithms for HyperLogLog sketches" (2017),
     // which needs no bias tables.
-    private long estimateDense() {
+    private long estimateDense(final byte[] source) {
         final int maxRank = maxRank();
         final int[] rankCounts = new int[maxRank + 1];
         for (int i = 0; i < registerCount; i++) {
-            rankCounts[getRegister(i)]++;
+            // A register that is being changed by another thread could be read as more than the greatest rank.
+            rankCounts[Math.min(getRegister(source, i), maxRank)]++;
         }
 
         final double m = registerCount;
@@ -545,18 +567,23 @@ public class HyperLogLogPlusPlus {
     }
 
     private void decodeDense(final byte[] bytes) {
-        if (bytes.length != denseByteCount) {
-            throw invalid("unexpected dense length");
-        }
-        registers = bytes;
         for (int i = 0; i < registerCount; i++) {
-            if (getRegister(i) > maxRank()) {
+            if (getRegister(bytes, i) > maxRank()) {
                 throw invalid("bad register");
             }
         }
+        registers = bytes;
     }
 
     private static IllegalArgumentException invalid(final String reason) {
         return new IllegalArgumentException("Invalid sketch: " + reason);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record DenseEstimate(int changeCount, long estimate) {
+
     }
 }

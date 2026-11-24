@@ -812,7 +812,9 @@ public class LmdbDataStore implements DataStore {
 
                         // Get the existing entry for this key.
                         final ByteBuffer existingValueBuffer = db.get(writeTxn, lmdbKV.key());
-                        final ByteBuffer newValueBuffer = lmdbRowValueFactory.useOutput(output -> {
+                        // The merged row is about as big as the two rows at most.
+                        final int expectedSize = existingValueBuffer.remaining() + lmdbKV.val().remaining();
+                        final ByteBuffer newValueBuffer = lmdbRowValueFactory.useOutput(expectedSize, output -> {
                             boolean merged = false;
                             while (existingValueBuffer.remaining() > 0) {
                                 final int startPos = existingValueBuffer.position();

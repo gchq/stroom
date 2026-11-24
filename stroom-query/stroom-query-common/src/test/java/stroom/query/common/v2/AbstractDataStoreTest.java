@@ -271,6 +271,95 @@ abstract class AbstractDataStoreTest {
         }
     }
 
+    /// Check that the estimated and exact counts of unique values are the same for few values.
+    void countUniqueApproxTest() {
+        final TableSettings tableSettings = countUniqueTable();
+        final DataStore dataStore = createUnlimitedDataStore(tableSettings);
+        addCountUniqueRows(dataStore, 0, 500);
+        assertThat(countUniqueRows(dataStore, tableSettings)).containsExactlyInAnyOrder(
+                List.of("a", "500", "500", "1000"),
+                List.of("b", "1", "1", "500"));
+    }
+
+    /// Create a table of the unique values in each group, estimated and exact, and how many rows there are.
+    ///
+    /// @return The settings of the table.
+    TableSettings countUniqueTable() {
+        return TableSettings.builder()
+                .addColumns(Column.builder()
+                        .id("Group")
+                        .name("Group")
+                        .expression(ParamUtil.create("Group"))
+                        .format(Format.TEXT)
+                        .group(0)
+                        .build())
+                .addColumns(Column.builder()
+                        .id("Approx")
+                        .name("Approx")
+                        .expression("countUniqueApprox(${Value})")
+                        .format(Format.NUMBER)
+                        .build())
+                .addColumns(Column.builder()
+                        .id("Exact")
+                        .name("Exact")
+                        .expression("countUnique(${Value})")
+                        .format(Format.NUMBER)
+                        .build())
+                .addColumns(Column.builder()
+                        .id("Count")
+                        .name("Count")
+                        .expression("count()")
+                        .format(Format.NUMBER)
+                        .build())
+                .build();
+    }
+
+    /// Add rows to group a with each value twice, and to group b with all the same value.
+    ///
+    /// @param dataStore The store to add the rows to.
+    /// @param from      The first value to add to group a.
+    /// @param to        One more than the last value to add to group a.
+    void addCountUniqueRows(final DataStore dataStore, final int from, final int to) {
+        for (int i = from; i < to; i++) {
+            dataStore.accept(Val.of(ValString.create("a"), ValString.create("value" + i)));
+            dataStore.accept(Val.of(ValString.create("a"), ValString.create("value" + i)));
+            dataStore.accept(Val.of(ValString.create("b"), ValString.create("same")));
+        }
+    }
+
+    /// Complete a store and get its rows.
+    ///
+    /// @param dataStore     The store to complete.
+    /// @param tableSettings The settings of the table.
+    /// @return The values of each row.
+    List<List<String>> countUniqueRows(final DataStore dataStore, final TableSettings tableSettings) {
+        try {
+            dataStore.getCompletionState().signalComplete();
+            dataStore.getCompletionState().awaitCompletion();
+        } catch (final InterruptedException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+        return getRowValues(dataStore, tableSettings);
+    }
+
+    /// Get the rows of a store.
+    ///
+    /// @param dataStore     The store.
+    /// @param tableSettings The settings of the table.
+    /// @return The values of each row.
+    List<List<String>> getRowValues(final DataStore dataStore, final TableSettings tableSettings) {
+        final ResultRequest tableResultRequest = ResultRequest.builder()
+                .componentId("componentX")
+                .addMappings(tableSettings)
+                .requestedRange(new OffsetRange(0, 100))
+                .build();
+        return ((TableResult) new TableResultCreator().create(dataStore, tableResultRequest))
+                .getRows()
+                .stream()
+                .map(Row::getValues)
+                .toList();
+    }
+
     void noValuesTest() {
         final TableSettings tableSettings = TableSettings.builder()
                 .addColumns(Column.builder()

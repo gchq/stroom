@@ -32,7 +32,11 @@ public class LmdbRowValueFactory {
     private final ValueReferenceIndex valueReferenceIndex;
     private final DataWriterFactory writerFactory;
 
-    private int bufferSize = 128;
+    private static final int MIN_BUFFER_SIZE = 128;
+
+    // The size that new rows have needed. Merged rows can be far larger so are not included, as there can be a great
+    // many new rows waiting to be stored.
+    private int newRowBufferSize = MIN_BUFFER_SIZE;
 
     public LmdbRowValueFactory(final ByteBufferFactory byteBufferFactory,
                                final ValueReferenceIndex valueReferenceIndex,
@@ -42,22 +46,27 @@ public class LmdbRowValueFactory {
         this.writerFactory = writerFactory;
     }
 
-    public ByteBuffer useOutput(final Consumer<ByteBufferPoolOutput> consumer) {
-        try (final ByteBufferPoolOutput output =
-                new ByteBufferPoolOutput(byteBufferFactory, bufferSize, -1)) {
+    /// Creates a row value from what is written to an output.
+    ///
+    /// @param expectedSize How many bytes are expected to be written, though more can be.
+    /// @param consumer     Writes to the output.
+    /// @return The row value, which must be released.
+    public ByteBuffer useOutput(final int expectedSize, final Consumer<ByteBufferPoolOutput> consumer) {
+        try (final ByteBufferPoolOutput output = new ByteBufferPoolOutput(
+                byteBufferFactory, Math.max(MIN_BUFFER_SIZE, expectedSize), -1)) {
             consumer.accept(output);
-            final ByteBuffer byteBuffer = output.getByteBuffer().flip();
-            bufferSize = Math.max(bufferSize, byteBuffer.capacity());
-            return byteBuffer;
+            return output.getByteBuffer().flip();
         }
     }
 
     public ByteBuffer create(final StoredValues storedValues) {
-        return useOutput(output -> {
+        final ByteBuffer byteBuffer = useOutput(newRowBufferSize, output -> {
             try (final KryoDataWriter writer = writerFactory.create(output)) {
                 write(storedValues, writer);
             }
         });
+        newRowBufferSize = Math.max(newRowBufferSize, byteBuffer.capacity());
+        return byteBuffer;
     }
 
     private void write(final StoredValues storedValues,
