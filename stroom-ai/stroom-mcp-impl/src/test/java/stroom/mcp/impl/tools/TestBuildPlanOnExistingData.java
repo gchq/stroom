@@ -343,6 +343,27 @@ class TestBuildPlanOnExistingData {
     }
 
     @Test
+    void aCopiedTranslationWhoseXsltKeepsNoMappingIsReadBackBeforeItIsStepped() {
+        // Seen in eval case 97 (2026-11-25, Haiku and Sonnet): a hand-written pipeline copied straight from
+        // start_build's advice, next said step_sample, and the agent rewrote the copy's XSLT by hand with save_xslt,
+        // as build_translation_xslt changes= has no mapping to change.
+        facts.docs = List.of(FakeBuildFacts.doc("Pipeline", "ev", "ACME-Events-V1.1", "version_of", "prod-ev"),
+                FakeBuildFacts.doc("XSLT", "x", "ACME-Events-V1.1"));
+        facts.sources = List.of("ACME");
+        facts.stages = Map.of("ev", "translation");
+        Map<String, Object> result = status();
+        assertThat(next(result).get("step")).isEqualTo("stepped");
+        assertThat(call(result)).isEqualTo(Map.of("tool", "rebuild_mapping", "arguments", Map.of("uuid", "x",
+                "pipeline_uuid", "ev")));
+        assertThat(String.valueOf(next(result).get("then"))).contains("keeps no mapping",
+                "build_translation_xslt uuid=<it> changes=");
+        // Once read back, the copy is stepped as any translation is.
+        facts.mappings = Map.of("x", FakeBuildFacts.kept("translation", Map.of()));
+        result = status();
+        assertThat(call(result).get("tool")).isEqualTo("step_sample");
+    }
+
+    @Test
     void anExistingFeedsFormatIsReadFromItsSurvey() {
         // Seen (e2e_existing_feed): with no raw stream of its own, the plan profiled the survey's examples and
         // failed on a key the profile doesn't have.

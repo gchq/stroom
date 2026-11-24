@@ -215,10 +215,10 @@ public class BuildPlan {
     private static final String ASK = "ask them to, on the pipeline's Processors tab, if they haven't said";
     private static final String DOCUMENTATION = "<the documentation, from the documentation guide>";
     // The steps whose call depends on how processing stands, as step:processing.
-    private static final Set<String> CALLS = Set.of("pipeline:version", "stepped:surveyed", "processed:disabled",
-            "processed:running", "index_template:unstepped", "indexed:disabled", "indexed:unstepped",
-            "indexed:running", "indexed:no_index", "indexed:finished", "documented:edited", "feed:reference",
-            "samples:reference", "reference_processed:disabled", "reference_processed:running",
+    private static final Set<String> CALLS = Set.of("pipeline:version", "stepped:surveyed", "stepped:copied",
+            "processed:disabled", "processed:running", "index_template:unstepped", "indexed:disabled",
+            "indexed:unstepped", "indexed:running", "indexed:no_index", "indexed:finished", "documented:edited",
+            "feed:reference", "samples:reference", "reference_processed:disabled", "reference_processed:running",
             "stepped:no_reference", "index:discovery", CATALOGUE + ":offer", CATALOGUE + ":existing_copy",
             CATALOGUE + ":existing_rebuild", CATALOGUE + ":existing_confirm");
     // The steps before the translation, which a reference-only build keeps.
@@ -1070,6 +1070,17 @@ public class BuildPlan {
                 processing = "version";
                 version = current.getFirst();
             }
+        } else if ("stepped".equals(nextStep) && startFrom == null && !copies.isEmpty() && !translation.isEmpty()
+                   && xslts.stream().anyMatch(x -> x.get("mapping") == null)) {
+            // A pipeline copied as its next version whose XSLT keeps no mapping (written by hand, say): read back
+            // first, so the change is made as a mapping change (seen in eval case 97, 2026-11-25: copied straight
+            // from start_build's advice, next said step_sample, and the agent rewrote the copy's XSLT by hand).
+            processing = "copied";
+            edited = xslts.stream()
+                    .filter(x -> x.get("mapping") == null)
+                    .map(BuildPlan::uuid)
+                    .findFirst()
+                    .orElse(null);
         } else if ("stepped".equals(nextStep) && survey != null && JsonValues.truthy(survey.get("locations"))) {
             // The survey's locations, when there are few enough to give: else step_sample over its streams, as the
             // plan says (seen in Ask Stroom AI: 66 locations, and create_pipeline's next said step_records with a
@@ -1332,6 +1343,12 @@ public class BuildPlan {
             }
             case "stepped" -> call("step_sample", args("pipeline_uuid", tr, "stream_ids", raw),
                     "until the verdict is clean: fix the mapping and build_translation_xslt uuid=... in between");
+            case "stepped:copied" -> call("rebuild_mapping", args("uuid", NullSafe.nonBlankStringElse(
+                            args.editedXslt(), "<the copy's XSLT uuid>"), "pipeline_uuid", tr),
+                    "the copy's XSLT keeps no mapping (written by hand, say): this reads it back into one, proven "
+                    + "against the original on the sample (what it can't read is kept as XSLT expressions), so the "
+                    + "change asked for is made with build_translation_xslt uuid=<it> changes= only what changes, "
+                    + "never by rewriting the XSLT; then step it");
             case "stepped:surveyed" -> call("step_records", args("pipeline_uuid", tr, "locations", args.locations()),
                     "until clean: the feed's own records, stepped where they are; fix the mapping and "
                     + "build_translation_xslt uuid=... in between");
