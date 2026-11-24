@@ -115,7 +115,7 @@ class TestActivityTimelineAnySource {
                 "keyword", "SchemaAction", "keyword", "event.action", "keyword", "StreamId", "long", "EventId",
                 "long");
         final Map<String, String> codesMapping = Map.of("@timestamp", "date", "user", "keyword", "code", "keyword",
-                "client", "keyword");
+                "client", "keyword", "staff", "keyword");
         Mockito.when(queryService.findFields(Mockito.any())).thenAnswer(invocation -> {
             final DocRef doc = invocation.<FindFieldCriteria>getArgument(0).getDataSourceRef();
             final List<QueryField> fields = new ArrayList<>();
@@ -412,6 +412,81 @@ class TestActivityTimelineAnySource {
         assertThat((List<Map<String, Object>>) result.get("left_out")).singleElement().satisfies(left ->
                 assertThat(left).containsEntry("index", "Codes").containsEntry("why", "no events of pat in the "
                                                                                       + "period"));
+    }
+
+    @Test
+    void aPersonIsReadByThePersonFieldWhereAnIndexHasOneElseByEachOfTheLogonIds() {
+        week();
+        // The same person's admin account, on the index with no person field.
+        final Map<String, Object> admin = new LinkedHashMap<>(Map.of("EventTime", at("11:00"), "UserId", "adm-pat",
+                "HostName", "srv-01", "SchemaAction", "View", "StreamId", STREAM, "EventId", 500L));
+        events.add(admin);
+        codes.add(new LinkedHashMap<>(Map.of("@timestamp", at("09:00"), "user", "PAT01", "staff", "P1", "code",
+                "A-1")));
+        codes.add(new LinkedHashMap<>(Map.of("@timestamp", at("09:10"), "user", "PAT01", "staff", "P1", "code",
+                "A-1")));
+        // Another person's, never read.
+        codes.add(new LinkedHashMap<>(Map.of("@timestamp", at("09:20"), "user", "BOB01", "staff", "P2", "code",
+                "A-1")));
+        final Map<String, Object> arguments = arguments(Map.of("person", "P1", "personField", "staff", "logonIds",
+                List.of("adm-pat"), "sources", List.of("Events", "Codes")));
+
+        final Map<String, Object> result = json(mcp(), arguments);
+
+        final List<Map<String, Object>> sources = (List<Map<String, Object>>) result.get("sources");
+        assertThat(sources).extracting(source -> source.get("index"), source -> source.get("by"),
+                source -> source.get("user_field"), source -> source.get("events")).containsExactly(
+                org.assertj.core.groups.Tuple.tuple("Events", "by logon id", "UserId", 12L),
+                org.assertj.core.groups.Tuple.tuple("Codes", "by person id", "staff", 2L));
+        // Each account kept visible, and the others said not to be included.
+        assertThat(sources.getFirst()).containsEntry("accounts", Map.of("pat", 11L, "adm-pat", 1L));
+        assertThat(sources.get(1)).doesNotContainKey("accounts");
+        assertThat(result).containsEntry("entity", "P1")
+                .containsEntry("other_accounts", PersonScope.OTHER_ACCOUNTS);
+    }
+
+    @Test
+    void aSourceWhereNoLogonIdMatchesIsLeftOutWithItsCloseVariantsNeverMerged() {
+        week();
+        Mockito.when(agentInstructions.fieldsRuled(Mockito.any(), Mockito.eq(CODES))).thenReturn(Map.of(
+                InstructionRules.USER_FIELD, new FieldRule(List.of("user"), "/")));
+        code("09:00", "CORP\\pat", "A-101");
+        final Map<String, Object> arguments = arguments(Map.of("logonIds", List.of("CORP\\pat", "adm-pat"),
+                "sources", List.of("Events", "Codes")));
+        arguments.remove("entity");
+
+        final Map<String, Object> result = json(mcp(), arguments);
+
+        assertThat((List<Map<String, Object>>) result.get("sources")).singleElement().satisfies(source ->
+                assertThat(source).containsEntry("index", "Codes").containsEntry("accounts",
+                        Map.of("CORP\\pat", 1L)));
+        // The index holds the user without the domain: offered, not read.
+        assertThat((List<Map<String, Object>>) result.get("left_out")).singleElement().satisfies(left ->
+                assertThat(left).containsEntry("index", "Events").containsEntry("why", "no events by logon id "
+                                                                                       + "(CORP\\pat, adm-pat) in "
+                                                                                       + "the period; close variants "
+                                                                                       + "in its index: pat (not "
+                                                                                       + "merged: give them in "
+                                                                                       + "logonIds if they are the "
+                                                                                       + "same person's)"));
+    }
+
+    @Test
+    void aPersonOnAnIndexWithNoPersonFieldAndNoLogonIdsIsLeftOutSayingWhy() {
+        week();
+        codes.add(new LinkedHashMap<>(Map.of("@timestamp", at("09:00"), "user", "PAT01", "staff", "P1", "code",
+                "A-1")));
+        final Map<String, Object> arguments = arguments(Map.of("person", "P1", "personField", "staff", "sources",
+                List.of("Events", "Codes")));
+        arguments.remove("entity");
+
+        final Map<String, Object> result = json(mcp(), arguments);
+
+        assertThat((List<Map<String, Object>>) result.get("sources")).extracting(source -> source.get("index"))
+                .containsExactly("Codes");
+        assertThat((List<Map<String, Object>>) result.get("left_out")).singleElement().satisfies(left ->
+                assertThat((String) left.get("why")).contains("no field holding the person id"));
+        assertThat(result).doesNotContainKey("other_accounts");
     }
 
     // ------------------------------------------------------------------------------------------------

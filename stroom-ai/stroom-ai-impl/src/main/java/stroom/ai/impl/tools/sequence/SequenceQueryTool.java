@@ -31,11 +31,13 @@ import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolDescription;
 import stroom.ai.impl.tools.ToolPermissions;
+import stroom.ai.impl.tools.ToolResource;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolTables;
+import stroom.ai.impl.tools.ToolUserAction;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.query.AgentSearches;
 import stroom.ai.impl.tools.query.DataSourceAccess;
@@ -52,6 +54,9 @@ import stroom.ai.impl.tools.sequence.KeyStreamSequence.JoinStep;
 import stroom.ai.impl.tools.time.ToolTimeZone;
 import stroom.ai.impl.tools.time.UserTimeZones;
 import stroom.ai.impl.tools.timeline.ActivityTimelineTool;
+import stroom.ai.impl.tools.timeline.PersonScope;
+import stroom.ai.impl.tools.timeline.PersonScope.Scope;
+import stroom.ai.impl.tools.timeline.TimelineFields;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
@@ -132,6 +137,10 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
     static final String KEYS_ONLY_KEY = "keysOnly";
     static final String TRANSFORM_KEY = "transform";
     static final String ENGINE_ARG = "engine";
+    static final String PERSON_ARG = "person";
+    static final String LOGON_IDS_ARG = "logonIds";
+    static final String PERSON_FIELD_ARG = "personField";
+    static final String USER_FIELD_ARG = "userField";
     static final String ENGINE_AUTO = "auto";
     static final String ENGINE_EQL = "eql";
     static final String ENGINE_STREAM = "stream";
@@ -218,6 +227,7 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
     private final AiAuditLog auditLog;
     private final StroomQlSequence stroomQlSequence;
     private final KeyStreamSequence keyStreamSequence;
+    private final TimelineFields timelineFields;
 
     @Inject
     SequenceQueryTool(final ChatWorkspace workspace,
@@ -227,7 +237,8 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
                       final Provider<QueryService> queryServiceProvider,
                       final AiAuditLog auditLog,
                       final AgentSearches agentSearches,
-                      final KeyStreamSequence keyStreamSequence) {
+                      final KeyStreamSequence keyStreamSequence,
+                      final TimelineFields timelineFields) {
         super(workspace);
         this.elasticEqlProvider = elasticEqlProvider;
         this.elasticEsqlProvider = elasticEsqlProvider;
@@ -236,6 +247,7 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
         this.auditLog = auditLog;
         this.stroomQlSequence = new StroomQlSequence(queryServiceProvider, agentSearches, dataSourceAccess);
         this.keyStreamSequence = keyStreamSequence;
+        this.timelineFields = timelineFields;
     }
 
     @Override
@@ -395,6 +407,16 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
                                 .chatOnly("; leave it out if the user didn't say, and they are asked")
                                 .general(".")
                                 .build())
+                        .addStringProperty(PERSON_ARG, "Optional: one person's sequences only: a person id, each "
+                                                       + "step filtered on its doc's person field (personField, "
+                                                       + "AGENTS ## Fields 'person:', ECS user.id), else on its "
+                                                       + "user field by logonIds; the result says which.")
+                        .addProperty(LOGON_IDS_ARG, stringArraySchema("Optional: the person's logon ids (all "
+                                                                      + "kept), for docs with no person field, or "
+                                                                      + "alone."))
+                        .addStringProperty(PERSON_FIELD_ARG, "Optional: the field holding the person id (a "
+                                                             + "skill's).")
+                        .addStringProperty(USER_FIELD_ARG, "Optional: the field holding the logon id (a skill's).")
                         .addStringProperty(TIME_FROM_ARG, "Optional: from this time on the docs' time field (ISO "
                                                           + "8601, or Stroom's day()-7d).")
                         .addStringProperty(TIME_TO_ARG, "Optional: up to this time (ISO 8601, or Stroom's now()).")
@@ -441,12 +463,109 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
 
     @Override
     protected ToolResult run(final ToolCall request, final ToolCallContext context) {
-        final SessionWorkspace workspace = sessionWorkspace(context);
-        final Duration timeLimit = timeLimit(context);
-        final Instant deadline = Instant.now().plus(timeLimit);
         final List<String> fieldNotes = new ArrayList<>();
         final List<GivenStep> given = SequenceSteps.givenSteps(request, fieldNotes);
         final GivenStep givenUntil = SequenceSteps.givenUntil(request, fieldNotes);
+        final String person = stringArg(request, PERSON_ARG);
+        final List<String> logonIds = stringListArg(request, LOGON_IDS_ARG);
+        if (NullSafe.isBlankString(person) && logonIds.isEmpty()) {
+            return runSteps(request, context, given, givenUntil, fieldNotes);
+        }
+        // One person's sequences: each step restricted to them in its doc, by person id or by logon id.
+        final Map<String, Scope> scopes = new LinkedHashMap<>();
+        final List<GivenStep> scoped = new ArrayList<>();
+        for (final GivenStep step : given) {
+            scoped.add(scoped(request, context, step, person, logonIds, scopes));
+        }
+        final GivenStep scopedUntil = givenUntil == null
+                ? null
+                : scoped(request, context, givenUntil, person, logonIds, scopes);
+        final ToolResult result = runSteps(request, context, scoped, scopedUntil, fieldNotes);
+        return withScopes(result, scopes);
+    }
+
+    // A step restricted to the person: an IN condition on its doc's person field, else its user field holding any
+    // of the logon ids. A step read as keys (an entity condition at any time, e.g. a directory) is left as given.
+    private GivenStep scoped(final ToolCall request,
+                             final ToolCallContext context,
+                             final GivenStep step,
+                             final String person,
+                             final List<String> logonIds,
+                             final Map<String, Scope> scopes) {
+        if (step.keysOnly()) {
+            return step;
+        }
+        final DocRef doc = dataSource(step.index());
+        final Scope scope = scopes.computeIfAbsent(doc.getName(), name -> {
+            final Set<String> names = new LinkedHashSet<>();
+            EsqlQueryTool.fields(queryServiceProvider.get(), doc).forEach(field -> names.add(field.getFldName()));
+            final Scope found = PersonScope.resolve(timelineFields, context.session(), doc, person, logonIds,
+                    stringListArg(request, PERSON_FIELD_ARG), stringListArg(request, USER_FIELD_ARG),
+                    names::contains);
+            if (!found.usable()) {
+                throw new WorkspaceException(DataSourceAccess.describe(doc) + " can't be restricted to the person: "
+                                             + found.leftOut() + ". Give " + PERSON_FIELD_ARG + " or "
+                                             + USER_FIELD_ARG + " (with " + LOGON_IDS_ARG + "), or leave the "
+                                             + "step's doc out.");
+            }
+            return found;
+        });
+        final List<Filter> filters = new ArrayList<>(NullSafe.list(step.filters()));
+        filters.add(new Filter(scope.field().field(), Condition.IN, String.join(",", scope.values()), false));
+        return new GivenStep(step.index(), filters, step.anyOf(), step.by(), step.missing(), step.runs(),
+                step.fields(), step.keysOnly(), step.transforms());
+    }
+
+    // The result, saying by what each doc was restricted to the person.
+    private static ToolResult withScopes(final ToolResult result, final Map<String, Scope> scopes) {
+        if (result.isError() || scopes.isEmpty()) {
+            return result;
+        }
+        final List<Map<String, Object>> listed = new ArrayList<>();
+        final StringBuilder sb = new StringBuilder(NullSafe.string(result.text())).append("\n\nRestricted to the "
+                                                                                          + "person:");
+        boolean byLogon = false;
+        for (final Map.Entry<String, Scope> entry : scopes.entrySet()) {
+            final Scope scope = entry.getValue();
+            byLogon |= scope.by() == PersonScope.By.LOGON;
+            listed.add(Map.of("index", entry.getKey(), "by", scope.by().label(), "field", scope.field().field(),
+                    "field_from", scope.field().from(), "values", scope.values()));
+            sb.append("\n- ").append(entry.getKey()).append(": ").append(scope.by().label()).append(", ")
+                    .append(scope.field().field()).append(" in (").append(String.join(", ", scope.values()))
+                    .append(")");
+        }
+        if (byLogon) {
+            sb.append("\n").append(PersonScope.OTHER_ACCOUNTS);
+        }
+        final Map<String, Object> structured = new LinkedHashMap<>(NullSafe.map(result.structuredContent()));
+        structured.put("scope", listed);
+        if (byLogon) {
+            structured.put("other_accounts", PersonScope.OTHER_ACCOUNTS);
+        }
+        final String text = result.text() != null && result.text().stripLeading().startsWith("{")
+                ? JsonUtil.writeValueAsString(structured, false)
+                : sb.toString();
+        ToolResult out = ToolResult.text(text).withStructuredContent(structured);
+        for (final ToolResource resource : result.resources()) {
+            out = out.withResource(resource);
+        }
+        for (final ToolUserAction action : result.userActions()) {
+            out = out.withUserAction(action);
+        }
+        return result.chatOutline() == null
+                ? out
+                : out.withChatOutline(result.chatOutline());
+    }
+
+    // Runs the steps given (restricted to a person where the call names one).
+    private ToolResult runSteps(final ToolCall request,
+                                final ToolCallContext context,
+                                final List<GivenStep> given,
+                                final GivenStep givenUntil,
+                                final List<String> fieldNotes) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
+        final Duration timeLimit = timeLimit(context);
+        final Instant deadline = Instant.now().plus(timeLimit);
 
         // The docs, in the order the steps first name them, each checked and with its fields.
         final List<DocRef> docs = new ArrayList<>();

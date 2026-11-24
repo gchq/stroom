@@ -29,8 +29,10 @@ import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
+import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.query.AgentSearches;
 import stroom.ai.impl.tools.query.DataSourceAccess;
+import stroom.ai.impl.tools.timeline.TimelineFields;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
@@ -61,6 +63,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -144,7 +147,8 @@ class TestKeyStreamSequence {
         users = streams.add(USERS, null, Map.of("sAMAccountName", "keyword", "team", "keyword"));
         tool = new SequenceQueryTool(chatWorkspace, () -> elasticEql, () -> elasticEsql, dataSourceAccess,
                 () -> queryService, auditLog, Mockito.mock(AgentSearches.class),
-                new KeyStreamSequence(() -> streams, () -> elasticEsql, securityContext, auditLog));
+                new KeyStreamSequence(() -> streams, () -> elasticEsql, securityContext, auditLog),
+                new TimelineFields(Mockito.mock(AgentInstructions.class), dataSourceAccess, Optional.empty()));
     }
 
     @Test

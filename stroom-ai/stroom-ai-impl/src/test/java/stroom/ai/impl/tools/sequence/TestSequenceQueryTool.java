@@ -36,12 +36,17 @@ import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.ToolRunContext;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
+import stroom.ai.impl.tools.instructions.AgentInstructions;
+import stroom.ai.impl.tools.instructions.InstructionRules;
+import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.ai.impl.tools.query.AgentSearches;
 import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.sequence.EqlQueryWriter.Filter;
 import stroom.ai.impl.tools.sequence.EqlQueryWriter.Step;
 import stroom.ai.impl.tools.sequence.SequenceQueryTool.Preflight;
 import stroom.ai.impl.tools.time.ToolTimeZone;
+import stroom.ai.impl.tools.timeline.PersonScope;
+import stroom.ai.impl.tools.timeline.TimelineFields;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
@@ -114,6 +119,7 @@ class TestSequenceQueryTool {
     private final ElasticEsql elasticEsql = Mockito.mock(ElasticEsql.class);
     private final ElasticKeyStreams keyStreams = Mockito.mock(ElasticKeyStreams.class);
     private final DataSourceAccess dataSourceAccess = Mockito.mock(DataSourceAccess.class);
+    private final AgentInstructions agentInstructions = Mockito.mock(AgentInstructions.class);
     private final QueryService queryService = Mockito.mock(QueryService.class);
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
     private final AgentSearches agentSearches = Mockito.mock(AgentSearches.class);
@@ -204,7 +210,8 @@ class TestSequenceQueryTool {
         sequences.add(pair("alice", "H1", T0, 40_000, 1));
         tool = new SequenceQueryTool(chatWorkspace, () -> elasticEql, () -> elasticEsql, dataSourceAccess,
                 () -> queryService, auditLog, agentSearches, new KeyStreamSequence(() -> keyStreams,
-                        () -> elasticEsql, Mockito.mock(SecurityContext.class), auditLog));
+                        () -> elasticEsql, Mockito.mock(SecurityContext.class), auditLog),
+                new TimelineFields(agentInstructions, dataSourceAccess, Optional.empty()));
     }
 
     @Test
@@ -251,6 +258,42 @@ class TestSequenceQueryTool {
                 Mockito.eq(1L), Mockito.eq("EQL sequence by the sequence_query tool"));
         Mockito.verify(auditLog).searched(Mockito.any(), Mockito.eq(SYSMON), Mockito.anyString(), Mockito.eq(1L),
                 Mockito.anyString());
+    }
+
+    @Test
+    void aPersonsSequencesAreReadByThePersonFieldWhereADocHasOneElseByTheirLogonIds() {
+        final Map<String, Object> args = args("2m");
+        args.put("person", "P1");
+        args.put("personField", "user");
+        args.put("userField", "SubjectUserName");
+        args.put("logonIds", List.of("alice", "CORP\\alice"));
+
+        final Map<String, Object> json = JsonUtil.readValue(run(mcp(), args), Map.class);
+
+        assertThat(request().query()).isEqualTo("""
+                sequence with maxspan=2m
+                  [any where action : "copy" and user in ("P1")] by user, host
+                  [any where Image like~ "*powershell.exe" and SubjectUserName in ("alice", "CORP\\\\alice")] by \
+                SubjectUserName, Computer""");
+        assertThat((List<Map<String, Object>>) json.get("scope")).extracting(scope -> scope.get("index"),
+                scope -> scope.get("by"), scope -> scope.get("field")).containsExactly(
+                org.assertj.core.groups.Tuple.tuple("Devices", "by person id", "user"),
+                org.assertj.core.groups.Tuple.tuple("Sysmon", "by logon id", "SubjectUserName"));
+        assertThat(json).containsEntry("other_accounts", PersonScope.OTHER_ACCOUNTS);
+        assertThat(run(chat(UserQuestions.NONE), args)).contains("Restricted to the person:\n- Devices: by person "
+                                                                 + "id, user in (P1)\n- Sysmon: by logon id, "
+                                                                 + "SubjectUserName in (alice, CORP\\alice)");
+    }
+
+    @Test
+    void aDocThatCantBeRestrictedToThePersonIsRefused() {
+        final Map<String, Object> args = args("2m");
+        args.put("person", "P1");
+        args.put("personField", "user");
+
+        assertThat(run(mcp(), args)).startsWith("Error: ").contains("Sysmon")
+                .contains("no field holding the person id");
+        Mockito.verify(elasticEql, Mockito.never()).search(Mockito.any());
     }
 
     @Test

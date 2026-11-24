@@ -69,32 +69,34 @@ final class TimelineReader {
     /// Reads the events.
     ///
     /// @param streams   The key streams.
-    /// @param sources   The sources, each with its fields and roles.
-    /// @param entity    The user (or entity) as the call gives it.
+    /// @param sources   The sources, each with its fields, roles and the values its user (or person) field is
+    ///                  filtered on.
     /// @param timeRange The period.
     /// @param budget    The events cap, the time limit and the stop.
-    /// @return The events, with how many each source gave and whether reading ended early.
+    /// @return The events, with how many each source gave (and of each account) and whether reading ended early.
     /// @throws WorkspaceException saying why a source couldn't be read.
     static Read read(final ElasticKeyStreams streams,
                      final List<Source> sources,
-                     final String entity,
                      final TimeRange timeRange,
                      final JoinBudget budget) {
         final List<Event> events = new ArrayList<>();
         final List<Long> counts = new ArrayList<>();
+        final List<Map<String, Long>> accounts = new ArrayList<>();
         final Map<String, Map<String, String>> extras = new LinkedHashMap<>();
         long cut = 0;
         for (int s = 0; s < sources.size(); s++) {
             final Source source = sources.get(s);
-            final Object term = source.term(entity);
+            final List<Object> terms = source.terms();
+            final Map<String, Long> byAccount = new LinkedHashMap<>();
             long count = 0;
             for (final RoleRead role : source.roles()) {
                 final Side side = new Side(source.doc(), List.of(new KeyField(source.userField(),
-                        source.transforms())), role.filter(), timeRange, KeyRange.ALL, List.of(List.of(term)));
+                        source.transforms())), role.filter(), timeRange, KeyRange.ALL, List.of(terms));
                 try (final KeyGroupSource scan = KeyGroupSource.scan(streams, List.of(side), source.fetched(),
                         PAGE_SIZE, JoinKeys.comparator(List.of(source.kind())), budget)) {
-                    final KeyGroup group = refused(scan::next);
-                    if (group != null) {
+                    // A group a value filtered on (several where several logon ids were given), in key order.
+                    KeyGroup group = refused(scan::next);
+                    while (group != null) {
                         for (final Row row : group.rows()) {
                             final Event event = event(s, source, role, row);
                             events.add(event);
@@ -107,6 +109,11 @@ final class TimelineReader {
                             }
                         }
                         count += group.rows().size();
+                        byAccount.merge(account(group), (long) group.rows().size(), Long::sum);
+                        if (budget.check()) {
+                            break;
+                        }
+                        group = refused(scan::next);
                     }
                     cut += scan.cutKeys();
                 }
@@ -115,6 +122,7 @@ final class TimelineReader {
                 }
             }
             counts.add(count);
+            accounts.add(byAccount);
             if (budget.stoppedByUser()) {
                 throw new TaskTerminatedException();
             }
@@ -122,15 +130,14 @@ final class TimelineReader {
                 break;
             }
         }
-        return new Read(events, counts, budget.reached(), cut > 0, extras);
+        return new Read(events, counts, budget.reached(), cut > 0, extras, accounts);
     }
 
     /// The first events of one source for the user, with the fields asked for: to tell which of an index's fields
     /// holds what (e.g. the EventDetail element), by their values.
     ///
     /// @param streams   The key streams.
-    /// @param source    The source.
-    /// @param entity    The user.
+    /// @param source    The source, with the values its user (or person) field is filtered on.
     /// @param timeRange The period.
     /// @param fields    The fields to fetch.
     /// @param count     The most events.
@@ -139,20 +146,19 @@ final class TimelineReader {
     /// @return Each event's values by field.
     static List<Map<String, String>> sample(final ElasticKeyStreams streams,
                                             final Source source,
-                                            final String entity,
                                             final TimeRange timeRange,
                                             final List<String> fields,
                                             final int count,
                                             final Instant deadline,
                                             final BooleanSupplier stopped) {
         final Side side = new Side(source.doc(), List.of(new KeyField(source.userField(), source.transforms())),
-                null, timeRange, KeyRange.ALL, List.of(List.of(source.term(entity))));
+                null, timeRange, KeyRange.ALL, List.of(source.terms()));
         final JoinBudget budget = new JoinBudget(count, Long.MAX_VALUE, deadline, stopped);
         final List<Map<String, String>> out = new ArrayList<>();
         try (final KeyGroupSource scan = KeyGroupSource.scan(streams, List.of(side), fields, PAGE_SIZE,
                 JoinKeys.comparator(List.of(source.kind())), budget)) {
-            final KeyGroup group = refused(scan::next);
-            if (group != null) {
+            KeyGroup group = refused(scan::next);
+            while (group != null && out.size() < count) {
                 for (final Row row : group.rows()) {
                     final Map<String, String> values = new LinkedHashMap<>();
                     for (final String field : fields) {
@@ -163,9 +169,19 @@ final class TimelineReader {
                         break;
                     }
                 }
+                group = out.size() < count
+                        ? refused(scan::next)
+                        : null;
             }
         }
         return out;
+    }
+
+    // The account a group is of: the value its key holds (transformed, where the source transforms it).
+    private static String account(final KeyGroup group) {
+        return group.key().isEmpty() || group.key().getFirst() == null
+                ? ""
+                : String.valueOf(group.key().getFirst());
     }
 
     private static Event event(final int s, final Source source, final RoleRead role, final Row row) {
@@ -227,6 +243,8 @@ final class TimelineReader {
     /// @param roles        Its roles, each with its conditions.
     /// @param automatic    True if its events are classified (from their Events XML and so on), not by roles.
     /// @param extraFields  More fields fetched, for classifying its events (e.g. the element, the event code).
+    /// @param values       The values its user field is filtered on: a person id, or one or more logon ids.
+    /// @param by           Whether `userField` holds the person id or the logon id.
     record Source(String name,
                   DocRef doc,
                   String userField,
@@ -241,20 +259,23 @@ final class TimelineReader {
                   boolean hasStreamIds,
                   List<RoleRead> roles,
                   boolean automatic,
-                  List<String> extraFields) {
+                  List<String> extraFields,
+                  List<String> values,
+                  PersonScope.By by) {
 
         /// Copies the lists.
         Source {
             transforms = List.copyOf(transforms);
             roles = List.copyOf(roles);
             extraFields = List.copyOf(extraFields);
+            values = List.copyOf(values);
         }
 
         /// @param newTransforms What is done to the user's value before it is compared.
         /// @return It with them.
         Source withTransforms(final List<Transform> newTransforms) {
             return new Source(name, doc, userField, kind, newTransforms, hostField, processField, titleField,
-                    windowField, objectField, textField, hasStreamIds, roles, automatic, extraFields);
+                    windowField, objectField, textField, hasStreamIds, roles, automatic, extraFields, values, by);
         }
 
         /// @return The fields a scan fetches.
@@ -274,9 +295,20 @@ final class TimelineReader {
             return List.copyOf(fields);
         }
 
-        /// @param entity The user as the call gives it.
-        /// @return It as the terms condition takes it: transformed text, or a number for a number field.
-        Object term(final String entity) {
+        /// @return The values filtered on as the terms condition takes them: transformed text, or numbers for a
+        /// number field.
+        List<Object> terms() {
+            final List<Object> terms = new ArrayList<>();
+            for (final String value : values) {
+                final Object term = term(value);
+                if (!terms.contains(term)) {
+                    terms.add(term);
+                }
+            }
+            return terms;
+        }
+
+        private Object term(final String entity) {
             if (kind == JoinKeys.Kind.NUMBER) {
                 try {
                     return Long.parseLong(entity.strip());
@@ -323,12 +355,14 @@ final class TimelineReader {
     /// @param counts  How many events each source gave.
     /// @param reached Why reading ended early, or null if it didn't.
     /// @param cut     True if a role of a source had more events than one scan keeps.
-    /// @param extras  The more fields' values of the automatic sources' events, by event id.
+    /// @param extras   The more fields' values of the automatic sources' events, by event id.
+    /// @param accounts How many events each source gave of each value filtered on (e.g. each logon id).
     record Read(List<Event> events,
                 List<Long> counts,
                 JoinBudget.Limit reached,
                 boolean cut,
-                Map<String, Map<String, String>> extras) {
+                Map<String, Map<String, String>> extras,
+                List<Map<String, Long>> accounts) {
 
     }
 }

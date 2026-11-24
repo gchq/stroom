@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Activity;
 import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Characterised;
 import stroom.ai.impl.tools.timeline.PairInference.Candidate;
 import stroom.ai.impl.tools.timeline.TimelineReader.Read;
+import stroom.ai.impl.tools.timeline.TimelineReader.Source;
 import stroom.ai.impl.tools.timeline.TimelineRun.SourceNote;
 import stroom.ai.impl.tools.timeline.TimelineRun.View;
 import stroom.ai.impl.tools.timeline.TimelineRun.XmlRead;
@@ -78,6 +79,11 @@ final class TimelineResult {
                     ? run.read().counts().get(i)
                     : 0L);
             source.put("user_field", run.sources().get(i).userField());
+            source.put("by", run.sources().get(i).by().label());
+            final Map<String, Long> accounts = accounts(run, i);
+            if (run.sources().get(i).by() == PersonScope.By.LOGON) {
+                source.put("accounts", accounts);
+            }
             final SourceNote note = note(run, run.sources().get(i).name());
             if (note != null) {
                 NullSafe.consume(note.userFrom(), from -> source.put("user_field_from", from));
@@ -90,6 +96,9 @@ final class TimelineResult {
             sources.add(source);
         }
         map.put("sources", sources);
+        if (byLogon(run)) {
+            map.put("other_accounts", PersonScope.OTHER_ACCOUNTS);
+        }
         final List<Map<String, Object>> leftOut = run.notes().stream()
                 .filter(note -> note.leftOut() != null)
                 .map(note -> Map.<String, Object>of("index", note.index(), "why", note.leftOut()))
@@ -169,6 +178,18 @@ final class TimelineResult {
         map.put("derived", ActivityTimelineTool.DERIVED);
         map.put("caveat", ActivityTimelineTool.CAVEAT);
         return map;
+    }
+
+    // The events of each value a source was filtered on (each logon id), the accounts covered.
+    private static Map<String, Long> accounts(final TimelineRun run, final int source) {
+        return source < NullSafe.list(run.read().accounts()).size()
+                ? run.read().accounts().get(source)
+                : Map.of();
+    }
+
+    // True if any source was read by logon id.
+    private static boolean byLogon(final TimelineRun run) {
+        return run.sources().stream().anyMatch(source -> source.by() == PersonScope.By.LOGON);
     }
 
     private static SourceNote note(final TimelineRun run, final String name) {
@@ -377,6 +398,15 @@ final class TimelineResult {
 
     /// @param run   The run.
     /// @param files The tables written.
+    // Each logon id's events, those with none included.
+    private static String accountsText(final Map<String, Long> accounts, final List<String> values) {
+        final Map<String, Long> all = new LinkedHashMap<>(accounts);
+        values.forEach(value -> all.putIfAbsent(value, 0L));
+        return String.join(", ", all.entrySet().stream()
+                .map(entry -> entry.getKey() + " " + entry.getValue())
+                .toList());
+    }
+
     /// @return The result as Markdown, for a chat.
     static String markdown(final TimelineRun run, final Files files) {
         final ZoneId zoneId = run.zone().zone();
@@ -404,12 +434,21 @@ final class TimelineResult {
             final List<String> routes = new ArrayList<>();
             run.classification().routes().getOrDefault(i, Map.of()).forEach((route, count) ->
                     routes.add(count + " by " + route.description()));
-            sb.append("- ").append(run.sources().get(i).name()).append(": user field ")
-                    .append(run.sources().get(i).userField()).append(note == null || note.userFrom() == null
+            final Source source = run.sources().get(i);
+            sb.append("- ").append(source.name()).append(source.by() == PersonScope.By.PERSON
+                    ? ": person field "
+                    : ": user field ")
+                    .append(source.userField()).append(note == null || note.userFrom() == null
                             ? ""
-                            : " (from " + note.userFrom() + ")").append(routes.isEmpty()
+                            : " (from " + note.userFrom() + ")").append(", ").append(source.by().label())
+                    .append(source.by() == PersonScope.By.LOGON
+                            ? "; accounts " + accountsText(accounts(run, i), source.values())
+                            : "").append(routes.isEmpty()
                             ? ""
                             : "; events classified " + String.join(", ", routes)).append('\n');
+        }
+        if (byLogon(run)) {
+            sb.append(PersonScope.OTHER_ACCOUNTS).append('\n');
         }
         run.notes().stream().filter(note -> note.leftOut() != null).forEach(note -> sb.append("- left out: ")
                 .append(note.index()).append(" (").append(note.leftOut()).append(")\n"));

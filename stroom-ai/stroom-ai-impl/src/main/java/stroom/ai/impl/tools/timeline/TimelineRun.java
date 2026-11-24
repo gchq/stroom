@@ -108,8 +108,9 @@ record TimelineRun(String entity,
     /// @param userFrom  Where that came from, or null.
     /// @param transform A transform tried as none found the user, or null.
     /// @param leftOut   Why it was left out, or null if it was read.
+    /// @param by        Whether its user field holds the person id or the logon id, or null if neither was found.
     record SourceNote(String name, String index, String userField, String userFrom, String transform,
-                      String leftOut) {
+                      String leftOut, PersonScope.By by) {
 
     }
 
