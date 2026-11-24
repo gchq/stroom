@@ -968,7 +968,9 @@ other data source, as a StroomQL windowed join. Decided with the user:
 
 Built 2026-11-23, each part with its "As built" notes: part 1 (the streaming join), parts 2 and 2b (the activity
 timeline and what the user was working on), part 3's chat route (the gantt; the dashboard route's CSV Data
-Connection is not built) and part 4 (skills). Designed with the product owner from analysts' questions that join entities across indexes
+Connection is not built) and part 4 (skills); part 2c (timelines from any source) 2026-11-24, with the additions
+for insider risk (by person id or logon ids, wider keys, spans bounded by a key) recorded at its end. Designed with
+the product owner from analysts' questions that join entities across indexes
 and order their events in time, "which users in team A accessed abc.com and downloaded a file, then copied that file
 to removable media?" (proxy, identity and endpoint indexes, 100,000 users), and "build a timeline of a user's
 activity over the past 7 days" (window open, close and focus, clipboard copies, web accesses, file copies, from
@@ -1350,7 +1352,8 @@ schema, and what it can't is captured iteratively in the site's skill.
   index is listed in `left_out` with why (where more than one source was asked for).
 * **The user field** (`TimelineFields`): the source's `user`, then `userField` (the skill's), then the AGENTS docs'
   `## Fields` (`InstructionRules.fields`: `user`, `host`, `application`/`process`, `object`, `element`/`event
-  detail`, `action`, `event type`/`event code`; several fields a line, the first an index has used; the most
+  detail`, `action`, `event type`/`event code`, and since 2026-11-24 `person`/`person id`;
+  several fields a line, the first an index has used; the most
   specific doc winning), then the bundled conventions' `field_map` (`EventSource/User/Id`; `EventSource/Device/
   HostName` for the host, `EventDetail/*/Action`, `EventDetail/TypeId`), then the first of the index's fields its
   documentation names on a line about the user, then asked (one chat form for every index left, each a choice of its
@@ -1414,6 +1417,42 @@ schema, and what it can't is captured iteratively in the site's skill.
   190) and the duration in `TestStroomQlDatePoints`/`TestEsqlQueryTool`; `TestInstructionRules`, `TestSkillChecks`;
   e2e `TestE2eActivityTimelineAnySource` on the generator's `any-source.csv` written as an Events stream and an
   index; eval case 78 (the proxy-only user's activity periods, by the index's element field).
+
+**Added for insider risk** (2026-11-24; see
+[Insider risk](#insider-risk-patterns-anomalies-and-a-record-per-person-built-2026-11-24); TOOLS.md
+"`activity_timeline`", "`sequence_query`"):
+
+* **By person id or logon ids** (`PersonScope`): `person`, `logonIds` and `personField` beside `entity`, which is no
+  longer required (alone, it keeps the old retry without the domain and in lower case). Each index's person field
+  as the user field is found (the call or skill, the AGENTS doc's `## Fields` `person:`, convention `user.id`); an
+  index without one is read by the logon ids. The result says `by` per source, `accounts` (events per logon id),
+  `other_accounts` (other accounts of the person aren't included unless named), and, for a source where none of the
+  ids matched, the close variants its index holds in `left_out`'s text, offered, never merged. A source given with
+  `roles` is read by logon ids only, and refused with only `person`. `sequence_query` takes the same arguments
+  (and `userField`): each step that isn't `keysOnly`, and `until`, gets an `IN` condition on its doc's person field,
+  else its user field; a doc that can't be restricted is refused; the result's `scope` says how each was. Variants
+  are offered only by the timeline.
+* **The empty window** (`none_in_period`): where no source has the user's events in the period, each source's first
+  and last events and count overall, from one ES|QL `MIN`/`MAX`/`COUNT`, in the result and in the "No source
+  holds ..." refusal, so the agent can move the window rather than conclude there was no activity.
+* **The Network object** (`EventXmlClassifier.TO_DESTINATION`): a Network event's object is its destination's
+  HostName, else its IPAddress; Send and Receive keep a more telling leaf (a subject, a URL) first, then the
+  destination; a Source or Destination device's name is never otherwise the object.
+* **Wider correlation keys**: every leaf of the event (under the element by its path below it, a `Data` entry by
+  its name as `Data[SessionId]`, `Open/Data[Category]`; the EventSource's and EventDetail's other leaves by their
+  whole paths), plus the index's fields returned with the event (`Classified.withKeys`); never the time, user or
+  type. Inference keeps only paths some value of which both types hold and that the lane doesn't fix
+  (`PairInference.informative`).
+* **Spans bounded by a key** (`KeySpans`, kind `key`): first to last event sharing a value, split at the idle cap
+  across all sources, taking no events from other spans, out of the daily totals. Automatic only for session-like
+  keys (held by 2 or more types, repeating on 3 or more values, saying more than the lane, 80% of values in one
+  stretch, not a used pair's key): automatic domain or application spans flooded the charts, so those are a
+  source's `spanBy` (labelled by the value; found keys "SessionId 8614").
+* **Pair and key spans in activities**: a pair span that isn't session-level (session-level: started or ended by an
+  Authenticate action making the user active or idle) and every key span is a characterisation item of its own
+  (`p<n>`, `Span.itemId`), placed by terms or the model and rolled up in the activities.
+* **Tests**: JUnit `TestPersonScope`, `TestTimelineFields`, `TestEventXmlClassifier`, `TestTimelineSpans`; e2e
+  `TestE2eInsiderTimeline` on the insider dataset; eval cases 79 to 82.
 
 #### 3. Charts of derived results: in the chat, or a dashboard (the user's choice)
 
@@ -1671,9 +1710,10 @@ To settle with the product owner before building; listed in [Open questions](#op
 13. ~~Over `/mcp` with no Stroom model~~: MCP sampling (the client's model, approved there), else strong links only,
     the result saying the loose items weren't classified (decided 2026-11-23).
 
-### Insider risk: patterns, anomalies and a record per person (proposed 2026-11-24)
+### Insider risk: patterns, anomalies and a record per person (built 2026-11-24)
 
-Proposed, not built. The use case the timeline, comparison and skills work serves: detecting and monitoring insider
+Built 2026-11-24 (see "As built" at the end), apart from the record per person, which is parked. The use
+case the timeline, comparison and skills work serves: detecting and monitoring insider
 risk behaviours for one person or a small group, over days to a year. Findings are indicators with evidence for an
 analyst to weigh, never a verdict on a person.
 
@@ -1813,6 +1853,90 @@ threat-hunting evals are.
 **Proposed order**: the Network object fix and the empty-window hint; the dataset generator; wider correlation keys,
 spans bounded by a key, activities for pairs; `compare_activity` and its template skills;
 categories; the access graph; location. Parked: the findings ledger, risk score, exceptions and annotation cases.
+
+**As built (2026-11-24; TOOLS.md "`compare_activity`", "`activity_timeline`", "`sequence_query`")**: in the proposed
+order, the timeline package first, then the comparison package; the record per person stays parked.
+
+* **The person, by person id or logon id** (`PersonScope`, `TimelineFields`): the person field from the call or
+  skill, then the AGENTS doc's `## Fields` (`person:` or `person id:`), then convention (ECS
+  `EventSource/User/UserDetails/Id` to `user.id`; the flat convention has none); else the logon ids by the user
+  field. `activity_timeline`, `sequence_query` and `compare_activity` take `person`, `logonIds` and `personField`
+  (and `userField`); each source or doc says "by person id" or "by logon id", by logon id with the accounts counted
+  and "other accounts aren't included unless named". Close variants of logon ids (domain added or removed, case)
+  are offered by `activity_timeline` only, never merged. Renames, new accounts and shared accounts aren't flagged
+  yet.
+* **The timeline additions** (part 2c's "Added for insider risk"): a Network event's object is its destination;
+  the empty window's hint (`none_in_period`: each source's first and last events); wider correlation keys (every
+  leaf, `Data[...]` by name, index fields); spans bounded by a key, automatic only for session-like keys, others by
+  a source's `spanBy` (automatic domain or application spans flooded the charts); pair and key spans placed in
+  activities.
+* **`compare_activity`, a tool** (timelines group, search, Use; peers need View Data), from aggregates only: ES|QL
+  `STATS` on Elastic Indexes, StroomQL on others, each time-bucketed query in monthly slices in parallel up to
+  `joinWorkers`, as the user; hour buckets in UTC put in the zone in code, day buckets by ES|QL's `time_zone` (else
+  a fixed offset, said), StroomQL's days formatted in the zone; every name and value quoted; each search removed
+  once read. Defaults: a 30-day window against the 180 days before it, compared by the week; every Elastic and
+  Lucene index the user can use with a person or user field; breadth fields the host, application and object
+  fields found.
+* **Checks before scoring**: coverage (a day the source holds no data isn't scored), leave and **approved
+  exceptions** (`from..to: reason`, from the question, skill or AGENTS doc: not scored, and said), quiet runs of a
+  week or more (reported), and the **source-wide** volume (everyone else's events per person, the person's own left
+  out). A finding everyone shares (their change past the threshold the same way, at least half the person's relative
+  to its level; a change point within 7 days) is **listed apart** as "Explained by the source", not ranked; only
+  volume features (events, active hours, sums) are compared with the source, so categories, times and breadth
+  never are.
+* **Scoring choices**: robust z (median and MAD, the mean absolute deviation when the MAD is 0, ±10 for a constant
+  baseline), a finding at |z| ≥ 3.5 and at least half the level (60 minutes for a time), z capped at 50 and shown
+  "over 50" (a baseline with almost no spread makes the number meaningless); runs of consecutive window findings
+  merged into one, so a month-long change is one finding; **change points** by the split of weekly means leaving the
+  least absolute deviation from each side's median (2 weeks each side; weekly so quiet weekends aren't a shift),
+  sized 3.5 or more, dated to the first day already at the new level; drifts by Theil-Sen over 4 months or more, one
+  from zero not sized; the hour-of-week rhythm only with 5 baseline months; at most 20 ranked findings and a line a
+  month, the rest in files (`profile.csv`, `monthly.csv`, `findings.csv`, `values.csv` under
+  `/outputs/compare/<person>/`), and up to 5 flagged days for `activity_timeline`.
+* **Peers**: `Organisation` by default (`Unit`, `Group`, `Role` allowed; `Nationality` and the like refused), read
+  from one event each (`TimelineEventXml`), capped at 200 people a call: asked past it in a chat, the first 200
+  read and said over MCP; the map cached in `/outputs/compare/peer-groups.json`; fewer than 5 peers not compared.
+* **Categories**: an index's category field first; else model side calls (batches of 100, at most 1,000 values a
+  call, answers checked against a fixed category set, the values data), cached in `/outputs/compare/
+  categories.json` and marked inferred; the site's list (`categoryList`, from the AGENTS doc or skill) overrides
+  everything, then the analyst's corrections; per-source `<source>-categories.csv`.
+* **Access graph** (`accessField`): the baseline's people and resources clustered by `Leiden` (made public for
+  it); findings for window access outside the person's cluster and resources no one in it reached before; the
+  cluster's people noted as peers learned from access.
+* **Location**: `*.geo.country_iso_code` (or `countryField`), and on Elastic Indexes `*.geo.location` by ES|QL
+  `ST_CENTROID_AGG`: new countries, impossible travel (over 900 km/h and 500 km; with countries only, two
+  countries within 2 hours, said), activity abroad on leave; "location isn't available" without geo fields. No
+  reference data lookups (dropped by the user).
+* **Cost**: per source per person over N months about 3N queries, plus N each for peers, categories and location,
+  1 for the people active (and up to 200 cached event reads), 2 for access, 1 a breadth field: 12 months of one
+  source with 2 breadth fields and everything on is about 75 queries, 5 sources about 375; a re-run asks only the
+  days since the last held day (`CachedAggregates`, about 1 or 2 slices a query). 10,000 rows a slice; a slice cut
+  short makes the figures "approximate", said.
+* **Skill templates**: `activity-comparison`, `leaver-review`, `privileged-user-review` and `alert-triage` (the
+  leaving date, leave and exceptions as parameters; findings worded as indicators).
+* **The dataset generator** (stroom-app e2e `InsiderDataset`, `InsiderRecords`, `AbstractInsiderE2eTest`,
+  `TestInsiderDataset`): 12 months (2025-11 to 2026-10) of 6 scenario and up to 30 background people in 3
+  Organisations; the person id indexed as `user.id`, the `Organisation` in the Event XML only; five sources (an
+  endpoint agent in an invented format, a Netskope-style proxy CSV, NetScaler VPN, Azure/Office 365 audit JSON,
+  Delinea PAM XML) with logon ids whose form differs by source; the plants (the leaver, a disgruntled
+  administrator, a curious viewer, a compromised account, a role change, a drift, leave, one-offs, a new host) and
+  the decoys (an approved migration, an on-call week, a source-wide pipeline change on 2026-06-15) in a known-answer
+  JSON. The e2e tests use a reduced form (11 people, scale 0.3, a few weeks); the dev node's files (about 524 MB,
+  month files, `known-answer.json`, and `reference-accounts.csv` as decoration input only) are under
+  `.ai/data/insider-dataset/`, regenerated with `INSIDER_DATASET_DIR` (and `INSIDER_DATASET_NETSKOPE`) and
+  `TestInsiderDataset.writeTheDevNodesFiles`. e2e `TestE2eInsiderTimeline`, `TestE2eCompareActivity` (ES|QL and
+  StroomQL agree) and `TestE2eInsiderCompareActivity` (the plants found, the decoys not flagged).
+* **Eval cases** (generate kind `insider_events`): 79 (the leaver's week as a timeline by person id), 80 (what
+  P10006 was working on on 2026-09-16), 81 (the leaver's VPN session at night), 82 (an archive, then a personal
+  cloud upload over 10 MB within an hour), all listed; 83 to 86 (`compare_activity`: the leaver before leaving, the
+  curious viewer against the team, the compromised account in April, the decoys not flagged) are written but not yet
+  in `EvalCases.IDS`.
+* **Not built**: the record per person (parked, below); a `check_skill` rule against stating intent or guilt (the
+  tool's wording and the templates only, so far); the tools' own tool policy (the safeguard above); charts of
+  `compare_activity`'s CSVs through `propose_timeline_dashboard` (it takes the timeline's tables only); speed from
+  numeric latitude and longitude on non-Elastic indexes; flags for renamed, new and shared accounts.
+  Characterisation quality on the generated data is poor (clusters such as "Chrome"), the existing behaviour; cloud
+  sign-ins have no logoff, so their starts are unpaired.
 
 ### Stop and Elasticsearch errors (built 2026-11-16)
 
@@ -5673,6 +5797,8 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-24 | Insider risk comparison built: `compare_activity` (timelines group, search, Use; peers need View Data) compares a person's window (default 30 days, by the week) with their 180-day baseline and their peers' from index aggregates only (ES\|QL, else StroomQL, monthly slices in parallel, re-runs asking only the days since); coverage, leave, approved exceptions (`from..to: reason`, not scored, said) and source-wide shifts (listed apart as "Explained by the source", volume features only) checked first; robust z ≥ 3.5 and half the level (an hour for times), capped at 50; runs of window findings merged; change points by least absolute deviation on weekly means, dated to the first day at the new level; drifts over 4 months; rhythm with 5 baseline months; at most 20 findings worded as indicators, CSV files and flagged days for `activity_timeline`; peers by the Event XML's `Organisation` (Unit, Group, Role allowed, never Nationality) read from one event each, 200 a call, cached; categories from the index's field, else model side calls checked against a fixed set, the site's list then corrections overriding; an access graph by Leiden; location from geo fields (new countries, impossible travel, abroad on leave), no reference data lookups; four skill templates; the insider dataset generator with plants, decoys and a known answer; eval cases 79 to 86 (83 to 86 not yet listed). Not built: the record per person (parked), a `check_skill` rule against stating intent or guilt, a tool policy of its own, compare's CSVs to a dashboard, speed from numeric coordinates on non-Elastic indexes | [Insider risk](#insider-risk-patterns-anomalies-and-a-record-per-person-built-2026-11-24) (as built); TOOLS.md (compare_activity) |
+| 2026-11-24 | Timelines for insider risk: `activity_timeline` and `sequence_query` take `person` (a person id by each index's person field: the call, the AGENTS doc's `## Fields` `person:`, ECS `user.id`), `logonIds` and `personField`, the result saying by person id or by logon id with the accounts counted and that other accounts aren't included unless named; close variants of logon ids offered, never merged (the timeline only); the empty window's sources' first and last events (`none_in_period`); a Network event's object its destination; correlation keys widened to every leaf, `Data[...]` by name and index fields; spans bounded by a key, automatic only for session-like keys (others by `spanBy`, as automatic domain or application spans flooded the charts); pair and key spans placed in activities; `propose_instructions` names the folder itself | Activity timelines, streaming joins and skills (2c., added for insider risk); TOOLS.md (activity_timeline, sequence_query, propose_instructions) |
 | 2026-11-24 | The dashboard route for derived timelines built (the user's decisions): `propose_timeline_dashboard`, a tool of its own in the timelines group (not an action of `activity_timeline`, which would run the timeline again, nor of `propose_dashboard`, which reads data sources), offers one button that, on the click, writes `spans.csv` or `activities.csv` as it is as a CSV Data Connection (typed, `start` its time field, named `Timeline <entity> <first day> to <last day> (<table>)`, described as a dated snapshot) with its generated ECharts `timeline` Visualisation, as the user, in the folder the user chose (a form, the attached dashboard's folder suggested), then opens the New Dashboard dialog there for a query of it over the period, the chart (lanes host or source, or day or activity; colour activity) and a typed table a bar's click filters to its interval; the table's hash kept in the button (refused once the timeline is built again); a second click rewrites the same documents; a re-run for the same entity and table replaces and renames the earlier run's; offered only with Create in the folder (and Edit on one it replaces); the result and the button say who can read it (the folder's permissions); `activity_timeline` writes `timeline.json` (`TimelineSnapshot`) for it | Activity timelines, streaming joins and skills (3. Charts: the dashboard route, as built); TOOLS.md (propose_timeline_dashboard, activity_timeline) |
 | 2026-11-24 | Chat 192 (an aggregated Microsoft 365 feed's Messaging group, its V1.0 promoted, rebuilt as V1.1) fixes: (1) a new version's build documents named for the previous version are renamed for the new one by `create_pipeline version_of=` (`VersionNames.retokened`, `WriteGuard.rename`), and promotion promotes a document named for another version than its pipeline's under the name for that version, said in the layout's warnings and renamed as it moves; (2) a group the registry places nowhere but whose promoted pipeline `<feed> <group>` (any version) reads the feed is placed from that pipeline (its XSLT, its output feed), recorded with the save and said, never asked as new (`SourceTypeGroups.recoveredPlacement`, `CurrentTranslations.groupPipeline`); (3) a catalogue description holding the event type's sample record count or the scope's (10 or more) is a check problem, and `description` is described as written into every event; (4) `promote_build` with `reviewed` left out takes the review last shown in the chat where nothing it showed has changed (layout and the rest), saying so, else shows the new one; (5) `write_documentation` refuses an events pipeline in a build that stepped clean before but whose latest saved XSLT hasn't (one never stepped clean is documented as before: that is how errors are accepted), and `build_status`'s stepping step says to update the documentation after it when the pipeline was documented before the save; (6) a constant naming one of the feed's source types outside the group is put to the user (change: not saved; keep: remembered for the chat), and the aggregated feeds guide says a group's events come only from its own source types; (7) a production version whose own XSLTs import a module that no longer exists is said by `build_status`/`promote_build` (`before_promotion`, never blocking), `create_pipeline version_of=`, `build_translation_xslt` and `review_coverage`'s follow-ons (`PipelineShapes.brokenImports`); (9) a new version's promoted filter reads what the user chooses at promotion: from now on (recommended, a minimum stream create time), everything (backfill) or from a date; without a form from now on, said; a first version's filter unchanged | TOOLS.md (build_translation_xslt, create_pipeline, catalogue_event_types, promote_build, write_documentation, build_status, review_coverage); guides/aggregated-feeds.md |
 | 2026-11-24 | A build whose feed or source type group a pipeline already translates (the registry's rows of its scope, by UUID else by name, or the pipeline its processor filter reads the raw data for; promoted, hand-written or a content pack's) is offered, after the survey, in catalogue_event_types' first call's form: start from the existing pipeline (recommended: copy_pipeline makes a new version, rebuild_mapping reads its XSLT back into a mapping and catalogue, the original untouched) or draft a new translation; without a form the reply names both routes for the chat (`start_from=`). The plan routes through `next` (copy, rebuild, catalogue check and confirmation, the `catalogue` step kept to do), not one tool doing both, as each step has its own form (names, the rebuild's proof) the user answers in turn. The reader lays hand-written XSLTs out as the generator's first (a template per event, a choose on an event id, xsl:if chains, named templates, JSON keys by type); conditions it can't read stay xpath conditions, guards testing more than presence are not read. The existing version's run over the sample (records writing no Event, Unknown) is listed; event types read back are proposed and confirmed, the summary naming their origin | [Start from an existing pipeline](#start-from-an-existing-pipeline-built-2026-11-24) |
@@ -6013,5 +6139,10 @@ behaviour; the settled ones are listed here with the section that records them.
 | An Elasticsearch TLS node in CI | Open | The TLS tests skip without one. |
 | HTML bodies to plain text (`html_text` transform) | Future (2026-11-23) | See [HTML bodies to plain text](#html-bodies-to-plain-text-future-2026-11-23). |
 | Skills run by analytic rules (per detection or scheduled; typed parameters, declared output) | Future (2026-11-24) | See [Skills run by analytic rules](#skills-run-by-analytic-rules-future-2026-11-24). |
-| Insider risk: comparison across windows, reference data context | Proposed (2026-11-24) | See [Insider risk](#insider-risk-patterns-anomalies-and-a-record-per-person-proposed-2026-11-24). |
-| Insider risk: the record per person (findings ledger, risk score, exceptions and verdicts, annotation cases) | Parked (2026-11-24) | See [Insider risk](#insider-risk-patterns-anomalies-and-a-record-per-person-proposed-2026-11-24), "The record per person". |
+| Insider risk: comparison across windows | Built (2026-11-24) | `compare_activity`; reference data context dropped (the question, skill or AGENTS doc give it). See [Insider risk](#insider-risk-patterns-anomalies-and-a-record-per-person-built-2026-11-24), "As built". |
+| Insider risk: the record per person (findings ledger, risk score, exceptions and verdicts, annotation cases) | Parked (2026-11-24) | Still parked after the comparison was built. See [Insider risk](#insider-risk-patterns-anomalies-and-a-record-per-person-built-2026-11-24), "The record per person". |
+| Insider risk: a `check_skill` rule against stating intent or guilt | Open (2026-11-24) | The safeguard names the guide and `check_skill`; only the tool's wording and the skill templates say it so far. |
+| Insider risk: a tool policy of its own for these tools | Open (2026-11-24) | The safeguard: granted to the insider risk team. Today the general tool policies decide who may run `compare_activity` and the timelines. |
+| `compare_activity`'s CSVs to a dashboard | Open (2026-11-24) | `propose_timeline_dashboard` takes the timeline's tables only; charting `profile.csv`, `monthly.csv` and `findings.csv` needs it extended. |
+| Impossible travel by speed on non-Elastic indexes | Open (2026-11-24) | From numeric latitude and longitude fields; today a geo point only on an Elastic Index (`ST_CENTROID_AGG`), else countries only (two within 2 hours). |
+| Characterisation quality on generated data | Open (2026-11-24) | On the insider dataset the activities cluster weakly (e.g. "Chrome"): the existing behaviour, seen, not changed. |

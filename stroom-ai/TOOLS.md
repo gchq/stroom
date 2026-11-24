@@ -145,9 +145,10 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 
 | Tool | What it does | Category | Read-only | Group | Requires | Unlocked by | Documents | Flags |
 |------|--------------|----------|-----------|-------|----------|-------------|-----------|-------|
-| `activity_timeline` | One user's (or entity's) activity timeline from any Elastic Index sources (asked, or all, where not given), worked out in code: detail spans (focus sessions where a source records window focus; pairs from a start to its end, the schema's, a skill's or inferred; activity periods), events without roles classified from their Events XML (else the index's fields or codes), each index's user field found, daily totals, missing events flagged; activities rolled up (`characterise`, or `view` activities); what was learned offered for the skill's Event chains | search | yes | timelines | | | Use | slot |
+| `activity_timeline` | One user's (or entity's, or person's: a person id or several logon ids) activity timeline from any Elastic Index sources (asked, or all, where not given), worked out in code: detail spans (focus sessions where a source records window focus; pairs from a start to its end, the schema's, a skill's or inferred; spans bounded by a key such as a session id; activity periods), events without roles classified from their Events XML (else the index's fields or codes), each index's person or user field found and said (by person id or by logon id), daily totals, missing events flagged, each source's first and last events where the period has none; activities rolled up (`characterise`, or `view` activities); what was learned offered for the skill's Event chains | search | yes | timelines | | | Use | slot |
 | `ask_user` | Asks the user questions in a form, with options to pick, and waits for the answers | core | yes | | | | | trusted |
 | `check_skill` | A skill's problems and suggestions, each with a fix: structure, parameters, example calls against the tools' schemas and policies, data sources and fields, hand edits, vague steps, values that should be parameters, charts, near-duplicates, use | core | yes | skills | | | View, Use | |
+| `compare_activity` | Compares one person's activity in a window with their own baseline and their peers' (the same UserDetails Organisation, read from one event each) from index aggregates only (ESQL, else StroomQL, in monthly slices): volume, rhythm, breadth, novelty, and optionally categories, an access graph and location; coverage, leave, exceptions and source-wide shifts checked first; scored in code (robust z-scores, change points, drifts, values started and stopped); at most 20 ranked findings, each an indicator with an alternative explanation, a line a month, CSV files | search | yes | timelines | | | Use | slot |
 | `config_properties` | Searches, gets and lists system properties, with overrides and their sources; secrets masked | administration | yes | administration | Manage Properties | | | |
 | `current_results` | Snapshots the results table of the attached query or dashboard tab as a workspace table | search | yes | | | | Use | chat |
 | `delete_file` | Deletes a file in the workspace's `/outputs/` | core | no | | | | | trusted |
@@ -196,7 +197,7 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 | `run_stroomql` | Runs a StroomQL query into a workspace table, refusing a search on an index whose answer would mislead | search | yes | | | | | slot |
 | `search_events` | XPath, text or jq search over fetched events into a table; or, given an index, finds events as a dashboard would | search | yes | | | | Use | slot |
 | `search_history` | Searches the chat's history for text | search | yes | | | | | chat |
-| `sequence_query` | Ordered sequences of events (X then Y by the same entity within N): EQL on Elastic Indexes (steps, join fields, missing, runs, until), or a streaming key-ordered join in Stroom where EQL can't (keysOnly entity steps, join-field transforms, sides too big for EQL); a StroomQL windowed join of two steps on other data sources | search | yes | sequences | | | Use | slot |
+| `sequence_query` | Ordered sequences of events (X then Y by the same entity within N): EQL on Elastic Indexes (steps, join fields, missing, runs, until), or a streaming key-ordered join in Stroom where EQL can't (keysOnly entity steps, join-field transforms, sides too big for EQL); a StroomQL windowed join of two steps on other data sources; optionally one person's only (a person id or logon ids, each step restricted, said in `scope`) | search | yes | sequences | | | Use | slot |
 | `server_tasks` | The tasks running on every node now (Monitoring > Server Tasks) | administration | yes | administration | Manage Tasks | | | |
 | `str_replace` | Replaces text in a workspace file | core | no | | | | | trusted |
 | `stream_meta` | Finds streams and their meta, grouped and aggregated if asked; describes one stream's family | processing | yes | | | View Data | View | |
@@ -667,13 +668,15 @@ applies it from the chat's 'Review and apply' button, as with `propose_documenta
 Lines of the sections the tools apply themselves (`## Required imports`, `## Component templates`,
 `## Documentation`, `## Fields`) that name nothing the tools know are pointed out in the result
 (`InstructionRules.problems`): the tools leave such lines out without a word, which is right for a note but not for
-a slip, so the agent can propose the corrected text again. So are `## Fields` lines (`- user: Initiator.Id`, read by
-`activity_timeline`) naming no field of the data sources in the folder (and below) the user can Use
-(`InstructionRules.fieldProblems`, `IndexFieldNames`).
+a slip, so the agent can propose the corrected text again. So are `## Fields` lines (`- user: Initiator.Id`,
+`- person: user.id`, read by `activity_timeline`, `sequence_query` and `compare_activity`) naming no field of the
+data sources in the folder (and below) the user can Use (`InstructionRules.fieldProblems`, `IndexFieldNames`).
 
 * **Arguments**: `folder` (UUID or Explorer path), `markdown` (the whole text) or `edits` (`oldText`/`newText`
   against the existing doc; a new doc needs `markdown`), `summary` (shown with the diff).
-* **Returns**: text: what the user was shown, the diff, and any lines the tools will leave out; with the button.
+* **Returns**: text: what the user was shown (naming the folder itself by its whole path, `DocumentAccess.folderPath`,
+  as `propose_skill` does, not the folder holding it), the diff, and any lines the tools will leave out; with the
+  button.
 * **Refuses**: a folder the user can't see; `edits` for a folder with no doc; text identical to the doc's.
 
 ### Skills: `find_skills`, `check_skill`, `propose_skill`
@@ -742,7 +745,10 @@ YAML text: no change to the shared Markdown rendering. The model follows the ste
     vary (each offered as a parameter named after its argument or the field it is compared with) and where the
     results go; the draft has those values as `{name}` and `[[...]]` for what the model must write.
   * `template`: the built-in starting points (`SkillTemplates`, resources `skill-templates/*.md`): a user activity
-    timeline, X then Y by the same entity, who of a group did X; each the procedure with `[[...]]` placeholders for
+    timeline, X then Y by the same entity, who of a group did X, and (2026-11-24) an activity comparison, a leaver
+    review, a privileged user review and an alert triage (`compare_activity` and `activity_timeline`; the
+    leaving date, leave and exceptions as parameters; findings worded as indicators); each the procedure with `[[...]]`
+    placeholders for
     a site's sources, fields and role conditions; no product-specific content.
   * `trial`: the draft run once before saving: kept at `/outputs/skills/<name>.md`, checked, bound to
     `parameters` (refused if a required one is missing), and its steps come back for the model to follow now, as
@@ -1540,9 +1546,16 @@ by the same user on the same host", "20 failed logons then a success". Structure
   10,000, and for EQL at most as many sequences as fit 10,000 fetched events: 5,000 two-step ones, said in the
   result, as Elasticsearch refuses more ids than its max result window, seen in the 2026-11-20 benchmark; the
   streaming join: default 10,000, at most 100,000, all counted); `runAnyway`; `engine` (`auto`, the default, `eql`
-  or `stream`); `out` (chat);
+  or `stream`); `out` (chat); `person`, `logonIds`, `personField`, `userField` (one person's sequences only, below);
   `timeZone` (see Time zones: the zone of `timeFrom`/`timeTo`, of the windowed join's conditions' date points, and
   of the result's times, which both engines' results state, `time_zone` in JSON).
+* **One person's sequences** (`person` or `logonIds`, built 2026-11-24, `PersonScope` as `activity_timeline`'s):
+  each step that isn't `keysOnly`, and `until`, gets an `IN` condition on its doc's person field (`personField`, the
+  AGENTS doc's `## Fields` `person:`, the ECS convention `user.id`), else on its user field (`userField`, likewise)
+  holding the logon ids; a doc that can't be restricted is refused (give `personField` or `userField`, or leave the
+  step's doc out). The result adds `scope` (per doc: `index`, `by`, `field`, `field_from`, `values`) and, by logon
+  id, `other_accounts`; in text, "Restricted to the person:". Close variants of logon ids are offered by
+  `activity_timeline` only.
 * **EQL** (`EqlQueryWriter`): `sequence with maxspan=2m [any where stroom_eql_doc == "1" and ...] by a, b ...`,
   `![...]` for missing, `with runs=N`, `until [...]`. EQUALS is `==` (`:` case-insensitive), `like`/`like~` with
   `*`, `cidrMatch` for a CIDR on an IP field; IN `in`/`in~` or `cidrMatch`; CONTAINS/STARTS_WITH/ENDS_WITH like
@@ -1687,13 +1700,13 @@ by the same user on the same host", "20 failed logons then a success". Structure
 
 ### `activity_timeline`
 
-One user's (or entity's) activity timeline for a period from any sources (`ActivityTimelineTool`): two levels, the
-detail spans (focus sessions of an application on a host where a source records window focus; pairs, from a start to
-its end; activity periods, the actions in neither) and the activities rolled up from them (what the user was working
-on), each a table `gantt_chart` draws as it is; the actions with where each was attached, each day's active time, the
-window lifetimes, the events by their stream and event ids and how each was classified, and data-quality flags (parts
-2, 2b and 2c of DESIGN.md's "Activity timelines, streaming joins and skills"). Group `timelines`; offered to a user who
-can use an Elastic Index.
+One user's (or entity's, or person's) activity timeline for a period from any sources (`ActivityTimelineTool`): two
+levels, the detail spans (focus sessions of an application on a host where a source records window focus; pairs, from
+a start to its end; spans bounded by a key; activity periods, the actions in none) and the activities rolled up from
+them (what the user was working on), each a table `gantt_chart` draws as it is; the actions with where each was
+attached, each day's active time, the window lifetimes, the events by their stream and event ids and how each was
+classified, and data-quality flags (parts 2, 2b and 2c of DESIGN.md's "Activity timelines, streaming joins and
+skills"). Group `timelines`; offered to a user who can use an Elastic Index.
 
 * **Sources** (`TimelineSourceChoice`): `sources` as objects (`index` and, optionally, the fields and `roles`), index
   names, `all`, or `ask`/omitted. Omitted in a chat, a form asks: with a dashboard attached, only its data source,
@@ -1702,20 +1715,40 @@ can use an Elastic Index.
   doesn't choose them) and shown to confirm as a multi-choice. Over MCP, all supported, said in `sources_chosen`.
   Supported: every Elastic Index the user can use.
 * **Automatic sources** (no `roles`): each index's user field is the source's `user`, else `userField`, else the
-  AGENTS doc's `## Fields` (`- user: Initiator.Id, user.name`, read by the tool itself, `InstructionRules.fields`),
+  AGENTS doc's `## Fields` (`- user: Initiator.Id, user.name`, read by the tool itself, `InstructionRules.fields`;
+  `- person: user.id` for the person field, below),
   else the bundled field conventions' (`user.name`, `UserId`), else a field its documentation names on a line about
   the user, else asked in a chat form; the host, element, Action and event code fields the same way (`host`,
-  `elementField`, `actionField`, `eventTypeField`; `## Fields` keys `host`, `element`, `action`, `event type`).
+  `elementField`, `actionField`, `eventTypeField`; `## Fields` keys `host`, `element`, `action`, `event type`;
+  `person` or `person id` for the person field).
   Each is probed first (its first 200 events of the user): none, also without the domain and in lower case for a
   text field (said as `user_transform`), and it is listed in `left_out` and left out (where more than one source
   was asked for); the probe's keyword fields also find an element field (90% of its values EventDetail elements).
+  With `entity` alone this is as before.
+* **Whose events** (`PersonScope`, built 2026-11-24): `person` (a person id, the same for all of a person's accounts,
+  as processing decorates each event with it) is read in each index by its person field: `personField` (the
+  skill's), else the AGENTS doc's `## Fields` (`- person: user.id`; the key `person id` too), else the convention
+  (ECS `EventSource/User/UserDetails/Id` to `user.id`; the flat convention has none); an index without one falls back
+  to `entity` and `logonIds` by its user field. `logonIds` are more logon ids of the person (forms differ by source:
+  `alex.chen`, `CORP\achen`, `adm-achen`), read together, each account counted (`accounts`). Each source says
+  `by` (by person id or by logon id); by logon id, the result says other accounts of the person (an admin or service
+  account) aren't included unless named (`other_accounts`). For a source with none of the logon ids, close variants
+  the index holds (the domain added or removed, another case) are offered in `left_out`'s text, never merged
+  without the user. A source with `roles` is read by its `user` field, so by logon ids only (`entity` or
+  `logonIds`); with only `person` it is refused.
 * **Classification** (`TimelineClassification`, `EventXmlClassifier`): an automatic source's events by their Events
   XML (`TimelineEventXml`: by StreamId and EventId, as `fetch_events` reads them; View Data checked; audited as
   streams viewed; at most `timelineMaxXmlEvents`, 50,000, in time order): Authenticate Logon, ScreenUnlock, Connect,
   Reconnect make the user active (`idle_end`); Logoff, ScreenLock, Disconnect idle (`idle_start`); Process
   Execute and Startup open, Terminate and Shutdown close; any other element an action of that kind. The type is the
-  TypeId, else the element and Action; keys are the leaves under the element by path; the label the application
-  (a Process's Command), else the object (Title, Subject, URL, Path, Name). The user and time always come from the
+  TypeId, else the element and Action; the keys (correlation keys, widened 2026-11-24) are every leaf of the event:
+  under the element by its path below it (`ProcessId`, a `Data` entry by its name as `Data[SessionId]`,
+  `Open/Data[Category]`), the EventSource's and EventDetail's other leaves by their whole paths
+  (`EventSource/Client/IPAddress`), never the time, user or type; and the index's fields returned with the event, by
+  their names (`Classified.withKeys`). The label is the application (a Process's Command), else the object (Title,
+  Subject, URL, Path, Name). A Network event's object is its destination device's HostName, else its IPAddress; Send
+  and Receive keep a more telling leaf (a subject, a URL) first, then the destination (`TO_DESTINATION`); a Source or
+  Destination device's name is never otherwise the object. The user and time always come from the
   index. Where the XML is gone or there is none: the element and Action fields; else the event codes, asked of the
   model once (`EventCodes`, a side call of up to 100 codes, roles checked in code), confirmed in a chat form and
   kept per index (`/outputs/timelines/event-codes/<uuid>.json`, the user's workspace where there is one); over MCP
@@ -1739,13 +1772,23 @@ can use an Elastic Index.
   Event chains, a source's `pairs` (`{start, end, by, label}`), the schema's (Process Execute to Terminate and Startup
   to Shutdown by ProcessId, else Command; Authenticate Logon to Logoff, "logged on", and ScreenLock to ScreenUnlock,
   "locked", by the host), and those inferred (`PairInference`): per source, two of its 40 commonest types that, for
-  the same key value (a path 80% of both hold, or the host alone), run A, B, A, B from an A, each B within 24 hours,
+  the same key value (a key path 80% of both hold that is informative, `PairInference.informative`: some value held
+  by both types and not fixed by the lane; or the host alone), run A, B, A, B from an A, each B within 24 hours,
   for 90% of keys, the counts within 0.8 of each other, over 3 keys (or 3 spans of one key); borderline (50% and 2
   keys, or clear but lopsided) listed with their figures in `borderline_pairs`, not used; a type in one pair at
   most. An end closes the latest open start of its key; a start with no end runs to the lane's first gap past the
   cap, an idle start or the period's end, marked; `unpaired_start` and `unpaired_end` flagged for a pair of actions.
   A pair's start and end, and an action in its span with its label (`by pair`), are the pair's. Each pair's origin,
   alternation, spans and unpaired starts and ends are in `pairs`.
+* **Spans bounded by a key** (`KeySpans`, kind `key`, built 2026-11-24): from the first to the last of the user's
+  events sharing a key's value, even where no event starts or ends it, split where the user is idle past the cap
+  across all sources; no events taken from other spans; left out of the daily totals. Automatic only for a
+  session-like key: held by events of two or more types, repeating on 3 or more values (`PairInference.MIN_KEYS`),
+  saying more than the lane, 80% or more of its values making one stretch only (`ONE_RUN_SHARE`), and not a used
+  pair's key (a VPN session's id, where a domain or an application recurs all day). Other keys (a destination domain,
+  an application) only when a source's `spanBy` names them (an index field, or a key path such as
+  `Data[SessionId]`), labelled by the value; a found key's spans are labelled by the key and value (`SessionId
+  8614`).
 * **Activity periods**: the actions in no focus session or pair, in a lane (the host, else the source's name),
   labelled by the application, else the object's place (a URL's host, a path's last part), else the action's kind;
   one ends at the next action where the label changes, at its last action where the next is past the idle cap, or at
@@ -1765,7 +1808,10 @@ can use an Elastic Index.
   more differences past 2 minutes), `two_focused` (two focuses on a host within a second), `unpaired_start`,
   `unpaired_end`.
 * **Characterisation** (`ActivityCharacterisation`, with `characterise=true` or `view` activities or both), over the
-  focus sessions and activity periods: pass 1 in code, a graph of the spans linked by an artifact they share (a
+  focus sessions and activity periods, and (2026-11-24) pair spans that aren't session-level (a session-level pair
+  starts or ends with an Authenticate action that makes the user active or idle, e.g. logged on) and key spans, each
+  an item of its own (`p<n>`, `Span.itemId`, apart from the sessions' `s<n>`) placed by terms or by the model and
+  rolled up in the activities: pass 1 in code, a graph of the spans linked by an artifact they share (a
   title's parts, its application's suffix such as " - Word" dropped where every title of the application has it; a
   file's name; a URL's domain and first path segment; normalised so "Report v2.docx" and "Report.docx" are one), by
   significant terms they share (in 2 or more spans and at most half), and by being close in time (2 minutes, each
@@ -1807,16 +1853,21 @@ can use an Elastic Index.
   record them. Borderline pairs are listed for the user to confirm. `check_skill` checks the lines (an entry each, a
   usable index) and, by `TimelineChainCheck`, against the index's last 7 days (any user, 5,000 events and their
   XML): types seen, the key held, still alternating (90%) per user and host.
-* **Arguments**: `entity`, `sources` (each `index`, `name`, `user`, `transform`, `host`, `process`, `title`,
+* **Arguments**: `entity` (no longer required: `entity`, `person` or `logonIds`), `person`, `logonIds`,
+  `personField`, `sources` (each `index`, `name`, `user`, `transform`, `host`, `process`, `title`,
   `window`, `object`, `text`, `elementField`, `actionField`, `eventTypeField`, `roles` with `focus`, `open`,
   `close`, `idle_start`, `idle_end` as `{where, any_of}` and `actions` as `[{kind, where, any_of}]`, `pairs`,
-  `typeRoles`), `userField`, `timeFrom` (default `now()-7d`), `timeTo` (default `now()`), `idleCap`, `view`,
+  `spanBy`, `typeRoles`), `userField`, `timeFrom` (default `now()-7d`), `timeTo` (default `now()`), `idleCap`, `view`,
   `lanes`, `skill`, `characterise`, `corrections`, `runAnyway`, `timeZone`.
 * **Returns**: in a chat, Markdown (the sources with their user fields and how their events were classified, the
   spans by kind, the pairs and borderline pairs, active time by host or source and application or place, the flags
   with examples, the activities with their evidence, the tables, the view's gantt_chart calls, what was learned);
   over MCP, JSON (also structured content): `entity`, `time`, `idle_cap_minutes`, `sources_chosen`, `sources`
-  (events, `user_field`, `user_field_from`, `user_transform`, `classified_by` each), `left_out`, `events_read`,
+  (events, `user_field`, `by` (by person id or by logon id), `accounts` (by logon id: events per account),
+  `user_field_from`, `user_transform`, `classified_by` each), `other_accounts` (by logon id), `left_out` (with the
+  close variants of the logon ids found), `events_read`, `none_in_period` (where no source had the user's events in
+  the period: each source's `events`, `first` and `last` overall, from one ES|QL `MIN`/`MAX`/`COUNT` each, or
+  `not_known` with why; also in the refusal's text, so the agent can move the window),
   `events_ignored`, `events_xml`, `ended_early`, `session_count` (focus sessions), `hosts`, `uncertain_sessions`,
   `actions`, `unattached_actions` (in no session or span), `spans` (by kind), `activity_periods_show`, `pairs`,
   `borderline_pairs`, `columns`/`rows` (host, process, sessions, active minutes, the most first, of focus sessions
@@ -1825,16 +1876,18 @@ can use an Elastic Index.
   `model_calls`, `items_asked`, `items_not_classified`, `unclear` with reasons, `modularity`, `notes`, `gantt`),
   `learned` (`event_chains`, `borderline_to_confirm`, `can_record`, `file`, `offer`), `time_zone`, `derived`,
   `caveat`. Tables under `/outputs/timelines/<entity>/`, every run: `spans.csv` (span, start, end, label, lane, kind
-  focus/pair/activity, activity, activity_label, host, source, events, how, uncertain), `activities.csv` (activity,
+  focus/pair/key/activity, activity, activity_label, host, source, events, how, uncertain), `activities.csv` (activity,
   activity_label, day, start, end, active_minutes, spans, lanes, evidence; header only when not characterised),
   `sessions.csv` (the focus sessions; `gantt_chart` with start, end, label `process`, lane `host` draws it as it
   is), `actions.csv`, `events.csv` (with `type` and `classified_by`), `daily.csv`, `windows.csv`, `quality.csv`,
   and with characterisation `items.csv`. Times in the tables are UTC. `timeline.json` (`TimelineSnapshot`: entity,
   period, zone, view, lanes, sources, whether characterised, when built) is written beside them, for
   `propose_timeline_dashboard`.
-* **Refuses**: no `entity`; no source with the user's events and a user field (each left out is said); a source
-  that isn't an Elastic Index, or whose index has no time field; a field the index doesn't have; a user field that
-  can't be one key (a text field with no keyword subfield, a transform on a number); a role that isn't one, or with
+* **Refuses**: none of `entity`, `person` or `logonIds`; no source with the user's events and a user field ("No
+  source holds ...": each left out is said, with each source's first and last events and count); a source with
+  `roles` and only `person`; a source that isn't an Elastic Index, or whose index has no time field; a field the
+  index doesn't have; a user field that can't be one key (a text field with no keyword subfield, a
+  transform on a number); a role that isn't one, or with
   no conditions; a `typeRoles` role that isn't one; a bad period, `idleCap` (1 minute to 24 hours), `view` or
   `lanes`; the user declining the sources form.
 
@@ -1886,6 +1939,139 @@ the workspace.
   activities, both, or characterise); more rows than a Data Connection reads (100,000); a folder the user can't
   see, or declines to choose; no Create in the folder; no Edit on the Data Connection it would replace; ECharts not
   installed, or no Use on it; a chart the table can't draw (`ChartCheck`).
+
+### `compare_activity`
+
+search · read-only · timelines group · Use on every index (`DataSourceAccess`, and again by Stroom as each
+aggregate runs); the peers' groups read as the data viewer reads events (View Data, and the stream store's check on
+each stream's feed) · takes a run slot · Classes: `CompareActivityTool`, `ActivityProfiles`, `ActivityScoring`,
+`ActivityStatistics`, `AggregateQuery`, `AggregateText`, `AggregateRunner`, `IndexAggregates`, `CachedAggregates`,
+`PeerGroups`, `ActivityCategories`, `ActivityAccess`, `ActivityLocation`, `CompareResult` (package
+`stroom.ai.impl.tools.compare`); `PersonScope`, `TimelineFields`, `TimelineEventXml` and `Leiden` from the timelines
+
+Compares one person's activity in a window with their own baseline and their peers' (built 2026-11-24; DESIGN.md's
+"Insider risk"), from index aggregates only, never the events, so 12 months is a few thousand numbers. Findings are
+indicators with their evidence and an alternative explanation, never a conclusion about the person: every result
+says so first (`CompareResult.INDICATORS`). Offered to a user who can use an Elastic or Lucene index. No permission
+of its own: the tool policies decide who may compare a person's activity.
+
+* **Whose events** (`PersonScope`, as `activity_timeline`'s): `person` (the person id) by each index's person field
+  (`personField`, the AGENTS doc's `## Fields` `person:`, the ECS convention `user.id`), else `logonIds` by its user
+  field (`userField`, likewise); each source says by which, with its field and where it came from. One of `person`
+  or `logonIds` is needed.
+* **Periods**: `windowFrom`/`windowTo` (a date, ISO 8601 time or date expression such as `now()-30d`; `windowTo`
+  exclusive, default today included; `windowFrom` default 30 days before), `baselineFrom`/`baselineTo` (default the
+  180 days before the window's start); the baseline ends by the window's start, and the two together are at most
+  3 × 366 days. `unit` (`day`, `week`, the default, or `month`) is what the window is compared in. Days and hours
+  are in `timeZone` (the person's).
+* **Sources**: `sources` (names or uuids), default every Elastic and Lucene index the user can use; each one with no
+  time field, or with no person or user field for the person, is listed as left out with why, and refused only if
+  none is left. `sumFields` are numeric fields summed a day (bytes sent); `breadthFields` are fields whose distinct
+  and new values are counted a day (default the host, application and object fields `TimelineFields` finds, by the
+  AGENTS doc's `## Fields` or convention, countable: not a date, nor analysed text on Elasticsearch).
+* **What it asks** (`ActivityProfiles`, run by `IndexAggregates` as the user): per source, the person's events by
+  day (events, first and last time, sums, distinct counts of each breadth field), by hour (active hours, the
+  hour-of-week profile a month), each breadth field's values with their first and last times (novelty, a row a
+  value), and everyone's events and people by day (coverage and source-wide shifts). ES|QL `STATS` on an Elastic
+  Index, StroomQL on any other (`AggregateText`: every name and value quoted); a query bucketed by time is cut into
+  calendar months in the person's zone, run in parallel up to `joinWorkers`, each search Stroom runs removed once
+  read. Hour buckets come back in UTC and are put in the zone in code; day buckets use ES|QL's `time_zone`, else (a
+  cluster that refuses it) a fixed offset, said (`ZONE_NOT_APPLIED`); StroomQL formats its days in the zone. At most
+  10,000 rows a query slice (`ActivityProfiles.MAX_ROWS`): one cut short is said and its figures are "approximate".
+  Each source audited as a search, with its first aggregate and how many more.
+* **Cost**: per source over N months about 3N queries, plus 1 a breadth field, N with peers (plus 1 for the people
+  active, and up to 200 event reads, cached), N for categories, N for location and 2 for an access field. 12 months
+  of one source with 2 breadth fields, peers, categories and location is about 75 queries, in parallel up to
+  `joinWorkers`; 5 sources about 375. The time limit is 4 times the query time limit.
+* **Re-runs** (`CachedAggregates`): the time-bucketed aggregates are kept in `/outputs/compare/<person>/
+  aggregates.json`; the same query asked again is answered from it for the days it holds, the last held day asked
+  again (it may have been part of a day), and only the days since run (about 1 or 2 slices a query). Aggregates not
+  bucketed by time (values' first and last times, the people active) always run.
+* **Checked first** (`ActivityScoring`): the days the source holds any data at all (a gap, e.g. retention, isn't
+  scored); `leave` (each `yyyy-MM-dd..yyyy-MM-dd` or a date, from the question, skill or AGENTS doc: not scored);
+  `exceptions` (each `yyyy-MM-dd..yyyy-MM-dd: reason`, e.g. an approved migration: not scored, and said with the
+  reason); quiet runs of 7 days or more (reported, not scored); and the whole source's volume, everyone else's
+  events per person a day with the person's own left out, so a shift everyone shares is told as the source's.
+* **Scoring** (`ActivityScoring`, `ActivityStatistics`; each a pure function checked by hand-computed cases):
+  * Features a day: events, active hours, first and last activity (minutes in the zone), each sum, each breadth
+    field's distinct and new values (none counted new in the first 28 days), each category's events.
+  * **Windows**: a day (`unit` day) against the 8 same weekdays before it; a week or month against the baseline's
+    windows of the same length (each needing 3 scored days). A finding at robust |z| ≥ 3.5 (median and MAD; the
+    mean absolute deviation when the MAD is 0; a constant baseline scores ±10; no score on fewer than 5 baseline
+    values) whose difference is at least half the baseline's level, or 60 minutes for a time. z is capped at 50 in
+    ranking and shown as "over 50". Runs of consecutive window findings of a feature the same way are merged into
+    one.
+  * **Change points**: the split of the feature's weekly means leaving the least absolute deviation from each
+    side's median (2 weeks or more each side), sized in the sides' pooled spread (3.5 or more) and at least half
+    the level before (an hour for a time); dated to the day within a week either side where the shift shows, the
+    first day already at the new level (not a quiet weekend before it).
+  * **Drifts**: a Theil-Sen slope of monthly means (medians for times) over 4 or more months of 5 or more days,
+    at least half the starting level (an hour for a time); a drift from zero, with no least change, isn't sized.
+  * **Rhythm**: each window month's hour-of-week profile against the baseline months' summed (total variation
+    distance), scored against how far each baseline month was from the rest; needs 5 baseline months.
+  * **Values started and stopped**: a breadth field's values first seen in the window, and those of the baseline
+    not seen since; listed where the field has at most 50 values.
+  * **Source-wide**: a window finding or change point of events, active hours or a sum is the source's when
+    everyone else's moved the same way past the threshold (a change point within 7 days) by at least half the
+    person's change relative to its level; listed apart ("Explained by the source", at most 5 shown), not ranked
+    with the person's. Other features (times, breadth, novelty, categories) aren't checked against the source.
+* **Peers** (`peers`, default true; `PeerGroups`): the people active in the source (one aggregate by the person or
+  user field), then each one's group read from one of their events' Event XML
+  (`EventSource/User/UserDetails/<peerElement>`, `Organisation` by default, as processing decorates it there and
+  not in the index; `Unit`, `Group` or `Role` allowed; `Nationality` or any other personal characteristic
+  refused). At most 200 people a call (`MAX_PEOPLE`): past it, a chat form asks to read the first 200 or compare
+  without peers; over MCP the first 200 are read and the result says the group may be missing members. The map of
+  person to group is kept in `/outputs/compare/peer-groups.json` and reused. Then the group's days in a second
+  round (`IN` their ids), each day's median taken in code; a finding where a window week's events a day, as a
+  multiple of the peers' median, part from that multiple in the baseline weeks (z ≥ 3.5 and 0.5 apart), and where
+  the whole window's events a day are at least twice the peers' median and z ≥ 3.5 against their spread (a curious
+  viewer's volume above the team's). Fewer than 5 peers
+  with events: not compared, said. Needs View Data and StreamId and EventId fields; without either, no peers, said.
+* **Categories** (`categories`, default false; `ActivityCategories`): the first breadth field's values a day by
+  category (personal cloud storage, webmail, job search, anonymiser, archive or encryption tool, remote access,
+  file sharing, social media, else other): from the index's `categoryField` where given; else classified by the
+  model in side calls (`ModelSideCalls`, as `activity_timeline`'s; batches of 100, at most 1,000 values a call, the
+  commonest first; answers checked against the fixed categories; values treated as data), cached in
+  `/outputs/compare/categories.json` and marked inferred. `categoryList` (the site's own, `value=category`, from the
+  AGENTS doc or a skill) overrides the rest, then `categoryCorrections` (kept for re-runs). Each value's category
+  and where it came from is in `<source>-categories.csv`; each category's events a day is one more feature.
+* **Access graph** (`accessField`, a field of the resources people reach: shares, repositories, sites, record types;
+  `ActivityAccess`): the baseline's people and resources (one aggregate, capped) clustered by `Leiden`; the
+  person's window access outside their cluster (at least 5 events and a tenth of the window's), and resources no
+  one in their cluster reached before, are a finding naming up to 10; the people of the person's cluster are noted
+  as peers learned from access.
+* **Location** (`location`, default true; `ActivityLocation`): from `countryField`, else a `*.geo.country_iso_code`
+  field (`source.*` first), and on an Elastic Index a `*.geo.location` point (ES|QL `ST_CENTROID_AGG`), in one
+  hourly aggregate by country: countries new in the window; impossible travel (over 900 km/h between two places at
+  least 500 km apart; with countries only, two countries within 2 hours, said as such); activity from abroad on
+  leave. An index with no geo fields: "location isn't available", said. No reference data lookups.
+* **Arguments**: `person`, `logonIds`, `personField`, `userField`, `windowFrom`, `windowTo`, `baselineFrom`,
+  `baselineTo`, `unit`, `timeZone`, `sources`, `sumFields`, `breadthFields`, `leave`, `exceptions`, `peers`,
+  `peerElement`, `categories`, `categoryField`, `categoryList`, `categoryCorrections`, `accessField`, `location`,
+  `countryField`.
+* **Returns**: in a chat, Markdown (the note, the sources by what, the ranked findings, those explained by the
+  source, values started and stopped, a line a month, notes, files, and the `activity_timeline` call for the flagged
+  days); over MCP, JSON (also
+  structured content): `person`, `logon_ids`, `baseline` and `window` (`from`, `to`), `unit`, `time_zone`, `note`,
+  `sources` (`index`, `by`, `values`, `breadth_fields`, `sum_fields`, or `left_out`), `findings` (at most 20,
+  ranked: `source`, `kind` day/week/month/change/drift/rhythm/peers/access/location, `feature`, `window`,
+  `baseline`, `value`, `score`, `evidence`, `alternative`), `findings_total`, `source_wide`, `months`, `notes`,
+  `files`, `flagged_days` (up to 5, for `activity_timeline`), `queries`. Files under `/outputs/compare/<person>/`
+  (the person id, else the logon ids, made safe): `profile.csv` (the daily features), `monthly.csv`, `findings.csv`
+  (every finding), `values.csv` (each field's values started and stopped), and with categories
+  `<source>-categories.csv`; charted by the table tool, or a CSV Data Connection by hand.
+* **Refuses**: neither `person` nor `logonIds`; a period that ends before it starts, a baseline after the window's
+  start, or more than 3 × 366 days in all; a `unit`, leave or exception that can't be read; a `peerElement` other
+  than Organisation, Unit, Group or Role; a `categoryList` or `categoryCorrections` entry that isn't
+  `value=category`; a source the user can't use; no Elastic or Lucene index the user can use; no source that can be
+  compared (each with why).
+* **Not built**: speed from numeric latitude and longitude fields on a non-Elastic index (countries only there); a
+  `check_skill` rule against stating intent or guilt (the tool's own wording and the templates only); a tool policy
+  of its own for these tools; `propose_timeline_dashboard` for these CSV files (its charts need it extended).
+* **Tests**: JUnit `TestActivityStatistics`, `TestActivityScoring`, `TestAggregateText`, `TestPeerGroups`,
+  `TestActivityCategories`, `TestActivityAccessAndLocation`, `TestCompareActivityTool` (over `InMemoryAggregates`);
+  e2e `TestE2eCompareActivity` (ES|QL and StroomQL agree) and `TestE2eInsiderCompareActivity` (the insider
+  dataset's plants found, its decoys not flagged).
 
 ### `current_results`
 
