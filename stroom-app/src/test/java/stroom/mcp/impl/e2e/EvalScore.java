@@ -1196,7 +1196,8 @@ final class EvalScore {
         }
         for (final Object way : ways) {
             final List<List<Object>> rows = rows(way);
-            if (accepted.stream().anyMatch(call -> rowsMismatch(rows, call, tabled, ordered, tolerance, extraRows) == null)) {
+            if (accepted.stream()
+                    .anyMatch(call -> rowsMismatch(rows, call, tabled, ordered, tolerance, extraRows) == null)) {
                 return rows;
             }
         }
@@ -1212,7 +1213,8 @@ final class EvalScore {
     ///   (an agent may answer from one call, then run others to check or add to it), and which call it was is noted; if
     ///   none matches, the problem is said of the closest accepted call (the one holding the most expected rows, in any
     ///   order; the latest of those as close), and the other checks are of it. `extra_rows: true` allows rows besides
-    ///   the expected ones; `rows_any_of` lists several right forms, the first an accepted call matches being used. A row matches when each expected value
+    ///   the expected ones; `rows_any_of` lists several right forms, the first an accepted call matches being used.
+    ///   A row matches when each expected value
     ///   is one of its values, whatever the columns are called: a string exactly, or as the start of a date
     ///   (`2026-01-02` matches `2026-01-02T00:00:00.000Z`); a number within `tolerance` of it (a fraction of it,
     ///   default 0.001), or 0.05 for one given with decimals, as an answer rounded to one place is. The rows must be
@@ -1290,9 +1292,9 @@ final class EvalScore {
                     .orElse(null);
             if (matching != null) {
                 answerCall = matching;
-                final boolean fromTable = mismatch(wanted, kept(wanted, rows(matching.result().get("rows")), extraRows, tolerance),
-                        ordered, tolerance)
-                                          != null;
+                final boolean fromTable = mismatch(wanted,
+                        kept(wanted, rows(matching.result().get("rows")), extraRows, tolerance),
+                        ordered, tolerance) != null;
                 note("answer rows from " + (fromTable
                         ? "a " + TABLE_TOOL + " call on "
                         : "") + tool + " call " + (tries.indexOf(matching) + 1) + " of " + tries.size());

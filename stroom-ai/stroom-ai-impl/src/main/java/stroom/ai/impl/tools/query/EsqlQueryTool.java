@@ -219,8 +219,8 @@ public class EsqlQueryTool extends AbstractWorkspaceTool {
                                  + "RLIKE, @ matches any string: escape it, or use LIKE for simple "
                                  + "patterns. ES|QL has no IF: use CASE(condition, then, else). Patterns: first "
                                  + "seen, MIN(@timestamp) BY user, value; spraying or scans, COUNT_DISTINCT(target) "
-                                 + "BY source; an index's baseline vs recent, one STATS with COUNT(*) WHERE @timestamp < x "
-                                 + "per period; a cold-start guard, WHERE on a history count.")
+                                 + "BY source; an index's baseline vs recent, one STATS with COUNT(*) WHERE "
+                                 + "@timestamp < x per period; a cold-start guard, WHERE on a history count.")
                         .chatOnly(" The rows are written to a table in the workspace too, for the table tool.")
                         .build())
                 .parameters(ObjectSchema.builder()
