@@ -87,6 +87,26 @@ final class TimelineSpans {
                        final Map<String, Classified> classified,
                        final List<PairRule> pairs,
                        final Options options) {
+        return build(timeline, events, classified, pairs, List.of(), options);
+    }
+
+    /// Works out the spans, with spans bounded by keys ([KeySpans]): from the first to the last event sharing a
+    /// key's value, split where the user is idle past the cap. Like pairs, they overlap the rest: they take no
+    /// event from a focus session or an activity period, and aren't in the daily totals.
+    ///
+    /// @param timeline   The focus sessions and the actions' attachment, from [TimelineSessions#build].
+    /// @param events     Every event of the timeline.
+    /// @param classified The automatic sources' events as classified, by event id.
+    /// @param pairs      The pairs, in the order they are applied.
+    /// @param keys       The keys spans are bounded by.
+    /// @param options    The cap, the period's end, the zone and the sources' names.
+    /// @return The spans of every kind, as [#build(Timeline, List, Map, List, Options)] gives them.
+    static Built build(final Timeline timeline,
+                       final List<Event> events,
+                       final Map<String, Classified> classified,
+                       final List<PairRule> pairs,
+                       final List<KeySpans.KeyRule> keys,
+                       final Options options) {
         final List<Event> sorted = new ArrayList<>(events);
         sorted.sort(Comparator.comparingLong(Event::time).thenComparingInt(Event::source).thenComparing(Event::id));
         final int focusCount = timeline.sessions().size();
@@ -131,7 +151,7 @@ final class TimelineSpans {
                     session.process()), session.host(), session.host(), sourcesOf(session, events, options),
                     session.eventIds(), "focus", session.startMark() != null
                             ? session.startMark()
-                            : NullSafe.string(session.endMark())));
+                            : NullSafe.string(session.endMark()), false));
         }
         int number = focusCount;
         final List<Session> activitySessions = new ArrayList<>();
@@ -155,6 +175,13 @@ final class TimelineSpans {
             draft.actions.forEach(id -> inPairNumber.put(id, at));
             // Its own start and end are its too.
             draft.eventIds.forEach(id -> inPairNumber.putIfAbsent(id, at));
+        }
+        final List<Draft> keyDrafts = keySpans(keys, sorted, classified, options);
+        keyDrafts.sort(Comparator.comparingLong((Draft draft) -> draft.start).thenComparing(draft -> draft.lane));
+        for (final Draft draft : keyDrafts) {
+            number++;
+            draft.number = number;
+            spans.add(draft.span(Kind.KEY));
         }
         spans.sort(Comparator.comparingLong(Span::start).thenComparing(Span::lane).thenComparingInt(Span::number));
 
@@ -274,7 +301,69 @@ final class TimelineSpans {
         if (endEvent != null) {
             draft.eventIds.add(endEvent.id());
         }
+        draft.sessionLevel = sessionLevel(c) || (endEvent != null && sessionLevel(classified.get(endEvent.id())));
         return draft;
+    }
+
+    /// @param c An event as classified, or null.
+    /// @return True if it starts or ends the user's being active (a logon, an unlock, a connect; a logoff, a lock,
+    /// a disconnect): a pair bounded by one is a session, not an activity of its own.
+    static boolean sessionLevel(final Classified c) {
+        if (c == null || !"Authenticate".equals(c.element()) || c.action() == null) {
+            return false;
+        }
+        final String action = c.action().strip();
+        return EventXmlClassifier.ACTIVE_FROM.stream().anyMatch(action::equalsIgnoreCase)
+               || EventXmlClassifier.IDLE_FROM.stream().anyMatch(action::equalsIgnoreCase);
+    }
+
+    // ------------------------------------------------------------------------------------------------
+    // Spans bounded by a key
+
+    private static List<Draft> keySpans(final List<KeySpans.KeyRule> keys,
+                                        final List<Event> sorted,
+                                        final Map<String, Classified> classified,
+                                        final Options options) {
+        final List<Draft> drafts = new ArrayList<>();
+        if (keys.isEmpty()) {
+            return drafts;
+        }
+        final KeySpans.Idle idle = new KeySpans.Idle(sorted.stream().map(Event::time).toList(), options.capMs());
+        for (final KeySpans.KeyRule key : keys) {
+            final Map<String, List<Event>> byValue = new LinkedHashMap<>();
+            for (final Event event : sorted) {
+                final Classified c = classified.get(event.id());
+                final String value = c == null || event.source() != key.source()
+                        ? null
+                        : c.keys().get(key.path());
+                if (value != null && !value.isBlank()) {
+                    byValue.computeIfAbsent(lane(event, options) + "\u0000" + value, k -> new ArrayList<>())
+                            .add(event);
+                }
+            }
+            for (final List<Event> group : byValue.values()) {
+                final String value = classified.get(group.getFirst().id()).keys().get(key.path());
+                int at = 0;
+                for (final List<Long> run : idle.runs(group.stream().map(Event::time).toList())) {
+                    final List<Event> runEvents = group.subList(at, at + run.size());
+                    at += run.size();
+                    if (runEvents.size() < 2) {
+                        continue;
+                    }
+                    final Event first = runEvents.getFirst();
+                    final Draft draft = new Draft(lane(first, options), first.host(), cut(key.label(value)),
+                            first.time(), runEvents.getLast().time(), "key " + key.path() + (key.given()
+                            ? " (given)"
+                            : " (session-like)"), null);
+                    runEvents.forEach(event -> {
+                        draft.sources.add(options.sourceName(event.source()));
+                        draft.eventIds.add(event.id());
+                    });
+                    drafts.add(draft);
+                }
+            }
+        }
+        return drafts;
     }
 
     // When a start with no end stops: the lane's first gap past the cap after it (its last event then, plus the
@@ -497,7 +586,9 @@ final class TimelineSpans {
         /// A pair's span: from a start to its end.
         PAIR,
         /// An activity period: actions close in time in a source.
-        ACTIVITY;
+        ACTIVITY,
+        /// A span bounded by a key: the first to the last event sharing a key's value.
+        KEY;
 
         /// @return Its name in the tables.
         String key() {
@@ -522,6 +613,8 @@ final class TimelineSpans {
     /// @param eventIds Its events' ids.
     /// @param how      How it was made.
     /// @param mark     Why its start or end is uncertain, or empty.
+    /// @param sessionLevel True for a pair a logon, unlock or connect (or their ends) bounds: a session, not an
+    ///                 activity of its own.
     record Span(int number,
                 Kind kind,
                 long start,
@@ -532,11 +625,24 @@ final class TimelineSpans {
                 String sources,
                 List<String> eventIds,
                 String how,
-                String mark) {
+                String mark,
+                boolean sessionLevel) {
 
         /// Copies the list.
         Span {
             eventIds = List.copyOf(eventIds);
+        }
+
+        /// @return True if it is placed in an activity as an item of its own (by its [#itemId]): a pair's span that
+        /// isn't a session, or a span bounded by a key.
+        boolean isItem() {
+            return (kind == Kind.PAIR && !sessionLevel) || kind == Kind.KEY;
+        }
+
+        /// @return Its id as an item of the characterisation (`p12`), apart from the sessions' (`s12`), so it never
+        /// takes a session's placement.
+        String itemId() {
+            return "p" + number;
         }
 
         /// @return Its id, as a session's is (`s12`).
@@ -610,6 +716,7 @@ final class TimelineSpans {
         private final Set<String> titles = new LinkedHashSet<>();
         private long end;
         private int number;
+        private boolean sessionLevel;
 
         Draft(final String lane,
               final String host,
@@ -633,7 +740,7 @@ final class TimelineSpans {
             return new Span(number, kind, start, Math.max(start, end), label, lane, host, String.join("; ",
                     sources), ids, how, mark == null
                     ? ""
-                    : mark);
+                    : mark, sessionLevel);
         }
 
         Session session() {

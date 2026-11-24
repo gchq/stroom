@@ -159,7 +159,7 @@ final class TimelineTables {
 
         final List<List<String>> spanRows = new ArrayList<>();
         for (final Span span : run.built().spans()) {
-            final String activity = activityOf(characterised, span.id());
+            final String activity = activityOf(characterised, span);
             spanRows.add(List.of(span.id(), iso(span.start()), iso(span.end()), span.label(), span.lane(),
                     span.kind().key(), activity, activity.isEmpty()
                             ? ""
@@ -228,8 +228,9 @@ final class TimelineTables {
                                     final ZoneId zone) {
         final Map<String, List<Span>> byActivity = new LinkedHashMap<>();
         for (final Span span : spans) {
-            final String activity = activityOf(characterised, span.id());
-            if (activity.startsWith("a") && span.kind() != Kind.PAIR) {
+            final String activity = activityOf(characterised, span);
+            // A session's pair (a logon to its logoff) holds the activities, so it isn't one's.
+            if (activity.startsWith("a") && (span.kind() != Kind.PAIR || span.isItem())) {
                 byActivity.computeIfAbsent(activity, a -> new ArrayList<>()).add(span);
             }
         }
@@ -259,6 +260,21 @@ final class TimelineTables {
         });
         rows.sort(Comparator.comparingLong(ActivityRow::start).thenComparing(ActivityRow::activity));
         return rows;
+    }
+
+    // A span's activity: an item's placement for a span placed as an item (by its item id, never a session's), else
+    // its session's.
+    private static String activityOf(final Characterised characterised, final Span span) {
+        if (!span.isItem()) {
+            return activityOf(characterised, span.id());
+        }
+        if (characterised == null) {
+            return "";
+        }
+        final Placement placement = characterised.items().get(span.itemId());
+        return placement == null
+                ? ""
+                : placement.activity();
     }
 
     private static String activityOf(final Characterised characterised, final String id) {

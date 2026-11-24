@@ -162,6 +162,26 @@ final class ActivityCharacterisation {
                                       final List<String> sourceNames,
                                       final Settings settings,
                                       final ModelSideCalls sideCalls) {
+        return characterise(timeline, events, sourceNames, List.of(), settings, sideCalls);
+    }
+
+    /// Characterises a timeline, with spans that aren't sessions as items of their own (a pair's span other than a
+    /// session's, e.g. a window's focus to its loss; a span bounded by a key): placed by terms or the model as loose
+    /// text is, each by its item id ([TimelineSpans.Span#itemId]), so never by a session's placement.
+    ///
+    /// @param timeline    The timeline.
+    /// @param events      Its events, by id.
+    /// @param sourceNames Each source's name, by its place.
+    /// @param spans       The spans to place as items (those [TimelineSpans.Span#isItem]).
+    /// @param settings    The excerpt cap, batch size, budget, workers, zone, corrections and cache.
+    /// @param sideCalls   The model's side calls.
+    /// @return The activities, where each session and item went, and what was left undone.
+    static Characterised characterise(final Timeline timeline,
+                                      final Map<String, Event> events,
+                                      final List<String> sourceNames,
+                                      final List<TimelineSpans.Span> spans,
+                                      final Settings settings,
+                                      final ModelSideCalls sideCalls) {
         final List<Session> sessions = timeline.sessions();
         final Map<String, SessionWords> words = new LinkedHashMap<>();
         final Map<String, String> suffixes = titleSuffixes(sessions);
@@ -214,6 +234,8 @@ final class ActivityCharacterisation {
 
         // Items: free text, and sessions with words the graph left out.
         final List<Item> items = items(timeline, events, sourceNames, words, placements, settings);
+        items.addAll(spanItems(timeline, events, spans, settings));
+        items.sort(Comparator.comparingLong(Item::time).thenComparing(Item::id));
         final Map<String, Placement> itemPlacements = new LinkedHashMap<>();
         final List<Item> loose = new ArrayList<>();
         for (final Item item : items) {
@@ -479,6 +501,30 @@ final class ActivityCharacterisation {
             }
         }
         items.sort(Comparator.comparingLong(Item::time).thenComparing(Item::id));
+        return items;
+    }
+
+    // Each span to place as an item: its label and its start event's text, by its item id.
+    private static List<Item> spanItems(final Timeline timeline,
+                                        final Map<String, Event> events,
+                                        final List<TimelineSpans.Span> spans,
+                                        final Settings settings) {
+        final List<Item> items = new ArrayList<>();
+        final List<Session> byStart = new ArrayList<>(timeline.sessions());
+        for (final TimelineSpans.Span span : spans) {
+            if (!span.isItem()) {
+                continue;
+            }
+            final Event start = span.eventIds().isEmpty()
+                    ? null
+                    : events.get(span.eventIds().getFirst());
+            final String text = (span.label() + " " + NullSafe.string(NullSafe.get(start, Event::text))).strip();
+            if (text.isBlank()) {
+                continue;
+            }
+            items.add(new Item(span.itemId(), excerpt(text, settings.excerptChars()), span.start(), span.host(),
+                    span.sources(), null, before(byStart, null, span.start())));
+        }
         return items;
     }
 

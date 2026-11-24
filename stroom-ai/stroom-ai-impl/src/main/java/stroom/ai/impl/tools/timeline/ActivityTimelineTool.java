@@ -56,6 +56,7 @@ import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Characterised;
 import stroom.ai.impl.tools.timeline.EventChains.Entry;
 import stroom.ai.impl.tools.timeline.EventCodes.CodeRole;
 import stroom.ai.impl.tools.timeline.EventXmlClassifier.Classified;
+import stroom.ai.impl.tools.timeline.KeySpans.KeyRule;
 import stroom.ai.impl.tools.timeline.PairInference.Candidate;
 import stroom.ai.impl.tools.timeline.PairInference.Inferred;
 import stroom.ai.impl.tools.timeline.PairInference.Typed;
@@ -182,6 +183,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     static final String KIND_KEY = "kind";
     static final String PAIRS_KEY = "pairs";
     static final String TYPE_ROLES_KEY = "typeRoles";
+    static final String SPAN_BY_KEY = "spanBy";
     static final String ELEMENT_FIELD_KEY = "elementField";
     static final String ACTION_FIELD_KEY = "actionField";
     static final String EVENT_TYPE_FIELD_KEY = "eventTypeField";
@@ -407,6 +409,10 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 .addProperty(ROLES_KEY, roles)
                 .addProperty(PAIRS_KEY, ArraySchema.builder().items(pair)
                         .description("Optional: the source's own pairs (e.g. one the user confirmed).").build())
+                .addProperty(SPAN_BY_KEY, stringArraySchema("Optional: keys (an index field, or a key path such as "
+                                                            + "Data[SessionId]) whose values bound spans, from the "
+                                                            + "first to the last event sharing one, e.g. "
+                                                            + "destination.domain (session ids are found)."))
                 .addProperty(TYPE_ROLES_KEY, ObjectSchema.builder()
                         .description("Optional: the user's corrections, an event type's role: {\"<type>\": "
                                      + "\"active|idle|open|close|action|ignore\"}.")
@@ -420,6 +426,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                  + "Index sources, in code. Two levels: detail spans (focus sessions where a source "
                                  + "records window focus; pairs from a start to its end, e.g. a process's start "
                                  + "and end, the schema's, a skill's, or inferred from the user's own events; "
+                                 + "spans bounded by a key, e.g. a session id; "
                                  + "activity periods, the actions in neither close in time, by host or source) and "
                                  + "activities rolled up from them (what the user was working on). Events without "
                                  + "roles are classified from their Events XML (the EventDetail element and "
@@ -541,17 +548,25 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
 
         final List<PairRule> pairs = new ArrayList<>(plan.pairs());
         pairs.addAll(PairRule.SCHEMA);
-        final Inferred inferred = PairInference.infer(typed(classification, byId, options), pairs);
+        final List<Typed> typed = typed(classification, byId, options);
+        final Inferred inferred = PairInference.infer(typed, pairs);
         for (final Candidate candidate : inferred.clear()) {
             pairs.add(new PairRule(candidate.source(), candidate.start(), candidate.end(), candidate.by(), null,
                     Origin.INFERRED, candidate.share()));
         }
+        final List<KeyRule> keys = new ArrayList<>(plan.keys());
+        for (final KeyRule found : KeySpans.find(typed, pairs, new KeySpans.Idle(classification.events().stream()
+                .map(Event::time).toList(), capMs))) {
+            if (keys.stream().noneMatch(key -> key.source() == found.source() && key.path().equals(found.path()))) {
+                keys.add(found);
+            }
+        }
         final Built built = TimelineSpans.build(timeline, classification.events(), classification.byId(), pairs,
-                options);
+                keys, options);
 
         final String folder = FOLDER + safe(entity) + "/";
         final Characterised characterised = booleanArg(request, CHARACTERISE_ARG, false) || view != View.DETAIL
-                ? characterise(request, context, workspace, config, built.combined(), byId, names, folder, zone)
+                ? characterise(request, context, workspace, config, built, byId, names, folder, zone)
                 : null;
         final Learned learned = TimelineLearning.learn(learnedEntries(request, sources, inferred, plan),
                 inferred.borderline().stream()
@@ -687,7 +702,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                       + "person's)", automatic.by()));
                     continue;
                 }
-                sources.add(automatic.source(automatic.transforms(), List.of()));
+                sources.add(automatic.source(automatic.transforms(), spanFields(one.spec(), automatic.mapping())));
                 kept.add(one.spec());
                 notes.add(new SourceNote(automatic.name(), automatic.doc().getName(), automatic.user().field(),
                         automatic.user().from(), null, null, automatic.by()));
@@ -701,6 +716,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                     extra.add(field);
                 }
             }
+            spanFields(one.spec(), automatic.mapping()).stream().filter(field -> !extra.contains(field))
+                    .forEach(extra::add);
             sources.add(automatic.source(probed.transforms(), extra));
             kept.add(one.spec());
             fields.put(sources.size() - 1, found);
@@ -725,7 +742,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             throw new WorkspaceException(sb.toString());
         }
         return new Plan(sources, notes, chosen, fields, pairsOf(kept, sources, skill), overridesOf(kept, sources,
-                skill));
+                skill), keysOf(kept));
     }
 
     // An automatic source's index, its fields, and its user field found (or not yet).
@@ -1019,6 +1036,39 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             }
         }
         return null;
+    }
+
+    // The index fields a source's spanBy names, fetched so they are keys of its events.
+    private static List<String> spanFields(final Map<?, ?> spec, final Map<String, ElasticEql.Field> mapping) {
+        return spanBy(spec).stream().filter(mapping::containsKey).toList();
+    }
+
+    private static List<String> spanBy(final Map<?, ?> spec) {
+        final Object given = spec.get(SPAN_BY_KEY);
+        final List<?> items = given instanceof final List<?> list
+                ? list
+                : given == null
+                        ? List.of()
+                        : List.of(String.valueOf(given).split(","));
+        final List<String> out = new ArrayList<>();
+        for (final Object item : items) {
+            final String key = text(item);
+            if (key != null && !out.contains(key)) {
+                out.add(key);
+            }
+        }
+        return out;
+    }
+
+    // The keys each source's call gives spans to be bounded by.
+    private static List<KeyRule> keysOf(final List<Map<?, ?>> specs) {
+        final List<KeyRule> keys = new ArrayList<>();
+        for (int i = 0; i < specs.size(); i++) {
+            for (final String key : spanBy(specs.get(i))) {
+                keys.add(new KeyRule(i, key, true));
+            }
+        }
+        return keys;
     }
 
     // Each source's pairs: the skill's Event chains first, then the call's.
@@ -1678,7 +1728,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                        final ToolCallContext context,
                                        final SessionWorkspace workspace,
                                        final AiWorkspaceConfig config,
-                                       final Timeline timeline,
+                                       final Built built,
                                        final Map<String, Event> byId,
                                        final List<String> names,
                                        final String folder,
@@ -1692,6 +1742,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             // Kept with the investigation, so a re-run keeps them.
             workspace.write(correctionsPath, JsonUtil.writeValueAsString(corrections, true), null);
         }
+        final Timeline timeline = built.combined();
         context.progress().report("Characterising " + timeline.sessions().size() + " session(s)");
         final boolean runAnyway = booleanArg(request, RUN_ANYWAY_ARG, false);
         final ActivityCharacterisation.Settings settings = new ActivityCharacterisation.Settings(
@@ -1699,8 +1750,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 Math.max(0, config.getCharacteriseMaxItems()), runAnyway, Math.max(1, config.getJoinWorkers()),
                 zone.zone(), corrections, readCache(workspace, cachePath),
                 count -> askBeyond(request, context, count, config.getCharacteriseMaxItems()));
-        final Characterised characterised = ActivityCharacterisation.characterise(timeline, byId, names, settings,
-                context.sideCalls());
+        final Characterised characterised = ActivityCharacterisation.characterise(timeline, byId, names,
+                built.spans().stream().filter(TimelineSpans.Span::isItem).toList(), settings, context.sideCalls());
         if (!characterised.cache().isEmpty()) {
             workspace.write(cachePath, JsonUtil.writeValueAsString(characterised.cache(), false), null);
         }
@@ -1815,12 +1866,14 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     /// @param fields    The automatic sources' classifying fields, by place.
     /// @param pairs     The pairs given, in the order they are applied.
     /// @param overrides The types given a role, by source.
+    /// @param keys      The keys the call gives spans to be bounded by, by source.
     private record Plan(List<Source> sources,
                         List<SourceNote> notes,
                         String chosen,
                         Map<Integer, Fields> fields,
                         List<PairRule> pairs,
-                        Map<Integer, Map<String, RoleOverride>> overrides) {
+                        Map<Integer, Map<String, RoleOverride>> overrides,
+                        List<KeyRule> keys) {
 
     }
 

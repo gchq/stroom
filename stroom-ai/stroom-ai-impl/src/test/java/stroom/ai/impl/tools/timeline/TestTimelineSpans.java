@@ -170,6 +170,69 @@ class TestTimelineSpans {
     }
 
     @Test
+    void aSessionIdSeveralTypesShareBoundsASpanSplitWhereTheUserIsIdle() {
+        // Five sessions, each a checkout, an action and a close sharing a session id; no start or end of their own
+        // the schema knows, and no pair matched by it.
+        for (final String[] session : new String[][]{{"09:00", "09:05", "09:20", "701"}, {"10:00", "10:10", "10:15",
+                "702"}, {"13:00", "13:02", "13:25", "703"}, {"14:00", "14:05", "14:10", "704"}, {"15:00", "15:05", "15:10",
+                "705"}}) {
+            typed(session[0], "vault-checkout", Map.of("Data[SessionId]", session[3]), "srv-db-01");
+            typed(session[1], "vault-command", Map.of("Data[SessionId]", session[3]), "srv-db-01");
+            typed(session[2], "vault-close", Map.of("Data[SessionId]", session[3]), "srv-db-01");
+        }
+        // The last session's id again after a long idle: a stretch of its own, not the session's.
+        typed("16:00", "vault-command", Map.of("Data[SessionId]", "703"), "srv-db-01");
+        typed("16:05", "vault-command", Map.of("Data[SessionId]", "703"), "srv-db-01");
+
+        final List<KeySpans.KeyRule> keys = KeySpans.find(typedEvents(), List.of(), idle());
+        final Built built = build(List.of(), keys);
+
+        assertThat(keys).containsExactly(new KeySpans.KeyRule(0, "Data[SessionId]", false));
+        assertThat(built.spans()).filteredOn(span -> span.kind() == Kind.KEY)
+                .extracting(Span::label, span -> iso(span.start()), span -> iso(span.end()), Span::isItem)
+                .containsExactly(tuple("SessionId 701", "09:00", "09:20", true),
+                        tuple("SessionId 702", "10:00", "10:15", true),
+                        tuple("SessionId 703", "13:00", "13:25", true),
+                        tuple("SessionId 704", "14:00", "14:10", true),
+                        tuple("SessionId 705", "15:00", "15:10", true),
+                        tuple("SessionId 703", "16:00", "16:05", true));
+        // They overlap the rest: the actions are still in activity periods.
+        assertThat(built.count(Kind.ACTIVITY)).isPositive();
+        assertThat(built.spans()).filteredOn(span -> span.kind() == Kind.KEY)
+                .allSatisfy(span -> assertThat(span.itemId()).isEqualTo("p" + span.number()));
+    }
+
+    @Test
+    void aKeyAPairIsMatchedByOrThatRecursAllDayIsntSessionLikeAndAGivenKeyIsLabelledByItsValue() {
+        for (int day = 0; day < 4; day++) {
+            final String hour = "%02d".formatted(9 + day * 2);
+            typed(hour + ":00", "focus-in", Map.of("Data[Application]", "EXCEL.EXE", "Data[WindowHandle]",
+                    "0x" + day), "Budget.xlsx");
+            typed(hour + ":20", "focus-out", Map.of("Data[Application]", "EXCEL.EXE", "Data[WindowHandle]",
+                    "0x" + day), "Budget.xlsx");
+            typed(hour + ":25", "focus-in", Map.of("Data[Application]", "WINWORD.EXE", "Data[WindowHandle]",
+                    "1x" + day), "Report.docx");
+            typed(hour + ":40", "focus-out", Map.of("Data[Application]", "WINWORD.EXE", "Data[WindowHandle]",
+                    "1x" + day), "Report.docx");
+        }
+        final PairRule focus = new PairRule(0, "focus-in", "focus-out", "Data[WindowHandle]", null,
+                PairRule.Origin.INFERRED, 1);
+
+        // The window handle is the pair's; an application recurs in a stretch a time, every time.
+        assertThat(KeySpans.find(typedEvents(), List.of(focus), idle())).isEmpty();
+        final Built built = build(List.of(focus), List.of(new KeySpans.KeyRule(0, "Data[Application]", true)));
+        assertThat(built.spans()).filteredOn(span -> span.kind() == Kind.KEY).extracting(Span::label)
+                .contains("EXCEL.EXE", "WINWORD.EXE");
+        // A pair other than a session's is an item of the characterisation; a logon's isn't.
+        assertThat(built.spans()).filteredOn(span -> span.kind() == Kind.PAIR).isNotEmpty()
+                .allSatisfy(span -> assertThat(span.isItem()).isTrue());
+        assertThat(TimelineSpans.sessionLevel(EventXmlClassifier.of("Authenticate", "Connect", null, null, null,
+                null, Map.of(), Route.XML))).isTrue();
+        assertThat(TimelineSpans.sessionLevel(EventXmlClassifier.of("Authenticate", "Other", null, null, null,
+                null, Map.of(), Route.XML))).isFalse();
+    }
+
+    @Test
     void labelsAreTheApplicationElseTheObjectsPlaceElseTheKind() {
         assertThat(TimelineSpans.objectLabel("https://Research.Example.org/x?y=1")).isEqualTo("research.example.org");
         assertThat(TimelineSpans.objectLabel("C:\\Users\\j\\Q3 Proposal.docx")).isEqualTo("Q3 Proposal.docx");
@@ -180,10 +243,27 @@ class TestTimelineSpans {
     // ------------------------------------------------------------------------------------------------
 
     private Built build(final List<PairRule> pairs) {
+        return build(pairs, List.of());
+    }
+
+    private Built build(final List<PairRule> pairs, final List<KeySpans.KeyRule> keys) {
         final Options options = new Options(CAP, PERIOD_END, PERIOD_END, ZoneOffset.UTC, List.of("Endpoint",
                 "Messages"), Set.of());
         final Timeline timeline = TimelineSessions.build(events, options);
-        return TimelineSpans.build(timeline, events, classified, pairs, options);
+        return TimelineSpans.build(timeline, events, classified, pairs, keys, options);
+    }
+
+    private List<PairInference.Typed> typedEvents() {
+        return events.stream()
+                .filter(event -> classified.containsKey(event.id()))
+                .map(event -> new PairInference.Typed(event.id(), event.source(), event.time(), event.host(),
+                        classified.get(event.id()).type(), classified.get(event.id()).schemaType(),
+                        classified.get(event.id()).keys()))
+                .toList();
+    }
+
+    private KeySpans.Idle idle() {
+        return new KeySpans.Idle(events.stream().map(Event::time).toList(), CAP);
     }
 
     private void process(final String time, final String action, final String pid, final String command) {
