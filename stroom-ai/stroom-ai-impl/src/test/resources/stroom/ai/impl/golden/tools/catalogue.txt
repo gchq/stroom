@@ -1,10 +1,10 @@
 # The built-in tools the model is shown
 
-Built-in tools: 65
+Built-in tools: 66
 
 ## Offered in each mode (in a chat with no MCP servers)
 
-### AGENT (49 tool(s))
+### AGENT (50 tool(s))
 activate_administration
 activate_build
 activate_dashboards
@@ -12,6 +12,7 @@ activate_indexing
 activate_processing
 activate_skills
 ask_user
+check_instructions
 current_results
 delete_file
 describe_data_source
@@ -55,7 +56,7 @@ write_file
 xpath
 xslt_lookups
 
-### ASK (45 tool(s))
+### ASK (46 tool(s))
 activate_administration
 activate_build
 activate_dashboards
@@ -63,6 +64,7 @@ activate_indexing
 activate_processing
 activate_skills
 ask_user
+check_instructions
 current_results
 describe_data_source
 document_documentation
@@ -102,7 +104,7 @@ wc
 xpath
 xslt_lookups
 
-### PLAN (45 tool(s))
+### PLAN (46 tool(s))
 activate_administration
 activate_build
 activate_dashboards
@@ -110,6 +112,7 @@ activate_indexing
 activate_processing
 activate_skills
 ask_user
+check_instructions
 current_results
 describe_data_source
 document_documentation
@@ -816,6 +819,37 @@ Asks the user the questions you need answered before you carry on, and waits for
     }
   },
   "required" : [ "questions" ],
+  "type" : "object"
+}
+
+================================================================================
+## check_instructions
+
+isReadOnly: true
+readsUntrustedContent: true
+boundsItsOutput: false
+strict: null
+metadata: { }
+offered in modes: AGENT, ASK, PLAN
+
+### Description
+
+Checks standing instructions (AGENTS docs): those that apply in a folder, or a draft of a folder's doc. Gives problems (a line of '## Fields', '## Required imports', '## Component templates' or '## Documentation' the tools can't apply as written: an unknown key, a field no index there has, field lines under another heading, a near-miss heading) and suggestions (a line the same as a more general doc's, a field the index plan maps otherwise), each with a fix to propose with propose_instructions. Other text only guides you and is never a problem.
+
+### Parameters
+
+{
+  "properties" : {
+    "folder" : {
+      "description" : "The folder, by UUID or Explorer path: its docs are checked, or where the draft would live.",
+      "type" : "string"
+    },
+    "markdown" : {
+      "description" : "A draft of the folder's doc to check instead.",
+      "type" : "string"
+    }
+  },
+  "required" : [ ],
   "type" : "object"
 }
 

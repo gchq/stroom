@@ -331,6 +331,14 @@ Needs: View (document)
 - nothing: REFUSED or limited: Error: no folder '/Test' that you can see. Give a folder's UUID or Explorer path.
 - admin: runs (the same as with everything)
 
+## check_instructions {"folder":"/Test"}
+Needs: View (document), Use (document)
+- everything: runs: 1 AGENTS doc(s) apply in /Test, most general first.
+- without View (document): REFUSED or limited: No AGENTS docs apply in /Test.
+- without Use (document): REFUSED or limited: No AGENTS docs apply in /Test.
+- nothing: REFUSED or limited: No AGENTS docs apply in /Test.
+- admin: runs (the same as with everything)
+
 ## find_skills {"name":"Test skill"}
 Needs: View (document), Use (document)
 - everything: runs: Skill 'Test skill' (folder /Test, doc skills-uuid).

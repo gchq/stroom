@@ -88,6 +88,7 @@ class TestToolPermissionMatrix {
             new Case("propose_extraction_pipeline", null, List.of(Need.VIEW)),
             new Case("propose_documentation_change", null, List.of(Need.VIEW)),
             new Case("propose_instructions", null, List.of(Need.VIEW)),
+            new Case("check_instructions", null, List.of(Need.VIEW, Need.USE)),
             new Case("find_skills", null, List.of(Need.VIEW, Need.USE)),
             new Case("check_skill", null, List.of(Need.VIEW, Need.USE)),
             new Case("propose_skill", null, List.of(Need.VIEW)),

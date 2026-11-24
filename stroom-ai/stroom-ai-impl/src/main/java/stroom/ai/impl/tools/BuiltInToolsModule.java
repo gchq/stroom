@@ -31,6 +31,7 @@ import stroom.ai.impl.tools.documents.FindInContentTool;
 import stroom.ai.impl.tools.documents.FolderContentsTool;
 import stroom.ai.impl.tools.documents.ReadDocumentTool;
 import stroom.ai.impl.tools.instructions.AgentKnowledge;
+import stroom.ai.impl.tools.instructions.CheckInstructionsTool;
 import stroom.ai.impl.tools.instructions.GetInstructionsTool;
 import stroom.ai.impl.tools.instructions.InstructionEvidenceTool;
 import stroom.ai.impl.tools.instructions.MemoryTool;
@@ -134,6 +135,7 @@ public class BuiltInToolsModule extends AbstractModule {
                 .addBinding(GetInstructionsTool.class)
                 .addBinding(InstructionEvidenceTool.class)
                 .addBinding(ProposeInstructionsTool.class)
+                .addBinding(CheckInstructionsTool.class)
                 .addBinding(FindSkillsTool.class)
                 .addBinding(CheckSkillTool.class)
                 .addBinding(ProposeSkillTool.class)

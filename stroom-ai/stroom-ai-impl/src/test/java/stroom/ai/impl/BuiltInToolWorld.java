@@ -315,6 +315,7 @@ public final class BuiltInToolWorld implements AutoCloseable {
                     "markdown", "# Test words\n\nThe words to look for.", "summary", "Says what the words are."))),
             Map.entry("propose_instructions", json(Map.of("folder", "/Test", "markdown",
                     "# Standing instructions\n\n- Times are UTC.", "summary", "Times as chosen in two chats."))),
+            Map.entry("check_instructions", "{\"folder\":\"/Test\"}"),
             Map.entry("find_skills", "{\"name\":\"Test skill\"}"),
             Map.entry("check_skill", "{\"name\":\"Test skill\"}"),
             Map.entry("propose_skill", json(Map.of("folder", "/Test", "markdown",

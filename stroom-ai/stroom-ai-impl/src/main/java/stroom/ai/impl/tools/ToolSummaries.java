@@ -34,6 +34,8 @@ public final class ToolSummaries {
             Map.entry("build_translation_xslt",
                     "Onboarding: writes an event-logging translation XSLT from a field mapping."),
             Map.entry("catalogue_event_types", "Onboarding: catalogues a source's event types with the user."),
+            Map.entry("check_instructions",
+                    "Checks AGENTS docs and gives what the tools can't apply as written, with fixes."),
             Map.entry("check_skill", "Checks a skill and gives its problems and suggestions, with fixes."),
             Map.entry("check_events", "Onboarding: validates event XML against the event-logging schema."),
             Map.entry("check_index_template", "Onboarding: checks an Elasticsearch index template."),

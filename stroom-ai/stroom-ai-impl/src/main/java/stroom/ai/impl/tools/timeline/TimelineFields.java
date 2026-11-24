@@ -63,14 +63,7 @@ public class TimelineFields {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TimelineFields.class);
 
     /// The event-logging paths of what is found, as the conventions map them.
-    static final Map<String, String> CONVENTION_PATHS = Map.of(
-            InstructionRules.USER_FIELD, "EventSource/User/Id",
-            InstructionRules.PERSON_FIELD, "EventSource/User/UserDetails/Id",
-            InstructionRules.TARGET_USER_FIELD, "EventDetail/Authorise/User/Id",
-            InstructionRules.TARGET_PERSON_FIELD, "EventDetail/Authorise/User/UserDetails/Id",
-            InstructionRules.HOST_FIELD, "EventSource/Device/HostName",
-            InstructionRules.ACTION_FIELD, "EventDetail/*/Action",
-            InstructionRules.EVENT_TYPE_FIELD, "EventDetail/TypeId");
+    static final Map<String, String> CONVENTION_PATHS = InstructionRules.CONVENTION_PATHS;
     private static final Pattern CONVENTION_LINE = Pattern.compile(
             "^\\s+([A-Za-z*/]+):\\s*\\{\\s*name:\\s*([^,}\\s]+)", Pattern.MULTILINE);
     private static final Pattern TOKEN = Pattern.compile("[A-Za-z0-9_@.\\-]+");
@@ -187,7 +180,7 @@ public class TimelineFields {
 
     /// @param path An event-logging path, e.g. `EventSource/User/Id`.
     /// @return Each convention profile's field for it, by the profile's name.
-    Map<String, String> conventions(final String path) {
+    public Map<String, String> conventions(final String path) {
         final Map<String, String> out = new LinkedHashMap<>();
         if (knowledge.isEmpty()) {
             return out;

@@ -30,7 +30,9 @@ import stroom.util.shared.ResultPage;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 /// The fields of the data sources an AGENTS doc applies to, as the user can use them, so a proposed doc's
@@ -62,21 +64,49 @@ public class IndexFieldNames {
     public Set<String> under(final DocRef folderRef) {
         final Set<String> fields = new LinkedHashSet<>();
         try {
-            final String folder = agentInstructions.folderPath(folderRef);
-            for (final DocRef dataSource : dataSourceAccess.listUsable()) {
-                final String in = agentInstructions.folderOf(dataSource);
-                if ("/".equals(folder) || in.equals(folder) || in.startsWith(folder + "/")) {
-                    final ResultPage<QueryField> page = queryServiceProvider.get().findFields(new FindFieldCriteria(
-                            new PageRequest(0, MAX_FIELDS), FindFieldCriteria.DEFAULT_SORT_LIST, dataSource, null,
-                            null));
-                    NullSafe.list(NullSafe.get(page, ResultPage::getValues))
-                            .forEach(field -> fields.add(field.getFldName()));
-                }
-            }
+            indexes(agentInstructions.folderPath(folderRef)).forEach(index -> fields.addAll(index.fields()));
         } catch (final RuntimeException e) {
             LOGGER.debug("Unable to read the fields of the data sources under {}", folderRef, e);
             return Set.of();
         }
         return fields;
+    }
+
+    /// @param folder A folder's path, e.g. `/Indexes`, or `/` for everything.
+    /// @return Every data source the user can use in the folder or below it, each with its folder and fields.
+    /// @throws RuntimeException If the data sources or their fields can't be read.
+    public List<IndexFields> indexes(final String folder) {
+        final List<IndexFields> out = new ArrayList<>();
+        final String at = AgentInstructions.normalise(folder);
+        for (final DocRef dataSource : dataSourceAccess.listUsable()) {
+            final String in = agentInstructions.folderOf(dataSource);
+            if (AgentInstructions.isWithin(in, at)) {
+                final ResultPage<QueryField> page = queryServiceProvider.get().findFields(new FindFieldCriteria(
+                        new PageRequest(0, MAX_FIELDS), FindFieldCriteria.DEFAULT_SORT_LIST, dataSource, null,
+                        null));
+                final Set<String> fields = new LinkedHashSet<>();
+                NullSafe.list(NullSafe.get(page, ResultPage::getValues))
+                        .forEach(field -> fields.add(field.getFldName()));
+                out.add(new IndexFields(dataSource, in, fields));
+            }
+        }
+        return out;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A data source's fields.
+    ///
+    /// @param dataSource The data source.
+    /// @param folder     Its folder, e.g. `/Indexes`.
+    /// @param fields     Its fields' names.
+    public record IndexFields(DocRef dataSource, String folder, Set<String> fields) {
+
+        /// Copies the set.
+        public IndexFields {
+            fields = Set.copyOf(fields);
+        }
     }
 }

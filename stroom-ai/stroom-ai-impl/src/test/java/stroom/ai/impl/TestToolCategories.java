@@ -35,7 +35,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestToolCategories {
 
     private static final Map<AiToolCategory, List<String>> EXPECTED = Map.of(
-            AiToolCategory.CORE, List.of("ask_user", "check_skill", "delete_file", "document_documentation",
+            AiToolCategory.CORE, List.of("ask_user", "check_instructions", "check_skill", "delete_file",
+                    "document_documentation",
                     "document_info",
                     "document_links", "find_in_content", "find_skills", "folder_contents", "gantt_chart",
                     "get_current_date",

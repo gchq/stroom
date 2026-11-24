@@ -110,6 +110,17 @@ public final class InstructionRules {
     /// The field holding the country an event came from, as a code (e.g. where a sign-in came from).
     public static final String COUNTRY_FIELD = "country";
 
+    /// The event-logging path of each `## Fields` key the field conventions and the index plans kept with the
+    /// indexing XSLTs give a field for, as the timeline tools look for them.
+    public static final Map<String, String> CONVENTION_PATHS = Map.of(
+            USER_FIELD, "EventSource/User/Id",
+            PERSON_FIELD, "EventSource/User/UserDetails/Id",
+            TARGET_USER_FIELD, "EventDetail/Authorise/User/Id",
+            TARGET_PERSON_FIELD, "EventDetail/Authorise/User/UserDetails/Id",
+            HOST_FIELD, "EventSource/Device/HostName",
+            ACTION_FIELD, "EventDetail/*/Action",
+            EVENT_TYPE_FIELD, "EventDetail/TypeId");
+
     /// What each stage may be called in a doc.
     static final Map<String, String> STAGES = Map.ofEntries(
             Map.entry("translation", TRANSLATION),
@@ -126,9 +137,18 @@ public final class InstructionRules {
             Map.entry("cef", CEF),
             Map.entry("forwarding", CEF));
 
+    /// The heading of the section of `## Fields` lines.
+    public static final String FIELDS_SECTION = "Fields";
+    /// The heading of the section of required imports.
+    public static final String REQUIRED_IMPORTS_SECTION = "Required imports";
+    /// The heading of the section of component template rules.
+    public static final String COMPONENT_TEMPLATES_SECTION = "Component templates";
+    /// The heading of the section of documentation rules.
+    public static final String DOCUMENTATION_SECTION = "Documentation";
+
     private static final String INCLUDE = "include";
     private static final String EXCLUDE = "exclude";
-    private static final Map<String, String> COMPONENT_RULES = Map.of(
+    static final Map<String, String> COMPONENT_RULES = Map.of(
             "include", INCLUDE,
             "always", INCLUDE,
             "add", INCLUDE,
@@ -137,7 +157,7 @@ public final class InstructionRules {
             "never", EXCLUDE,
             "omit", EXCLUDE,
             "drop", EXCLUDE);
-    private static final Map<String, String> LAYOUTS = Map.of(
+    static final Map<String, String> LAYOUTS = Map.of(
             "by event type", BY_EVENT_TYPE,
             "by_event_type", BY_EVENT_TYPE,
             "per event type", BY_EVENT_TYPE,
@@ -173,8 +193,8 @@ public final class InstructionRules {
     private static final Pattern DOCUMENTATION_HEADING = Pattern.compile("^#{1,6}\\s*documentation\\s*$",
             Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
     private static final Pattern NEXT_HEADING = Pattern.compile("^#{1,6}\\s", Pattern.MULTILINE);
-    private static final Pattern BULLET = Pattern.compile("^\\s*[-*]\\s*([^:]+):\\s*(.+)$");
-    private static final Pattern LAYOUT_BULLET = Pattern.compile("^\\s*[-*]\\s*field mapping( layout)?\\s*:\\s*(.+)$",
+    static final Pattern BULLET = Pattern.compile("^\\s*[-*]\\s*([^:]+):\\s*(.+)$");
+    static final Pattern LAYOUT_BULLET = Pattern.compile("^\\s*[-*]\\s*field mapping( layout)?\\s*:\\s*(.+)$",
             Pattern.CASE_INSENSITIVE);
 
     private InstructionRules() {
@@ -290,13 +310,7 @@ public final class InstructionRules {
             if (key == null) {
                 continue;
             }
-            final List<String> names = new ArrayList<>();
-            for (final String item : bullet.group(2).split(",")) {
-                final String name = stripChars(item.strip(), "`*.").strip();
-                if (!name.isEmpty()) {
-                    names.add(name);
-                }
-            }
+            final List<String> names = fieldNames(bullet.group(2));
             if (!names.isEmpty()) {
                 out.put(key, List.copyOf(names));
             }
@@ -378,8 +392,62 @@ public final class InstructionRules {
                 : rest);
     }
 
+    /// @param line A line of a doc.
+    /// @return The section the tools read whose heading it is ([#FIELDS_SECTION] and so on), or null if it is no
+    /// such heading.
+    static String typedSection(final String line) {
+        final String text = NullSafe.string(line);
+        if (FIELDS_HEADING.matcher(text).matches()) {
+            return FIELDS_SECTION;
+        } else if (REQUIRED_HEADING.matcher(text).matches()) {
+            return REQUIRED_IMPORTS_SECTION;
+        } else if (COMPONENTS_HEADING.matcher(text).matches()) {
+            return COMPONENT_TEMPLATES_SECTION;
+        } else if (DOCUMENTATION_HEADING.matcher(text).matches()) {
+            return DOCUMENTATION_SECTION;
+        }
+        return null;
+    }
+
+    /// @param line A line of a doc.
+    /// @return True if the tools take it as a heading, ending the section above it.
+    static boolean isHeading(final String line) {
+        return NEXT_HEADING.matcher(NullSafe.string(line)).find() || typedSection(line) != null;
+    }
+
+    /// @param section A section the tools read, e.g. [#FIELDS_SECTION].
+    /// @return The keys its `- key: value` lines may have (for [#DOCUMENTATION_SECTION], its layouts).
+    static Set<String> keysOf(final String section) {
+        return switch (section) {
+            case FIELDS_SECTION -> FIELDS.keySet();
+            case REQUIRED_IMPORTS_SECTION -> STAGES.keySet();
+            case COMPONENT_TEMPLATES_SECTION -> COMPONENT_RULES.keySet();
+            case DOCUMENTATION_SECTION -> LAYOUTS.keySet();
+            default -> Set.of();
+        };
+    }
+
+    /// @param key A line's key as written, e.g. `` `Person ID` ``.
+    /// @return It as the tools compare it: without backticks or asterisks at either end, lower case.
+    static String normaliseKey(final String key) {
+        return stripChars(NullSafe.string(key).strip(), "`*").toLowerCase(Locale.ROOT);
+    }
+
+    /// @param value A `## Fields` line's value, e.g. `` `user.name`, UserId ``.
+    /// @return The fields it names, in order, as the tools read them.
+    static List<String> fieldNames(final String value) {
+        final List<String> names = new ArrayList<>();
+        for (final String item : NullSafe.string(value).split(",")) {
+            final String name = stripChars(item.strip(), "`*.").strip();
+            if (!name.isEmpty()) {
+                names.add(name);
+            }
+        }
+        return names;
+    }
+
     // The text without any of the characters at either end.
-    private static String stripChars(final String text, final String chars) {
+    static String stripChars(final String text, final String chars) {
         int start = 0;
         int end = text.length();
         while (start < end && chars.indexOf(text.charAt(start)) >= 0) {
