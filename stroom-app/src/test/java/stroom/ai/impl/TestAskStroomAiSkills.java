@@ -42,6 +42,7 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.shared.DocumentPermission;
@@ -70,7 +71,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// folder with no SKILLS doc and created on apply, with its history entry; a change proposed to that doc, applied to
 /// its editor unsaved, and refused once the doc has been saved with other text; the reverse diff for undo after a
 /// save; `check_skill` on planted faults; discovery (only the skills the user can read, in the prompt); a template
-/// filled and tried; and a skill run by name with the slash command, its missing parameter asked in a form.
+/// filled and tried; a skill run by name with the slash command, its missing parameter asked in a form; and a broken
+/// skill run so stopping, with the likely replacement and the fix offered.
 class TestAskStroomAiSkills extends AbstractAiIntegrationTest {
 
     private static final String SKILL = """
@@ -316,7 +318,9 @@ class TestAskStroomAiSkills extends AbstractAiIntegrationTest {
     @Test
     void aSkillRunByNameAsksForItsMissingParameterInAForm() {
         toolPolicy("Everything", AiToolAccess.READ_WRITE, user);
-        skillsDoc(folder("Logons"), SkillDoc.parse("").withSkill(SKILL, null));
+        final DocRef folder = folder("Logons");
+        index(folder, "Logons");
+        skillsDoc(folder, SkillDoc.parse("").withSkill(SKILL, null));
         final DocRef modelRef = asUser(user, this::fakeModel);
         model.callTool("find_skills", json(Map.of("name", "logons-by-user", "arguments", Map.of("days", "3"))))
                 .answer("Counted.");
@@ -337,6 +341,31 @@ class TestAskStroomAiSkills extends AbstractAiIntegrationTest {
                         .schema()).extractingByKey("required").isEqualTo(List.of("user")));
         assertThat(results(messages, "find_skills").getLast().text())
                 .contains("Run it with user=jsmith, days=3", "UserId = 'jsmith'", "/outputs/skills/logons-3.md");
+    }
+
+    @Test
+    void aBrokenSkillRunByNameStopsSayingWhatIsBrokenWithTheLikelyReplacementAndTheFixOffered() {
+        toolPolicy("Everything", AiToolAccess.READ_WRITE, user);
+        final DocRef folder = folder("Hunts");
+        // The skill reads the index Logons, renamed Logons-V2 since.
+        index(folder, "Logons-V2");
+        skillsDoc(folder, SkillDoc.parse("").withSkill(SKILL, null));
+        final DocRef modelRef = asUser(user, this::fakeModel);
+        model.callTool("find_skills", json(Map.of("name", "logons-by-user", "arguments", Map.of("user", "jsmith"))))
+                .answer("It can't run as written: the index Logons is now Logons-V2.");
+
+        final List<AiChatMessage> messages = ask(asUser(user, () -> askStroomAIService.createChat()), modelRef,
+                "/skill:logons-by-user user=jsmith");
+
+        assertThat(JsonUtil.writeValueAsString(model.agentRequests().getFirst().get("messages")))
+                .contains("unless it says to stop");
+        assertThat(results(messages, "find_skills").getLast().text())
+                .contains("Stop: don't run this skill", "query is from 'Logons', which doesn't exist",
+                        "Likely replacement: 'Logons-V2'", "The user can edit its skills doc",
+                        "propose_skill {\"doc\":", "\"action\":\"remove\"",
+                        "The skill as saved, to correct (not to run)")
+                .doesNotContain("Run it with");
+        assertThat(messages).noneMatch(message -> message.getMessageType() == AiMessageType.ELICITATION);
     }
 
     // The "who of a group did X" template with its placeholders filled.
@@ -380,6 +409,12 @@ class TestAskStroomAiSkills extends AbstractAiIntegrationTest {
     private DocRef folder(final String name) {
         return asUser(user, () -> explorerService.create(ExplorerConstants.FOLDER_TYPE, name,
                 explorerNodeService.getRoot(), PermissionInheritance.DESTINATION).getDocRef());
+    }
+
+    // A Lucene index in the folder, made as the user, which a skill's query can be from.
+    private void index(final DocRef folder, final String name) {
+        asUser(user, () -> explorerService.create(LuceneIndexDoc.TYPE, name,
+                explorerNodeService.getNode(folder).orElseThrow(), PermissionInheritance.DESTINATION));
     }
 
     private DocRef skillsDoc(final DocRef folder, final String text) {
