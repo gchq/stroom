@@ -476,9 +476,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                                            + "that has it (a skill's), before the other ways.")
                         .addStringProperty(TIME_FROM_ARG, "The period's start: a date, ISO 8601 or a date "
                                                           + "expression (default " + DEFAULT_FROM + "). A date "
-                                                          + "alone is a whole day in timeZone, as "
-                                                          + "compare_activity's: timeFrom 2026-11-09 and timeTo "
-                                                          + "2026-11-13 are those five days.")
+                                                          + "alone is a whole day in timeZone: timeFrom "
+                                                          + "2026-11-09 and timeTo 2026-11-13 are those five days.")
                         .addStringProperty(TIME_TO_ARG, "The period's end (default " + DEFAULT_TO + "); a date "
                                                         + "alone is included.")
                         .addStringProperty(IDLE_CAP_ARG, "How long with no event on a host ends an interval, "
