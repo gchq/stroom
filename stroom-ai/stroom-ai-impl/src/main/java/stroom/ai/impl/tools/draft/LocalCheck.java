@@ -53,6 +53,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.function.IntPredicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -1196,6 +1197,7 @@ public final class LocalCheck {
                 continue;
             }
             final List<String> unheld = new ArrayList<>();
+            final List<String> heldElsewhere = new ArrayList<>();
             for (final FieldMapping entry : rule.fields()) {
                 final List<String> inputs = new ArrayList<>();
                 if (hasText(entry.field())) {
@@ -1205,21 +1207,30 @@ public final class LocalCheck {
                 if (!hasText(entry.dataName()) || inputs.isEmpty() || entry.defaultValue() != null) {
                     continue;
                 }
-                final boolean held = taken.stream().anyMatch(n -> inputs.stream().anyMatch(field -> hasText(
-                        derived.contains(field)
-                                ? (extracted.get(n) == null
-                                        ? null
-                                        : extracted.get(n).get(field))
-                                : valueOf(records.get(n), field))));
-                if (!held) {
+                final IntPredicate holds = n -> inputs.stream().anyMatch(field -> hasText(derived.contains(field)
+                        ? (extracted.get(n) == null
+                                ? null
+                                : extracted.get(n).get(field))
+                        : valueOf(records.get(n), field)));
+                if (taken.stream().noneMatch(holds::test)) {
                     unheld.add("'" + entry.dataKey() + "'");
+                    final String held = heldBy(String.join(" or ", inputs.stream().map(ToolText::repr).toList()),
+                            rules, records.size(), holds);
+                    if (held != null) {
+                        heldElsewhere.add(held);
+                    }
                 }
             }
             if (!unheld.isEmpty()) {
+                // Chat 194: said with no word of which records hold the field, while step_sample said it was in 59
+                // records no rule reads, the agent took the two for a contradiction: the rules whose records hold it
+                // are named.
                 out.add("[" + rule.name() + "] Data " + String.join(", ", unheld) + " read" + (unheld.size() == 1
                         ? "s a field"
-                        : " fields") + " none of the " + taken.size() + " sample records this rule takes holds: "
-                        + "remove " + (unheld.size() == 1
+                        : " fields") + " none of the " + taken.size() + " sample records this rule takes holds"
+                        + (heldElsewhere.isEmpty()
+                        ? ""
+                        : " (" + String.join("; ", heldElsewhere) + ")") + ": remove " + (unheld.size() == 1
                         ? "it"
                         : "them") + ", unless other records will have " + (unheld.size() == 1
                         ? "it"
@@ -1227,6 +1238,26 @@ public final class LocalCheck {
             }
         }
         return out;
+    }
+
+    // The rules whose sample records hold an input, with how many: e.g. `'app' is in the records of focus_window
+    // (33), unfocus_window (26)`; null when no sample record does (the sample check's own warning says so).
+    private static String heldBy(final String input,
+                                 final List<String> rules,
+                                 final int records,
+                                 final IntPredicate holds) {
+        final Map<String, Integer> byRule = new LinkedHashMap<>();
+        for (int n = 0; n < records; n++) {
+            if (holds.test(n)) {
+                byRule.merge(Objects.requireNonNullElse(rules.get(n), "no rule"), 1, Integer::sum);
+            }
+        }
+        if (byRule.isEmpty()) {
+            return null;
+        }
+        final List<String> of = new ArrayList<>();
+        byRule.forEach((rule, count) -> of.add(rule + " (" + count + ")"));
+        return input + " is in the records of " + String.join(", ", of);
     }
 
     /// Value maps none of whose keys is a value the sample records give them: every record gets the default (or

@@ -84,6 +84,50 @@ class TestLocalCheck extends DraftFixtures {
                 .containsExactly("request", "fault", "rest", "fault", "rest");
     }
 
+    // Chat 194 (an endpoint log): 'app' added as Data to every rule, held only by the focus events' records. The
+    // build said none of the logon rule's records hold it, step_sample that 59 records hold it that no rule reads:
+    // both true, of different records, and taken for a contradiction. The warning now names whose records hold it.
+    @Test
+    void dataNoRecordOfTheRuleHoldsSaysWhichRulesRecordsDo() {
+        final TranslationMapping m = mapping(json("""
+                {"input": "json", "json_layout": "lines",
+                 "common": [{"path": "EventTime/TimeCreated", "field": "time"},
+                            {"path": "EventSource/System/Name", "value": "deskwatch"},
+                            {"path": "EventSource/System/Environment", "value": "Test"},
+                            {"path": "EventSource/Generator", "value": "deskwatch"},
+                            {"path": "EventSource/Device/HostName", "field": "host"}],
+                 "events": [{"name": "logon_user", "when": [{"field": "evt", "equals": "logon"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Logon-User"},
+                                        {"path": "EventDetail/Authenticate/Data", "data_name": "app", "field": "app"},
+                                        {"path": "EventDetail/Authenticate/Data", "data_name": "pid",
+                                         "field": "pid"}]},
+                            {"name": "focus_window", "when": [{"field": "evt", "equals": "focus.in"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Focus-Window"},
+                                        {"path": "EventDetail/View/Data", "data_name": "app", "field": "app"}]},
+                            {"name": "unfocus_window", "when": [{"field": "evt", "equals": "focus.out"}],
+                             "fields": [{"path": "EventDetail/TypeId", "value": "Unfocus-Window"}]}]}"""));
+        final String sample = String.join("\n",
+                "{\"time\": \"2025-11-01T10:21:00Z\", \"host\": \"ws-epillai\", \"evt\": \"logon\"}",
+                "{\"time\": \"2025-11-01T10:22:00Z\", \"host\": \"ws-epillai\", \"evt\": \"focus.in\", "
+                + "\"app\": \"Code.exe\"}",
+                "{\"time\": \"2025-11-01T10:29:00Z\", \"host\": \"ws-epillai\", \"evt\": \"focus.out\", "
+                + "\"app\": \"Code.exe\"}",
+                "{\"time\": \"2025-11-01T10:30:00Z\", \"host\": \"ws-epillai\", \"evt\": \"focus.in\", "
+                + "\"app\": \"chrome.exe\"}");
+
+        final List<String> warnings = LocalCheck.dataNotHeld(m, records(m, sample, null));
+
+        assertThat(warnings).containsExactly("[logon_user] Data 'app', 'pid' read fields none of the 1 sample "
+                                             + "records this rule takes holds ('app' is in the records of "
+                                             + "focus_window (2), unfocus_window (1)): remove them, unless "
+                                             + "other records will have them.");
+        // A field no sample record holds is said by the sample check's own warning: no more here.
+        final String logonOnly = sample.lines().findFirst().orElseThrow();
+        assertThat(LocalCheck.dataNotHeld(m, records(m, logonOnly, null))).containsExactly(
+                "[logon_user] Data 'app', 'pid' read fields none of the 1 sample records this rule takes holds: "
+                + "remove them, unless other records will have them.");
+    }
+
     @Test
     void everyFieldNothingReadsIsListedWithHowManyThereAre() {
         // Seen: a list cut at 12 ("...") on a 184-column CSV cost about 20 calls working out the rest.
