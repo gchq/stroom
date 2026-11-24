@@ -51,6 +51,7 @@ import java.util.Map;
 /// @param lanes          The lanes asked for, or null for the view's default.
 /// @param learned        What was learned for the skill, and the offer to record it.
 /// @param zone           The user's zone.
+/// @param ranges         Where the period has no events, each source's first and last at any time; else empty.
 record TimelineRun(String entity,
                    Period period,
                    long capMs,
@@ -68,7 +69,8 @@ record TimelineRun(String entity,
                    View view,
                    String lanes,
                    TimelineLearning.Learned learned,
-                   ToolTimeZone zone) {
+                   ToolTimeZone zone,
+                   List<EventRange> ranges) {
 
     /// @param source A source, by its place.
     /// @return Its name.
@@ -150,5 +152,19 @@ record TimelineRun(String entity,
         String argName() {
             return name().toLowerCase(Locale.ROOT);
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A source's first and last events of whom the timeline is of, at any time: given where the period has none.
+    ///
+    /// @param source Its name.
+    /// @param first  The first event's time, or null if there is none.
+    /// @param last   The last event's time, or null.
+    /// @param events How many events there are.
+    record EventRange(String source, String first, String last, long events) {
+
     }
 }

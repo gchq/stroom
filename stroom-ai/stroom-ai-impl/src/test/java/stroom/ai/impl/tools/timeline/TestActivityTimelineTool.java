@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.timeline;
 
+import stroom.ai.api.ElasticEsql;
 import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
@@ -139,7 +140,7 @@ class TestActivityTimelineTool {
         tool = new ActivityTimelineTool(files.workspace(), () -> streams, dataSourceAccess, () -> queryService,
                 auditLog, eventXml, new TimelineFields(agentInstructions, dataSourceAccess, Optional.empty()),
                 new TimelineSourceChoice(dataSourceAccess, () -> tabSnapshots), () -> skillCatalogue, documentAccess,
-                agentInstructions);
+                agentInstructions, () -> Mockito.mock(ElasticEsql.class));
 
         windows("08:30", "4800");
         windows("08:58", "4801");

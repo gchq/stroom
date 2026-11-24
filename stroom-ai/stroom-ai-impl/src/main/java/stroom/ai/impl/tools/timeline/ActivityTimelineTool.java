@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.timeline;
 
 import stroom.ai.api.ElasticEql;
+import stroom.ai.api.ElasticEsql;
 import stroom.ai.api.ElasticKeyStreams;
 import stroom.ai.api.ElasticKeyStreams.Refusal;
 import stroom.ai.api.ElasticKeyStreams.Transform;
@@ -70,6 +71,7 @@ import stroom.ai.impl.tools.timeline.TimelineLearning.SkillInUse;
 import stroom.ai.impl.tools.timeline.TimelineReader.Read;
 import stroom.ai.impl.tools.timeline.TimelineReader.RoleRead;
 import stroom.ai.impl.tools.timeline.TimelineReader.Source;
+import stroom.ai.impl.tools.timeline.TimelineRun.EventRange;
 import stroom.ai.impl.tools.timeline.TimelineRun.Period;
 import stroom.ai.impl.tools.timeline.TimelineRun.SourceNote;
 import stroom.ai.impl.tools.timeline.TimelineRun.View;
@@ -91,6 +93,8 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.TimeRange;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
@@ -98,6 +102,7 @@ import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.impl.QueryService;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.shared.DocumentPermission;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
@@ -241,6 +246,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     private static final Set<String> KEYWORD_TYPES = Set.of("keyword", "constant_keyword", "wildcard");
 
     private final Provider<ElasticKeyStreams> keyStreamsProvider;
+    private final Provider<ElasticEsql> elasticEsqlProvider;
     private final DataSourceAccess dataSourceAccess;
     private final Provider<QueryService> queryServiceProvider;
     private final AiAuditLog auditLog;
@@ -262,6 +268,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     /// @param skillCatalogueProvider Finds the skill in use, for its Event chains.
     /// @param documentAccess         Checks the user may change the skill's doc, or create one.
     /// @param agentInstructions      Gives the folder an index is in.
+    /// @param elasticEsqlProvider    Finds each source's first and last events where the period has none.
     @Inject
     ActivityTimelineTool(final ChatWorkspace workspace,
                          final Provider<ElasticKeyStreams> keyStreamsProvider,
@@ -273,9 +280,11 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                          final TimelineSourceChoice sourceChoice,
                          final Provider<SkillCatalogue> skillCatalogueProvider,
                          final DocumentAccess documentAccess,
-                         final AgentInstructions agentInstructions) {
+                         final AgentInstructions agentInstructions,
+                         final Provider<ElasticEsql> elasticEsqlProvider) {
         super(workspace);
         this.keyStreamsProvider = keyStreamsProvider;
+        this.elasticEsqlProvider = elasticEsqlProvider;
         this.dataSourceAccess = dataSourceAccess;
         this.queryServiceProvider = queryServiceProvider;
         this.auditLog = auditLog;
@@ -551,9 +560,13 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                         .toList(), skill, skill == null || skill.listed() == null
                         ? createIn(context, sources)
                         : null, workspace, folder);
+        final List<EventRange> ranges = read.events().isEmpty()
+                ? sources.stream().map(source -> range(context, source.name(), source.doc(), source.userField(),
+                source.values(), deadline)).toList()
+                : List.of();
         final TimelineRun run = new TimelineRun(entity, period, capMs, sources, plan.notes(), plan.chosen(), read,
                 classification, xml.summary(), timeline, built, byId, inferred.borderline(), characterised, view,
-                lanes, learned, zone);
+                lanes, learned, zone, ranges);
         final Files files = TimelineTables.write(workspace, folder, run);
         // So its tables can be written elsewhere later, as they are (propose_timeline_dashboard).
         TimelineSnapshot.of(run, now).write(workspace, folder);
@@ -702,6 +715,13 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             final StringBuilder sb = new StringBuilder("No source holds ").append(entity)
                     .append("'s events in the period with a field holding the user:");
             notes.forEach(note -> sb.append("\n- ").append(note.index()).append(": ").append(note.leftOut()));
+            final List<EventRange> ranges = prepared.stream()
+                    .map(Prepared::automatic)
+                    .filter(automatic -> automatic != null && automatic.user() != null)
+                    .map(automatic -> range(context, automatic.name(), automatic.doc(), automatic.user().field(),
+                            automatic.values(), deadline))
+                    .toList();
+            sb.append(TimelineResult.rangesText(ranges));
             throw new WorkspaceException(sb.toString());
         }
         return new Plan(sources, notes, chosen, fields, pairsOf(kept, sources, skill), overridesOf(kept, sources,
@@ -922,6 +942,57 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             return PersonScope.variants(automatic.values(), held);
         } catch (final PermissionException e) {
             return List.of();
+        }
+    }
+
+    // A source's first and last events of the values filtered on, at any time (one aggregate), for a period with
+    // none of them, so the agent needn't hunt for the range; nothing known where the source can't be asked.
+    private EventRange range(final ToolCallContext context,
+                             final String name,
+                             final DocRef doc,
+                             final String field,
+                             final List<String> values,
+                             final Instant deadline) {
+        final String timeField;
+        try {
+            timeField = keyStreamsProvider.get().target(List.of(doc)).docs().getFirst().timeField();
+        } catch (final RuntimeException e) {
+            return new EventRange(name, null, null, -1);
+        }
+        if (timeField == null || values.isEmpty()) {
+            return new EventRange(name, null, null, -1);
+        }
+        final String time = "`" + timeField.replace("`", "``") + "`";
+        final ExpressionOperator filter = ExpressionOperator.builder()
+                .addTerm(ExpressionTerm.builder().field(field).condition(Condition.IN).value(String.join(",", values))
+                        .build())
+                .build();
+        try {
+            final Duration left = Duration.between(Instant.now(), deadline);
+            final ElasticEsql.Result result = elasticEsqlProvider.get().query(new ElasticEsql.Request(doc,
+                    "| STATS first = MIN(" + time + "), last = MAX(" + time + "), events = COUNT(*)", filter, null, 1,
+                    left.isNegative()
+                            ? Duration.ofSeconds(1)
+                            : left, false, context.stopped()));
+            if (result.rows().isEmpty()) {
+                return new EventRange(name, null, null, 0);
+            }
+            final List<Object> row = result.rows().getFirst();
+            final long events = row.size() > 2 && row.get(2) instanceof final Number number
+                    ? number.longValue()
+                    : 0;
+            return new EventRange(name, events == 0
+                    ? null
+                    : text(row.get(0)), events == 0
+                    ? null
+                    : text(row.get(1)), events);
+        } catch (final ElasticEsql.Refusal refusal) {
+            if (refusal.reason() == ElasticEsql.Reason.STOPPED) {
+                throw new TaskTerminatedException();
+            }
+            return new EventRange(name, null, null, -1);
+        } catch (final RuntimeException e) {
+            return new EventRange(name, null, null, -1);
         }
     }
 

@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.timeline;
 
+import stroom.ai.api.ElasticEsql;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.FakeTabWorkspace;
@@ -83,6 +84,7 @@ class TestActivityTimelineAnySource {
     Path tempDir;
 
     private final InMemoryKeyStreams streams = new InMemoryKeyStreams();
+    private final ElasticEsql elasticEsql = Mockito.mock(ElasticEsql.class);
     private final DataSourceAccess dataSourceAccess = Mockito.mock(DataSourceAccess.class);
     private final QueryService queryService = Mockito.mock(QueryService.class);
     private final TimelineEventXml eventXml = Mockito.mock(TimelineEventXml.class);
@@ -150,7 +152,7 @@ class TestActivityTimelineAnySource {
         tool = new ActivityTimelineTool(files.workspace(), () -> streams, dataSourceAccess, () -> queryService,
                 Mockito.mock(AiAuditLog.class), eventXml, new TimelineFields(agentInstructions, dataSourceAccess,
                 Optional.empty()), new TimelineSourceChoice(dataSourceAccess, () -> Mockito.mock(TabSnapshots.class)),
-                () -> skillCatalogue, documentAccess, agentInstructions);
+                () -> skillCatalogue, documentAccess, agentInstructions, () -> elasticEsql);
     }
 
     @Test
@@ -487,6 +489,46 @@ class TestActivityTimelineAnySource {
         assertThat((List<Map<String, Object>>) result.get("left_out")).singleElement().satisfies(left ->
                 assertThat((String) left.get("why")).contains("no field holding the person id"));
         assertThat(result).doesNotContainKey("other_accounts");
+    }
+
+    @Test
+    void aPeriodWithNoneOfTheUsersEventsGivesEachSourcesFirstAndLastAtAnyTime() {
+        week();
+        final List<ElasticEsql.Request> asked = new ArrayList<>();
+        Mockito.when(elasticEsql.query(Mockito.any())).thenAnswer(invocation -> {
+            final ElasticEsql.Request request = invocation.getArgument(0);
+            asked.add(request);
+            return new ElasticEsql.Result("FROM x", "x", List.of(new ElasticEsql.Column("first", "date"),
+                    new ElasticEsql.Column("last", "date"), new ElasticEsql.Column("events", "long")),
+                    List.of(List.of("2026-11-10T08:55:00.000Z", "2026-11-10T10:30:00.000Z", 11L)), 1, 1, null,
+                    false, false, null, null, "9.5.3", List.of());
+        });
+        final Map<String, Object> arguments = arguments(Map.of("timeFrom", "2026-11-20T00:00:00Z", "timeTo",
+                "2026-11-21T00:00:00Z"));
+
+        final Map<String, Object> result = json(mcp(), arguments);
+
+        assertThat(result).containsEntry("events_read", 0L);
+        assertThat((List<Map<String, Object>>) result.get("none_in_period")).singleElement().satisfies(range ->
+                assertThat(range).containsEntry("source", "Events").containsEntry("events", 11L)
+                        .containsEntry("first", "2026-11-10T08:55:00.000Z")
+                        .containsEntry("last", "2026-11-10T10:30:00.000Z"));
+        // One aggregate on the user's events, at any time.
+        assertThat(asked).singleElement().satisfies(request -> {
+            assertThat(request.pipeline()).isEqualTo("| STATS first = MIN(`EventTime`), last = MAX(`EventTime`), "
+                                                     + "events = COUNT(*)");
+            assertThat(request.timeRange()).isNull();
+            assertThat(request.filter().toString()).contains("UserId").contains("pat");
+        });
+        // Where every source is left out, the refusal says it too.
+        final Map<String, Object> two = new LinkedHashMap<>(arguments);
+        two.put("sources", List.of("Events", "Codes"));
+        Mockito.when(agentInstructions.fieldsRuled(Mockito.any(), Mockito.eq(CODES))).thenReturn(Map.of(
+                InstructionRules.USER_FIELD, new FieldRule(List.of("user"), "/")));
+        assertThat(tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(two, false)),
+                mcp()).text()).contains("None in the period. Their events at any time, per source:\n- Events: 11 "
+                                        + "event(s), first 2026-11-10T08:55:00.000Z, last "
+                                        + "2026-11-10T10:30:00.000Z");
     }
 
     // ------------------------------------------------------------------------------------------------

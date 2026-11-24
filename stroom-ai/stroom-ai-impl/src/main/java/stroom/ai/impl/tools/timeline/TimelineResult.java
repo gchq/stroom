@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Characterised;
 import stroom.ai.impl.tools.timeline.PairInference.Candidate;
 import stroom.ai.impl.tools.timeline.TimelineReader.Read;
 import stroom.ai.impl.tools.timeline.TimelineReader.Source;
+import stroom.ai.impl.tools.timeline.TimelineRun.EventRange;
 import stroom.ai.impl.tools.timeline.TimelineRun.SourceNote;
 import stroom.ai.impl.tools.timeline.TimelineRun.View;
 import stroom.ai.impl.tools.timeline.TimelineRun.XmlRead;
@@ -107,6 +108,9 @@ final class TimelineResult {
             map.put("left_out", leftOut);
         }
         map.put("events_read", run.read().events().size());
+        if (!NullSafe.list(run.ranges()).isEmpty()) {
+            map.put("none_in_period", run.ranges().stream().map(TimelineResult::range).toList());
+        }
         if (run.classification().ignored() > 0) {
             map.put("events_ignored", run.classification().ignored());
         }
@@ -177,6 +181,38 @@ final class TimelineResult {
         map.put("time_zone", run.zone().zone().getId());
         map.put("derived", ActivityTimelineTool.DERIVED);
         map.put("caveat", ActivityTimelineTool.CAVEAT);
+        return map;
+    }
+
+    /// @param ranges Each source's first and last events at any time, for a period with none.
+    /// @return What a result says of them: empty for none.
+    static String rangesText(final List<EventRange> ranges) {
+        if (NullSafe.list(ranges).isEmpty()) {
+            return "";
+        }
+        final StringBuilder sb = new StringBuilder("\n\nNone in the period. Their events at any time, per source:");
+        for (final EventRange range : ranges) {
+            sb.append("\n- ").append(range.source()).append(": ");
+            if (range.events() < 0) {
+                sb.append("not known (it couldn't be asked)");
+            } else if (range.events() == 0) {
+                sb.append("none");
+            } else {
+                sb.append(range.events()).append(" event(s), first ").append(range.first()).append(", last ")
+                        .append(range.last());
+            }
+        }
+        return sb.toString();
+    }
+
+    private static Map<String, Object> range(final EventRange range) {
+        final Map<String, Object> map = new LinkedHashMap<>();
+        map.put("source", range.source());
+        if (range.events() >= 0) {
+            map.put("events", range.events());
+        }
+        NullSafe.consume(range.first(), first -> map.put("first", first));
+        NullSafe.consume(range.last(), last -> map.put("last", last));
         return map;
     }
 
@@ -427,6 +463,9 @@ final class TimelineResult {
         final String early = endedEarly(run.read());
         if (early != null) {
             sb.append("\n").append(early).append("\n");
+        }
+        if (!NullSafe.list(run.ranges()).isEmpty()) {
+            sb.append(rangesText(run.ranges()).substring(1)).append('\n');
         }
         sb.append("\nSources: ").append(run.chosen()).append(".\n");
         for (int i = 0; i < run.sources().size(); i++) {
