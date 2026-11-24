@@ -293,7 +293,7 @@ class TestVisualisationE2e extends AbstractAiIntegrationTest {
             assertThat(create.getFunctionName()).isEqualTo(EChartsTemplate.FUNCTION_NAME);
             assertThat(EChartsTemplate.defaults(create.getSettings()))
                     .containsEntry(EChartsTemplate.KIND_CONTROL, "timeline")
-                    .containsEntry(EChartsTemplate.FIELDS_CONTROL, "start,end,label,lane,colour")
+                    .containsEntry(EChartsTemplate.FIELDS_CONTROL, "start,end,label,lane,colour,detail")
                     .containsEntry("zoomSlider", "true");
             assertThat(scriptStore.readDocument(create.getScriptRef()).getData())
                     .contains("timeline: timelineModel");
