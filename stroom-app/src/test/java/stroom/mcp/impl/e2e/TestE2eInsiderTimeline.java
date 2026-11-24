@@ -33,11 +33,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /// `activity_timeline` on the insider-risk dataset's reduced form ([AbstractInsiderE2eTest]) over `/mcp`, on a real
 /// Stroom and Elasticsearch: a person read by their person id in every source, though their logon ids differ by
-/// source; the fallback by logon id, each account counted, with close variants offered but never merged; the first
-/// and last events where the period has none; and the leaver's week of 2026-09-14: the VPN's sessions (a pair keyed
-/// only by a session id), a window's focus to its loss (a vendor's pair) placed in activities, and the proxy's periods
-/// labelled by their destination; and, with `includeTargets`, what was done to them (the leaver's privileged group,
-/// the compromised account's failed logons, reset and MFA device) apart, never in their activity.
+/// source; the fallback by logon id, each account counted, matched exactly (no other written forms searched for
+/// unasked); the first and last events where the period has none; and the leaver's week of 2026-09-14: the VPN's
+/// sessions (a pair keyed only by a session id), a window's focus to its loss (a vendor's pair) placed in
+/// activities, and the proxy's periods labelled by their destination; and, with `includeTargets`, what was done
+/// to them (the leaver's privileged group, the compromised account's failed logons, reset and MFA device) apart,
+/// never in their activity.
 @SuppressWarnings("unchecked")
 class TestE2eInsiderTimeline extends AbstractInsiderE2eTest {
 
@@ -85,13 +86,14 @@ class TestE2eInsiderTimeline extends AbstractInsiderE2eTest {
                 "By logon id: other accounts of the person (an admin or service account) aren't included unless "
                 + "named.");
 
-        // As the sources wrote them, not as the indexes hold them: nothing matches, the variants are offered.
+        // As the sources wrote them, not as the indexes hold them: nothing matches, and no search is made for other
+        // forms; the result says how to ask for them.
         final String variants = McpTestClient.text(client.call("activity_timeline", timeline(Map.of("logonIds",
                 List.of("CORP\\dwhitfield", "Dana.Whitfield@corp.example")), EVENING_FROM, EVENING_TO)));
         dump("activity_timeline, the leaver's logon ids as the sources wrote them", variants);
         assertThat(variants).startsWith("Error: No source holds")
-                .contains("close variants in its index: dwhitfield (not merged")
-                .contains("close variants in its index: dana.whitfield (not merged");
+                .contains("give logonForms [strip_domain] (slower: a script runs over every event in the period)")
+                .doesNotContain("close variants");
     }
 
     @Test

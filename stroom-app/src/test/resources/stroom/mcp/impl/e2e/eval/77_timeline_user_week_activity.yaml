@@ -19,8 +19,8 @@ elastic_index:
            WindowId: text, EventType: text, Object: text, Text: text}
 request: >
   Build a timeline of jsmith's activity in the week starting Monday 9 November 2026, from the "User activity"
-  Elasticsearch index, and tell me what they were working on. How long were they active in each application on each
-  host, and is anything missing from the logs?
+  Elasticsearch index (some systems log him as CORP\jsmith), and tell me what they were working on. How long
+  were they active in each application on each host, and is anything missing from the logs?
 user_knows: >
   Source says which product wrote each event: endpoint (EventType focus, open, close, clipboard, save,
   removable_copy), windows (lock, unlock; UserName is CORP\jsmith there), proxy (web), aichat (prompt, the prompt in

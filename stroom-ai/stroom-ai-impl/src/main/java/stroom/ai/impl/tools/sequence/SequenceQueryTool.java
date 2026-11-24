@@ -423,7 +423,8 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
                                                        + "user field by logonIds; the result says which.")
                         .addProperty(LOGON_IDS_ARG, stringArraySchema("Optional: the person's logon ids (all "
                                                                       + "kept), for docs with no person field, or "
-                                                                      + "alone."))
+                                                                      + "alone; matched exactly, so give each written "
+                                                                      + "form (jsmith, CORP\\jsmith)."))
                         .addStringProperty(PERSON_FIELD_ARG, "Optional: the field holding the person id (a "
                                                              + "skill's).")
                         .addStringProperty(USER_FIELD_ARG, "Optional: the field holding the logon id (a skill's).")

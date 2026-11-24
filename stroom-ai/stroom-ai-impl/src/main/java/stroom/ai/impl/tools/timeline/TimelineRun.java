@@ -124,18 +124,15 @@ record TimelineRun(String entity,
     /// @param index     The index's name.
     /// @param userField The field holding the user, or null.
     /// @param userFrom  Where that came from, or null.
-    /// @param transform A transform tried as none found the user, or null.
+    /// @param transform The transforms its user field was matched with (scripted, slower), or null for exact.
     /// @param leftOut   Why it was left out, or null if it was read.
     /// @param by        Whether its user field holds the person id or the logon id, or null if neither was found.
-    /// @param readAs    Where nothing matched the one user as given, so their other written forms were read (the
-    ///                  domain and case set aside): the forms the source's first events hold; empty otherwise.
-    /// @param otherForms Where the one user was found as given: the other written forms the index also holds,
-    ///                   offered but not read (another domain's account may be someone else's); empty otherwise.
+    /// @param hint      Where it was read by logon id exactly and held none: the hint that logonForms would match
+    ///                  other written forms, slower; else null.
     /// @param suggestions The `## Fields` lines that would make the fields found for it by a guess (a convention or
     ///                    the index's documentation) the site's ([TimelineFields.Found#suggestion]); empty for none.
     record SourceNote(String name, String index, String userField, String userFrom, String transform,
-                      String leftOut, PersonScope.By by, List<String> readAs, List<String> otherForms,
-                      List<String> suggestions) {
+                      String leftOut, PersonScope.By by, String hint, List<String> suggestions) {
 
     }
 

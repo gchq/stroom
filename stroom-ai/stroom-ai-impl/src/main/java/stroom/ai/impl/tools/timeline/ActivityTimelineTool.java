@@ -160,8 +160,6 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ActivityTimelineTool.class);
 
     static final String NAME = "activity_timeline";
-    /// What a source's note says where a lone user's other written forms were read.
-    static final String NO_EVENT_AS_GIVEN = "no event as given";
     static final String ENTITY_ARG = "entity";
     static final String SOURCES_ARG = "sources";
     static final String TIME_FROM_ARG = "timeFrom";
@@ -173,6 +171,11 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     static final String USER_FIELD_ARG = "userField";
     static final String PERSON_ARG = "person";
     static final String LOGON_IDS_ARG = "logonIds";
+    static final String LOGON_FORMS_ARG = "logonForms";
+    /// The transforms logonForms may name.
+    static final List<String> LOGON_FORMS = List.of("strip_domain", "lowercase");
+    /// What a source's note says where its user field was matched through a transform.
+    static final String SCRIPTED = "scripted, slower";
     static final String PERSON_FIELD_ARG = "personField";
     static final String VIEW_ARG = "view";
     static final String LANES_ARG = "lanes";
@@ -239,8 +242,6 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     /// The events of an automatic source probed first: whether the user has any there, and which of its fields
     /// holds the EventDetail element.
     static final int PROBE_EVENTS = 200;
-    /// The most events read for the other written forms of a user found as given, offered but not read.
-    static final int VARIANT_EVENTS = 20;
     /// The most fields fetched by the probe.
     static final int PROBE_FIELDS = 100;
     /// The share of an index field's values in the probe that are EventDetail elements, for it to be taken as the
@@ -407,9 +408,10 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 .addStringProperty(USER_KEY, "The field holding the user (default: found, see userField).")
                 .addProperty(TRANSFORM_KEY, ArraySchema.builder()
                         .items(new ToolSchema.EnumSchema(null, SequenceQueryTool.TRANSFORMS))
-                        .description("Optional: what is done to the user field's values and the entity before they "
-                                     + "are compared, where sources write users differently (strip_domain, "
-                                     + "lowercase).")
+                        .description("Optional: what is done to this source's user field's values and the entity "
+                                     + "before they are compared (strip_domain, lowercase), only where the user says "
+                                     + "it writes logons with a domain or as an email: slower, a script runs over "
+                                     + "every event in the period; a person id or exact logonIds is better.")
                         .build())
                 .addStringProperty(HOST_KEY, "The field holding the host (optional).")
                 .addStringProperty(PROCESS_KEY, "The field holding the application (process).")
@@ -458,10 +460,9 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                         .build())
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(ENTITY_ARG, "The user (or entity), as the sources hold it, e.g. "
-                                                       + "jsmith. Alone, its other written forms (CORP\\jsmith, "
-                                                       + "JSmith) are read only in a source holding none of it "
-                                                       + "as given; elsewhere they are offered, not read: give them "
-                                                       + "in logonIds if the same person's.")
+                                                       + "jsmith. Matched exactly: other written forms "
+                                                       + "(CORP\\jsmith, jsmith@corp) only by logonIds or "
+                                                       + "logonForms.")
                         .addStringProperty(PERSON_ARG, "Optional: a person id, read in each index by its person "
                                                        + "field (personField, AGENTS ## Fields 'person:', ECS "
                                                        + "user.id); an index without one falls back to entity and "
@@ -472,6 +473,14 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                                                       + "adm-achen), read together, each account "
                                                                       + "counted; close variants are offered, never "
                                                                       + "merged."))
+                        .addProperty(LOGON_FORMS_ARG, ArraySchema.builder()
+                                .items(new ToolSchema.EnumSchema(null, LOGON_FORMS))
+                                .description("Optional: only when the user says logons are written with a domain "
+                                             + "(CORP\\jsmith) or as an email in some sources: strip_domain "
+                                             + "(both forms), lowercase; applied to the user field of every source "
+                                             + "read by logon id. Slower: a script runs over every event in the "
+                                             + "period. A person id or exact logonIds is better.")
+                                .build())
                         .addStringProperty(PERSON_FIELD_ARG, "Optional: the field holding the person id (a "
                                                              + "skill's), before the other ways.")
                         .addProperty(SOURCES_ARG, ArraySchema.builder().items(ToolSchema.AnyOfSchema.of(null,
@@ -571,7 +580,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
 
         final XmlOutcome xml = readXml(context, config, sources, read);
         final Map<Integer, Map<String, CodeRole>> codes = codes(request, context, sources, read, plan.fields(),
-                xml.xml(), plan.overrides(), TimelineResult.otherFormsText(entity, plan.notes()));
+                xml.xml(), plan.overrides());
         final TimelineClassification.Result classification = TimelineClassification.classify(read.events(),
                 sources, read.extras(), plan.fields(), xml.xml(), codes, plan.overrides());
 
@@ -819,6 +828,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         }
         final List<String> userFields = stringListArg(request, USER_FIELD_ARG);
         final List<String> personFields = stringListArg(request, PERSON_FIELD_ARG);
+        final List<Transform> logonForms = logonForms(request);
         final String entity = who.label();
         final List<Source> sources = new ArrayList<>();
         final List<SourceNote> notes = new ArrayList<>();
@@ -832,7 +842,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 prepared.add(new Prepared(spec, source(spec, what, who), null));
             } else {
                 automaticSpecs.add(spec);
-                prepared.add(prepare(context, spec, what, userFields, personFields, who));
+                prepared.add(prepare(context, spec, what, userFields, personFields, who, logonForms));
             }
         }
         askUserFields(request, context, prepared);
@@ -843,7 +853,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 sources.add(one.source());
                 kept.add(one.spec());
                 notes.add(new SourceNote(one.source().name(), one.source().doc().getName(), one.source().userField(),
-                        "the call (roles given)", null, null, one.source().by(), List.of(), List.of(), List.of()));
+                        "the call (roles given)", null, null, one.source().by(), null, List.of()));
                 continue;
             }
             final Automatic automatic = one.automatic();
@@ -852,30 +862,31 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                         who.person() == null
                                 ? "no field holding the user was found (give sources [{index, user}], or a ## Fields "
                                   + "line in the AGENTS doc where it is)"
-                                : automatic.leftOut(), null, List.of(), List.of(), List.of()));
+                                : automatic.leftOut(), null, null, List.of()));
                 continue;
             }
-            final Probed probed = probe(context, automatic, who, period, deadline);
+            final Probed probed = probe(context, automatic, period, deadline);
             if (probed == null) {
                 final String none = who.single()
                         ? "no events of " + entity + " in the period"
                         : "no events " + automatic.by().label() + " (" + String.join(", ", automatic.values())
                           + ") in the period";
+                // Every supported index read: most hold none of the user's events, so no hint for each.
+                final String hint = all
+                        ? null
+                        : formsHint(automatic);
                 if (all || specs.size() > 1) {
-                    final List<String> variants = variants(context, automatic, who, period, deadline);
                     notes.add(new SourceNote(automatic.name(), automatic.doc().getName(), automatic.user().field(),
-                            automatic.user().from(), null, variants.isEmpty()
+                            automatic.user().from(), null, hint == null
                                     ? none
-                                    : none + "; close variants in its index: " + String.join(", ", variants)
-                                      + " (not merged: give them in " + LOGON_IDS_ARG + " if they are the same "
-                                      + "person's)", automatic.by(), List.of(), List.of(), List.of()));
+                                    : none + ". " + hint, automatic.by(), null, List.of()));
                     noneOfTheirs.add(automatic);
                     continue;
                 }
                 sources.add(automatic.source(automatic.transforms(), spanFields(one.spec(), automatic.mapping())));
                 kept.add(one.spec());
                 notes.add(new SourceNote(automatic.name(), automatic.doc().getName(), automatic.user().field(),
-                        automatic.user().from(), null, null, automatic.by(), List.of(), List.of(),
+                        automatic.user().from(), transformNote(automatic.transforms()), null, automatic.by(), hint,
                         automatic.suggestions()));
                 fields.put(sources.size() - 1, automatic.fields(null));
                 continue;
@@ -889,17 +900,11 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             }
             spanFields(one.spec(), automatic.mapping()).stream().filter(field -> !extra.contains(field))
                     .forEach(extra::add);
-            sources.add(automatic.source(probed.transforms(), extra));
+            sources.add(automatic.source(automatic.transforms(), extra));
             kept.add(one.spec());
             fields.put(sources.size() - 1, found);
             notes.add(new SourceNote(automatic.name(), automatic.doc().getName(), automatic.user().field(),
-                    automatic.user().from(), probed.transforms().isEmpty()
-                            ? null
-                            : String.join(", ", probed.transforms().stream()
-                                    .map(transform -> transform.name().toLowerCase(Locale.ROOT)).toList())
-                              + (probed.fallback()
-                                    ? " (" + NO_EVENT_AS_GIVEN + ")"
-                                    : ""), null, automatic.by(), probed.readAs(), probed.otherForms(),
+                    automatic.user().from(), transformNote(automatic.transforms()), null, automatic.by(), null,
                     automatic.suggestions()));
         }
         if (sources.isEmpty()) {
@@ -925,7 +930,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                              final String what,
                              final List<String> userFields,
                              final List<String> personFields,
-                             final Who who) {
+                             final Who who,
+                             final List<Transform> logonForms) {
         final String index = text(spec.get(INDEX_KEY));
         if (index == null) {
             throw new WorkspaceException(what + " has no " + INDEX_KEY + ": give its Elastic Index's uuid or name.");
@@ -972,8 +978,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                         types, suggestions), checked(spec.get(OBJECT_KEY), mapping, types, what, doc),
                 new Described(checked(spec.get(PROCESS_KEY), mapping, types, what, doc), checked(spec.get(TITLE_KEY),
                         mapping, types, what, doc), checked(spec.get(WINDOW_KEY), mapping, types, what, doc),
-                        checked(spec.get(TEXT_KEY), mapping, types, what, doc)), transforms(spec.get(
-                TRANSFORM_KEY), what), scope.usable()
+                        checked(spec.get(TEXT_KEY), mapping, types, what, doc)), userTransforms(spec, what, scope,
+                logonForms), scope.usable()
                         ? scope.by()
                         : PersonScope.By.LOGON, scope.usable()
                         ? scope.values()
@@ -1096,14 +1102,12 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         });
     }
 
-    // The first of the user's events in an automatic source, with its keyword fields: whether there are any (with
-    // the source's transforms, else, for one user given alone as text and only where nothing matched as given, with
-    // the domain and case set aside), and which field holds the EventDetail element where none was named. Null if
-    // the user has none there. Other written forms are never read where the form given matched: CORP\jsmith beside
-    // jsmith may be the same person, but OTHERDOM\jsmith may not, and logon ids are taken as normalised.
+    // The first of the user's events in an automatic source, with its keyword fields: whether there are any (the
+    // user field matched exactly, or with the transforms asked for), and which field holds the EventDetail element
+    // where none was named. Null if the user has none there. No other written form is ever tried unasked: a
+    // transform is a script over every event in the period, and another domain's account may be someone else's.
     private Probed probe(final ToolCallContext context,
                          final Automatic automatic,
-                         final Who who,
                          final Period period,
                          final Instant deadline) {
         final String userField = automatic.user().field();
@@ -1114,101 +1118,70 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 .sorted()
                 .limit(PROBE_FIELDS)
                 .toList());
-        final List<List<Transform>> tries = new ArrayList<>();
-        tries.add(automatic.transforms());
-        final JoinKeys.Kind kind = JoinKeys.kind(automatic.mapping().get(userField).nativeType());
-        // One user given alone is tried again without its domain and in lower case; a person's accounts aren't
-        // (their close variants are offered instead, never merged unasked).
-        if (automatic.transforms().isEmpty() && kind == JoinKeys.Kind.TEXT && who.single()) {
-            tries.add(PersonScope.variantTransforms());
-        }
-        for (int i = 0; i < tries.size(); i++) {
-            final List<Transform> transforms = tries.get(i);
-            final boolean fallback = i > 0;
-            final Source source = automatic.source(transforms, List.of());
-            final List<String> fetched = new ArrayList<>(fields);
-            if (fallback) {
-                fetched.add(userField);
-            }
-            final List<Map<String, String>> rows;
-            try {
-                rows = TimelineReader.sample(keyStreamsProvider.get(), source, period.timeRange(), fetched,
-                        PROBE_EVENTS, deadline, context.stopped());
-            } catch (final PermissionException e) {
-                throw new WorkspaceException("You can't use Elastic Index '" + automatic.doc().getName() + "'.");
-            }
-            if (!rows.isEmpty()) {
-                final String element = automatic.element() != null
-                        ? automatic.element()
-                        : elementField(rows, fields);
-                if (fallback) {
-                    return new Probed(transforms, element, true, held(rows, userField), List.of());
-                }
-                // Found as given: the user's other written forms the index also holds are offered, never read
-                // (eval case 77: the logons' CORP\jsmith beside the endpoint's jsmith in one index).
-                return new Probed(transforms, element, false, List.of(), tries.size() > 1
-                        ? heldVariants(context, automatic, period, deadline)
-                        : List.of());
-            }
-        }
-        return null;
-    }
-
-    // The user field's values in a probe's events, in the order held, each once: the forms the user was read as.
-    private static List<String> held(final List<Map<String, String>> rows, final String userField) {
-        return rows.stream()
-                .map(row -> row.get(userField))
-                .filter(value -> value != null && !value.isBlank())
-                .distinct()
-                .toList();
-    }
-
-    // The values of an automatic source's user field, other than the one user as given, that are close variants of
-    // it (the domain added or removed, another case), as the index holds them: offered, never read unasked (another
-    // domain's account may be someone else's); empty for none.
-    private List<String> heldVariants(final ToolCallContext context,
-                                      final Automatic automatic,
-                                      final Period period,
-                                      final Instant deadline) {
-        final String field = automatic.user().field();
-        final Source source = automatic.source(PersonScope.variantTransforms(), List.of());
-        final ExpressionOperator notAsGiven = ExpressionOperator.builder().op(Op.NOT)
-                .addTerm(ExpressionTerm.builder().field(field).condition(Condition.IN)
-                        .value(String.join(",", automatic.values())).build())
-                .build();
+        final Source source = automatic.source(automatic.transforms(), List.of());
+        final List<Map<String, String>> rows;
         try {
-            final List<String> held = TimelineReader.sample(keyStreamsProvider.get(), source, period.timeRange(),
-                            List.of(field), VARIANT_EVENTS, deadline, context.stopped(), notAsGiven).stream()
-                    .map(row -> row.get(field))
-                    .toList();
-            return PersonScope.variants(automatic.values(), held);
+            rows = TimelineReader.sample(keyStreamsProvider.get(), source, period.timeRange(), fields,
+                    PROBE_EVENTS, deadline, context.stopped());
         } catch (final PermissionException e) {
-            return List.of();
+            throw new WorkspaceException("You can't use Elastic Index '" + automatic.doc().getName() + "'.");
         }
+        if (rows.isEmpty()) {
+            return null;
+        }
+        return new Probed(automatic.element() != null
+                ? automatic.element()
+                : elementField(rows, fields));
     }
 
-    // The values of an automatic source's user field that are close variants of the logon ids (the domain added or
-    // removed, another case), where nothing matched them as given and more than the one user was given: offered,
-    // never merged unasked. Empty for a source read by person id, or text that isn't a keyword.
-    private List<String> variants(final ToolCallContext context,
-                                  final Automatic automatic,
-                                  final Who who,
-                                  final Period period,
-                                  final Instant deadline) {
-        if (automatic.by() != PersonScope.By.LOGON || who.single() || !automatic.transforms().isEmpty()
+    // Where a source read by logon id, exactly, has none of them: the hint that logonForms would match other written
+    // forms, at a cost (no search is made for them). Null where that wouldn't help: read by person id, with
+    // transforms already, or a user field that isn't text.
+    private static String formsHint(final Automatic automatic) {
+        if (automatic.by() != PersonScope.By.LOGON || !automatic.transforms().isEmpty()
             || JoinKeys.kind(automatic.mapping().get(automatic.user().field()).nativeType()) != JoinKeys.Kind.TEXT) {
-            return List.of();
+            return null;
         }
-        final Source source = automatic.source(PersonScope.variantTransforms(), List.of());
-        try {
-            final List<String> held = TimelineReader.sample(keyStreamsProvider.get(), source, period.timeRange(),
-                            List.of(automatic.user().field()), PROBE_EVENTS, deadline, context.stopped()).stream()
-                    .map(row -> row.get(automatic.user().field()))
-                    .toList();
-            return PersonScope.variants(automatic.values(), held);
-        } catch (final PermissionException e) {
-            return List.of();
+        return "If logons are written with a domain or as an email in '" + automatic.doc().getName() + "', and the "
+               + "user says so, give " + LOGON_FORMS_ARG + " [strip_domain] (slower: a script runs over every event "
+               + "in the period), or the exact forms in " + LOGON_IDS_ARG;
+    }
+
+    // What a source's note says of the transforms its user field was matched with, or null for none.
+    private static String transformNote(final List<Transform> transforms) {
+        return transforms.isEmpty()
+                ? null
+                : "matched with " + String.join(", ", transforms.stream()
+                        .map(transform -> transform.name().toLowerCase(Locale.ROOT))
+                        .toList()) + ": " + SCRIPTED;
+    }
+
+    // The transforms of an automatic source's user field: the source's own, else, read by logon id, the call's
+    // logonForms; none by default.
+    private static List<Transform> userTransforms(final Map<?, ?> spec,
+                                                  final String what,
+                                                  final Scope scope,
+                                                  final List<Transform> logonForms) {
+        final List<Transform> own = transforms(spec.get(TRANSFORM_KEY), what);
+        if (!own.isEmpty()) {
+            return own;
         }
+        final boolean byLogon = !scope.usable() || scope.by() == PersonScope.By.LOGON;
+        return byLogon
+                ? logonForms
+                : List.of();
+    }
+
+    // The call's logonForms: strip_domain and lowercase only.
+    private static List<Transform> logonForms(final ToolCall request) {
+        final Object given = argsMap(request).get(LOGON_FORMS_ARG);
+        final List<Transform> forms = transforms(given, LOGON_FORMS_ARG);
+        for (final Transform form : forms) {
+            if (!LOGON_FORMS.contains(form.name().toLowerCase(Locale.ROOT))) {
+                throw new WorkspaceException(LOGON_FORMS_ARG + " takes " + String.join(", ", LOGON_FORMS) + ".");
+            }
+        }
+        return forms;
     }
 
     // A source's first and last events of the values filtered on, at any time (one aggregate), for a period with
@@ -1454,8 +1427,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                                       final Read read,
                                                       final Map<Integer, Fields> fields,
                                                       final Map<String, String> xml,
-                                                      final Map<Integer, Map<String, RoleOverride>> overrides,
-                                                      final String otherForms) {
+                                                      final Map<Integer, Map<String, RoleOverride>> overrides) {
         final Map<Integer, Map<String, CodeRole>> out = new LinkedHashMap<>();
         final Map<Integer, Map<String, Integer>> counts = new LinkedHashMap<>();
         for (final Event event : read.events()) {
@@ -1499,11 +1471,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                     .anyMatch(code -> kept.containsKey(code) || given.keySet().stream()
                             .anyMatch(type -> type.equalsIgnoreCase(code)));
             if (!anyRole) {
-                final String refusal = EventCodes.unclassified(sources.get(source.getKey()).name(),
-                        fields.get(source.getKey()).eventType(), source.getValue(), context.sideCalls());
-                throw new WorkspaceException(otherForms == null
-                        ? refusal
-                        : refusal + "\n" + otherForms);
+                throw new WorkspaceException(EventCodes.unclassified(sources.get(source.getKey()).name(),
+                        fields.get(source.getKey()).eventType(), source.getValue(), context.sideCalls()));
             }
             out.put(source.getKey(), kept);
         }
@@ -2232,15 +2201,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     // --------------------------------------------------------------------------------
 
 
-    // What a probe found: the transforms the user was found with, the element field, and, where nothing matched as
-    // given and the user's other written forms were read (fallback), the forms its first events hold (empty
-    // otherwise); and, where the one user was found as given, the other written forms the index also holds, offered
-    // but not read (empty for none).
-    private record Probed(List<Transform> transforms,
-                          String element,
-                          boolean fallback,
-                          List<String> readAs,
-                          List<String> otherForms) {
+    // What a probe found: the field holding the EventDetail element, or null.
+    private record Probed(String element) {
 
     }
 

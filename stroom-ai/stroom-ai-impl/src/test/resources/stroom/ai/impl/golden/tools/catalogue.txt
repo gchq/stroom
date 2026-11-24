@@ -188,7 +188,7 @@ Builds one user's (or entity's) activity timeline for a period from any Elastic 
       "type" : "array"
     },
     "entity" : {
-      "description" : "The user (or entity), as the sources hold it, e.g. jsmith. Alone, its other written forms (CORP\\jsmith, JSmith) are read only in a source holding none of it as given; elsewhere they are offered, not read: give them in logonIds if the same person's.",
+      "description" : "The user (or entity), as the sources hold it, e.g. jsmith. Matched exactly: other written forms (CORP\\jsmith, jsmith@corp) only by logonIds or logonForms.",
       "type" : "string"
     },
     "idleCap" : {
@@ -203,6 +203,14 @@ Builds one user's (or entity's) activity timeline for a period from any Elastic 
       "description" : "Optional: the lanes: activities by day (default) or activity; detail by host (default) or source.",
       "enum" : [ "day", "activity", "host", "source" ],
       "type" : "string"
+    },
+    "logonForms" : {
+      "description" : "Optional: only when the user says logons are written with a domain (CORP\\jsmith) or as an email in some sources: strip_domain (both forms), lowercase; applied to the user field of every source read by logon id. Slower: a script runs over every event in the period. A person id or exact logonIds is better.",
+      "items" : {
+        "enum" : [ "strip_domain", "lowercase" ],
+        "type" : "string"
+      },
+      "type" : "array"
     },
     "logonIds" : {
       "description" : "Optional: more logon ids of the person (forms differ by source: alex.chen, CORP\\achen, adm-achen), read together, each account counted; close variants are offered, never merged.",
@@ -704,7 +712,7 @@ Builds one user's (or entity's) activity timeline for a period from any Elastic 
               "type" : "string"
             },
             "transform" : {
-              "description" : "Optional: what is done to the user field's values and the entity before they are compared, where sources write users differently (strip_domain, lowercase).",
+              "description" : "Optional: what is done to this source's user field's values and the entity before they are compared (strip_domain, lowercase), only where the user says it writes logons with a domain or as an email: slower, a script runs over every event in the period; a person id or exact logonIds is better.",
               "items" : {
                 "enum" : [ "lowercase", "strip_domain", "file_name" ],
                 "type" : "string"
@@ -978,7 +986,7 @@ Compares one person's activity in a window with their own baseline, from index a
       "type" : "boolean"
     },
     "logonIds" : {
-      "description" : "Logon ids (accounts) to use where an index has no person field, each kept visible; other accounts aren't included.",
+      "description" : "Logon ids (accounts) to use where an index has no person field, each kept visible; other accounts aren't included; matched exactly, so give each written form (jsmith, CORP\\jsmith).",
       "items" : {
         "type" : "string"
       },
@@ -3829,7 +3837,7 @@ Use for any 'X, then Y, within N' question ('did anyone X and then Y within an h
       "type" : "integer"
     },
     "logonIds" : {
-      "description" : "Optional: the person's logon ids (all kept), for docs with no person field, or alone.",
+      "description" : "Optional: the person's logon ids (all kept), for docs with no person field, or alone; matched exactly, so give each written form (jsmith, CORP\\jsmith).",
       "items" : {
         "type" : "string"
       },

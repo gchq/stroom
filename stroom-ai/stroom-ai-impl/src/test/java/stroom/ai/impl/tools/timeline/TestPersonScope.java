@@ -162,16 +162,6 @@ class TestPersonScope {
     }
 
     @Test
-    void closeVariantsDifferByDomainOrCaseOnly() {
-        assertThat(PersonScope.variants(List.of("alex.chen", "adm-achen"),
-                List.of("CORP\\alex.chen", "Alex.Chen@corp.example", "alex.chen", "alex.chang", "ADM-ACHEN",
-                        "CORP\\alex.chen", " ")))
-                .containsExactly("CORP\\alex.chen", "Alex.Chen@corp.example", "ADM-ACHEN");
-        assertThat(PersonScope.variants(List.of(), List.of("alex.chen"))).isEmpty();
-        assertThat(PersonScope.variants(List.of("alex.chen"), null)).isEmpty();
-    }
-
-    @Test
     void theTargetPersonFieldIsFoundByConventionTheActorsOwnActsLeftOut() {
         final Set<String> has = Set.of("user.id", "user.name", "user.target.id", "user.target.name");
         final Scope actor = resolve("P0042", List.of(), List.of(), has);

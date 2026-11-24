@@ -16,7 +16,6 @@
 
 package stroom.ai.impl.tools.timeline;
 
-import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.timeline.TimelineFields.Found;
@@ -35,16 +34,14 @@ import java.util.function.Predicate;
 /// with, the same for all of their accounts), or, where the index has no person field, one or more logon ids by
 /// the user field (`alex.chen`, `adm-achen`, `alex.chen@corp.example`: each account kept visible). Both fields are
 /// found by [TimelineFields] (the call's or skill's, the AGENTS doc's `## Fields`, convention). The result of a tool
-/// says which it was ([By#label]), the accounts covered and the indexes where nothing matched; for those, close
-/// variants of the logon ids found in the index ([#variants]: the domain added or removed, another case) are
-/// offered, never merged without the user's confirmation.
+/// says which it was ([By#label]), the accounts covered and the indexes where nothing matched. Logon ids are
+/// matched exactly: other written forms (a domain, an email) only where the call asks for them (logonForms or a
+/// source's transform), as that scripts every event in the period.
 public final class PersonScope {
 
     /// What a result by logon id says of the accounts it doesn't name.
     public static final String OTHER_ACCOUNTS = "By logon id: other accounts of the person (an admin or service "
                                                 + "account) aren't included unless named.";
-    /// What makes two logon ids close variants of each other: the domain and the case set aside.
-    private static final List<Transform> VARIANT = List.of(Transform.STRIP_DOMAIN, Transform.LOWERCASE);
 
     private PersonScope() {
         // Static only.
@@ -168,35 +165,6 @@ public final class PersonScope {
                                                                                      + "found (a ## Fields 'target "
                                                                                      + "user:' line in the AGENTS "
                                                                                      + "doc names it)"));
-    }
-
-    /// The values an index holds that are close variants of the logon ids given (the domain added or removed, or
-    /// another case) but not the same: offered to the user where nothing matched as given, never merged unasked.
-    ///
-    /// @param logonIds The logon ids given.
-    /// @param held     Values of the index's user field, e.g. from a sample read with the domain and case set aside.
-    /// @return The variants, in the order held, each once.
-    public static List<String> variants(final Collection<String> logonIds, final Collection<String> held) {
-        final Set<String> given = new LinkedHashSet<>(cleaned(logonIds));
-        final Set<String> keys = new LinkedHashSet<>();
-        given.forEach(logon -> keys.add(variantKey(logon)));
-        final Set<String> out = new LinkedHashSet<>();
-        for (final String value : NullSafe.collection(held)) {
-            if (value != null && !value.isBlank() && !given.contains(value.strip())
-                && keys.contains(variantKey(value))) {
-                out.add(value.strip());
-            }
-        }
-        return List.copyOf(out);
-    }
-
-    /// @return What sets close variants aside: the domain stripped, then lower case.
-    public static List<Transform> variantTransforms() {
-        return VARIANT;
-    }
-
-    private static String variantKey(final String value) {
-        return Transform.applyAll(VARIANT, value.strip());
     }
 
     private static List<String> cleaned(final Collection<String> values) {

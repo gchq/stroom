@@ -32,11 +32,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 ///
 /// Case 77's models gave one source over the whole index (endpoint, logons written `CORP\jsmith`, proxy, AI chat
 /// and messages), the event type field named and no roles: with no model to classify the codes the tool asks the
-/// calling model for them (typeRoles). The user's domain-qualified form the logons write (`CORP\jsmith`) is
-/// offered, never read unasked (another domain's account may be someone else's): given in logonIds, the logons'
-/// locks and unlocks are read too and, with the codes' roles, the week's focus sessions are the plan's. Case 78's
-/// Sonnet mapped the process to the source column (`proxy`) for a user seen only in web proxy events: still no
-/// session (only a focus starts one), the activity periods by site. Both models first gave dates alone, which are whole days in the call's zone.
+/// calling model for them (typeRoles). The user is matched exactly by default (no script over every event, and
+/// another domain's account may be someone else's); as the question says some systems log him as `CORP\jsmith`,
+/// the model asks for that form (logonForms [strip_domain], or logonIds with both forms): the logons' locks and
+/// unlocks are read too and, with the codes' roles, the week's focus sessions are the plan's. Case 78's Sonnet
+/// mapped the process to the source column (`proxy`) for a user seen only in web proxy events: still no session
+/// (only a focus starts one), the activity periods by site. Both models first gave dates alone, which are whole
+/// days in the call's zone.
 ///
 /// Skipped without an Elasticsearch node unless `STROOM_TEST_ELASTIC_REQUIRED=true`.
 @SuppressWarnings("unchecked")
@@ -56,12 +58,12 @@ class TestE2eTimelineModelCalls extends AbstractEvalTest {
             final Map<String, Object> first = sonnetsWeekCall();
             first.put("timeFrom", "2026-11-09");
             first.put("timeTo", "2026-11-16");
-            calls.add(theOtherFormIsOffered(theCodesAreAskedFor(call(first))));
+            calls.add(theCodesAreAskedFor(call(first)));
             // Its second, as it made it.
             final Map<String, Object> second = sonnetsWeekCall();
-            calls.add(theOtherFormIsOffered(theCodesAreAskedFor(call(second))));
-            // The form offered given, as the refusal says: the logons' codes are asked for too.
-            second.put("logonIds", List.of("CORP\\jsmith"));
+            calls.add(theCodesAreAskedFor(call(second)));
+            // The domain-qualified form the question names, asked for: the logons' codes are asked for too.
+            second.put("logonForms", List.of("strip_domain"));
             calls.add(theLogonsCodesAreAskedFor(call(second)));
             // Then with the codes' roles, as the refusal asks.
             second.put("sources", List.of(withTypeRoles(((List<Map<String, Object>>) second.get("sources"))
@@ -100,7 +102,8 @@ class TestE2eTimelineModelCalls extends AbstractEvalTest {
             arguments.put("view", "both");
             arguments.put("characterise", true);
             arguments.put("lanes", "host");
-            calls.add(theOtherFormIsOffered(theCodesAreAskedFor(call(arguments))));
+            calls.add(theCodesAreAskedFor(call(arguments)));
+            // The form the question names, as an exact logon id.
             arguments.put("logonIds", List.of("CORP\\jsmith"));
             calls.add(theLogonsCodesAreAskedFor(call(arguments)));
             arguments.put("sources", List.of(withTypeRoles(source)));
@@ -198,7 +201,7 @@ class TestE2eTimelineModelCalls extends AbstractEvalTest {
     }
 
     // Refused, never a timeline built from codes nothing classified: the codes and their counts given, and how to
-    // give their roles. Never a time it can't read. jsmith alone: the logons' CORP\jsmith isn't read.
+    // give their roles. Never a time it can't read. jsmith alone, exactly: the logons' CORP\jsmith isn't read.
     private static EvalScore.ToolUse theCodesAreAskedFor(final EvalScore.ToolUse used) {
         assertThat(used.refused()).as(used.text()).isTrue();
         assertThat(used.text()).doesNotContain("isn't a time", "lock 11").contains("typeRoles", "EventType",
@@ -206,25 +209,17 @@ class TestE2eTimelineModelCalls extends AbstractEvalTest {
         return used;
     }
 
-    // The logons' CORP\jsmith offered, for the calling model to give in logonIds if it is the same person's.
-    private static EvalScore.ToolUse theOtherFormIsOffered(final EvalScore.ToolUse used) {
-        assertThat(used.text()).contains("Other written forms of jsmith, not read: User activity: CORP\\jsmith. "
-                                         + "Give them in logonIds (with jsmith) if they are the same person's.");
-        return used;
-    }
-
     // With CORP\jsmith given, the logons' codes are among those asked for.
     private static EvalScore.ToolUse theLogonsCodesAreAskedFor(final EvalScore.ToolUse used) {
         assertThat(used.refused()).as(used.text()).isTrue();
-        assertThat(used.text()).contains("typeRoles", "focus 55", "lock 11", "unlock 10")
-                .doesNotContain("Other written forms");
+        assertThat(used.text()).contains("typeRoles", "focus 55", "lock 11", "unlock 10");
         return used;
     }
 
     private static EvalScore.ToolUse theWeeksSessions(final EvalScore.ToolUse used) {
         assertThat(used.refused()).as(used.text()).isFalse();
         assertThat(used.result()).containsEntry("entity", "jsmith").containsEntry("session_count", 63);
-        // The logons, written CORP\jsmith and given in logonIds, read with the rest: 360 events of jsmith and 21
+        // The logons, written CORP\jsmith and asked for, read with the rest: 360 events of jsmith and 21
         // locks and unlocks.
         assertThat(used.result()).containsEntry("events_read", 381);
         return used;

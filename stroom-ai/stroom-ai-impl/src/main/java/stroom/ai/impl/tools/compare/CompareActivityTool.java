@@ -279,7 +279,9 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                         .addStringProperty(PERSON_ARG, "The person id, as the indexes' person field holds it.")
                         .addProperty(LOGON_IDS_ARG, stringArraySchema("Logon ids (accounts) to use where an index "
                                                                       + "has no person field, each kept visible; "
-                                                                      + "other accounts aren't included."))
+                                                                      + "other accounts aren't included; matched "
+                                                                      + "exactly, so give each written form (jsmith, "
+                                                                      + "CORP\\jsmith)."))
                         .addStringProperty(PERSON_FIELD_ARG, "Optional: the person field, where the AGENTS doc's "
                                                              + "## Fields or the convention don't give it.")
                         .addStringProperty(USER_FIELD_ARG, "Optional: the user (logon id) field, likewise.")

@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.timeline;
 
 import stroom.ai.api.ElasticEsql;
+import stroom.ai.api.ElasticKeyStreams;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.FakeTabWorkspace;
@@ -82,6 +83,10 @@ class TestActivityTimelineAnySource {
     private static final DocRef CODES = new DocRef(ElasticIndexDoc.TYPE, "codes-uuid", "Codes");
     private static final DocRef SKILLS = new DocRef(DocumentationDoc.TYPE, "skills-uuid", "SKILLS");
     private static final String FOLDER = "/outputs/timelines/pat/";
+    private static final String EVENTS_HINT = "If logons are written with a domain or as an email in 'Events', and "
+                                              + "the user says so, give logonForms [strip_domain] (slower: a script "
+                                              + "runs over every event in the period), or the exact forms in "
+                                              + "logonIds";
 
     @TempDir
     Path tempDir;
@@ -381,7 +386,7 @@ class TestActivityTimelineAnySource {
     }
 
     @Test
-    void aSourceWritingTheUserWithADomainAndInCapitalsIsReadWithoutThem() {
+    void aSourceWritingTheUserWithADomainIsNotSearchedForItUnasked() {
         code("09:00", "CORP\\PAT", "A-101");
         code("09:05", "CORP\\PAT", "A-101");
         final Map<String, Object> arguments = arguments(Map.of("sources", List.of(Map.of("index", "Codes", "user",
@@ -389,18 +394,39 @@ class TestActivityTimelineAnySource {
 
         final Map<String, Object> result = json(mcp(), arguments);
 
+        // Exact by default: nothing as given, a hint, and no script over the period's events.
         final Map<String, Object> source = ((List<Map<String, Object>>) result.get("sources")).getFirst();
-        assertThat(source).containsEntry("events", 2L)
-                .containsEntry("user_transform", "strip_domain, lowercase (no event as given)")
-                .containsEntry("user_read_as", List.of("CORP\\PAT"));
-        // No model over this client: the codes are left as they are, actions of their own kind.
-        assertThat(source).containsEntry("classified_by", Map.of("not classified", 2L));
+        assertThat(source).containsEntry("events", 0L).doesNotContainKey("user_transform");
+        assertThat((String) source.get("hint")).contains("logonForms [strip_domain]", "slower");
+        assertThat(scripted()).isEmpty();
     }
 
     @Test
-    void aLoneUserFoundAsGivenIsReadOnlyAsGivenNotWithAnotherDomainsAccount() {
-        // OTHERDOM\pat may be someone else: the other written forms are read only where the form given matches
-        // nothing in a source.
+    void logonFormsMatchTheUserWithADomainAndInCapitalsScripted() {
+        code("09:00", "CORP\\PAT", "A-101");
+        code("09:05", "CORP\\PAT", "A-101");
+        final Map<String, Object> arguments = arguments(Map.of("logonForms", List.of("strip_domain", "lowercase"),
+                "sources", List.of(Map.of("index", "Codes", "user", "user"))));
+
+        final Map<String, Object> result = json(mcp(), arguments);
+
+        final Map<String, Object> source = ((List<Map<String, Object>>) result.get("sources")).getFirst();
+        assertThat(source).containsEntry("events", 2L)
+                .containsEntry("user_transform", "matched with strip_domain, lowercase: scripted, slower")
+                .doesNotContainKey("hint");
+        // No model over this client: the codes are left as they are, actions of their own kind.
+        assertThat(source).containsEntry("classified_by", Map.of("not classified", 2L));
+        assertThat(scripted()).isNotEmpty();
+        // Only the transforms of logon forms.
+        assertThat(tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(arguments(
+                Map.of("logonForms", List.of("file_name"), "sources", List.of(Map.of("index", "Codes", "user",
+                        "user")))), false)), mcp()).text())
+                .isEqualTo("Error: logonForms takes strip_domain, lowercase.");
+    }
+
+    @Test
+    void aLoneUserFoundAsGivenIsReadOnlyAsGivenWithNoScript() {
+        // OTHERDOM\pat may be someone else, and a script over every event is slow: the user is matched exactly.
         code("09:00", "pat", "A-101");
         code("09:05", "pat", "A-101");
         code("09:10", "OTHERDOM\\pat", "A-101");
@@ -411,12 +437,8 @@ class TestActivityTimelineAnySource {
 
         final Map<String, Object> source = ((List<Map<String, Object>>) result.get("sources")).getFirst();
         assertThat(source).containsEntry("events", 2L).doesNotContainKey("user_transform")
-                .doesNotContainKey("user_read_as")
-                .containsEntry("user_other_forms_not_read", List.of("OTHERDOM\\pat"));
-        // Offered, for the user to say whether it is the same person's.
-        assertThat(result).containsEntry("other_forms", "Other written forms of pat, not read: Codes: "
-                                                        + "OTHERDOM\\pat. Give them in logonIds (with pat) if they "
-                                                        + "are the same person's.");
+                .doesNotContainKey("hint");
+        assertThat(scripted()).isEmpty();
     }
 
     @Test
@@ -430,14 +452,15 @@ class TestActivityTimelineAnySource {
         final Map<String, Object> result = json(mcp(), arguments);
 
         final Map<String, Object> source = ((List<Map<String, Object>>) result.get("sources")).getFirst();
-        assertThat(source).containsEntry("events", 3L).doesNotContainKey("user_other_forms_not_read")
+        assertThat(source).containsEntry("events", 3L)
                 .containsEntry("accounts", Map.of("pat", 2L, "OTHERDOM\\pat", 1L));
         // Still the timeline of the entity given, its other form one of its accounts.
-        assertThat(result).doesNotContainKey("other_forms").containsEntry("entity", "pat");
+        assertThat(result).containsEntry("entity", "pat");
+        assertThat(scripted()).isEmpty();
     }
 
     @Test
-    void eachSourceNamesTheFormsOfALoneUserItRead() {
+    void aSourceWithNothingAsGivenHintsAtLogonFormsInTheChat() {
         week();
         code("09:00", "CORP\\pat", "A-101");
         final Map<String, Object> arguments = arguments(Map.of("sources", List.of(Map.of("index", "Events", "host",
@@ -446,7 +469,10 @@ class TestActivityTimelineAnySource {
         final String text = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
                 arguments, false)), chat(new Questions(Map.of()), ModelSideCalls.NONE)).text();
 
-        assertThat(text).contains("User read as: Events: pat; Codes: CORP\\pat (no event as given).");
+        assertThat(text).contains("- left out: Codes (no events of pat in the period. If logons are written with a "
+                                  + "domain or as an email in 'Codes', and the user says so, give logonForms "
+                                  + "[strip_domain]");
+        assertThat(scripted()).isEmpty();
     }
 
     @Test
@@ -620,7 +646,7 @@ class TestActivityTimelineAnySource {
     }
 
     @Test
-    void aSourceWhereNoLogonIdMatchesIsLeftOutWithItsCloseVariantsNeverMerged() {
+    void aSourceWhereNoLogonIdMatchesIsLeftOutWithAHintAndNoSearchForOtherForms() {
         week();
         Mockito.when(agentInstructions.fieldsRuled(Mockito.any(), Mockito.eq(CODES))).thenReturn(Map.of(
                 InstructionRules.USER_FIELD, new FieldRule(List.of("user"), "/")));
@@ -634,15 +660,13 @@ class TestActivityTimelineAnySource {
         assertThat((List<Map<String, Object>>) result.get("sources")).singleElement().satisfies(source ->
                 assertThat(source).containsEntry("index", "Codes").containsEntry("accounts",
                         Map.of("CORP\\pat", 1L)));
-        // The index holds the user without the domain: offered, not read.
+        // The index holds the user without the domain: not searched for, a hint how to ask.
         assertThat((List<Map<String, Object>>) result.get("left_out")).singleElement().satisfies(left ->
                 assertThat(left).containsEntry("index", "Events").containsEntry("why", "no events by logon id "
                                                                                        + "(CORP\\pat, adm-pat) in "
-                                                                                       + "the period; close variants "
-                                                                                       + "in its index: pat (not "
-                                                                                       + "merged: give them in "
-                                                                                       + "logonIds if they are the "
-                                                                                       + "same person's)"));
+                                                                                       + "the period. "
+                                                                                       + EVENTS_HINT));
+        assertThat(scripted()).isEmpty();
     }
 
     @Test
@@ -806,6 +830,13 @@ class TestActivityTimelineAnySource {
         final Listed listed = new Listed(SKILLS, ExplorerConstants.SYSTEM_DOC_REF, "/", skill, -1);
         Mockito.when(skillCatalogue.readable(Mockito.any())).thenReturn(List.of(listed));
         return listed;
+    }
+
+    // The sides read with their user field transformed: each a script over every event in the period.
+    private List<ElasticKeyStreams.Side> scripted() {
+        return streams.scanned().stream()
+                .filter(side -> side.keys().stream().anyMatch(key -> !key.transforms().isEmpty()))
+                .toList();
     }
 
     private Map<String, Object> arguments(final Map<String, Object> more) {

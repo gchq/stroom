@@ -91,12 +91,7 @@ final class TimelineResult {
             if (note != null) {
                 NullSafe.consume(note.userFrom(), from -> source.put("user_field_from", from));
                 NullSafe.consume(note.transform(), transform -> source.put("user_transform", transform));
-                if (!NullSafe.list(note.readAs()).isEmpty()) {
-                    source.put("user_read_as", note.readAs());
-                }
-                if (!NullSafe.list(note.otherForms()).isEmpty()) {
-                    source.put("user_other_forms_not_read", note.otherForms());
-                }
+                NullSafe.consume(note.hint(), hint -> source.put("hint", hint));
             }
             final Map<String, Object> routes = new LinkedHashMap<>();
             run.classification().routes().getOrDefault(i, Map.of()).forEach((route, count) ->
@@ -108,7 +103,6 @@ final class TimelineResult {
         if (byLogon(run)) {
             map.put("other_accounts", PersonScope.OTHER_ACCOUNTS);
         }
-        NullSafe.consume(otherFormsText(run.entity(), run.notes()), text -> map.put("other_forms", text));
         final List<String> suggested = suggestions(run.notes());
         if (!suggested.isEmpty()) {
             map.put("fields_lines_to_offer", suggested);
@@ -480,41 +474,6 @@ final class TimelineResult {
                 .toList();
     }
 
-    /// Where a lone user was found as given in a source that also holds other written forms of them (the domain
-    /// added or removed, another case), those forms, offered but not read: another domain's account may be someone
-    /// else's, so only the user can say they are the same person's.
-    ///
-    /// @param entity The user.
-    /// @param notes  The sources' notes.
-    /// @return E.g. "Other written forms of jsmith, not read: User activity: CORP\jsmith. Give them in logonIds
-    ///         (with jsmith) if they are the same person's.", or null where no source holds any.
-    static String otherFormsText(final String entity, final List<SourceNote> notes) {
-        final List<String> parts = NullSafe.list(notes).stream()
-                .filter(note -> !NullSafe.list(note.otherForms()).isEmpty())
-                .map(note -> note.name() + ": " + String.join(", ", note.otherForms()))
-                .toList();
-        return parts.isEmpty()
-                ? null
-                : "Other written forms of " + entity + ", not read: " + String.join("; ", parts) + ". Give them in "
-                  + ActivityTimelineTool.LOGON_IDS_ARG + " (with " + entity + ") if they are the same person's.";
-    }
-
-    // Where any source read a lone user's other written forms, the forms each source read, e.g. "User read as:
-    // Endpoint: jsmith; VPN: CORP\jsmith (no event as given)."; null where every source read the user as given.
-    private static String readAsText(final TimelineRun run) {
-        if (run.notes().stream().allMatch(note -> NullSafe.list(note.readAs()).isEmpty())) {
-            return null;
-        }
-        final List<String> parts = new ArrayList<>();
-        for (final Source source : run.sources()) {
-            final SourceNote note = note(run, source.name());
-            parts.add(source.name() + ": " + (note == null || NullSafe.list(note.readAs()).isEmpty()
-                    ? String.join(", ", source.values())
-                    : String.join(", ", note.readAs()) + " (" + ActivityTimelineTool.NO_EVENT_AS_GIVEN + ")"));
-        }
-        return "User read as: " + String.join("; ", parts) + ".";
-    }
-
     private static String accountsText(final Map<String, Long> accounts, final List<String> values) {
         final Map<String, Long> all = new LinkedHashMap<>(accounts);
         values.forEach(value -> all.putIfAbsent(value, 0L));
@@ -558,7 +517,9 @@ final class TimelineResult {
                     : ": user field ")
                     .append(source.userField()).append(note == null || note.userFrom() == null
                             ? ""
-                            : " (from " + note.userFrom() + ")").append(", ").append(source.by().label())
+                            : " (from " + note.userFrom() + ")").append(note == null || note.transform() == null
+                            ? ""
+                            : ", " + note.transform()).append(", ").append(source.by().label())
                     .append(source.by() == PersonScope.By.LOGON
                             ? "; accounts " + accountsText(accounts(run, i), source.values())
                             : "").append(routes.isEmpty()
@@ -568,8 +529,9 @@ final class TimelineResult {
         if (byLogon(run)) {
             sb.append(PersonScope.OTHER_ACCOUNTS).append('\n');
         }
-        NullSafe.consume(readAsText(run), text -> sb.append(text).append('\n'));
-        NullSafe.consume(otherFormsText(run.entity(), run.notes()), text -> sb.append(text).append('\n'));
+        run.notes().stream().filter(note -> note.leftOut() == null && note.hint() != null)
+                .forEach(note -> sb.append("- ").append(note.name()).append(": nothing as given. ")
+                        .append(note.hint()).append(".\n"));
         final List<String> suggested = suggestions(run.notes());
         if (!suggested.isEmpty()) {
             sb.append("Fields found by a convention or the documentation (offer to make them the site's): ")
