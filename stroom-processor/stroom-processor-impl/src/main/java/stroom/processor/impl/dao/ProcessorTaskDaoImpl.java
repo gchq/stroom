@@ -364,7 +364,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         final Supplier<String> msgSupplier = () -> LogUtil.message(
                 "claimTasks - filterId: {}, nodeName: {}, limit: {}", filterId, nodeName, limit);
 
-        final List<ProcessorTask> claimed = JooqUtil.withDeadlockRetries(() ->
+        final Result<Record> claimedRecords = JooqUtil.withDeadlockRetries(() ->
                         JooqUtil.transactionResult(processorDbConnProvider, context -> {
                             // Lock the oldest waiting tasks, stepping over any row another node is
                             // already claiming rather than queueing behind it. Read in index order so
@@ -381,7 +381,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                     .fetch(PROCESSOR_TASK.ID);
 
                             if (ids.isEmpty()) {
-                                return List.<ProcessorTask>of();
+                                return null;
                             }
 
                             // Straight to PROCESSING - there is no queue to sit in - so the tasks
@@ -402,9 +402,15 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                 throw new RuntimeException("Claimed " + ids.size() + " tasks but updated " + count);
                             }
 
-                            return convert(select(context, PROCESSOR_TASK.ID.in(ids)));
+                            return select(context, PROCESSOR_TASK.ID.in(ids));
                         }),
                 msgSupplier);
+
+        // Convert after the commit, so that a filter cache miss never takes a second connection while
+        // this claim's connection and row locks are held.
+        final List<ProcessorTask> claimed = claimedRecords == null
+                ? List.of()
+                : convert(claimedRecords);
 
         LOGGER.debug(() -> LogUtil.message("claimTasks() - filter {} asked for {}, claimed {}",
                 filterId, limit, claimed.size()));
