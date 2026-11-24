@@ -25,6 +25,8 @@ expected:
   tools_used: [esql_query]
   answer:
     ordered: true
+    # Another session outside the night may be listed too (an agent looking wider to be sure of the night's).
+    extra_rows: true
     # The session in one row (its start, end and id), or as its two events (each with the session's id).
     rows:
       - ['2026-09-17T10:05:00.000Z', '2026-09-17T11:40:00.000Z', '71300001']

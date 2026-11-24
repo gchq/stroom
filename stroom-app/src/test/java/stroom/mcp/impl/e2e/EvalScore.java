@@ -1189,13 +1189,14 @@ final class EvalScore {
                                                  final List<ToolUse> accepted,
                                                  final Map<ToolUse, ToolUse> tabled,
                                                  final boolean ordered,
-                                                 final double tolerance) {
+                                                 final double tolerance,
+                                                 final boolean extraRows) {
         if (!(answer.get("rows_any_of") instanceof final List<?> ways) || ways.isEmpty()) {
             return rows(answer.get("rows"));
         }
         for (final Object way : ways) {
             final List<List<Object>> rows = rows(way);
-            if (accepted.stream().anyMatch(call -> rowsMismatch(rows, call, tabled, ordered, tolerance) == null)) {
+            if (accepted.stream().anyMatch(call -> rowsMismatch(rows, call, tabled, ordered, tolerance, extraRows) == null)) {
                 return rows;
             }
         }
@@ -1210,7 +1211,8 @@ final class EvalScore {
     ///   any order), and no others. The first accepted call that matches is the answer, whatever calls came after it
     ///   (an agent may answer from one call, then run others to check or add to it), and which call it was is noted; if
     ///   none matches, the problem is said of the closest accepted call (the one holding the most expected rows, in any
-    ///   order; the latest of those as close), and the other checks are of it. A row matches when each expected value
+    ///   order; the latest of those as close), and the other checks are of it. `extra_rows: true` allows rows besides
+    ///   the expected ones; `rows_any_of` lists several right forms, the first an accepted call matches being used. A row matches when each expected value
     ///   is one of its values, whatever the columns are called: a string exactly, or as the start of a date
     ///   (`2026-01-02` matches `2026-01-02T00:00:00.000Z`); a number within `tolerance` of it (a fraction of it,
     ///   default 0.001), or 0.05 for one given with decimals, as an answer rounded to one place is. The rows must be
@@ -1278,15 +1280,17 @@ final class EvalScore {
                 : 0.001;
         final boolean ordered = Boolean.TRUE.equals(answer.get("ordered"));
         final Map<ToolUse, ToolUse> tabled = tabled(calls, tool);
-        final List<List<Object>> wanted = wantedRows(answer, accepted, tabled, ordered, tolerance);
+        final boolean extraRows = Boolean.TRUE.equals(answer.get("extra_rows"));
+        final List<List<Object>> wanted = wantedRows(answer, accepted, tabled, ordered, tolerance, extraRows);
         if (!wanted.isEmpty()) {
             final ToolUse matching = accepted.stream()
-                    .filter(call -> rowsMismatch(wanted, call, tabled, ordered, tolerance) == null)
+                    .filter(call -> rowsMismatch(wanted, call, tabled, ordered, tolerance, extraRows) == null)
                     .findFirst()
                     .orElse(null);
             if (matching != null) {
                 answerCall = matching;
-                final boolean fromTable = mismatch(wanted, rows(matching.result().get("rows")), ordered, tolerance)
+                final boolean fromTable = mismatch(wanted, kept(wanted, rows(matching.result().get("rows")), extraRows, tolerance),
+                        ordered, tolerance)
                                           != null;
                 note("answer rows from " + (fromTable
                         ? "a " + TABLE_TOOL + " call on "
@@ -1306,7 +1310,7 @@ final class EvalScore {
                 note("no " + tool + " call matched; the closest, call " + (tries.indexOf(closest) + 1) + " of "
                      + tries.size() + ", held " + most + " of " + wanted.size() + " expected rows");
             }
-            final String mismatch = rowsMismatch(wanted, answerCall, tabled, ordered, tolerance);
+            final String mismatch = rowsMismatch(wanted, answerCall, tabled, ordered, tolerance, extraRows);
             questionCheck("answer rows", mismatch == null, "the answer's rows " + mismatch);
         }
         if (Boolean.TRUE.equals(answer.get("uncapped"))) {
@@ -1459,13 +1463,28 @@ final class EvalScore {
                                        final ToolUse call,
                                        final Map<ToolUse, ToolUse> tabled,
                                        final boolean ordered,
-                                       final double tolerance) {
-        final String own = mismatch(wanted, rows(call.result().get("rows")), ordered, tolerance);
+                                       final double tolerance,
+                                       final boolean extraRows) {
+        final String own = mismatch(wanted, kept(wanted, rows(call.result().get("rows")), extraRows, tolerance),
+                ordered, tolerance);
         final ToolUse table = tabled.get(call);
         if (own == null || table == null) {
             return own;
         }
-        return mismatch(wanted, rows(table.result().get("rows")), ordered, tolerance);
+        return mismatch(wanted, kept(wanted, rows(table.result().get("rows")), extraRows, tolerance), ordered,
+                tolerance);
+    }
+
+    // A call's rows, or where the answer allows extra rows (extra_rows: true, as when an agent looks wider than the
+    // question to be sure), only those that match an expected row.
+    private static List<List<Object>> kept(final List<List<Object>> wanted,
+                                           final List<List<Object>> rows,
+                                           final boolean extraRows,
+                                           final double tolerance) {
+        return extraRows
+                ? rows.stream().filter(row -> wanted.stream().anyMatch(want -> rowMatches(want, row, tolerance)))
+                        .toList()
+                : rows;
     }
 
     // The latest accepted table call on the file each accepted call of the tool wrote, after it and before any

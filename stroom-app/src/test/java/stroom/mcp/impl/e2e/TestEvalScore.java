@@ -1128,6 +1128,26 @@ class TestEvalScore {
     }
 
     @Test
+    void anAnswerAllowingExtraRowsPassesWithRowsBesidesTheExpected() {
+        final Map<String, Object> evalCase = Map.of("kind", "question", "expected", Map.of(
+                "answer", Map.of("ordered", true, "extra_rows", true, "rows", List.of(
+                        List.of("2026-09-17T10:05:00.000Z", "S1"), List.of("2026-09-17T11:40:00.000Z", "S1")))));
+        final EvalScore wider = new EvalScore("q");
+        final EvalScore missing = new EvalScore("q");
+
+        wider.scoreQuestion(evalCase, List.of(new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                List.of("2026-09-17T20:05:00.000+10:00", "S1", "Connect"),
+                List.of("2026-09-17T21:40:00.000+10:00", "S1", "Disconnect"),
+                List.of("2026-09-18T08:26:00.000+10:00", "S2", "Connect"))), "ok")));
+        missing.scoreQuestion(evalCase, List.of(new EvalScore.ToolUse("esql_query", false, Map.of("rows", List.of(
+                List.of("2026-09-17T20:05:00.000+10:00", "S1", "Connect"),
+                List.of("2026-09-18T08:26:00.000+10:00", "S2", "Connect"))), "ok")));
+
+        assertThat(wider.passed()).as(wider.summary()).isTrue();
+        assertThat(missing.passed()).as(missing.summary()).isFalse();
+    }
+
+    @Test
     void aQuestionAnsweredWithTheExpectedRowsPasses() {
         final EvalScore score = new EvalScore("q");
 
