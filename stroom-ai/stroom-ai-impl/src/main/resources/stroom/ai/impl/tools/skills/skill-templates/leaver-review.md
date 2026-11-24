@@ -26,11 +26,11 @@ weigh, never a conclusion about the person.
 
 1. Compare the review window with the person's own year and their peers, by week:
    ```json
-   {"tool": "compare_activity", "arguments": {"person": "{person}", "logonIds": "{logon_ids}", "windowFrom": "{window_start}", "windowTo": "{leaving_date}", "baselineFrom": "{baseline_start}", "unit": "week", "sources": "[[the sources to compare: proxy, cloud audit and endpoint indexes, by name]]", "sumFields": "[[numeric fields to sum, e.g. bytes sent, or none]]", "breadthFields": "[[fields for breadth and new values: hosts, destinations, applications, repositories]]", "leave": "{leave}"}}
+   {"tool": "compare_activity", "arguments": {"person": "{person}", "logonIds": "{logon_ids}", "windowFrom": "{window_start}", "windowTo": "{leaving_date}", "baselineFrom": "{baseline_start}", "unit": "week", "sources": "[[the sources to compare: proxy, cloud audit and endpoint indexes, by name]]", "sumFields": "[[numeric fields to sum, e.g. bytes sent, or none]]", "breadthFields": "[[fields for breadth and new values: destinations first, then hosts, applications, repositories]]", "categories": true, "categoryField": "[[the proxy's own category field, or leave out for the model to classify the destinations]]", "accessField": "[[a field of the sites, shares or repositories people reach, or leave out]]", "leave": "{leave}"}}
    ```
    Read each change point against the leaving date (e.g. "breadth up threefold from 12 April, 41 days before the
-   leaving date"). Where the site's categories are known ([[where personal cloud, webmail and job sites are listed:
-   a category field, the AGENTS doc, or none]]), say which new destinations fall in them.
+   leaving date"). The site's own list of categories, where the AGENTS doc has one ([[the AGENTS doc's list of
+   personal cloud, webmail and job sites as value=category, or none]]), goes in categoryList and overrides the rest.
 2. Look for the sequences that take data out, by the person's field, from window_start to leaving_date:
    ```json
    {"tool": "sequence_query", "arguments": {"steps": [{"index": "[[the index of file access]]", "where": [{"field": "[[a field marking sensitive files]]", "value": "[[its value]]"}], "by": ["[[person field]]"]}, {"index": "[[the index of archive or upload events]]", "where": [{"field": "[[a field marking an archive or an upload to a personal destination]]", "value": "[[its value]]"}], "by": ["[[person field]]"]}], "maxspan": "1h", "timeFrom": "{window_start}", "timeTo": "{leaving_date}"}}
