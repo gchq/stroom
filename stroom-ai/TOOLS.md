@@ -1733,6 +1733,10 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
   Each is probed first (its first 200 events of the user): none, also without the domain and in lower case for a
   text field (said as `user_transform`), and it is listed in `left_out` and left out (where more than one source
   was asked for); the probe's keyword fields also find an element field (90% of its values EventDetail elements).
+  One user given alone, found as given in a text field with no `transform`, is read with its close variants too
+  (strip_domain and lowercase) where the index also holds them (a 20-event sample of the user's other forms):
+  `user_transform` names them, "read together" (since 2026-11-25: eval case 77's one source over the whole index
+  missed the logons' `CORP\jsmith`, so no lock ended a session).
   With `entity` alone this is as before.
 * **Whose events** (`PersonScope`, built 2026-11-24): `person` (a person id, the same for all of a person's accounts,
   as processing decorates each event with it) is read in each index by its person field: `personField` (the
@@ -1774,7 +1778,11 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
   model once (`EventCodes`, a side call of up to 100 codes, roles checked in code: active, idle, focus (a window or
   application came to the front; its loss is ignore), open, close, action, ignore), confirmed in a chat form and
   kept per index (`/outputs/timelines/event-codes/<uuid>.json`, the user's workspace where there is one); over MCP
-  used unconfirmed, not kept; with no model, actions named by their code. A skill's Event chains roles and a
+  used unconfirmed, not kept. Where nothing gives any of a source's codes a role (no model to ask, as over a client
+  that doesn't sample, and no skill's or call's `typeRoles`), the call is refused with the source's codes and
+  counts, the commonest first (at most 100), and the roles, for the calling model to classify them and call again
+  with `typeRoles` (since 2026-11-25: such a timeline had no focus, idle or window, eval case 77's 11 sessions for
+  63); a code `typeRoles` leaves out is an action named by its code. A skill's Event chains roles and a
   source's `typeRoles` override a type's role (`focus` among them, since eval case 77); `ignore` leaves its events
   out. An automatic source keeps the fields the call names for its events' application (`process`), window title,
   window and text (checked against the index): a code or index field says what an event was, not these, and without
@@ -1791,8 +1799,10 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
 * **Focus sessions** (`TimelineSessions`, in code): per host, an interval on a process starts at a `focus` on it and
   ends at the next focus (any process), an `idle_start`, or the idle cap (no event of any source on the host for
   `idleCap`, default `timelineIdleCap`, 30 minutes), marked `end_mark` ("ended by the idle cap") and `ended_by cap`;
-  an `idle_end` resumes the process focused before (`start_mark` "resumed after idle"); an action on a process with
-  no interval running starts one (`start_mark` "no focus event seen"); one still running at the period's end ends
+  an `idle_end` resumes the process focused before (`start_mark` "resumed after idle"); only a focus starts one: an
+  action outside any is left to the activity periods (until 2026-11-25 an action on a process started one, "no
+  focus event seen", and a `process` field naming a source's column gave a proxy-only user sessions of `proxy`,
+  eval case 78); one still running at the period's end ends
   there, marked. Window lifetimes from `open` to `close`, paired by the `window` field, else the process.
 * **Pairs** (`TimelineSpans`, `PairRule`), applied in order, each event used by the first that takes it: a skill's
   Event chains, a source's `pairs` (`{start, end, by, label}`), the schema's (Process Execute to Terminate and Startup
@@ -1816,7 +1826,9 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
   `Data[SessionId]`), labelled by the value; a found key's spans are labelled by the key and value (`SessionId
   8614`).
 * **Activity periods**: the actions in no focus session or pair, in a lane (the host, else the source's name),
-  labelled by the application, else the object's place (a URL's host, a path's last part), else the action's kind;
+  labelled by the application, else the object's place (a URL's host, a path's last part), else the action's kind
+  (a source whose events all hold one application, e.g. a `process` field naming the source column, by the
+  object's place first: eval case 78's `proxy`);
   one ends at the next action where the label changes, at its last action where the next is past the idle cap, or at
   an idle start on its host; a lone action is a marker. They show when the user was active in a source, not what had
   focus (`activity_periods_show`). Their actions are attached `by activity`; they count in the daily totals and the
@@ -1902,7 +1914,9 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
   `personField`, `sources` (each `index`, `name`, `user`, `transform`, `host`, `process`, `title`,
   `window`, `object`, `text`, `elementField`, `actionField`, `eventTypeField`, `roles` with `focus`, `open`,
   `close`, `idle_start`, `idle_end` as `{where, any_of}` and `actions` as `[{kind, where, any_of}]`, `pairs`,
-  `spanBy`, `typeRoles`), `userField`, `timeFrom` (default `now()-7d`), `timeTo` (default `now()`), `idleCap`, `view`,
+  `spanBy`, `typeRoles`), `userField`, `timeFrom` (default `now()-7d`), `timeTo` (default `now()`; a date alone is a
+  whole day in `timeZone`, an end date included, as compare_activity's, `CompareActivityTool.dateBound`), `idleCap`,
+  `view`,
   `lanes`, `skill`, `characterise`, `corrections`, `runAnyway`, `includeTargets`, `targetPersonField`,
   `targetUserField`, `timeZone`.
 * **Returns**: in a chat, Markdown (the sources with their user fields and how their events were classified, the
