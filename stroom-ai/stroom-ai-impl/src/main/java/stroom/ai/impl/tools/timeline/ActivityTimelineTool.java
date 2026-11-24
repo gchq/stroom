@@ -38,6 +38,7 @@ import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.query.DataSourceAccess;
+import stroom.ai.impl.tools.query.DataSourceDocumentation;
 import stroom.ai.impl.tools.query.EsqlQueryTool;
 import stroom.ai.impl.tools.query.StroomQlDatePoints;
 import stroom.ai.impl.tools.sequence.EqlQueryWriter.Filter;
@@ -105,6 +106,9 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.json.JsonUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.time.StroomDuration;
@@ -151,6 +155,8 @@ import java.util.TreeMap;
 /// loose items classified by the model in side calls ([stroom.ai.impl.tools.ModelSideCalls]), so the chat's model
 /// sees only the outcome. The analyst's corrections are kept with the investigation, so a re-run keeps them.
 public class ActivityTimelineTool extends AbstractWorkspaceTool {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ActivityTimelineTool.class);
 
     static final String NAME = "activity_timeline";
     static final String ENTITY_ARG = "entity";
@@ -261,6 +267,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     private final Provider<SkillCatalogue> skillCatalogueProvider;
     private final DocumentAccess documentAccess;
     private final AgentInstructions agentInstructions;
+    private final Provider<DataSourceDocumentation> dataSourceDocumentationProvider;
 
     /// @param workspace              The chats' workspaces.
     /// @param keyStreamsProvider     Reads each source's events for the entity, in time order.
@@ -274,6 +281,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     /// @param documentAccess         Checks the user may change the skill's doc, or create one.
     /// @param agentInstructions      Gives the folder an index is in.
     /// @param elasticEsqlProvider    Finds each source's first and last events where the period has none.
+    /// @param dataSourceDocumentationProvider Describes the field the lanes are by, for the charts' lane axis.
     @Inject
     ActivityTimelineTool(final ChatWorkspace workspace,
                          final Provider<ElasticKeyStreams> keyStreamsProvider,
@@ -286,8 +294,10 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                          final Provider<SkillCatalogue> skillCatalogueProvider,
                          final DocumentAccess documentAccess,
                          final AgentInstructions agentInstructions,
-                         final Provider<ElasticEsql> elasticEsqlProvider) {
+                         final Provider<ElasticEsql> elasticEsqlProvider,
+                         final Provider<DataSourceDocumentation> dataSourceDocumentationProvider) {
         super(workspace);
+        this.dataSourceDocumentationProvider = dataSourceDocumentationProvider;
         this.keyStreamsProvider = keyStreamsProvider;
         this.elasticEsqlProvider = elasticEsqlProvider;
         this.dataSourceAccess = dataSourceAccess;
@@ -597,9 +607,13 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 ? sources.stream().map(source -> range(context, source.name(), source.doc(), source.userField(),
                 source.values(), deadline)).toList()
                 : List.of();
+        final String hostLanes = "source".equals(lanes)
+                ? null
+                : TimelineLaneTitles.hosts(sources, (source, field) -> fieldDescription(context, source.doc(),
+                        field));
         final TimelineRun run = new TimelineRun(entity, period, capMs, sources, plan.notes(), plan.chosen(), read,
                 classification, xml.summary(), timeline, built, byId, inferred.borderline(), characterised, view,
-                lanes, learned, zone, ranges, targets);
+                lanes, learned, zone, ranges, targets, hostLanes);
         final Files files = TimelineTables.write(workspace, folder, run);
         // So its tables can be written elsewhere later, as they are (propose_timeline_dashboard).
         TimelineSnapshot.of(run, now).write(workspace, folder);
@@ -607,6 +621,33 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         return context.session().isChat()
                 ? ToolResult.text(TimelineResult.markdown(run, files)).withStructuredContent(structured)
                 : ToolResult.text(JsonUtil.writeValueAsString(structured, false)).withStructuredContent(structured);
+    }
+
+    // A field's description, as describe_data_source gives it: from the index's documentation (a field table's
+    // Description column), else the index plan kept with a pipeline feeding it; null if neither has one, or they
+    // can't be read.
+    private String fieldDescription(final ToolCallContext context, final DocRef index, final String field) {
+        try {
+            final DataSourceDocumentation documentation = dataSourceDocumentationProvider.get();
+            final Map<String, String> row = DataSourceDocumentation.fieldRows(documentation.find(context.session(),
+                    index, "Documentation read by the " + NAME + " tool")).get(field);
+            final String documented = NullSafe.map(row).entrySet().stream()
+                    .filter(entry -> entry.getKey().strip().toLowerCase(Locale.ROOT).startsWith("description"))
+                    .map(Map.Entry::getValue)
+                    .filter(NullSafe::isNonBlankString)
+                    .findFirst()
+                    .orElse(null);
+            if (documented != null) {
+                return documented;
+            }
+            return documentation.planned(documentation.feedingPipelines(index), field)
+                    .map(planned -> planned.field().description())
+                    .filter(NullSafe::isNonBlankString)
+                    .orElse(null);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Unable to describe field {} of {}", field, index), e);
+            return null;
+        }
     }
 
     // ------------------------------------------------------------------------------------------------

@@ -32,6 +32,7 @@ import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.query.DataSourceAccess;
+import stroom.ai.impl.tools.query.DataSourceDocumentation;
 import stroom.ai.impl.tools.sequence.InMemoryKeyStreams;
 import stroom.ai.impl.tools.skills.SkillCatalogue;
 import stroom.ai.impl.tools.workspace.GanttChartTool;
@@ -84,6 +85,7 @@ class TestActivityTimelineTool {
 
     private final InMemoryKeyStreams streams = new InMemoryKeyStreams();
     private final DataSourceAccess dataSourceAccess = Mockito.mock(DataSourceAccess.class);
+    private final DataSourceDocumentation documentation = Mockito.mock(DataSourceDocumentation.class);
     private final QueryService queryService = Mockito.mock(QueryService.class);
     private final AiAuditLog auditLog = Mockito.mock(AiAuditLog.class);
     private final TimelineEventXml eventXml = Mockito.mock(TimelineEventXml.class);
@@ -140,7 +142,7 @@ class TestActivityTimelineTool {
         tool = new ActivityTimelineTool(files.workspace(), () -> streams, dataSourceAccess, () -> queryService,
                 auditLog, eventXml, new TimelineFields(agentInstructions, dataSourceAccess, Optional.empty()),
                 new TimelineSourceChoice(dataSourceAccess, () -> tabSnapshots), () -> skillCatalogue, documentAccess,
-                agentInstructions, () -> Mockito.mock(ElasticEsql.class));
+                agentInstructions, () -> Mockito.mock(ElasticEsql.class), () -> documentation);
 
         windows("08:30", "4800");
         windows("08:58", "4801");
@@ -223,17 +225,27 @@ class TestActivityTimelineTool {
 
     @Test
     void aChatsResultSaysWhatWasFoundAndHowToDrawIt() {
+        // The index documents a host field: the lanes are titled by its description (chat 195: "lane").
+        Mockito.when(documentation.find(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(List.of(
+                new DataSourceDocumentation.Documented(null, null, "its Documentation tab",
+                        "| Field | Description |\n| --- | --- |\n| `client_host` | Device host name |\n")));
+
         final String text = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
                 arguments(Map.of("timeZone", "UTC")), false)), ToolCalls.inChat(CHAT, files.workspace())).text();
 
-        assertThat(text).startsWith("Activity timeline of jsmith, 2026-11-10 00:00 to 2026-11-10 12:00: 4 session(s) "
-                                    + "on 1 host(s), 4 action(s) (0 in no session or span), from 14 event(s): "
-                                    + "Endpoint 8, Windows 4, Proxy 2.")
+        // Spans of every kind and their hosts, focus sessions a part of them.
+        assertThat(text).startsWith("Activity timeline of jsmith, 2026-11-10 00:00 to 2026-11-10 12:00: 4 span(s) "
+                                    + "on 1 host(s) (4 focus session(s), 0 pair span(s), 0 activity period(s)), "
+                                    + "4 action(s) (0 in no session or span), from 14 event(s): Endpoint 8, "
+                                    + "Windows 4, Proxy 2.")
                 .contains("| ws-01 | WINWORD.EXE | 2 | 45.0 |")
                 .contains("- idle_start_without_end: 1 idle starts")
                 .contains("draw it in the chat with gantt_chart: path " + FOLDER + "spans.csv, start start, end "
-                          + "end, label label, lane lane.")
+                          + "end, label label, lane lane, title 'jsmith: spans by Computer / Device host name "
+                          + "(client_host)'.")
                 .contains(ActivityTimelineTool.CAVEAT);
+        assertThat(files.content(FOLDER + TimelineSnapshot.FILE).orElseThrow())
+                .contains("Computer / Device host name (client_host)", "Day (UTC)");
     }
 
     @Test
@@ -256,9 +268,12 @@ class TestActivityTimelineTool {
         assertThat(result).containsEntry("session_count", 0L).containsEntry("actions", 5L);
         assertThat((Map<String, Object>) result.get("spans")).containsEntry("activity", 3L);
         final String spans = files.content("/outputs/timelines/pat/spans.csv").orElseThrow();
-        assertThat(spans).contains("2026-11-10T09:00:00Z,2026-11-10T09:20:00Z,research.example.org,ws-09,activity")
-                .contains("2026-11-10T09:20:00Z,2026-11-10T09:20:00Z,news.example.com,ws-09,activity")
-                .contains("2026-11-10T11:00:00Z,2026-11-10T11:00:00Z,research.example.org,ws-09,activity");
+        assertThat(spans).contains("2026-11-10T09:00:00Z,2026-11-10T09:20:00Z,web access · research.example.org,"
+                                   + "web access ×3,ws-09,activity")
+                .contains("2026-11-10T09:20:00Z,2026-11-10T09:20:00Z,web access · news.example.com,web access ×1,"
+                          + "ws-09,activity")
+                .contains("2026-11-10T11:00:00Z,2026-11-10T11:00:00Z,web access · research.example.org,"
+                          + "web access ×1,ws-09,activity");
     }
 
     @Test
@@ -325,8 +340,8 @@ class TestActivityTimelineTool {
         final String first = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
                 withText, false)), chat(model)).text();
 
-        assertThat(first).contains("\"The Q3 proposal\"").contains("classified by the model in 1 call(s) outside "
-                                                                    + "this conversation");
+        assertThat(first).contains("\"The Q3 proposal\"").contains("sent to the model in 1 call(s) outside this "
+                                                                    + "conversation: 2 classified;");
         assertThat(first).doesNotContain("lunch at one?");
         assertThat(calls.get()).isGreaterThanOrEqualTo(1);
         assertThat(files.content(FOLDER + ActivityTimelineTool.CORRECTIONS_FILE).orElseThrow())

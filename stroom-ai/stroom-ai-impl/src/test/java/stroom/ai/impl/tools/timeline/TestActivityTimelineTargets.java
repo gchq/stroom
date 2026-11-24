@@ -32,6 +32,7 @@ import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.ai.impl.tools.query.DataSourceAccess;
+import stroom.ai.impl.tools.query.DataSourceDocumentation;
 import stroom.ai.impl.tools.sequence.InMemoryKeyStreams;
 import stroom.ai.impl.tools.skills.SkillCatalogue;
 import stroom.ai.impl.workspace.SessionWorkspace;
@@ -121,7 +122,7 @@ class TestActivityTimelineTargets {
         tool = new ActivityTimelineTool(files.workspace(), () -> streams, dataSourceAccess, () -> queryService,
                 Mockito.mock(AiAuditLog.class), Mockito.mock(TimelineEventXml.class), timelineFields, sourceChoice,
                 () -> Mockito.mock(SkillCatalogue.class), Mockito.mock(DocumentAccess.class), agentInstructions,
-                () -> Mockito.mock(ElasticEsql.class));
+                () -> Mockito.mock(ElasticEsql.class), () -> Mockito.mock(DataSourceDocumentation.class));
         // The person's own: a sign-in, a file read, and a password they changed themselves (their own act on their
         // own account: theirs, never done to them).
         cloud.add(doc("09:00", "P1", "pat", "Logon", "P1", "pat"));
@@ -175,10 +176,10 @@ class TestActivityTimelineTargets {
                 event -> event.get("by")).containsExactly(org.assertj.core.groups.Tuple.tuple("AddGroup", "admin1"),
                 org.assertj.core.groups.Tuple.tuple("Logon", TimelineTargets.NO_ACCOUNT));
         // In the tables, a lane of their own, each an instant, the role said.
-        assertThat(spans()).contains("t1,2026-11-10T10:00:00Z,2026-11-10T10:00:00Z,AddGroup by admin1,done to "
-                                     + "them: Cloud,target,")
-                .contains("t2,2026-11-10T11:00:00Z,2026-11-10T11:00:00Z,Logon by no account,done to them: Cloud,"
-                          + "target,")
+        assertThat(spans()).contains("t1,2026-11-10T10:00:00Z,2026-11-10T10:00:00Z,AddGroup by admin1,AddGroup by "
+                                     + "admin1,done to them: Cloud,target,")
+                .contains("t2,2026-11-10T11:00:00Z,2026-11-10T11:00:00Z,Logon by no account,Logon by no account,"
+                          + "done to them: Cloud,target,")
                 .doesNotContain("ResetPassword").doesNotContain("ChangePassword by");
         assertThat(files.content(FOLDER + ActivityTimelineTool.ACTIONS_FILE).orElseThrow().lines()
                 .filter(line -> line.endsWith("," + TimelineTargets.TARGET)))

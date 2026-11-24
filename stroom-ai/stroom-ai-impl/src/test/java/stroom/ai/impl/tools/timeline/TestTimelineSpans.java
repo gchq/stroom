@@ -73,6 +73,59 @@ class TestTimelineSpans {
     }
 
     @Test
+    void eachSpanSaysWhatHappenedAndItsLabelLeadsWithIt() {
+        // Chat 195: a span's label was only its object, so it was unclear whether it was opened, focused or written.
+        final PairRule focus = new PairRule(0, "Focus-Window", "Unfocus-Window", "Window", null,
+                PairRule.Origin.INFERRED, 1);
+        typed("09:00", "Focus-Window", Map.of("Window", "w1"), "Forecast FY27.xlsx");
+        typed("09:20", "Unfocus-Window", Map.of("Window", "w1"), "Forecast FY27.xlsx");
+        process("10:00", "Execute", "11", "notepad.exe");
+        process("10:30", "Terminate", "11", "notepad.exe");
+        process("11:00", "Execute", "12", "calc.exe");
+        typed("12:00", "Read-File", Map.of(), "Budget.xlsx");
+        typed("12:01", "Read-File", Map.of(), "Budget.xlsx");
+        typed("12:02", "Write-File", Map.of(), "Budget.xlsx");
+        typed("12:03", "Read-File", Map.of(), "Budget.xlsx");
+
+        final List<PairRule> pairs = new ArrayList<>(List.of(focus));
+        pairs.addAll(PairRule.SCHEMA);
+        final Built built = build(pairs);
+
+        assertThat(built.spans()).extracting(Span::kind, Span::shownLabel, Span::action)
+                .containsExactly(
+                        // The source's own type names, as one action.
+                        tuple(Kind.PAIR, "Focus-Window · Forecast FY27.xlsx", "Focus-Window to Unfocus-Window"),
+                        // The schema's, of one element.
+                        tuple(Kind.PAIR, "Process Execute · notepad.exe", "Process Execute to Terminate"),
+                        tuple(Kind.PAIR, "Process Execute · calc.exe", "Process Execute (no end seen)"),
+                        // An activity period's types with their counts, the most first.
+                        tuple(Kind.ACTIVITY, "Read-File/Write-File · Budget.xlsx", "Read-File ×3, Write-File ×1"));
+        assertThat(built.spans().getFirst().types()).containsExactly(Map.entry("Focus-Window", 1),
+                Map.entry("Unfocus-Window", 1));
+        // The label without its lead is what pairs and characterisation match on.
+        assertThat(built.spans().getFirst().label()).isEqualTo("Forecast FY27.xlsx");
+    }
+
+    @Test
+    void aLeadNamesTwoTypesAtMostAndTypesOfNoNameAreLeftOut() {
+        final Map<String, Integer> types = new LinkedHashMap<>();
+        types.put("Read-File", 1);
+        types.put("Write-File", 4);
+        types.put("Delete-File", 2);
+
+        assertThat(TimelineSpans.typesText(types)).isEqualTo("Write-File ×4, Delete-File ×2, Read-File ×1");
+        assertThat(TimelineSpans.lead(types)).isEqualTo("Write-File/Delete-File/…");
+        assertThat(TimelineSpans.lead(Map.of())).isNull();
+        assertThat(TimelineSpans.typesText(Map.of())).isEmpty();
+        // An event the schema classifies with no Action is named by its element; one unclassified by its kind.
+        final Event event = new Event(at("09:00"), 0, "x", Role.ACTION, "view", "ws-1", null, null, null, null,
+                null, null, null);
+        assertThat(TimelineSpans.typeName(event, null)).isEqualTo("view");
+        assertThat(TimelineSpans.typeName(event, new Classified("Search", null, null, Role.ACTION, "view", null,
+                null, null, Map.of(), Route.XML))).isEqualTo("Search");
+    }
+
+    @Test
     void anUnpairedStartRunsUntilTheLaneGoesIdleAndBothUnpairedAreFlagged() {
         final PairRule tunnel = new PairRule(0, "Tun-Ascend", "Tun-Recede", "Tunnel", null, PairRule.Origin.INFERRED,
                 1);

@@ -29,8 +29,10 @@ import stroom.ai.impl.tools.timeline.TimelineRun.XmlRead;
 import stroom.ai.impl.tools.timeline.TimelineSessions.Flag;
 import stroom.ai.impl.tools.timeline.TimelineSessions.Session;
 import stroom.ai.impl.tools.timeline.TimelineSessions.Timeline;
+import stroom.ai.impl.tools.timeline.TimelineSpans.Built;
 import stroom.ai.impl.tools.timeline.TimelineSpans.Kind;
 import stroom.ai.impl.tools.timeline.TimelineSpans.PairUse;
+import stroom.ai.impl.tools.timeline.TimelineSpans.Span;
 import stroom.ai.impl.tools.timeline.TimelineTables.Files;
 import stroom.util.shared.NullSafe;
 
@@ -116,6 +118,8 @@ final class TimelineResult {
         }
         map.put("events_xml", xml(run.xml()));
         map.put("ended_early", endedEarly(run.read()));
+        map.put("span_count", run.built().spans().size());
+        map.put("span_hosts", spanHosts(run.built()));
         map.put("session_count", timeline.sessions().size());
         map.put("hosts", timeline.sessions().stream().map(Session::host).distinct().toList());
         map.put("uncertain_sessions", timeline.sessions().stream().filter(Session::uncertain).count());
@@ -307,7 +311,7 @@ final class TimelineResult {
             final boolean perActivity = "activity".equals(run.lanes());
             charts.add(chart(files.activities().toString(), "activity_label", perActivity
                     ? "activity_label"
-                    : "day"));
+                    : "day", run.entity() + ": activities by " + run.activityLaneTitle()));
             final int lanes = perActivity
                     ? files.activityNames()
                     : files.activityLanes();
@@ -321,7 +325,7 @@ final class TimelineResult {
             final boolean bySource = "source".equals(run.lanes());
             charts.add(chart(files.spans().toString(), "label", bySource
                     ? "source"
-                    : "lane"));
+                    : "lane", run.entity() + ": spans by " + run.spanLaneTitle()));
             final int lanes = bySource
                     ? files.sourceLanes()
                     : files.hostLanes();
@@ -345,13 +349,18 @@ final class TimelineResult {
         return map;
     }
 
-    private static Map<String, Object> chart(final String path, final String label, final String lane) {
+    // A gantt_chart call: its title says what the lanes (the chart's sections) are, as a gantt has no lane axis.
+    private static Map<String, Object> chart(final String path,
+                                             final String label,
+                                             final String lane,
+                                             final String title) {
         final Map<String, Object> map = new LinkedHashMap<>();
         map.put("path", path);
         map.put("start", "start");
         map.put("end", "end");
         map.put("label", label);
         map.put("lane", lane);
+        map.put("title", title);
         return map;
     }
 
@@ -387,8 +396,16 @@ final class TimelineResult {
         map.put("items", characterised.allItems().size());
         map.put("items_placed", placed);
         map.put("model_calls", characterised.calls());
+        map.put("items_linked_in_code", characterised.counts().linked());
+        map.put("items_reused", characterised.counts().reused());
         map.put("items_asked", characterised.asked());
+        map.put("items_classified", characterised.asked() - characterised.counts().failed());
+        map.put("items_failed", characterised.counts().failed());
+        if (characterised.counts().failedWhy() != null) {
+            map.put("failed_why", characterised.counts().failedWhy());
+        }
         map.put("items_not_classified", characterised.skipped());
+        map.put("items_unclear", unclear(characterised));
         final List<Map<String, Object>> unclear = new ArrayList<>();
         characterised.items().values().stream()
                 .filter(placement -> ActivityCharacterisation.UNCLEAR.equals(placement.activity()))
@@ -455,8 +472,7 @@ final class TimelineResult {
         final Timeline timeline = run.timeline();
         final StringBuilder sb = new StringBuilder("Activity timeline of ").append(run.entity()).append(", ")
                 .append(local(run.period().fromMs(), zoneId)).append(" to ").append(local(run.period().toMs(), zoneId))
-                .append(": ").append(timeline.sessions().size()).append(" session(s) on ")
-                .append(timeline.sessions().stream().map(Session::host).distinct().count()).append(" host(s), ")
+                .append(": ").append(spansText(run.built())).append(", ")
                 .append(run.built().actions().size()).append(" action(s) (").append(run.built().unattached())
                 .append(" in no session or span), from ").append(run.read().events().size()).append(" event(s): ");
         final List<String> counts = new ArrayList<>();
@@ -502,9 +518,7 @@ final class TimelineResult {
                                                                    + "classified by the index's fields. Narrow the "
                                                                    + "period to classify them all by their XML.\n");
         }
-        sb.append("\nSpans: ").append(run.built().count(Kind.FOCUS)).append(" focus session(s), ")
-                .append(run.built().count(Kind.PAIR)).append(" pair span(s), ")
-                .append(run.built().count(Kind.ACTIVITY)).append(" activity period(s)");
+        sb.append("\nSpans: ").append(kindsText(run.built()));
         if (run.built().count(Kind.ACTIVITY) > 0) {
             sb.append(" (an activity period shows ").append(TimelineSpans.ACTIVITY_MEANS).append(")");
         }
@@ -554,14 +568,7 @@ final class TimelineResult {
                                 ? " (a theme the model found in several items)"
                                 : "").append('\n');
             }
-            final long unclear = characterised.items().values().stream()
-                    .filter(placement -> ActivityCharacterisation.UNCLEAR.equals(placement.activity()))
-                    .count();
-            sb.append(characterised.allItems().size()).append(" item(s) (messages, prompts, sessions the graph "
-                                                              + "left out): ").append(characterised.asked())
-                    .append(" classified by the model in ").append(characterised.calls())
-                    .append(" call(s) outside this conversation, ").append(unclear).append(" unclear (")
-                    .append(files.items()).append(" has each with its reason).\n");
+            sb.append(itemsText(characterised, files.items()));
             characterised.notes().forEach(note -> sb.append("- ").append(note).append('\n'));
         }
         sb.append("\nTables: ").append(files.spans()).append(" (detail spans: focus sessions, pairs and activity "
@@ -576,7 +583,8 @@ final class TimelineResult {
         for (final Object chart : (List<?>) views.get("gantt_charts")) {
             final Map<?, ?> args = (Map<?, ?>) chart;
             sb.append(" path ").append(args.get("path")).append(", start start, end end, label ")
-                    .append(args.get("label")).append(", lane ").append(args.get("lane")).append(';');
+                    .append(args.get("label")).append(", lane ").append(args.get("lane")).append(", title '")
+                    .append(args.get("title")).append("';");
         }
         sb.setLength(sb.length() - 1);
         sb.append(". On a dashboard instead: ").append(ProposeTimelineDashboardTool.NAME)
@@ -592,6 +600,68 @@ final class TimelineResult {
         sb.append("\n").append(run.zone().stated()).append(" The tables' times are UTC.\n\n")
                 .append(ActivityTimelineTool.DERIVED).append(' ').append(ActivityTimelineTool.CAVEAT);
         return sb.toString();
+    }
+
+    /// The spans of every kind and the hosts they are on, e.g. `313 span(s) on 1 host(s) (0 focus session(s), 246
+    /// pair span(s), 67 activity period(s))`: focus sessions are only a part of them.
+    ///
+    /// @param built The spans.
+    /// @return The text.
+    static String spansText(final Built built) {
+        return built.spans().size() + " span(s) on " + spanHosts(built).size() + " host(s) (" + kindsText(built)
+               + ")";
+    }
+
+    // Each kind's spans: focus sessions, pairs and activity periods always, spans bounded by a key where there are.
+    private static String kindsText(final Built built) {
+        return built.count(Kind.FOCUS) + " focus session(s), " + built.count(Kind.PAIR) + " pair span(s), "
+               + built.count(Kind.ACTIVITY) + " activity period(s)" + (built.count(Kind.KEY) > 0
+                ? ", " + built.count(Kind.KEY) + " key span(s)"
+                : "");
+    }
+
+    // The hosts the spans are on, in order; a span with no host (in a source's lane) is on none.
+    private static List<String> spanHosts(final Built built) {
+        return built.spans().stream()
+                .map(Span::host)
+                .filter(NullSafe::isNonBlankString)
+                .distinct()
+                .toList();
+    }
+
+    /// What became of the characterisation's items: placed in code, reused from an earlier run, sent to the model
+    /// (classified, or not as their calls failed, and why), not sent; and how many are unclear in all.
+    ///
+    /// @param characterised The characterisation.
+    /// @param itemsFile     The items' table.
+    /// @return The line, ending with a new line.
+    static String itemsText(final Characterised characterised, final Object itemsFile) {
+        final ActivityCharacterisation.Counts counts = characterised.counts();
+        final StringBuilder sb = new StringBuilder().append(characterised.allItems().size())
+                .append(" item(s) (messages, prompts, spans and sessions the graph left out): ")
+                .append(counts.linked()).append(" placed in code (a shared artifact or terms)");
+        if (counts.reused() > 0) {
+            sb.append(", ").append(counts.reused()).append(" reused from an earlier run");
+        }
+        sb.append(", ").append(characterised.asked()).append(" sent to the model in ").append(characterised.calls())
+                .append(" call(s) outside this conversation: ").append(characterised.asked() - counts.failed())
+                .append(" classified");
+        if (counts.failed() > 0) {
+            sb.append(", ").append(counts.failed()).append(" not classified as the calls failed (")
+                    .append(NullSafe.nonBlankStringElse(counts.failedWhy(), "the model couldn't be asked"))
+                    .append(')');
+        }
+        if (characterised.skipped() > 0) {
+            sb.append("; ").append(characterised.skipped()).append(" not sent (see below)");
+        }
+        return sb.append("; ").append(unclear(characterised)).append(" unclear in all (").append(itemsFile)
+                .append(" has each with its reason).\n").toString();
+    }
+
+    private static long unclear(final Characterised characterised) {
+        return characterised.items().values().stream()
+                .filter(placement -> ActivityCharacterisation.UNCLEAR.equals(placement.activity()))
+                .count();
     }
 
     private static String local(final long ms, final ZoneId zone) {

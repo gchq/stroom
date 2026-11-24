@@ -54,6 +54,8 @@ import java.util.Map;
 /// @param ranges         Where the period has no events, each source's first and last at any time; else empty.
 /// @param targets        What was done to the person (`includeTargets`), kept apart from their activity; null if
 ///                       not asked.
+/// @param hostLanes      What the lanes by host are: the field holding the host, described
+///                       ([TimelineLaneTitles#hosts]); null for lanes by source.
 record TimelineRun(String entity,
                    Period period,
                    long capMs,
@@ -73,7 +75,8 @@ record TimelineRun(String entity,
                    TimelineLearning.Learned learned,
                    ToolTimeZone zone,
                    List<EventRange> ranges,
-                   TimelineTargets.Asked targets) {
+                   TimelineTargets.Asked targets,
+                   String hostLanes) {
 
     /// @param source A source, by its place.
     /// @return Its name.
@@ -81,6 +84,16 @@ record TimelineRun(String entity,
         return source >= 0 && source < sources.size()
                 ? sources.get(source).name()
                 : "source " + (source + 1);
+    }
+
+    /// @return The title of the spans' lanes ([TimelineLaneTitles#spans]).
+    String spanLaneTitle() {
+        return TimelineLaneTitles.spans(lanes, hostLanes);
+    }
+
+    /// @return The title of the activities' lanes ([TimelineLaneTitles#activities]).
+    String activityLaneTitle() {
+        return TimelineLaneTitles.activities(lanes, zone.id());
     }
 
     /// @return The sources' names, by their places.

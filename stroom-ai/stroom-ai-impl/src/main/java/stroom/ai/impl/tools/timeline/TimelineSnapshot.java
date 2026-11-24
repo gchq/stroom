@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /// What a timeline run was, written beside its tables (`timeline.json`) so its tables can be written elsewhere later
@@ -42,6 +43,9 @@ import java.util.Optional;
 /// @param sources       The sources read, by their names in the result.
 /// @param characterised True if the activities were found, so `activity_label` is filled.
 /// @param builtMs       When it was built.
+/// @param laneTitles    What each table's lanes are, by table ([TimelineDataConnection#SPANS],
+///                      [TimelineDataConnection#ACTIVITIES]), e.g. `Device host name (host.name)`
+///                      ([TimelineLaneTitles]); empty for a snapshot from before they were written.
 public record TimelineSnapshot(String entity,
                                long fromMs,
                                long toMs,
@@ -50,14 +54,16 @@ public record TimelineSnapshot(String entity,
                                String lanes,
                                List<String> sources,
                                boolean characterised,
-                               long builtMs) {
+                               long builtMs,
+                               Map<String, String> laneTitles) {
 
     /// The file it is written to, in the timeline's folder.
     public static final String FILE = "timeline.json";
 
-    /// Copies the sources.
+    /// Copies the sources and the titles.
     public TimelineSnapshot {
         sources = NullSafe.list(sources).stream().filter(NullSafe::isNonBlankString).toList();
+        laneTitles = Map.copyOf(NullSafe.map(laneTitles));
     }
 
     /// The snapshot of a run.
@@ -68,7 +74,8 @@ public record TimelineSnapshot(String entity,
     static TimelineSnapshot of(final TimelineRun run, final long builtMs) {
         return new TimelineSnapshot(run.entity(), run.period().fromMs(), run.period().toMs(),
                 run.zone().zone().getId(), run.view().argName(), run.lanes(), run.names(),
-                run.characterised() != null, builtMs);
+                run.characterised() != null, builtMs, Map.of(TimelineDataConnection.SPANS, run.spanLaneTitle(),
+                        TimelineDataConnection.ACTIVITIES, run.activityLaneTitle()));
     }
 
     /// Writes it to the timeline's folder.

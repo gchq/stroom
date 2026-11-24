@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -96,7 +97,8 @@ class TestTimelineDataConnection {
     @Test
     void theDescriptionSaysItIsADatedSnapshotOfWhomAndFromWhichSources() {
         final TimelineSnapshot snapshot = new TimelineSnapshot("sam.patel", FROM, TO, "UTC", "detail", null,
-                List.of("Endpoint", "Proxy"), false, Instant.parse("2026-11-24T10:15:00Z").toEpochMilli());
+                List.of("Endpoint", "Proxy"), false, Instant.parse("2026-11-24T10:15:00Z").toEpochMilli(),
+                Map.of());
 
         assertThat(TimelineDataConnection.description(snapshot, TimelineDataConnection.SPANS))
                 .contains("A snapshot of sam.patel's activity timeline (the detail spans",

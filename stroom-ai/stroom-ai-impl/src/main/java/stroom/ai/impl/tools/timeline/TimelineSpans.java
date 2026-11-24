@@ -34,6 +34,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashMap;
@@ -67,6 +68,11 @@ final class TimelineSpans {
     static final String ACTIVITY_MEANS = "when the user was active in that source, not what had focus";
     /// The longest label of an activity period.
     static final int MAX_LABEL_CHARS = 80;
+    /// Between a span's action and what it touched in its label, e.g. `Focus-Window · Forecast FY27.xlsx` (a colon
+    /// or a comma would be taken out of a chat's gantt chart).
+    static final String LEAD_SEPARATOR = " · ";
+    /// The most event types a label leads with.
+    static final int LEAD_TYPES = 2;
 
     private TimelineSpans() {
         // Static only.
@@ -151,7 +157,8 @@ final class TimelineSpans {
                     session.process()), session.host(), session.host(), sourcesOf(session, events, options),
                     session.eventIds(), "focus", session.startMark() != null
                             ? session.startMark()
-                            : NullSafe.string(session.endMark()), false));
+                            : NullSafe.string(session.endMark()), false, NullSafe.map(session.actionsByKind()),
+                    focusAction(session), null));
         }
         int number = focusCount;
         final List<Session> activitySessions = new ArrayList<>();
@@ -298,9 +305,23 @@ final class TimelineSpans {
                 mark);
         draft.sources.add(options.sourceName(start.source()));
         draft.eventIds.add(start.id());
+        final String startType = Objects.requireNonNullElse(typeName(start, c), rule.start());
+        draft.count(startType);
+        final String endType;
         if (endEvent != null) {
             draft.eventIds.add(endEvent.id());
+            endType = Objects.requireNonNullElse(typeName(endEvent, classified.get(endEvent.id())), rule.end());
+            draft.count(endType);
+        } else {
+            endType = null;
         }
+        draft.action = pairAction(startType, endType, c, endEvent == null
+                ? null
+                : classified.get(endEvent.id()));
+        // A label the pair gives as text ("logged on", "locked") says what happened already.
+        draft.lead = rule.label() != null && rule.label().startsWith("=")
+                ? null
+                : startType;
         draft.sessionLevel = sessionLevel(c) || (endEvent != null && sessionLevel(classified.get(endEvent.id())));
         return draft;
     }
@@ -358,7 +379,10 @@ final class TimelineSpans {
                     runEvents.forEach(event -> {
                         draft.sources.add(options.sourceName(event.source()));
                         draft.eventIds.add(event.id());
+                        draft.count(typeName(event, classified.get(event.id())));
                     });
+                    draft.action = typesText(draft.types) + " (sharing " + key.path() + ")";
+                    draft.lead = lead(draft.types);
                     drafts.add(draft);
                 }
             }
@@ -448,6 +472,7 @@ final class TimelineSpans {
                 current.sources.add(options.sourceName(event.source()));
                 current.eventIds.add(event.id());
                 current.actions.add(event.id());
+                current.count(typeName(event, classified.get(event.id())));
                 if (event.object() != null) {
                     current.titles.add(event.object());
                 }
@@ -459,6 +484,86 @@ final class TimelineSpans {
             }
         }
         return drafts;
+    }
+
+    /// What an event did, as its type is named: the source's own name for it (its TypeId, e.g. `Focus-Window`)
+    /// where it has one, else the schema's element and Action (e.g. `Process Execute`), else its kind.
+    ///
+    /// @param event An event.
+    /// @param c     It as classified, or null.
+    /// @return The name, or null if there is none.
+    static String typeName(final Event event, final Classified c) {
+        if (c != null && NullSafe.isNonBlankString(c.typeId())) {
+            return c.typeId().strip();
+        }
+        if (c != null && NullSafe.isNonBlankString(c.element())) {
+            return NullSafe.isNonBlankString(c.action())
+                    ? c.element().strip() + " " + c.action().strip()
+                    : c.element().strip();
+        }
+        return NullSafe.isNonBlankString(event.kind())
+                ? event.kind().strip()
+                : null;
+    }
+
+    /// A pair's two types read as one action: `Focus-Window to Unfocus-Window`; the schema's of one element as
+    /// `Process Execute to Terminate`; a start with no end seen as `Process Execute (no end seen)`.
+    ///
+    /// @param startType The start's type name.
+    /// @param endType   The end's, or null if no end was seen.
+    /// @param start     The start as classified, or null.
+    /// @param end       The end as classified, or null.
+    /// @return The action.
+    static String pairAction(final String startType,
+                             final String endType,
+                             final Classified start,
+                             final Classified end) {
+        if (endType == null) {
+            return startType + " (no end seen)";
+        }
+        final boolean oneElement = start != null && end != null && NullSafe.isBlankString(start.typeId())
+                                   && NullSafe.isBlankString(end.typeId()) && start.element() != null
+                                   && start.element().equals(end.element()) && end.action() != null;
+        return oneElement
+                ? startType + " to " + end.action().strip()
+                : startType + " to " + endType;
+    }
+
+    /// @param types Event types and how many of each.
+    /// @return Them, the most first, e.g. `Read-File ×3, Write-File ×1`; empty for none.
+    static String typesText(final Map<String, Integer> types) {
+        return String.join(", ", ranked(types).stream()
+                .map(type -> type + " ×" + types.get(type))
+                .toList());
+    }
+
+    /// @param types Event types and how many of each.
+    /// @return What a label leads with: the commonest types, at most [#LEAD_TYPES], `/` between them and `/…` if
+    /// there are more, e.g. `Read-File/Write-File`; null for none.
+    static String lead(final Map<String, Integer> types) {
+        final List<String> ranked = ranked(types);
+        if (ranked.isEmpty()) {
+            return null;
+        }
+        return String.join("/", ranked.subList(0, Math.min(LEAD_TYPES, ranked.size())))
+               + (ranked.size() > LEAD_TYPES
+                ? "/…"
+                : "");
+    }
+
+    // The types, the most first, then in the order first seen.
+    private static List<String> ranked(final Map<String, Integer> types) {
+        final List<String> ranked = new ArrayList<>(NullSafe.map(types).keySet());
+        ranked.sort(Comparator.comparingInt((String type) -> types.get(type)).reversed());
+        return ranked;
+    }
+
+    // A focus session's action: its focus, and its actions by kind.
+    private static String focusAction(final Session session) {
+        final String kinds = typesText(NullSafe.map(session.actionsByKind()));
+        return kinds.isEmpty()
+                ? "focus"
+                : "focus: " + kinds;
     }
 
     /// @param event An event.
@@ -615,6 +720,10 @@ final class TimelineSpans {
     /// @param mark     Why its start or end is uncertain, or empty.
     /// @param sessionLevel True for a pair a logon, unlock or connect (or their ends) bounds: a session, not an
     ///                 activity of its own.
+    /// @param types    Its events' types ([#typeName]), and how many of each; a focus session's actions by kind.
+    /// @param action   What happened in it: a pair's two types as one action, an activity period's (or a key
+    ///                 span's) types with their counts, a focus session's focus and actions.
+    /// @param lead     What its label leads with ([#shownLabel]), or null for nothing.
     record Span(int number,
                 Kind kind,
                 long start,
@@ -626,11 +735,27 @@ final class TimelineSpans {
                 List<String> eventIds,
                 String how,
                 String mark,
-                boolean sessionLevel) {
+                boolean sessionLevel,
+                Map<String, Integer> types,
+                String action,
+                String lead) {
 
-        /// Copies the list.
+        /// Copies the list and the map.
         Span {
             eventIds = List.copyOf(eventIds);
+            types = types == null
+                    ? Map.of()
+                    : Collections.unmodifiableMap(new LinkedHashMap<>(types));
+            action = NullSafe.string(action);
+        }
+
+        /// @return Its label as shown, leading with what happened, e.g. `Focus-Window · Forecast FY27.xlsx`; its
+        /// label alone where there is nothing to lead with, or the label says it already (an activity period
+        /// labelled by its events' kind).
+        String shownLabel() {
+            return NullSafe.isBlankString(lead) || lead.equalsIgnoreCase(label)
+                    ? label
+                    : cut(lead + LEAD_SEPARATOR + label);
         }
 
         /// @return True if it is placed in an activity as an item of its own (by its [#itemId]): a pair's span that
@@ -714,9 +839,13 @@ final class TimelineSpans {
         private final List<String> eventIds = new ArrayList<>();
         private final List<String> actions = new ArrayList<>();
         private final Set<String> titles = new LinkedHashSet<>();
+        private final Map<String, Integer> types = new LinkedHashMap<>();
         private long end;
         private int number;
         private boolean sessionLevel;
+        // A pair's or a key span's action and lead; an activity period's are its types'.
+        private String action;
+        private String lead;
 
         Draft(final String lane,
               final String host,
@@ -734,13 +863,23 @@ final class TimelineSpans {
             this.mark = mark;
         }
 
+        void count(final String type) {
+            if (type != null) {
+                types.merge(type, 1, Integer::sum);
+            }
+        }
+
         Span span(final Kind kind) {
             final List<String> ids = new ArrayList<>(eventIds);
             actions.stream().filter(id -> !ids.contains(id)).forEach(ids::add);
             return new Span(number, kind, start, Math.max(start, end), label, lane, host, String.join("; ",
                     sources), ids, how, mark == null
                     ? ""
-                    : mark, sessionLevel);
+                    : mark, sessionLevel, types, action != null
+                    ? action
+                    : typesText(types), action != null
+                    ? lead
+                    : lead(types));
         }
 
         Session session() {

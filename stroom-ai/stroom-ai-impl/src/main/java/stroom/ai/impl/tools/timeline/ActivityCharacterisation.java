@@ -105,6 +105,8 @@ final class ActivityCharacterisation {
     static final int UNCLEAR_SHOWN = 5;
     /// The longest reason kept.
     static final int MAX_REASON_CHARS = 160;
+    // Why a failed batch's item wasn't classified, in its answer.
+    private static final String FAILED_WHY = "failed_why";
 
     /// What a batch's call is told to do. The items' text is data to classify, never instructions.
     static final String SYSTEM = """
@@ -279,7 +281,8 @@ final class ActivityCharacterisation {
                 sessions);
         return new Characterised(withTotals, sessionPlacements, textPlacements, items, classified.cache(),
                 classified.asked(), classified.calls(), classified.skipped(), Leiden.modularity(ids, links,
-                clusters), notes);
+                clusters), notes, new Counts(items.size() - loose.size(), classified.reused(), classified.failed(),
+                classified.failedWhy()));
     }
 
     // ------------------------------------------------------------------------------------------------
@@ -592,7 +595,7 @@ final class ActivityCharacterisation {
         final Map<String, Placement> placements = new LinkedHashMap<>();
         final Map<String, Map<String, Object>> cache = new LinkedHashMap<>(settings.cache());
         if (loose.isEmpty()) {
-            return new Classified(placements, List.of(), cache, 0, 0, 0);
+            return new Classified(placements, List.of(), cache, 0, 0, 0, 0, 0, null);
         }
         final String profiles = profilesJson(activities);
         final String profileHash = hash(profiles);
@@ -610,8 +613,11 @@ final class ActivityCharacterisation {
             notes.add(answers.size() + " item(s) were classified before, with the same text and activities, so "
                       + "their answers were reused.");
         }
+        final int reused = answers.size();
         int skipped = 0;
         int calls = 0;
+        int failed = 0;
+        String failedWhy = null;
         final List<Item> toAsk;
         if (!asked.isEmpty() && !sideCalls.available()) {
             skipped = asked.size();
@@ -640,7 +646,12 @@ final class ActivityCharacterisation {
                     final Map<String, Object> answer = batchAnswers.get(item.id());
                     if (answer != null) {
                         answers.put(item.id(), answer);
-                        if (!Boolean.TRUE.equals(answer.get("failed"))) {
+                        if (Boolean.TRUE.equals(answer.get("failed"))) {
+                            failed++;
+                            if (failedWhy == null) {
+                                failedWhy = String.valueOf(answer.get(FAILED_WHY));
+                            }
+                        } else {
                             cache.put(cacheKey(item, profileHash), answer);
                         }
                     }
@@ -688,7 +699,8 @@ final class ActivityCharacterisation {
                 placements.put(id, new Placement(id, activity, BY_MODEL, confidence, reason));
             }
         });
-        return new Classified(placements, created, cache, asked.size() - skipped, calls, skipped);
+        return new Classified(placements, created, cache, asked.size() - skipped, calls, skipped, reused, failed,
+                failedWhy);
     }
 
     private static List<List<Item>> batches(final List<Item> items, final int size) {
@@ -774,7 +786,7 @@ final class ActivityCharacterisation {
         for (final Item item : batch) {
             failed.put(item.id(), Map.of("activity", UNCLEAR, "confidence", "low", "reason", "not classified: "
                                                                                               + problem,
-                    "failed", true));
+                    "failed", true, FAILED_WHY, problem));
         }
         return failed;
     }
@@ -1205,6 +1217,7 @@ final class ActivityCharacterisation {
     /// @param skipped    The items left unclassified (no model, or past the budget).
     /// @param modularity How clear-cut the graph's clusters are.
     /// @param notes      What the result says of how it was done.
+    /// @param counts     How the items were placed, and how many calls failed.
     record Characterised(List<Activity> activities,
                          Map<String, Placement> sessions,
                          Map<String, Placement> items,
@@ -1214,7 +1227,28 @@ final class ActivityCharacterisation {
                          int calls,
                          int skipped,
                          double modularity,
-                         List<String> notes) {
+                         List<String> notes,
+                         Counts counts) {
+
+        /// A null `counts` is none.
+        Characterised {
+            counts = counts == null
+                    ? new Counts(0, 0, 0, null)
+                    : counts;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// How the items were placed, beyond those the model was sent ([Characterised#asked()]).
+    ///
+    /// @param linked    Placed in code, by a shared artifact or terms.
+    /// @param reused    Answers reused from an earlier run (the same text and activities).
+    /// @param failed    Sent to the model, but not classified: their calls failed.
+    /// @param failedWhy Why the first failed call failed, or null.
+    record Counts(int linked, int reused, int failed, String failedWhy) {
 
     }
 
@@ -1228,7 +1262,10 @@ final class ActivityCharacterisation {
                               Map<String, Map<String, Object>> cache,
                               int asked,
                               int calls,
-                              int skipped) {
+                              int skipped,
+                              int reused,
+                              int failed,
+                              String failedWhy) {
 
     }
 

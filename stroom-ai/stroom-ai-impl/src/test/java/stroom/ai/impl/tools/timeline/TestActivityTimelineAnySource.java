@@ -33,6 +33,7 @@ import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.ai.impl.tools.query.DataSourceAccess;
+import stroom.ai.impl.tools.query.DataSourceDocumentation;
 import stroom.ai.impl.tools.sequence.InMemoryKeyStreams;
 import stroom.ai.impl.tools.skills.SkillCatalogue;
 import stroom.ai.impl.tools.skills.SkillCatalogue.Listed;
@@ -152,7 +153,8 @@ class TestActivityTimelineAnySource {
         tool = new ActivityTimelineTool(files.workspace(), () -> streams, dataSourceAccess, () -> queryService,
                 Mockito.mock(AiAuditLog.class), eventXml, new TimelineFields(agentInstructions, dataSourceAccess,
                 Optional.empty()), new TimelineSourceChoice(dataSourceAccess, () -> Mockito.mock(TabSnapshots.class)),
-                () -> skillCatalogue, documentAccess, agentInstructions, () -> elasticEsql);
+                () -> skillCatalogue, documentAccess, agentInstructions, () -> elasticEsql,
+                () -> Mockito.mock(DataSourceDocumentation.class));
     }
 
     @Test
@@ -172,14 +174,22 @@ class TestActivityTimelineAnySource {
         final String spans = files.content(FOLDER + ActivityTimelineTool.SPANS_FILE).orElseThrow();
         assertThat(spans.lines().findFirst().orElseThrow()).isEqualTo(String.join(",",
                 TimelineTables.SPAN_COLUMNS));
+        // No focus session, but spans of other kinds on the host: counted, as chat 195's "0 session(s) on 0
+        // host(s)" didn't.
+        assertThat(result).containsEntry("span_count", spans.lines().count() - 1)
+                .containsEntry("span_hosts", List.of("ws-09"));
         assertThat(spans).doesNotContain("2001")
                 // The web views by their domain, then the mail sent: an activity period each.
-                .contains("2026-11-10T09:00:00Z,2026-11-10T09:20:00Z,research.example.org,ws-09,activity")
+                .contains("2026-11-10T09:00:00Z,2026-11-10T09:20:00Z,View · research.example.org,View ×3,ws-09,"
+                          + "activity")
                 // Active until the lock.
-                .contains("2026-11-10T09:20:00Z,2026-11-10T09:40:00Z,Q3 proposal,ws-09,activity")
+                .contains("2026-11-10T09:20:00Z,2026-11-10T09:40:00Z,Send · Q3 proposal,Send ×1,ws-09,activity")
                 // The schema's pairs: the lock to the unlock, the process from its start to its end.
-                .contains("2026-11-10T09:40:00Z,2026-11-10T10:00:00Z,locked,ws-09,pair")
-                .contains("2026-11-10T10:10:00Z,2026-11-10T10:30:00Z,notepad.exe,ws-09,pair");
+                .contains("2026-11-10T09:40:00Z,2026-11-10T10:00:00Z,locked,Authenticate ScreenLock to ScreenUnlock,"
+                          + "ws-09,pair")
+                // What happened leads the label (chat 195: a span's label was only its object).
+                .contains("2026-11-10T10:10:00Z,2026-11-10T10:30:00Z,Process Execute · notepad.exe,Process Execute to "
+                          + "Terminate,ws-09,pair");
         assertThat(files.content(FOLDER + ActivityTimelineTool.EVENTS_FILE).orElseThrow())
                 .contains(",Authenticate/ScreenLock,Events XML").doesNotContain("CORP");
         assertThat((List<Map<String, Object>>) result.get("pairs")).extracting(pair -> pair.get("start"),
@@ -209,7 +219,10 @@ class TestActivityTimelineAnySource {
                 .containsEntry("classified_by", Map.of("index fields", 11L));
         assertThat((Map<String, Object>) result.get("events_xml")).containsEntry("gone_or_not_events", 11L);
         assertThat(files.content(FOLDER + ActivityTimelineTool.SPANS_FILE).orElseThrow())
-                .contains("2026-11-10T09:40:00Z,2026-11-10T10:00:00Z,locked,ws-09,pair");
+                .contains("2026-11-10T09:40:00Z,2026-11-10T10:00:00Z,locked,Authenticate ScreenLock to ScreenUnlock,"
+                          + "ws-09,pair")
+                // An activity period labelled by its events' kind isn't led by it again.
+                .contains(",view,View ×3,ws-09,activity");
     }
 
     @Test
@@ -252,7 +265,7 @@ class TestActivityTimelineAnySource {
         assertThat(text).contains("events classified 4 by event code");
         // The ignored code's event is left out; the idle code ends the period.
         assertThat(files.content(FOLDER + ActivityTimelineTool.SPANS_FILE).orElseThrow())
-                .contains("2026-11-10T09:00:00Z,2026-11-10T09:05:00Z,file read,Codes,activity");
+                .contains("2026-11-10T09:00:00Z,2026-11-10T09:05:00Z,A-101 · file read,A-101 ×2,Codes,activity");
         // Kept for the index, so a re-run asks nothing.
         assertThat(files.content(EventCodes.FOLDER + "codes-uuid.json")).isPresent();
         asked.clear();

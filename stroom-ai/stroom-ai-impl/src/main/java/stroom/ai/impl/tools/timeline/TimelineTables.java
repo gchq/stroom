@@ -53,11 +53,14 @@ import java.util.Set;
 final class TimelineTables {
 
     /// The columns of `spans.csv`.
-    static final List<String> SPAN_COLUMNS = List.of("span", "start", "end", "label", "lane", "kind", "activity",
-            "activity_label", "host", "source", "events", "how", "uncertain", "role");
+    static final List<String> SPAN_COLUMNS = List.of("span", "start", "end", "label", "action", "lane", "kind",
+            "activity", "activity_label", "host", "source", "events", "how", "uncertain", "role");
     /// The columns of `activities.csv`.
     static final List<String> ACTIVITY_COLUMNS = List.of("activity", "activity_label", "day", "start", "end",
-            "active_minutes", "spans", "lanes", "evidence");
+            "active_minutes", "spans", "actions", "lanes", "evidence");
+    // The columns of spans.csv counted for how dense a view is: its lane and its source.
+    private static final int SPAN_LANE = SPAN_COLUMNS.indexOf("lane");
+    private static final int SPAN_SOURCE = SPAN_COLUMNS.indexOf("source");
 
     private TimelineTables() {
         // Static only.
@@ -170,16 +173,16 @@ final class TimelineTables {
         final List<List<String>> spanRows = new ArrayList<>();
         for (final Span span : run.built().spans()) {
             final String activity = activityOf(characterised, span);
-            spanRows.add(List.of(span.id(), iso(span.start()), iso(span.end()), span.label(), span.lane(),
-                    span.kind().key(), activity, activity.isEmpty()
+            spanRows.add(List.of(span.id(), iso(span.start()), iso(span.end()), span.shownLabel(), span.action(),
+                    span.lane(), span.kind().key(), activity, activity.isEmpty()
                             ? ""
                             : labels.getOrDefault(activity, activity), NullSafe.string(span.host()), span.sources(),
                     String.valueOf(span.eventIds().size()), span.how(), span.mark(), TimelineTargets.ACTOR));
         }
         for (int i = 0; i < done.size(); i++) {
             final TimelineTargets.Done event = done.get(i);
-            spanRows.add(List.of("t" + (i + 1), iso(event.time()), iso(event.time()), event.label(), event.lane(),
-                    TimelineTargets.TARGET, "", "", NullSafe.string(event.host()), event.lane(), "1",
+            spanRows.add(List.of("t" + (i + 1), iso(event.time()), iso(event.time()), event.label(), event.label(),
+                    event.lane(), TimelineTargets.TARGET, "", "", NullSafe.string(event.host()), event.lane(), "1",
                     TimelineTargets.LANE, "", TimelineTargets.TARGET));
         }
         final WorkspacePath spansPath = path(folder, ActivityTimelineTool.SPANS_FILE);
@@ -192,7 +195,8 @@ final class TimelineTables {
         for (final ActivityRow row : rolledUp) {
             activityRows.add(List.of(row.activity(), row.label(), row.day().toString(), iso(row.start()),
                     iso(row.end()), minutes(row.activeMs()), String.join(" ", row.spans()),
-                    String.join("; ", row.lanes()), String.join("; ", row.evidence())));
+                    TimelineSpans.typesText(row.actions()), String.join("; ", row.lanes()),
+                    String.join("; ", row.evidence())));
         }
         final WorkspacePath activitiesPath = path(folder, ActivityTimelineTool.ACTIVITIES_FILE);
         ToolTables.write(workspace, activitiesPath, ACTIVITY_COLUMNS, activityRows, sourceDoc);
@@ -223,8 +227,8 @@ final class TimelineTables {
                     "how", "confidence", "reason"), itemRows, sourceDoc);
         }
         return new Files(sessionsPath, actionsPath, eventsPath, dailyPath, windowsPath, qualityPath, spansPath,
-                activitiesPath, itemsPath, spanRows.size(), activityRows.size(), distinct(spanRows, 4),
-                distinct(activityRows, 2), distinct(activityRows, 1), distinct(spanRows, 9));
+                activitiesPath, itemsPath, spanRows.size(), activityRows.size(), distinct(spanRows, SPAN_LANE),
+                distinct(activityRows, 2), distinct(activityRows, 1), distinct(spanRows, SPAN_SOURCE));
     }
 
     /// The activities rolled up from their spans: an activity's spans following each other within the idle cap,
@@ -344,6 +348,7 @@ final class TimelineTables {
     /// @param end      Its end.
     /// @param activeMs The time its spans cover in it.
     /// @param spans    Its spans' ids.
+    /// @param actions  Its spans' event types (a focus session's actions by kind), and how many of each.
     /// @param lanes    Its spans' lanes.
     /// @param evidence The activity's evidence: its top artifacts and applications.
     record ActivityRow(String activity,
@@ -353,6 +358,7 @@ final class TimelineTables {
                        long end,
                        long activeMs,
                        List<String> spans,
+                       Map<String, Integer> actions,
                        List<String> lanes,
                        List<String> evidence) {
 
@@ -433,8 +439,11 @@ final class TimelineTables {
                 final List<Span> inDay = spans.stream()
                         .filter(span -> span.end() >= dayFrom && span.start() <= to)
                         .toList();
+                final Map<String, Integer> actions = new LinkedHashMap<>();
+                inDay.forEach(span -> span.types().forEach((type, count) -> actions.merge(type, count,
+                        Integer::sum)));
                 rows.add(new ActivityRow(activity, labels.getOrDefault(activity, activity), day, from, to,
-                        covered(inDay, from, to), inDay.stream().map(Span::id).toList(), inDay.stream()
+                        covered(inDay, from, to), inDay.stream().map(Span::id).toList(), actions, inDay.stream()
                         .map(Span::lane).distinct().toList(), evidence.getOrDefault(activity, List.of())));
                 from = to;
             } while (from < end);
