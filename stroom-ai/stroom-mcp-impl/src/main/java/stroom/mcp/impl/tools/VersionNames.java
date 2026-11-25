@@ -59,6 +59,11 @@ final class VersionNames {
     private static final Pattern TOKEN = Pattern.compile(
             "(?<![A-Za-z0-9])([vV])(" + NUMBERS + ")(?![A-Za-z0-9]|\\.\\d)");
 
+    // A version token on its own: v or V, then its numbers.
+    private static final Pattern VERSION_ALONE = Pattern.compile("([vV])(" + NUMBERS + ")");
+    // Where a name with no version token would have one, marked to split it there.
+    private static final char VERSION_MARK = '\u0000';
+
     // A shared module's version after its base name: a space, then a version token.
     private static final Pattern MODULE_VERSION = Pattern.compile(" ([vV])(" + NUMBERS + ")");
     // A shared module's version at the end of its name.
@@ -95,6 +100,46 @@ final class VersionNames {
             return Boolean.compare(a.isPresent(), b.isPresent());
         }
         return compare(parts(a.get()), parts(b.get()));
+    }
+
+    /// Whether a name is one for a newer version of another: the original's name with its version token (its last
+    /// outside the names held) replaced by a newer one (`ACME-V1.0-Events` to `ACME-V1.1-Events` or
+    /// `ACME-V2.0-Events`), or, where it has none, with `-V<n>` (either case) after it, before its first
+    /// `{variable}` as [#next] puts it, newer than the [#FIRST_MODULE_VERSION] it is taken to be
+    /// (`ACME-Events` to `ACME-Events-V1.1`). The version anywhere else (`ACME-V1.1-Events` or `ACME-Events V1.1`
+    /// for `ACME-Events`) is no such name.
+    ///
+    /// @param original  The original's name, e.g. `ACME-Events`.
+    /// @param candidate The name given for its new version.
+    /// @param held      The names they may hold whose tokens are theirs, not their version: their feeds', say.
+    /// @return True if the candidate names a newer version of the original, placed as the original's is.
+    static boolean namesNewerVersion(final String original, final String candidate, final Collection<String> held) {
+        if (original == null || candidate == null) {
+            return false;
+        }
+        final Optional<Matcher> found = last(original, held);
+        final String prefix;
+        final String suffix;
+        final List<Long> before;
+        if (found.isPresent()) {
+            prefix = original.substring(0, found.get().start());
+            suffix = original.substring(found.get().end());
+            before = parts(found.get().group(2));
+        } else {
+            // Where next would put a version, marked, and split there.
+            final String marked = beforeVariables(original, "-" + VERSION_MARK);
+            final int at = marked.indexOf(VERSION_MARK);
+            prefix = marked.substring(0, at);
+            suffix = marked.substring(at + 1);
+            before = parts(FIRST_MODULE_VERSION.substring(1));
+        }
+        if (candidate.length() <= prefix.length() + suffix.length() || !candidate.startsWith(prefix)
+            || !candidate.endsWith(suffix)) {
+            return false;
+        }
+        final Matcher version = VERSION_ALONE.matcher(candidate.substring(prefix.length(),
+                candidate.length() - suffix.length()));
+        return version.matches() && compare(parts(version.group(2)), before) > 0;
     }
 
     /// The next version's name, its version token's last part one higher: `V1.0` to `V1.1`, `V1` to `V2`,

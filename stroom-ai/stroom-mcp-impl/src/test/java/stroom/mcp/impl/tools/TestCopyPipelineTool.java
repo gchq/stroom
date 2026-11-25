@@ -191,6 +191,74 @@ class TestCopyPipelineTool {
     }
 
     @Test
+    void aPipelineDescribedInPlaceIsNotCopied() {
+        // Seen in eval cases 108 and 109 on Haiku: copied as V1.1 after the user chose to describe it in place.
+        source();
+        describedInPlace("p1", "x9");
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final ToolResult refused = call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": "
+                                        + "\"ACME-V2 - Indexing\"}", user.context());
+
+        assertThat(refused.isError()).isTrue();
+        assertThat(refused.text()).contains("describes 'ACME-V1 - Indexing' in place", "no new version",
+                "catalogue_event_types build=" + BUILD, "Nothing was copied");
+        assertThat(user.shown()).isEmpty();
+        assertNothingCopied();
+    }
+
+    @Test
+    void aPipelineRunningTheXsltDescribedInPlaceIsNotCopiedEither() {
+        // Another pipeline the described translation serves: copying it is a new version of that translation.
+        source();
+        describedInPlace("other", "x1");
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final ToolResult refused = call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": "
+                                        + "\"ACME-V2 - Indexing\"}", user.context());
+
+        assertThat(refused.text()).contains("in place", "'ACME-V1 - Indexing' isn't copied");
+        assertNothingCopied();
+    }
+
+    @Test
+    void anotherPipelineIsCopiedInABuildDescribingOneInPlace() {
+        // The gate is on what is described: a pipeline running other code is copied as before.
+        source();
+        describedInPlace("other", "x9");
+        final ToolCallContext context = BuildToolCalls.answering(Map.of("value", true));
+
+        final Map<String, Object> made = PipelineWorld.json(call("{\"build\": \"" + BUILD + "\", \"source_uuid\": "
+                                                                 + "\"p1\", \"new_name\": \"ACME-V2 - Indexing\"}",
+                context));
+
+        assertThat(made).containsEntry("name", "ACME-V2 - Indexing");
+    }
+
+    @ParameterizedTest
+    @MethodSource("misplacedVersions")
+    void aNewVersionNamedWithItsVersionElsewhereIsRefusedSayingTheNameExpected(final String given) {
+        // Seen in eval cases 97 and 102-105 on Haiku: 'EVAL-102-V1.1-Events' and 'EVAL-103-Events V1.1' for
+        // 'EVAL-102-Events-V1.1'.
+        source();
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
+
+        final ToolResult refused = call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": \""
+                                        + given + "\"}", user.context());
+
+        assertThat(refused.isError()).isTrue();
+        assertThat(refused.text()).contains("'" + given + "' doesn't name a new version of 'ACME-V1 - Indexing'",
+                "new_name='ACME-V2 - Indexing'", "Nothing was copied");
+        assertThat(user.shown()).isEmpty();
+        assertNothingCopied();
+    }
+
+    private static Stream<String> misplacedVersions() {
+        return Stream.of("ACME - Indexing V2", "ACME-V1 - Indexing V2", "ACME-V1 - Indexing-V1.1", "ACME-V0 - Indexing",
+                "Something else");
+    }
+
+    @Test
     void aWorkingCopyOfAPromotedPipelineIsRefused() {
         source();
         final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
@@ -427,6 +495,13 @@ class TestCopyPipelineTool {
                                                               || made.startsWith(ElasticIndexDoc.TYPE + ":"));
     }
 
+
+    // The build's start: a pipeline described in place, with the XSLT it described.
+    private void describedInPlace(final String pipeline, final String xslt) {
+        pipelines.feeds.facts.startFrom = Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline", Map.of("name",
+                "ACME-V1 - Indexing", "uuid", pipeline), InPlaceInduction.IN_PLACE, Map.of(InPlaceInduction.XSLT,
+                Map.of("type", XsltDoc.TYPE, "uuid", xslt, "name", "ACME-V1-XSLT")));
+    }
 
     private void source() {
         pipelines.template(TEMPLATE.getUuid(), TEMPLATE.getName(), PipelineLayers.layer(TEMPLATE.getUuid())

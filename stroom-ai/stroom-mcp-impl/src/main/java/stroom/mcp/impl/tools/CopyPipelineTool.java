@@ -258,6 +258,7 @@ class CopyPipelineTool extends AbstractBuiltInTool {
             }
             names.put(entity.getUuid(), name);
         }
+        refuseInPlace(build, source, owned);
         refuseWorkingCopy(call, source, promoted);
         if (promoted) {
             refuseCopiesUnderOriginalNames(build, source, owned);
@@ -392,6 +393,28 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         return plan.withNext(context, build, result);
     }
 
+    // A build describing a pipeline in place (the user's start choice: no new version) copies neither it nor any
+    // pipeline running the XSLT it describes. Seen in eval cases 108 and 109 on Haiku: copied as V1.1 after the
+    // choice, then changed and promoted.
+    private void refuseInPlace(final String build, final PipelineDoc source, final List<DocRef> owned) {
+        final Map<String, Object> startFrom = plan.startFrom(build).orElse(null);
+        if (!InPlaceInduction.inPlace(startFrom)) {
+            return;
+        }
+        final Map<String, Object> pipeline = JsonValues.mapOrEmpty(startFrom.get("pipeline"));
+        final String xslt = ToolText.str(JsonValues.mapOrEmpty(JsonValues.mapOrEmpty(startFrom.get(
+                InPlaceInduction.IN_PLACE)).get(InPlaceInduction.XSLT)).get("uuid"));
+        final boolean described = source.getUuid().equals(ToolText.str(pipeline.get("uuid")))
+                                  || (!xslt.isEmpty() && owned.stream().anyMatch(doc -> xslt.equals(doc.getUuid())));
+        if (described) {
+            throw new ToolRefusal("Build '" + build + "' describes '" + ToolText.str(pipeline.get("name"))
+                                  + "' in place, as the user chose: no new version, so '" + source.getName()
+                                  + "' isn't copied. Its event types change in catalogue_event_types build=" + build
+                                  + "; a change to what the translation writes is a new version, in a build the "
+                                  + "user starts for it. Nothing was copied.");
+        }
+    }
+
     // A copy is always a new version (decided by the user, 2026-11-17: no change in place of a promoted pipeline
     // or the code it runs; seen in a user's test, a promoted feed's pipelines copied as working copies under the
     // same names where a new version was meant). A pipeline of a build is changed where it is.
@@ -435,6 +458,7 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         // A version token inside the name of a feed the build works from is the feed's, not the pipeline's version
         // (found in review, 2026-11-18).
         final List<String> held = heldNames(build);
+        refuseMisplacedVersion(source.getName(), newName, held);
         final String pipeline = newName.equals(source.getName())
                 ? VersionNames.next(source.getName(), held)
                 : newName;
@@ -485,6 +509,25 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         }
         return new NewVersion(source.getName(), pipeline, VersionNames.nextMajor(source.getName(), held), documents,
                 originals, oldIndex, index, destination, elements, indexDocs, indexDocOriginals);
+    }
+
+    // The agent's name for a new version: the original's with its version newer, in its place, or -V<n> after a name
+    // with none (VersionNames#namesNewerVersion); anything else refused, saying the name expected. Seen in eval
+    // cases 97 and 102-105 on Haiku: 'EVAL-102-V1.1-Events', 'EVAL-103-Events V1.1' and 'EVAL-105-Events V1.0'
+    // for 'EVAL-102-Events-V1.1'. The user may still edit it in the form.
+    private static void refuseMisplacedVersion(final String original,
+                                               final String newName,
+                                               final List<String> held) {
+        if (newName.equals(original) || VersionNames.namesNewerVersion(original, newName, held)) {
+            return;
+        }
+        final String expected = VersionNames.next(original, held);
+        throw new ToolRefusal("'" + newName + "' doesn't name a new version of '" + original + "': a new "
+                              + "version's name is the original's with its version token made newer, where it has "
+                              + "one ('ACME-V1.0-Events' to 'ACME-V1.1-Events'), or with -V<n> after it where it "
+                              + "has none. Call again with " + NEW_NAME_ARG + "='" + expected + "' (its documents' "
+                              + "names follow it; the user confirms or edits them in the form). Nothing was "
+                              + "copied.");
     }
 
     // The names a pipeline's name may hold whose version tokens are theirs: the feeds the build works from.

@@ -49,6 +49,47 @@ class TestVersionNames {
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
+            // Its version token changed for a newer one, in its place.
+            "ACME-V1.0-Events      | ACME-V1.1-Events       | true",
+            "ACME-V1.0-Events      | ACME-V2.0-Events       | true",
+            "ACME-V1.0-Events      | ACME-v1.10-Events      | true",
+            "acme-events-v1        | acme-events-v2         | true",
+            // No token: -V<n> after it, newer than the V1.0 it is taken to be.
+            "EVAL-102-Events       | EVAL-102-Events-V1.1   | true",
+            "EVAL-102-Events       | EVAL-102-Events-v2     | true",
+            "Acme-{feed}-Indexing  | Acme-V1.1-{feed}-Indexing | true",
+            // Seen in eval cases 97 and 102-104 on Haiku: the version placed elsewhere.
+            "EVAL-102-Events       | EVAL-102-V1.1-Events   | false",
+            "EVAL-97-Events        | EVAL-97-Events V1.1    | false",
+            "EVAL-97-Events        | EVAL-97-Events_V1.1    | false",
+            // Not newer: the original's own version, or an older one.
+            "EVAL-105-Events       | EVAL-105-Events-V1.0   | false",
+            "ACME-V1.1-Events      | ACME-V1.1-Events       | false",
+            "ACME-V1.1-Events      | ACME-V1.0-Events       | false",
+            // Anything else changed, or no version at all.
+            "ACME-V1.0-Events      | ACME-V1.1-Event        | false",
+            "ACME-V1.0-Events      | ACME-Events            | false",
+            "ACME-V1.0-Events      | ACME-V1.1-Events-V1.1  | false",
+            "EVAL-102-Events       | EVAL-102-Events-       | false"})
+    void aNewVersionsNameIsTheOriginalsWithANewerVersionInItsPlace(final String original,
+                                                                    final String candidate,
+                                                                    final boolean newer) {
+        assertThat(VersionNames.namesNewerVersion(original, candidate, List.of())).isEqualTo(newer);
+    }
+
+    @Test
+    void aVersionTokenInAFeedsNameIsLeftToTheFeed() {
+        // The feed CISCO-ASA-V9's token isn't the pipeline's: its new version gets -V1.1 after its name.
+        assertThat(VersionNames.namesNewerVersion("CISCO-ASA-V9-EVENTS", "CISCO-ASA-V9-EVENTS-V1.1",
+                List.of("CISCO-ASA-V9"))).isTrue();
+        assertThat(VersionNames.namesNewerVersion("CISCO-ASA-V9-EVENTS", "CISCO-ASA-V10-EVENTS",
+                List.of("CISCO-ASA-V9"))).isFalse();
+        assertThat(VersionNames.namesNewerVersion(null, "X-V1.1", List.of())).isFalse();
+        assertThat(VersionNames.namesNewerVersion("X", null, List.of())).isFalse();
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
             "Acme-Events-Indexing | Acme-Events-Indexing-V1.1",
             "Acme security        | Acme security-V1.1"})
     void aNameWithNoVersionIsTakenAsTheFirstVersionPromotionFilesItUnder(final String name, final String next) {
