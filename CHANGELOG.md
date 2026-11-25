@@ -13,6 +13,53 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v8.0-beta.2] - 2026-11-25
+
+* Feature : Change docker images to be based off RedHat's Universal Base Image (UBI10-minimal). Also change the docker images to run as a non-root user and to use a custom JRE rather than the JDK.
+
+* Bug : Remove `.java` source files from the Stroom JAR file.
+
+* Dependency : Uplift docker base image to eclipse-temurin:25.0.5.1_2-jdk-ubi10-minimal.
+
+* Bug **#6096** : Fix expressions that mix `+` and `-`, or `%` with `*` or `/`, so they are worked out left to right, e.g. `10 - 3 + 2` is now `9` and not `5`. Results of existing queries and dashboards that use such expressions without brackets will change.
+
+* Bug **#6100** : Fix the docs generator so that it includes non-public classes, e.g. most XSLT functions, which it has left out since the upgrade to ClassGraph 6.
+
+* Feature **#6098** : Accept numbers with exponents in expressions and StroomQL conditions, e.g. `1e5`, `1.5E3` and `1e-3`.
+
+* Bug **#6098** : Fix expressions that chain comparisons, e.g. `2 = 2 = true()`, so they are worked out left to right, with `<`, `<=`, `>` and `>=` before `=` and `!=`.
+
+* Bug **#6098** : Fix the `+` operator and `add()` function so that they return null if any value is null, like the other arithmetic operators, instead of ignoring it. Results of existing queries and dashboards will change where a field has no value, e.g. use `if(isNull(x), 0, x)` to treat it as `0`. Joining text still ignores nulls.
+
+* Bug **#6098** : Improve the error given by arithmetic on a value that is not a number, e.g. `'5' - 3` now gives `Expected a number but got '5'` and not `Unknown`.
+
+* Bug : Fix the data browser's data pane being slow to change between its Info, Data Preview, Meta and other tabs, and showing a late reply for a tab or stream that is no longer chosen.
+
+* Bug : Fix the data retention rules being read from the database for every stream listed in the data browser.
+
+* Bug **#3502** : Fix one large search result row making the buffers of all later rows large, and row buffers not being released if a row can't be stored.
+
+* Bug **#3502** : Fix visualisations losing their data after a warning, such as that the data has been truncated.
+
+* Bug : Show an error in the data browser's data pane when a stream's data can't be fetched, and let the user try again.
+
+* Bug : Show a stream's classification, not the last stream's, on the Info tab of the data browser's data pane.
+
+* Bug **#3502** : Fix CSV searches that have a warning being rejected as a bad request if they time out.
+
+* Bug **#6098** : Fix the `+` operator and `add()` function so that they give an error if a value is a boolean or XML and no value is text, like the other arithmetic operators, instead of counting booleans as `1` or `0`. Use `if(x, 1, 0)` to treat a boolean as a number.
+
+* Bug **#6098** : Fix the `sum()` function so that it gives an error if a value is a boolean, like the `+` operator, instead of counting booleans as `1` or `0`. Use `sum(if(x, 1, 0))` to count booleans.
+
+* Feature **#3502** : Add `dcount()`, which estimates the number of unique values using far less space than `countUnique()`.
+
+* Feature **#3502** : Add `countDistinct()`, which counts unique values exactly up to a limit (10,000 for each group by default) and estimates the number above it. Deprecate `countUnique()`.
+
+* Feature **#6078** : Remove index shard leases, takeover and stream recovery. An index shard on a shared index volume is now written to, retained and deleted only by the node that created it, and can still be searched by any node. As before v7.14-beta.19, documents a node has not committed are lost if it stops abruptly or a commit fails, and an indexing failure part way through a stream leaves the stream part indexed with its task complete and a fatal error. The job `Index Shard Stream Recovery` is removed. As nothing now stops an old process from writing to a shard, make sure a node's old process has stopped before starting another with the same node name, e.g. after force deleting a Kubernetes pod, or index shards on shared volumes could be corrupted.
+
+* Feature **#6078** : Upgrade note for v7.14-beta.19: stop all nodes before upgrading any of them, as nodes on that version expect others to hold index shard leases. Remove `shardLeaseDuration`, `shardLeaseRenewInterval` and `shardLeaseTakeoverGrace` from `appConfig.index.writer` in the configuration file if they are set there, as Stroom will not start with them. Before stopping the nodes, disable the processor filters of indexing pipelines and wait until the `index_shard_pending_stream` table has no rows other than those with a `state` of 6, as its rows are deleted by the upgrade. The streams of any other rows still in it may be missing from the index or indexed twice.
+
+
 ## [v8.0-beta.1] - 2026-11-24
 
 * Feature **#5720** : Add field types to quickfilter parser.
@@ -712,6 +759,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Bug : Tell screen readers when an expression's field values, or an Elastic index's fields or statistics, take a while to load, and how that ended.
 
 
-
-[Unreleased]: https://github.com/gchq/stroom/compare/v8.0-beta.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v8.0-beta.2...HEAD
+[v8.0-beta.2]: https://github.com/gchq/stroom/compare/v8.0-beta.1...v8.0-beta.2
 [v8.0-beta.1]: https://github.com/gchq/stroom/compare/v7.14-beta.19...v8.0-beta.1
