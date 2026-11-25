@@ -1170,6 +1170,29 @@ class TestEvalScore {
                 "the Events of record(s) [3] differ");
     }
 
+    @Test
+    void aTranslationDescribedInPlaceIsScoredByWhatItLeftInStroom() {
+        final Map<String, Object> expected = Map.of("code_unchanged", true, "mapping_kept", true,
+                "description_kept", "Owned by the network team", "pre_process_untouched", true, "notes_beside", true,
+                "confirmed", true, "checked_feeds", List.of("A", "B"), "timeline_roles",
+                Map.of("vpn-login", "active", "vpn-session-switch", "focus"));
+        final Map<String, Object> beside = Map.of("checked_feeds", List.of("B", "A"), "event_types", List.of(
+                Map.of("type_id", "vpn-login", "status", "confirmed", "timeline_role", "active"),
+                Map.of("type_id", "vpn-session-switch", "status", "confirmed", "timeline_role", "focus")));
+        final EvalScore described = new EvalScore("106");
+        final EvalScore copied = new EvalScore("106");
+
+        described.scoreInPlace(expected, new EvalScore.InPlace(true, true, "Owned by the network team. <!-- x -->",
+                true, true, beside));
+        copied.scoreInPlace(expected, new EvalScore.InPlace(false, false, "Replaced", false, false, null));
+
+        assertThat(described.summary()).doesNotContain("\n  - ");
+        assertThat(copied.summary()).contains("the XSLT's code was changed", "keeps no mapping",
+                "doesn't start with the user's text", "the pre-processor keeps a mapping",
+                "links no source notes beside its pipeline", "not every event type beside the pipeline is confirmed",
+                "checked against [], expected [A, B]", "vpn-session-switch's timeline role is null, expected focus");
+    }
+
     // A skill case expecting so.
     private static Map<String, Object> skillCase(final Map<String, Object> expected) {
         return Map.of("kind", "skill", "expected", expected);

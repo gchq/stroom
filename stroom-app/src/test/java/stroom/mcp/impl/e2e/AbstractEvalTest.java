@@ -205,6 +205,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
 
     // The forms the user answered in the case's own build: each its message and the answer's content.
     private final List<Map<String, Object>> formsAnswered = new ArrayList<>();
+    // What a hand-written case's setup made beyond its pipeline, by its placeholder ([#setUpHandWritten]):
+    // `<pre xslt>`, `<shared raw>` and `<shared pipeline>`.
+    private final Map<String, Object> handWrittenValues = new LinkedHashMap<>();
     // The case's reference answers of which key of each old/new list holds the value before the change (2026-11-23):
     // the options picked, e.g. "OldValue holds the value before, NewValue the value after".
     private List<String> changeSides = List.of();
@@ -848,7 +851,10 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     /// its translation as an environment made them by hand, never through the tools ([#handWritten]): in `folder`,
     /// the `feed`, its `sample` stored, the `xslt` (a test resource next to the e2e tests) in a `pipeline` of that
     /// name, a child of the translation `template` with any further `properties` (each its `element`, `name` and
-    /// `value`), and the processor filter reading its `processor_filter`'s `stream_type`.
+    /// `value`), and the processor filter reading its `processor_filter`'s `stream_type`. Optionally: `description`,
+    /// the user's own text in the XSLT's description; `pre_process`, a test resource XSLT put before the translation
+    /// (`<pre xslt>` in the reference); `shared_with`, another pipeline (`folder`, `feed`, `pipeline`, `sample`)
+    /// naming the same XSLT for its own feed (`<shared raw>`, `<shared pipeline>`).
     ///
     /// @param evalCase The case.
     /// @return What the setup made.
@@ -865,10 +871,41 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                             : new PipelinePropertyValue(String.valueOf(value)))
                     .build());
         }
+        final String streamType = String.valueOf(EvalCases.map(spec.get("processor_filter"))
+                .getOrDefault("stream_type", StreamTypeNames.RAW_EVENTS));
         final HandWritten made = handWritten(explorerPath((String) spec.get("folder")), (String) spec.get("feed"),
                 textResource((String) spec.get("xslt")), (String) spec.get("pipeline"), (String) spec.get("template"),
-                properties, String.valueOf(EvalCases.map(spec.get("processor_filter")).getOrDefault("stream_type",
-                        StreamTypeNames.RAW_EVENTS)), (String) spec.get("sample"));
+                properties, streamType, (String) spec.get("sample"), spec.get("pre_process") == null);
+        handWrittenValues.clear();
+        // The user's own words in the translation's description.
+        if (spec.get("description") instanceof final String description) {
+            editXslt(made.xslt(), doc -> doc.copy().description(description).build());
+        }
+        // A pre-processor before the translation, its records written as the translation reads them.
+        if (spec.get("pre_process") instanceof final String preProcess) {
+            final String pre = create(XsltDoc.TYPE, spec.get("pipeline") + "-Pre", explorerPath((String) spec.get(
+                    "folder"))).getUuid();
+            editXslt(pre, doc -> doc.copy().data(textResource(preProcess)).build());
+            withPreProcessor(made.pipeline(), pre, made.xslt(), properties);
+            assertThat(stepSample(made.pipeline(), List.of(made.raw())).get("verdict"))
+                    .as("the hand-written pipeline works with its pre-processor").isEqualTo("clean");
+            handWrittenValues.put("<pre xslt>", pre);
+        }
+        // Another pipeline, of another feed, naming the same XSLT.
+        final Map<String, Object> shared = EvalCases.map(spec.get("shared_with"));
+        if (!shared.isEmpty()) {
+            final ExplorerNode folder = folder(explorerPath((String) shared.get("folder")));
+            final String feed = (String) shared.get("feed");
+            create(FeedDoc.TYPE, feed, folder);
+            final long raw = storeParts(feed, List.of(Map.entry(Map.of("Feed", feed), (String) shared.get("sample"))));
+            final List<PipelineProperty> sharedProperties = new ArrayList<>(properties);
+            sharedProperties.add(property("translationFilter", "xslt", new DocRef(XsltDoc.TYPE, made.xslt())));
+            final String pipeline = childPipeline(folder, (String) shared.get("pipeline"), templateUuid("translation",
+                    (String) spec.get("template")), sharedProperties);
+            feedFilter(feed, streamType, pipeline);
+            handWrittenValues.put("<shared raw>", raw);
+            handWrittenValues.put("<shared pipeline>", pipeline);
+        }
         setUpOtherFeeds(spec);
         // A case's AGENTS docs, each in its folder.
         for (final Map<String, Object> doc : EvalCases.maps(evalCase.get("agents_docs"))) {
@@ -917,6 +954,7 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         final Map<String, Object> values = new LinkedHashMap<>();
         values.put("<original>", original.pipeline());
         values.put("<raw>", original.raw());
+        values.putAll(handWrittenValues);
         final List<String> made = new ArrayList<>();
         Map<String, Object> listing = null;
         Map<String, Object> compared = null;
@@ -959,7 +997,9 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     /// `same_as_setup_except`, each record's Events the original's with those paths taken out; the catalogue
     /// (`expected.catalogue`, [EvalScore#scoreCatalogue], and its `origin`: the start of the catalogue listing's
     /// origin, e.g. `4 event types from 'EVAL-97-Events'`); and the promotion (`expected.promoted`: the copy named
-    /// `pipeline`, and with `original_unchanged`, the original's XSLT as the setup wrote it).
+    /// `pipeline`, and with `original_unchanged`, the original's XSLT as the setup wrote it). A case described in
+    /// place (`expected.in_place`) has no copy: its XSLT and the source notes beside its pipeline are scored
+    /// ([EvalScore#scoreInPlace]), and that catalogue as `expected.catalogue` says.
     ///
     /// @param evalCase The case.
     /// @param score    Its score.
@@ -978,6 +1018,30 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         final Map<String, Object> expected = EvalCases.map(evalCase.get("expected"));
         final Map<String, Object> spec = EvalCases.handWritten(evalCase);
         final String originalXslt = textResource((String) spec.get("xslt"));
+        if (expected.get("in_place") instanceof final Map<?, ?> inPlace) {
+            // Described in place: no copy; its XSLT, the notes beside the pipeline and their catalogue scored.
+            score.scoreHandWritten(evalCase, made, null, null, true);
+            final XsltDoc xslt = readXslt(original.xslt());
+            final String pre = (String) handWrittenValues.get("<pre xslt>");
+            final DocRef notes = KeptMapping.readSourceNotes(xslt.getDescription()).orElse(null);
+            final String pipelineFolder = folderOf(original.pipeline());
+            final Map<String, Object> beside = catalogueNear(pipelineFolder);
+            score.scoreInPlace((Map<String, Object>) inPlace, new EvalScore.InPlace(
+                    xslt.getData().equals(originalXslt),
+                    KeptMapping.readMapping(xslt.getDescription()).isPresent(),
+                    xslt.getDescription(),
+                    pre == null || KeptMapping.readMapping(readXslt(pre).getDescription()).isEmpty(),
+                    notes != null && pipelineFolder.equals(folderOf(notes.getUuid())),
+                    beside));
+            if (beside != null) {
+                score.scoreCatalogue(evalCase, beside, null);
+            }
+            // The pipeline described stands as it was: its Events, record by record, scored as a build's are.
+            final List<String> outputs = recordOutputs(expected, original.pipeline(), original.raw());
+            score.scoreEvents(evalCase, outputs, validity(outputs), null);
+            score.indexed(true);
+            return;
+        }
         score.scoreHandWritten(evalCase, made, listing == null
                 ? null
                 : String.valueOf(listing.get("origin")), copy == null
@@ -1060,6 +1124,27 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             }
         }
         return out;
+    }
+
+    // Each of the sample's records' Events through a pipeline (`expected.records_in_sample` of them).
+    private List<String> recordOutputs(final Map<String, Object> expected, final String pipeline, final long raw) {
+        final int records = ((Number) expected.getOrDefault("records_in_sample", 1)).intValue();
+        final List<String> outputs = new ArrayList<>();
+        for (int record = 0; record < records; record++) {
+            outputs.add(translationOutput(pipeline, raw, record));
+        }
+        return outputs;
+    }
+
+    // Whether each output is valid against its schema, as check_events says.
+    private List<Boolean> validity(final List<String> outputs) {
+        final List<Boolean> validity = new ArrayList<>();
+        for (final String output : outputs) {
+            final Map<String, Object> checked = json("check_events", args("events_xml", output));
+            validity.add(checked.get("schema") instanceof final Map<?, ?> schema
+                         && Boolean.TRUE.equals(schema.get("valid")));
+        }
+        return validity;
     }
 
     // An argument with the hand-written case's values put in for their placeholders.

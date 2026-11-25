@@ -1,0 +1,57 @@
+name: A hand-written VPN translation after a pre-processor, described in place without a new version (JSON array)
+template: Event Data (JSON)
+capabilities: [event_types, hand_written, in_place]
+# The feed is translated by a hand-written pipeline whose translation (hand_written_vpn.xsl) reads the action a
+# hand-written pre-processor before it (vpn_op_codes_pre.xsl) writes from each record's operation code: the raw
+# records hold no action. The user wants the tools to know the translation, not a new version: the right route
+# describes it in place (catalogue_event_types' start choice), so its translation's mapping is read back (never the
+# pre-processor's), and its records are surveyed and its catalogue checked where the translation reads them. The
+# traps: copying it as a new version, drafting afresh, taking the pre-processor for the translation, or checking the
+# catalogue against the raw records (every event type would recognise none).
+setup:
+  hand_written:
+    folder: /Feeds/EVAL-106
+    feed: EVAL-106
+    xslt: hand_written_vpn.xsl
+    pre_process: vpn_op_codes_pre.xsl
+    pipeline: EVAL-106-Events
+    template: Event Data (JSON)
+    properties: [{element: jsonParser, name: addRootObject, value: false}]
+    processor_filter: {stream_type: Raw Events}
+    sample: |
+      [{"ts": "2026-11-03T08:00:01.000Z", "op": "LGN", "user": "jbloggs", "host": "vpn-gw-1", "result": "success"},
+       {"ts": "2026-11-03T08:02:45.000Z", "op": "LGN", "user": "asmith", "host": "vpn-gw-1", "result": "failure"},
+       {"ts": "2026-11-03T12:10:00.000Z", "op": "LGT", "user": "jbloggs", "host": "vpn-gw-1"},
+       {"ts": "2026-11-03T09:30:00.000Z", "op": "CFG", "user": "admin", "host": "vpn-gw-1", "setting": "idle_timeout", "new_value": "900"},
+       {"ts": "2026-11-03T09:31:00.000Z", "op": "HB", "host": "vpn-gw-1"}]
+request: >
+  Our VPN's audit feed, EVAL-106, is translated by a pipeline someone wrote by hand, with a step before the
+  translation that turns the device's operation codes into actions. Get the tools to understand that translation and
+  its event types, without making a new version of it.
+user_knows: >
+  The translation is right as it is and must not change. Describe it in place when asked. Every feed it serves is to
+  be covered.
+expected:
+  records: 4
+  records_in_sample: 5
+  event_types: [Authenticate, Update]
+  route:
+    start_from: in_place
+    calls_in_order: [survey_feed, catalogue_event_types, catalogue_event_types]
+    forbidden_calls: [copy_pipeline, rebuild_mapping, draft_translation_mapping, build_translation_xslt,
+                      promote_build]
+  in_place: {code_unchanged: true, mapping_kept: true, pre_process_untouched: true, notes_beside: true,
+             confirmed: true, checked_feeds: [EVAL-106]}
+  type_ids:
+    pattern: any
+    exactly: [vpn-login, vpn-login-failed, vpn-logout, vpn-config-change]
+  catalogue: {catch_all_confirmed: true, event_types_at_least: 4}
+reference:
+  # <raw> is the feed's raw stream ([AbstractEvalTest#runHandWrittenReference]).
+  calls:
+    - {tool: start_build, arguments: {build: eval-106, feeds: [EVAL-106]}}
+    - {tool: survey_feed, arguments: {feed: EVAL-106, build: eval-106}}
+    - {tool: catalogue_event_types, arguments: {build: eval-106}, answer: Describe it in place (no new version)}
+    - {tool: survey_feed, arguments: {feed: EVAL-106, build: eval-106, stream_ids: [<raw>]}}
+    - {tool: catalogue_event_types, arguments: {build: eval-106, stream_ids: [<raw>]}}
+    - {tool: catalogue_event_types, arguments: {build: eval-106, confirm: true}, confirm: true}

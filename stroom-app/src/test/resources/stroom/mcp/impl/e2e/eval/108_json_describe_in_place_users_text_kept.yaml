@@ -1,0 +1,49 @@
+name: A production VPN translation whose description has the user's own text, described in place, the text kept
+template: Event Data (JSON)
+capabilities: [event_types, hand_written, in_place]
+# The hand-written translation's XSLT (hand_written_vpn.xsl) has the team's own words in its description. Described
+# in place, without asking (only the tools' hidden blocks change), its description keeps that text first, the hidden
+# mapping and source notes link added after it, its code untouched; its catalogue is in a source notes doc beside the
+# pipeline. The traps: replacing the description, asking the user before writing the hidden blocks, or a new version.
+setup:
+  hand_written:
+    folder: /Feeds/EVAL-108
+    feed: EVAL-108
+    xslt: hand_written_vpn.xsl
+    description: "Owned by the network team: ask in #vpn before changing it."
+    pipeline: EVAL-108-Events
+    template: Event Data (JSON)
+    properties: [{element: jsonParser, name: addRootObject, value: false}]
+    processor_filter: {stream_type: Raw Events}
+    sample: |
+      [{"ts": "2026-11-03T08:00:01.000Z", "action": "login", "user": "jbloggs", "host": "vpn-gw-1", "result": "success"},
+       {"ts": "2026-11-03T08:02:45.000Z", "action": "login", "user": "asmith", "host": "vpn-gw-1", "result": "failure"},
+       {"ts": "2026-11-03T12:10:00.000Z", "action": "logout", "user": "jbloggs", "host": "vpn-gw-1"},
+       {"ts": "2026-11-03T09:30:00.000Z", "action": "config_change", "user": "admin", "host": "vpn-gw-1", "setting": "idle_timeout", "new_value": "900"},
+       {"ts": "2026-11-03T09:31:00.000Z", "action": "heartbeat", "host": "vpn-gw-1"}]
+request: >
+  EVAL-108's VPN translation was written by hand and is in production. Have the tools learn what it translates and
+  its event types, and don't make a new version.
+user_knows: >
+  The translation and the team's note in its description must stay as they are. Describe it in place when asked.
+expected:
+  records: 4
+  records_in_sample: 5
+  event_types: [Authenticate, Update]
+  route:
+    start_from: in_place
+    calls_in_order: [survey_feed, catalogue_event_types, catalogue_event_types]
+    forbidden_calls: [copy_pipeline, rebuild_mapping, build_translation_xslt, save_xslt, promote_build]
+  in_place: {code_unchanged: true, mapping_kept: true, notes_beside: true, confirmed: true,
+             description_kept: "Owned by the network team: ask in #vpn before changing it."}
+  type_ids:
+    pattern: any
+    exactly: [vpn-login, vpn-login-failed, vpn-logout, vpn-config-change]
+  catalogue: {catch_all_confirmed: true, event_types_at_least: 4}
+reference:
+  calls:
+    - {tool: start_build, arguments: {build: eval-108, feeds: [EVAL-108]}}
+    - {tool: survey_feed, arguments: {feed: EVAL-108, build: eval-108}}
+    - {tool: catalogue_event_types, arguments: {build: eval-108}, answer: Describe it in place (no new version)}
+    - {tool: catalogue_event_types, arguments: {build: eval-108, stream_ids: [<raw>]}}
+    - {tool: catalogue_event_types, arguments: {build: eval-108, confirm: true}, confirm: true}

@@ -1476,6 +1476,73 @@ final class EvalScore {
         }
     }
 
+    /// Scores a hand-written translation described in place (`expected.in_place`, decided with the user 2026-11-25):
+    /// each check given is made, a failed one a problem.
+    ///
+    /// - `code_unchanged`: the XSLT's code is as the setup wrote it;
+    /// - `mapping_kept`: its description keeps a translation mapping (the hidden block);
+    /// - `description_kept`: its description starts with this text, the user's own;
+    /// - `pre_process_untouched`: the pre-processor before it keeps no mapping;
+    /// - `notes_beside`: its hidden link names source notes in the pipeline's own folder;
+    /// - `confirmed`: every event type in those notes is confirmed;
+    /// - `checked_feeds`: the feeds their catalogue says it was checked against, in any order;
+    /// - `timeline_roles`: an event type's timeline role there, by TypeId.
+    ///
+    /// @param expected `expected.in_place`.
+    /// @param facts    What was found in Stroom.
+    void scoreInPlace(final Map<String, Object> expected, final InPlace facts) {
+        if (Boolean.TRUE.equals(expected.get("code_unchanged"))) {
+            check("code unchanged", facts.codeUnchanged(), "the XSLT's code was changed");
+        }
+        if (Boolean.TRUE.equals(expected.get("mapping_kept"))) {
+            check("mapping kept with the XSLT", facts.mappingKept(), "the XSLT's description keeps no mapping");
+        }
+        if (expected.get("description_kept") instanceof final String text) {
+            check("the user's description kept", facts.description() != null
+                                                  && facts.description().startsWith(text),
+                    "the XSLT's description doesn't start with the user's text: " + facts.description());
+        }
+        if (Boolean.TRUE.equals(expected.get("pre_process_untouched"))) {
+            check("pre-processor untouched", facts.preProcessUntouched(), "the pre-processor keeps a mapping");
+        }
+        if (Boolean.TRUE.equals(expected.get("notes_beside"))) {
+            check("notes beside the pipeline", facts.notesBeside() && facts.beside() != null,
+                    "the XSLT links no source notes beside its pipeline");
+        }
+        final List<Map<String, Object>> types = facts.beside() == null
+                ? List.of()
+                : listOfMaps(facts.beside().get("event_types"));
+        if (Boolean.TRUE.equals(expected.get("confirmed"))) {
+            check("catalogue confirmed beside the pipeline", !types.isEmpty() && types.stream()
+                    .allMatch(type -> "confirmed".equals(type.get("status"))), "not every event type beside the "
+                                                                              + "pipeline is confirmed");
+        }
+        if (expected.get("checked_feeds") instanceof final List<?> feeds) {
+            final List<String> found = facts.beside() == null
+                    ? List.of()
+                    : strings(facts.beside().get("checked_feeds"));
+            check("checked against " + feeds, found.size() == feeds.size() && found.containsAll(strings(feeds)),
+                    "the catalogue was checked against " + found + ", expected " + feeds);
+        }
+        maps(expected.get("timeline_roles")).forEach((typeId, role) -> {
+            final Object found = types.stream()
+                    .filter(type -> typeId.equals(type.get("type_id")))
+                    .map(type -> type.get("timeline_role"))
+                    .findFirst()
+                    .orElse(null);
+            check("timeline role of " + typeId, String.valueOf(role).equals(String.valueOf(found)),
+                    typeId + "'s timeline role is " + found + ", expected " + role);
+        });
+    }
+
+    // A list of maps, the rest left out.
+    @SuppressWarnings("unchecked")
+    private static List<Map<String, Object>> listOfMaps(final Object value) {
+        return value instanceof final List<?> list
+                ? list.stream().filter(Map.class::isInstance).map(item -> (Map<String, Object>) item).toList()
+                : List.of();
+    }
+
     /// Scores a copy's Events against the original's: each record's the same, the paths given aside.
     ///
     /// @param except    The paths the copy may add, below Event.
@@ -2497,5 +2564,26 @@ final class EvalScore {
             proposals = List.copyOf(proposals);
             errors = List.copyOf(errors);
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// What a translation described in place left in Stroom.
+    ///
+    /// @param codeUnchanged       True if its XSLT's code is as the setup wrote it.
+    /// @param mappingKept         True if its description keeps a translation mapping.
+    /// @param description         Its description.
+    /// @param preProcessUntouched True if the pre-processor before it (if any) keeps no mapping.
+    /// @param notesBeside         True if its hidden link names source notes in the pipeline's folder.
+    /// @param beside              The catalogue of the source notes beside the pipeline (their JSON block), or null.
+    record InPlace(boolean codeUnchanged,
+                   boolean mappingKept,
+                   String description,
+                   boolean preProcessUntouched,
+                   boolean notesBeside,
+                   Map<String, Object> beside) {
+
     }
 }

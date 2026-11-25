@@ -1,0 +1,53 @@
+name: A VPN catalogue whose session switch needs its timeline role asked, the others filled from the schema
+template: Event Data (JSON)
+capabilities: [event_types, hand_written, in_place, timeline_roles]
+# Described in place, the hand-written translation (hand_written_vpn_switch.xsl) writes logons and logoffs (active
+# and idle by the schema's table), a setting changed (an action of its kind) and a session switch as an Authenticate
+# Action the table doesn't name (Other). Only the switch's timeline role is the user's to say, asked in its set's
+# form; the user says it is a focus. The traps: asking for every event type's role, or guessing the switch's.
+setup:
+  hand_written:
+    folder: /Feeds/EVAL-109
+    feed: EVAL-109
+    xslt: hand_written_vpn_switch.xsl
+    pipeline: EVAL-109-Events
+    template: Event Data (JSON)
+    properties: [{element: jsonParser, name: addRootObject, value: false}]
+    processor_filter: {stream_type: Raw Events}
+    sample: |
+      [{"ts": "2026-11-03T08:00:01.000Z", "action": "login", "user": "jbloggs", "host": "vpn-gw-1", "result": "success"},
+       {"ts": "2026-11-03T08:02:45.000Z", "action": "login", "user": "asmith", "host": "vpn-gw-1", "result": "failure"},
+       {"ts": "2026-11-03T12:10:00.000Z", "action": "logout", "user": "jbloggs", "host": "vpn-gw-1"},
+       {"ts": "2026-11-03T09:30:00.000Z", "action": "config_change", "user": "admin", "host": "vpn-gw-1", "setting": "idle_timeout", "new_value": "900"},
+       {"ts": "2026-11-03T12:00:00.000Z", "action": "switch", "user": "jbloggs", "host": "vpn-gw-1"},
+       {"ts": "2026-11-03T09:31:00.000Z", "action": "heartbeat", "host": "vpn-gw-1"}]
+request: >
+  EVAL-109's VPN translation was written by hand. Have the tools learn its event types, including what each means on
+  a user's activity timeline, without a new version.
+user_knows: >
+  A session switch is the user moving to another session, which on a timeline is a focus. Describe it in place when
+  asked.
+expected:
+  records: 5
+  records_in_sample: 6
+  event_types: [Authenticate, Update]
+  route:
+    start_from: in_place
+    calls_in_order: [survey_feed, catalogue_event_types, catalogue_event_types]
+    forbidden_calls: [copy_pipeline, rebuild_mapping, promote_build]
+  in_place: {mapping_kept: true, notes_beside: true, confirmed: true,
+             timeline_roles: {vpn-login: active, vpn-logout: idle, vpn-config-change: action,
+                              vpn-session-switch: focus}}
+  type_ids:
+    pattern: any
+    exactly: [vpn-login, vpn-login-failed, vpn-logout, vpn-config-change, vpn-session-switch]
+  catalogue: {catch_all_confirmed: true, event_types_at_least: 5}
+reference:
+  calls:
+    - {tool: start_build, arguments: {build: eval-109, feeds: [EVAL-109]}}
+    - {tool: survey_feed, arguments: {feed: EVAL-109, build: eval-109}}
+    - {tool: catalogue_event_types, arguments: {build: eval-109}, answer: Describe it in place (no new version)}
+    - {tool: catalogue_event_types, arguments: {build: eval-109, stream_ids: [<raw>]}}
+    - {tool: catalogue_event_types, arguments: {build: eval-109, proposals: [{op: change, type_id: vpn-session-switch,
+                                                                         timeline_role: focus}]}}
+    - {tool: catalogue_event_types, arguments: {build: eval-109, confirm: true}, confirm: true}

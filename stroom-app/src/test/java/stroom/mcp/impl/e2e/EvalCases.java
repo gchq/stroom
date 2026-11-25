@@ -81,7 +81,9 @@ final class EvalCases {
             "96_skill_undo_last_change", "97_json_hand_written_add_source_ip", "98_agents_fields_from_description",
             "99_agents_fields_under_wrong_heading", "100_agents_change_user_field",
             "101_agents_fields_disagree_with_plan", "102_json_three_feeds_one_shape", "103_json_two_feeds_differ",
-            "104_json_dormant_feed", "105_json_feeds_in_two_folders");
+            "104_json_dormant_feed", "105_json_feeds_in_two_folders", "106_json_describe_in_place_pre_process",
+            "107_json_describe_in_place_shared_two_feeds", "108_json_describe_in_place_users_text_kept",
+            "109_json_describe_in_place_timeline_roles");
 
     // The types of a question's columns ([#table]).
     private static final List<String> QUESTION_TYPES = List.of("text", "long", "date");

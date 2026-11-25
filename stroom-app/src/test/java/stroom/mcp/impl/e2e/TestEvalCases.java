@@ -90,6 +90,24 @@ class TestEvalCases {
     }
 
     @Test
+    void theCasesDescribingInPlaceStartFromAHandWrittenPipelineAndScoreWhatIsWrittenInPlace() {
+        for (final String id : List.of("106_json_describe_in_place_pre_process",
+                "107_json_describe_in_place_shared_two_feeds", "108_json_describe_in_place_users_text_kept",
+                "109_json_describe_in_place_timeline_roles")) {
+            final Map<String, Object> evalCase = EvalCases.load(id);
+            assertThat(EvalCases.handWritten(evalCase)).as(id).isNotNull();
+            assertThat(EvalCases.isDrafted(evalCase)).as(id).isFalse();
+            assertThat(EvalCases.map(evalCase.get("expected")).get("in_place")).as(id).isInstanceOf(Map.class);
+            assertThat(EvalCases.strings(EvalCases.map(EvalCases.map(evalCase.get("expected")).get("route"))
+                    .get("forbidden_calls"))).as(id).contains("copy_pipeline", "promote_build");
+        }
+        assertThat(EvalCases.handWritten(EvalCases.load("106_json_describe_in_place_pre_process")))
+                .containsEntry("pre_process", "vpn_op_codes_pre.xsl");
+        assertThat(EvalCases.map(EvalCases.handWritten(EvalCases.load("107_json_describe_in_place_shared_two_feeds"))
+                .get("shared_with"))).containsEntry("feed", "EVAL-107-B");
+    }
+
+    @Test
     void aCasesLuceneIndexesAreOneOrAList() {
         final Map<String, Object> one = Map.of("name", "Logons");
         final Map<String, Object> two = Map.of("name", "VPN");
