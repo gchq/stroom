@@ -21,6 +21,7 @@ import stroom.ai.impl.ToolApprovalRequest.Decision;
 import stroom.ai.impl.ToolApprovalRequest.PendingCall;
 import stroom.ai.impl.tools.BuiltInTools;
 import stroom.ai.impl.tools.LangChain4jTools.StroomToolExecutor;
+import stroom.ai.impl.tools.ToolProgress;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolRunContext;
 import stroom.ai.impl.tools.ToolSession;
@@ -116,6 +117,8 @@ class McpAgentChat {
     private static final int PROGRESS_MESSAGE_LIMIT = 160;
     // The most of what an MCP server says a tool call has got to that is shown after the working line.
     private static final int PROGRESS_UPDATE_LIMIT = 120;
+    // The least time between two changes of the working line by a call's progress.
+    private static final long PROGRESS_INTERVAL_MS = 500;
 
     /**
      * Argument fields, in preference order, whose value best summarises what a tool call is for.
@@ -720,17 +723,35 @@ class McpAgentChat {
             return call.get();
         }
         final AtomicReference<String> shown = new AtomicReference<>();
-        toolset.listenForProgress(toolRequest.id(), update -> {
+        final ToolProgress line = update -> {
             final String text = working + " — " + truncate(update, PROGRESS_UPDATE_LIMIT) + "…";
             // A server may report the same thing many times; the line is only changed when what it says changes.
             if (!text.equals(shown.getAndSet(text))) {
                 aiService.updateMessageText(workingMessageId, text);
             }
-        });
+        };
+        toolset.listenForProgress(toolRequest.id(), line::report);
+        // A built-in tool reports through the run's context (ChatToolCallContexts), at most every
+        // PROGRESS_INTERVAL_MS after its first report: one may report a count for each stream it reads.
+        final ToolRunContext run = ToolRunContext.current().orElse(null);
+        if (run != null) {
+            final AtomicLong reportedAt = new AtomicLong();
+            run.setProgress(update -> {
+                final long now = System.currentTimeMillis();
+                final long last = reportedAt.get();
+                if (last == 0 || now - last >= PROGRESS_INTERVAL_MS) {
+                    reportedAt.set(now);
+                    line.report(update);
+                }
+            });
+        }
         try {
             return call.get();
         } finally {
             toolset.stopListening(toolRequest.id());
+            if (run != null) {
+                run.setProgress(null);
+            }
         }
     }
 

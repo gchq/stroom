@@ -77,6 +77,10 @@ public class ChatToolCallContexts {
                 // The session's limits, including its time limit.
                 .limits(sessionLimits.forSession(session))
                 .runContext(run)
+                // The run's working line, while the call runs (chat 197: a built-in tool's progress went nowhere).
+                .progress(run == null
+                        ? null
+                        : message -> run.progress().report(message))
                 .sideCalls(run == null || sideCalls == null
                         ? ModelSideCalls.NONE
                         : sideCalls.forRun(chatId, run))

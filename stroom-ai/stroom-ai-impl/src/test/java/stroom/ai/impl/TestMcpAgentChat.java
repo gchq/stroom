@@ -25,7 +25,9 @@ import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolCalls;
 import stroom.ai.impl.tools.ToolDefinition;
+import stroom.ai.impl.tools.ToolProgress;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.ToolRunContext;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.ToolUserAction;
 import stroom.ai.impl.tools.chat.TaskListReminder;
@@ -350,6 +352,43 @@ class TestMcpAgentChat {
                 .contains("unavailable")
                 .contains("'elastic' could not be reached");
         assertThat(McpAgentChat.withUnavailableServersNote(messages, List.of())).isEqualTo(messages);
+    }
+
+    @Test
+    void aBuiltInToolsProgressIsShownOnTheWorkingLine() {
+        // Chat 197: activity_timeline ran for minutes with "Running activity_timeline — entity=qquigley…" alone, as
+        // a built-in tool's progress went nowhere in a chat.
+        final dev.langchain4j.agent.tool.ToolSpecification builtIn = dev.langchain4j.agent.tool.ToolSpecification
+                .builder()
+                .name("activity_timeline")
+                .description("built in")
+                .build();
+        Mockito.when(builtInTools.toolMap()).thenReturn(Map.of(builtIn, (request, memoryId) -> {
+            final ToolProgress progress = ToolRunContext.current().orElseThrow().progress();
+            progress.report("Reading qquigley's events from 1 source(s)");
+            // Said again, the line isn't changed again.
+            progress.report("Reading qquigley's events from 1 source(s)");
+            return "built-in result";
+        }));
+        final ChatModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("1")
+                        .name("activity_timeline")
+                        .arguments("{\"entity\":\"qquigley\"}")
+                        .build())),
+                AiMessage.from("done"));
+
+        agentChat.chat(model, null, 7, messages, toolset(Mockito.mock(McpSyncClient.class), searchTool()), 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        final ArgumentCaptor<String> working = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(aiService, Mockito.atLeastOnce()).updateMessageText(Mockito.eq(99), working.capture());
+        assertThat(working.getAllValues())
+                .filteredOn(text -> text.contains("Reading qquigley's events"))
+                .containsExactly("Running activity_timeline — entity=qquigley — Reading qquigley's events from 1 "
+                                 + "source(s)…");
+        // Once the call is answered, the run's progress goes nowhere.
+        assertThat(ToolRunContext.current()).isEmpty();
     }
 
     @Test

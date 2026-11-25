@@ -21,6 +21,7 @@ import stroom.openai.shared.OpenAIModelDoc;
 import dev.langchain4j.model.chat.ChatModel;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
@@ -42,6 +43,8 @@ public final class ToolRunContext {
     private final OpenAIModelDoc modelDoc;
     private final BooleanSupplier cancelled;
     private final Map<String, Integer> failures = new ConcurrentHashMap<>();
+    // Where the call running now reports how it is getting on: the chat's working line while a call runs.
+    private volatile ToolProgress progress = ToolProgress.NONE;
 
     /// @param chatModel The model the run uses.
     /// @param modelDoc  Its document, or null.
@@ -82,6 +85,17 @@ public final class ToolRunContext {
 
     public BooleanSupplier getCancelled() {
         return cancelled;
+    }
+
+    /// @return Where the call running now reports how it is getting on; [ToolProgress#NONE] between calls.
+    public ToolProgress progress() {
+        return progress;
+    }
+
+    /// @param progress Where the call about to run reports how it is getting on, or null for nowhere (once it has
+    ///                 been answered).
+    public void setProgress(final ToolProgress progress) {
+        this.progress = Objects.requireNonNullElse(progress, ToolProgress.NONE);
     }
 
     /// Records that a kind of query failed.
