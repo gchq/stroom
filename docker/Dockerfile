@@ -230,7 +230,7 @@ RUN \
     # shadow-utils was only needed for groupadd/useradd, so now can be removed \
     # along with any deps it pulled in \
     rpm -qa --queryformat "%{NAME}\n" | sort > /tmp/new_pkgs; \
-    # Get a list of all added packages then remove them if there are any
+    # Get a list of all added packages then remove them if there are any \
     added_pkgs="$(comm -13 /tmp/current_pkgs /tmp/new_pkgs)"; \
     rm /tmp/current_pkgs /tmp/new_pkgs; \
     echo "[${added_pkgs}]"; \
@@ -437,7 +437,7 @@ RUN \
     # shadow-utils was only needed for groupadd/useradd, so now can be removed \
     # along with any deps it pulled in \
     rpm -qa --queryformat "%{NAME}\n" | sort > /tmp/new_pkgs; \
-    # Get a list of all added packages then remove them if there are any
+    # Get a list of all added packages then remove them if there are any \
     added_pkgs="$(comm -13 /tmp/current_pkgs /tmp/new_pkgs)"; \
     rm /tmp/current_pkgs /tmp/new_pkgs; \
     echo "[${added_pkgs}]"; \
