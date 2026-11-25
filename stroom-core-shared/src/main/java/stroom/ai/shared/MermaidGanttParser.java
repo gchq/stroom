@@ -39,9 +39,11 @@ import java.util.List;
 /// * `section <name>`;
 /// * a task, `<name> : [tags,] [id,] <start>, <end or duration>`: tags `done`, `active`, `crit` and `milestone`,
 ///   an id of letters, digits, `_` and `-`, the start in the date format, the end in it too or a duration (a
-///   number and `ms`, `s`, `m`, `h`, `d` or `w`); a milestone or a task with no length is a marker.
+///   number and `ms`, `s`, `m`, `h`, `d` or `w`); a milestone or a task with no length is a marker;
+/// * `%% events <start> | <end>`, straight after a task, at most once: the names of the events it starts and ends
+///   at, either may be empty. A Mermaid comment, so other apps draw the block as if it weren't there.
 ///
-/// Anything else is outside it: comments and directives (`%%`, so never `%%{init}%%`), `click`, `call` and
+/// Anything else is outside it: other comments and directives (`%%`, so never `%%{init}%%`), `click`, `call` and
 /// callbacks, `after` and `until`, `excludes`, `todayMarker` and Mermaid's other statements, front matter, and
 /// the characters Mermaid reads as syntax in text (`#`, `;`, `%`, quotes, braces, angle brackets, backticks and
 /// backslashes). So is a task whose name Mermaid would read as a statement or a date (one starting with a
@@ -73,6 +75,10 @@ public final class MermaidGanttParser {
     private static final String DATE_FORMAT = "dateformat";
     private static final String AXIS_FORMAT = "axisformat";
     private static final String SECTION = "section";
+    private static final String COMMENT = "%%";
+    private static final String EVENTS = "events";
+    // Between a task's start event and its end event.
+    private static final char EVENTS_SEPARATOR = '|';
     // The dayjs tokens of the subset (case matters: MM is the month, mm the minute).
     private static final List<String> DATE_TOKENS = Collections.unmodifiableList(Arrays.asList(
             "YYYY", "MM", "DD", "HH", "mm", "ss", "SSS"));
@@ -148,6 +154,10 @@ public final class MermaidGanttParser {
 
     // One statement after `gantt`.
     private static void statement(final String line, final Builder builder) {
+        if (line.startsWith(COMMENT)) {
+            events(line, builder);
+            return;
+        }
         final String keyword = firstWord(line).toLowerCase();
         final String rest = line.substring(Math.min(line.length(), keyword.length())).trim();
         final boolean followedBySpace = line.length() > keyword.length()
@@ -169,6 +179,24 @@ public final class MermaidGanttParser {
         } else {
             builder.task(line);
         }
+    }
+
+    // A task's events, `%% events <start> | <end>`: the only comment of the subset.
+    private static void events(final String line, final Builder builder) {
+        final String comment = line.substring(COMMENT.length());
+        final String trimmed = comment.trim();
+        if (comment.isEmpty() || !isSpace(comment.charAt(0)) || !trimmed.startsWith(EVENTS)
+            || trimmed.length() == EVENTS.length() || !isSpace(trimmed.charAt(EVENTS.length()))) {
+            throw new IllegalArgumentException("a comment is outside the subset, but '%% events'");
+        }
+        final String names = trimmed.substring(EVENTS.length());
+        checkCharacters(names, "");
+        final int separator = names.indexOf(EVENTS_SEPARATOR);
+        if (separator < 0 || names.indexOf(EVENTS_SEPARATOR, separator + 1) >= 0) {
+            throw new IllegalArgumentException("events need one '" + EVENTS_SEPARATOR + "' between the start's "
+                                               + "and the end's");
+        }
+        builder.events(names.substring(0, separator).trim(), names.substring(separator + 1).trim());
     }
 
     // Refuses a line with a character Mermaid reads as syntax in text, but those allowed.
@@ -404,8 +432,11 @@ public final class MermaidGanttParser {
         private List<Task> tasks = new ArrayList<>();
         private int taskCount;
         private boolean anyTask;
+        // True while the last statement read is a task with no events yet.
+        private boolean eventsMayFollow;
 
         private void title(final String text) {
+            eventsMayFollow = false;
             if (title != null) {
                 throw new IllegalArgumentException("a second title");
             }
@@ -413,6 +444,7 @@ public final class MermaidGanttParser {
         }
 
         private void dateFormat(final String format) {
+            eventsMayFollow = false;
             if (dateFormat != null) {
                 throw new IllegalArgumentException("a second date format");
             } else if (anyTask) {
@@ -422,6 +454,7 @@ public final class MermaidGanttParser {
         }
 
         private void axisFormat(final String format) {
+            eventsMayFollow = false;
             if (axisFormat != null) {
                 throw new IllegalArgumentException("a second axis format");
             }
@@ -429,6 +462,7 @@ public final class MermaidGanttParser {
         }
 
         private void section(final String name) {
+            eventsMayFollow = false;
             endSection();
             if (sections.size() >= MAX_SECTIONS) {
                 throw new IllegalArgumentException("more than " + MAX_SECTIONS + " sections");
@@ -478,7 +512,16 @@ public final class MermaidGanttParser {
                 throw new IllegalArgumentException("more than " + MAX_TASKS + " tasks");
             }
             anyTask = true;
+            eventsMayFollow = true;
             tasks.add(new Task(name, id, tags, start, end));
+        }
+
+        private void events(final String startEvent, final String endEvent) {
+            if (!eventsMayFollow) {
+                throw new IllegalArgumentException("events must follow a task, once");
+            }
+            eventsMayFollow = false;
+            tasks.set(tasks.size() - 1, tasks.get(tasks.size() - 1).withEvents(startEvent, endEvent));
         }
 
         private void endSection() {

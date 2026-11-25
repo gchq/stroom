@@ -25,6 +25,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -230,6 +231,69 @@ class TestMermaidGanttParser {
         assertThat(MermaidGanttParser.startsLikeAStatement("Chrome")).isFalse();
         assertThat(MermaidGanttParser.startsLikeAStatement("Report 2026-11-23")).isFalse();
         assertThat(MermaidGanttParser.startsLikeAStatement("\u00b7 click here")).isFalse();
+    }
+
+    @Test
+    void aTasksStartAndEndEventsAreReadFromTheCommentAfterIt() {
+        final MermaidGantt gantt = MermaidGanttParser.parse("""
+                gantt
+                    dateFormat YYYY-MM-DD HH:mm:ss
+                    section host-1
+                    logged on :2026-11-23 09:00:00, 2026-11-23 17:00:00
+                    %% events Logon-User | Logoff-User
+                    Chrome :2026-11-23 09:10:00, 2026-11-23 09:30:00
+                    Copy :milestone, 2026-11-23 09:40:00, 0d
+                    %% events File copied |
+                    Word :2026-11-23 10:00:00, 2026-11-23 10:30:00
+                    %%   events   | Close-Window
+                """);
+
+        final List<Task> tasks = gantt.getSections().getFirst().tasks();
+        assertThat(tasks).extracting(Task::startEvent)
+                .containsExactly("Logon-User", null, "File copied", null);
+        assertThat(tasks).extracting(Task::endEvent)
+                .containsExactly("Logoff-User", null, null, "Close-Window");
+        assertThat(tasks.getFirst().name()).isEqualTo("logged on");
+        assertThat(gantt.taskCount()).isEqualTo(4);
+    }
+
+    @Test
+    void aBlockWithoutEventsHasNone() {
+        final MermaidGantt gantt = MermaidGanttParser.parse(CHART);
+
+        gantt.getSections().forEach(section -> section.tasks().forEach(task -> {
+            assertThat(task.startEvent()).isNull();
+            assertThat(task.endEvent()).isNull();
+        }));
+    }
+
+    /// Events belong to the task just before them, once, and hold only text.
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "gantt\n%% events a | b",
+            "gantt\nsection s\n%% events a | b",
+            "gantt\nt :2026-11-23, 1d\nsection s\n%% events a | b",
+            "gantt\nt :2026-11-23, 1d\n%% events a | b\n%% events c | d",
+            "gantt\nt :2026-11-23, 1d\n%% events a",
+            "gantt\nt :2026-11-23, 1d\n%% events a | b | c",
+            "gantt\nt :2026-11-23, 1d\n%% events a # b | c",
+            "gantt\nt :2026-11-23, 1d\n%% events a % b | c",
+            "gantt\nt :2026-11-23, 1d\n%% events a ; b | c",
+            "gantt\nt :2026-11-23, 1d\n%% events <b>a</b> | c",
+            "gantt\nt :2026-11-23, 1d\n%%events a | b",
+            "gantt\nt :2026-11-23, 1d\n%% event a | b",
+            "gantt\nt :2026-11-23, 1d\n%%{init: {}}%% events a | b"})
+    void eventsOutsideTheSubsetAreRefused(final String block) {
+        assertThat(MermaidGanttParser.isValid(block)).isFalse();
+    }
+
+    @Test
+    void anEventsLineWithNeitherNameIsLikeNone() {
+        final Task task = MermaidGanttParser.parse("gantt\nt :2026-11-23, 1d\n%% events  | ")
+                .getSections().getFirst().tasks().getFirst();
+
+        assertThat(task.startEvent()).isNull();
+        assertThat(task.endEvent()).isNull();
     }
 
     private static long millis(final String localTime) {

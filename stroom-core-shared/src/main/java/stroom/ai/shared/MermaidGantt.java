@@ -204,28 +204,57 @@ public final class MermaidGantt {
 
     /// A task: a bar from its start to its end, or a marker at its start if it is a milestone or has no length.
     ///
-    /// @param name  What it is called.
-    /// @param id    Its id, or null.
-    /// @param tags  Its tags (`done`, `active`, `crit`, `milestone`), in the order given.
-    /// @param start When it starts, as [MermaidGantt#wallClock] gives it.
-    /// @param end   When it ends, the same way, not before its start.
-    public record Task(String name, String id, List<String> tags, long start, long end) {
+    /// @param name       What it is called.
+    /// @param id         Its id, or null.
+    /// @param tags       Its tags (`done`, `active`, `crit`, `milestone`), in the order given.
+    /// @param start      When it starts, as [MermaidGantt#wallClock] gives it.
+    /// @param end        When it ends, the same way, not before its start.
+    /// @param startEvent The name of the event it starts at (e.g. `Logon-User`), or null.
+    /// @param endEvent   The name of the event it ends at (e.g. `Logoff-User`), or null.
+    public record Task(String name, String id, List<String> tags, long start, long end, String startEvent,
+                       String endEvent) {
 
         /// The tag that makes a task a marker.
         public static final String MILESTONE = "milestone";
 
+        /// @param name       What it is called.
+        /// @param id         Its id, or null.
+        /// @param tags       Its tags, in the order given.
+        /// @param start      When it starts.
+        /// @param end        When it ends, not before its start.
+        /// @param startEvent The name of the event it starts at, or null (empty is held as null).
+        /// @param endEvent   The name of the event it ends at, or null (empty is held as null).
+        public Task {
+            tags = Collections.unmodifiableList(new ArrayList<>(tags));
+            startEvent = startEvent == null || startEvent.isEmpty()
+                    ? null
+                    : startEvent;
+            endEvent = endEvent == null || endEvent.isEmpty()
+                    ? null
+                    : endEvent;
+        }
+
+        /// A task with no events named.
+        ///
         /// @param name  What it is called.
         /// @param id    Its id, or null.
         /// @param tags  Its tags, in the order given.
         /// @param start When it starts.
         /// @param end   When it ends, not before its start.
-        public Task {
-            tags = Collections.unmodifiableList(new ArrayList<>(tags));
+        public Task(final String name, final String id, final List<String> tags, final long start, final long end) {
+            this(name, id, tags, start, end, null, null);
         }
 
         /// @return True if it is drawn as a marker at its start: a milestone, or a task with no length.
         public boolean isMarker() {
             return end == start || tags.contains(MILESTONE);
+        }
+
+        /// @param otherStartEvent The name of the event it starts at, or null.
+        /// @param otherEndEvent   The name of the event it ends at, or null.
+        /// @return It with those events.
+        public Task withEvents(final String otherStartEvent, final String otherEndEvent) {
+            return new Task(name, id, tags, start, end, otherStartEvent, otherEndEvent);
         }
     }
 }
