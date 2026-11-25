@@ -407,9 +407,11 @@ class TestE2eStreamTypes extends AbstractE2eTest {
         assertThat(userName(stepOutput((String) keeping.get("uuid"), eventsRaw, 1, "translationFilter")))
                 .as("the new version's lookup fills the event")
                 .isEqualTo("Bob Brown");
-        assertThat(map(client.json("build_status", args("build", build)), "next"))
-                .as("the version recorded, it is stepped next")
-                .containsEntry("step", "stepped");
+        // A build on an existing translation goes through the catalogue before it is stepped (decided by the user,
+        // 2026-11-25: every existing translation is surveyed and catalogued first, whichever route makes it).
+        final Map<String, Object> next = map(client.json("build_status", args("build", build)), "next");
+        assertThat(next).as("the version recorded, the catalogue is next").containsEntry("step", "catalogue");
+        assertThat(map(next, "call")).containsEntry("tool", "catalogue_event_types");
 
         final Map<String, Object> dropped = agreed("create_pipeline", args("build", build,
                 "name", eventsFeed + "-Events-V2-NoRef", "version_of", eventsUuid, "keep_references", false));
