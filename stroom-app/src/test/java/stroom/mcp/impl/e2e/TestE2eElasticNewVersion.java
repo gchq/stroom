@@ -226,6 +226,13 @@ class TestE2eElasticNewVersion extends AbstractE2eTest {
         final String versionName = source.pipelineName() + "-V1.1";
         assertThat(copied).containsEntry("name", versionName);
         final String version = uuidOf(copied);
+        // Its XSLT written by hand (onboard keeps no mapping): read back, its catalogue confirmed, before promotion.
+        final String versionXslt = list(copied, "copied_documents").stream()
+                .filter(document -> "XSLT".equals(document.get("type")))
+                .map(document -> (String) document.get("uuid"))
+                .findFirst()
+                .orElseThrow();
+        readBackCopy(build, source.feed(), versionXslt, version, List.of(source.raw()));
 
         final Map<String, Object> review = json("promote_build", args("build", build, "destinations", Map.of()));
         assertThat(review).as("the layout first: %s", review).containsEntry("status", "needs_review");

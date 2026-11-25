@@ -612,6 +612,29 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         return CatalogueSteps.confirmedCatalogue(client, build);
     }
 
+    /// A new version of a pipeline whose XSLT keeps no mapping ([#onboard] writes its XSLT by hand): the copy's XSLT
+    /// read back into a mapping and catalogue, the feed surveyed, and the catalogue listed and confirmed, as the
+    /// build's gates require before the copy's XSLT changes or the build is promoted.
+    ///
+    /// @param build      The build.
+    /// @param feed       The feed the copy translates.
+    /// @param copyXslt   The copy's XSLT.
+    /// @param copy       The copied pipeline.
+    /// @param rawStreams The sample raw streams.
+    /// @return The catalogue confirmed.
+    Map<String, Object> readBackCopy(final String build,
+                                     final String feed,
+                                     final String copyXslt,
+                                     final String copy,
+                                     final List<Long> rawStreams) {
+        final Map<String, Object> rebuilt = agreed("rebuild_mapping", args("uuid", copyXslt, "pipeline_uuid", copy,
+                "stream_ids", rawStreams, "change", "Read back from the translation written by hand"));
+        assertThat(rebuilt.get("saved")).as("read back: %s", rebuilt).isNotNull();
+        json("survey_feed", args("feed", feed, "build", build));
+        json(CATALOGUE, args("build", build, "stream_ids", rawStreams));
+        return confirmedCatalogue(build);
+    }
+
     /// What the schema requires of a Process event placed as constants, for the tests whose subject is something
     /// else (decided by the user 2026-11-21: a set isn't put to the user while an event type leaves an element the
     /// schema requires empty).

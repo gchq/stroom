@@ -332,6 +332,8 @@ class TestE2eEvaluateAndFix extends AbstractE2eTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(xsltCopy).isNotEqualTo(prod.xslt());
+        // Its XSLT written by hand (no mapping kept): read back, its catalogue confirmed, before it changes.
+        readBackCopy(build, FEED, xsltCopy, (String) copy.get("uuid"), prod.raw());
         agreed("save_xslt", args("uuid", xsltCopy, "code", draft));
         final Map<String, Object> diff = json("compare_outputs", args("pipeline_uuid", prod.pipeline(),
                 "stream_ids", prod.raw(), "other_pipeline_uuid", copy.get("uuid")));

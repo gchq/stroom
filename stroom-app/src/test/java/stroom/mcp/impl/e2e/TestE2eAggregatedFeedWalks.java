@@ -720,8 +720,9 @@ class TestE2eAggregatedFeedWalks extends AbstractE2eTest {
                 feed + " " + firstName, "working_copy", true))).contains("never a working copy",
                 "Nothing was copied");
         final int changeBefore = client.forms().size();
+        // The version where the original has it (' V1.1' to ' V1.2'), as copy_pipeline requires since 9b0721a5a7.
         final Map<String, Object> copied = agreed("copy_pipeline", args("build", third, "source_uuid",
-                current, "new_name", feed + " " + firstName + "-V3"));
+                current, "new_name", feed + " " + firstName + " V1.2"));
         assertThat(copied).doesNotContainKey("working_copy");
         assertThat(strings(copied, "source_types")).containsExactly(firstType);
         final String running = uuidOf(copied);

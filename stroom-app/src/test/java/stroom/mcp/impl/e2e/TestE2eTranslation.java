@@ -194,7 +194,15 @@ class TestE2eTranslation extends AbstractE2eTest {
         assertThat(((List<Map<String, Object>>) diff.get("fields_changed")))
                 .extracting(field -> field.get("path"))
                 .containsExactly("Event/EventDetail/Description");
-        json("save_xslt", args("uuid", xsltCopy.get("uuid"), "code", changed));
+        // Its XSLT written by hand (onboard keeps no mapping): read back, its catalogue confirmed, before it changes.
+        readBackCopy(fixBuild, csv.feed(), (String) xsltCopy.get("uuid"), (String) copy.get("uuid"),
+                List.of(csv.raw()));
+        // The change made in the mapping read back, as the tools say: a save by hand would leave the mapping behind.
+        final Map<String, Object> remapped = json("build_translation_xslt", args("uuid", xsltCopy.get("uuid"),
+                "build", fixBuild, "stream_ids", List.of(csv.raw()), "change", "Reworded the logon description",
+                "changes", Map.of("events", List.of(Map.of("name", "logon", "fields", List.of(Map.of(
+                        "path", "EventDetail/Description", "value", "Interactive user logon")))))));
+        assertThat(remapped).as("changed: %s", remapped.get("problems")).containsEntry("ok", true);
         final String direct = refusal("save_xslt", args("uuid", csv.xsltUuid(), "code", changed));
         assertThat(direct).contains("not created by this server", "new version");
         final List<String> before = strings(json("build_status", args("build", fixBuild)), "before_promotion");
@@ -204,7 +212,9 @@ class TestE2eTranslation extends AbstractE2eTest {
                 .anySatisfy(warning -> assertThat(warning).contains("'" + versionName + "'", "no documentation"));
         final Map<String, Object> fixed = promote(fixBuild, Map.of());
         dump("promote_build fix", fixed);
-        assertThat(findFolder("System/MCP Workspace/" + fixBuild)).isEmpty();
+        // Only the survey the read-back's catalogue needed is left in the workspace, as promotion leaves surveys.
+        assertThat(strings(fixed, "promoted")).filteredOn(line -> line.startsWith("left "))
+                .containsExactly("left Documentation '" + csv.feed() + " - Survey' in the workspace");
         assertThat(list(fixed, "promoted_with_warnings")).isEqualTo(before);
         // Beside the original, which is left as it was: nothing written back, nothing backed up.
         assertThat(readXslt((String) xsltCopy.get("uuid")).getData()).contains("Interactive user logon");

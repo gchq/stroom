@@ -271,7 +271,8 @@ class TestE2eExistingFeed extends AbstractE2eTest {
         assertThat(feedProperties(pipelineUuid)).as("the StreamAppender's feed property is taken off").isEmpty();
         final List<String> said = strings(promoted, "promoted");
         assertThat(said).anySatisfy(line -> assertThat(line).contains("writes its Events into its input"));
-        assertThat(said).anySatisfy(line -> assertThat(line).contains(TEST_FEED, "left"));
+        // The tidy-up deletes the test feed, so it isn't said to be left in the workspace (chat 195, 701d68f20a).
+        assertThat(said).noneSatisfy(line -> assertThat(line).contains(TEST_FEED, "left"));
         final List<Map<String, Object>> made = list(promoted, "processing_filters");
         assertThat(made).singleElement().satisfies(filter -> {
             assertThat(filter).containsEntry("feed", SOURCE);
