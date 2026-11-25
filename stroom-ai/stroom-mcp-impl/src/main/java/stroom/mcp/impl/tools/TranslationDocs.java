@@ -450,6 +450,11 @@ public class TranslationDocs {
                                           + "back (build_translation_xslt uuid=" + uuid + " changes=...), or the "
                                           + "code where the mapping can't hold the change. Nothing was saved.");
                 });
+        plan.awaitingCatalogue(build, uuid).ifPresent(next -> {
+            throw new ToolRefusal("Not yet: " + next + ". The translation changes once the user has agreed what "
+                                  + "the original translates. Then change the mapping (build_translation_xslt uuid="
+                                  + uuid + " changes=...). Nothing was saved.");
+        });
     }
 
     /// Replaces an XSLT's code, after check_xslt passes. Only XSLTs the tools created (including working copies of

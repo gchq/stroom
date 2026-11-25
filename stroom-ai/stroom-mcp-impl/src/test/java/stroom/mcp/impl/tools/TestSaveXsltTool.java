@@ -128,6 +128,34 @@ class TestSaveXsltTool {
     }
 
     @Test
+    void aCopysXsltReadBackIsNotChangedBeforeItsCatalogueIsConfirmed() {
+        // Seen in eval case 97 on Haiku and Sonnet: the source IP added straight after the read-back, the catalogue
+        // read back put to the user only when promotion refused.
+        final SaveXsltTool tool = world.saveXsltTool();
+        final String code = HAND.replace("{BODY}", "");
+        final String uuid = String.valueOf(world.call(tool, Map.of("build", BUILD, "name", "n", "code", code))
+                .get("uuid"));
+        world.facts.startFrom = Map.of("choice", ExistingTranslations.EXISTING, "pipeline", Map.of("name",
+                "ACME-Events", "uuid", "prod-ev"));
+        world.facts.docs.add(FakeBuildFacts.doc("Pipeline", "ev", "ACME-Events-V1.1", "version_of", "prod-ev"));
+        world.facts.docs.add(FakeBuildFacts.doc("XSLT", uuid, "n", "version_of", "prod-x"));
+        world.facts.stages = Map.of("ev", "translation");
+        world.facts.mappings = Map.of(uuid, FakeBuildFacts.kept("translation", Map.of()));
+        world.facts.catalogued = false;
+
+        final String refused = String.valueOf(world.call(tool, Map.of("build", BUILD, "uuid", uuid, "code",
+                HAND.replace("{BODY}", "<Extra/>"))).get("error"));
+
+        assertThat(refused).contains("Not yet: catalogue_event_types build=" + BUILD, "'ACME-Events'",
+                "confirm=true puts it to the user", "build_translation_xslt uuid=" + uuid, "Nothing was saved");
+        assertThat(world.xslt(uuid).getData()).isEqualTo(code);
+        // Confirmed, it is changed as any other.
+        world.facts.catalogued = true;
+        assertThat(world.call(tool, Map.of("build", BUILD, "uuid", uuid, "code", HAND.replace("{BODY}",
+                "<Extra/>")))).containsEntry("uuid", uuid);
+    }
+
+    @Test
     void theXsltABuildDescribesInPlaceIsNotSaved() {
         // Seen in eval case 109 on Haiku: build_translation_xslt over the described XSLT; the guard's refusal sent
         // the agent to copy_pipeline, a new version the user had ruled out.

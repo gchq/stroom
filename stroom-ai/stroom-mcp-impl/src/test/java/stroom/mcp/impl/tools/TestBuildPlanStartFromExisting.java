@@ -340,6 +340,43 @@ class TestBuildPlanStartFromExisting {
     }
 
     @Test
+    void theCopyChangesOnlyOnceTheCatalogueReadBackIsConfirmed() {
+        // Seen in eval case 97 on Haiku and Sonnet, and 104 on Haiku: the field added straight after the read-back,
+        // the catalogue put to the user only when promotion asked for it.
+        facts.startFrom = Map.of("choice", ExistingTranslations.EXISTING, "pipeline", EXISTING);
+        copied("translation");
+        // Not read back yet: the read-back's own gate says so, not this one.
+        assertThat(plan.awaitingCatalogue("b", "x")).isEmpty();
+        facts.mappings = Map.of("x", FakeBuildFacts.kept("translation", Map.of()));
+
+        assertThat(plan.awaitingCatalogue("b", "x")).hasValueSatisfying(next -> assertThat(next)
+                .startsWith("catalogue_event_types build=b stream_ids=<the sample streams> first")
+                .contains("'ACME-V1.0-Events'", "confirm=true puts it to the user"));
+        facts.catalogued = true;
+        assertThat(plan.awaitingCatalogue("b", "x")).isEmpty();
+    }
+
+    @Test
+    void nothingAwaitsTheCatalogueOtherwise() {
+        copied("translation");
+        facts.mappings = Map.of("x", FakeBuildFacts.kept("translation", Map.of()), "y",
+                FakeBuildFacts.kept("translation", Map.of()));
+        // No start recorded, a draft, a description in place.
+        assertThat(plan.awaitingCatalogue("b", "x")).isEmpty();
+        facts.startFrom = Map.of("choice", ExistingTranslations.DRAFT, "pipeline", EXISTING);
+        assertThat(plan.awaitingCatalogue("b", "x")).isEmpty();
+        facts.startFrom = Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline", EXISTING);
+        assertThat(plan.awaitingCatalogue("b", "x")).isEmpty();
+        // From the existing pipeline: an XSLT that isn't the copy's, a failed read-back, no build or XSLT.
+        facts.startFrom = Map.of("choice", ExistingTranslations.EXISTING, "pipeline", EXISTING);
+        assertThat(plan.awaitingCatalogue("b", "y")).isEmpty();
+        assertThat(plan.awaitingCatalogue(null, "x")).isEmpty();
+        assertThat(plan.awaitingCatalogue("b", null)).isEmpty();
+        facts.readBackFailed = Map.of("xslt", Map.of("uuid", "x", "name", "ACME-V1.1-Events"), "why", "unread");
+        assertThat(plan.awaitingCatalogue("b", "x")).isEmpty();
+    }
+
+    @Test
     void onlyAHandWrittenOfferIsOneACopyStartsFrom() {
         assertThat(plan.handWrittenToOffer("b")).isEmpty();
         facts.existing = EXISTING;

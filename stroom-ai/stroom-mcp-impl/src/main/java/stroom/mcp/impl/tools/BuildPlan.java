@@ -791,6 +791,49 @@ public class BuildPlan {
         }
     }
 
+    /// What a build starting from an existing pipeline does once its copy's XSLT is read back, before the
+    /// translation changes: the catalogue read back confirmed by the user (each event type, then the catch-all), so
+    /// the change is made on what they agreed the original translates. Seen in eval case 97 on Haiku and Sonnet, and
+    /// 104 on Haiku: the field added at once after the read-back, the catalogue put to the user only at promotion.
+    ///
+    /// @param build A build, or null.
+    /// @param xslt  The XSLT to change.
+    /// @return The call still to make; empty where the XSLT isn't the copy's read back, the catalogue is confirmed,
+    /// the build doesn't start from an existing pipeline (drafted, described in place, a new source), or its
+    /// read-back failed (the translation drafted anew, through the draft's own gates).
+    public Optional<String> awaitingCatalogue(final String build, final String xslt) {
+        if (NullSafe.isBlankString(build) || NullSafe.isBlankString(xslt)) {
+            return Optional.empty();
+        }
+        try {
+            final Map<String, Object> startFrom = facts.startFrom(build).orElse(null);
+            if (startFrom == null || !ExistingTranslations.EXISTING.equals(startFrom.get("choice"))
+                || facts.readBackFailed(build).isPresent()) {
+                return Optional.empty();
+            }
+            final boolean readBack = facts.xsltMapping(xslt)
+                    .filter(kept -> KeptMapping.TRANSLATION.equals(kept.kind()))
+                    .isPresent();
+            if (!readBack) {
+                return Optional.empty();
+            }
+            final List<Map<String, Object>> docs = facts.buildDocs(build);
+            final boolean copy = docs.stream().anyMatch(doc -> XsltDoc.TYPE.equals(doc.get("type"))
+                                                               && xslt.equals(uuid(doc))
+                                                               && doc.get("version_of") != null);
+            if (!copy || facts.catalogued(docs)) {
+                return Optional.empty();
+            }
+            return Optional.of("catalogue_event_types build=" + build + " stream_ids=<the sample streams> first: it "
+                               + "lists the catalogue read back from '" + ToolText.str(JsonValues.mapOrEmpty(
+                    startFrom.get("pipeline")).get("name")) + "' with its check against the sample, then "
+                               + "confirm=true puts it to the user (each event type, then the catch-all)");
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Build {}'s catalogue wasn't checked: {}", build, e.getMessage()), e);
+            return Optional.empty();
+        }
+    }
+
     // A pipeline's stage, or null where Stroom can't load it.
     private String stageOf(final Map<String, Object> doc) {
         try {
