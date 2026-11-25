@@ -107,6 +107,8 @@ class TestProposeSkillTool {
         Mockito.when(documentAccess.folderPath(Mockito.any())).thenCallRealMethod();
         Mockito.when(documentAccess.children(FOLDER)).thenReturn(List.of());
         Mockito.when(documentAccess.parent(SKILLS)).thenReturn(Optional.of(FOLDER));
+        Mockito.when(documentAccess.canEdit(SKILLS)).thenReturn(true);
+        Mockito.when(documentAccess.canCreate(FOLDER, DocumentationDoc.TYPE)).thenReturn(true);
         Mockito.when(facts.forSkill(Mockito.any(), Mockito.any(), Mockito.anyBoolean()))
                 .thenReturn(SkillTestFacts.permissive());
         Mockito.when(securityContext.getUserRef()).thenReturn(UserRef.builder().uuid("u").subjectId("jsmith")
@@ -154,6 +156,42 @@ class TestProposeSkillTool {
                 .containsEntry("base", saved)
                 .containsEntry("base_hash", ProposeCodeChangeTool.sha256(saved))
                 .containsEntry("summary", "By day"));
+    }
+
+    @Test
+    void aChangeToASkillsDocTheUserCantEditIsRefusedWithNoButton() {
+        withSkillsDoc(SkillDoc.parse("").withSkill(SKILL, entry(1)));
+        Mockito.when(documentAccess.canEdit(SKILLS)).thenReturn(false);
+
+        final String result = run(Map.of("folder", "/Hunts", "markdown", SKILL.replace("Counts a user's logons.",
+                "Counts a user's logons, by day.")));
+
+        assertThat(result).contains("Not proposed", "can't edit the skills doc 'SKILLS' in folder '/Hunts'",
+                        "someone with Edit on it (its owner, or an administrator)",
+                        "+Counts a user's logons, by day.")
+                .doesNotContain("'Review and apply' button");
+        assertThat(takeUserActions()).as("no button the user can't use").isEmpty();
+    }
+
+    @Test
+    void removingOrUndoingInADocTheUserCantEditIsRefusedToo() {
+        withSkillsDoc(SkillDoc.parse("").withSkill(SKILL, entry(1)));
+        Mockito.when(documentAccess.canEdit(SKILLS)).thenReturn(false);
+
+        assertThat(run(Map.of("action", "remove", "folder", "/Hunts", "name", "Logons by user")))
+                .contains("Not proposed", "can't edit the skills doc");
+        assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void aNewSkillsDocInAFolderTheUserCantCreateInIsRefused() {
+        Mockito.when(documentAccess.canCreate(FOLDER, DocumentationDoc.TYPE)).thenReturn(false);
+
+        final String result = run(Map.of("folder", "/Hunts", "markdown", SKILL));
+
+        assertThat(result).contains("Not proposed", "can't create a Documentation doc in folder '/Hunts'",
+                "someone who can (the folder's owner, or an administrator)", "+# Logons by user");
+        assertThat(takeUserActions()).isEmpty();
     }
 
     @Test

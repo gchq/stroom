@@ -174,7 +174,8 @@ public class ProposeSkillTool extends AbstractWorkspaceTool {
         return ToolPermissions.builder()
                 .checksDocuments(DocumentPermission.VIEW)
                 .note("Applying an existing doc's change needs Edit on it; creating a SKILLS doc needs Create in "
-                      + "the folder. Both are checked when the user applies it.")
+                      + "the folder. Both are checked before anything is proposed (a user without them is given "
+                      + "the diff to pass on, no button) and again when the user applies it.")
                 .build();
     }
 
@@ -198,7 +199,9 @@ public class ProposeSkillTool extends AbstractWorkspaceTool {
                                  + "user and proposes it for a skills doc as a diff with a 'Review and apply' "
                                  + "button; nothing changes until they apply it (to the doc's editor, unsaved, "
                                  + "for them to save; or, for a folder with no " + SkillDoc.DOC_NAME + " doc, by "
-                                 + "creating and saving one). The doc's history is written for you. Actions: "
+                                 + "creating and saving one); refused, with the diff to pass on, where the user "
+                                 + "can't edit the doc (or create one in the folder). The doc's history is "
+                                 + "written for you. Actions: "
                                  + "draft (from this chat's calls, or a description: what only the user knows is "
                                  + "asked in a form), template (built-in starting points), trial (run a draft "
                                  + "once on given parameters before saving: follow the steps it gives back), "
@@ -667,6 +670,13 @@ public class ProposeSkillTool extends AbstractWorkspaceTool {
         if (diff.isIdentical()) {
             return ToolResult.text("The proposed text is the same as " + target.where() + " has already.");
         }
+        final Optional<String> refusal = refusal(target);
+        if (refusal.isPresent()) {
+            // A button the user can't use is no proposal: the change goes, as text, to someone who can apply it.
+            return ToolResult.text("Not proposed: " + refusal.get() + " Tell the user they can't change it, and "
+                                   + "give them " + what + " (the diff below) to pass on; don't propose it again."
+                                   + "\nThe diff:\n" + diff.toUnifiedDiff(LineDiffResult.DEFAULT_CONTEXT_LINES));
+        }
         final Map<String, Object> arguments = new LinkedHashMap<>();
         arguments.put("doc", ProposeCodeChangeTool.docRefMap(target.existing() == null
                 ? target.folder()
@@ -706,6 +716,22 @@ public class ProposeSkillTool extends AbstractWorkspaceTool {
                           + SkillChecks.describe(problems))
                                + "\nThe diff:\n" + diff.toUnifiedDiff(LineDiffResult.DEFAULT_CONTEXT_LINES))
                 .withUserAction(action);
+    }
+
+    // Why the user couldn't apply a change to the target, if they couldn't: no Edit on its doc, or no Create in its
+    // folder for a new one.
+    private Optional<String> refusal(final Target target) {
+        if (target.existing() != null) {
+            return documentAccess.canEdit(target.existing())
+                    ? Optional.empty()
+                    : Optional.of("you can't edit " + target.where() + " (applying a change needs Edit on it), so "
+                                  + "only someone with Edit on it (its owner, or an administrator) can make it.");
+        }
+        return documentAccess.canCreate(target.folder(), DocumentationDoc.TYPE)
+                ? Optional.empty()
+                : Optional.of("you can't create a Documentation doc in " + target.where() + ", so only someone who "
+                              + "can (the folder's owner, or an administrator) can create its " + SkillDoc.DOC_NAME
+                              + " doc.");
     }
 
     // ------------------------------------------------------------------------------------------------
