@@ -159,7 +159,7 @@ class TestE2eSeveralFeedsBuild extends AbstractE2eTest {
         final HandWritten written = handWritten(siteA, feedA, textResource("hand_written_vpn.xsl"),
                 name + "-Events", "Event Data (JSON)", List.of(PipelineProperty.builder().element("jsonParser")
                         .name("addRootObject").value(new PipelinePropertyValue(false)).build()), RAW,
-                vpnSample("2026-11-03T08:00:01.000Z"));
+                everyKind("2026-11-03T08:00:01.000Z"));
         create(FeedDoc.TYPE, feedB, folder(siteB));
         storeParts(feedB, List.of(Map.entry(Map.of("Feed", feedB), vpnSample("2026-11-03T09:00:01.000Z"))));
         create(FeedDoc.TYPE, feedC, folder(siteA));
@@ -167,8 +167,24 @@ class TestE2eSeveralFeedsBuild extends AbstractE2eTest {
                 System.currentTimeMillis() - Duration.ofDays(200).toMillis());
         final String build = "manyp-v1-1";
         json("start_build", args("build", build, "feeds", List.of(feedA, feedB, feedC)));
-        agreed("copy_pipeline", args("build", build, "source_uuid", written.pipeline(), "new_name",
-                name + "-Events-V1.1"));
+        for (final String feed : List.of(feedA, feedB, feedC)) {
+            json("survey_feed", args("feed", feed, "build", build));
+        }
+        agreed("compare_feeds", args("build", build));
+        final Map<String, Object> copy = agreed("copy_pipeline", args("build", build, "source_uuid",
+                written.pipeline(), "new_name", name + "-Events-V1.1"));
+        // A copy of a hand-written translation is promoted once its XSLT is read back and the catalogue read back
+        // with it confirmed (promote_build's gate, 2026-11-25).
+        final String copyXslt = list(copy, "copied_documents").stream()
+                .filter(doc -> "XSLT".equals(doc.get("type")))
+                .map(doc -> (String) doc.get("uuid"))
+                .findFirst()
+                .orElseThrow();
+        final List<Long> raws = List.of(written.raw());
+        assertThat(agreed("rebuild_mapping", args("uuid", copyXslt, "pipeline_uuid", uuidOf(copy), "stream_ids",
+                raws, "change", "Read back from the hand-written translation")).get("saved")).isNotNull();
+        json(CATALOGUE, args("build", build, "stream_ids", raws));
+        confirmedCatalogue(build);
 
         // The feeds are in two folders: where the shared documents go is asked, in a form (here, Site-A's).
         final int before = client.forms().size();
@@ -350,6 +366,18 @@ class TestE2eSeveralFeedsBuild extends AbstractE2eTest {
             n++;
         }
         return String.join("\n", out) + "\n";
+    }
+
+    // Every kind of record the hand-written translation writes, so the catalogue read back from it is checked whole.
+    private static String everyKind(final String time) {
+        return "[{\"ts\": \"" + time + "\", \"action\": \"login\", \"user\": \"jbloggs\", \"src_ip\": "
+               + "\"198.51.100.7\", \"host\": \"vpn-gw-1\", \"result\": \"success\"}, "
+               + "{\"ts\": \"" + time + "\", \"action\": \"login\", \"user\": \"asmith\", \"src_ip\": "
+               + "\"198.51.100.9\", \"host\": \"vpn-gw-1\", \"result\": \"failure\"}, "
+               + "{\"ts\": \"" + time + "\", \"action\": \"logout\", \"user\": \"jbloggs\", \"src_ip\": "
+               + "\"198.51.100.7\", \"host\": \"vpn-gw-1\"}, "
+               + "{\"ts\": \"" + time + "\", \"action\": \"config_change\", \"user\": \"admin\", "
+               + "\"host\": \"vpn-gw-1\", \"setting\": \"idle_timeout\", \"new_value\": \"900\"}]";
     }
 
     private static String vpnSample(final String time) {
