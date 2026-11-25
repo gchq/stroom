@@ -235,6 +235,63 @@ class TestCopyPipelineTool {
         assertThat(made).containsEntry("name", "ACME-V2 - Indexing");
     }
 
+    @Test
+    void aCopyOfTheHandWrittenPipelineOfferedStartsTheBuildFromIt() {
+        // Seen in eval case 97 on Haiku: copied straight after the survey, the start never asked, so its XSLT was
+        // read back as no existing pipeline's (its TypeIds refused as not Verb-Object, the catalogue's origin null).
+        source();
+        pipelines.feeds.facts.existing = Map.of("name", "ACME-V1 - Indexing", "uuid", "p1");
+        final ToolCallContext context = BuildToolCalls.answering(Map.of("value", true));
+
+        final ToolResult made = call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": "
+                                     + "\"ACME-V2 - Indexing\"}", context);
+
+        assertThat(made.isError()).as(made.text()).isFalse();
+        assertThat(pipelines.world.records().startFrom(BUILD)).hasValueSatisfying(startFrom -> {
+            assertThat(startFrom).containsEntry("choice", ExistingTranslations.EXISTING)
+                    .containsEntry("by", CopyPipelineTool.NAME);
+            assertThat(startFrom.get("pipeline")).isEqualTo(Map.of("name", "ACME-V1 - Indexing", "uuid", "p1"));
+        });
+    }
+
+    @Test
+    void aCopyStartsNothingWhereTheToolsBuiltTheOffer() {
+        // A new version of a pipeline the tools built carries its mapping and catalogue: nothing to read back.
+        source();
+        pipelines.feeds.facts.existing = Map.of("name", "ACME-V1 - Indexing", "uuid", "p1");
+        pipelines.feeds.facts.keptXslt = "x1";
+
+        call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": \"ACME-V2 - Indexing\"}",
+                BuildToolCalls.answering(Map.of("value", true)));
+
+        assertThat(pipelines.world.records().startFrom(BUILD)).isEmpty();
+    }
+
+    @Test
+    void aCopyOfAnotherPipelineThanTheOfferStartsNothing() {
+        source();
+        pipelines.feeds.facts.existing = Map.of("name", "Other-Events", "uuid", "other");
+
+        call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": \"ACME-V2 - Indexing\"}",
+                BuildToolCalls.answering(Map.of("value", true)));
+
+        assertThat(pipelines.world.records().startFrom(BUILD)).isEmpty();
+    }
+
+    @Test
+    void aCopyTheUserDeclinesStartsNothing() {
+        source();
+        pipelines.feeds.facts.existing = Map.of("name", "ACME-V1 - Indexing", "uuid", "p1");
+
+        final ToolResult declined = call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", "
+                                         + "\"new_name\": \"ACME-V2 - Indexing\"}",
+                BuildToolCalls.declining().context());
+
+        assertThat(declined.isError()).isTrue();
+        assertThat(pipelines.world.records().startFrom(BUILD)).isEmpty();
+        assertNothingCopied();
+    }
+
     @ParameterizedTest
     @MethodSource("misplacedVersions")
     void aNewVersionNamedWithItsVersionElsewhereIsRefusedSayingTheNameExpected(final String given) {

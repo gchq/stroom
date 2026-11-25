@@ -339,6 +339,16 @@ class TestBuildPlanStartFromExisting {
         assertThat(status()).doesNotContainKey("read_back");
     }
 
+    @Test
+    void onlyAHandWrittenOfferIsOneACopyStartsFrom() {
+        assertThat(plan.handWrittenToOffer("b")).isEmpty();
+        facts.existing = EXISTING;
+        assertThat(plan.handWrittenToOffer("b")).contains(EXISTING);
+        // Its XSLT keeps the tools' mapping: they built it.
+        facts.keptXslt = "prod-x";
+        assertThat(plan.handWrittenToOffer("b")).isEmpty();
+    }
+
     // The build holds a copy of a pipeline of that stage, and of its XSLT.
     private void copied(final String stage) {
         facts.docs = List.of(FakeBuildFacts.doc("Documentation", "s", "ACME - Survey"),

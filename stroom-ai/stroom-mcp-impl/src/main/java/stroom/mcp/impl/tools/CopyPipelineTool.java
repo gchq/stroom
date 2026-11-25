@@ -41,6 +41,9 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -62,6 +65,9 @@ import java.util.TreeSet;
 class CopyPipelineTool extends AbstractBuiltInTool {
 
     static final String NAME = "copy_pipeline";
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CopyPipelineTool.class);
+
     static final String BUILD_ARG = "build";
     static final String SOURCE_UUID_ARG = "source_uuid";
     static final String NEW_NAME_ARG = "new_name";
@@ -95,6 +101,8 @@ class CopyPipelineTool extends AbstractBuiltInTool {
     private Provider<CatalogueNotes> catalogueNotesProvider;
     // The pipelines' inheritance; none in tests that make the tool themselves.
     private Provider<PipelineInheritance> inheritanceProvider;
+    // Where an existing pipeline's translation reads its records; none in tests that make the tool themselves.
+    private Provider<InPlaceInduction> inPlaceProvider;
 
     @Inject
     CopyPipelineTool(final PipelineWrites writes,
@@ -156,6 +164,16 @@ class CopyPipelineTool extends AbstractBuiltInTool {
     @Inject
     void setInheritance(final Provider<PipelineInheritance> inheritance) {
         this.inheritanceProvider = inheritance;
+    }
+
+    /// Tells where a hand-written pipeline's translation reads its records (a pre-processor may feed it), kept with
+    /// the build's start when a copy of it starts the build (set by injection; none in tests that make the tool
+    /// themselves).
+    ///
+    /// @param inPlace The existing pipelines' translations.
+    @Inject
+    void setInPlaceInduction(final Provider<InPlaceInduction> inPlace) {
+        this.inPlaceProvider = inPlace;
     }
 
     @Override
@@ -256,6 +274,9 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                                   + "new version of a source's own pipeline (e.g. "
                                   + "Acme-Door-V1.2-Events).");
         }
+        // The hand-written pipeline the plan offers to start from, read before the copy is in the build.
+        final Optional<Map<String, Object>> offered = plan.handWrittenToOffer(build)
+                .filter(pipeline -> sourceUuid.equals(ToolText.str(pipeline.get("uuid"))));
         final List<String> notes = new ArrayList<>();
         // Promoted: outside any build (in production), whoever made it.
         final boolean promoted = guard.buildOf(new DocRef(PipelineDoc.TYPE, sourceUuid)).isEmpty();
@@ -350,6 +371,7 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         final PipelineDoc changed = data;
         final DocRef ref = guard.create(PipelineDoc.TYPE, pipelineName, build, null, false, role);
         records.update(build, ref, entry -> entry.put("version_of", sourceUuid));
+        offered.ifPresent(pipeline -> startsFromCopy(build, pipeline));
         final PipelineDoc doc = pipelineDocs.write(pipelineDocs.read(ref.getUuid()).copy()
                 .parentPipeline(source.getParentPipeline())
                 .description(source.getDescription())
@@ -409,6 +431,36 @@ class CopyPipelineTool extends AbstractBuiltInTool {
             result.put("note", String.join("; ", notes));
         }
         return plan.withNext(context, build, result);
+    }
+
+    // A copy of the hand-written pipeline the plan offers to start from, made before the start was asked (the user
+    // confirms the copy's names in its form): the build starts from it, recorded as the start choice is, so the
+    // copy's XSLT is read back as an existing pipeline's (its TypeIds kept) and the catalogue names its origin. Seen
+    // in eval case 97 on Haiku: copied straight after the survey, its read-back catalogue had no origin and its
+    // TypeIds were refused as not Verb-Object, so promotion was never reached.
+    private void startsFromCopy(final String build, final Map<String, Object> pipeline) {
+        final Map<String, Object> startFrom = new LinkedHashMap<>();
+        startFrom.put("choice", ExistingTranslations.EXISTING);
+        final Map<String, Object> named = new LinkedHashMap<>();
+        named.put("name", pipeline.get("name"));
+        named.put("uuid", pipeline.get("uuid"));
+        startFrom.put("pipeline", named);
+        startFrom.put("at", System.currentTimeMillis());
+        startFrom.put("by", NAME);
+        if (inPlaceProvider != null) {
+            try {
+                inPlaceProvider.get().scope(ToolText.str(pipeline.get("uuid"))).ifPresent(scope -> {
+                    // Where its translation reads its records, which a pre-processor may feed.
+                    startFrom.put(InPlaceInduction.ELEMENT, scope.translation().element());
+                    startFrom.put(InPlaceInduction.PRE_PROCESSED, scope.preProcessed());
+                });
+            } catch (final RuntimeException e) {
+                // Its stages not told: recorded as a translation reading the parser's output, as before.
+                LOGGER.debug(() -> LogUtil.message("Where {}'s translation reads wasn't told: {}",
+                        pipeline.get("name"), e.getMessage()));
+            }
+        }
+        records.rememberStartFrom(build, startFrom);
     }
 
     // A build describing a pipeline in place (the user's start choice: no new version) copies neither it nor any

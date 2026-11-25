@@ -700,6 +700,23 @@ public class BuildPlan {
         }
     }
 
+    /// The pipeline [#existingToOffer] offers, where its translation is one the tools never built (its XSLT keeps
+    /// no mapping): a copy of it as a new version starts the build from it, whether or not the user was asked first.
+    ///
+    /// @param build A build.
+    /// @return The pipeline (`name`, `uuid`), or empty when none is offered or the tools built it.
+    public Optional<Map<String, Object>> handWrittenToOffer(final String build) {
+        return existingToOffer(build).filter(pipeline -> {
+            try {
+                return facts.keptXsltUuid(ToolText.str(pipeline.get("uuid"))).isEmpty();
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> LogUtil.message("Whether build {}'s offer is hand-written wasn't read: {}", build,
+                        e.getMessage()), e);
+                return false;
+            }
+        });
+    }
+
     /// @param build A build.
     /// @return How the user chose to start it ([BuildFacts#startFrom]), or empty when not asked yet.
     public Optional<Map<String, Object>> startFrom(final String build) {
