@@ -690,12 +690,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
             if (NullSafe.isBlankString(feed) || first == null || last == null) {
                 continue;
             }
-            spans.merge(feed, new LocalDate[]{first, last}, (a, b) -> new LocalDate[]{
-                    a[0].isBefore(b[0])
-                            ? a[0]
-                            : b[0], a[1].isAfter(b[1])
-                    ? a[1]
-                    : b[1]});
+            spans.merge(feed, new LocalDate[]{first, last}, CompareActivityTool::widest);
         }
         final List<FeedSpan> out = new ArrayList<>();
         spans.forEach((feed, days) -> out.add(new FeedSpan(feed, days[0], days[1])));
@@ -712,6 +707,17 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                     : ""));
         }
         return out;
+    }
+
+    // The days from the earlier first to the later last.
+    private static LocalDate[] widest(final LocalDate[] a, final LocalDate[] b) {
+        final LocalDate first = a[0].isBefore(b[0])
+                ? a[0]
+                : b[0];
+        final LocalDate last = a[1].isAfter(b[1])
+                ? a[1]
+                : b[1];
+        return new LocalDate[]{first, last};
     }
 
     private static LocalDate day(final String instant, final ToolTimeZone zone) {
