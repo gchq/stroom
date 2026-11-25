@@ -107,6 +107,11 @@ class TestPipelineInheritance {
                 "'Vault CEF' inherits 'Kafka Forwarding (pre-prod)'; the other forwarding pipelines in folder "
                 + "'/Vault' inherit 'Kafka Forwarding' ('Accounts CEF', 'Billing CEF')");
         assertThat(inheritance.facts("a", null, null).orElseThrow().flags()).as("one beside its own").isEmpty();
+        // A template kept beside them (inheriting nothing) is no sibling to compare with.
+        pipeline("t2", "Kafka Forwarding (copy)", null, null);
+        node("t2", "Kafka Forwarding (copy)");
+        assertThat(inheritance.facts("v", null, null).orElseThrow().flags()).singleElement().asString()
+                .doesNotContain("no template");
 
         // Siblings of another kind don't count.
         Mockito.when(shapes.shape("a")).thenReturn(new PipelineShapes.Shape("translation", null, List.of(), null,

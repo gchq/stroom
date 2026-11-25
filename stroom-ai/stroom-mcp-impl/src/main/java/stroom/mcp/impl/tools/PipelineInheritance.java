@@ -44,7 +44,7 @@ import java.util.Optional;
 /// never make an inherited property the child's own; they say what it inherits and flag, changing nothing:
 ///
 /// - a template other than its predecessor's (`inherits 'X'; its predecessor 'P' inherits 'Y'`);
-/// - a template none of its siblings inherit (the other pipelines of its kind in the same folder);
+/// - a template none of its siblings inherit (the other pipelines of its kind in the same folder that inherit one);
 /// - an XSLT of its own where its template supplies one, so it won't follow the template.
 ///
 /// Everything is read as the user; what can't be read is left out, never guessed.
@@ -130,7 +130,8 @@ class PipelineInheritance {
             if (!stage.equals(stage(sibling))) {
                 continue;
             }
-            read(sibling).ifPresent(doc -> {
+            read(sibling).filter(doc -> doc.getParentPipeline() != null).ifPresent(doc -> {
+                // Only siblings that inherit: a template kept beside its children isn't one of them.
                 final DocRef theirs = named(doc.getParentPipeline());
                 final String key = NullSafe.string(uuidOf(theirs));
                 templates.putIfAbsent(key, theirs);
