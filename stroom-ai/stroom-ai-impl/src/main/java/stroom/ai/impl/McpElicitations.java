@@ -460,6 +460,28 @@ public class McpElicitations {
                 : " " + afterward.strip());
     }
 
+    /// A tool's form answered, or the call ended where the user sent a message in the chat instead of answering it:
+    /// a tool never carries on as if they had answered (taking a default, or "no"), so the agent reads their message
+    /// first. Seen in chat 197: activity_timeline took a put-aside "Classify them all?" as its default and ran the
+    /// full history for minutes; compare_activity said "Compared without peers, as the user chose".
+    ///
+    /// @param result    The form's answer.
+    /// @param asked     What the form asked, e.g. its question.
+    /// @param tool      The tool that asked.
+    /// @param afterward What the agent does once the user has said what they want, or blank for nothing more.
+    /// @return The answer, where the user didn't send a message instead.
+    /// @throws ToolRefusal saying what the user sent ([#sentInsteadText]), where they did.
+    public static ElicitResult unlessSentInstead(final ElicitResult result,
+                                                 final String asked,
+                                                 final String tool,
+                                                 final String afterward) {
+        final Optional<String> sent = sentInstead(result);
+        if (sent.isPresent()) {
+            throw new ToolRefusal(sentInsteadText(asked, tool, sent.get(), afterward));
+        }
+        return result;
+    }
+
     // A form put aside by a message the user sent instead: a cancel, as for an MCP server, carrying what they sent,
     // the first message sent to the chat's run after the form was shown (AskStroomAIService stores it, then puts
     // the form aside).

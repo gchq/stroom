@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.UserQuestions;
@@ -112,6 +113,8 @@ class FeedNames {
             final ElicitResult answer = questions.ask(toolName, callId, "There is no feed named '" + given
                                                                        + "' in this Stroom. Did you mean one of "
                                                                        + "these?", form(options));
+            McpElicitations.unlessSentInstead(answer, "There is no feed named '" + given + "'. Did you mean one "
+                                                      + "of these?", toolName, "");
             final Object chosen = answer.action() == ElicitResult.Action.ACCEPT
                     ? NullSafe.map(answer.content()).get(CHOICE_FIELD)
                     : null;

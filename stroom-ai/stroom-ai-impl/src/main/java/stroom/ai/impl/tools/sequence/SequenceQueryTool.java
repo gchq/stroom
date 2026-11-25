@@ -25,6 +25,7 @@ import stroom.ai.api.ElasticKeyStreams;
 import stroom.ai.api.ElasticKeyStreams.KeyField;
 import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.tools.AbstractWorkspaceTool;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -1364,6 +1365,7 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
         final ElicitResult answer = context.userQuestions().ask(NAME,
                 UserQuestions.formCallId(request.id(), MAXSPAN_FORM), MAXSPAN_QUESTION + " " + WIDER_NOTE,
                 SequenceWindow.maxspanForm(options));
+        McpElicitations.unlessSentInstead(answer, MAXSPAN_QUESTION, NAME, "");
         if (answer.action() != ElicitResult.Action.ACCEPT) {
             throw new WorkspaceException("The user didn't choose a window, so nothing was run. Ask them in the chat "
                                          + "how far apart the steps may be, then call again with maxspan.");

@@ -22,6 +22,7 @@ import stroom.ai.api.ElasticKeyStreams.Side;
 import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
+import stroom.ai.impl.tools.FormAnswers;
 import stroom.ai.impl.tools.SessionLimits;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -249,6 +250,18 @@ class TestKeyStreamSequence {
                 .contains("2 workers, about")
                 .contains("2 workers put 2 times the search load on the cluster")
                 .contains("runAnyway=true");
+        assertThat(streams.scanned()).isEmpty();
+    }
+
+    @Test
+    void aMessageSentInsteadOfAnsweringTheJoinsQuestionRunsNothingAndIsReplied() {
+        // Not "the user chose not to run the join": they sent a message (seen in chat 197 for another tool's form).
+        downloadsThenCopies(9_000, 9_000);
+        config = config(1, 10, 1_000_000L, 20_000L);
+
+        assertThat(text(chat(FormAnswers.sendingInstead("Only for jsmith")), downloadThenCopy("stream", null)))
+                .contains("The user sent a message instead of answering", "\"Only for jsmith\"", "Nothing was done.")
+                .doesNotContain("chose not to run");
         assertThat(streams.scanned()).isEmpty();
     }
 

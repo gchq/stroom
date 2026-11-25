@@ -29,6 +29,7 @@ import stroom.ai.api.ElasticKeyStreams;
 import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
+import stroom.ai.impl.tools.FormAnswers;
 import stroom.ai.impl.tools.LangChain4jTools;
 import stroom.ai.impl.tools.SessionLimits;
 import stroom.ai.impl.tools.ToolCall;
@@ -472,6 +473,14 @@ class TestSequenceQueryTool {
                 "1 hour", SequenceQueryTool.ANOTHER_INTERVAL);
         // Typed in the user's own words.
         assertThat(request().query()).startsWith("sequence with maxspan=10m");
+    }
+
+    @Test
+    void aMessageSentInsteadOfChoosingAWindowRunsNothingAndIsReplied() {
+        // Seen in chat 197: a tool took a form put aside by the user's message as their answer.
+        assertThat(run(chat(FormAnswers.sendingInstead("Within an hour")), args(null)))
+                .contains("The user sent a message instead of answering", "\"Within an hour\"", "Nothing was done.");
+        Mockito.verify(elasticEql, Mockito.never()).search(Mockito.any());
     }
 
     @Test

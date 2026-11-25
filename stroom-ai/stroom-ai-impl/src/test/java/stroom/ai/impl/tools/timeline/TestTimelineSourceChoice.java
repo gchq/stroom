@@ -16,10 +16,13 @@
 
 package stroom.ai.impl.tools.timeline;
 
+import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
+import stroom.ai.impl.tools.FormAnswers;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolCalls;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.query.DataSourceAccess;
@@ -144,6 +147,36 @@ class TestTimelineSourceChoice {
         };
         assertThatThrownBy(() -> choice.choose(ToolCalls.call("activity_timeline", "{}"), chat(declining), "t"))
                 .isInstanceOf(WorkspaceException.class).hasMessageContaining("didn't choose");
+    }
+
+    @Test
+    void aMessageSentInsteadOfEitherFormBuildsNothingAndIsReplied() {
+        // Seen in chat 197: a tool took a form put aside by the user's message as their answer.
+        supported();
+        assertThatThrownBy(() -> choice.choose(ToolCalls.call("activity_timeline", "{}"),
+                chat(FormAnswers.sendingInstead("Just the proxy")), "t"))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("The user sent a message instead of answering 'Which data sources should the "
+                                      + "timeline read?': \"Just the proxy\". Nothing was done.");
+
+        // Its words chosen, then a message sent instead of confirming the indexes they match.
+        final UserQuestions confirmingInstead = new Answers(Map.of("sources", TimelineSourceChoice.OWN_WORDS,
+                "other", "windows")) {
+            private int asked;
+
+            @Override
+            public ElicitResult ask(final String toolName, final String callId, final String intro,
+                                    final Map<String, Object> form) {
+                return asked++ == 0
+                        ? super.ask(toolName, callId, intro, form)
+                        : new ElicitResult(ElicitResult.Action.CANCEL, null, Map.of(McpElicitations.SENT_INSTEAD,
+                                "And the endpoint"));
+            }
+        };
+        assertThatThrownBy(() -> choice.choose(ToolCalls.call("activity_timeline", "{}"), chat(confirmingInstead),
+                "t"))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("'Read these data sources?': \"And the endpoint\"");
     }
 
     private void supported() {

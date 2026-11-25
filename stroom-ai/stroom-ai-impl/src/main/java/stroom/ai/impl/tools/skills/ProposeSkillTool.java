@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.skills;
 
 import stroom.ai.api.AiService;
+import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.ToolCallRecord;
 import stroom.ai.impl.ToolResultRecord;
 import stroom.ai.impl.UserActionRecord;
@@ -411,6 +412,7 @@ public class ProposeSkillTool extends AbstractWorkspaceTool {
         form.put("required", List.of(FORM_NAME, FORM_WHEN));
         final ElicitResult answer = context.userQuestions().ask(NAME, UserQuestions.formCallId(request.id(),
                 DRAFT_FORM), "A few things only you know about the skill to save", form);
+        McpElicitations.unlessSentInstead(answer, "A few things only you know about the skill to save", NAME, "");
         return answer.action() == ElicitResult.Action.ACCEPT
                 ? new LinkedHashMap<>(NullSafe.map(answer.content()))
                 : Map.of();

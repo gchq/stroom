@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.propose;
 
 import stroom.ai.impl.AiWorkspaceConfig;
+import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.UserActions;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -172,6 +173,23 @@ class TestProposeInstructionsTool {
 
         assertThat(run(Map.of("folder", "/Feeds/Acme", "markdown", SAVED))).contains("nothing to propose");
         assertThat(takeUserActions()).isEmpty();
+    }
+
+    @Test
+    void aMessageSentInsteadOfAnsweringDraftsNothingAndIsReplied() {
+        // Seen in chat 197: a tool took a form put aside by the user's message as their answer and carried on.
+        withFacts(new Facts(List.of(), List.of(
+                new IndexFacts("Proxy", "/Feeds/Acme/Proxy", Set.of("UserId", "user.name"), Map.of(
+                        InstructionRules.USER_FIELD, new PlanField("UserId", "Proxy indexing")), Map.of(
+                        InstructionRules.USER_FIELD, "user.name")))));
+        answer = new ElicitResult(ElicitResult.Action.CANCEL, null, Map.of(McpElicitations.SENT_INSTEAD,
+                "Use UserName instead"));
+
+        final String result = runDraft(Map.of("folder", "/Feeds/Acme", "action", "draft"));
+
+        assertThat(result).contains("The user sent a message instead of answering 'Which fields hold these?': "
+                                    + "\"Use UserName instead\". Nothing was done.")
+                .doesNotContain("A draft of the AGENTS doc");
     }
 
     @Test

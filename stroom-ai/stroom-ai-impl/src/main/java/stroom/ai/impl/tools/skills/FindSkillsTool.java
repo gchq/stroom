@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.skills;
 
+import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -305,6 +306,7 @@ public class FindSkillsTool extends AbstractBuiltInTool {
         final ElicitResult answer = context.userQuestions().ask(NAME,
                 UserQuestions.formCallId(request.id(), FORM_KEY),
                 "To run the skill '" + skill.skill().name() + "', give:", form);
+        McpElicitations.unlessSentInstead(answer, "To run the skill '" + skill.skill().name() + "', give:", NAME, "");
         if (answer.action() != ElicitResult.Action.ACCEPT) {
             return Map.of();
         }

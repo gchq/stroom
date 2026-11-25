@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.timeline;
 
+import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.UserActions;
@@ -375,6 +376,8 @@ public class ProposeTimelineDashboardTool extends AbstractWorkspaceTool {
         form.put("required", List.of(FOLDER_ARG));
         final ElicitResult answer = context.userQuestions().ask(NAME, UserQuestions.formCallId(request.id(),
                 FOLDER_FORM), "Which folder should the timeline's Data Connection and chart go in?", form);
+        McpElicitations.unlessSentInstead(answer, "Which folder should the timeline's Data Connection and chart go in?",
+                NAME, "");
         if (answer.action() != ElicitResult.Action.ACCEPT) {
             return Optional.empty();
         }

@@ -31,6 +31,7 @@ import stroom.ai.api.ElasticKeyStreams.Side;
 import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
+import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolTables;
@@ -461,6 +462,7 @@ public class KeyStreamSequence {
         form.put("required", List.of(RUN_FORM));
         final ElicitResult answer = context.userQuestions().ask(SequenceQueryTool.NAME,
                 UserQuestions.formCallId(call.callId(), RUN_FORM), question, form);
+        McpElicitations.unlessSentInstead(answer, question, SequenceQueryTool.NAME, "");
         final String chosen = answer.action() == ElicitResult.Action.ACCEPT
                 ? String.valueOf(NullSafe.map(answer.content()).get(RUN_FORM))
                 : DONT_RUN;

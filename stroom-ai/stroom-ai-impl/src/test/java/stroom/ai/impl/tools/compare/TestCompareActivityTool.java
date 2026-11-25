@@ -20,6 +20,7 @@ import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.FakeTabWorkspace;
+import stroom.ai.impl.tools.FormAnswers;
 import stroom.ai.impl.tools.ModelSideCalls;
 import stroom.ai.impl.tools.SessionLimits;
 import stroom.ai.impl.tools.ToolCall;
@@ -463,6 +464,23 @@ class TestCompareActivityTool {
     }
 
     @Test
+    void aMessageSentInsteadOfThePeersFormComparesNothingAndIsReplied() {
+        // More active than the peer groups read in a call: the user is asked. Seen in chat 197 for another tool's
+        // form: not "Compared without peers, as the user chose", which they didn't.
+        IntStream.range(0, CompareActivityTool.MAX_PEOPLE).forEach(i -> fixtures.workdays("many" + i, WINDOW_FROM,
+                WINDOW_TO, 9, 10, date -> 1, date -> Map.of()));
+        final Map<String, Object> arguments = arguments();
+        arguments.put(CompareActivityTool.PEERS_ARG, true);
+
+        final String text = tool.execute(ToolCalls.call(CompareActivityTool.NAME, JsonUtil.writeValueAsString(
+                arguments, false)), chat(FormAnswers.sendingInstead("Only Finance"))).text();
+
+        assertThat(text).contains("The user sent a message instead of answering 'Read the peers' groups?': \"Only "
+                                  + "Finance\". Nothing was done.")
+                .doesNotContain("as the user chose");
+    }
+
+    @Test
     void peersFromTheirOrganisationInTheEventXml() {
         final List<String> peers = IntStream.range(0, 6).mapToObj(i -> "peer" + i).toList();
         peers.forEach(peer -> fixtures.workdays(peer, FROM, WINDOW_TO, 9, 17, date -> 5, date -> Map.of()));
@@ -574,9 +592,13 @@ class TestCompareActivityTool {
     }
 
     private ToolCallContext chat() {
+        return chat(UserQuestions.NONE);
+    }
+
+    private ToolCallContext chat(final UserQuestions questions) {
         return ToolCallContext.builder(ToolSession.chat(CHAT))
                 .workspace(new SessionWorkspace(files.workspace(), CHAT))
-                .userQuestions(UserQuestions.NONE)
+                .userQuestions(questions)
                 .limits(SessionLimits.lookedUp(AiWorkspaceConfig::new))
                 .build();
     }

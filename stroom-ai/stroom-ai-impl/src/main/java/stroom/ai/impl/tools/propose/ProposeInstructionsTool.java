@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.propose;
 
+import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.UserActions;
 import stroom.ai.impl.tools.AbstractWorkspaceTool;
 import stroom.ai.impl.tools.ToolCall;
@@ -416,6 +417,7 @@ public class ProposeInstructionsTool extends AbstractWorkspaceTool {
         final ElicitResult answer = context.userQuestions().ask(NAME, UserQuestions.formCallId(request.id(),
                 DRAFT_FORM), "Which fields hold these in " + plan.folder() + "? Only what the indexes and docs "
                              + "there don't settle is asked.", form);
+        McpElicitations.unlessSentInstead(answer, "Which fields hold these?", NAME, "");
         return answer.action() == ElicitResult.Action.ACCEPT
                 ? new LinkedHashMap<>(NullSafe.map(answer.content()))
                 : Map.of();

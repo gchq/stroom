@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.timeline;
 
+import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.tools.ToolCall;
@@ -118,6 +119,7 @@ class TimelineSourceChoice {
         final ElicitResult answer = context.userQuestions().ask(toolName, UserQuestions.formCallId(request.id(),
                 FORM), "Which data sources should the timeline read? Supported: the " + supported.size()
                        + " Elastic Index(es) you can use.", form);
+        McpElicitations.unlessSentInstead(answer, "Which data sources should the timeline read?", toolName, "");
         if (answer.action() != ElicitResult.Action.ACCEPT) {
             throw new WorkspaceException("The user didn't choose the data sources, so no timeline was built: ask "
                                          + "which to use, or give sources.");
@@ -161,6 +163,7 @@ class TimelineSourceChoice {
                 CONFIRM_FORM), matched.listed().isEmpty()
                 ? "No data source's name or documentation matches '" + words + "'. Which of these?"
                 : "The data sources matching '" + words + "'. Read these?", form);
+        McpElicitations.unlessSentInstead(answer, "Read these data sources?", toolName, "");
         if (answer.action() != ElicitResult.Action.ACCEPT) {
             throw new WorkspaceException("The user didn't confirm the data sources, so no timeline was built.");
         }

@@ -19,6 +19,7 @@ package stroom.ai.impl.tools.compare;
 import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
+import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.tools.AbstractWorkspaceTool;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -812,7 +813,6 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
             }
         }
         final List<Table> ran = runner.run(batch.queries(), runContext);
-        int queriesRun = ran.stream().mapToInt(Table::queries).sum();
         final Map<String, Table> tables = batch.read(ran);
 
         final Map<String, List<ActivityScoring.Finding>> findings = new LinkedHashMap<>();
@@ -933,6 +933,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
             }
         }
         refuseEmptyBaseline(firstActive, windowStart, periods, zone.zone());
+        int queriesRun = ran.stream().mapToInt(Table::queries).sum();
         // The rare values' holders, in a second round: one aggregate a source, filtered to its rare values.
         final List<AggregateQuery> holderQueries = new ArrayList<>();
         final List<Integer> holderAt = new ArrayList<>();
@@ -1859,6 +1860,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                 PEERS_FORM), active + " people were active in " + source.source().name() + ". Finding the "
                              + "person's peers reads one event of each for their group, at most " + MAX_PEOPLE
                              + " a call.", form);
+        McpElicitations.unlessSentInstead(answer, "Read the peers' groups?", NAME, "");
         final boolean read = answer.action() == ElicitResult.Action.ACCEPT
                              && READ_FIRST.equals(String.valueOf(NullSafe.map(answer.content()).get("choice")));
         notes.add(read

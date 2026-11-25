@@ -59,7 +59,8 @@ public abstract class AbstractWorkspaceTool extends AbstractBuiltInTool {
             final ToolResult result = workspaces.withTimeLimit(timeLimit(request, context),
                     () -> run(request, context));
             return result.withResources(written(context));
-        } catch (final WorkspaceException | ToolSessionException e) {
+        } catch (final WorkspaceException | ToolSessionException | ToolRefusal e) {
+            // A refusal too, e.g. a form the user put aside by sending a message instead (McpElicitations).
             // ToolSessionException: the tool needs the chat (e.g. the tab the user attached), and this isn't one.
             return ToolResult.text("Error: " + e.getMessage());
         } finally {

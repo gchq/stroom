@@ -16,9 +16,11 @@
 
 package stroom.ai.impl.tools.skills;
 
+import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolCalls;
+import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.documents.DocumentAccess;
@@ -39,6 +41,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestFindSkillsTool {
 
@@ -178,6 +181,18 @@ class TestFindSkillsTool {
 
         assertThat(run(Map.of("name", "user-activity-timeline", "arguments", Map.of())))
                 .contains("Not run: it needs user, host", "Ask them in the chat");
+    }
+
+    @Test
+    void aMessageSentInsteadOfTheFormRunsNothingAndIsReplied() {
+        answer = new ElicitResult(ElicitResult.Action.CANCEL, null, Map.of(McpElicitations.SENT_INSTEAD,
+                "Use UserName instead"));
+
+        // A refusal, which the chat gives the model as the call's result.
+        assertThatThrownBy(() -> run(Map.of("name", "user-activity-timeline", "arguments", Map.of("user", "x"))))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("The user sent a message instead of answering 'To run the skill")
+                .hasMessageContaining("\"Use UserName instead\". Nothing was done.");
     }
 
     @Test

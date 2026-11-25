@@ -20,6 +20,7 @@ import stroom.ai.impl.FakeTabWorkspace;
 import stroom.ai.impl.TabSnapshots;
 import stroom.ai.impl.TabSnapshots.StoredTabSnapshot;
 import stroom.ai.impl.UserActions;
+import stroom.ai.impl.tools.FormAnswers;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
@@ -165,6 +166,18 @@ class TestProposeTimelineDashboardTool {
         });
 
         assertThat(result.text()).contains("the user didn't choose a folder");
+        assertThat(result.userActions()).isEmpty();
+    }
+
+    @Test
+    void aMessageSentInsteadOfChoosingAFolderOffersNothingAndIsReplied() {
+        timeline(CSV);
+
+        final ToolResult result = run(Map.of("entity", "jsmith", "table", "spans"),
+                FormAnswers.sendingInstead("Put it in /Security"));
+
+        assertThat(result.text()).contains("The user sent a message instead of answering 'Which folder should the "
+                                           + "timeline's Data Connection and chart go in?': \"Put it in /Security\"");
         assertThat(result.userActions()).isEmpty();
     }
 

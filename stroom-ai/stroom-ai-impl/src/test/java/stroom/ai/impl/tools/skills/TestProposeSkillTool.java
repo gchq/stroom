@@ -18,6 +18,7 @@ package stroom.ai.impl.tools.skills;
 
 import stroom.ai.api.AiService;
 import stroom.ai.impl.AiWorkspaceConfig;
+import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.ToolCallRecord;
 import stroom.ai.impl.ToolResultRecord;
 import stroom.ai.impl.UserActionRecord;
@@ -276,6 +277,21 @@ class TestProposeSkillTool {
         assertThat(result).contains("recording an edit by hand", "+    how: user", "+    author: \"bob\"");
         final SkillDoc proposed = SkillDoc.parse((String) takeUserActions().getFirst().get("request"));
         assertThat(proposed.isEditedSinceLatestEntry()).isFalse();
+    }
+
+    @Test
+    void aMessageSentInsteadOfTheFormDraftsNothingAndIsReplied() {
+        Mockito.when(aiService.getMessages(CHAT)).thenReturn(List.of(
+                message(AiMessageType.TOOL_CALL, JsonUtil.writeValueAsString(new ToolCallRecord("b",
+                        "run_stroomql", JsonUtil.writeValueAsString(Map.of("query",
+                        "from Logons where UserId = 'jsmith' select count()")), null)))));
+        answer = new ElicitResult(ElicitResult.Action.CANCEL, null, Map.of(McpElicitations.SENT_INSTEAD,
+                "Use UserName instead"));
+
+        assertThat(run(Map.of("action", "draft")))
+                .contains("The user sent a message instead of answering 'A few things only you know about the skill "
+                          + "to save': \"Use UserName instead\". Nothing was done.")
+                .doesNotContain("A draft");
     }
 
     @Test

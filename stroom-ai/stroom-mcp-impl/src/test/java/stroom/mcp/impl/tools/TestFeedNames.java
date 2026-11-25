@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
@@ -92,6 +93,20 @@ class TestFeedNames {
     void testAnExactNameIsTakenAsItIs() {
         Mockito.when(docFinder.findByName(FeedDoc.TYPE, "FORTIGATE")).thenReturn(List.of(feed("FORTIGATE")));
         assertThat(feedNames.resolve(" FORTIGATE ", "describe_feed", null, context)).isEqualTo("FORTIGATE");
+    }
+
+    @Test
+    void testAMessageSentInsteadOfTheFormIsRepliedNotTakenForNoneOfThem() {
+        // Seen in chat 197 for another tool's form: a form put aside by the user's message taken as an answer.
+        Mockito.when(questions.canAsk()).thenReturn(true);
+        Mockito.when(questions.ask(anyString(), any(), anyString(), anyMap()))
+                .thenReturn(new ElicitResult(ElicitResult.Action.CANCEL, null, Map.of(McpElicitations.SENT_INSTEAD,
+                        "It's on the other cluster")));
+
+        assertThatThrownBy(() -> feedNames.resolve("ACME-VPN", "describe_feed", "c1", context))
+                .isInstanceOf(ToolRefusal.class)
+                .hasMessageContaining("The user sent a message instead of answering 'There is no feed named "
+                                      + "'ACME-VPN'. Did you mean one of these?': \"It's on the other cluster\"");
     }
 
     @Test
