@@ -956,7 +956,8 @@ public class BuildPlan {
                 assessment));
         // A build of several feeds: their surveys compared and the union confirmed by the user (decided by the
         // user, 2026-11-25); not needed for one feed, or a new source.
-        done.put(FEEDS_COMPARED, perFeed.feeds().size() > 1 && !discovery
+        // Not needed either where the survey isn't (a copied translation with no survey).
+        done.put(FEEDS_COMPARED, perFeed.feeds().size() > 1 && !discovery && done.get(SURVEYED) != null
                 ? (Boolean) facts.feedsCompared(build, docs)
                 : null);
         // How the user chose to start, where a pipeline already translates what the build is to (decided by the user,

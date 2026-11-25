@@ -153,6 +153,17 @@ class TestBuildPlanSeveralFeeds {
     }
 
     @Test
+    void aCopiedTranslationWithNoSurveyNeedsNoComparison() {
+        facts.sources = List.of("ACME-A", "ACME-B");
+        facts.docs = List.of(FakeBuildFacts.doc("Pipeline", "ev", "ACME-Events-V1.1", "version_of", "prod"),
+                FakeBuildFacts.doc("XSLT", "x", "ACME-Events-V1.1"));
+        facts.stages = Map.of("ev", "translation");
+        facts.mappings = Map.of("x", FakeBuildFacts.kept("translation", Map.of()));
+
+        assertThat(state(plan.status("b", null), BuildPlan.FEEDS_COMPARED)).isEqualTo("not needed");
+    }
+
+    @Test
     void theExistingDataStartListsEveryFeed() {
         facts.sources = List.of("ACME-A", "ACME-B");
 
