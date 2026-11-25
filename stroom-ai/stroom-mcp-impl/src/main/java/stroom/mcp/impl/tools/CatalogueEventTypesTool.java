@@ -717,6 +717,16 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     // with a survey, or with no streams to survey.
     private Optional<String> unsurveyed(final String build) {
         if (!builds.surveyStatesInBuild(build).isEmpty()) {
+            // A build of several feeds catalogues once each is surveyed (decided by the user, 2026-11-25): the
+            // evidence holds every feed's records (seen in eval case 103: one surveyed, the other never read).
+            final List<String> toSurvey = plan.feedsToSurvey(build);
+            if (!toSurvey.isEmpty()) {
+                throw new ToolRefusal("Survey every feed first: survey_feed feed=" + toSurvey.getFirst() + " build="
+                                      + build + (toSurvey.size() > 1
+                        ? ", then each of " + String.join(", ", toSurvey.subList(1, toSurvey.size()))
+                        : "") + ", then compare_feeds build=" + build + ". The catalogue's evidence is every "
+                                      + "feed's records.");
+            }
             return Optional.empty();
         }
         final List<String> sources = plan.worksFrom(build);

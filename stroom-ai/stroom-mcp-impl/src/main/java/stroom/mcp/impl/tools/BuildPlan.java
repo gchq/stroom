@@ -494,6 +494,26 @@ public class BuildPlan {
     }
 
     /// @param build A build, or null.
+    /// @return The feeds of a build of several not surveyed yet, in order; none for one feed, a new source, or a
+    /// build that can't be read.
+    public List<String> feedsToSurvey(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return List.of();
+        }
+        try {
+            final List<Map<String, Object>> docs = facts.buildDocs(build);
+            final List<Map<String, Object>> surveys = docs.stream()
+                    .filter(doc -> DocumentationDoc.TYPE.equals(doc.get("type")))
+                    .filter(doc -> String.valueOf(doc.get("name")).endsWith(StroomBuildFacts.SURVEY))
+                    .toList();
+            return feedSurveys(build, docs, facts.sourceFeeds(build, docs), surveys).unsurveyed();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No feeds to survey read for build {}: {}", build, e.getMessage()));
+            return List.of();
+        }
+    }
+
+    /// @param build A build, or null.
     /// @return The existing feeds the build is for ([BuildFacts#buildSourceFeeds]): those start_build or
     /// start_onboarding was given and those it surveyed; none for a new source, or no build.
     public List<String> buildFeeds(final String build) {

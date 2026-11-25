@@ -122,6 +122,24 @@ class TestCatalogueEventTypesTool {
     }
 
     @Test
+    void aBuildOfSeveralFeedsCataloguesOnceEachIsSurveyed() {
+        // Seen in eval case 103 on Sonnet (2026-11-25): one feed surveyed, compare_feeds refused, and the agent
+        // catalogued anyway, the other feed's records never in the evidence.
+        facts.sources = List.of("ACME-A", "ACME-B");
+        facts.docs.add(FakeBuildFacts.doc("Documentation", "s-a", "ACME-A" + StroomBuildFacts.SURVEY));
+        facts.surveysByFeed.put("ACME-A", Map.of("saturated", true, "format", "json lines"));
+        Mockito.when(builds.surveyStatesInBuild(BUILD)).thenReturn(List.of(Map.of("feed", "ACME-A")));
+
+        assertThat(text(Map.of("build", BUILD, "stream_ids", List.of(7)), plain()))
+                .contains("Survey every feed first: survey_feed feed=ACME-B build=acme");
+
+        facts.docs.add(FakeBuildFacts.doc("Documentation", "s-b", "ACME-B" + StroomBuildFacts.SURVEY));
+        facts.surveysByFeed.put("ACME-B", Map.of("saturated", true, "format", "json lines"));
+        assertThat(text(Map.of("build", BUILD, "stream_ids", List.of(7)), plain()))
+                .doesNotContain("Survey every feed first");
+    }
+
+    @Test
     void proposalsAreCheckedAgainstEveryRecordAndKeptInTheSourceNotes() {
         final Map<String, Object> checked = propose(List.of(
                 withKeys(type("Authenticate-Logon", "Authenticate", "high", "login"), "action", "Logon",
