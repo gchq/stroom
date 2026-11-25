@@ -83,7 +83,7 @@ final class EvalCases {
             "101_agents_fields_disagree_with_plan", "102_json_three_feeds_one_shape", "103_json_two_feeds_differ",
             "104_json_dormant_feed", "105_json_feeds_in_two_folders", "106_json_describe_in_place_pre_process",
             "107_json_describe_in_place_shared_two_feeds", "108_json_describe_in_place_users_text_kept",
-            "109_json_describe_in_place_timeline_roles");
+            "109_json_describe_in_place_timeline_roles", "110_cef_forwarder_two_stages");
 
     // The types of a question's columns ([#table]).
     private static final List<String> QUESTION_TYPES = List.of("text", "long", "date");
@@ -146,13 +146,27 @@ final class EvalCases {
         return "instructions".equals(evalCase.get("kind"));
     }
 
-    /// Whether a case's reference drafts a translation from its sample: every case but a question, a skill case and
-    /// a hand-written one (which reads the translation back from the pipeline written by hand).
+    /// Whether a case's reference drafts a translation from its sample: every case but a question, a skill case, a
+    /// hand-written one (which reads the translation back from the pipeline written by hand) and a CEF forwarder
+    /// (which starts from Events).
     ///
     /// @param evalCase The case.
     /// @return True for a case whose reference drafts its translation.
     static boolean isDrafted(final Map<String, Object> evalCase) {
-        return !isQuestion(evalCase) && !isSkill(evalCase) && handWritten(evalCase) == null;
+        return !isQuestion(evalCase) && !isSkill(evalCase) && handWritten(evalCase) == null
+               && forwarding(evalCase) == null;
+    }
+
+    /// A CEF forwarder case's setup (`setup: {forwarding: ...}`, decided with the user 2026-11-25): an Events feed
+    /// and a forwarding template of two stages whose shared XSLT writes the Kafka records
+    /// ([AbstractEvalTest#setUpForwarding]), for a build that sends the feed's Events as CEF through it.
+    ///
+    /// @param evalCase The case.
+    /// @return The setup's spec, or null for a case that has none.
+    static Map<String, Object> forwarding(final Map<String, Object> evalCase) {
+        return map(evalCase.get("setup")).get("forwarding") instanceof final Map<?, ?> spec
+                ? (Map<String, Object>) spec
+                : null;
     }
 
     /// A hand-written case's setup (`setup: {hand_written: ...}`): a feed whose translation was written by hand in

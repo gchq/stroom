@@ -17,6 +17,7 @@
 package stroom.mcp.impl.e2e;
 
 import stroom.ai.impl.tools.catalogue.TypeIds;
+import stroom.ai.impl.tools.cef.CefPlan;
 import stroom.ai.impl.tools.indexing.FeedIndexes;
 import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.instructions.InstructionRules;
@@ -1414,6 +1415,69 @@ final class EvalScore {
         }
     }
 
+    /// Scores a CEF forwarder's build (decided with the user, 2026-11-25), as `expected` gives it: `route`
+    /// (`calls_in_order`, a subsequence of the calls made; `forbidden_calls`, none of them); and `forwarder`: a
+    /// pipeline of the build inherits the template, setting only `flattener`'s XSLT (nothing of the shared stage, no
+    /// topic or Kafka setting of its own); its flattener's XSLT keeps a CEF plan handing each line on (`chained`)
+    /// and writes no Kafka record or topic; the template's shared XSLT is as the setup wrote it; the pipeline steps
+    /// clean; and for each of `lines` records the shared stage writes a Kafka record on `topic` whose value starts
+    /// `line_starts`.
+    ///
+    /// @param evalCase The case.
+    /// @param made     The tools called, in order.
+    /// @param built    What the build holds.
+    void scoreForwarder(final Map<String, Object> evalCase, final List<String> made, final Forwarder built) {
+        final Map<String, Object> expected = maps(evalCase.get("expected"));
+        final Map<String, Object> route = maps(expected.get("route"));
+        final List<String> inOrder = strings(route.get("calls_in_order"));
+        int next = 0;
+        for (final String tool : made) {
+            if (next < inOrder.size() && inOrder.get(next).equals(tool)) {
+                next++;
+            }
+        }
+        final int before = problems.size();
+        check("route in order", next == inOrder.size(), "the calls didn't hold " + inOrder + " in order (made: "
+                                                        + made + ")");
+        for (final String forbidden : strings(route.get("forbidden_calls"))) {
+            check("didn't call " + forbidden, !made.contains(forbidden), forbidden + " was called");
+        }
+        final Map<String, Object> wanted = maps(expected.get("forwarder"));
+        final String flattener = String.valueOf(wanted.getOrDefault("flattener", "flattenFilter"));
+        check("a child of the template", built.child(), "no pipeline of the build inherits the template");
+        check("sets only the flattener", built.own().equals(List.of(flattener + ".xslt")), "the pipeline sets "
+                                                                                           + built.own()
+                                                                                           + ", expected only "
+                                                                                           + flattener + ".xslt");
+        check("a chained CEF plan", CefPlan.CHAINED.equals(built.keptOutput()), "the flattener's XSLT keeps "
+                                                                                + (built.keptOutput() == null
+                ? "no CEF plan"
+                : "a plan of output " + built.keptOutput()) + ", expected chained");
+        final String code = String.valueOf(built.flattenerCode());
+        check("the flattener writes no Kafka record or topic", built.flattenerCode() != null
+                                                              && !code.contains("kafkaRecord")
+                                                              && !code.contains("topic="),
+                "the flattener's XSLT writes Kafka records or a topic itself");
+        check("the shared XSLT unchanged", built.sharedUnchanged(), "the template's shared XSLT was changed");
+        check("stepped clean", "clean".equals(built.verdict()), "step_sample's verdict is " + built.verdict());
+        final String topic = String.valueOf(wanted.get("topic"));
+        final String starts = String.valueOf(wanted.getOrDefault("line_starts", "CEF:0|"));
+        final int lines = ((Number) wanted.getOrDefault("lines", 1)).intValue();
+        int sent = 0;
+        for (final String output : built.outputs()) {
+            if (output.contains("topic=\"" + topic + "\"") && output.contains("<value>" + starts)) {
+                sent++;
+            }
+        }
+        check("each line a Kafka record", sent == lines, sent + " of " + lines + " records gave a Kafka record "
+                                                         + "on topic " + topic + " whose value starts " + starts);
+        events = sent;
+        validEvents = sent;
+        stage1 = problems.size() == before;
+        // Nothing is indexed: the records go to Kafka.
+        indexed = true;
+    }
+
     /// Scores what a build of several feeds kept and promoted (decided by the user, 2026-11-25), as
     /// `expected.several_feeds` gives it: `compared` (the user's confirmation of the feeds' differences kept in the
     /// build), `fields_only_in` (each field some feeds have and others lack, with those feeds), `dormant` (the feeds
@@ -2515,6 +2579,27 @@ final class EvalScore {
             map.put("values", all);
             return map;
         }
+    }
+
+    // --------------------------------------------------------------------------------
+
+    /// What a CEF forwarder case's build holds.
+    ///
+    /// @param child           True if a pipeline of the build inherits the template.
+    /// @param own             The properties it sets itself, each `element.name`.
+    /// @param keptOutput      The output of the CEF plan its flattener's XSLT keeps, or null.
+    /// @param flattenerCode   Its flattener's XSLT, or null.
+    /// @param sharedUnchanged True if the template's shared XSLT is as the setup wrote it.
+    /// @param verdict         step_sample's verdict over the feed's Events, or null.
+    /// @param outputs         The shared stage's output for each record stepped.
+    record Forwarder(boolean child,
+                     List<String> own,
+                     String keptOutput,
+                     String flattenerCode,
+                     boolean sharedUnchanged,
+                     String verdict,
+                     List<String> outputs) {
+
     }
 
     // --------------------------------------------------------------------------------

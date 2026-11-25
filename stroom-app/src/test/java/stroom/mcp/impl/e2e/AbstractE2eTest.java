@@ -1239,6 +1239,78 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         return node.getUuid();
     }
 
+    /// @param uuid A pipeline's UUID.
+    /// @return It, as the administrator reads it.
+    PipelineDoc readPipeline(final String uuid) {
+        return asUser(admin, () -> pipelineStore.readDocument(new DocRef(PipelineDoc.TYPE, uuid)));
+    }
+
+    /// @param path A folder's explorer path, e.g. `System/MCP Workspace/a-build`.
+    /// @return The pipelines in it and the folders below it, as the administrator reads them; none if there is no
+    /// such folder.
+    List<PipelineDoc> pipelinesIn(final String path) {
+        final Optional<ExplorerNode> folder = findFolder(path);
+        if (folder.isEmpty()) {
+            return List.of();
+        }
+        final List<PipelineDoc> out = new ArrayList<>();
+        final List<ExplorerNode> pending = new ArrayList<>(List.of(folder.get()));
+        while (!pending.isEmpty()) {
+            final ExplorerNode current = pending.removeFirst();
+            for (final ExplorerNode child : securityContext.asProcessingUserResult(() -> explorerNodeService
+                    .getChildren(current.getDocRef()))) {
+                if (PipelineDoc.TYPE.equals(child.getType())) {
+                    out.add(readPipeline(child.getUuid()));
+                } else if (ExplorerConstants.isFolder(child)) {
+                    pending.add(child);
+                }
+            }
+        }
+        return out;
+    }
+
+    /// A CEF forwarding template made directly in Stroom, as a site holds one: one Event a record, an open XSLT slot
+    /// the child fills, then (for two stages) the shared XSLT given, which turns the slot's output into Kafka
+    /// records, a schema filter on kafka-records:1 and the Kafka producer with the KafkaConfig given. The open slot
+    /// is `flattenFilter` with a shared XSLT (`kafkaOutputFilter` its stage), else `xsltFilter`.
+    ///
+    /// @param folder The folder it goes in.
+    /// @param name   Its name.
+    /// @param kafka  The KafkaConfig its producer sends with.
+    /// @param shared The shared XSLT, or null for a template of one stage.
+    /// @return Its UUID.
+    String forwardingTemplate(final ExplorerNode folder, final String name, final DocRef kafka, final DocRef shared) {
+        final List<List<String>> chain = new ArrayList<>(List.of(List.of("xmlParser", "XMLParser"),
+                List.of("splitFilter", "SplitFilter")));
+        if (shared != null) {
+            chain.add(List.of("flattenFilter", "XSLTFilter"));
+            chain.add(List.of("kafkaOutputFilter", "XSLTFilter"));
+        } else {
+            chain.add(List.of("xsltFilter", "XSLTFilter"));
+        }
+        chain.add(List.of("schemaFilter", "SchemaFilter"));
+        chain.add(List.of("standardKafkaProducer", "StandardKafkaProducer"));
+        final PipelineDataBuilder data = new PipelineDataBuilder();
+        data.addElement(new PipelineElement("Source", "Source"));
+        String previous = "Source";
+        for (final List<String> element : chain) {
+            data.addElement(new PipelineElement(element.get(0), element.get(1)));
+            data.addLink(previous, element.get(0));
+            previous = element.get(0);
+        }
+        data.addProperty(new PipelineProperty("splitFilter", "splitCount", new PipelinePropertyValue(1)));
+        data.addProperty(new PipelineProperty("schemaFilter", "namespaceURI",
+                new PipelinePropertyValue("kafka-records:1")));
+        data.addProperty(property("standardKafkaProducer", "kafkaConfig", kafka));
+        if (shared != null) {
+            data.addProperty(property("kafkaOutputFilter", "xslt", shared));
+        }
+        final DocRef ref = create(PipelineDoc.TYPE, name, folder).getDocRef();
+        asUser(admin, () -> pipelineStore.writeDocument(pipelineStore.readDocument(ref).copy()
+                .pipelineData(data.build()).build()));
+        return ref.getUuid();
+    }
+
     /// An indexing template reading Events into Elasticsearch: the content pack's Indexing, its Lucene filter swapped
     /// for Elasticsearch's, with a JSON schema filter before it, as the live one has.
     ///

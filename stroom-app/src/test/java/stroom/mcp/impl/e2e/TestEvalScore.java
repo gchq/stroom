@@ -79,6 +79,42 @@ class TestEvalScore {
             """;
 
     @Test
+    @SuppressWarnings("unchecked")
+    void aCefForwarderPassesOnlyAsAChildOfItsTemplateSettingTheFlattenerAlone() {
+        final Map<String, Object> evalCase = Map.of("expected", Map.of(
+                "route", Map.of("calls_in_order", List.of("draft_cef_mapping", "create_pipeline")),
+                "forwarder", Map.of("topic", "arcsight-prod", "lines", 1, "line_starts", "CEF:0|Delinea|")));
+        final String sent = "<kafkaRecords xmlns=\"kafka-records:1\"><kafkaRecord topic=\"arcsight-prod\">"
+                            + "<value>CEF:0|Delinea|SecretServer|</value></kafkaRecord></kafkaRecords>";
+
+        final EvalScore right = new EvalScore("110");
+        right.scoreForwarder(evalCase, List.of("draft_cef_mapping", "create_pipeline", "step_sample"),
+                new EvalScore.Forwarder(true, List.of("flattenFilter.xslt"), "chained", "<records/>", true, "clean",
+                        List.of(sent)));
+        assertThat(right.passed()).as(String.valueOf(right.toMap())).isTrue();
+
+        // One XSLT writing the records itself, over the template's shared stage, with a topic of its own.
+        final EvalScore wrong = new EvalScore("110");
+        wrong.scoreForwarder(evalCase, List.of("draft_cef_mapping", "create_pipeline"),
+                new EvalScore.Forwarder(true, List.of("flattenFilter.xslt", "kafkaOutputFilter.xslt"), "kafka",
+                        "<kafkaRecord topic=\"mine\"/>", true, "clean", List.of(sent.replace("arcsight-prod",
+                        "mine"))));
+        assertThat(wrong.passed()).isFalse();
+        assertThat((List<String>) wrong.toMap().get("problems")).containsExactly(
+                "the pipeline sets [flattenFilter.xslt, kafkaOutputFilter.xslt], expected only flattenFilter.xslt",
+                "the flattener's XSLT keeps a plan of output kafka, expected chained",
+                "the flattener's XSLT writes Kafka records or a topic itself",
+                "0 of 1 records gave a Kafka record on topic arcsight-prod whose value starts CEF:0|Delinea|");
+
+        // No child of the template at all.
+        final EvalScore none = new EvalScore("110");
+        none.scoreForwarder(evalCase, List.of(), new EvalScore.Forwarder(false, List.of(), null, null, true, null,
+                List.of()));
+        assertThat((List<String>) none.toMap().get("problems")).contains(
+                "no pipeline of the build inherits the template", "step_sample's verdict is null");
+    }
+
+    @Test
     void eventsHoldingWhatTheCaseExpectsAreStage1() {
         final EvalScore score = new EvalScore("c");
 

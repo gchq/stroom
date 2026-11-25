@@ -24,10 +24,7 @@ import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.pipeline.shared.data.PipelineDataBuilder;
-import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
-import stroom.pipeline.shared.data.PipelinePropertyValue;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -292,41 +289,10 @@ class TestE2eCefChained extends AbstractE2eTest {
         editXslt(preShared.getUuid(), doc -> doc.copy().data(SHARED.formatted(TOPIC + "-pre")).build());
         final String twoStages = "E2E Kafka Forwarding " + STAMP;
         final String preProd = "E2E Kafka Forwarding (pre-prod) " + STAMP;
-        return new Templates(template(folder, twoStages, kafka, shared), twoStages,
-                template(folder, preProd, kafka, preShared), preProd,
-                template(folder, "E2E CEF one stage " + STAMP, kafka, null), shared.getUuid(), shared.getName());
-    }
-
-    // A forwarding template: one Event a record, an open XSLT slot (the flattener), the shared XSLT if given, a schema
-    // filter on kafka-records:1 and the Kafka producer.
-    private String template(final ExplorerNode folder, final String name, final DocRef kafka, final DocRef shared) {
-        final PipelineDataBuilder data = new PipelineDataBuilder();
-        final List<List<String>> chain = shared == null
-                ? List.of(List.of("xmlParser", "XMLParser"), List.of("splitFilter", "SplitFilter"),
-                List.of("xsltFilter", "XSLTFilter"), List.of("schemaFilter", "SchemaFilter"),
-                List.of("standardKafkaProducer", "StandardKafkaProducer"))
-                : List.of(List.of("xmlParser", "XMLParser"), List.of("splitFilter", "SplitFilter"),
-                        List.of("flattenFilter", "XSLTFilter"), List.of("kafkaOutputFilter", "XSLTFilter"),
-                        List.of("schemaFilter", "SchemaFilter"),
-                        List.of("standardKafkaProducer", "StandardKafkaProducer"));
-        data.addElement(new PipelineElement("Source", "Source"));
-        String previous = "Source";
-        for (final List<String> element : chain) {
-            data.addElement(new PipelineElement(element.get(0), element.get(1)));
-            data.addLink(previous, element.get(0));
-            previous = element.get(0);
-        }
-        data.addProperty(new PipelineProperty("splitFilter", "splitCount", new PipelinePropertyValue(1)));
-        data.addProperty(new PipelineProperty("schemaFilter", "namespaceURI",
-                new PipelinePropertyValue("kafka-records:1")));
-        data.addProperty(property("standardKafkaProducer", "kafkaConfig", kafka));
-        if (shared != null) {
-            data.addProperty(property("kafkaOutputFilter", "xslt", shared));
-        }
-        final DocRef ref = create(PipelineDoc.TYPE, name, folder).getDocRef();
-        asUser(admin, () -> pipelineStore.writeDocument(pipelineStore.readDocument(ref).copy()
-                .pipelineData(data.build()).build()));
-        return ref.getUuid();
+        return new Templates(forwardingTemplate(folder, twoStages, kafka, shared), twoStages,
+                forwardingTemplate(folder, preProd, kafka, preShared), preProd,
+                forwardingTemplate(folder, "E2E CEF one stage " + STAMP, kafka, null), shared.getUuid(),
+                shared.getName());
     }
 
     // The first record's output of the shared stage, as step_pipeline gives it.
@@ -334,10 +300,6 @@ class TestE2eCefChained extends AbstractE2eTest {
         final Map<String, Object> step = json("step_pipeline", args("pipeline_uuid", pipeline, "stream_id", stream,
                 "record", 0, "show", List.of("kafkaOutputFilter")));
         return String.valueOf(map(map(step, "elements"), "kafkaOutputFilter").get("output"));
-    }
-
-    private PipelineDoc readPipeline(final String uuid) {
-        return asUser(admin, () -> pipelineStore.readDocument(new DocRef(PipelineDoc.TYPE, uuid)));
     }
 
     private static String events() {

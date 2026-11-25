@@ -52,7 +52,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// ([EvalScore#scoreSkill]).
 ///
 /// A hand-written case (`setup: {hand_written: ...}`, case 97) has its feed's translation written by hand in Stroom
-/// first, then its reference route from it ([AbstractEvalTest#runHandWrittenReference]).
+/// first, then its reference route from it ([AbstractEvalTest#runHandWrittenReference]). A CEF forwarder case
+/// (`setup: {forwarding: ...}`, case 110) has its Events feed and forwarding template made first, then its reference
+/// route sends the Events as CEF through the template ([AbstractEvalTest#runForwardingReference]).
 ///
 /// `create_index_doc` adds the fields of the plan drafted for the index in the session, so nothing else sets them;
 /// the processor filters aren't deleted after each case, as each case starts from an empty Stroom.
@@ -75,6 +77,8 @@ class TestE2eEvalReference extends AbstractEvalTest {
                 runQuestionReference(evalCase, score);
             } else if (EvalCases.isSkill(evalCase)) {
                 runSkillReference(evalCase, score);
+            } else if (EvalCases.forwarding(evalCase) != null) {
+                runForwardingReference(evalCase, score, "eval-" + tag);
             } else if (EvalCases.handWritten(evalCase) != null) {
                 runHandWrittenReference(evalCase, score, "eval-" + tag);
             } else {

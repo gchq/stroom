@@ -53,6 +53,7 @@ import stroom.index.impl.Indexer;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
+import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.mcp.impl.McpTerminal;
 import stroom.mcp.impl.McpTestClient;
 import stroom.mcp.impl.tools.BuildRecords;
@@ -113,6 +114,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -1084,6 +1086,114 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             catalogue = catalogueNear(folderOf(copy));
         }
         score.scoreCatalogue(evalCase, catalogue, null);
+    }
+
+    /// A CEF forwarder case's pre-state (`setup: {forwarding: ...}`, [EvalCases#forwarding]), as a site made it by
+    /// hand: in `folder`, the Events `feed` holding the `events` (each an `<Event>`, one Events stream); in
+    /// `template_folder`, a KafkaConfig, the `shared_xslt` (a test resource next to the e2e tests: the XSLT turning
+    /// the flattener's output into Kafka records, its topic set there) and the forwarding template `template` of two
+    /// stages ([#forwardingTemplate]: the open slot `flattenFilter`, the shared stage `kafkaOutputFilter`).
+    ///
+    /// @param evalCase The case.
+    /// @return What the setup made.
+    Forwarding setUpForwarding(final Map<String, Object> evalCase) {
+        final Map<String, Object> spec = EvalCases.forwarding(evalCase);
+        final ExplorerNode folder = folder(explorerPath((String) spec.get("folder")));
+        final String feed = (String) spec.get("feed");
+        create(FeedDoc.TYPE, feed, folder);
+        final long events = storeEvents(feed, EvalCases.strings(spec.get("events")));
+        final ExplorerNode templates = folder(explorerPath((String) spec.get("template_folder")));
+        final DocRef kafka = create(KafkaConfigDoc.TYPE, spec.get("template") + " Kafka", templates).getDocRef();
+        final String code = textResource((String) spec.get("shared_xslt"));
+        final DocRef shared = create(XsltDoc.TYPE, spec.get("template") + " output", templates).getDocRef();
+        editXslt(shared.getUuid(), doc -> doc.copy().data(code).build());
+        final String template = forwardingTemplate(templates, (String) spec.get("template"), kafka, shared);
+        return new Forwarding(events, template, shared.getUuid(), code);
+    }
+
+    /// A CEF forwarder case run with its reference solution: its setup ([#setUpForwarding]), then the reference's
+    /// `calls` made in turn, each agreed to; an argument's `<events>` is the feed's Events stream, `<template>` the
+    /// forwarding template's UUID, `<xslt>` the XSLT the last draft_cef_mapping saved, `<cef pipeline>` the pipeline
+    /// the last create_pipeline made. Scored as an agent's build is ([#scoreForwarding]).
+    ///
+    /// @param evalCase The case.
+    /// @param score    Its score.
+    /// @param build    The build's name.
+    void runForwardingReference(final Map<String, Object> evalCase, final EvalScore score, final String build) {
+        final Forwarding setup = setUpForwarding(evalCase);
+        final Map<String, Object> values = new LinkedHashMap<>();
+        values.put("<events>", setup.events());
+        values.put("<template>", setup.template());
+        final List<String> made = new ArrayList<>();
+        for (final Map<String, Object> call : EvalCases.maps(EvalCases.map(evalCase.get("reference"))
+                .get("calls"))) {
+            final String tool = (String) call.get("tool");
+            final Map<String, Object> result = agreed(tool, (Map<String, Object>) substituted(call.get("arguments"),
+                    values));
+            dump(tool, result);
+            made.add(tool);
+            if ("draft_cef_mapping".equals(tool) && result.get("saved") instanceof final Map<?, ?> saved) {
+                values.put("<xslt>", saved.get("uuid"));
+            }
+            if ("create_pipeline".equals(tool)) {
+                values.put("<cef pipeline>", uuidOf(result));
+            }
+        }
+        scoreForwarding(evalCase, score, build, setup, made);
+    }
+
+    /// Scores a CEF forwarder case's build from Stroom and the calls made, whoever made them
+    /// ([EvalScore#scoreForwarder]): the build's pipeline inheriting the template, what it sets of its own, its
+    /// flattener's XSLT and kept plan, the template's shared XSLT as the setup wrote it, the pipeline stepped over
+    /// the feed's Events, and the shared stage's output for each of `expected.forwarder.lines` records.
+    ///
+    /// @param evalCase The case.
+    /// @param score    Its score.
+    /// @param build    The build.
+    /// @param setup    What the setup made.
+    /// @param made     The tools called, in order.
+    void scoreForwarding(final Map<String, Object> evalCase,
+                         final EvalScore score,
+                         final String build,
+                         final Forwarding setup,
+                         final List<String> made) {
+        final Map<String, Object> wanted = EvalCases.map(EvalCases.map(evalCase.get("expected")).get("forwarder"));
+        final String flattener = (String) wanted.getOrDefault("flattener", "flattenFilter");
+        final String stage = (String) wanted.getOrDefault("stage", "kafkaOutputFilter");
+        final Optional<PipelineDoc> child = pipelinesIn("System/MCP Workspace/" + build).stream()
+                .filter(doc -> doc.getParentPipeline() != null
+                               && setup.template().equals(doc.getParentPipeline().getUuid()))
+                .findFirst();
+        final List<String> own = new ArrayList<>();
+        String code = null;
+        String keptOutput = null;
+        String verdict = null;
+        final List<String> outputs = new ArrayList<>();
+        if (child.isPresent()) {
+            for (final PipelineProperty property : child.get().getPipelineData().getAddedProperties()) {
+                own.add(property.getElement() + "." + property.getName());
+                final DocRef entity = property.getValue() == null
+                        ? null
+                        : property.getValue().getEntity();
+                if (flattener.equals(property.getElement()) && entity != null) {
+                    final XsltDoc xslt = readXslt(entity.getUuid());
+                    code = xslt.getData();
+                    keptOutput = KeptMapping.readMapping(xslt.getDescription())
+                            .map(kept -> String.valueOf(kept.payload().get("output")))
+                            .orElse(null);
+                }
+            }
+            verdict = String.valueOf(json("step_sample", args("pipeline_uuid", child.get().getUuid(),
+                    "stream_ids", List.of(setup.events()))).get("verdict"));
+            final int lines = ((Number) wanted.getOrDefault("lines", 1)).intValue();
+            for (int record = 0; record < lines; record++) {
+                final Map<String, Object> step = json("step_pipeline", args("pipeline_uuid", child.get().getUuid(),
+                        "stream_id", setup.events(), "record", record, "show", List.of(stage)));
+                outputs.add(String.valueOf(map(map(step, "elements"), stage).get("output")));
+            }
+        }
+        score.scoreForwarder(evalCase, made, new EvalScore.Forwarder(child.isPresent(), own, keptOutput, code,
+                readXslt(setup.shared()).getData().equals(setup.sharedCode()), verdict, outputs));
     }
 
     /// Scores what a build of several feeds kept in its record and promoted ([EvalScore#scoreSeveralFeeds]).
@@ -2357,5 +2467,19 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             scripted.close();
             data.remove();
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// What a CEF forwarder case's setup made.
+    ///
+    /// @param events     The feed's Events stream.
+    /// @param template   The forwarding template's UUID.
+    /// @param shared     Its shared XSLT's UUID.
+    /// @param sharedCode The shared XSLT as the setup wrote it.
+    record Forwarding(long events, String template, String shared, String sharedCode) {
+
     }
 }
