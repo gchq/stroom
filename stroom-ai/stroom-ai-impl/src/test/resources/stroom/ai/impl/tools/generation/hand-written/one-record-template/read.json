@@ -1,0 +1,20 @@
+{
+ "rules": [
+  "logon"
+ ],
+ "counts": {
+  "read": 11,
+  "kept_as_xpath": 1,
+  "calls_imported_functions": 0,
+  "not_read": 0
+ },
+ "kept_as_xpath": [
+  "rule logon: EventDetail/Authenticate/Outcome/Success"
+ ],
+ "calls_imported_functions": [],
+ "written_by_hand": [
+  "the records' template (applied with no mode) read as the record template"
+ ],
+ "not_read": [],
+ "differences": []
+}

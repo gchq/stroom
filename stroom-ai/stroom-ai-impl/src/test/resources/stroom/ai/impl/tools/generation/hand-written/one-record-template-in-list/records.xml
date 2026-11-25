@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<records xmlns="records:2">
+  <record>
+    <data name="time" value="2026-09-28T10:00:00.000Z"/>
+    <data name="user" value="alice"/>
+    <data name="host" value="ws01"/>
+    <data name="ip" value="10.0.0.1"/>
+    <data name="result" value="ok"/>
+  </record>
+  <record>
+    <data name="time" value="2026-09-28T10:05:00.000Z"/>
+    <data name="user" value="bob"/>
+    <data name="host" value="ws02"/>
+    <data name="ip" value="10.0.0.2"/>
+    <data name="result" value="fail"/>
+  </record>
+</records>

@@ -41,6 +41,13 @@ final class ReadIdioms {
     private static final Pattern NOT_ALPHANUMERIC = Pattern.compile("[^A-Za-z0-9]+");
     private static final Pattern NOT_WORD = Pattern.compile("\\W+", Pattern.UNICODE_CHARACTER_CLASS);
     private static final Set<String> PLAIN_SOURCES = Set.of("field", "any_of");
+    // The operators and functions whose result is one boolean or number, never nodes: an xpath entry of one is kept
+    // as its string, as xsl:value-of writes it, since the generator tests an entry's value with normalize-space(.).
+    private static final Set<String> ATOMIC_OPERATORS = Set.of("=", "!=", "<", "<=", ">", ">=", "eq", "ne", "lt",
+            "le", "gt", "ge", "is", "<<", ">>", "and", "or", "+", "-", "*", "div", "idiv", "mod");
+    private static final Set<String> ATOMIC_CALLS = Set.of("not", "true", "false", "boolean", "exists", "empty",
+            "contains", "starts-with", "ends-with", "matches", "count", "number", "sum", "string-length", "round",
+            "floor", "ceiling", "abs");
     // What a max_length cap doesn't go with (FieldMapping refuses them with it), or doesn't cut (a default is
     // written uncut, outside it).
     private static final List<String> CAP_REFUSES = List.of("value", "map", "time_format", "fill_template",
@@ -330,8 +337,27 @@ final class ReadIdioms {
             base.put("value", normal.valueText());
             return new Entry(base, false);
         }
-        base.put("xpath", portable(keptText(normal)));
+        // A boolean or number (data[@name='result']/@value = 'ok', say) as the string xsl:value-of wrote: seen in
+        // the e2e suite's hand-written CSV translation (2026-11-26), whose regenerated XSLT didn't compile
+        // (normalize-space() of a boolean), so the read-back wrote no Events. Kept as written: normal() takes the
+        // brackets off a nested list (x = ('a', 'b')), which its text can't lose.
+        base.put("xpath", atomic(normal)
+                ? "string(" + portable(XPathTrees.unbracketed(node).text()) + ")"
+                : portable(keptText(normal)));
         return new Entry(base, true);
+    }
+
+    // Whether an expression gives one boolean or number: a comparison, and/or, arithmetic, or a call of a function
+    // that gives one.
+    private static boolean atomic(final XPathNode node) {
+        if (ATOMIC_OPERATORS.contains(node.symbol())) {
+            return node.size() == 2 || "-".equals(node.symbol()) && node.size() == 1;
+        }
+        if ("call".equals(node.symbol())) {
+            final String name = node.valueText();
+            return ATOMIC_CALLS.contains(name.substring(name.indexOf(':') + 1));
+        }
+        return false;
     }
 
     // An expression kept as an xpath entry, without the [1] the generator puts after an entry's value (its first, as
