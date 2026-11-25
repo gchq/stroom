@@ -119,6 +119,33 @@ class TestE2eActivityTimelineAnySource extends AbstractE2eTest {
     }
 
     @Test
+    void aSourceWhoseClusterCantBeReachedIsLeftOutWithItsReasonAndTheOthersAreRead() {
+        // Chat 195: one source whose cluster refused ("missing authentication credentials") failed the timeline.
+        final DocRef unreachable = elasticCluster("E2E unreachable cluster " + indexName, "http://localhost:1");
+        final ExplorerNode created = create(ElasticIndexDoc.TYPE, "E2E unreachable " + indexName, templateFolder());
+        asUser(admin, () -> elasticIndexStore.writeDocument(elasticIndexStore.readDocument(created.getDocRef())
+                .copy()
+                .clusterRef(unreachable)
+                .indexName(indexName)
+                .timeField("EventTime")
+                .build()));
+        final Map<String, Object> arguments = timeline("pnguyen", Map.of());
+        arguments.put("sources", List.of(Map.of("index", index.getUuid(), "user", "UserName", "host", "Host"),
+                Map.of("index", created.getDocRef().getUuid(), "user", "UserName", "host", "Host")));
+
+        final Map<String, Object> result = json("activity_timeline", arguments);
+        dump("activity_timeline, one source unreachable", result);
+
+        assertThat((List<Map<String, Object>>) result.get("sources")).extracting(source -> source.get("index"))
+                .containsExactly(index.getName());
+        assertThat((List<Map<String, Object>>) result.get("left_out")).singleElement().satisfies(left -> {
+            assertThat(left).containsEntry("index", created.getDocRef().getName());
+            assertThat(String.valueOf(left.get("why"))).startsWith("it can't be read: ");
+        });
+        assertThat(number(result.get("events_read"))).isPositive();
+    }
+
+    @Test
     void aUserSeenOnlyInWebProxyEventsGetsActivityPeriodsFromTheirEventsXml() {
         final Map<String, Object> result = json("activity_timeline", timeline("pnguyen", Map.of()));
         dump("activity_timeline, proxy only", result);

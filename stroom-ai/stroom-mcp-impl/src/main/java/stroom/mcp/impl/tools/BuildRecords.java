@@ -379,10 +379,10 @@ public class BuildRecords {
     /// @param checked True if it was checked to be a folder, as every root is now; false only for one recorded as
     ///                before typed answers were checked.
     /// @return The record as saved.
-    Map<String, Object> rememberPromotionRoot(final String build,
-                                              final String role,
-                                              final String root,
-                                              final boolean checked) {
+    public Map<String, Object> rememberPromotionRoot(final String build,
+                                                     final String role,
+                                                     final String root,
+                                                     final boolean checked) {
         final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
         return save(build, found.orElse(null), state -> {
             final Map<String, Object> roots = state.get(PROMOTION_ROOTS) instanceof final Map<?, ?> earlier
