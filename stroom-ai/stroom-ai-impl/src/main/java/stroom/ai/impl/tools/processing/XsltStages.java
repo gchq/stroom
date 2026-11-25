@@ -64,7 +64,11 @@ import java.util.regex.Pattern;
 /// input is no Events document and whose output is one is the translation), else by each XSLT's content: the
 /// namespace of what it writes ([EventsNamespaces#writtenBy]) and of what it reads (its `xpath-default-namespace`,
 /// or a template matching an element of an Events namespace), helped by its place in the chain (an Events writer
-/// after the translation decorates; the last XSLT of a pipeline with an indexing filter, past the Events, indexes).
+/// after the translation decorates; the last XSLT past the Events that writes no Events is told by what its output
+/// goes to ([#writtenTo]): an indexer (an element whose type ends `IndexingFilter`) makes it the indexing stage, a
+/// Kafka producer, a writer or an appender an output (decided with the user, 2026-11-25: a forwarding template's
+/// shared XSLT writing Kafka records is no indexing XSLT); with neither after it, it indexes where the pipeline has
+/// an indexing filter or it writes something other than Events).
 /// An XSLT reading Events and writing no `Events` or `Event` ([#isOutput]) doesn't write Events, whatever namespace
 /// it writes in: a flattener may keep the Events namespace for the pairs it hands on.
 ///
@@ -79,6 +83,10 @@ public class XsltStages {
     private static final String XSLT_FILTER = "XSLTFilter";
     private static final String XSLT_PROPERTY = "xslt";
     private static final String INDEXING_FILTER = "IndexingFilter";
+    // The endings of the types of elements that send or write what reaches them: a Kafka producer, the writers and
+    // the appenders.
+    private static final List<String> OUTPUT_TYPE_ENDINGS = List.of("Producer", "Writer", "Appender");
+    private static final String HTTP_POST_FILTER = "HttpPostFilter";
     private static final Pattern QNAME_PREFIX = Pattern.compile("([A-Za-z_][\\w.\\-]*):[A-Za-z_*]");
     private static final Pattern XPATH_DEFAULT_NAMESPACE = Pattern.compile(
             "xpath-default-namespace\\s*=\\s*[\"']([^\"']*)[\"']");
@@ -161,6 +169,22 @@ public class XsltStages {
                 .orElse(false);
     }
 
+    /// Where an element's output goes, by the elements its output reaches: an indexer (a type ending
+    /// `IndexingFilter`: Lucene, Elasticsearch, Solr, dynamic) is the indexing stage, wherever a writer is too; else a
+    /// Kafka producer, a writer or an appender (or an HTTP POST filter) is an output.
+    ///
+    /// @param pipeline The pipeline as Stroom runs it.
+    /// @param element  An element's id.
+    /// @return [Stage#INDEXING] or [Stage#OUTPUT]; empty where nothing after it indexes, sends or writes (or it
+    /// isn't in the pipeline).
+    public static Optional<Stage> writtenTo(final MergedPipeline pipeline, final String element) {
+        final List<String> types = pipeline.downstream(element).stream()
+                .map(id -> pipeline.elements().get(id))
+                .filter(type -> type != null)
+                .toList();
+        return StageRules.writtenTo(types);
+    }
+
     /// @return The Events namespaces: event-logging's, and those of this Stroom's forks of it.
     Set<String> eventsNamespaces() {
         final Set<String> namespaces = new LinkedHashSet<>();
@@ -207,7 +231,7 @@ public class XsltStages {
                     doc != null && doc.inheritedFromTemplate(), NullSafe.get(doc, TranslationDoc::setBy),
                     seen != null
                             ? seen
-                            : content));
+                            : content, writtenTo(pipeline, element).orElse(null)));
         }
         return steps;
     }
@@ -330,7 +354,9 @@ public class XsltStages {
     /// @param inherited True if a template sets it.
     /// @param setBy     The layer that sets it, or null.
     /// @param reading   What it reads and writes.
-    record Step(String element, DocRef xslt, boolean inherited, String setBy, Reading reading) {
+    /// @param writtenTo Where its output goes ([XsltStages#writtenTo]): indexing, output, or null where nothing
+    ///                  after it says.
+    record Step(String element, DocRef xslt, boolean inherited, String setBy, Reading reading, Stage writtenTo) {
 
     }
 
@@ -362,6 +388,19 @@ public class XsltStages {
             final boolean writesOther = !writesEvents && XmlTrees.descendantsAndSelf(root.get()).stream()
                     .anyMatch(element -> !XmlTrees.XSL.equals(element.getNamespaceURI()));
             return new Reading(readsEvents(root.get(), text, namespaces), writesEvents, writesOther, How.CONTENT);
+        }
+
+        /// @param types The types of the elements an element's output reaches.
+        /// @return [Stage#INDEXING] if one indexes; else [Stage#OUTPUT] if one sends or writes; else empty.
+        static Optional<Stage> writtenTo(final Collection<String> types) {
+            if (types.stream().anyMatch(type -> type.endsWith(INDEXING_FILTER))) {
+                return Optional.of(Stage.INDEXING);
+            }
+            if (types.stream().anyMatch(type -> HTTP_POST_FILTER.equals(type)
+                                                || OUTPUT_TYPE_ENDINGS.stream().anyMatch(type::endsWith))) {
+                return Optional.of(Stage.OUTPUT);
+            }
+            return Optional.empty();
         }
 
         /// @param root       An XSLT's root element.
@@ -474,6 +513,9 @@ public class XsltStages {
                             : Stage.PRE_PROCESS;
                 } else if (reading.writesEvents()) {
                     stage = Stage.DECORATION;
+                } else if (i == lastNonEvents && step.writtenTo() != null) {
+                    // What its output goes to says: an indexer, or a producer, writer or appender.
+                    stage = step.writtenTo();
                 } else if (i == lastNonEvents && (reading.writesOther() || hasIndexingFilter)) {
                     stage = Stage.INDEXING;
                 } else if (reading.writesOther()) {

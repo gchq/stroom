@@ -96,6 +96,10 @@ class TestXsltStages {
                                 + "<xsl:value-of select=\"data[@name='user']/@value\"/></kafkaRecord>"
                                 + "</xsl:for-each></kafkaRecords></xsl:template></xsl:stylesheet>";
 
+    // The element types of elements so named; any other is an XSLTFilter.
+    private static final Map<String, String> TYPES = Map.of("elasticIndexingFilter", "ElasticIndexingFilter",
+            "indexFilter", "IndexingFilter", "kafkaProducer", "StandardKafkaProducer", "xmlWriter", "XMLWriter",
+            "textWriter", "TextWriter", "streamAppender", "StreamAppender", "schemaFilter", "SchemaFilter");
     private static final DocRef TEMPLATE = new DocRef(PipelineDoc.TYPE, "t", "Event Data (JSON)");
     private static final DocRef CHILD = new DocRef(PipelineDoc.TYPE, "p", "Acme-V1.0-EVENTS");
 
@@ -244,6 +248,66 @@ class TestXsltStages {
     }
 
     @Test
+    void theLastXsltBeforeAKafkaProducerIsAnOutputNotIndexing() {
+        // Regression: the last XSLT not writing Events was always the indexing stage, so the shared XSLT writing
+        // Kafka records (inherited from a forwarding template) was called an indexing XSLT.
+        forkHeld();
+        xslt("forked", "Forked translation", TRANSLATION.replace(EVENTS, FORK), true);
+        xslt("flat", "Flattener", FLATTENER, true);
+        xslt("kafka", "Kafka records", KAFKA, true);
+        pipeline(CHILD, null, List.of("translationFilter", "flattenFilter", "kafkaOutputFilter", "schemaFilter",
+                        "kafkaProducer"),
+                Map.of("translationFilter", "forked", "flattenFilter", "flat", "kafkaOutputFilter", "kafka"));
+
+        assertThat(stages.classify(merged("p")))
+                .extracting(StagedXslt::element, StagedXslt::stage)
+                .containsExactly(tuple("translationFilter", Stage.TRANSLATION),
+                        tuple("flattenFilter", Stage.OUTPUT),
+                        tuple("kafkaOutputFilter", Stage.OUTPUT));
+        assertThat(XsltStages.of(stages.classify(merged("p")), Stage.INDEXING)).isEmpty();
+    }
+
+    @Test
+    void theLastXsltBeforeAnIndexerIndexesWhateverElseFollowsIt() {
+        pipeline(CHILD, null, List.of("translationFilter", "indexingFilter", "elasticIndexingFilter"),
+                Map.of("translationFilter", "tr", "indexingFilter", "idx"));
+        assertThat(stages.classify(merged("p"))).extracting(StagedXslt::stage)
+                .containsExactly(Stage.TRANSLATION, Stage.INDEXING);
+
+        // An indexer and a writer both after it: the documents go to the index.
+        pipeline(CHILD, null, List.of("translationFilter", "indexingFilter", "xmlWriter", "elasticIndexingFilter"),
+                Map.of("translationFilter", "tr", "indexingFilter", "idx"));
+        assertThat(stages.classify(merged("p"))).extracting(StagedXslt::stage)
+                .containsExactly(Stage.TRANSLATION, Stage.INDEXING);
+    }
+
+    @Test
+    void aSingleCefXsltBeforeAWriterOrAnAppenderIsAnOutput() {
+        // One XSLT from Events to Kafka records, then the producer: an output.
+        xslt("cef", "CEF to Kafka", KAFKA.replace(FORK, EVENTS), true);
+        pipeline(CHILD, null, List.of("cefFilter", "schemaFilter", "kafkaProducer"), Map.of("cefFilter", "cef"));
+        assertThat(stages.classify(merged("p"))).extracting(StagedXslt::stage).containsExactly(Stage.OUTPUT);
+
+        // Lines of text (it writes no element of its own), then a text writer and a stream appender.
+        xslt("text", "CEF as text", "<xsl:stylesheet " + XSL + " xpath-default-namespace=\"" + EVENTS + "\">"
+                                    + "<xsl:output method=\"text\"/><xsl:template match=\"/Events\">"
+                                    + "<xsl:value-of select=\"'CEF:0|a'\"/></xsl:template></xsl:stylesheet>", true);
+        pipeline(CHILD, null, List.of("cefFilter", "textWriter", "streamAppender"), Map.of("cefFilter", "text"));
+        assertThat(stages.classify(merged("p"))).extracting(StagedXslt::stage).containsExactly(Stage.OUTPUT);
+    }
+
+    @Test
+    void whatFollowsAnElementTellsWhereItsOutputGoes() {
+        pipeline(CHILD, null, List.of("aFilter", "schemaFilter", "kafkaProducer"), Map.of());
+        assertThat(XsltStages.writtenTo(merged("p"), "aFilter")).contains(Stage.OUTPUT);
+        pipeline(CHILD, null, List.of("aFilter", "xmlWriter", "elasticIndexingFilter"), Map.of());
+        assertThat(XsltStages.writtenTo(merged("p"), "aFilter")).contains(Stage.INDEXING);
+        pipeline(CHILD, null, List.of("aFilter", "schemaFilter"), Map.of());
+        assertThat(XsltStages.writtenTo(merged("p"), "aFilter")).isEmpty();
+        assertThat(XsltStages.writtenTo(merged("p"), "noSuchElement")).isEmpty();
+    }
+
+    @Test
     void aSteppedFlattenerIsAnOutput() {
         forkHeld();
         xslt("forked", "Forked translation", TRANSLATION.replace(EVENTS, FORK), true);
@@ -367,8 +431,8 @@ class TestXsltStages {
                 canView);
     }
 
-    // A pipeline of the XSLT filters named, linked in order (an element named ...IndexingFilter or indexFilter is
-    // of that type), with the XSLTs given set on them.
+    // A pipeline of the elements named, linked in order (one named in TYPES is of that type, any other an
+    // XSLTFilter), with the XSLTs given set on them.
     private void pipeline(final DocRef ref,
                           final DocRef parent,
                           final List<String> elements,
@@ -376,11 +440,7 @@ class TestXsltStages {
         final PipelineDataBuilder data = new PipelineDataBuilder();
         String previous = null;
         for (final String element : elements) {
-            final String type = element.equals("elasticIndexingFilter")
-                    ? "ElasticIndexingFilter"
-                    : element.equals("indexFilter")
-                            ? "IndexingFilter"
-                            : "XSLTFilter";
+            final String type = TYPES.getOrDefault(element, "XSLTFilter");
             data.addElement(new PipelineElement(element, type));
             if (previous != null) {
                 data.addLink(new PipelineLink(previous, element));
