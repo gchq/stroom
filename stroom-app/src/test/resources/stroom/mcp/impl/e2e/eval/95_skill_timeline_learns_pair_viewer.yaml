@@ -67,7 +67,7 @@ user_knows: >
   UserName is the user. If it offers to record what the timeline learned in the skill, say yes.
 expected:
   tools_used: [find_skills, activity_timeline]
-  tools_not_used: [propose_skill]
+  # Scored on the outcome (2026-11-25): propose_skill refuses a viewer, so a call to it proposes nothing.
   no_proposal: true
   find_skills: {name: User activity timeline}
   calls_with:
