@@ -1,0 +1,82 @@
+name: VPN feeds in two folders with a conflicting AGENTS line and different readers, asked, one index per feed
+template: Event Data (JSON)
+capabilities: [lifecycle, event_types, hand_written, several_feeds]
+# EVAL-105 (in /Feeds/EVAL-105/Site-A) is translated by a hand-written pipeline; EVAL-105-B is in Site-B, where the
+# AGENTS doc gives the user field differently, and a group may read it that may not read EVAL-105. The right route
+# surveys both, has the user answer the AGENTS conflict (compare_feeds), starts from the existing pipeline, and at the
+# index has one index per feed proposed (their readers differ) and chosen. Not promoted. The traps: the AGENTS rule
+# taken without asking, or one shared index made without a word.
+promote: false
+setup:
+  hand_written:
+    folder: /Feeds/EVAL-105/Site-A
+    feed: EVAL-105
+    xslt: hand_written_vpn.xsl
+    pipeline: EVAL-105-Events
+    template: Event Data (JSON)
+    properties: [{element: jsonParser, name: addRootObject, value: false}]
+    processor_filter: {stream_type: Raw Events}
+    sample: |
+      [{"ts": "2026-11-03T08:00:01.000Z", "action": "login", "user": "jbloggs", "src_ip": "198.51.100.7", "host": "vpn-gw-1", "result": "success"},
+       {"ts": "2026-11-03T08:02:45.000Z", "action": "login", "user": "asmith", "src_ip": "198.51.100.9", "host": "vpn-gw-1", "result": "failure"},
+       {"ts": "2026-11-03T12:10:00.000Z", "action": "logout", "user": "jbloggs", "src_ip": "198.51.100.7", "host": "vpn-gw-1"},
+       {"ts": "2026-11-03T09:30:00.000Z", "action": "config_change", "user": "admin", "host": "vpn-gw-1", "setting": "idle_timeout", "new_value": "900"},
+       {"ts": "2026-11-03T09:31:00.000Z", "action": "heartbeat", "host": "vpn-gw-1"}]
+    other_feeds:
+      - feed: EVAL-105-B
+        folder: /Feeds/EVAL-105/Site-B
+        readers: eval-105-site-b-analysts
+        sample: |
+          [{"ts": "2026-11-03T08:10:01.000Z", "action": "login", "user": "kjones", "src_ip": "198.51.100.20", "host": "vpn-b-1", "result": "success"},
+          {"ts": "2026-11-03T08:12:45.000Z", "action": "login", "user": "pwhite", "src_ip": "198.51.100.21", "host": "vpn-b-1", "result": "failure"},
+          {"ts": "2026-11-03T12:20:00.000Z", "action": "logout", "user": "kjones", "src_ip": "198.51.100.20", "host": "vpn-b-1"},
+          {"ts": "2026-11-03T09:40:00.000Z", "action": "config_change", "user": "admin", "host": "vpn-b-1", "setting": "idle_timeout", "new_value": "600"},
+          {"ts": "2026-11-03T09:41:00.000Z", "action": "heartbeat", "host": "vpn-b-1"}]
+
+agents_docs:
+  - folder: /Feeds/EVAL-105/Site-A
+    text: |
+      ## Fields
+      - user: user
+  - folder: /Feeds/EVAL-105/Site-B
+    text: |
+      ## Fields
+      - user: account
+request: >
+  EVAL-105 and EVAL-105-B are two sites' feeds of our VPN. EVAL-105's translation was written by hand. Have one
+  translation serve both, and make the index for their events.
+user_knows: >
+  Site-A's AGENTS doc applies to the shared documents. Site B's analysts may read only Site B's events: one index
+  per feed. Start from the existing pipeline when asked; keep its translation as it is. Both feeds' times are UTC.
+expected:
+  route:
+    start_from: existing
+    calls_in_order: [start_build, survey_feed, survey_feed, compare_feeds, catalogue_event_types, copy_pipeline, rebuild_mapping, catalogue_event_types, create_index_doc]
+    forbidden_calls: [draft_translation_mapping]
+  records: 4
+  records_in_sample: 5
+  event_types: [Authenticate, Update]
+  forbidden_types: [Unknown]
+  same_as_setup_except: []
+  type_ids:
+    pattern: any
+    exactly: [vpn-login, vpn-login-failed, vpn-logout, vpn-config-change]
+  catalogue: {catch_all_confirmed: true, event_types_at_least: 4, origin: "4 event types from 'EVAL-105-Events'"}
+  several_feeds:
+    compared: true
+    agents_chosen: ["fields: user"]
+    index_split: per_feed
+reference:
+  calls:
+    - {tool: start_build, arguments: {build: eval-105, feeds: [EVAL-105, EVAL-105-B]}}
+    - {tool: survey_feed, arguments: {feed: EVAL-105, build: eval-105}}
+    - {tool: survey_feed, arguments: {feed: EVAL-105-B, build: eval-105}}
+    - {tool: compare_feeds, arguments: {build: eval-105}}
+    - {tool: catalogue_event_types, arguments: {build: eval-105}, answer: Start from the existing pipeline (recommended)}
+    - {tool: copy_pipeline, arguments: {build: eval-105, source_uuid: <original>, new_name: EVAL-105-Events-V1.1}}
+    - {tool: rebuild_mapping, arguments: {uuid: <copy xslt>, pipeline_uuid: <copy>, stream_ids: [<raw>],
+                                          change: Read back from the hand-written translation}}
+    - {tool: catalogue_event_types, arguments: {build: eval-105, stream_ids: [<raw>]}}
+    - {tool: catalogue_event_types, arguments: {build: eval-105, confirm: true}, confirm: true}
+    - {tool: step_sample, arguments: {pipeline_uuid: <copy>, stream_ids: [<raw>]}}
+    - {tool: create_index_doc, arguments: {build: eval-105, backend: lucene, name: EVAL-105-Index, time_field: EventTime}}

@@ -55,13 +55,19 @@ import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
 import stroom.mcp.impl.McpTerminal;
 import stroom.mcp.impl.McpTestClient;
+import stroom.mcp.impl.tools.BuildRecords;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
+import stroom.processor.api.ProcessorFilterService;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
 import stroom.query.api.datasource.AnalyzerType;
 import stroom.query.api.datasource.Field;
 import stroom.query.api.datasource.FieldType;
@@ -227,6 +233,8 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     private ExplorerNodeService explorerNodeService;
     @Inject
     private SkillCatalogue skillCatalogue;
+    @Inject
+    private ProcessorFilterService processorFilterService;
 
     // A filter made disabled (a reference pipeline's) is enabled, as the user would in Stroom.
     @Override
@@ -857,10 +865,41 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                             : new PipelinePropertyValue(String.valueOf(value)))
                     .build());
         }
-        return handWritten(explorerPath((String) spec.get("folder")), (String) spec.get("feed"),
+        final HandWritten made = handWritten(explorerPath((String) spec.get("folder")), (String) spec.get("feed"),
                 textResource((String) spec.get("xslt")), (String) spec.get("pipeline"), (String) spec.get("template"),
                 properties, String.valueOf(EvalCases.map(spec.get("processor_filter")).getOrDefault("stream_type",
                         StreamTypeNames.RAW_EVENTS)), (String) spec.get("sample"));
+        setUpOtherFeeds(spec);
+        // A case's AGENTS docs, each in its folder.
+        for (final Map<String, Object> doc : EvalCases.maps(evalCase.get("agents_docs"))) {
+            documentationDoc(folder(explorerPath((String) doc.get("folder"))), AgentInstructions.DOC_NAME,
+                    (String) doc.get("text"));
+        }
+        return made;
+    }
+
+    /// The other feeds of a hand-written case's source (`other_feeds`, decided by the user 2026-11-25: a build of
+    /// several feeds): each its `feed` in its `folder` (the hand-written feed's where none is given), its `sample`
+    /// stored `age_days` ago (0 where none is given: a dormant feed's is older), and with `readers`, a group of that
+    /// name given View on it alone. The hand-written pipeline's filter reads none of them.
+    ///
+    /// @param spec The hand-written setup's spec.
+    private void setUpOtherFeeds(final Map<String, Object> spec) {
+        for (final Map<String, Object> other : EvalCases.maps(spec.get("other_feeds"))) {
+            final String feed = (String) other.get("feed");
+            final ExplorerNode node = folder(explorerPath((String) other.getOrDefault("folder", spec.get("folder"))));
+            final ExplorerNode created = create(FeedDoc.TYPE, feed, node);
+            final long age = Duration.ofDays(((Number) other.getOrDefault("age_days", 0)).longValue()).toMillis();
+            storeParts(feed, List.of(Map.entry(Map.of("Feed", feed), (String) other.get("sample"))),
+                    System.currentTimeMillis() - age);
+            if (other.get("readers") instanceof final String group) {
+                final UserRef readers = user(group, Set.of(AppPermission.USE_MCP_TOOLS));
+                asUser(admin, () -> {
+                    documentPermissionService.setPermission(created.getDocRef(), readers, DocumentPermission.VIEW);
+                    return null;
+                });
+            }
+        }
     }
 
     /// A hand-written case run with its reference solution: its setup ([#setUpHandWritten]), then the reference's
@@ -880,6 +919,7 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         values.put("<raw>", original.raw());
         final List<String> made = new ArrayList<>();
         Map<String, Object> listing = null;
+        Map<String, Object> compared = null;
         for (final Map<String, Object> call : EvalCases.maps(EvalCases.map(evalCase.get("reference"))
                 .get("calls"))) {
             final String tool = (String) call.get("tool");
@@ -904,8 +944,12 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             if (CATALOGUE.equals(tool) && result.get("origin") != null) {
                 listing = result;
             }
+            if ("compare_feeds".equals(tool) && result.get("differences") != null) {
+                compared = result;
+            }
         }
         scoreHandWritten(evalCase, score, build, original, (String) values.get("<copy>"), made, listing);
+        scoreSeveralFeeds(evalCase, score, build, (String) values.get("<copy>"), compared);
     }
 
     /// Scores a hand-written case's build from Stroom and the calls made, whoever made them
@@ -972,6 +1016,50 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             catalogue = catalogueNear(folderOf(copy));
         }
         score.scoreCatalogue(evalCase, catalogue, null);
+    }
+
+    /// Scores what a build of several feeds kept in its record and promoted ([EvalScore#scoreSeveralFeeds]).
+    ///
+    /// @param evalCase    The case.
+    /// @param score       Its score.
+    /// @param build       The build.
+    /// @param copy        The copy's pipeline UUID, or null if none was made.
+    /// @param compared compare_feeds' last answer, or null.
+    void scoreSeveralFeeds(final Map<String, Object> evalCase,
+                           final EvalScore score,
+                           final String build,
+                           final String copy,
+                           final Map<String, Object> compared) {
+        Map<String, Object> kept;
+        try {
+            kept = asUser(admin, () -> injector.getInstance(BuildRecords.class).feedComparison(build));
+        } catch (final RuntimeException e) {
+            kept = Map.of();
+        }
+        final List<String> feeds = copy == null
+                ? null
+                : asUser(admin, () -> processorFilterService.find(new DocRef(PipelineDoc.TYPE, copy)).getValues()
+                        .stream()
+                        .filter(filter -> !filter.isDeleted())
+                        .flatMap(filter -> feedTerms(filter.getQueryData().getExpression()).stream())
+                        .distinct()
+                        .toList());
+        score.scoreSeveralFeeds(evalCase, kept, compared, feeds);
+    }
+
+    // The feeds a filter's Feed terms name, at any depth.
+    private static List<String> feedTerms(final ExpressionOperator expression) {
+        final List<String> out = new ArrayList<>();
+        for (final ExpressionItem child : NullSafe.list(expression.getChildren())) {
+            if (child instanceof final ExpressionOperator operator) {
+                out.addAll(feedTerms(operator));
+            } else if (child instanceof final ExpressionTerm term && MetaFields.FIELD_FEED.equals(term.getField())) {
+                out.add(term.getDocRef() != null
+                        ? term.getDocRef().getName()
+                        : term.getValue());
+            }
+        }
+        return out;
     }
 
     // An argument with the hand-written case's values put in for their placeholders.

@@ -1,0 +1,76 @@
+name: A dormant VPN feed with a live one, its volume stated and both in the filter
+template: Event Data (JSON)
+capabilities: [lifecycle, event_types, hand_written, several_feeds]
+# EVAL-104 is translated by a hand-written pipeline; EVAL-104-OLD, a retired gateway's feed, last received a stream
+# 200 days ago. The user wants it translated as well (its history matters). The right route surveys both, the
+# comparison says EVAL-104-OLD is dormant with its streams and dates, and promotion's one filter selects both. The
+# trap: the dormant feed dropped by its dates, or by its name.
+promote: true
+setup:
+  hand_written:
+    folder: /Feeds/EVAL-104
+    feed: EVAL-104
+    xslt: hand_written_vpn.xsl
+    pipeline: EVAL-104-Events
+    template: Event Data (JSON)
+    properties: [{element: jsonParser, name: addRootObject, value: false}]
+    processor_filter: {stream_type: Raw Events}
+    sample: |
+      [{"ts": "2026-11-03T08:00:01.000Z", "action": "login", "user": "jbloggs", "src_ip": "198.51.100.7", "host": "vpn-gw-1", "result": "success"},
+       {"ts": "2026-11-03T08:02:45.000Z", "action": "login", "user": "asmith", "src_ip": "198.51.100.9", "host": "vpn-gw-1", "result": "failure"},
+       {"ts": "2026-11-03T12:10:00.000Z", "action": "logout", "user": "jbloggs", "src_ip": "198.51.100.7", "host": "vpn-gw-1"},
+       {"ts": "2026-11-03T09:30:00.000Z", "action": "config_change", "user": "admin", "host": "vpn-gw-1", "setting": "idle_timeout", "new_value": "900"},
+       {"ts": "2026-11-03T09:31:00.000Z", "action": "heartbeat", "host": "vpn-gw-1"}]
+    other_feeds:
+      - feed: EVAL-104-OLD
+        age_days: 200
+        sample: |
+          [{"ts": "2026-11-03T08:10:01.000Z", "action": "login", "user": "kjones", "src_ip": "198.51.100.20", "host": "vpn-old-1", "result": "success"},
+          {"ts": "2026-11-03T08:12:45.000Z", "action": "login", "user": "pwhite", "src_ip": "198.51.100.21", "host": "vpn-old-1", "result": "failure"},
+          {"ts": "2026-11-03T12:20:00.000Z", "action": "logout", "user": "kjones", "src_ip": "198.51.100.20", "host": "vpn-old-1"},
+          {"ts": "2026-11-03T09:40:00.000Z", "action": "config_change", "user": "admin", "host": "vpn-old-1", "setting": "idle_timeout", "new_value": "600"},
+          {"ts": "2026-11-03T09:41:00.000Z", "action": "heartbeat", "host": "vpn-old-1"}]
+
+request: >
+  EVAL-104 is our VPN audit feed, translated by a pipeline written by hand. EVAL-104-OLD is a gateway we retired;
+  translate its history too, with the same translation.
+user_knows: >
+  EVAL-104-OLD's records are the same as EVAL-104's; its old streams are to be translated. Start from the existing
+  pipeline when asked and keep its translation as it is. Both feeds' times are UTC.
+expected:
+  route:
+    start_from: existing
+    calls_in_order: [start_build, survey_feed, survey_feed, compare_feeds, catalogue_event_types, copy_pipeline, rebuild_mapping, catalogue_event_types, promote_build]
+    forbidden_calls: [draft_translation_mapping]
+  records: 4
+  records_in_sample: 5
+  event_types: [Authenticate, Update]
+  forbidden_types: [Unknown]
+  same_as_setup_except: []
+  type_ids:
+    pattern: any
+    exactly: [vpn-login, vpn-login-failed, vpn-logout, vpn-config-change]
+  catalogue: {catch_all_confirmed: true, event_types_at_least: 4, origin: "4 event types from 'EVAL-104-Events'"}
+  promoted: {pipeline: EVAL-104-Events-V1.1, original_unchanged: true}
+  several_feeds:
+    compared: true
+    dormant: [EVAL-104-OLD]
+    filter_feeds: [EVAL-104, EVAL-104-OLD]
+reference:
+  calls:
+    - {tool: start_build, arguments: {build: eval-104, feeds: [EVAL-104, EVAL-104-OLD]}}
+    - {tool: survey_feed, arguments: {feed: EVAL-104, build: eval-104}}
+    - {tool: survey_feed, arguments: {feed: EVAL-104-OLD, build: eval-104}}
+    - {tool: compare_feeds, arguments: {build: eval-104}}
+    - {tool: catalogue_event_types, arguments: {build: eval-104}, answer: Start from the existing pipeline (recommended)}
+    - {tool: copy_pipeline, arguments: {build: eval-104, source_uuid: <original>, new_name: EVAL-104-Events-V1.1}}
+    - {tool: rebuild_mapping, arguments: {uuid: <copy xslt>, pipeline_uuid: <copy>, stream_ids: [<raw>],
+                                          change: Read back from the hand-written translation}}
+    - {tool: catalogue_event_types, arguments: {build: eval-104, stream_ids: [<raw>]}}
+    - {tool: catalogue_event_types, arguments: {build: eval-104, confirm: true}, confirm: true}
+    - {tool: step_sample, arguments: {pipeline_uuid: <copy>, stream_ids: [<raw>]}}
+    - {tool: write_documentation, arguments: {build: eval-104, pipeline_uuid: <copy>, stream_ids: [<raw>],
+                                              change: Serves every feed of the source,
+                                              markdown: "## Purpose and data\n\nVPN sign-ins and settings, every gateway's feed.\n"}}
+    - {tool: promote_build, arguments: {build: eval-104, destinations: {XSLT: Feeds/EVAL-104, Pipeline: Feeds/EVAL-104,
+                                                                       Documentation: Feeds/EVAL-104}}}

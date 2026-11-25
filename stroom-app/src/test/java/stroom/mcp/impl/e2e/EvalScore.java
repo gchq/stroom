@@ -1414,6 +1414,68 @@ final class EvalScore {
         }
     }
 
+    /// Scores what a build of several feeds kept and promoted (decided by the user, 2026-11-25), as
+    /// `expected.several_feeds` gives it: `compared` (the user's confirmation of the feeds' differences kept in the
+    /// build), `fields_only_in` (each field some feeds have and others lack, with those feeds), `dormant` (the feeds
+    /// compare_feeds said are dormant), `agents_chosen` (the AGENTS conflicts answered, by key), `index_split`
+    /// (`per_feed` or `shared`, as chosen), and `filter_feeds` (the feeds the promoted pipeline's filters select).
+    ///
+    /// @param evalCase    The case.
+    /// @param kept        What the build's record keeps of the comparison ([stroom.mcp.impl.tools.BuildRecords
+    ///                    #FEED_COMPARISON]); empty when none.
+    /// @param compared    compare_feeds' last answer, or null.
+    /// @param filterFeeds The feeds the promoted pipeline's filters select, or null when not promoted.
+    @SuppressWarnings("unchecked")
+    void scoreSeveralFeeds(final Map<String, Object> evalCase,
+                           final Map<String, Object> kept,
+                           final Map<String, Object> compared,
+                           final List<String> filterFeeds) {
+        final Map<String, Object> differences = compared == null
+                ? null
+                : maps(compared.get("differences"));
+        final Map<String, Object> wanted = maps(maps(evalCase.get("expected")).get("several_feeds"));
+        if (wanted.isEmpty()) {
+            return;
+        }
+        if (Boolean.TRUE.equals(wanted.get("compared"))) {
+            check("feeds compared and confirmed", kept.get("digest") != null, "the user's confirmation of how "
+                                                                              + "the feeds differ wasn't kept");
+        }
+        if (wanted.get("fields_only_in") instanceof final Map<?, ?> fields) {
+            final Object found = differences == null
+                    ? null
+                    : differences.get("fields_only_in");
+            check("fields in some feeds only " + fields, String.valueOf(fields).equals(String.valueOf(found)),
+                    "the differences shown gave fields in some feeds only as " + found + ", expected " + fields);
+        }
+        if (wanted.get("dormant") != null) {
+            final List<String> expected = strings(wanted.get("dormant"));
+            final List<String> found = compared == null
+                    ? List.of()
+                    : ((List<Object>) compared.getOrDefault("feeds", List.of())).stream()
+                            .map(item -> (Map<String, Object>) item)
+                            .filter(feed -> Boolean.TRUE.equals(feed.get("dormant")))
+                            .map(feed -> String.valueOf(feed.get("feed")))
+                            .toList();
+            check("dormant " + expected, found.equals(expected), "compare_feeds said " + found + " are dormant, "
+                                                                 + "expected " + expected);
+        }
+        for (final String key : strings(wanted.get("agents_chosen"))) {
+            check("AGENTS conflict " + key + " answered", maps(kept.get("agents")).containsKey(key),
+                    "no answer kept for the AGENTS conflict '" + key + "' (kept: " + kept.get("agents") + ")");
+        }
+        if (wanted.get("index_split") instanceof final String split) {
+            check("index " + split, split.equals(kept.get("index")), "the index choice kept is "
+                                                                     + kept.get("index") + ", expected " + split);
+        }
+        if (wanted.get("filter_feeds") != null) {
+            final List<String> expected = strings(wanted.get("filter_feeds"));
+            check("filters select " + expected, filterFeeds != null && filterFeeds.size() == expected.size()
+                                                && filterFeeds.containsAll(expected),
+                    "the promoted filters select " + filterFeeds + ", expected " + expected);
+        }
+    }
+
     /// Scores a copy's Events against the original's: each record's the same, the paths given aside.
     ///
     /// @param except    The paths the copy may add, below Event.
