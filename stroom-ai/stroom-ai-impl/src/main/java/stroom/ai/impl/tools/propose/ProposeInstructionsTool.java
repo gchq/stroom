@@ -152,7 +152,8 @@ public class ProposeInstructionsTool extends AbstractWorkspaceTool {
                                  + "or, for a folder with no " + AgentInstructions.DOC_NAME + " doc, by creating "
                                  + "and saving one). Keep what the doc says already. Short, concrete rules, one "
                                  + "per bullet; the sections the tools apply themselves are '## Required "
-                                 + "imports', '## Component templates', '## Documentation' and '## Fields'.")
+                                 + "imports', '## Component templates', '## Documentation', '## Fields', '## Event "
+                                 + "types' (an event type's timeline role a line) and '## Sources'.")
                         .chatOnly(" Draft rules from instruction_evidence's repeated choices or from what the "
                                   + "user said they always want, and read get_instructions for the folder first "
                                   + "(its guide='agent-instructions' says how the sections are written). The "

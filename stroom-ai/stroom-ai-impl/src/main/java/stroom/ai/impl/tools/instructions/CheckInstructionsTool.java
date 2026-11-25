@@ -82,8 +82,9 @@ public class CheckInstructionsTool extends AbstractBuiltInTool {
                 .description(ToolDescription.builder()
                         .general("Checks standing instructions (" + AgentInstructions.DOC_NAME + " docs): those "
                                  + "that apply in a folder, or a draft of a folder's doc. Gives problems (a line of "
-                                 + "'## Fields', '## Required imports', '## Component templates' or '## "
-                                 + "Documentation' the tools can't apply as written: an unknown key, a field no "
+                                 + "'## Fields', '## Required imports', '## Component templates', '## "
+                                 + "Documentation', '## Event types' (a role not known) or '## Sources' the tools "
+                                 + "can't apply as written: an unknown key, a field no "
                                  + "index there has, field lines under another heading, a near-miss heading) and "
                                  + "suggestions (a line the same as a more general doc's, a field the index plan "
                                  + "maps otherwise), each with a fix. Other text only guides you and is never a "

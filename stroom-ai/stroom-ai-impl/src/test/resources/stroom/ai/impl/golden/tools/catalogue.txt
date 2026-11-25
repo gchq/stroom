@@ -842,7 +842,7 @@ offered in modes: AGENT, ASK, PLAN
 
 ### Description
 
-Checks standing instructions (AGENTS docs): those that apply in a folder, or a draft of a folder's doc. Gives problems (a line of '## Fields', '## Required imports', '## Component templates' or '## Documentation' the tools can't apply as written: an unknown key, a field no index there has, field lines under another heading, a near-miss heading) and suggestions (a line the same as a more general doc's, a field the index plan maps otherwise), each with a fix. Other text only guides you and is never a problem. Offer a fix with propose_instructions; ask the user before following a suggestion.
+Checks standing instructions (AGENTS docs): those that apply in a folder, or a draft of a folder's doc. Gives problems (a line of '## Fields', '## Required imports', '## Component templates', '## Documentation', '## Event types' (a role not known) or '## Sources' the tools can't apply as written: an unknown key, a field no index there has, field lines under another heading, a near-miss heading) and suggestions (a line the same as a more general doc's, a field the index plan maps otherwise), each with a fix. Other text only guides you and is never a problem. Offer a fix with propose_instructions; ask the user before following a suggestion.
 
 ### Parameters
 
@@ -2831,7 +2831,7 @@ offered in modes: AGENT, ASK, PLAN
 
 ### Description
 
-Proposes standing instructions for a folder: the text of its AGENTS doc, which applies to the folder and everything below it. The user is shown a diff with a 'Review and apply' button; nothing changes until they apply it (to the doc's editor, unsaved, for them to save; or, for a folder with no AGENTS doc, by creating and saving one). Keep what the doc says already. Short, concrete rules, one per bullet; the sections the tools apply themselves are '## Required imports', '## Component templates', '## Documentation' and '## Fields'. Draft rules from instruction_evidence's repeated choices or from what the user said they always want, and read get_instructions for the folder first (its guide='agent-instructions' says how the sections are written). The proposal is checked as check_instructions checks it. action=draft drafts the folder's '## Fields' lines from the indexes there and what the user said (fields), asking only what they alone know; then propose the draft.
+Proposes standing instructions for a folder: the text of its AGENTS doc, which applies to the folder and everything below it. The user is shown a diff with a 'Review and apply' button; nothing changes until they apply it (to the doc's editor, unsaved, for them to save; or, for a folder with no AGENTS doc, by creating and saving one). Keep what the doc says already. Short, concrete rules, one per bullet; the sections the tools apply themselves are '## Required imports', '## Component templates', '## Documentation', '## Fields', '## Event types' (an event type's timeline role a line) and '## Sources'. Draft rules from instruction_evidence's repeated choices or from what the user said they always want, and read get_instructions for the folder first (its guide='agent-instructions' says how the sections are written). The proposal is checked as check_instructions checks it. action=draft drafts the folder's '## Fields' lines from the indexes there and what the user said (fields), asking only what they alone know; then propose the draft.
 
 ### Parameters
 
