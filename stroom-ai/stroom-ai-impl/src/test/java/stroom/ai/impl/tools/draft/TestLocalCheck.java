@@ -151,6 +151,24 @@ class TestLocalCheck extends DraftFixtures {
     }
 
     @Test
+    void aFieldTheMappingLeavesOutOnPurposeIsNotSaidToBeReadByNothing() {
+        // Seen in eval case 105 on Haiku: src_ip listed in ignored_fields, as the user asked, and still warned of as
+        // read by nothing, so the agent took the warning as one it couldn't clear.
+        final TranslationMapping mapping = mapping(json("""
+                {"input": "json", "json_layout": "lines", "ignored_fields": ["src_ip"], "common": [
+                 {"path": "EventTime/TimeCreated", "field": "ts"}],
+                 "events": [{"name": "a", "fields": [{"path": "EventDetail/TypeId", "value": "x"}]}]}"""));
+
+        final Map<String, Object> check = LocalCheck.checkMapping(mapping, records(mapping, """
+                {"ts": "2026-10-01T10:00:00Z", "src_ip": "198.51.100.7", "host": "gw"}""", null));
+
+        assertThat(warnings(check)).filteredOn(w -> w.startsWith("fields in the sample that nothing reads"))
+                .containsExactly("fields in the sample that nothing reads (1 of 3): ['host']: map each to the "
+                                 + "element that means it (a Data entry if nothing else fits), or leave it out on "
+                                 + "purpose.");
+    }
+
+    @Test
     void aMapNoneOfWhoseKeysTheSampleHoldsIsWarnedOf() {
         // Seen in testing: iptables' PROTO=TCP mapped by protocol number, so every dropped packet was Other.
         final TranslationMapping mapping = mapping(json("""

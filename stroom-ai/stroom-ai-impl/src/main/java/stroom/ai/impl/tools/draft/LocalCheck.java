@@ -2145,6 +2145,9 @@ public final class LocalCheck {
                     .filter(k -> !k.equals(mapping.forEach()))
                     .filter(k -> !derived.contains(k) && !suggested.contains(k) && !MappingFacts.readsInput(mapping, k))
                     .filter(k -> !(xml && readWords.containsAll(ToolText.findall(WORD, k))))
+                    // Left out on purpose: not read by nothing (seen in eval case 105 on Haiku, src_ip listed in
+                    // ignored_fields and still warned of).
+                    .filter(k -> !mapping.ignoredFields().contains(k))
                     .toList();
             if (!unread.isEmpty()) {
                 // A parsed field no output reads is lost from every event: often one the request asked for (a
