@@ -23,7 +23,7 @@ package stroom.query.language.functions;
         commonReturnType = Val.class,
         commonReturnDescription = "The result of multiplying the supplied number by -1",
         signatures = @FunctionSignature(
-                description = "Multiplies the supplied value by -1",
+                description = "Multiplies the supplied value by -1. The value can be a duration or period.",
                 args = {
                         @FunctionArg(
                                 name = "value",

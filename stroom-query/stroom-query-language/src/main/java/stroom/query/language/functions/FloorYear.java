@@ -28,10 +28,11 @@ import java.time.Period;
         commonReturnType = ValDate.class,
         commonReturnDescription = "The result date and time.",
         signatures = @FunctionSignature(
-                description = "Rounds the supplied time down to the start of the current year.",
+                description = "Rounds the supplied time down to the start of its year, in the time zone of the query.",
                 args = @FunctionArg(
                         name = "time",
-                        description = "The time to round.",
+                        description = "The date, a number of milliseconds since the epoch (1 Jan 1970), or text of " +
+                                "either. Text that is not a date gives a null.",
                         argType = Val.class)))
 class FloorYear extends AbstractRoundDateTime {
 

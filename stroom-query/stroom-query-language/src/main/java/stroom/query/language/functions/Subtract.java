@@ -28,10 +28,11 @@ import java.util.function.Supplier;
         commonReturnDescription = "The result of subtracting each argument from the last argument or result of the " +
                 "last subtraction.",
         commonDescription = "Subtracts arg2 from arg1. Minimum of two arguments. If more than two arguments are " +
-                "supplied then each argument is subtracted from the previous result, e.g. subtract(10, 5, 2) returns " +
-                "3. Can be expressed as '${field1}-${field2}'. A date minus a date is a duration. A duration, " +
-                "e.g. 2h, or a period, e.g. 1M, can be subtracted from a date. A period is subtracted in the time " +
-                "zone of the query.",
+                "supplied then each argument is subtracted from the previous result, e.g. subtract(10, 5, 2) " +
+                "returns 3. Can be expressed as '${field1}-${field2}'. A date minus a date is a duration. A " +
+                "duration, e.g. 2h, or a period, e.g. 1d or 1M, can be subtracted from a date. A period is " +
+                "subtracted on the calendar in the time zone of the query. Put dates in quotes, as 2024-07-03 " +
+                "without them is 2024 minus 7 minus 3.",
         signatures = @FunctionSignature(
                 args = @FunctionArg(
                         name = "arg",

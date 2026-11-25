@@ -27,10 +27,11 @@ import java.time.ZonedDateTime;
         commonReturnType = ValBoolean.class,
         commonReturnDescription = "Is the date a weekend day or not.",
         signatures = @FunctionSignature(
-                description = "Returns whether a date is part of the weekend or not.",
+                description = "Returns whether a date is on a Saturday or Sunday, in the time zone of the query.",
                 args = @FunctionArg(
                         name = "time",
-                        description = "The time to test.",
+                        description = "The date, a number of milliseconds since the epoch (1 Jan 1970), or text of " +
+                                "either. Text that is not a date gives a null.",
                         argType = Val.class)))
 class IsWeekend extends AbstractDateTimeFunction {
 

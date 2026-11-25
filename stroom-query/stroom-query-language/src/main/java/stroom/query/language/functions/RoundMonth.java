@@ -28,10 +28,12 @@ import java.time.Period;
         commonReturnType = ValDate.class,
         commonReturnDescription = "The result date and time.",
         signatures = @FunctionSignature(
-                description = "Rounds the supplied time up or down to the nearest start of a month.",
+                description = "Rounds the supplied time up or down to the nearest start of a month, in the time zone " +
+                        "of the query. Halfway is rounded up.",
                 args = @FunctionArg(
                         name = "time",
-                        description = "The time to round.",
+                        description = "The date, a number of milliseconds since the epoch (1 Jan 1970), or text of " +
+                                "either. Text that is not a date gives a null.",
                         argType = Val.class)))
 class RoundMonth extends AbstractRoundDateTime {
 

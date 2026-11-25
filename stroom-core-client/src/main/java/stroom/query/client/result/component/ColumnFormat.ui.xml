@@ -66,7 +66,7 @@
 
         <!-- Duration settings -->
         <form:FormGroup ui:field="formatDurationStyle" identity="formatDurationStyle" label="Style"
-                        helpText="How durations are written: Exact (every unit needed, e.g. 2d1h30m), ISO 8601 (e.g. PT49H30M) or Pattern (your own layout, e.g. 2.01:30:00). A number is taken as milliseconds, and a value that is not a duration is shown as it is. Default is Exact."
+                        helpText="How durations are written: Exact (every unit needed, e.g. 2d1h30m), ISO 8601 (e.g. PT49H30M) or Pattern (your own layout, e.g. 2.01:30:00). A number is taken as milliseconds, and a value that is not a duration is shown as it is. Filters on the column can be a duration, e.g. =1h or &gt;90m, or milliseconds. == compares the text exactly. Default is Exact."
                         screenReaderText="Exact, ISO 8601 or Pattern.">
             <i:SelectionBox ui:field="durationStyle" addStyleNames="w-100"/>
         </form:FormGroup>

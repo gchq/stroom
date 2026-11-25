@@ -31,9 +31,10 @@ import java.util.function.Supplier;
         signatures = {
                 @FunctionSignature(
                         description = "Parses the supplied value as a duration. It can be numbers with the units w, " +
-                                      "d, h, m, s, ms, us and ns, e.g. 1d 2h or 1.5h, ISO 8601, e.g. PT1H30M, or a " +
-                                      "number of milliseconds. A day is 24 hours. Use parsePeriod for months and " +
-                                      "years.",
+                                "d, h, m, s, ms, us and ns, e.g. '1d 2h' or '1.5h', ISO 8601, e.g. 'PT1H30M', or a " +
+                                "number of milliseconds. Units must be in lower case, as 1M is a month. A day is 24 " +
+                                "hours, and any part of a millisecond is dropped. Use parsePeriod for months and " +
+                                "years.",
                         args = @FunctionArg(
                                 name = "value",
                                 argType = ValString.class,

@@ -31,16 +31,17 @@ import java.util.function.Supplier;
         name = ParseDate.NAME,
         commonCategory = FunctionCategory.DATE,
         commonReturnType = ValDate.class,
-        commonReturnDescription = "The date as number of milliseconds since the epoch.",
+        commonReturnDescription = "The date and time.",
         signatures = {
                 @FunctionSignature(
                         args = @FunctionArg(
                                 name = "dateString",
                                 argType = ValString.class,
                                 description = "The date string, e.g. '2014 02 22'"),
-                        description = "Parse dateString as an ISO 8601 date and time, " +
-                                      "e.g. '2014-02-22T12:12:12.888Z'. If dateString has no offset then it " +
-                                      "is in the time zone of the query."),
+                        description = "Parse dateString as an ISO 8601 date and time, e.g. " +
+                                "'2014-02-22T12:12:12.888Z'. If dateString has no offset then it is in the time " +
+                                "zone of the query. Put dates in quotes, as 2014-02-22 without them is a " +
+                                "subtraction. A number is milliseconds since the epoch."),
                 @FunctionSignature(
                         args = {
                                 @FunctionArg(
@@ -50,7 +51,8 @@ import java.util.function.Supplier;
                                 @FunctionArg(
                                         name = "pattern",
                                         argType = ValString.class,
-                                        description = "The format pattern, e.g. 'yyyy MM dd'")},
+                                        description = "The format pattern, e.g. 'yyyy MM dd'. Parts in square " +
+                                                "brackets are optional, e.g. 'yyyy-MM-dd[ HH:mm]'.")},
                         description = "Parse dateString using the supplied date format pattern. If dateString " +
                                       "has no offset then it is in the time zone of the query, or UTC if the " +
                                       "pattern ends with a quoted 'Z', 'UTC' or 'GMT'."),
@@ -63,12 +65,15 @@ import java.util.function.Supplier;
                                 @FunctionArg(
                                         name = "pattern",
                                         argType = ValString.class,
-                                        description = "The format pattern, e.g. 'yyyy MM dd'"),
+                                        description = "The format pattern, e.g. 'yyyy MM dd'. Parts in square " +
+                                                "brackets are optional, e.g. 'yyyy-MM-dd[ HH:mm]'."),
 
                                 @FunctionArg(
                                         name = "timezone",
                                         argType = ValString.class,
-                                        description = "The timezone, e.g. '+0400', which can be a field."),
+                                        description = "The time zone, e.g. 'Europe/London' or '+0400', which can be " +
+                                                "a field. Short names such as 'BST' and 'EST' are not accepted, as " +
+                                                "they mean different things to different people."),
                         },
                         description = "Parse dateString using the supplied date format pattern. If dateString " +
                                       "has no offset then it is in the supplied timezone.")})

@@ -29,8 +29,9 @@ import java.util.function.Supplier;
         commonReturnType = Val.class,
         commonReturnDescription = "The sum of all values",
         commonDescription = "Adds the value of all arguments together. Minimum of two arguments. Can be expressed as " +
-                            "'${field1}+${field2}'. A duration, e.g. 2h, or a period, e.g. 1M, can be added to a " +
-                            "date. A period is added in the time zone of the query.",
+                "'${field1}+${field2}'. A duration, e.g. 2h, or a period, e.g. 1d or 1M, can be added to a date. A " +
+                "period is added on the calendar in the time zone of the query, so adding 1d keeps the local time " +
+                "when the clocks change, and adding 24h does not.",
         signatures = @FunctionSignature(
                 args = @FunctionArg(
                         name = "arg",

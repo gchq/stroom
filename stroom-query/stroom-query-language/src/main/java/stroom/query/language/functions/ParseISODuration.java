@@ -30,7 +30,8 @@ import java.util.function.Supplier;
         commonReturnDescription = "The parsed ISO duration.",
         signatures = {
                 @FunctionSignature(
-                        description = "Parses the supplied value as an ISO duration, e.g. PT3H",
+                        description = "Parses the supplied value as an ISO 8601 duration, e.g. 'PT3H' or 'P1DT2H'. A " +
+                                "day is 24 hours. Use parsePeriod for days, weeks, months and years on the calendar.",
                         args = @FunctionArg(
                                 name = "value",
                                 argType = ValString.class,

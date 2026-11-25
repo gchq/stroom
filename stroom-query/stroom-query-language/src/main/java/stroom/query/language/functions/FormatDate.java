@@ -36,7 +36,8 @@ import java.util.function.Supplier;
                         args = @FunctionArg(
                                 name = "date",
                                 argType = ValLong.class,
-                                description = "The date as milliseconds since the epoch (1 Jan 1970)"),
+                                description = "The date, a number of milliseconds since the epoch (1 Jan 1970), or " +
+                                        "text of either."),
                         returnDescription = "A date string in the default date format pattern.",
                         description = "Convert the date to a string using the default date format pattern (" +
                                 DateUtil.DEFAULT_PATTERN + ") and the time zone of the query."),
@@ -45,7 +46,8 @@ import java.util.function.Supplier;
                                 @FunctionArg(
                                         name = "date",
                                         argType = ValLong.class,
-                                        description = "The date as milliseconds since the epoch (1 Jan 1970)"),
+                                        description = "The date, a number of milliseconds since the epoch (1 Jan " +
+                                                "1970), or text of either."),
                                 @FunctionArg(
                                         name = "pattern",
                                         argType = ValString.class,
@@ -59,7 +61,8 @@ import java.util.function.Supplier;
                                 @FunctionArg(
                                         name = "date",
                                         argType = ValLong.class,
-                                        description = "The date as milliseconds since the epoch (1 Jan 1970)"),
+                                        description = "The date, a number of milliseconds since the epoch (1 Jan " +
+                                                "1970), or text of either."),
                                 @FunctionArg(
                                         name = "pattern",
                                         argType = ValString.class,
@@ -68,7 +71,9 @@ import java.util.function.Supplier;
                                 @FunctionArg(
                                         name = "timezone",
                                         argType = ValString.class,
-                                        description = "The timezone, e.g. '+0400', which can be a field.")},
+                                        description = "The time zone, e.g. 'Europe/London' or '+0400', which can be " +
+                                                "a field. Short names such as 'BST' and 'EST' are not accepted, as " +
+                                                "they mean different things to different people.")},
                         returnDescription = "A date string in the supplied date format pattern.",
                         description = "Convert the date to a string using the supplied date format " +
                                 "pattern and timezone.")})

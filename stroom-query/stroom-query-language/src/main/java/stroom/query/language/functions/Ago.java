@@ -31,8 +31,9 @@ import java.util.function.Supplier;
         commonReturnType = ValDate.class,
         commonReturnDescription = "The date and time.",
         signatures = @FunctionSignature(
-                description = "Gets the time that was a duration or period before now, in the " +
-                              "time zone of the query. ago(1d) is the same as now() - 1d.",
+                description = "Gets the time that was a duration or period before now, in the time zone of the " +
+                        "query. ago(1d) is the same as now() - 1d, which is 23 or 25 hours ago if the clocks have " +
+                        "changed. Use ago(24h) for exactly 24 hours.",
                 args = {
                         @FunctionArg(
                                 name = "amount",

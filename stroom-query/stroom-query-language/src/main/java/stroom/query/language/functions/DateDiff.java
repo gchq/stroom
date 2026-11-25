@@ -29,9 +29,10 @@ import java.util.function.Supplier;
         commonReturnType = ValLong.class,
         commonReturnDescription = "The number of whole units.",
         signatures = @FunctionSignature(
-                description = "Counts the whole units from one date to another. Days and longer " +
-                              "units are counted on the calendar in a time zone, and shorter " +
-                              "units are exact.",
+                description = "Counts the whole units from one date to another. Days and longer units are counted on " +
+                        "the calendar in a time zone, and shorter units are exact. 31 January to 1 February is 0 " +
+                        "whole months. To count the months that start between two dates use dateDiff('month', " +
+                        "floorMonth(start), floorMonth(end)).",
                 args = {
                         @FunctionArg(
                                 name = "unit",

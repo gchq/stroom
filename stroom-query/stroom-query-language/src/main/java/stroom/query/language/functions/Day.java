@@ -27,7 +27,8 @@ import java.time.temporal.ChronoUnit;
         commonReturnType = ValDate.class,
         commonReturnDescription = "The current date and time truncated to the start of the day.",
         signatures = @FunctionSignature(
-                description = "Returns the current date and time truncated to the start of the day.",
+                description = "Returns the current date and time truncated to the start of the day, in the time zone " +
+                        "of the query.",
                 args = {}))
 class Day extends AbstractCurrentDateTimeFunction {
 
