@@ -36,6 +36,9 @@ import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.generation.XsltReader;
 import stroom.ai.impl.tools.processing.MergedPipeline.TranslationDoc;
+import stroom.ai.impl.tools.processing.XsltStages;
+import stroom.ai.impl.tools.processing.XsltStages.Stage;
+import stroom.ai.impl.tools.processing.XsltStages.StagedXslt;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
@@ -102,6 +105,8 @@ class RebuildMappingTool extends AbstractBuiltInTool {
     // The build records: whether a build started from an existing pipeline; none in tests that make the tool
     // themselves.
     private Provider<BuildRecords> buildRecordsProvider;
+    // Tells each XSLT's stage; none in tests that make the tool themselves.
+    private XsltStages xsltStages;
 
     @Inject
     RebuildMappingTool(final TranslationDocs translationDocs,
@@ -143,6 +148,16 @@ class RebuildMappingTool extends AbstractBuiltInTool {
     @Inject
     void setBuildRecords(final Provider<BuildRecords> buildRecords) {
         this.buildRecordsProvider = buildRecords;
+    }
+
+    /// Tells each XSLT's stage (set by injection; none in tests that make the tool themselves): an XSLT that isn't
+    /// its pipeline's translation (a pre-processor before it, a decorator after it, an indexing XSLT) is refused,
+    /// naming the translation.
+    ///
+    /// @param xsltStages The stage classification.
+    @Inject
+    void setXsltStages(final XsltStages xsltStages) {
+        this.xsltStages = xsltStages;
     }
 
     @Override
@@ -239,6 +254,7 @@ class RebuildMappingTool extends AbstractBuiltInTool {
         final XsltDoc xslt = translationDocs.readXslt(uuid);
         final DocRef ref = new DocRef(XsltDoc.TYPE, uuid, xslt.getName());
         guard.checkManaged(context.session(), ref);
+        refuseOtherStage(call, uuid, xslt.getName());
         final String code = NullSafe.string(xslt.getData());
         final Optional<KeptMapping.Kept> kept = KeptMapping.readMapping(xslt.getDescription());
         if (kept.isPresent() && !KeptMapping.TRANSLATION.equals(kept.get().kind())) {
@@ -559,6 +575,40 @@ class RebuildMappingTool extends AbstractBuiltInTool {
             LOGGER.debug(() -> LogUtil.message("How the build of {} starts wasn't read: {}", ref, e.getMessage()));
             return false;
         }
+    }
+
+    // An XSLT that its pipeline runs at another stage than the translation's ([XsltStages]: a pre-processor before
+    // it, say) is refused, naming the translation XSLT to give instead; where the pipeline can't be found or the
+    // stages told, the call goes on as before.
+    private void refuseOtherStage(final ToolCall call, final String uuid, final String name) {
+        if (xsltStages == null) {
+            return;
+        }
+        final StagedXslt mine;
+        final Optional<StagedXslt> translation;
+        try {
+            final String pipelineUuid = stringArg(call, PIPELINE_UUID_ARG);
+            final Runs runs = pipelineUuid != null
+                    ? new Runs(pipelineUuid, elementIn(pipelineUuid, uuid, name))
+                    : pipelineOf(uuid);
+            final List<StagedXslt> staged = xsltStages.classify(pipelineShapes.merged(runs.pipelineUuid()));
+            mine = staged.stream().filter(xslt -> xslt.element().equals(runs.element())).findFirst().orElse(null);
+            translation = XsltStages.first(staged, Stage.TRANSLATION);
+        } catch (final ToolRefusal | PipelineUnreadableException e) {
+            return;
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("The stage of XSLT {} wasn't told: {}", uuid, e.getMessage()), e);
+            return;
+        }
+        if (mine == null || mine.stage() == Stage.TRANSLATION || mine.stage() == Stage.UNKNOWN) {
+            return;
+        }
+        throw new ToolRefusal("XSLT '" + name + "' is its pipeline's " + mine.stage().label() + " XSLT (element "
+                              + mine.element() + "), not its translation: rebuild_mapping reads a translation's "
+                              + "mapping" + translation.map(StagedXslt::xslt)
+                                      .map(found -> ". Give uuid=" + found.getUuid() + " ('" + found.getName()
+                                                    + "'), the translation")
+                                      .orElse("") + ".");
     }
 
     // The pipeline that runs the XSLT as its own (not through a template), and the element it is set on.

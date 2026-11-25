@@ -41,7 +41,11 @@ import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.processing.ErrorTriage;
+import stroom.ai.impl.tools.processing.MergedPipeline;
 import stroom.ai.impl.tools.processing.MergedPipeline.TranslationDoc;
+import stroom.ai.impl.tools.processing.XsltStages;
+import stroom.ai.impl.tools.processing.XsltStages.Stage;
+import stroom.ai.impl.tools.processing.XsltStages.StagedXslt;
 import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.streams.SteppingWalks;
 import stroom.ai.impl.tools.streams.StreamReader;
@@ -99,6 +103,8 @@ class FieldMappingSections {
     private final SteppedSamples steppedSamples;
     // Gives the feeds a build is for; none in tests that make this themselves.
     private Provider<BuildPlan> planProvider;
+    // Tells each XSLT's stage; none in tests that make this themselves.
+    private XsltStages xsltStages;
 
     /// @param stepping        Steps the pipeline over the sample streams.
     /// @param cef             Steps a CEF pipeline, reading its lines and the Events they came from.
@@ -142,6 +148,15 @@ class FieldMappingSections {
     @Inject
     void setPlan(final Provider<BuildPlan> plan) {
         this.planProvider = plan;
+    }
+
+    /// Tells each XSLT's stage (set by injection; none in tests that make this themselves, which read the pipeline's
+    /// first own XSLT): the translation documented for an events pipeline, the indexing XSLT for an indexing one.
+    ///
+    /// @param xsltStages The stage classification.
+    @Inject
+    void setXsltStages(final XsltStages xsltStages) {
+        this.xsltStages = xsltStages;
     }
 
     /// The Field mapping section generated from the kept mapping (stepped over the sample streams, with each Event
@@ -191,7 +206,7 @@ class FieldMappingSections {
     String writtenFieldsSection(final ToolCallContext context,
                                 final String pipelineUuid,
                                 final List<Long> streamIds) {
-        final String element = ownXslt(pipelineUuid).element();
+        final String element = ownXslt(pipelineUuid, Stage.INDEXING).element();
         final SteppedPipeline loaded = load(pipelineUuid);
         final List<Map<String, List<String>>> documents = IndexFieldDocs.indexDocuments(
                 outputs(context, loaded, streamIds, element, null));
@@ -220,7 +235,7 @@ class FieldMappingSections {
                                 final List<Long> streamIds,
                                 final String layout,
                                 final Descriptions described) {
-        final TranslationDoc own = ownXslt(pipelineUuid);
+        final TranslationDoc own = ownXslt(pipelineUuid, Stage.TRANSLATION);
         final String code = documentAccessProvider.get().read(own.doc(), XsltDoc.class)
                 .map(XsltDoc::getData)
                 .orElseThrow(() -> new ToolRefusal("The pipeline's XSLT '" + own.doc().getName() + "' can't be "
@@ -795,13 +810,33 @@ class FieldMappingSections {
         }
     }
 
-    // The pipeline's own XSLT (not its template's).
-    private TranslationDoc ownXslt(final String pipelineUuid) {
-        return pipelineShapes.merged(pipelineUuid).translationDocs(pipelineUuid).stream()
+    // The pipeline's own XSLT (not its template's) of the stage given ([XsltStages]: never a pre-processor before
+    // the translation); its first own XSLT where none of its own is of that stage, or the stages can't be told.
+    private TranslationDoc ownXslt(final String pipelineUuid, final Stage stage) {
+        final MergedPipeline merged = pipelineShapes.merged(pipelineUuid);
+        final List<TranslationDoc> own = merged.translationDocs(pipelineUuid).stream()
                 .filter(entry -> !entry.inheritedFromTemplate() && XsltDoc.TYPE.equals(entry.doc().getType()))
-                .findFirst()
-                .orElseThrow(() -> new ToolRefusal("The pipeline has no XSLT of its own to document: give it one, or "
-                                                   + "document the template"));
+                .toList();
+        if (own.isEmpty()) {
+            throw new ToolRefusal("The pipeline has no XSLT of its own to document: give it one, or document the "
+                                  + "template");
+        }
+        if (xsltStages != null && own.size() > 1) {
+            try {
+                final Optional<String> element = XsltStages.first(xsltStages.classify(merged), stage)
+                        .map(StagedXslt::element);
+                final Optional<TranslationDoc> staged = element.flatMap(found -> own.stream()
+                        .filter(entry -> entry.element().equals(found))
+                        .findFirst());
+                if (staged.isPresent()) {
+                    return staged.get();
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> LogUtil.message("The stages of {} weren't told: {}", pipelineUuid,
+                        e.getMessage()), e);
+            }
+        }
+        return own.getFirst();
     }
 
     // The Events schema an XSLT with no mapping writes: the fork its code writes, else the event-logging version it

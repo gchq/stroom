@@ -23,8 +23,10 @@ import stroom.ai.impl.tools.fielddoc.Descriptions;
 import stroom.ai.impl.tools.fielddoc.FieldDocs;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.processing.MergedPipeline;
+import stroom.ai.impl.tools.processing.XsltStages;
 import stroom.ai.impl.tools.streams.SteppingWalks;
 import stroom.ai.impl.tools.streams.StreamSummaries;
+import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.docref.DocRef;
 import stroom.meta.shared.Meta;
@@ -101,6 +103,46 @@ class TestFieldMappingSections {
                 List.of(873L), FieldDocs.BY_EVENT_TYPE, new Descriptions()))
                 .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("streams ['873 (ACME, Events)'] hold no events");
+    }
+
+    @Test
+    void aHandWrittenPipelinesTranslationIsDocumentedNotThePreProcessorBeforeIt() {
+        final MergedPipeline merged = Mockito.mock(MergedPipeline.class);
+        final DocRef pre = new DocRef(XsltDoc.TYPE, "pre", "ACME-Unpack");
+        final DocRef xslt = new DocRef(XsltDoc.TYPE, "x", "ACME-Events");
+        Mockito.when(merged.translationDocs(Mockito.any())).thenReturn(List.of(
+                new MergedPipeline.TranslationDoc("preFilter", "XSLTFilter", pre, "p", false),
+                new MergedPipeline.TranslationDoc("translationFilter", "XSLTFilter", xslt, "p", false)));
+        Mockito.when(merged.chain()).thenReturn(List.of("dsParser", "preFilter", "translationFilter"));
+        Mockito.when(merged.elements()).thenReturn(Map.of("dsParser", "DSParser", "preFilter", "XSLTFilter",
+                "translationFilter", "XSLTFilter"));
+        Mockito.when(merged.pipeline()).thenReturn(new DocRef(PipelineDoc.TYPE, "p"));
+        Mockito.when(pipelineShapes.merged("p")).thenReturn(merged);
+        Mockito.when(documentAccess.read(pre, XsltDoc.class)).thenReturn(Optional.of(XsltDoc.builder().uuid("pre")
+                .name("ACME-Unpack").data("<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                                          + "xpath-default-namespace=\"records:2\" xmlns=\"records:2\" "
+                                          + "version=\"3.0\"><records/></xsl:stylesheet>").build()));
+        Mockito.when(documentAccess.read(xslt, XsltDoc.class)).thenReturn(Optional.of(XsltDoc.builder().uuid("x")
+                .name("ACME-Events").data("<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                                          + "xpath-default-namespace=\"records:2\" xmlns=\"event-logging:3\" "
+                                          + "version=\"3.0\"><Events/></xsl:stylesheet>").build()));
+        final HeldSchemas heldSchemas = Mockito.mock(HeldSchemas.class);
+        Mockito.when(heldSchemas.forks()).thenReturn(List.of());
+        sections.setXsltStages(new XsltStages(documentAccess, heldSchemas, Mockito.mock(SteppingWalks.class)));
+        final SteppedPipeline loaded = Mockito.mock(SteppedPipeline.class);
+        Mockito.when(stepping.load("p")).thenReturn(loaded);
+        Mockito.when(stepping.outputs(any(), any(), any(), anyString(), any(), anyInt()))
+                .thenReturn(new PipelineStepping.Outputs(Map.of(
+                        "5:0", events("<TypeId>login</TypeId><Authenticate><Action>Logon</Action></Authenticate>")),
+                        false));
+
+        final String section = sections.writtenEventsSection(BuildToolCalls.context(), "b", "p", List.of(5L),
+                FieldDocs.BY_EVENT_TYPE, new Descriptions());
+
+        assertThat(section).contains("#### login");
+        // Stepped at the translation, its Events read there: never at the pre-processor, which writes records.
+        Mockito.verify(stepping).outputs(any(), any(), eq(List.of(5L)), eq("translationFilter"), eq(null),
+                anyInt());
     }
 
     @Test

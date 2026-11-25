@@ -18,10 +18,17 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.processing.MergedPipeline;
 import stroom.ai.impl.tools.processing.MergedPipeline.TranslationDoc;
+import stroom.ai.impl.tools.processing.XsltStages;
+import stroom.ai.impl.tools.processing.XsltStages.Stage;
+import stroom.ai.impl.tools.processing.XsltStages.StagedXslt;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -30,11 +37,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/// The mapping a pipeline's own XSLT was generated from, kept with the XSLT (read by [KeptMapping]).
+/// The mapping a pipeline's own XSLT was generated from, kept with the XSLT (read by [KeptMapping]). Where the
+/// pipeline runs several XSLTs of its own, they are read in the order of their stages ([XsltStages], decided with
+/// the user 2026-11-25): the translation's first, then the indexing XSLT's, then any other's, so a pre-processor
+/// before the translation, or a decorator after it, is never taken for it.
 class KeptMappings {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(KeptMappings.class);
+
+    // The stages read first, in this order; any other after them.
+    private static final List<Stage> FIRST = List.of(Stage.TRANSLATION, Stage.INDEXING);
 
     private final PipelineShapes pipelineShapes;
     private final DocumentAccess documentAccess;
+    // Tells each XSLT's stage; none in tests that make this themselves (the pipeline's order is read then).
+    private XsltStages xsltStages;
 
     /// @param pipelineShapes Reads a pipeline's XSLTs.
     /// @param documentAccess Reads each XSLT, checking View.
@@ -42,6 +59,14 @@ class KeptMappings {
     KeptMappings(final PipelineShapes pipelineShapes, final DocumentAccess documentAccess) {
         this.pipelineShapes = pipelineShapes;
         this.documentAccess = documentAccess;
+    }
+
+    /// Tells each XSLT's stage (set by injection; none in tests that make this themselves).
+    ///
+    /// @param xsltStages The stage classification.
+    @Inject
+    void setXsltStages(final XsltStages xsltStages) {
+        this.xsltStages = xsltStages;
     }
 
     /// @param pipelineUuid A pipeline.
@@ -56,7 +81,8 @@ class KeptMappings {
     /// on, or empty.
     /// @throws PipelineUnreadableException if Stroom can't load the pipeline.
     Optional<KeptXslt> keptXslt(final String pipelineUuid) {
-        for (final TranslationDoc entry : pipelineShapes.merged(pipelineUuid).translationDocs(pipelineUuid)) {
+        final MergedPipeline merged = pipelineShapes.merged(pipelineUuid);
+        for (final TranslationDoc entry : byStage(merged, merged.translationDocs(pipelineUuid))) {
             if (entry.inheritedFromTemplate() || !XsltDoc.TYPE.equals(entry.doc().getType())) {
                 continue;
             }
@@ -70,6 +96,32 @@ class KeptMappings {
         return Optional.empty();
     }
 
+
+    // The pipeline's documents with its translation XSLT first, then its indexing XSLT, then the rest in the
+    // pipeline's order; as they are where the stages can't be told.
+    private List<TranslationDoc> byStage(final MergedPipeline merged, final List<TranslationDoc> docs) {
+        if (xsltStages == null) {
+            return docs;
+        }
+        final List<StagedXslt> staged;
+        try {
+            staged = xsltStages.classify(merged);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("The stages of {} weren't told: {}", merged.pipeline(),
+                    e.getMessage()), e);
+            return docs;
+        }
+        final List<TranslationDoc> ordered = new ArrayList<>();
+        for (final Stage stage : FIRST) {
+            for (final StagedXslt xslt : XsltStages.of(staged, stage)) {
+                docs.stream()
+                        .filter(doc -> doc.element().equals(xslt.element()) && !ordered.contains(doc))
+                        .forEach(ordered::add);
+            }
+        }
+        docs.stream().filter(doc -> !ordered.contains(doc)).forEach(ordered::add);
+        return ordered;
+    }
 
     /// The pipeline's own Data Splitter, as processing reads its raw streams with it.
     ///

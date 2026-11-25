@@ -23,6 +23,9 @@ import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.fielddoc.IndexFieldDocs;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.processing.MergedPipeline.TranslationDoc;
+import stroom.ai.impl.tools.processing.XsltStages;
+import stroom.ai.impl.tools.processing.XsltStages.Stage;
+import stroom.ai.impl.tools.processing.XsltStages.StagedXslt;
 import stroom.ai.impl.tools.query.IndexSearches;
 import stroom.ai.impl.tools.query.IndexSearches.Counted;
 import stroom.ai.impl.tools.query.IndexSearches.Found;
@@ -84,6 +87,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -131,6 +135,8 @@ class IndexChecks {
     private final IndexingMemory memory;
     private final IndexTemplateAgreements agreements;
     private final Sleeper sleeper;
+    // Tells each XSLT's stage; none in tests that make this themselves.
+    private XsltStages xsltStages;
 
     /// @param indexSearches Searches the index as a dashboard does.
     /// @param stepping      Steps the indexing pipeline to trace hits.
@@ -159,6 +165,15 @@ class IndexChecks {
         this.memory = memory;
         this.agreements = agreements;
         this.sleeper = sleeper;
+    }
+
+    /// Tells each XSLT's stage (set by injection; none in tests that make this themselves, which trace the
+    /// pipeline's first own XSLT): a hit is traced at the indexing XSLT, never an Events decorator before it.
+    ///
+    /// @param xsltStages The stage classification.
+    @Inject
+    void setXsltStages(final XsltStages xsltStages) {
+        this.xsltStages = xsltStages;
     }
 
     // --------------------------------------------------------------------------------
@@ -975,7 +990,7 @@ class IndexChecks {
             stepping.checkCanStep();
             final SteppedPipeline pipeline = stepping.load(pipelineUuid);
             pipeline.refuseMistyped();
-            element = ownXsltElement(pipeline, pipelineUuid);
+            element = indexingElement(pipeline, pipelineUuid);
             stepAll(context, pipeline, chosen, element, stepped, outOfTime);
         } catch (final ToolRefusal e) {
             // Each hit's trace says why, as each step failing did.
@@ -1238,9 +1253,27 @@ class IndexChecks {
         }
     }
 
+    // The element running the pipeline's own indexing XSLT ([XsltStages]: where its documents are written), else its
+    // first own XSLT.
+    private String indexingElement(final SteppedPipeline pipeline, final String pipelineUuid) {
+        final String first = ownXsltElement(pipeline, pipelineUuid);
+        if (xsltStages == null || first == null) {
+            return first;
+        }
+        try {
+            final Optional<StagedXslt> indexing = XsltStages.of(xsltStages.classify(pipeline.merged()),
+                    Stage.INDEXING).stream().filter(xslt -> !xslt.inherited()).findFirst();
+            return indexing.map(StagedXslt::element).orElse(first);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("The stages of {} weren't told: {}", pipelineUuid, e.getMessage()),
+                    e);
+            return first;
+        }
+    }
+
     /// @param pipeline     The indexing pipeline.
     /// @param pipelineUuid Its UUID.
-    /// @return The element running the pipeline's own XSLT (where its documents are written), or null.
+    /// @return The element running the pipeline's first own XSLT, or null.
     static String ownXsltElement(final SteppedPipeline pipeline, final String pipelineUuid) {
         return pipeline.merged().translationDocs(pipelineUuid).stream()
                 .filter(doc -> XsltDoc.TYPE.equals(doc.doc().getType()) && !doc.inheritedFromTemplate())

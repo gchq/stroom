@@ -21,6 +21,9 @@ import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.processing.XsltStages;
+import stroom.ai.impl.tools.streams.SteppingWalks;
+import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.documentation.shared.DocumentationDoc;
@@ -85,6 +88,36 @@ class TestRebuildMappingTool {
         assertThat(result).containsEntry("status", "in_step");
         assertThat(result.get("hint")).isEqualTo("The XSLT is what its kept mapping generates: nothing to rebuild.");
         Mockito.verifyNoInteractions(world.stepping);
+    }
+
+    @Test
+    void aPreProcessorBeforeTheTranslationIsRefusedNamingTheTranslation() {
+        // A pre-processor (records in, records out) in the build too, before the translation in a second pipeline.
+        final Map<String, Object> made = world.docs.createXslt(new ToolCall("2", SaveXsltTool.NAME, "{}"),
+                world.context(), BUILD, "ACME-Unpack", generated(TranslationWorld.parsed()),
+                TranslationDocs.Source.of(TranslationWorld.parsed()), null);
+        final String pre = String.valueOf(made.get("uuid"));
+        world.editByHand(pre, code -> "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                                      + "xpath-default-namespace=\"records:2\" xmlns=\"records:2\" version=\"3.0\">"
+                                      + "<xsl:template match=\"@*|node()\"><xsl:copy><xsl:apply-templates "
+                                      + "select=\"@*|node()\"/></xsl:copy></xsl:template></xsl:stylesheet>");
+        PipelineLayers.given(world.world.pipelineService, "p2", PipelineLayers.of(
+                PipelineLayers.layer("t").chain("dsParser", "DSParser", "preFilter", "XSLTFilter",
+                        "translationFilter", "XSLTFilter"),
+                PipelineLayers.layer("p2")
+                        .property("preFilter", "xslt", new DocRef(XsltDoc.TYPE, pre, "ACME-Unpack"))
+                        .property("translationFilter", "xslt", new DocRef(XsltDoc.TYPE, uuid, "ACME-Events"))));
+        final HeldSchemas heldSchemas = Mockito.mock(HeldSchemas.class);
+        Mockito.when(heldSchemas.forks()).thenReturn(List.of());
+        tool.setXsltStages(new XsltStages(world.world.documentAccess, heldSchemas, Mockito.mock(SteppingWalks.class)));
+
+        final Map<String, Object> refused = call(Map.of("uuid", pre, "pipeline_uuid", "p2"));
+
+        assertThat(String.valueOf(refused.get("error"))).contains("'ACME-Unpack' is its pipeline's pre-process XSLT",
+                "Give uuid=" + uuid + " ('ACME-Events'), the translation");
+        Mockito.verifyNoInteractions(world.stepping);
+        // The translation itself goes on as before.
+        assertThat(call(Map.of("pipeline_uuid", "p2"))).containsEntry("status", "in_step");
     }
 
     @Test
