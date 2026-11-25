@@ -175,7 +175,8 @@ class InPlaceInduction {
             final MergedPipeline merged = pipelineShapes.merged(pipelineUuid);
             final List<StagedXslt> staged = xsltStages.classify(merged);
             final Optional<StagedXslt> translation = XsltStages.first(staged, Stage.TRANSLATION)
-                    .filter(xslt -> xslt.xslt() != null);
+                    .filter(xslt -> xslt.xslt() != null)
+                    .map(this::named);
             if (translation.isEmpty()) {
                 return Optional.empty();
             }
@@ -191,6 +192,17 @@ class InPlaceInduction {
                     e.getMessage()), e);
             return Optional.empty();
         }
+    }
+
+    // The XSLT named as it is now, where its pipeline names it by UUID alone.
+    private StagedXslt named(final StagedXslt xslt) {
+        if (NullSafe.isNonBlankString(xslt.xslt().getName())) {
+            return xslt;
+        }
+        final String name = documentAccess.read(xslt.xslt(), XsltDoc.class).map(XsltDoc::getName)
+                .orElse(xslt.xslt().getUuid());
+        return new StagedXslt(xslt.element(), new DocRef(XsltDoc.TYPE, xslt.xslt().getUuid(), name), xslt.stage(),
+                xslt.inherited(), xslt.setBy(), xslt.how());
     }
 
     /// Describes the pipeline in place: its translation's mapping and catalogue read back from its XSLT, kept with
@@ -276,7 +288,7 @@ class InPlaceInduction {
                   + "them kept)"
                 : null);
         written.put(NOTES, original.map(notes -> ref(notes, notes.getName())).orElse(null));
-        remember(build, scope, feeds, original.orElse(null), xsltWritten, xsltWritten
+        remember(build, scope, xslt.getName(), feeds, original.orElse(null), xsltWritten, xsltWritten
                 ? null
                 : payload);
         out.put("status", "described_in_place");
@@ -396,6 +408,7 @@ class InPlaceInduction {
     // feeds it, the feeds, the notes beside the pipeline, and the mapping where it couldn't be written.
     private void remember(final String build,
                           final Scope scope,
+                          final String xsltName,
                           final List<String> feeds,
                           final DocRef notes,
                           final boolean xsltWritten,
@@ -403,7 +416,7 @@ class InPlaceInduction {
         final Map<String, Object> startFrom = new LinkedHashMap<>(buildRecords.get().startFrom(build)
                 .orElse(Map.of()));
         final Map<String, Object> described = new LinkedHashMap<>();
-        described.put(XSLT, ref(scope.translation().xslt(), scope.translation().xslt().getName()));
+        described.put(XSLT, ref(scope.translation().xslt(), xsltName));
         described.put(ELEMENT, scope.translation().element());
         described.put(PRE_PROCESSED, scope.preProcessed());
         described.put(FEEDS, feeds);
@@ -461,7 +474,10 @@ class InPlaceInduction {
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("type", ref.getType());
         out.put("uuid", ref.getUuid());
-        out.put("name", NullSafe.nonBlankStringElse(name, ref.getName()));
+        // A pipeline may name a document by its UUID alone: no name to give then.
+        out.put("name", NullSafe.isNonBlankString(name)
+                ? name
+                : ref.getName());
         return out;
     }
 

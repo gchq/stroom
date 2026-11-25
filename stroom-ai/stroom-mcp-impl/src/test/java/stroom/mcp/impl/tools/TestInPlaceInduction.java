@@ -293,6 +293,24 @@ class TestInPlaceInduction {
     }
 
     @Test
+    void aTranslationNamedByUuidAloneInItsPipelineIsDescribedAndRemembered() {
+        // Seen in the e2e suite: a pipeline naming its XSLT by UUID alone failed to be remembered (no name to say).
+        PipelineLayers.given(world.pipelineService, "hand-pipeline", PipelineLayers.of(
+                PipelineLayers.layer("t").chain("jsonParser", "JSONParser", "translationFilter", "XSLTFilter"),
+                PipelineLayers.layer("hand-pipeline").property("translationFilter", "xslt",
+                        new DocRef(XsltDoc.TYPE, "hand-xslt"))));
+        final InPlaceInduction.Scope scope = induction.scope("hand-pipeline").orElseThrow();
+
+        final Map<String, Object> described = induction.describe(BuildToolCalls.context(), BUILD, "VPN", scope,
+                List.of("VPN-A"));
+
+        assertThat(described).containsEntry("status", "described_in_place");
+        assertThat(JsonValues.mapOrEmpty(described.get("xslt"))).containsEntry("name", "VPN-Events");
+        assertThat(JsonValues.mapOrEmpty(world.records().startFrom(BUILD).orElseThrow()
+                .get(InPlaceInduction.IN_PLACE))).containsKey("xslt");
+    }
+
+    @Test
     void aPipelineWithNoTranslationHasNothingToDescribe() {
         PipelineLayers.given(world.pipelineService, "hand-pipeline", PipelineLayers.of(
                 PipelineLayers.layer("t").chain("jsonParser", "JSONParser", "preFilter", "XSLTFilter")));
