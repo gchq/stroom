@@ -252,6 +252,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         final Object given = ToolArgs.raw(call, SAMPLES_ARG);
         final List<Long> streamIds = StartOnboardingTool.streamIds(call, STREAM_IDS_ARG);
         final String build = stringArg(call, BUILD_ARG);
+        refuseExistingStart(build);
         if (given == null && streamIds.isEmpty()) {
             throw new ToolRefusal("Give the samples' text, or stream_ids of the uploaded sample streams");
         }
@@ -547,6 +548,30 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                         final String forEach) {
         return new LinkedHashMap<>(DraftMapping.draft(samples, NullSafe.string(rawArg(call, SOURCE_NAME_ARG)),
                 systemName, environment, sourceNotes, detailCheck, splitter, forEach));
+    }
+
+    // A build the user chose to start from an existing pipeline (copied, or described in place) is never drafted
+    // anew: its mapping is the one read back from that pipeline's XSLT. Seen in eval cases 103 and 105 on Haiku: a
+    // draft after the copy was read back replaced its mapping, and the records it didn't cover became Unknown events.
+    private void refuseExistingStart(final String build) {
+        if (build == null || buildRecords == null) {
+            return;
+        }
+        final Map<String, Object> startFrom = buildRecords.get().startFrom(build).orElse(null);
+        final boolean inPlace = InPlaceInduction.inPlace(startFrom);
+        if (!inPlace && (startFrom == null || !ExistingTranslations.EXISTING.equals(startFrom.get("choice")))) {
+            return;
+        }
+        final String pipeline = ToolText.str(JsonValues.mapOrEmpty(startFrom.get("pipeline")).get("name"));
+        throw new ToolRefusal(inPlace
+                ? "Build '" + build + "' describes '" + pipeline + "' in place, as the user chose: its mapping is "
+                  + "read from its XSLT, and nothing is drafted. Its event types change in catalogue_event_types "
+                  + "build=" + build + ". Nothing drafted."
+                : "Build '" + build + "' starts from '" + pipeline + "', as the user chose: its copy's XSLT is read "
+                  + "back into the mapping (rebuild_mapping), and nothing is drafted anew, which would replace "
+                  + "what it translates. Change the copy's mapping with build_translation_xslt uuid=<the copy's "
+                  + "XSLT> changes=..., and its event types in catalogue_event_types build=" + build + ". Nothing "
+                  + "drafted.");
     }
 
     // A catalogue of event types still to confirm: the translation follows the catalogue, so the draft waits for it

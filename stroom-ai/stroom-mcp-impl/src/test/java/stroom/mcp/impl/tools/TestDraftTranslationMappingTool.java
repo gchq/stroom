@@ -68,6 +68,43 @@ class TestDraftTranslationMappingTool {
     }
 
     @Test
+    void aBuildStartedFromACopyOfAnExistingPipelineIsNeverDraftedAnew() {
+        // Seen in eval cases 103 and 105 on Haiku: drafted after the copy was read back, its mapping replaced and
+        // the records it didn't cover written as Unknown events.
+        world.world.records().rememberStartFrom("vpn", Map.of("choice", ExistingTranslations.EXISTING, "pipeline",
+                Map.of("name", "VPN-Events", "uuid", "p")));
+
+        final Map<String, Object> refused = world.call(tool, Map.of("build", "vpn", "stream_ids", List.of(7)));
+
+        assertThat(String.valueOf(refused.get("error"))).contains("starts from 'VPN-Events'", "rebuild_mapping",
+                "build_translation_xslt", "Nothing drafted");
+        Mockito.verifyNoInteractions(world.sampleStreamTexts);
+    }
+
+    @Test
+    void aBuildDescribingAPipelineInPlaceIsNeverDrafted() {
+        world.world.records().rememberStartFrom("vpn", Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline",
+                Map.of("name", "VPN-Events", "uuid", "p")));
+
+        final Map<String, Object> refused = world.call(tool, Map.of("build", "vpn", "stream_ids", List.of(7)));
+
+        assertThat(String.valueOf(refused.get("error"))).contains("describes 'VPN-Events' in place",
+                "catalogue_event_types build=vpn", "Nothing drafted");
+    }
+
+    @Test
+    void aBuildWhoseUserChoseToDraftIsDrafted() {
+        // The third start choice: a new translation drafted from the sample, as for a new source.
+        world.world.records().rememberStartFrom("vpn", Map.of("choice", ExistingTranslations.DRAFT));
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", CSV), List.of()));
+
+        final Map<String, Object> draft = world.call(tool, Map.of("build", "vpn", "stream_ids", List.of(7)));
+
+        assertThat(draft).containsKey("mapping").doesNotContainKey("error");
+    }
+
+    @Test
     void neitherSamplesNorStreamsIsRefused() {
         assertThat(world.call(tool, Map.of("source_name", "Acme")))
                 .containsEntry("error", "Give the samples' text, or stream_ids of the uploaded sample streams");
