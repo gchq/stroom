@@ -2134,7 +2134,8 @@ coverage is by day across them (a day with no events from any feed is a gap, not
 Organisation field, never by feed; each feed's first and last day listed.
 
 **As built (2026-11-25, timeline reading pending).**
-* Foundations: `XsltStages` (pre-process, translation, decoration, indexing, UNKNOWN where the XSLT can't be read;
+* Foundations: `XsltStages` (pre-process, translation, decoration, output (reads Events, writes no `Events`/`Event`,
+  e.g. a flattener, not the last non-Events XSLT), indexing, UNKNOWN where the XSLT can't be read;
   by content, or by stepping one record); `DataSourceDocumentation.feedingPlans` (every feeding pipeline's plan from
   its effective indexing-stage XSLT, read once a call); `TimelineFields` (`Found.byPipeline`, the From column as
   `INDEX_DOCUMENTATION`); `StreamProvenance` (batches of 500, as the user; unseen streams counted, never named) and

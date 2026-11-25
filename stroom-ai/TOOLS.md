@@ -5771,6 +5771,13 @@ before it is stepped (`PipelineStepping.checkDrafts`). In order:
   `stroom_functions` (the `stroom:` functions it calls).
 * **Refuses**: an empty `xslt`. Everything else is an error in the result, not a refusal.
 
+**Output XSLTs (2026-11-25).** The event-element-name check runs only for an XSLT that writes an `Events` or
+`Event` element (a literal, an `xsl:element` or an `xsl:copy`) or doesn't read Events: it is skipped for an output
+XSLT, one reading Events and writing no `Events`/`Event` (`XsltStages.isOutput`), e.g. a flattener's
+`<data name= value=/>` pairs in the Events namespace (seen in a reference environment: one refusal per pair from
+check_xslt, save_xslt and step_pipeline's draft_code). Every other check still runs; shared modules writing Events
+fragments from records are still checked; there is no opt-out.
+
 ### `check_events`
 
 Content · read-only (records Events that pass as validated in the build record) · unlocked by View Data (for
