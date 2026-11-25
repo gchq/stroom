@@ -881,6 +881,32 @@ class TestActivityTimelineAnySource {
     }
 
     @Test
+    void anEventCodeNothingSettlesHasItsElementAndActionReadFromTheXmlBeforeAnyModelIsAsked() {
+        typed("09:00", 9, "proc-start", null);
+        xml.put("9:" + eventId, "<Event><EventDetail><TypeId>proc-start</TypeId><Process><Action>Execute</Action>"
+                                + "<Command>C:\\Windows\\notepad.exe</Command><ProcessId>42</ProcessId></Process>"
+                                + "</EventDetail></Event>");
+        typed("09:30", 9, "proc-end", null);
+        xml.put("9:" + eventId, "<Event><EventDetail><TypeId>proc-end</TypeId><Process><Action>Terminate</Action>"
+                                + "<Command>C:\\Windows\\notepad.exe</Command><ProcessId>42</ProcessId></Process>"
+                                + "</EventDetail></Event>");
+        Mockito.when(agentInstructions.fieldsRuled(Mockito.any(), Mockito.eq(EVENTS))).thenReturn(Map.of(
+                InstructionRules.EVENT_TYPE_FIELD, new FieldRule(List.of("TypeId"), "/")));
+
+        // Over MCP with no model: the XML settles the codes, so no refusal.
+        final Map<String, Object> result = json(mcp(), arguments(Map.of()));
+
+        final Map<String, Object> source = ((List<Map<String, Object>>) result.get("sources")).getFirst();
+        assertThat(source).containsEntry("classified_by", Map.of("Events XML", 2L));
+        assertThat((Map<String, Object>) source.get("roles_from")).containsOnlyKeys(TypeRoleLookup.FROM_SCHEMA);
+        assertThat((List<Map<String, Object>>) ((Map<String, Object>) result.get("events_xml")).get("paths_read"))
+                .singleElement().satisfies(paths -> assertThat(paths).containsEntry("paths",
+                        ActivityTimelineTool.TYPE_PATHS).containsEntry("events", 2L));
+        assertThat(files.content(FOLDER + ActivityTimelineTool.SPANS_FILE).orElseThrow())
+                .contains(",proc-start · notepad.exe,proc-start to proc-end,");
+    }
+
+    @Test
     void anAgentsDocsEventTypesGiveRolesAndTheModelsClassificationIsOfferedAsLines() {
         typed("09:00", 9, "Tun-Ascend", null);
         typed("09:10", 9, "file-open", null);
