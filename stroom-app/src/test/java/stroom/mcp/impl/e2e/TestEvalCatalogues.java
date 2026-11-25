@@ -96,8 +96,9 @@ class TestEvalCatalogues {
         }
         // Every case but the 19 question cases (62 to 64, 71 to 75, 77 to 87), the 9 skill cases (88 to 96), the 4
         // instructions cases (98 to 101), the hand-written ones (97 and 102 to 109, their translation read back from
-        // the pipeline) and the CEF forwarder (110, from Events) drafts a translation.
-        assertThat(built).isEqualTo(EvalCases.IDS.size() - 42);
+        // the pipeline), the CEF forwarder (110, from Events) and the population screen (111, a question) drafts a
+        // translation.
+        assertThat(built).isEqualTo(EvalCases.IDS.size() - 43);
     }
 
     @Test
