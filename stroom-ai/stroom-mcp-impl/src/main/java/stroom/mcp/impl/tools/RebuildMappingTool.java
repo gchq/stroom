@@ -468,7 +468,7 @@ class RebuildMappingTool extends AbstractBuiltInTool {
         }
         final Catalogue before = catalogueNotesProvider.get().catalogue(build.get()).orElse(null);
         final CatalogueFromMapping.FromMapping read = CatalogueFromMapping.read(rebuild.rebuilt().mapping(), before);
-        if (!inducting(rebuild.ref())) {
+        if (!inducting(rebuild.ref()) && !(rebuild.base() == null && copiedUnasked(build.get(), rebuild.ref()))) {
             return Optional.of(new CatalogueReadBack(build.get(), before, read));
         }
         // A build starting from an existing pipeline: the event types read back from its XSLT are proposed, put to
@@ -640,6 +640,24 @@ class RebuildMappingTool extends AbstractBuiltInTool {
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("The failed read-back of {} wasn't recorded: {}", ref,
                     e.getMessage()), e);
+        }
+    }
+
+    // A copy in the build (a new version) of an XSLT that kept no mapping, in a build with no start recorded: held
+    // for its read-back as an existing pipeline's is (BuildPlan#awaitingReadBack), so its event types are read back
+    // as that pipeline's, their TypeIds kept as it writes them. Seen in the e2e suite (2026-11-26): such a copy's
+    // TypeId 'Logon' refused as not Verb-Object when its catalogue was confirmed.
+    private boolean copiedUnasked(final String build, final DocRef ref) {
+        if (buildRecordsProvider == null) {
+            return false;
+        }
+        try {
+            final BuildRecords records = buildRecordsProvider.get();
+            return records.startFrom(build).isEmpty()
+                   && records.entry(build, ref.getUuid()).get("version_of") != null;
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Whether {} is a copy wasn't read: {}", ref, e.getMessage()));
+            return false;
         }
     }
 

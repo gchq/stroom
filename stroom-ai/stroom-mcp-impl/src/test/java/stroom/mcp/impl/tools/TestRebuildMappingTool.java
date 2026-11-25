@@ -18,6 +18,7 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.catalogue.EventType;
 import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.TranslationMapping;
@@ -467,6 +468,38 @@ class TestRebuildMappingTool {
         // Its regenerated XSLT reads src_ip as left out on purpose: never logged as a field no rule reads.
         assertThat(saved.getData()).contains("'src_ip'");
         assertThat(XsltCode.normalise(saved.getData())).isEqualTo(XsltCode.normalise(generated(kept)));
+    }
+
+    @Test
+    void aCopysXsltKeepingNoMappingIsReadBackAsTheExistingPipelinesWithNoStartRecorded() {
+        // Seen in the e2e suite (2026-11-26): a copy of a pipeline whose XSLT keeps no mapping, made with no start
+        // offered, is held for its read-back as one the user chose to start from (BuildPlan#awaitingReadBack), so
+        // its event types are the existing pipeline's too, their TypeIds kept as it writes them.
+        final BuildRecords records = world.world.records();
+        tool.setBuildRecords(() -> records);
+        tool.setCatalogueNotes(() -> new CatalogueNotes(world.world.guard(), world.world.documentAccess,
+                new DocumentWrites(world.world.documentAccess),
+                new FeedNames(() -> Mockito.mock(DocFinder.class), world.world.documentAccess)));
+        final Map<String, Object> block = new LinkedHashMap<>();
+        block.put("source", "Acme");
+        block.put("fields", List.of());
+        block.put("event_types", List.of());
+        final String notes = world.inBuild(BUILD, DocumentationDoc.TYPE, "Acme source notes").getUuid();
+        world.world.docs.put(notes, DocumentationDoc.builder().uuid(notes).name("Acme source notes").version("v0")
+                .data("# Acme source notes\n\n" + SourceNotes.block(block) + "\n").build());
+        world.world.docs.put(uuid, world.xslt(uuid).copy().description(null).updateUser("bob").build());
+        records.update(BUILD, new DocRef(XsltDoc.TYPE, uuid, "ACME-Events"), entry -> entry.put("version_of",
+                "prod-x"));
+        world.forms = true;
+        world.answers.put("Save the mapping rebuilt", "yes");
+
+        final Map<String, Object> done = call(Map.of());
+
+        assertThat(done).as("rebuilt: %s", done).containsKey("saved").containsEntry("mode", "mapping lost");
+        final Catalogue catalogue = SourceNotes.catalogue(SourceNotes.readNotes(
+                ((DocumentationDoc) world.world.docs.get(notes)).getData()));
+        assertThat(catalogue.eventTypes()).isNotEmpty()
+                .allSatisfy(type -> assertThat(type.basis()).isEqualTo(EventType.EXISTING_PIPELINE));
     }
 
     @Test
