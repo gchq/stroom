@@ -2129,6 +2129,27 @@ holding the user's events and the fields needed, up to about 10, beyond which th
 coverage is by day across them (a day with no events from any feed is a gap, not quiet); peers by the
 Organisation field, never by feed; each feed's first and last day listed.
 
+**As built (2026-11-25, timeline reading pending).**
+* Foundations: `XsltStages` (pre-process, translation, decoration, indexing, UNKNOWN where the XSLT can't be read;
+  by content, or by stepping one record); `DataSourceDocumentation.feedingPlans` (every feeding pipeline's plan from
+  its effective indexing-stage XSLT, read once a call); `TimelineFields` (`Found.byPipeline`, the From column as
+  `INDEX_DOCUMENTATION`); `StreamProvenance` (batches of 500, as the user; unseen streams counted, never named) and
+  `timelineRoles`; `SourceNotesLinks` (the hidden `source notes` block, `{uuid, name}`, by the promoted UUID for a
+  working copy); `FeedingPlanMerges` (templates).
+* Promotion: `PromotionSwitchOver`, `FeedVolumes`, `PromotedFeeds` (the session's feed selection for
+  `build_status`; derived, so a new session has nothing to report); every filter is created disabled, as before
+  (confirmed by the user): brand-new feeds get the Enable button, overlapping ones the ordered switch-over.
+* Several feeds: a new tool, `compare_feeds`, and the plan step `feeds_compared`; one index per feed is one indexing
+  pipeline per feed (`FeedIndexes`; it serves Lucene too, readers are separated by each index doc's permissions, and
+  in a build `{feed}` would fill with the test feed's name); dormant is over 30 days since a feed's own last stream;
+  unknown read permissions count as differing; the test feed keeps `<first feed>-MCP-TEST`, its settings said.
+* Induction: the third start choice of `catalogue_event_types`, "describe it in place" (no new tool or build kind);
+  `XsltUsers` (pipelines running the XSLT, their feeds, an estimate at roughly 30 s a survey call); the source
+  notes moved beside the pipeline, the build keeping a working copy; the drift check passes a mapping read from the
+  same XSLT (`inducted.xslt`); a raw survey made before a pre-processed start is stale.
+* Eval cases 102 to 105 (several feeds: `setup.hand_written.other_feeds`, `expected.several_feeds`) and 106 to 109
+  (in place: `description`, `pre_process`, `shared_with`, `expected.in_place`).
+
 **Audit findings** (HEAD ba5e771df6): promotion advised disabling the earlier version's filters while they still
 translated other feeds (`PromoteBuildTool` 780-811), and listed old indexing filters likewise
 (`PromotionProcessing` 112-140, 233-290); new filters covered only the sampled feeds (`PromotionProcessing`
