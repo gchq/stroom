@@ -61,6 +61,9 @@ final class TimelineResult {
     /// The most lanes gantt_chart draws in one chart (as `GanttCharts` keeps).
     static final int MAX_LANES = 20;
 
+    // Why a source's events weren't deduplicated.
+    private static final String NOT_DEDUPLICATED = "its index has no StreamId and EventId, so an event read twice "
+                                                   + "can't be told";
     // The most types listed for each origin of a source's roles.
     private static final int MAX_TYPES_LISTED = 20;
     // The most days an overview's result lists (the busiest); every day is in its file.
@@ -109,6 +112,13 @@ final class TimelineResult {
             final Map<String, Map<String, Long>> byStream = reading(run).byStream().get(i);
             if (byStream != null && !byStream.isEmpty()) {
                 source.put("fields_by_pipeline", byStream);
+            }
+            final Integer duplicates = reading(run).duplicates().get(i);
+            if (duplicates != null && duplicates > 0) {
+                source.put("duplicates_left_out", duplicates);
+            }
+            if (reading(run).notDeduplicated().contains(i)) {
+                source.put("not_deduplicated", NOT_DEDUPLICATED);
             }
             final Map<String, Set<String>> origins = NullSafe.map(run.classification().roleFrom()).get(i);
             if (origins != null && !origins.isEmpty()) {
@@ -630,6 +640,18 @@ final class TimelineResult {
     }
 
     /// @return The result as Markdown, for a chat.
+    // A source's documents of events read more than once, left out, or why it wasn't deduplicated.
+    private static String dedupeText(final TimelineRun run, final int i) {
+        final Integer duplicates = reading(run).duplicates().get(i);
+        if (reading(run).notDeduplicated().contains(i)) {
+            return "; not deduplicated (" + NOT_DEDUPLICATED + ")";
+        }
+        return duplicates == null || duplicates == 0
+                ? ""
+                : "; " + duplicates + " duplicate document(s) left out (an event counted once by its raw stream "
+                  + "and record)";
+    }
+
     static String markdown(final TimelineRun run, final Files files) {
         final ZoneId zoneId = run.zone().zone();
         final Timeline timeline = run.timeline();
@@ -671,7 +693,8 @@ final class TimelineResult {
                             ? "; accounts " + accountsText(accounts(run, i), source.values())
                             : "").append(routes.isEmpty()
                             ? ""
-                            : "; events classified " + String.join(", ", routes)).append('\n');
+                            : "; events classified " + String.join(", ", routes))
+                    .append(dedupeText(run, i)).append('\n');
         }
         if (byLogon(run)) {
             sb.append(PersonScope.OTHER_ACCOUNTS).append('\n');

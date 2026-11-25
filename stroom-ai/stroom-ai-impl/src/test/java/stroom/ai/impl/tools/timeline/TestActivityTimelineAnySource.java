@@ -999,6 +999,52 @@ class TestActivityTimelineAnySource {
     }
 
     @Test
+    void aReprocessedEventsOldAndNewDocumentsAreCountedOnceByTheirRawStreamAndRecord() {
+        // Raw stream 8 translated twice: Events streams 21 (old) and 22 (reprocessed), the same records 1 and 2.
+        for (final long stream : new long[]{21, 22}) {
+            events.add(new LinkedHashMap<>(Map.of("EventTime", at("09:00"), "UserId", "pat", "HostName",
+                    "ws-" + stream, "SchemaAction", "View", "StreamId", stream, "EventId", 1L)));
+            events.add(new LinkedHashMap<>(Map.of("EventTime", at("09:05"), "UserId", "pat", "HostName",
+                    "ws-" + stream, "SchemaAction", "View", "StreamId", stream, "EventId", 2L)));
+        }
+        // Another raw stream's record 1 is another event.
+        events.add(new LinkedHashMap<>(Map.of("EventTime", at("09:10"), "UserId", "pat", "HostName", "ws-30",
+                "SchemaAction", "View", "StreamId", 30L, "EventId", 1L)));
+        Mockito.when(streamProvenance.of(Mockito.any())).thenReturn(new Provenance(Map.of(
+                21L, new StreamSource(21L, "ENDPOINT", "Events", null, null, 8L),
+                22L, new StreamSource(22L, "ENDPOINT", "Events", null, null, 8L),
+                30L, new StreamSource(30L, "ENDPOINT", "Events", null, null, 9L)), 0, Map.of()));
+        elementInIndex = true;
+
+        final Map<String, Object> result = json(mcp(), arguments(Map.of("sources", List.of("Events"))));
+
+        assertThat(result).containsEntry("events_read", 3L);
+        final Map<String, Object> source = ((List<Map<String, Object>>) result.get("sources")).getFirst();
+        assertThat(source).containsEntry("duplicates_left_out", 2L).doesNotContainKey("not_deduplicated");
+        // The reprocessed (newest) documents kept.
+        assertThat(files.content(FOLDER + ActivityTimelineTool.EVENTS_FILE).orElseThrow()).contains(",22,1,",
+                ",22,2,", ",30,1,").doesNotContain(",21,");
+    }
+
+    @Test
+    void anIndexWithoutStreamIdsIsSaidNotDeduplicated() {
+        code("09:00", "pat", "login");
+        code("09:00", "pat", "login");
+        final ModelSideCalls model = model(new ArrayList<>(), "{\"login\": {\"role\": \"active\", \"kind\": "
+                                                              + "\"logon\"}}");
+
+        Mockito.when(agentInstructions.fieldsRuled(Mockito.any(), Mockito.eq(CODES))).thenReturn(Map.of(
+                InstructionRules.EVENT_TYPE_FIELD, new FieldRule(List.of("code"), "/")));
+
+        final Map<String, Object> result = json(mcpWith(model), arguments(Map.of("sources", List.of(Map.of(
+                "index", "Codes", "user", "user")))));
+
+        final Map<String, Object> source = ((List<Map<String, Object>>) result.get("sources")).getFirst();
+        assertThat(source).containsKey("not_deduplicated").doesNotContainKey("duplicates_left_out");
+        assertThat(result).containsEntry("events_read", 2L);
+    }
+
+    @Test
     void theXmlIsReadOnlyForWhatTheIndexDoesntMapAndOnlyForTheEventsCharacterised() {
         elementInIndex = true;
         week();

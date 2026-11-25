@@ -479,7 +479,9 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                  + "spans bounded by a key, e.g. a session id; "
                                  + "activity periods, the actions in neither close in time, by host or source) and "
                                  + "activities rolled up from them (what the user was working on). Each source is "
-                                 + "read once; its fields (user, host, type, object...) mapped once per index: "
+                                 + "read once, each event counted once (by its raw stream and record, so a "
+                                 + "reprocessed event or one in two indexes isn't doubled); its fields (user, "
+                                 + "host, type, object...) mapped once per index: "
                                  + "userField and the call's, the AGENTS doc's ## Fields, the feeding pipelines' "
                                  + "index plans (each event its own pipeline's where they differ), the index's "
                                  + "documentation, a convention, else asked. Roles by event type: typeRoles or the "
@@ -623,7 +625,11 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         // Where each event came from, by its stream (one batched lookup of the distinct streams read): its own
         // pipeline's fields where the pipelines feeding an index differ, and its translation's catalogue.
         final Provenance provenance = provenance(context, sources, scanned);
-        final StreamFields.Resolved resolved = StreamFields.resolve(scanned.events(), sources, scanned.extras(),
+        // Each event once: the same event in two sources, or a reprocessed event's old and new documents, by its raw
+        // parent stream and record.
+        final EventDedupe.Deduped deduped = EventDedupe.dedupe(scanned.events(), sources,
+                streamId -> parentOf(provenance, streamId));
+        final StreamFields.Resolved resolved = StreamFields.resolve(deduped.events(), sources, scanned.extras(),
                 streamId -> pipelineOf(provenance, streamId));
         final Read read = scanned.with(resolved.events(), resolved.extras());
         final TypeRoleLookup roles = new TypeRoleLookup(plan.overrides(), catalogue(provenance),
@@ -638,7 +644,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final TimelineReading reading = new TimelineReading(read.scans(), resolved.read(), xml.paths(),
                 offers(sources, classifiedNow), provenance == null
                 ? 0
-                : provenance.streams().size());
+                : provenance.streams().size(), deduped.duplicates(), deduped.notDeduplicated());
 
         final Set<Integer> withOpen = new LinkedHashSet<>();
         for (int i = 0; i < sources.size(); i++) {
@@ -1736,12 +1742,12 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         return NullSafe.isNonBlankString(code) && roles.settles(event.source(), event.streamId(), code);
     }
 
-    // Where each event read came from: the streams' meta and producing pipelines, one batched lookup; null where no
-    // automatic source has StreamIds, or they can't be looked up.
+    // Where each event read came from: the streams' meta (their parents, to count each event once) and producing
+    // pipelines, one batched lookup; null where no source has StreamIds, or they can't be looked up.
     private Provenance provenance(final ToolCallContext context, final List<Source> sources, final Read read) {
         final Set<Long> streams = new LinkedHashSet<>();
         for (final Event event : read.events()) {
-            if (sources.get(event.source()).automatic()) {
+            if (sources.get(event.source()).hasStreamIds()) {
                 NullSafe.consume(number(event.streamId()), streams::add);
             }
         }
@@ -1763,6 +1769,14 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             return null;
         }
         return provenance.pipelineOf(streamId).map(PipelineFacts::pipeline).orElse(null);
+    }
+
+    // The raw stream a stream was translated from; null where it isn't known.
+    private static Long parentOf(final Provenance provenance, final Long streamId) {
+        if (provenance == null || streamId == null) {
+            return null;
+        }
+        return NullSafe.get(provenance.streams().get(streamId), StreamProvenance.StreamSource::parentId);
     }
 
     // The catalogue's roles of the translation that produced each stream, read once per pipeline.
