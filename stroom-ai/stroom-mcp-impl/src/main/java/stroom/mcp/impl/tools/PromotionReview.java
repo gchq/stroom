@@ -40,6 +40,10 @@ class PromotionReview {
                                                                  + "after promotion",
             "Everything (backfill): existing streams too", "From a date: I'll give it");
 
+    /// The key of each new filter's feeds' streams in the review: how many, how large, from when to when. Left out
+    /// of what the review is known by, as a live feed's change from one call to the next.
+    static final String FEED_STREAMS = "feed_streams";
+
     private final Consent consent;
 
     /// @param consent Asks the user which streams a new version's filter reads.
@@ -93,6 +97,7 @@ class PromotionReview {
     static String shownDigest(final Map<String, Object> review) {
         final Map<String, Object> shown = new TreeMap<>(review);
         shown.remove("hint");
+        shown.remove(FEED_STREAMS);
         return Consent.reviewId(ToolJson.dumpsSortedKeys(shown));
     }
 

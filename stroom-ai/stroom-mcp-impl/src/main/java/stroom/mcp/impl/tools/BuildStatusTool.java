@@ -54,6 +54,9 @@ class BuildStatusTool extends AbstractBuiltInTool {
     static final String FOLLOW_ON_REVIEW = "follow_on_review";
     // First, so a result too large to show in full still shows them.
     private static final List<String> FIRST = List.of("next", "before_promotion", "steps");
+    // What the report says when each promoted feed is selected once.
+    private static final String EACH_ONCE = "each feed the promotion gave a new filter is selected by one pipeline's "
+                                            + "enabled filter";
 
     private final BuildPlan plan;
     private final PendingDocumentation pendingDocs;
@@ -61,6 +64,8 @@ class BuildStatusTool extends AbstractBuiltInTool {
     private Provider<SourceTypeGroups> groupsProvider;
     // The processor filters naming a pipeline; none in tests that make the tool themselves.
     private Provider<ProcessorFilters> filtersProvider;
+    // How a promoted build's feeds are selected; none in tests that make the tool themselves.
+    private Provider<PromotionSwitchOver> switchOverProvider;
 
     @Inject
     BuildStatusTool(final BuildPlan plan, final PendingDocumentation pendingDocs) {
@@ -84,6 +89,15 @@ class BuildStatusTool extends AbstractBuiltInTool {
     @Inject
     void setProcessorFilters(final Provider<ProcessorFilters> filters) {
         this.filtersProvider = filters;
+    }
+
+    /// How the feeds a promotion in this session gave new filters are selected now (set by injection; none in tests
+    /// that make the tool themselves).
+    ///
+    /// @param switchOver Reads which filters select a feed.
+    @Inject
+    void setSwitchOver(final Provider<PromotionSwitchOver> switchOver) {
+        this.switchOverProvider = switchOver;
     }
 
     @Override
@@ -139,7 +153,22 @@ class BuildStatusTool extends AbstractBuiltInTool {
             if (skip != null) {
                 plan.skipStage(build, skip);
             }
+            final List<PromotedFeeds.Promoted> promoted = switchOverProvider == null
+                    ? List.of()
+                    : PromotedFeeds.recalled(context, build);
+            final List<String> selection = promoted.isEmpty()
+                    ? List.of()
+                    : PromotedFeeds.report(promoted, switchOverProvider.get());
             final Map<String, Object> status = new LinkedHashMap<>(plan.status(build, null));
+            if (!promoted.isEmpty() && status.get("documents") instanceof final List<?> held && held.isEmpty()) {
+                // Promoted in this session, nothing left in it: what matters now is how its feeds are selected.
+                return JsonResults.of(promotedStatus(build, selection));
+            }
+            if (!promoted.isEmpty()) {
+                status.put(PromotedFeeds.FEED_SELECTION, selection.isEmpty()
+                        ? List.of(EACH_ONCE)
+                        : selection);
+            }
             final List<String> skipped = plan.skippedByUser(build);
             if (!skipped.isEmpty()) {
                 status.put("skipped_by_user", skipped);
@@ -167,6 +196,28 @@ class BuildStatusTool extends AbstractBuiltInTool {
         } catch (final ToolRefusal e) {
             return JsonResults.refused(e);
         }
+    }
+
+    /// A build promoted in this session with nothing left in it: how the feeds its promotion gave new filters are
+    /// selected now, report only (decided by the user, 2026-11-25).
+    ///
+    /// @param build     The build.
+    /// @param selection What [PromotedFeeds#report] says.
+    /// @return The status.
+    static Map<String, Object> promotedStatus(final String build, final List<String> selection) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("build", build);
+        out.put("status", "promoted");
+        out.put(PromotedFeeds.FEED_SELECTION, selection.isEmpty()
+                ? List.of(EACH_ONCE)
+                : selection);
+        out.put("next", selection.isEmpty()
+                ? "Nothing to do for its feeds' selection: each is processed by one pipeline's enabled filter."
+                : "Tell the user the feed_selection as it is: a feed selected twice is processed twice once both "
+                  + "filters are enabled, so the switch-over (the promotion's next steps) comes first; a feed "
+                  + "selected by no enabled filter isn't processed until one is enabled. Report only: the tools "
+                  + "change no filter or dictionary.");
+        return out;
     }
 
     /// For each new version of an events (or records) pipeline in the build whose predecessor's Events promoted

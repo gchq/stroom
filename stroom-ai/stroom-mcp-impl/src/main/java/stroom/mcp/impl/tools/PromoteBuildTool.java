@@ -124,6 +124,10 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     // themselves.
     private Provider<FeedIndexDecisions> feedIndexesProvider;
     private Provider<BuildTestIndexes> testIndexesProvider;
+    // How old filters selecting the build's feeds hand over to its new ones, and how much the feeds hold; none in
+    // tests that make the tool themselves.
+    private Provider<PromotionSwitchOver> switchOverProvider;
+    private Provider<FeedVolumes> feedVolumesProvider;
 
     @Inject
     PromoteBuildTool(final BuildFacts facts,
@@ -188,6 +192,17 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     @Inject
     void setTestIndexes(final Provider<BuildTestIndexes> testIndexes) {
         this.testIndexesProvider = testIndexes;
+    }
+
+    /// How the build's new filters take over feeds old filters select, and how much each feed holds (set by
+    /// injection; none in tests that make the tool themselves).
+    ///
+    /// @param switchOver  Finds the old filters selecting the build's feeds, and says the switch-over.
+    /// @param feedVolumes Counts each feed's streams and their size.
+    @Inject
+    void setSwitchOver(final Provider<PromotionSwitchOver> switchOver, final Provider<FeedVolumes> feedVolumes) {
+        this.switchOverProvider = switchOver;
+        this.feedVolumesProvider = feedVolumes;
     }
 
     @Override
@@ -402,6 +417,24 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                         guard.buildOf(pipeline).isEmpty() && !BuildDocumentation.inBuild(docs, pipeline.getUuid())
                         && !predecessors.containsValue(pipeline.getUuid())), processing, testIndexes(build));
         final List<PromotionProcessing.FollowOn> followOns = followed.followOns();
+        // Old filters (any pipeline's) already selecting the new filters' feeds: each new filter is made disabled and
+        // the switch-over is the user's (decided by the user, 2026-11-25); and what each earlier version keeps.
+        final Set<String> inBuild = new LinkedHashSet<>();
+        docs.forEach(doc -> inBuild.add(String.valueOf(doc.get("uuid"))));
+        final List<List<PromotionSwitchOver.OldSelection>> overlaps = switchOverProvider == null
+                ? processing.stream().map(entry -> List.<PromotionSwitchOver.OldSelection>of()).toList()
+                : switchOverProvider.get().overlaps(processing, inBuild::contains);
+        final List<String> switchOverSaid = PromotionSwitchOver.said(processing, overlaps);
+        final Map<String, List<String>> keeps = keeps(predecessors, processing);
+        final List<String> keptSaid = new ArrayList<>();
+        keeps.forEach((name, kept) -> {
+            if (!kept.isEmpty()) {
+                keptSaid.add("'" + name + "' keeps " + String.join(", ", kept) + ": it goes on processing them, as "
+                             + "this build doesn't move them");
+            }
+        });
+        // How much each new filter's feeds hold: enabled, a new filter processes every stream it selects.
+        final List<String> volumes = volumesSaid(processing);
         final List<String> followOnSaid = followOns.stream().map(PromotionProcessing.FollowOn::said).toList();
         final List<String> warnings = new ArrayList<>(facts.buildChecks(docs));
         final List<String> leftOut = moving.isEmpty()
@@ -468,6 +501,24 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                         PromotionRoleRoots.feedKeyCoversRoles(docs, placed.source()));
         final Map<String, Object> review = PromotionReview.review(build, tree, bound, warnings, processed, roots,
                 rolesHint, reviewed);
+        if (!volumes.isEmpty()) {
+            review.put(PromotionReview.FEED_STREAMS, volumes);
+            review.put("hint", review.get("hint") + " Say the feed_streams too: enabled, each new filter processes "
+                               + "every stream of its feeds it hasn't processed, existing ones included (a dormant "
+                               + "feed's history too), unless the new version's filter is limited to streams from "
+                               + "a time on.");
+        }
+        if (!switchOverSaid.isEmpty()) {
+            review.put("switch_over", switchOverSaid);
+            review.put("hint", review.get("hint") + " Say the switch_over too: old filters already select these "
+                               + "feeds, so the new filter is made disabled and the user switches over in Stroom "
+                               + "(the tools change no old filter or dictionary): which feeds move and which stay.");
+        }
+        if (!keptSaid.isEmpty()) {
+            review.put("earlier_versions_keep", keptSaid);
+            review.put("hint", review.get("hint") + " Say the earlier_versions_keep too: those feeds stay with the "
+                               + "earlier version, whose filters go on.");
+        }
         if (!followOnSaid.isEmpty()) {
             review.put("follow_on_filters", followOnSaid);
             review.put("hint", review.get("hint") + " Say the follow_on_filters too: each promoted pipeline "
@@ -557,6 +608,15 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         }
         if (!indexSaid.isEmpty()) {
             shortForm.put("index changes", indexSaid);
+        }
+        if (!volumes.isEmpty()) {
+            shortForm.put("streams the new filters select", volumes);
+        }
+        if (!switchOverSaid.isEmpty()) {
+            shortForm.put("switch-over (yours, after promotion)", switchOverSaid);
+        }
+        if (!keptSaid.isEmpty()) {
+            shortForm.put("earlier versions keep", keptSaid);
         }
         if (!followOnSaid.isEmpty()) {
             shortForm.put("follow-on filters", followOnSaid);
@@ -673,11 +733,21 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         }
         final List<Map<String, Object>> filters = promotionProcessing.createPromotionFilters(context.links(),
                 processing, moved, since);
+        if (switchOverProvider != null) {
+            switchOverProvider.get().handOver(context.links(), overlaps, filters);
+        }
         final List<Map<String, Object>> followOnFilters = followOns.isEmpty()
                 ? List.of()
                 : promotionProcessing.createFollowOnFilters(context.links(), followOns, filters);
         final Map<String, Object> result = promoted(context, build, plan, folders, tree, done, warnings, filters,
-                followOnFilters, predecessors);
+                followOnFilters, keeps, !predecessors.isEmpty());
+        final List<String> selection = PromotedFeeds.remember(context, build, processing, filters,
+                switchOverProvider == null
+                        ? null
+                        : switchOverProvider.get());
+        if (!selection.isEmpty()) {
+            result.put(PromotedFeeds.FEED_SELECTION, selection);
+        }
         tidy.report(result, tidying, tidied);
         if (backfill != null) {
             result.put("new_version_reads", backfill.said() + ". Its filter is made disabled, as every filter "
@@ -771,55 +841,124 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         return out;
     }
 
-    // What the user does once a new version is promoted (decided by the user, 2026-11-17): enable the new version's
-    // filters, then, once its output is right, the admin disables or removes the earlier version's and those still
-    // reading its Events. Never a reason for promotion to fail.
-    private List<String> nextSteps(final List<Map<String, Object>> filters,
-                                   final List<Map<String, Object>> followOnFilters,
-                                   final Map<String, String> predecessors) {
-        if (predecessors.isEmpty()) {
-            return List.of();
+    // What each earlier version keeps once its new version takes the build's feeds, by its name: its filters selecting
+    // feeds outside the build (or feeds that can't be listed), never advised to be disabled or removed; none listed
+    // for one that keeps nothing. No earlier version given without the switch-over (tests that make the tool
+    // themselves), or where its filters can't be read.
+    private Map<String, List<String>> keeps(final Map<String, String> predecessors,
+                                            final List<PromotionProcessing.Entry> processing) {
+        final Map<String, List<String>> out = new LinkedHashMap<>();
+        if (switchOverProvider == null || predecessors.isEmpty()) {
+            return out;
         }
-        final List<String> enable = new ArrayList<>();
-        filters.stream()
-                .filter(filter -> !Boolean.TRUE.equals(filter.get("enabled")))
-                .forEach(filter -> enable.add("filter " + filter.get("filter_id") + " ('" + filter.get("pipeline")
-                                              + "')"));
-        followOnFilters.stream()
-                .filter(filter -> !Boolean.TRUE.equals(filter.get("enabled")))
-                .forEach(filter -> enable.add("filter " + filter.get("filter_id") + " ('" + filter.get("pipeline")
-                                              + "', reading the Events of '" + filter.get("reads") + "')"));
-        final List<String> earlier = new ArrayList<>();
+        final Set<String> moving = new LinkedHashSet<>();
+        processing.forEach(entry -> moving.addAll(entry.feeds()));
         for (final String predecessor : new LinkedHashSet<>(predecessors.values())) {
             try {
                 places.find(predecessor).ifPresent(found -> {
-                    final DocRef before = new DocRef(PipelineDoc.TYPE, found.getUuid(), found.getName());
-                    final List<String> ids = filterWrites.filters(before).stream()
-                            .map(filter -> String.valueOf(filter.getId()))
-                            .toList();
-                    if (!ids.isEmpty()) {
-                        earlier.add("'" + found.getName() + "': filter " + String.join(", ", ids));
-                    }
+                    final List<String> kept = switchOverProvider.get().keeps(new DocRef(PipelineDoc.TYPE,
+                            found.getUuid(), found.getName()), moving);
+                    out.put(found.getName(), kept);
                 });
             } catch (final RuntimeException e) {
                 LOGGER.debug(() -> LogUtil.message("No filters of the earlier version {}: {}", predecessor,
                         e.getMessage()));
             }
         }
-        final Map<String, List<String>> following = new LinkedHashMap<>();
-        followOnFilters.forEach(filter -> following.computeIfAbsent("'" + filter.get("pipeline") + "'",
-                ignored -> new ArrayList<>()).add(filter.get("copied_from") + " (reading the Events of '"
-                                                  + filter.get("in_place_of") + "')"));
-        following.forEach((pipeline, ids) -> earlier.add(pipeline + ": filter " + String.join(", ", ids)));
-        final List<String> steps = new ArrayList<>();
-        if (!enable.isEmpty()) {
-            steps.add("1. Enable the new version's filters when ready: " + String.join("; ", enable) + ".");
+        return out;
+    }
+
+    // How much each new filter's feeds hold, as the review and the approval say it; none without the counts (tests
+    // that make the tool themselves).
+    private List<String> volumesSaid(final List<PromotionProcessing.Entry> processing) {
+        if (feedVolumesProvider == null) {
+            return List.of();
         }
-        if (!earlier.isEmpty()) {
-            steps.add((steps.isEmpty()
-                    ? "1"
-                    : "2") + ". Once the new version's output is right, the admin disables or removes the earlier "
-                      + "version's filters (the tools never do): " + String.join("; ", earlier) + ".");
+        final List<String> out = new ArrayList<>();
+        final Set<String> said = new LinkedHashSet<>();
+        for (final PromotionProcessing.Entry entry : processing) {
+            for (final String feed : entry.feeds()) {
+                if (said.add(feed.toLowerCase(Locale.ROOT) + "|" + entry.streamType())) {
+                    out.add(feedVolumesProvider.get().volume(feed, entry.streamType()).said());
+                }
+            }
+        }
+        return out;
+    }
+
+    /// What the user does once the build is promoted (decided by the user, 2026-11-17, and for feeds old filters
+    /// select, 2026-11-25): for each new filter whose feeds old filters select, the switch-over in order, each step
+    /// linked (the tools change no old filter or dictionary); enable the other new filters; and of the earlier
+    /// versions, what stays (a filter serving feeds outside the build, a follow-on reading the Events of an earlier
+    /// version that still translates some): never advised to be disabled or removed. A follow-on reading only the
+    /// Events of an earlier version that translates nothing once switched over may be disabled by the admin, once
+    /// the new version's output is right.
+    ///
+    /// @param filters         What promotion made for the build's pipelines.
+    /// @param followOnFilters What promotion made for the pipelines reading an earlier version's Events.
+    /// @param keeps           What each earlier version keeps, by its name (none listed: it keeps nothing; not given:
+    ///                        not known, and nothing is said of what reads its Events).
+    /// @param newVersion      True if the build promotes a new version of a promoted pipeline.
+    /// @return The steps, numbered.
+    static List<String> nextSteps(final List<Map<String, Object>> filters,
+                                  final List<Map<String, Object>> followOnFilters,
+                                  final Map<String, List<String>> keeps,
+                                  final boolean newVersion) {
+        final List<String> steps = new ArrayList<>();
+        for (final Map<String, Object> filter : filters) {
+            if (filter.get("switch_over") instanceof final List<?> switchOver && !switchOver.isEmpty()) {
+                final List<String> ordered = new ArrayList<>();
+                for (int i = 0; i < switchOver.size(); i++) {
+                    ordered.add("(" + (char) ('a' + i) + ") " + switchOver.get(i));
+                }
+                steps.add((steps.size() + 1) + ". The new filter " + filter.get("filter_id") + " ('"
+                          + filter.get("pipeline") + "') has been drafted and is disabled: old filters already select "
+                          + "its feeds, so the switch-over is the user's (the tools change no old filter or "
+                          + "dictionary; in-flight tasks make it unsafe), in this order: " + String.join(" ", ordered)
+                          + ".");
+            }
+        }
+        final List<String> enable = new ArrayList<>();
+        filters.stream()
+                .filter(filter -> !Boolean.TRUE.equals(filter.get("enabled")) && filter.get("switch_over") == null)
+                .forEach(filter -> enable.add("filter " + filter.get("filter_id") + " ('" + filter.get("pipeline")
+                                              + "')"));
+        followOnFilters.stream()
+                .filter(filter -> !Boolean.TRUE.equals(filter.get("enabled")))
+                .forEach(filter -> enable.add("filter " + filter.get("filter_id") + " ('" + filter.get("pipeline")
+                                              + "', reading the Events of '" + filter.get("reads") + "')"));
+        final boolean switching = !steps.isEmpty();
+        if (!enable.isEmpty() && (switching || newVersion)) {
+            steps.add((steps.size() + 1) + ". Enable " + (switching
+                    ? "the other new filters"
+                    : "the new version's filters") + " when ready: " + String.join("; ", enable) + ".");
+        }
+        keeps.forEach((name, kept) -> {
+            if (!kept.isEmpty()) {
+                steps.add((steps.size() + 1) + ". '" + name + "' stays for the feeds this build doesn't move: "
+                          + String.join("; ", kept) + ". Never disable or remove it while it serves them.");
+            }
+        });
+        final List<String> following = new ArrayList<>();
+        final List<String> retiring = new ArrayList<>();
+        for (final Map<String, Object> filter : followOnFilters) {
+            final String said = "'" + filter.get("pipeline") + "': filter " + filter.get("copied_from")
+                                + " (reading the Events of '" + filter.get("in_place_of") + "')";
+            final List<String> kept = keeps.get(String.valueOf(filter.get("in_place_of")));
+            if (kept != null && kept.isEmpty()) {
+                retiring.add(said);
+            } else if (kept != null) {
+                following.add(said);
+            }
+        }
+        if (!following.isEmpty()) {
+            steps.add((steps.size() + 1) + ". These stay too, as the earlier version they read still translates "
+                      + "feeds: " + String.join("; ", following) + ".");
+        }
+        if (!retiring.isEmpty()) {
+            steps.add((steps.size() + 1) + ". Once the new version's output is right, the admin may disable these "
+                      + "(the tools never do): they read the Events of an earlier version that translates no feed "
+                      + "once switched over: " + String.join("; ", retiring) + ".");
         }
         return steps;
     }
@@ -1435,7 +1574,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                          final List<String> warnings,
                                          final List<Map<String, Object>> filters,
                                          final List<Map<String, Object>> followOnFilters,
-                                         final Map<String, String> predecessors) {
+                                         final Map<String, List<String>> keeps,
+                                         final boolean newVersion) {
         final List<Map<String, Object>> links = new ArrayList<>();
         for (final String path : new TreeSet<>(moveTargets(plan))) {
             final WriteGuard.Folder folder = folders.get(path);
@@ -1501,7 +1641,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (!followOnFilters.isEmpty()) {
             result.put("follow_on_filters", followOnFilters);
         }
-        final List<String> nextSteps = nextSteps(filters, followOnFilters, predecessors);
+        final List<String> nextSteps = nextSteps(filters, followOnFilters, keeps, newVersion);
         if (!nextSteps.isEmpty()) {
             result.put("next_steps", nextSteps);
         }
@@ -1514,8 +1654,10 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                + "data included, and what the build processed again: if an earlier version still "
                                + "processes the same feed, it processes that history again, so decide with them "
                                + "first (limit the filter in Stroom, say). Give them the next_steps as they are: "
-                               + "disabling or removing the earlier version's filters is the admin's, never the "
-                               + "tools'."
+                               + "where old filters already select a new filter's feeds (its switch_over), the "
+                               + "switch-over is the user's, in its order, each step linked; changing, disabling or "
+                               + "removing any old filter or dictionary is the user's or the admin's, never the "
+                               + "tools'; what the earlier version keeps stays."
                                + (filters.stream().anyMatch(f -> f.get("before_enabling") != null)
                     ? " Give the user each filter's before_enabling as it is: an index the build made is emptied or "
                       + "dropped first, as it says (left as it is, it holds the build's events twice); a production "

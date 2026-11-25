@@ -186,6 +186,19 @@ class PipelineFeeds {
         return enumeratedFeeds(pipelineUuid, 0, new HashMap<>());
     }
 
+    /// The feeds one filter's expression selects, when they are known in full, as [#enumeratedFeeds(String)] reads
+    /// each filter.
+    ///
+    /// @param expression A processor filter's expression, or null.
+    /// @param known      Dictionaries and streams already read, across one walk of the filters.
+    /// @return The feeds, as written; empty when it may select a feed not known (a wildcard, a stream type alone, a
+    /// NOT, an unreadable Dictionary).
+    Optional<Set<String>> selectedFeeds(final ExpressionOperator expression, final Map<Object, Object> known) {
+        return expression == null
+                ? Optional.empty()
+                : selected(expression, 0, known);
+    }
+
     private Optional<Set<String>> enumeratedFeeds(final String pipelineUuid,
                                                   final int depth,
                                                   final Map<Object, Object> known) {

@@ -43,8 +43,10 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -67,6 +69,9 @@ class StreamProcessing {
     /// The most task rows of one filter read.
     static final int MAX_TASKS = 1_000;
     private static final Set<TaskStatus> ENDED = Set.of(TaskStatus.COMPLETE, TaskStatus.FAILED);
+    // The states of a task that hasn't ended.
+    private static final List<TaskStatus> OPEN = List.of(TaskStatus.CREATED, TaskStatus.QUEUED, TaskStatus.ASSIGNED,
+            TaskStatus.PROCESSING);
 
     private final StreamReader streamReader;
     private final FeedAccess feedAccess;
@@ -124,6 +129,31 @@ class StreamProcessing {
                             : open).add(task.getMetaId()));
         }
         return new Tasks(ended, open);
+    }
+
+    /// @param filterId A processor filter.
+    /// @param feeds    Only tasks of these feeds' streams (any case), or none for any feed's.
+    /// @return How many of its tasks haven't ended yet (created, queued, assigned, being processed), up to
+    /// [#MAX_TASKS], of feeds the user may view.
+    int openTasks(final int filterId, final Collection<String> feeds) {
+        final Set<String> wanted = new HashSet<>();
+        feeds.forEach(feed -> wanted.add(lower(feed)));
+        final ExpressionOperator.Builder statuses = ExpressionOperator.builder().op(Op.OR);
+        for (final TaskStatus status : OPEN) {
+            statuses.addTextTerm(ProcessorTaskFields.STATUS, Condition.EQUALS, status.name());
+        }
+        final ExpressionOperator expression = ExpressionOperator.builder().op(Op.AND)
+                .addIdTerm(ProcessorTaskFields.PROCESSOR_FILTER_ID, Condition.EQUALS, filterId)
+                .addOperator(statuses.build())
+                .build();
+        final Map<String, Boolean> feedViews = new HashMap<>();
+        return (int) ProcessorTaskFinder.find(processorTaskServiceProvider.get(), expression, MAX_TASKS,
+                        Integer.MAX_VALUE,
+                        task -> feedViews.computeIfAbsent(NullSafe.string(task.getFeedName()), feedAccess::canView))
+                .visible().stream()
+                .filter(task -> !ENDED.contains(task.getStatus()) && task.getStatus() != TaskStatus.DELETED)
+                .filter(task -> wanted.isEmpty() || wanted.contains(lower(task.getFeedName())))
+                .count();
     }
 
     /// @param streamIds Streams.

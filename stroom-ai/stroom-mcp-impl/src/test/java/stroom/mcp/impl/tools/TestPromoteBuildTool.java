@@ -18,11 +18,13 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.ToolOutputs;
+import stroom.ai.impl.tools.StroomLinks;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.generation.MappingFacts;
+import stroom.ai.impl.tools.processing.ProcessorFilterAccess;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
@@ -45,6 +47,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
+import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
@@ -53,7 +56,10 @@ import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.QueryData;
+import stroom.query.api.ExpressionOperator;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.util.shared.Range;
 import stroom.util.shared.ResultPage;
 
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
@@ -69,6 +75,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
@@ -1451,8 +1458,86 @@ class TestPromoteBuildTool {
     void aNewEventsVersionGoesBesideItsPredecessorAndItsFollowOnsGainFiltersTheAdminRetiresTheOldOnes() {
         // Decided by the user (2026-11-17): the new version in a sibling version folder; each promoted pipeline
         // reading the predecessor's Events gains a new filter, disabled, reading the new version's (listed in the
-        // approval); no buttons disabling the earlier filters: the next steps say what to enable, then what the
-        // admin disables or removes once the new version's output is right.
+        // approval); no buttons disabling the earlier filters. And (2026-11-25): the predecessor's filter selects
+        // the build's feed, so the new filter's switch-over is the user's, in order; the predecessor keeps no feed,
+        // so the follow-on reading its Events may be retired by the admin once the new version's output is right.
+        final Map<String, Object> promoted = newVersionPromoted(ProcessorFilterWrites.allOf(List.of(
+                ProcessorFilterWrites.term("Feed", "ACME"), ProcessorFilterWrites.term("Type", "Raw Events"))));
+
+        assertThat(promoted.get("follow_on_filters")).asList().hasSize(1);
+        assertThat(promoted.get("next_steps")).asList().hasSize(3);
+        assertThat(String.valueOf(asList(promoted.get("next_steps")).getFirst())).startsWith(
+                "1. The new filter 40 ('ACME-V1.1-Events') has been drafted and is disabled: old filters already "
+                + "select its feeds, so the switch-over is the user's (the tools change no old filter or "
+                + "dictionary; in-flight tasks make it unsafe), in this order: (a) Disable filter 3 of pipeline "
+                + "[ACME-V1.0-Events](?action=open-doc&docType=Pipeline&docUuid=ev1) (its Processors tab): it "
+                + "selects only ACME, which the new filter takes over (b) Let filter 3's in-flight tasks finish (0 "
+                + "open now for ACME;").contains("(c) Enable the new filter 40 ('ACME-V1.1-Events')");
+        assertThat(asList(promoted.get("next_steps")).subList(1, 3)).isEqualTo(List.of(
+                "2. Enable the other new filters when ready: filter 41 ('ACME-CEF', reading the Events of "
+                + "'ACME-V1.1-Events').",
+                "3. Once the new version's output is right, the admin may disable these (the tools never do): they "
+                + "read the Events of an earlier version that translates no feed once switched over: 'ACME-CEF': "
+                + "filter 5 (reading the Events of 'ACME-V1.0-Events')."));
+        assertThat(String.valueOf(promoted.get("user_actions"))).doesNotContain("disable_processor_filter")
+                .contains("switch-3");
+    }
+
+    @Test
+    void theReviewSaysEachNewFiltersFeedsStreamsAndVolumeWithoutBindingTheReviewToThem() {
+        // Decided by the user (2026-11-25): a new filter processes every matching stream it hasn't, a dormant feed's
+        // history too, so each feed's streams and volume are said before a filter can run. A live feed's count
+        // changes between calls: the review shown is still the one confirmed.
+        exists("System/Feeds/Acme");
+        final DocRef pipeline = world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-Events", "p");
+        listed(doc(PipelineDoc.TYPE, "p", "ACME-Events", null));
+        Mockito.when(processing.promotionProcessing(any(), any(), any(), any())).thenReturn(List.of(
+                new PromotionProcessing.Entry(pipeline, List.of("ACME-A", "ACME-B"), "Raw Events", List.of())));
+        final long[] count = {120};
+        Mockito.when(metaService.getSelectionSummary(any())).thenAnswer(inv -> new SelectionSummary(count[0], 1,
+                Set.of(), 1, Set.of(), 0, 0, 1, Set.of(), new Range<>(0L, 86_400_000L)));
+        Mockito.when(metaService.findRows(any())).thenReturn(new ResultPage<>(List.of(row(1, "2048"))));
+        tool.setSwitchOver(null, () -> new FeedVolumes(() -> metaService));
+        final Map<String, Object> destinations = Map.of("Pipeline", "/Feeds/Acme");
+
+        final Map<String, Object> shown = review(destinations);
+        count[0] = 121;
+        final Map<String, Object> later = review(destinations);
+
+        assertThat(shown.get(PromotionReview.FEED_STREAMS)).asList().containsExactly(
+                "ACME-A (Raw Events): 120 streams, about 240K, created 1970-01-01T00:00:00.000Z to "
+                + "1970-01-02T00:00:00.000Z",
+                "ACME-B (Raw Events): 120 streams, about 240K, created 1970-01-01T00:00:00.000Z to "
+                + "1970-01-02T00:00:00.000Z");
+        assertThat(String.valueOf(shown.get("hint"))).contains("Say the feed_streams too", "a dormant feed's "
+                                                                                           + "history too");
+        assertThat(String.valueOf(later.get(PromotionReview.FEED_STREAMS))).contains("121 streams");
+        assertThat(later.get("review_id")).isEqualTo(shown.get("review_id"));
+        assertThat(PromotionReview.shownDigest(later)).isEqualTo(PromotionReview.shownDigest(shown));
+    }
+
+    @Test
+    void anEarlierVersionStillTranslatingOtherFeedsAndWhatReadsItsEventsAreNeverAdvisedToBeRetired() {
+        // Seen in the audit (2026-11-25, PromoteBuildTool 780-811): the next steps advised disabling the earlier
+        // version's filters while they still translated feeds outside the build, and the follow-on filters reading
+        // its Events likewise.
+        final Map<String, Object> promoted = newVersionPromoted(ProcessorFilterWrites.allOf(List.of(
+                ProcessorFilterWrites.term("Feed", "ACME,ACME-B"), ProcessorFilterWrites.term("Type",
+                        "Raw Events"))));
+
+        final List<Object> steps = asList(promoted.get("next_steps"));
+        assertThat(String.valueOf(steps.getFirst())).contains("(a) Remove ACME from filter 3 of pipeline",
+                "it goes on selecting ACME-B");
+        assertThat(steps).contains("3. 'ACME-V1.0-Events' stays for the feeds this build doesn't move: filter 3 "
+                                   + "(ACME-B). Never disable or remove it while it serves them.",
+                "4. These stay too, as the earlier version they read still translates feeds: 'ACME-CEF': filter 5 "
+                + "(reading the Events of 'ACME-V1.0-Events').");
+        assertThat(String.valueOf(steps)).doesNotContain("may disable", "disables or removes");
+    }
+
+    // A new events version (ev2, of ev1) of the build, its predecessor's filter 3 selecting as given, a CEF flattener
+    // reading the predecessor's Events (filter 5), promoted: what promote_build returned.
+    private Map<String, Object> newVersionPromoted(final ExpressionOperator predecessorSelects) {
         final DocRef before = world.add(PipelineDoc.TYPE, "ACME-V1.0-Events",
                 world.folder("System/Feeds/Acme/Events/V1.0").uuid, "ev1").docRef();
         final DocRef version = world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-V1.1-Events", "ev2");
@@ -1462,38 +1547,51 @@ class TestPromoteBuildTool {
         listed.put("role", "Events");
         docs.facts.docs.add(listed);
         final DocRef cef = new DocRef(PipelineDoc.TYPE, "cef", "ACME-CEF");
-        final ProcessorFilter reading = ProcessorFilter.builder().id(5).pipelineUuid("cef").enabled(true).build();
+        final ProcessorFilter reading = ProcessorFilter.builder().id(5).pipelineUuid("cef").pipelineName("ACME-CEF")
+                .enabled(true).queryData(QueryData.builder().expression(ProcessorFilterWrites.allOf(List.of(
+                        ProcessorFilterWrites.term("Type", "Events"), ProcessorFilterWrites.pipelineTerm(before))))
+                        .build()).build();
+        final ProcessorFilter old = ProcessorFilter.builder().id(3).pipelineUuid("ev1")
+                .pipelineName("ACME-V1.0-Events").enabled(true)
+                .queryData(QueryData.builder().expression(predecessorSelects).build()).build();
+        Mockito.when(processorFilters.all()).thenReturn(List.of(old, reading));
         final PromotionProcessing.FollowOn followOn = new PromotionProcessing.FollowOn(cef, reading,
                 new DocRef(PipelineDoc.TYPE, "ev1", "ACME-V1.0-Events"), version);
         Mockito.when(processing.followOns(any(), any())).thenReturn(List.of(followOn));
-        Mockito.when(processing.createPromotionFilters(any(), any(), any(), any())).thenReturn(List.of(
-                new LinkedHashMap<>(Map.of("filter_id", 40, "pipeline", "ACME-V1.1-Events", "enabled", false))));
+        Mockito.when(processing.promotionProcessing(any(), any(), any(), any())).thenReturn(List.of(
+                new PromotionProcessing.Entry(version, List.of("ACME"), "Raw Events", List.of())));
+        Mockito.when(processing.createPromotionFilters(any(), any(), any(), any())).thenAnswer(inv -> {
+            final Map<String, Object> made = new LinkedHashMap<>(Map.of("filter_id", 40, "pipeline",
+                    "ACME-V1.1-Events", "feed", "ACME", "enabled", false, "pipeline_link",
+                    StroomLinks.CHAT.documentTarget(version)));
+            made.put(UserActionEntries.USER_ACTIONS, new ArrayList<>(List.of(UserActionEntries.enableFilter(
+                    StroomLinks.CHAT, 40, version, "processes feed ACME"))));
+            return new ArrayList<>(List.of(made));
+        });
         Mockito.when(processing.createFollowOnFilters(any(), any(), any())).thenReturn(List.of(new LinkedHashMap<>(
                 Map.of("filter_id", 41, "pipeline", "ACME-CEF", "reads", "ACME-V1.1-Events", "in_place_of",
                         "ACME-V1.0-Events", "copied_from", 5, "enabled", false))));
-        Mockito.when(filterWrites.filters(any())).thenReturn(List.of(ProcessorFilter.builder().id(3)
-                .pipelineUuid("ev1").enabled(true).build()));
+        Mockito.when(filterWrites.filters(any())).thenReturn(List.of(old));
+        tool.setSwitchOver(() -> new PromotionSwitchOver(() -> processorFilters, new PipelineFeeds(
+                Mockito.mock(ProcessorFilterAccess.class), world.documentAccess, null), () -> dependencies,
+                Mockito.mock(StreamProcessing.class)), null);
         final Map<String, Object> destinations = Map.of();
 
         final Map<String, Object> shown = call(destinations, null);
         assertThat(String.valueOf(shown.get("layout"))).startsWith("System/Feeds/Acme/Events/V1.1/  (new)\n"
                                                                    + "└── ACME-V1.1-Events  (Pipeline)");
         assertThat(String.valueOf(shown.get("follow_on_filters"))).contains("'ACME-CEF': a new filter, disabled");
-        assertThat(String.valueOf(approvalForm(destinations, shown.get("review_id"))))
-                .contains("follow-on filters");
-        final Map<String, Object> promoted = docs.call(tool, BuildToolCalls.answering(Map.of("value", true)),
+        assertThat(String.valueOf(shown.get("switch_over"))).contains("filter 3 of pipeline 'ACME-V1.0-Events' "
+                                                                      + "selects ACME, which moves");
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true, "choice",
+                "From now on (recommended): streams arriving after promotion"));
+        final Map<String, Object> promoted = docs.call(tool, user.context(),
                 DocumentationWorld.args(args(destinations, shown.get("review_id"))));
-
+        assertThat(user.shown()).anySatisfy(form -> assertThat(form).contains("switch-over (yours, after "
+                                                                              + "promotion)"));
         assertThat(world.documentAccess.path(version)).isEqualTo("/Feeds/Acme/Events/V1.1");
         assertThat(world.documentAccess.path(before)).isEqualTo("/Feeds/Acme/Events/V1.0");
-        assertThat(promoted.get("follow_on_filters")).asList().hasSize(1);
-        assertThat(promoted.get("next_steps")).isEqualTo(List.of(
-                "1. Enable the new version's filters when ready: filter 40 ('ACME-V1.1-Events'); filter 41 "
-                + "('ACME-CEF', reading the Events of 'ACME-V1.1-Events').",
-                "2. Once the new version's output is right, the admin disables or removes the earlier version's "
-                + "filters (the tools never do): 'ACME-V1.0-Events': filter 3; 'ACME-CEF': filter 5 (reading the "
-                + "Events of 'ACME-V1.0-Events')."));
-        assertThat(String.valueOf(promoted.get("user_actions"))).doesNotContain("disable");
+        return promoted;
     }
 
     @Test
