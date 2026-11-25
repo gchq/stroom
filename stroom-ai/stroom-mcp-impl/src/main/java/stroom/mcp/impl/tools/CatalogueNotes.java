@@ -168,6 +168,8 @@ class CatalogueNotes {
         final DocRef copy = guard.create(DocumentationDoc.TYPE, promoted.getName(), build, promoted.getUuid(), false,
                 null);
         documentWrites.copyFields(promoted, copy, BuildDocumentation.DOC_FIELDS);
+        // A translation already copied into the build links to the promoted notes.
+        SourceNotesLinks.linkTranslations(guard, documentAccess, build);
         final Catalogue catalogue = SourceNotes.catalogue(notesOf(copy));
         return "the source notes '" + promoted.getName() + "' carried into the build (a working copy, written back "
                + "at promotion)" + (catalogue == null
@@ -213,6 +215,8 @@ class CatalogueNotes {
         } else {
             guard.createFilled(DocumentationDoc.TYPE, name, build, ref -> documentWrites.writeText(ref, written),
                     false, null);
+            // Notes made after the translation was written: its XSLT links to them now.
+            SourceNotesLinks.linkTranslations(guard, documentAccess, build);
         }
     }
 

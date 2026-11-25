@@ -775,7 +775,9 @@ public class TranslationDocs {
                     .or(() -> eventVersions.forkWrittenBy(code).map(XmlSchemaDoc::getUuid))
                     .ifPresent(uuid -> payload.put(EventVersions.KEPT_SCHEMA_UUID, uuid));
             payload.put("mapping", source.mapping().toJson(DumpMode.COMPACT));
-            final String withMapping = KeptMapping.withMapping(description, KeptMapping.TRANSLATION, payload);
+            // With the link to the build's source notes, where it has them: the catalogue is found from the XSLT.
+            final String withMapping = SourceNotesLinks.linked(guard, build, KeptMapping.withMapping(description,
+                    KeptMapping.TRANSLATION, payload));
             try {
                 final String regenerated = XsltGenerator.generate(source.mapping(),
                         eventVersions.keptSchema(payload, version), version).xslt();

@@ -17,6 +17,8 @@
 package stroom.ai.impl.tools.documents;
 
 import stroom.ai.impl.tools.documents.KeptMapping.Kept;
+import stroom.docref.DocRef;
+import stroom.documentation.shared.DocumentationDoc;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
@@ -45,6 +47,76 @@ class TestKeptMapping {
                                   {"path":"EventDetail/Authenticate/Data","data_name":"session","field":"sid"}]},
                        {"name":"other","fields":[{"path":"EventDetail/TypeId","field":"action"},
                           {"path":"EventDetail/Unknown/Data","data_name":"action","field":"action"}]}]}""";
+
+    /// A user's own description: several paragraphs, a list and a heading.
+    private static final String OWN_TEXT = """
+            # Acme VPN translation
+
+            Translates the VPN daemon's log lines.
+            Maintained by the network team; ask them before changing it.
+
+            - Logons and logoffs only.
+            - Other lines are left untranslated.""";
+    /// The user's text after the blocks, as someone may add it below them.
+    private static final String OWN_TAIL = """
+            ## Notes added later
+
+            Checked against the 2026 release.""";
+
+    @Test
+    void aSourceNotesLinkIsKeptByUuidAndReplacesAnEarlierOne() {
+        final DocRef notes = new DocRef(DocumentationDoc.TYPE, "notes-1", "Acme VPN source notes");
+
+        final String linked = KeptMapping.withSourceNotes(OWN_TEXT, notes);
+
+        assertThat(KeptMapping.readSourceNotes(linked)).hasValueSatisfying(found -> {
+            assertThat(found.getUuid()).isEqualTo("notes-1");
+            assertThat(found.getName()).isEqualTo("Acme VPN source notes");
+            assertThat(found.getType()).isEqualTo(DocumentationDoc.TYPE);
+        });
+        // Hidden, after the note.
+        assertThat(linked).startsWith(OWN_TEXT).contains(KeptMapping.NOTE)
+                .contains("<!-- stroom-mcp source notes: kept by the server");
+        // Moved or renamed: the new link replaces the old.
+        final String relinked = KeptMapping.withSourceNotes(linked, new DocRef(DocumentationDoc.TYPE, "notes-2",
+                null));
+        assertThat(KeptMapping.readSourceNotes(relinked).orElseThrow().getUuid()).isEqualTo("notes-2");
+        assertThat(relinked).containsOnlyOnce("source notes: kept by the server");
+        // No notes: nothing written.
+        assertThat(KeptMapping.withSourceNotes(OWN_TEXT, null)).isEqualTo(OWN_TEXT);
+        assertThat(KeptMapping.readSourceNotes(OWN_TEXT)).isEmpty();
+        assertThat(KeptMapping.readSourceNotes(KeptMapping.withBlock(OWN_TEXT, KeptMapping.SOURCE_NOTES,
+                Map.of("name", "no uuid")))).isEmpty();
+    }
+
+    @Test
+    void theUsersOwnTextBeforeAndAfterTheBlocksSurvivesWritingRewritingAndRemovingThem() {
+        final Map<String, Object> mapping = Map.of("schema_version", "4.0.0", "mapping", Map.of("input", "json"));
+        final DocRef notes = new DocRef(DocumentationDoc.TYPE, "notes-1", "Acme VPN source notes");
+        // The user's text, the mapping, then more of the user's text below the blocks.
+        final String written = KeptMapping.withMapping(OWN_TEXT, KeptMapping.TRANSLATION, mapping) + "\n\n"
+                               + OWN_TAIL;
+
+        final String linked = KeptMapping.withSourceNotes(written, notes);
+        final String rewritten = KeptMapping.withMapping(linked, KeptMapping.TRANSLATION, Map.of("schema_version",
+                "4.1.0", "mapping", Map.of("input", "csv")));
+        final String relinked = KeptMapping.withSourceNotes(rewritten, notes);
+
+        for (final String text : List.of(linked, rewritten, relinked)) {
+            assertThat(text).contains(OWN_TEXT, OWN_TAIL).containsOnlyOnce(KeptMapping.NOTE);
+            assertThat(KeptMapping.withoutBlock(text, null)).isEqualTo(OWN_TEXT + "\n\n" + OWN_TAIL);
+            assertThat(KeptMapping.readSourceNotes(text).orElseThrow().getUuid()).isEqualTo("notes-1");
+        }
+        assertThat(KeptMapping.readMapping(relinked).orElseThrow().payload()).containsEntry("schema_version",
+                "4.1.0");
+        // Removing the link keeps the mapping and the user's text; removing both leaves only the user's text.
+        final String unlinked = KeptMapping.withoutBlock(relinked, KeptMapping.SOURCE_NOTES);
+        assertThat(KeptMapping.readSourceNotes(unlinked)).isEmpty();
+        assertThat(KeptMapping.readMapping(unlinked)).isPresent();
+        assertThat(unlinked).contains(OWN_TEXT, OWN_TAIL, KeptMapping.NOTE);
+        assertThat(KeptMapping.withoutBlock(KeptMapping.withoutBlock(unlinked, "translation mapping"),
+                KeptMapping.SOURCE_NOTES)).isEqualTo(OWN_TEXT + "\n\n" + OWN_TAIL);
+    }
 
     @Test
     void anXsltsKeptMappingIsSummarisedUnlessAskedForWhole() {

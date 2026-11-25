@@ -470,8 +470,13 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
             guard.checkInBuild(session, there.docRef());
             return documentWrites.writeText(there.docRef(), text);
         }
-        return guard.createFilled(DocumentationDoc.TYPE, name, build, ref -> documentWrites.writeText(ref, text), false,
-                null);
+        final DocumentationDoc made = guard.createFilled(DocumentationDoc.TYPE, name, build,
+                ref -> documentWrites.writeText(ref, text), false, null);
+        if (name.endsWith(SourceNotes.NOTES_SUFFIX)) {
+            // Notes made after the translation was written: its XSLT links to them now.
+            SourceNotesLinks.linkTranslations(guard, documentAccess, build);
+        }
+        return made;
     }
 
     private Map<String, Object> earlierNotes(final Map<String, WriteGuard.BuildDoc> contents, final String name) {

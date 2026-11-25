@@ -188,6 +188,22 @@ class TestBuildTranslationXsltTool {
     }
 
     @Test
+    void aTranslationSavedInABuildWithSourceNotesLinksToThemAndARebuildKeepsTheLink() {
+        final DocRef notes = world.inBuild("acme-v1", DocumentationDoc.TYPE, "ACME source notes");
+
+        final Map<String, Object> saved = world.call(tool, Map.of("mapping", TranslationWorld.mapping(),
+                "build", "acme-v1", "name", "ACME-Events"));
+        final String uuid = String.valueOf(map(saved.get("saved")).get("uuid"));
+
+        assertThat(KeptMapping.readSourceNotes(world.xslt(uuid).getDescription()).orElseThrow().getUuid())
+                .isEqualTo(notes.getUuid());
+        // Written again from its mapping: still linked, once.
+        world.call(tool, Map.of("uuid", uuid));
+        assertThat(world.xslt(uuid).getDescription()).containsOnlyOnce("source notes: kept by the server");
+        assertThat(KeptMapping.readSourceNotes(world.xslt(uuid).getDescription())).isPresent();
+    }
+
+    @Test
     void savingReturnsTheDocumentNotTheCode() {
         // The XSLT need not pass through the model: generated, saved with its mapping, referred to by uuid.
         final Map<String, Object> saved = world.call(tool, Map.of("mapping", TranslationWorld.mapping(),

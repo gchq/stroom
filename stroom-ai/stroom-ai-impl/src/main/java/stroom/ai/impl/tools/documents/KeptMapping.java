@@ -19,6 +19,8 @@ package stroom.ai.impl.tools.documents;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.sample.ToolJson;
+import stroom.docref.DocRef;
+import stroom.documentation.shared.DocumentationDoc;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
@@ -42,6 +44,9 @@ import java.util.regex.Pattern;
 /// pending changes and a pipeline's agreed index template. Blocks written before (shown, between `---` markers)
 /// are still read.
 ///
+/// A translation XSLT's description also holds a hidden link to its source notes doc ([#SOURCE_NOTES]), whose
+/// event type catalogue describes what it writes.
+///
 /// The blocks' markers are part of what is stored in documents, so they keep the server's name, `stroom-mcp`.
 public final class KeptMapping {
 
@@ -55,6 +60,9 @@ public final class KeptMapping {
     public static final List<String> KINDS = List.of("translation", "index", "cef");
     /// The name of the block of a pipeline's agreed index template.
     public static final String AGREED_TEMPLATE = "agreed index template";
+    /// The name of the block of a translation XSLT's link to its source notes doc (which holds its event type
+    /// catalogue): the doc's UUID, so the catalogue is found from the XSLT wherever either is moved or renamed.
+    public static final String SOURCE_NOTES = "source notes";
     /// The mark a documentation doc's Field mapping section carries: `{digest}` is the digest of the mapping and the
     /// XSLT it was generated from.
     public static final String DOC_MARK = "<!-- stroom-mcp field-mapping {digest} -->";
@@ -195,6 +203,34 @@ public final class KeptMapping {
     /// @return The index template agreed for it, or empty if none.
     public static Optional<Map<String, Object>> readAgreedTemplate(final String description) {
         return readBlock(description, AGREED_TEMPLATE);
+    }
+
+    /// @param description A translation XSLT's description, or null.
+    /// @param notes       Its source notes doc: the promoted doc, where the notes in a build are a working copy of
+    ///                    one (promotion writes the copy back over it).
+    /// @return The description linking to the notes by UUID (and name, for a reader), replacing any earlier link;
+    /// the description as it is for no notes. The user's own text is kept.
+    public static String withSourceNotes(final String description, final DocRef notes) {
+        if (notes == null || NullSafe.isBlankString(notes.getUuid())) {
+            return NullSafe.string(description);
+        }
+        final Map<String, Object> link = new LinkedHashMap<>();
+        link.put("uuid", notes.getUuid());
+        if (NullSafe.isNonBlankString(notes.getName())) {
+            link.put("name", notes.getName());
+        }
+        return withBlock(description, SOURCE_NOTES, link);
+    }
+
+    /// @param description A translation XSLT's description.
+    /// @return The source notes doc it links to ([#withSourceNotes]), by UUID (its name as written then, which
+    /// may have changed since); empty for none, or a link that doesn't read.
+    public static Optional<DocRef> readSourceNotes(final String description) {
+        final Map<String, Object> link = readBlock(description, SOURCE_NOTES).orElse(Map.of());
+        if (!(link.get("uuid") instanceof final String uuid) || uuid.isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.of(new DocRef(DocumentationDoc.TYPE, uuid, NullSafe.get(link.get("name"), String::valueOf)));
     }
 
     /// @param markdown A documentation doc's text.

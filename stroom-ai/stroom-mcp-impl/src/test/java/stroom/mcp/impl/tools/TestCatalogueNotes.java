@@ -19,12 +19,14 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.catalogue.CatalogueDiff;
 import stroom.ai.impl.tools.catalogue.EventType;
+import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.XsltDoc;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -121,6 +123,49 @@ class TestCatalogueNotes {
 
         assertThat(notes.catalogue(BUILD).orElseThrow().catchAll().confirmed()).isTrue();
         assertThat(notes.changedSincePromoted(BUILD)).isEmpty();
+    }
+
+    @Test
+    void notesMadeAfterTheTranslationWasWrittenAreLinkedFromItsXsltItsOwnTextKept() {
+        final String own = "Translates Acme's VPN.\n\nAsk the network team before changing it.";
+        final DocRef xslt = world.inBuild(BUILD, XsltDoc.TYPE, "Acme-V2.0-EVENTS", "build-xslt");
+        world.docs.put("build-xslt", XsltDoc.builder().uuid("build-xslt").name("Acme-V2.0-EVENTS").version("v0")
+                .description(KeptMapping.withMapping(own, KeptMapping.TRANSLATION, Map.of("mapping", Map.of())))
+                .build());
+        // An XSLT keeping no translation mapping (an indexing one, say) is left alone.
+        world.inBuild(BUILD, XsltDoc.TYPE, "Acme indexing", "build-index-xslt");
+
+        notes.write(null, BUILD, "Acme", new Catalogue(List.of(), Catalogue.CatchAll.CONFIRMED, null));
+
+        final String description = ((XsltDoc) world.docs.get(xslt.getUuid())).getDescription();
+        final DocRef linked = KeptMapping.readSourceNotes(description).orElseThrow();
+        assertThat(world.docs.get(linked.getUuid())).isInstanceOf(DocumentationDoc.class);
+        assertThat(linked.getName()).isEqualTo("Acme source notes");
+        assertThat(KeptMapping.withoutBlock(description, null)).isEqualTo(own);
+        assertThat(KeptMapping.readSourceNotes(((XsltDoc) world.docs.get("build-index-xslt")).getDescription()))
+                .isEmpty();
+        // Linked already: not written again.
+        final int saves = world.saves.get();
+        assertThat(SourceNotesLinks.linkTranslations(world.guard(), world.documentAccess, BUILD)).isEmpty();
+        assertThat(world.saves.get()).isEqualTo(saves);
+    }
+
+    @Test
+    void notesCarriedIntoABuildAreLinkedByThePromotedDocTheWorkingCopyIsOf() {
+        final DocRef pipeline = promoted();
+        world.inBuild(BUILD, XsltDoc.TYPE, "Acme-V2.0-EVENTS", "build-xslt");
+        world.docs.put("build-xslt", XsltDoc.builder().uuid("build-xslt").name("Acme-V2.0-EVENTS").version("v0")
+                .description(KeptMapping.withMapping("", KeptMapping.TRANSLATION, Map.of("mapping", Map.of())))
+                .build());
+
+        notes.carryInto(BUILD, pipeline).orElseThrow();
+
+        assertThat(KeptMapping.readSourceNotes(((XsltDoc) world.docs.get("build-xslt")).getDescription())
+                .orElseThrow().getUuid()).isEqualTo("promoted-notes");
+        assertThat(SourceNotesLinks.notesOf(world.guard(), BUILD).orElseThrow().getUuid())
+                .isEqualTo("promoted-notes");
+        assertThat(SourceNotesLinks.notesOf(world.guard(), null)).isEmpty();
+        assertThat(SourceNotesLinks.linked(world.guard(), "no-such-build", "text")).isEqualTo("text");
     }
 
     @Test
