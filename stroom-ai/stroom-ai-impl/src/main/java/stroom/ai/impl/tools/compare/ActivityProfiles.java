@@ -112,6 +112,21 @@ final class ActivityProfiles {
                 new Metric(Kind.DISTINCT, field, PEOPLE)), MAX_ROWS);
     }
 
+    /// Everyone's events by the field telling feeds apart (a feed field, or the StreamId to be resolved to its
+    /// stream's feed), with each value's first and last time: the source's feeds, whoever's events.
+    ///
+    /// @param source The index.
+    /// @param field  The feed field, or `StreamId`.
+    /// @param from   The range's start.
+    /// @param to     The range's end.
+    /// @return The aggregate.
+    static AggregateQuery feeds(final Source source, final String field, final Instant from, final Instant to) {
+        return new AggregateQuery(source, Map.of(), from, to, Bucket.NONE, List.of(field), List.of(
+                new Metric(Kind.COUNT, null, EVENTS),
+                new Metric(Kind.MIN_TIME, null, FIRST),
+                new Metric(Kind.MAX_TIME, null, LAST)), MAX_ROWS);
+    }
+
     /// @return The people (values of the field) active in the range, with their events and one event's ids each.
     static AggregateQuery active(final Source source,
                                  final String field,

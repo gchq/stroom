@@ -33,6 +33,7 @@ import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.query.DataSourceDocumentation;
+import stroom.ai.impl.tools.streams.StreamProvenance;
 import stroom.ai.impl.tools.time.ToolTimeZone;
 import stroom.ai.impl.tools.timeline.PersonScope;
 import stroom.ai.impl.tools.timeline.TimelineEventXml;
@@ -54,6 +55,7 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,6 +89,7 @@ class TestCompareActivityTool {
             QueryField.createId("StreamId"), QueryField.createId("EventId")));
     private FakeTabWorkspace files;
     private CompareFixtures fixtures;
+    private final StreamProvenance streamProvenance = Mockito.mock(StreamProvenance.class);
     private CompareActivityTool tool;
 
     @BeforeEach
@@ -111,7 +114,7 @@ class TestCompareActivityTool {
         tool = new CompareActivityTool(files.workspace(), dataSourceAccess, () -> queryService,
                 fixtures.aggregates(), new TimelineFields(agentInstructions, dataSourceAccess, Optional.empty(),
                     () -> Mockito.mock(DataSourceDocumentation.class)),
-                new PeerGroups(eventXml), auditLog);
+                new PeerGroups(eventXml), auditLog, streamProvenance);
 
         for (int i = 0; i < 10; i++) {
             fixtures.workdays("other" + i, FROM, WINDOW_TO, 9, 17, date -> 5, date -> Map.of("host.name", "h"));
@@ -149,6 +152,28 @@ class TestCompareActivityTool {
                 .contains("2026-05-12,Proxy,scored,160,8,09:05,16:52,1,0");
         Mockito.verify(auditLog).searched(Mockito.any(), Mockito.eq(CompareFixtures.PROXY), Mockito.contains(
                 "more aggregates"), Mockito.anyLong(), Mockito.contains("by the compare_activity tool"));
+    }
+
+    @Test
+    void aSourcesFeedsAreListedByEachStreamsFeedInOneLookup() {
+        final List<Collection<Long>> looked = new ArrayList<>();
+        Mockito.when(streamProvenance.of(Mockito.any())).thenAnswer(invocation -> {
+            final Collection<Long> ids = invocation.getArgument(0);
+            looked.add(ids);
+            final Map<Long, StreamProvenance.StreamSource> streams = new LinkedHashMap<>();
+            ids.forEach(id -> streams.put(id, new StreamProvenance.StreamSource(id, id % 2 == 0
+                    ? "PROXY-EU"
+                    : "PROXY-US", "Events", null, null, null)));
+            return new StreamProvenance.Provenance(streams, 0, Map.of());
+        });
+
+        final Map<String, Object> json = json(mcp(), arguments());
+
+        assertThat(looked).singleElement().satisfies(ids -> assertThat(ids).isNotEmpty());
+        assertThat(String.valueOf(json.get("notes"))).contains("Proxy's feeds (by StreamId, each stream's feed from "
+                                                               + "its meta): PROXY-")
+                .contains("PROXY-EU ").contains("PROXY-US ")
+                .contains("a day with no event from any is a gap, not quiet");
     }
 
     @Test

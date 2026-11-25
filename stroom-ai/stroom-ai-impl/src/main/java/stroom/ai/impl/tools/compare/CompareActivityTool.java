@@ -30,6 +30,7 @@ import stroom.ai.impl.tools.ToolTables;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.compare.ActivityProfiles.Fields;
 import stroom.ai.impl.tools.compare.ActivityProfiles.Scope;
+import stroom.ai.impl.tools.compare.ActivityScoring.FeedSpan;
 import stroom.ai.impl.tools.compare.ActivityScoring.PeerData;
 import stroom.ai.impl.tools.compare.ActivityScoring.Scored;
 import stroom.ai.impl.tools.compare.ActivityScoring.SourceData;
@@ -43,6 +44,7 @@ import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.query.EsqlQueryTool;
 import stroom.ai.impl.tools.query.StroomQlDatePoints;
 import stroom.ai.impl.tools.sequence.EqlSequenceResults;
+import stroom.ai.impl.tools.streams.StreamProvenance;
 import stroom.ai.impl.tools.time.ToolTimeZone;
 import stroom.ai.impl.tools.time.UserTimeZones;
 import stroom.ai.impl.tools.timeline.PersonScope;
@@ -60,6 +62,8 @@ import stroom.query.impl.QueryService;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.json.JsonUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
@@ -96,6 +100,8 @@ import java.util.regex.Pattern;
 /// line a month; the daily profile, the monthly rollup and every finding are workspace files. A re-run asks only for
 /// the days since ([CachedAggregates]).
 public class CompareActivityTool extends AbstractWorkspaceTool {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CompareActivityTool.class);
 
     static final String NAME = "compare_activity";
     static final String PERSON_ARG = "person";
@@ -135,6 +141,8 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     /// field here.
     static final String EVENT_CATEGORY = "event.category";
     static final String PEER_ELEMENT_ARG = "peerElement";
+    // The offset of a source's feeds aggregate.
+    private static final String FEEDS = "feeds";
     static final String INCLUDE_TARGETS_ARG = "includeTargets";
     static final String TARGET_PERSON_FIELD_ARG = "targetPersonField";
     static final String TARGET_USER_FIELD_ARG = "targetUserField";
@@ -168,6 +176,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     private final TimelineFields timelineFields;
     private final PeerGroups peerGroups;
     private final AiAuditLog auditLog;
+    private final Provider<StreamProvenance> streamProvenanceProvider;
 
     /// @param workspace            The chats' workspaces.
     /// @param dataSourceAccess     Finds the indexes the user can use.
@@ -176,6 +185,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     /// @param timelineFields       Finds each index's person, user and breadth fields.
     /// @param peerGroups           Reads the peers' groups.
     /// @param auditLog             Audits what each index was searched for.
+    /// @param streamProvenanceProvider Gives each stream's feed, to tell a source's feeds apart.
     @Inject
     CompareActivityTool(final ChatWorkspace workspace,
                         final DataSourceAccess dataSourceAccess,
@@ -183,8 +193,10 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                         final Provider<IndexAggregates> runnerProvider,
                         final TimelineFields timelineFields,
                         final PeerGroups peerGroups,
-                        final AiAuditLog auditLog) {
+                        final AiAuditLog auditLog,
+                        final Provider<StreamProvenance> streamProvenanceProvider) {
         super(workspace);
+        this.streamProvenanceProvider = streamProvenanceProvider;
         this.dataSourceAccess = dataSourceAccess;
         this.queryServiceProvider = queryServiceProvider;
         this.runnerProvider = runnerProvider;
@@ -202,14 +214,17 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     /// @param timelineFields       Finds each index's person, user and breadth fields.
     /// @param peerGroups           Reads the peers' groups.
     /// @param auditLog             Audits what each index was searched for.
+    /// @param streamProvenance     Gives each stream's feed.
     CompareActivityTool(final ChatWorkspace workspace,
                         final DataSourceAccess dataSourceAccess,
                         final Provider<QueryService> queryServiceProvider,
                         final AggregateRunner runner,
                         final TimelineFields timelineFields,
                         final PeerGroups peerGroups,
-                        final AiAuditLog auditLog) {
+                        final AiAuditLog auditLog,
+                        final StreamProvenance streamProvenance) {
         super(workspace);
+        this.streamProvenanceProvider = () -> streamProvenance;
         this.dataSourceAccess = dataSourceAccess;
         this.queryServiceProvider = queryServiceProvider;
         this.runnerProvider = () -> runner;
@@ -259,7 +274,9 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                  + "rhythm (first and last of the day, hour of the week), breadth (distinct "
                                  + "values) and novelty (values first seen). Scored in code: robust z-scores, "
                                  + "change points with their date, drifts, values started and stopped; coverage "
-                                 + "gaps, leave and source-wide shifts are checked first. Gives at most "
+                                 + "gaps (by day across every feed of the source: a day with none from any is a "
+                                 + "gap, not quiet), leave, source-wide shifts and feeds joining or leaving (each "
+                                 + "feed's first and last day listed) are checked first. Gives at most "
                                  + MAX_FINDINGS + " ranked findings, each an indicator with its evidence and an "
                                  + "alternative explanation (never a conclusion about the person: say so), a line "
                                  + "a month, and CSV files of the daily profile and monthly rollup. Give person "
@@ -463,6 +480,10 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                     : null, from, to));
                 }
             }
+            if (source.feedBy() != null) {
+                offsets.put(FEEDS, queries.size() - start);
+                queries.add(ActivityProfiles.feeds(source.source(), source.feedBy(), from, to));
+            }
             offsetsBySource.add(offsets);
             final boolean peersHere = peers && source.hasEventIds();
             if (peersHere) {
@@ -539,10 +560,13 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                             notes);
                 }
             }
+            final List<FeedSpan> feeds = offsetsBySource.get(index).containsKey(FEEDS)
+                    ? feeds(source, own.get(offsetsBySource.get(index).get(FEEDS)), zone, notes)
+                    : List.of();
             data.add(new SourceData(source.source().name(), source.label(), source.fields(),
                     ActivityProfiles.days(own.get(0), own.get(1), source.fields(), zone.zone()),
                     ActivityProfiles.hourOfWeek(own.get(1), zone.zone()), seen, seenCutShort,
-                    ActivityProfiles.population(own.get(2)), null, extra));
+                    ActivityProfiles.population(own.get(2)), null, extra).withFeeds(feeds));
             index++;
         }
         // The peers' days, in a second round.
@@ -631,6 +655,94 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     }
 
     // --------------------------------------------------------------------------------
+    // The feeds
+
+    // A source's feeds, each with its first and last day, from everyone's events by its feed field or StreamId (each
+    // stream's feed looked up in one batch), said in the notes: the person's baseline is their activity across
+    // every feed, and coverage is judged by day across them.
+    private List<FeedSpan> feeds(final Planned source,
+                                 final Table table,
+                                 final ToolTimeZone zone,
+                                 final List<String> notes) {
+        final boolean byStream = EqlSequenceResults.STREAM_ID.equals(source.feedBy());
+        final Map<String, String> feedOf = new LinkedHashMap<>();
+        if (byStream) {
+            final List<Long> ids = new ArrayList<>();
+            for (final Map<String, String> row : table.rows()) {
+                NullSafe.consume(number(row.get(AggregateQuery.groupColumn(0))), ids::add);
+            }
+            try {
+                final StreamProvenance.Provenance provenance = streamProvenanceProvider.get().of(ids);
+                NullSafe.consume(provenance, found -> found.streams().forEach((id, stream) ->
+                        feedOf.put(String.valueOf(id), stream.feed())));
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> "The streams' feeds weren't looked up: " + e.getMessage(), e);
+            }
+        }
+        final Map<String, LocalDate[]> spans = new LinkedHashMap<>();
+        for (final Map<String, String> row : table.rows()) {
+            final String value = row.get(AggregateQuery.groupColumn(0));
+            final String feed = byStream
+                    ? feedOf.get(numberText(value))
+                    : value;
+            final LocalDate first = day(row.get(ActivityProfiles.FIRST), zone);
+            final LocalDate last = day(row.get(ActivityProfiles.LAST), zone);
+            if (NullSafe.isBlankString(feed) || first == null || last == null) {
+                continue;
+            }
+            spans.merge(feed, new LocalDate[]{first, last}, (a, b) -> new LocalDate[]{
+                    a[0].isBefore(b[0])
+                            ? a[0]
+                            : b[0], a[1].isAfter(b[1])
+                    ? a[1]
+                    : b[1]});
+        }
+        final List<FeedSpan> out = new ArrayList<>();
+        spans.forEach((feed, days) -> out.add(new FeedSpan(feed, days[0], days[1])));
+        out.sort(Comparator.comparing(FeedSpan::first).thenComparing(FeedSpan::feed));
+        if (!out.isEmpty()) {
+            notes.add(source.source().name() + "'s feeds (by " + (byStream
+                    ? "StreamId, each stream's feed from its meta"
+                    : "its feed field " + source.feedBy()) + "): " + String.join(", ", out.stream()
+                    .map(feed -> feed.feed() + " " + feed.first() + " to " + feed.last())
+                    .toList()) + ". The baseline is the person's activity across them all, and coverage is "
+                      + "judged by day across them: a day with no event from any is a gap, not quiet." + (table
+                    .cutShort()
+                    ? " (Read from the first " + table.rows().size() + " rows: there may be more.)"
+                    : ""));
+        }
+        return out;
+    }
+
+    private static LocalDate day(final String instant, final ToolTimeZone zone) {
+        if (NullSafe.isBlankString(instant)) {
+            return null;
+        }
+        try {
+            return Instant.parse(instant.strip()).atZone(zone.zone()).toLocalDate();
+        } catch (final DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    private static Long number(final String text) {
+        try {
+            return text == null
+                    ? null
+                    : (long) Double.parseDouble(text.strip());
+        } catch (final NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private static String numberText(final String text) {
+        final Long number = number(text);
+        return number == null
+                ? text
+                : String.valueOf(number);
+    }
+
+    // --------------------------------------------------------------------------------
     // The sources
 
     // Every source to read, each with whose events it is filtered to and its fields; those that can't be read kept,
@@ -706,6 +818,12 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                     LOCATION_ARG, defaults);
             // A user (or person) field found by a guess: the ## Fields line that would make it the site's, to offer.
             NullSafe.consume(scope.field().suggestion(), line -> defaults.add(doc.getName() + ": " + line));
+            // The feeds are told apart by the index's feed field (the call's, the AGENTS doc's ## Fields 'feed:'),
+            // else by StreamId, each stream's feed from its meta.
+            final String feedBy = timelineFields.find(context.session(), doc, InstructionRules.FEED_FIELD,
+                    List.of(), fields::containsKey).map(TimelineFields.Found::field).orElse(hasIds && elastic
+                    ? EqlSequenceResults.STREAM_ID
+                    : null);
             planned.add(new Planned(doc, source, new Scope(scope.field().field(), scope.values()),
                     new Fields(sumFields, breadthFields), scope.by().label() + " (" + scope.field().field() + " from "
                                                           + scope.field().from() + ")", hasIds, null,
@@ -715,7 +833,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                             : null, country.map(TimelineFields.Found::field).orElse(null), elastic
                             ? fields.keySet().stream().filter(name -> name.endsWith(POINT_SUFFIX)).sorted()
                                     .findFirst().orElse(null)
-                            : null, targeted, categories, location, defaults));
+                            : null, targeted, categories, location, defaults, feedBy));
         }
         if (planned.stream().noneMatch(Planned::usable)) {
             throw new WorkspaceException("No source can be compared: " + String.join("; ", planned.stream()
@@ -1329,7 +1447,8 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                    Targeted targeted,
                    boolean categories,
                    boolean location,
-                   List<String> defaults) {
+                   List<String> defaults,
+                   String feedBy) {
 
         /// Copies the list.
         Planned {
@@ -1341,7 +1460,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         /// @return It, left out.
         static Planned leftOut(final DocRef doc, final String why) {
             return new Planned(doc, null, null, null, null, false, why, null, null, null, null, null, false, false,
-                    List.of());
+                    List.of(), null);
         }
 
         /// @return True if it can be read.

@@ -132,7 +132,15 @@ final class ActivityScoring {
                 case WEEK, MONTH -> findings.addAll(merged(windowFindings(spec, data, features, status, population,
                         notes), spec.unit()));
             }
-            findings.addAll(changePoints(spec, data, features, population));
+            for (final Finding change : changePoints(spec, data, features, population)) {
+                final Optional<String> edge = feedEdge(spec, data, LocalDate.parse(change.window()));
+                if (edge.isPresent()) {
+                    // A feed joining or leaving the source moves the person's volume with it: no change of theirs.
+                    notes.add(change.evidence() + ": not scored, as " + edge.get() + ".");
+                } else {
+                    findings.add(change);
+                }
+            }
             findings.addAll(drifts(data, features));
             findings.addAll(rhythm(spec, data, notes));
             findings.addAll(peers(spec, data, status, notes));
@@ -544,6 +552,22 @@ final class ActivityScoring {
 
     // --------------------------------------------------------------------------------
     // Change points and drifts
+
+    // The feed that joined (its first day after the baseline's start) or left (its last day before the window's
+    // end) the source within a week of a change point's day, said; empty for none.
+    static Optional<String> feedEdge(final Spec spec, final SourceData data, final LocalDate date) {
+        for (final FeedSpan feed : data.feeds()) {
+            if (feed.first() != null && feed.first().isAfter(spec.baselineFrom())
+                && Math.abs(ChronoUnit.DAYS.between(feed.first(), date)) <= SOURCE_SHIFT_DAYS) {
+                return Optional.of("feed " + feed.feed() + " joined the source on " + feed.first());
+            }
+            if (feed.last() != null && feed.last().isBefore(spec.windowTo().minusDays(1))
+                && Math.abs(ChronoUnit.DAYS.between(feed.last().plusDays(1), date)) <= SOURCE_SHIFT_DAYS) {
+                return Optional.of("feed " + feed.feed() + " left the source after " + feed.last());
+            }
+        }
+        return Optional.empty();
+    }
 
     private static List<Finding> changePoints(final Spec spec,
                                               final SourceData data,
@@ -1301,6 +1325,8 @@ final class ActivityScoring {
     /// @param population   The whole source's volume by day.
     /// @param peers        The peers' daily events, or null without peers.
     /// @param extra        More daily features by name (e.g. `category:webmail`, events a day), scored as volume.
+    /// @param feeds        The feeds whose events the source holds in the period, each with its first and last day;
+    ///                     empty where they can't be told.
     record SourceData(String source,
                       String label,
                       ActivityProfiles.Fields fields,
@@ -1310,7 +1336,38 @@ final class ActivityScoring {
                       Set<String> seenCutShort,
                       SortedMap<LocalDate, Population> population,
                       PeerData peers,
-                      Map<String, SortedMap<LocalDate, Double>> extra) {
+                      Map<String, SortedMap<LocalDate, Double>> extra,
+                      List<FeedSpan> feeds) {
+
+        /// Copies the feeds.
+        SourceData {
+            feeds = List.copyOf(NullSafe.list(feeds));
+        }
+
+        /// Without feeds.
+        ///
+        /// @param source       The source's name.
+        /// @param label        Whose events they are.
+        /// @param fields       The sum and breadth fields.
+        /// @param days         The person's days with activity.
+        /// @param hourOfWeek   The person's hour-of-week profile a month.
+        /// @param seen         Each breadth field's values with their first and last times.
+        /// @param seenCutShort The breadth fields whose values were cut short.
+        /// @param population   The whole source's volume by day.
+        /// @param peers        The peers' daily events, or null without peers.
+        /// @param extra        More daily features by name.
+        SourceData(final String source,
+                   final String label,
+                   final ActivityProfiles.Fields fields,
+                   final SortedMap<LocalDate, Day> days,
+                   final SortedMap<YearMonth, double[]> hourOfWeek,
+                   final Map<String, List<Seen>> seen,
+                   final Set<String> seenCutShort,
+                   final SortedMap<LocalDate, Population> population,
+                   final PeerData peers,
+                   final Map<String, SortedMap<LocalDate, Double>> extra) {
+            this(source, label, fields, days, hourOfWeek, seen, seenCutShort, population, peers, extra, List.of());
+        }
 
         /// Without more features.
         ///
@@ -1339,15 +1396,35 @@ final class ActivityScoring {
         /// @return It with them.
         SourceData withExtra(final Map<String, SortedMap<LocalDate, Double>> more) {
             return new SourceData(source, label, fields, days, hourOfWeek, seen, seenCutShort, population, peers,
-                    more);
+                    more, feeds);
         }
 
         /// @param peerData The peers' daily events.
         /// @return It with them.
         SourceData withPeers(final PeerData peerData) {
             return new SourceData(source, label, fields, days, hourOfWeek, seen, seenCutShort, population, peerData,
-                    extra);
+                    extra, feeds);
         }
+
+        /// @param spans The feeds whose events the source holds, each with its first and last day.
+        /// @return It with them.
+        SourceData withFeeds(final List<FeedSpan> spans) {
+            return new SourceData(source, label, fields, days, hourOfWeek, seen, seenCutShort, population, peers,
+                    extra, spans);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A feed whose events a source holds.
+    ///
+    /// @param feed  The feed's name.
+    /// @param first Its first day in the period (the person's zone), or null.
+    /// @param last  Its last day in the period, or null.
+    record FeedSpan(String feed, LocalDate first, LocalDate last) {
+
     }
 
 

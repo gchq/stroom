@@ -83,6 +83,38 @@ class TestActivityScoring {
     }
 
     @Test
+    void aStepWhereAFeedJoinedTheSourceIsNoChangePointOfThePersons() {
+        // The person's events step up the day a second feed (their laptop's) joined the source.
+        final CompareFixtures fixtures = background(ZONE, BASE_FROM, WINDOW_TO, 1.0);
+        fixtures.workdays("p1", BASE_FROM, WINDOW_TO, 9, 17, date -> date.isBefore(STEP)
+                ? 5
+                : 20, date -> Map.of());
+        final ActivityScoring.SourceData data = fixtures.data("p1", NO_FIELDS, BASE_FROM, WINDOW_TO, List.of())
+                .withFeeds(List.of(new ActivityScoring.FeedSpan("DESKTOP-EVENTS", BASE_FROM, WINDOW_TO.minusDays(1)),
+                        new ActivityScoring.FeedSpan("LAPTOP-EVENTS", STEP.minusDays(2), WINDOW_TO.minusDays(1))));
+
+        final Scored scored = ActivityScoring.score(spec(Unit.WEEK), data);
+
+        assertThat(scored.findings()).noneSatisfy(finding -> assertThat(finding.kind()).isEqualTo(Kind.CHANGE));
+        assertThat(scored.notes()).anySatisfy(note -> assertThat(note).contains("not scored, as feed LAPTOP-EVENTS "
+                                                                                + "joined the source on 2026-05-09"));
+        // A feed there from the start, or one ending with the window, moves nothing.
+        assertThat(ActivityScoring.feedEdge(spec(Unit.WEEK), data, BASE_FROM.plusDays(3))).isEmpty();
+        assertThat(ActivityScoring.feedEdge(spec(Unit.WEEK), data, STEP.plusDays(30))).isEmpty();
+    }
+
+    @Test
+    void aStepWhereAFeedLeftTheSourceIsNoChangePointEither() {
+        final CompareFixtures fixtures = background(ZONE, BASE_FROM, WINDOW_TO, 1.0);
+        final ActivityScoring.SourceData data = fixtures.data("p1", NO_FIELDS, BASE_FROM, WINDOW_TO, List.of())
+                .withFeeds(List.of(new ActivityScoring.FeedSpan("OLD-EVENTS", BASE_FROM, STEP.minusDays(1))));
+
+        assertThat(ActivityScoring.feedEdge(spec(Unit.WEEK), data, STEP.plusDays(2))).contains(
+                "feed OLD-EVENTS left the source after 2026-05-10");
+        assertThat(ActivityScoring.feedEdge(spec(Unit.WEEK), data, STEP.plusDays(20))).isEmpty();
+    }
+
+    @Test
     void aStepEveryoneSharesIsTheSources() {
         final CompareFixtures fixtures = new CompareFixtures(ZONE);
         // A pipeline change: everyone's events quadruple from the same day.
