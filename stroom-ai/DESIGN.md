@@ -2135,7 +2135,7 @@ Organisation field, never by feed; each feed's first and last day listed.
 
 **As built (2026-11-25, timeline reading pending).**
 * Foundations: `XsltStages` (pre-process, translation, decoration, output (reads Events, writes no `Events`/`Event`,
-  e.g. a flattener, not the last non-Events XSLT), indexing, UNKNOWN where the XSLT can't be read;
+  e.g. a flattener; the last non-Events XSLT is output when a producer, writer or appender follows it), indexing, UNKNOWN where the XSLT can't be read;
   by content, or by stepping one record); `DataSourceDocumentation.feedingPlans` (every feeding pipeline's plan from
   its effective indexing-stage XSLT, read once a call); `TimelineFields` (`Found.byPipeline`, the From column as
   `INDEX_DOCUMENTATION`); `StreamProvenance` (batches of 500, as the user; unseen streams counted, never named) and
@@ -2162,6 +2162,22 @@ Organisation field, never by feed; each feed's first and last day listed.
   ES|QL query per source each run; a feed's joining or leaving suppresses change points within 7 days.
 * Eval cases 102 to 105 (several feeds: `setup.hand_written.other_feeds`, `expected.several_feeds`) and 106 to 109
   (in place: `description`, `pre_process`, `shared_with`, `expected.in_place`).
+
+**As built, evening (2026-11-25).** Eval-driven hard gates (the user's rule for repeated slips): promote_build refuses
+an in-place build with nothing new and an uncatalogued build on an existing hand-written translation; copy_pipeline
+refuses a misplaced version name and the described pipeline; draft_translation_mapping is refused after a copy or
+in-place start (lifted when the read-back fails); the catalogue and saves wait for the read-back; propose_skill
+refuses a user who can't apply the change; a failed Event chains check stops a skill run. Defects found by the runs:
+a false "no longer writes the vendor's code" warning for read-back event types, `ignored_fields` not respected by
+the sample check, the timeline roles asked only in a table, an Event chains user field, the 109 scorer. Built from
+decisions: stepping validates Events with no schema filter after the translation (`MergedPipeline.downstream()`
+follows links: a relinked-out schema filter no longer counts); induction skips Content Store packs (a GitRepo with
+store metadata) and writes git-synced ones; imported functions wrapping stroom:lookup or stroom:http-call count as
+lookups (`XsltLookupAnalyser.importedCalls`); IndexingTrace (processing user), the XML-path fallback and EventDedupe
+in the timeline; field-coverage boundaries and logonForms in compare_activity; logonForms in sequence_query (actor
+and target steps); two CEF forwarder shapes (`CefHandoff`, `CefChains`) with `PipelineInheritance` facts; the last
+non-Events XSLT staged by its next element; in-place builds promote only new documents; a failed read-back offers
+drafting anew. Eval case 110 (a two-stage CEF forwarder, `setup.forwarding`).
 
 **Audit findings** (HEAD ba5e771df6): promotion advised disabling the earlier version's filters while they still
 translated other feeds (`PromoteBuildTool` 780-811), and listed old indexing filters likewise

@@ -2010,6 +2010,19 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
 * Sources over MCP with no form: a root AGENTS doc's `## Sources` line `- timeline: A, B`; else the supported
   indexes holding the user's events; past 10, refused with the list for the calling model to choose.
 
+**Evening additions (2026-11-25).** All fallbacks after the call/skill and AGENTS `## Fields`:
+* Where feeding pipelines' plans differ: each Events stream traced once to its indexing pipeline (`IndexingTrace`,
+  read as the processing user: processing tasks, else the candidates' processor filters run as a meta search;
+  candidates only pipelines feeding this index whose plans the user can view; only the link is computed), else the
+  value from the event's Events XML at the thing's schema path (`EventXmlPaths`, within `timelineMaxXmlEvents`), else
+  "not read"; said in `fields_by_pipeline`.
+* An unsettled code is classified once from the XML of 3 of its events, read first so the cap reaches every code;
+  the code's other events are read within the cap and classified from their own XML. `eventsXml: each` also reads
+  the XML of events the index already types (within the cap); `events_xml.mode` says which ran.
+* Duplicates (the same event in two sources, or a reprocessed event's old and new documents) are counted once, keyed
+  by the raw parent stream and EventId (`EventDedupe`; `duplicates_left_out`, `not_deduplicated`).
+* `logonForms` is shared with compare_activity and sequence_query (`PersonScope.logonForms`).
+
 ### `propose_timeline_dashboard`
 
 Content · read-only · chat only · timelines group · Classes: `ProposeTimelineDashboardTool`,
@@ -2236,6 +2249,11 @@ of its own: the tool policies decide who may compare a person's activity.
 StreamId buckets resolved through `StreamProvenance`; the notes list each feed's first and last day; a change point
 within 7 days of a feed joining or leaving is not scored, said in the notes; coverage stays by day across the
 index (a day with no events from any feed is a gap); peers by the Organisation field.
+
+**Evening additions (2026-11-25).** A field's coverage starting or stopping (e.g. a person id held only from a
+reprocessed range) is a boundary like a feed joining: no change point within 7 days, and week/month findings on the
+field scored only over the days it is held (`ActivityScoring.coverageEdge`, `heldDays`). `logonForms` on request or
+as a skill gives (Elastic: a scripted ES|QL field, "scripted, slower"; StroomQL matched exactly, with a note).
 
 ### `current_results`
 
@@ -4098,6 +4116,14 @@ follow-on indexing filters likewise. The review states each feed's streams, size
 (the first feed's or another; the `Feed` destination answers it); one folder: used as for one feed. With one index
 per feed, each indexing pipeline's filter gains its own feed's `Feed is` term. The result has `feed_selection`.
 
+**Gates and in-place builds (2026-11-25, evening).** An in-place build promotes only its new documents (an index, a
+forwarder): the described pipeline and its XSLT (and any copy) are never promoted, shown as `described_in_place`
+("described in place, not promoted"); with nothing new it refuses ("Nothing to promote ... has made nothing new").
+A build on an existing hand-written translation (the existing start, or a translation-stage copy of a pipeline
+keeping no mapping) is refused before any review until its catalogue (each event type and the catch-all) is
+confirmed. Copies, versions and the review state the template a pipeline inherits (`inheritance`) and flag one
+unlike its predecessor's or siblings', or an own XSLT where the template supplies one (`PipelineInheritance`).
+
 ## Samples, surveys and feeds
 
 ### `profile_sample`
@@ -4977,6 +5003,10 @@ count (counts of 10 or more; `1,444` read as 1444): proposals bringing it are re
   kind); asked only for those the schema doesn't settle (Unknown, no element, a fork's element, an unnamed
   Authenticate or Process Action) and any focus; `timeline_roles_to_ask` in the compact catalogue.
 
+**Evening fixes (2026-11-25).** A set's form asks for the timeline roles the schema doesn't settle itself ("timeline
+roles", the given ones listed to change). `draft_translation_mapping` is refused in a build started from an existing
+pipeline (copy or in place), except after a failed read-back.
+
 ### `record_source_notes`
 
 Content · write (Documentation docs in the build) · checks View and Edit; docs created and changed as the user; a
@@ -5778,6 +5808,9 @@ XSLT, one reading Events and writing no `Events`/`Event` (`XsltStages.isOutput`)
 check_xslt, save_xslt and step_pipeline's draft_code). Every other check still runs; shared modules writing Events
 fragments from records are still checked; there is no opt-out.
 
+**Stages (2026-11-25, evening).** The last XSLT writing no Events is classified by what its output goes to: an
+indexing filter makes it indexing, a producer, writer or appender output (`XsltStages.writtenTo`).
+
 ### `check_events`
 
 Content · read-only (records Events that pass as validated in the build record) · unlocked by View Data (for
@@ -6086,6 +6119,11 @@ nothing it matches is offered for deletion.
     pipeline store), and `set_properties` is not checked against validation elements.
 
 **2026-11-25.** A pipeline naming its documents by UUID alone is copied with their names read from Stroom.
+
+**Gates (2026-11-25, evening).** A new version's name must be the original's with a newer version token in the same
+place, or with `-V<n>` appended (`VersionNames.namesNewerVersion`); any other name is refused with the expected one.
+The pipeline an in-place build describes (or any running its XSLT) is never copied. The result says the template
+inherited (`inheritance`); inherited properties stay inherited.
 
 ### `update_pipeline`
 
@@ -6967,6 +7005,11 @@ and puts them to the user.
 **XSLT stages (2026-11-25).** Refuses a pre-processor, decorator or indexing XSLT, naming the pipeline's
 translation (`XsltStages`); `KeptMappings.keptXslt` orders by stage.
 
+**Read-back failures (2026-11-25, evening).** In a copy start, a copied XSLT that can't be read back (or doesn't
+regenerate) is recorded (`read_back_failed`, `read_back` in the result): the read-back gate lifts and the plan's
+`translation:redraft` step drafts the translation anew into the copy (`draft_translation_mapping` is then allowed).
+The catalogue, `save_xslt` and `build_translation_xslt` otherwise wait for the read-back (`BuildPlan.awaitingReadBack`).
+
 ### `save_xslt`
 
 content · write · checks View and Edit; the XSLT is created in the build folder (Create) or changed (Edit); the
@@ -7515,6 +7558,15 @@ precedence, as do a topic, vendor and pipeline template the instructions name (`
     `sample_check_error`.
   * A review steps within the session's time limit for a long call and is audited; cut short it says
     `stopped_early` and reviews the lines stepped by then.
+
+**Two forwarder shapes (2026-11-25).** `template` (a template or predecessor forwarder, UUID or exact name) or the
+standing instructions' template or the build's copied forwarder decide the shape; with none, the user is asked only
+where some forwarding template has two stages. Chained (an open XSLT slot, then an inherited XSLT whose output goes
+to a producer, writer or appender and which writes no Events): only the flattener is drafted, in the form the
+shared XSLT reads (`CefHandoff`, read from its templates and checked by running it locally: kafkaRecords, a topic,
+the line as the value; `chain_check`), with no topic or Kafka settings (`notes` names any given); review reads the
+lines at the shared stage and the Events at the flattener's input. Kept plan output `chained` with its `handoff`.
+Single-stage forwarders as before. The shared XSLT is never changed.
 
 ### `review_coverage`
 
