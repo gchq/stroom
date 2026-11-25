@@ -21266,8 +21266,14 @@
   "detail_check": false,
   "result": {
    "mapping": {
-    "input": "data_splitter",
+    "input": "json",
+    "json_layout": "lines",
     "common": [
+     {
+      "path": "EventTime/TimeCreated",
+      "field": "time",
+      "time_format": "yyyy-MM-dd'T'HH:mm:ssX"
+     },
      {
       "path": "EventSource/System/Name",
       "value": "S"
@@ -21275,6 +21281,10 @@
      {
       "path": "EventSource/System/Environment",
       "value": "Prod"
+     },
+     {
+      "path": "EventSource/User/Id",
+      "field": "user"
      },
      {
       "path": "EventSource/Generator",
@@ -21288,6 +21298,11 @@
        {
         "path": "EventDetail/TypeId",
         "value": "Other"
+       },
+       {
+        "path": "EventDetail/Unknown/Data",
+        "data_name": "time",
+        "field": "time"
        }
       ],
       "catch_all": true
@@ -21295,22 +21310,20 @@
     ]
    },
    "source_notes": null,
-   "splitter": {
-    "kind": "delimited",
-    "header": true,
-    "quote": "\""
-   },
-   "format": "delimited",
-   "records": 0,
+   "splitter": null,
+   "format": "json lines",
+   "records": 1,
    "kinds": [],
    "notes": [
-    "No timestamp field was recognised: map EventTime/TimeCreated yourself (time_format from the profile).",
     "No host field was recognised: EventSource/Device is the device where the event happened, and the schema requires it (an event without one fails validation: never offer to leave it out). Map the field that names it (a door, a reader, a switch, a host) to Device/Name, HostName or IPAddress, or a constant; stroom:meta('RemoteAddress'), the sender's address, only when the record names none.",
     "No field tells the event types apart: every record is one 'other' event with Unknown/Data. If the records are all one event type (the request or the sample says what), replace Unknown with the action element that describes it (a command run is Process, a logon Authenticate, a file read View...) and move its Data entries into that element; otherwise catalogue the event types (catalogue_event_types) once you know how they are told apart.",
     "No catalogue of event types yet: these rules are the draft's own guesses from the sample's values, a draft to be catalogued. Catalogue the event types (catalogue_event_types) and draft again before building: the translation follows the catalogue."
    ],
    "unmapped_fields": [],
-   "fields_seen": []
+   "fields_seen": [
+    "time",
+    "user"
+   ]
   }
  },
  {

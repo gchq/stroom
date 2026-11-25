@@ -1463,7 +1463,10 @@ public final class SampleProfiler {
             bad = new ArrayList<>();
             read--;
         }
-        if (jsonLines.size() >= 2 && jsonLines.size() >= 0.8 * (read - bad.size())
+        // One object on the only line is a record too (seen in the many-feeds e2e, 2026-11-25: a dormant feed's only
+        // stream, one JSON line, profiled as delimited text).
+        final boolean oneLine = lines.size() == 1 && jsonLines.size() == 1 && bad.isEmpty();
+        if ((jsonLines.size() >= 2 || oneLine) && jsonLines.size() >= 0.8 * (read - bad.size())
             && jsonLines.size() >= 0.8 * read) {
             final Map<String, Object> found = with(result, "format", JSON_LINES, "records", lines.size(),
                     "fields", inventory(flattenAll(jsonLines.subList(0, Math.min(maxRecords, jsonLines.size())))),

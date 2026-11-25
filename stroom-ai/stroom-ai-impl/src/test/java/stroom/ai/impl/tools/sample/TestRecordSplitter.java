@@ -31,6 +31,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRecordSplitter {
 
+    @Test
+    void aSingleJsonLineIsJsonLinesNotDelimited() {
+        // Seen in the many-feeds e2e (2026-11-25): a dormant feed's only stream, one JSON object on one line, was
+        // surveyed as delimited text (its commas and colons read as columns).
+        final String line = "{\"time\": \"2026-05-09 08:00:01\", \"user\": \"u0\", \"action\": \"login\", "
+                            + "\"host\": \"vpn-0\"}\n";
+
+        final RecordSplitter.Chunk chunk = RecordSplitter.split(line);
+
+        assertThat(chunk.format()).isEqualTo(RecordSplitter.JSON_LINES);
+        assertThat(chunk.records()).hasSize(1);
+        assertThat(chunk.parsedAt(0)).containsEntry("action", "login");
+        assertThat(SampleProfiler.profile(line).get("format")).isEqualTo(SampleProfiler.JSON_LINES);
+    }
+
     private static final String WINDOWS = "http://schemas.microsoft.com/win/2004/08/events/event";
 
     @Test

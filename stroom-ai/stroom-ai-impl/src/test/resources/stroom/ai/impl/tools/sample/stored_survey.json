@@ -1193,8 +1193,8 @@
   }
  },
  "format:json_lines:third:head": {
-  "profile_format": "delimited",
-  "profile_records": 0,
+  "profile_format": "json lines",
+  "profile_records": 1,
   "split_format": "cef",
   "split_records": 0,
   "shapes": {}
@@ -1220,8 +1220,8 @@
   }
  },
  "format:json_offsets:third:head": {
-  "profile_format": "delimited",
-  "profile_records": 0,
+  "profile_format": "json lines",
+  "profile_records": 1,
   "split_format": "cef",
   "split_records": 0,
   "shapes": {}
@@ -1273,8 +1273,8 @@
   }
  },
  "format:json_epoch_fraction:third:head": {
-  "profile_format": "delimited",
-  "profile_records": 0,
+  "profile_format": "json lines",
+  "profile_records": 1,
   "split_format": "cef",
   "split_records": 0,
   "shapes": {}
@@ -1300,8 +1300,8 @@
   }
  },
  "format:json_micros:third:head": {
-  "profile_format": "delimited",
-  "profile_records": 0,
+  "profile_format": "json lines",
+  "profile_records": 1,
   "split_format": "cef",
   "split_records": 0,
   "shapes": {}
@@ -1327,8 +1327,8 @@
   }
  },
  "format:json_epoch_micros:third:head": {
-  "profile_format": "delimited",
-  "profile_records": 0,
+  "profile_format": "json lines",
+  "profile_records": 1,
   "split_format": "cef",
   "split_records": 0,
   "shapes": {}
@@ -1346,13 +1346,15 @@
  "format:json_epoch_s_micros:head": {
   "profile_format": "json lines",
   "profile_records": 2,
-  "split_format": "delimited",
-  "split_records": 0,
-  "shapes": {}
+  "split_format": "json lines",
+  "split_records": 1,
+  "shapes": {
+   "fields:event,ts,user.name | event=login": 1
+  }
  },
  "format:json_epoch_s_micros:third:head": {
-  "profile_format": "delimited",
-  "profile_records": 0,
+  "profile_format": "json lines",
+  "profile_records": 1,
   "split_format": "cef",
   "split_records": 0,
   "shapes": {}
@@ -1766,9 +1768,11 @@
  "eval:11_jsonl_message_text:0:head": {
   "profile_format": "delimited",
   "profile_records": 2,
-  "split_format": "delimited",
-  "split_records": 0,
-  "shapes": {}
+  "split_format": "json lines",
+  "split_records": 1,
+  "shapes": {
+   "fields:host,message,received > message: text:|<n> <n> alice LOGIN Successful login from <ip>": 1
+  }
  },
  "eval:11_jsonl_message_text:0:third:head": {
   "split_format": "cef",
@@ -2451,9 +2455,11 @@
  "eval:34_jsonl_schema_traps_nac:0:third:head": {
   "profile_format": "unknown text",
   "profile_records": null,
-  "split_format": "delimited",
-  "split_records": 0,
-  "shapes": {}
+  "split_format": "json lines",
+  "split_records": 1,
+  "shapes": {
+   "fields:ip,mac,port,result,service,switch,time,user": 1
+  }
  },
  "eval:34_jsonl_schema_traps_nac:0:most:head": {
   "profile_format": "json lines",
@@ -2938,9 +2944,11 @@
  "extra:epochs:head": {
   "profile_format": "unknown text",
   "profile_records": null,
-  "split_format": "delimited",
-  "split_records": 0,
-  "shapes": {}
+  "split_format": "json lines",
+  "split_records": 1,
+  "shapes": {
+   "fields:n,ts": 1
+  }
  },
  "extra:epochs:third:head": {
   "split_format": "cef",
@@ -2951,9 +2959,11 @@
  "extra:epochs:most:head": {
   "profile_format": "delimited",
   "profile_records": 1,
-  "split_format": "delimited",
-  "split_records": 0,
-  "shapes": {}
+  "split_format": "json lines",
+  "split_records": 1,
+  "shapes": {
+   "fields:n,ts": 1
+  }
  },
  "extra:ssh:head": {
   "profile_format": "syslog rfc5424",
@@ -3135,9 +3145,11 @@
  "extra:nested_json:head": {
   "profile_format": "unknown text",
   "profile_records": null,
-  "split_format": "delimited",
-  "split_records": 0,
-  "shapes": {}
+  "split_format": "json lines",
+  "split_records": 1,
+  "shapes": {
+   "fields:a.b.c.d,x": 1
+  }
  },
  "extra:nested_json:third:head": {
   "split_format": "cef",
@@ -3148,8 +3160,10 @@
  "extra:nested_json:most:head": {
   "profile_format": "delimited",
   "profile_records": 1,
-  "split_format": "delimited",
-  "split_records": 0,
-  "shapes": {}
+  "split_format": "json lines",
+  "split_records": 1,
+  "shapes": {
+   "fields:a.b.c.d,x": 1
+  }
  }
 }
