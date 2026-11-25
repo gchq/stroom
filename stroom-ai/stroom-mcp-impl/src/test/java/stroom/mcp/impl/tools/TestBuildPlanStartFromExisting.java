@@ -190,6 +190,27 @@ class TestBuildPlanStartFromExisting {
     }
 
     @Test
+    void aCopyMadeWithoutTheStartChoiceStillHasItsCatalogueToDo() {
+        // Seen in the multi-feed lane's eval runs: a hand-written pipeline copied before catalogue_event_types' start
+        // offer was answered, and the plan let the catalogue drop to "not needed".
+        facts.docs = List.of(FakeBuildFacts.doc("Documentation", "s", "ACME - Survey"),
+                FakeBuildFacts.doc("Pipeline", "ev", "ACME-V1.1-Events", "version_of", "prod-ev"),
+                FakeBuildFacts.doc("XSLT", "x", "ACME-V1.1-Events"));
+        facts.stages = Map.of("ev", "translation");
+        final Map<String, Object> unread = status();
+        assertThat(next(unread).get("step")).isEqualTo(BuildPlan.CATALOGUE);
+        assertThat(call(unread).get("tool")).isEqualTo("rebuild_mapping");
+
+        // Read back: the catalogue it gave confirmed before going on.
+        facts.mappings = Map.of("x", FakeBuildFacts.kept("translation", Map.of()));
+        final Map<String, Object> readBack = status();
+        assertThat(next(readBack).get("step")).isEqualTo(BuildPlan.CATALOGUE);
+        assertThat(call(readBack).get("tool")).isEqualTo(CatalogueEventTypesTool.NAME);
+        facts.catalogued = true;
+        assertThat(next(status()).get("step")).isNotEqualTo(BuildPlan.CATALOGUE);
+    }
+
+    @Test
     void theOfferSaysTheBuildMayBeDescribedInPlace() {
         facts.existing = EXISTING;
         assertThat(String.valueOf(next(status()).get("then"))).contains("described in place", "no new version");

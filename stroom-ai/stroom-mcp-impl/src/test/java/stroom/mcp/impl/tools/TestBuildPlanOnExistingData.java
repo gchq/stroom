@@ -351,14 +351,19 @@ class TestBuildPlanOnExistingData {
                 FakeBuildFacts.doc("XSLT", "x", "ACME-Events-V1.1"));
         facts.sources = List.of("ACME");
         facts.stages = Map.of("ev", "translation");
+        facts.catalogued = false;
+        // Copied without the start offer answered, it starts from the existing pipeline all the same (decided
+        // 2026-11-25: the catalogue is never skipped for a build on an existing translation): read back first, as
+        // the catalogue step.
         Map<String, Object> result = status();
-        assertThat(next(result).get("step")).isEqualTo("stepped");
-        assertThat(call(result)).isEqualTo(Map.of("tool", "rebuild_mapping", "arguments", Map.of("uuid", "x",
-                "pipeline_uuid", "ev")));
-        assertThat(String.valueOf(next(result).get("then"))).contains("keeps no mapping",
-                "build_translation_xslt uuid=<it> changes=");
-        // Once read back, the copy is stepped as any translation is.
+        assertThat(next(result).get("step")).isEqualTo(BuildPlan.CATALOGUE);
+        assertThat(call(result).get("tool")).isEqualTo("rebuild_mapping");
+        assertThat(((Map<?, ?>) call(result).get("arguments")).get("uuid")).isEqualTo("x");
+        // Once read back, its catalogue confirmed, then the copy is stepped as any translation is.
         facts.mappings = Map.of("x", FakeBuildFacts.kept("translation", Map.of()));
+        result = status();
+        assertThat(call(result).get("tool")).isEqualTo(CatalogueEventTypesTool.NAME);
+        facts.catalogued = true;
         result = status();
         assertThat(call(result).get("tool")).isEqualTo("step_sample");
     }

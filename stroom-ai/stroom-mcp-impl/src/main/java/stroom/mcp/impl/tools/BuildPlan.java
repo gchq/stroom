@@ -996,7 +996,12 @@ public class BuildPlan {
         // 2026-11-24): from it, the catalogue is to do (read back from its XSLT, then confirmed) though the build
         // holds its copy's translation.
         final Map<String, Object> startFrom = facts.startFrom(build).orElse(null);
-        final boolean inducting = startFrom != null
+        // A copy of an existing pipeline made without the start offer answered (seen in the multi-feed lane's eval
+        // runs: copied straight away, and the catalogue dropped to "not needed") starts from it all the same: its
+        // XSLT read back and the catalogue confirmed are never skipped.
+        final boolean copiedUnasked = startFrom == null && copies.stream()
+                .anyMatch(p -> p.get("version_of") != null);
+        final boolean inducting = copiedUnasked || startFrom != null
                                   && ExistingTranslations.EXISTING.equals(startFrom.get("choice"));
         // Described in place (decided with the user 2026-11-25): surveyed and catalogued, no new version.
         final boolean inPlace = InPlaceInduction.inPlace(startFrom);
@@ -1207,7 +1212,9 @@ public class BuildPlan {
                     .map(BuildPlan::uuid)
                     .findFirst()
                     .orElse(null);
-            version = JsonValues.mapOrEmpty(startFrom.get("pipeline"));
+            version = copiedUnasked
+                    ? copyOf(copies)
+                    : JsonValues.mapOrEmpty(startFrom.get("pipeline"));
             processing = translation.isEmpty()
                     ? "existing_copy"
                     : unread != null
@@ -1966,6 +1973,18 @@ public class BuildPlan {
             steps.add(shown);
         }
         return steps;
+    }
+
+    // The existing pipeline a build's copy is the next version of: its name and UUID, as the start offer gives it.
+    private static Map<String, Object> copyOf(final List<Map<String, Object>> copies) {
+        final Map<String, Object> copy = copies.stream()
+                .filter(p -> p.get("version_of") != null)
+                .findFirst()
+                .orElse(Map.of());
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("name", copy.get("name"));
+        out.put("uuid", copy.get("version_of"));
+        return out;
     }
 
     // A pipeline described in place is surveyed and its catalogue confirmed (its source types first, for an
