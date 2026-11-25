@@ -2697,6 +2697,62 @@ a.ai-stroom-link::after {
     fill-opacity: 0.55;
 }
 
+/* What can be clicked to pick its name out (AiGanttInteraction): the plot keeps its crosshair elsewhere. */
+.ai-gantt-bar,
+.ai-gantt-marker,
+.ai-gantt-edge,
+.ai-gantt-legend-item {
+    cursor: pointer;
+}
+
+.ai-gantt-legend-item .ai-gantt-legend-text {
+    cursor: pointer;
+}
+
+.ai-gantt-legend-item:focus {
+    outline: none;
+}
+
+.ai-gantt-legend-item:focus-visible .ai-gantt-legend-text {
+    text-decoration: underline;
+}
+
+.ai-gantt-legend-item:focus-visible .ai-gantt-swatch {
+    stroke: var(--focus-border);
+    stroke-width: 2;
+}
+
+.ai-gantt-legend-item[aria-pressed="true"] .ai-gantt-legend-text {
+    font-weight: 600;
+}
+
+/* What isn't of the name picked out. */
+.ai-gantt--dimmed {
+    opacity: 0.2;
+}
+
+/* A bar's title, in a box its size (so cut to it); the pointer goes through it to the bar. */
+.ai-gantt-bar-label-box {
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.ai-gantt-bar-label {
+    font-size: 9px;
+    fill: #ffffff;
+    paint-order: stroke;
+    stroke: rgba(0, 0, 0, 0.35);
+    stroke-width: 2px;
+    pointer-events: none;
+}
+
+/* A bar's start and end markers: small diamonds of the page's text colour, ringed by its background. */
+.ai-gantt-edge {
+    fill: var(--control__text-color);
+    stroke: var(--page__background-color);
+    stroke-width: 1;
+}
+
 .ai-gantt--crit {
     stroke: var(--control__text-color);
     stroke-width: 1.5;

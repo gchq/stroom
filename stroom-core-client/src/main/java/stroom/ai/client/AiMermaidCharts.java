@@ -40,6 +40,9 @@ final class AiMermaidCharts {
     static final String VIEW_ATTRIBUTE = "data-gantt-view";
     /// The attribute of a chart's element holding the width it is drawn at, when not [AiGanttChart#WIDTH].
     static final String WIDTH_ATTRIBUTE = "data-gantt-width";
+    /// The attribute on a chart's element giving the series picked out in it ([AiGanttChart#SERIES_ATTRIBUTE]), if
+    /// any.
+    static final String HIGHLIGHT_ATTRIBUTE = "data-gantt-highlight";
     /// The class of the element holding a chart's SVG, drawn again in place.
     static final String PLOT_CLASS = "ai-gantt-plot";
     /// The class of the button that shows the whole period again.
@@ -124,8 +127,8 @@ final class AiMermaidCharts {
         if (width != AiGanttChart.WIDTH) {
             sb.append(' ').append(WIDTH_ATTRIBUTE).append("=\"").append(width).append('"');
         }
-        sb.append("><div class=\"ai-gantt-tools\"><span class=\"ai-gantt-hint\">Drag across the times to zoom")
-                .append("</span>");
+        sb.append("><div class=\"ai-gantt-tools\"><span class=\"ai-gantt-hint\">Drag across the times to zoom; "
+                  + "click a bar or a name to pick it out").append("</span>");
         sb.append(button(RESET_CLASS, SvgImage.UNDO, "Reset zoom", "Show the whole period again", view == null));
         if (maximisable) {
             sb.append(button(MAXIMISE_CLASS, SvgImage.MAXIMISE, "Maximise", "Show the chart in a larger dialog",

@@ -23,6 +23,7 @@ import stroom.ai.shared.MermaidGanttParser;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -125,7 +126,9 @@ class TestAiGanttChart {
                 .contains("class=\"ai-gantt-bar ai-gantt-c1\"")
                 .contains("class=\"ai-gantt-marker ai-gantt-c2\"")
                 .contains("class=\"ai-gantt-bar ai-gantt-c3 ai-gantt--crit\"")
-                .contains("<title>Chrome: 23 Nov 09:00:00 to 23 Nov 09:30:00 (30 min)</title>")
+                // A bar's tooltip: its title and duration only (chat 195).
+                .contains("<title>Chrome (30 min)</title>")
+                .doesNotContain("<title>Chrome: ")
                 .contains(">09:00</text>", ">10:00</text>")
                 .contains(">USB copy</text>")
                 .endsWith("</svg>");
@@ -133,8 +136,8 @@ class TestAiGanttChart {
         assertThat(count(svg, "<path class=\"ai-gantt-marker ")).isEqualTo(1);
         assertThat(count(svg, "<g class=\"ai-gantt-lane")).isEqualTo(2);
         // Every bar starts and ends inside the plot.
-        final Matcher bar = Pattern.compile("<rect class=\"ai-gantt-bar [^\"]+\" x=\"([0-9.]+)\" y=\"[0-9]+\" "
-                                            + "width=\"([0-9.]+)\"").matcher(svg);
+        final Matcher bar = Pattern.compile("<rect class=\"ai-gantt-bar [^\"]+\"[^>]*? x=\"([0-9.]+)\" "
+                                            + "y=\"[0-9]+\" width=\"([0-9.]+)\"").matcher(svg);
         while (bar.find()) {
             final double x = Double.parseDouble(bar.group(1));
             assertThat(x).isBetween(162.0, 700.0);
@@ -152,7 +155,7 @@ class TestAiGanttChart {
                     Q&A :2026-11-23, 1d
                 """));
 
-        assertThat(svg).contains(">R&amp;D (times in UTC)</text>", ">A&amp;B</text>", "<title>Q&amp;A: ")
+        assertThat(svg).contains(">R&amp;D (times in UTC)</text>", ">A&amp;B</text>", "<title>Q&amp;A (")
                 .doesNotContain("R&D", ">A&B<", ">Q&A<");
     }
 
@@ -174,13 +177,118 @@ class TestAiGanttChart {
         block.append("Other :2026-11-23, 1d\n");
         final String svg = AiGanttChart.svg(MermaidGanttParser.parse(block.toString()));
 
-        assertThat(svg).contains(">app8</text>", ">Other and 2 more</text>").doesNotContain(">app9</text>");
+        final String legend = svg.substring(svg.indexOf("<g class=\"ai-gantt-legend\">"));
+        assertThat(legend).contains(">app8</text>", ">Other and 2 more</text>").doesNotContain(">app9</text>");
         assertThat(AiGanttChart.duration(90 * MINUTE)).isEqualTo("1 h 30 min");
         assertThat(AiGanttChart.duration(45_000)).isEqualTo("45 s");
     }
 
+    @Test
+    void aBarsTitleIsShownInItWhereItFitsCutToItsWidthAndLeftOutWhereItWouldntBeLegible() {
+        final String name = "Reviewing finance mail archive";
+
+        assertThat(AiGanttChart.barLabel(name, 400)).isEqualTo(name);
+        // As many characters as fit, the last an ellipsis.
+        assertThat(AiGanttChart.barLabel(name, 60)).isEqualTo("Reviewin\u2026");
+        assertThat(AiGanttChart.barLabel("Word", 30)).isEqualTo("Word");
+        // Too narrow for a few characters: none.
+        assertThat(AiGanttChart.barLabel(name, 20)).isNull();
+        assertThat(AiGanttChart.barLabel(name, 0)).isNull();
+        assertThat(AiGanttChart.barLabel("", 400)).isNull();
+
+        final String svg = AiGanttChart.svg(MermaidGanttParser.parse("""
+                gantt
+                    dateFormat YYYY-MM-DD HH:mm:ss
+                    Reviewing finance mail archive :2026-11-23 09:00:00, 2026-11-23 17:00:00
+                    Short one :2026-11-23 17:00:00, 2026-11-23 17:01:00
+                """));
+        // In a box the width of the bar, so it never runs past it; never in the pointer's way.
+        assertThat(barLabels(svg)).containsExactly("Reviewing finance mail archive");
+        // Drawn again at another width (a zoom or a resize), it is cut to the bar's width there.
+        final MermaidGantt gantt = MermaidGanttParser.parse("""
+                gantt
+                    dateFormat YYYY-MM-DD HH:mm:ss
+                    Reviewing finance mail archive :2026-11-23 09:00:00, 2026-11-23 09:30:00
+                    Other work :2026-11-23 09:30:00, 2026-11-23 17:00:00
+                """);
+        assertThat(barLabels(AiGanttChart.svg(gantt, null, AiGanttChart.MIN_WIDTH))).containsExactly("Other work");
+        final long nine = MermaidGantt.wallClock(2026, 11, 23, 9, 0, 0, 0);
+        assertThat(barLabels(AiGanttChart.svg(gantt, new long[]{nine, nine + 40 * MINUTE}, AiGanttChart.WIDTH)))
+                .containsExactly("Reviewing finance mail archive", "Other work");
+    }
+
+    @Test
+    void eachBarHasAStartAndAnEndMarkerNamingItsEventAndWhenItHappened() {
+        final String svg = AiGanttChart.svg(MermaidGanttParser.parse("""
+                gantt
+                    dateFormat YYYY-MM-DD HH:mm:ss
+                    logged on :2026-11-23 09:00:00, 2026-11-23 17:00:00
+                    %% events Logon-User | Logoff-User
+                    Chrome :2026-11-23 10:00:00, 2026-11-23 10:30:00
+                """));
+
+        assertThat(count(svg, "<path class=\"ai-gantt-edge")).isEqualTo(4);
+        assertThat(svg).contains("<title>Logon-User: 23 Nov 2026 09:00:00</title>",
+                "<title>Logoff-User: 23 Nov 2026 17:00:00</title>",
+                // Where the block names no events, what they are.
+                "<title>Start: 23 Nov 2026 10:00:00</title>", "<title>End: 23 Nov 2026 10:30:00</title>");
+        // A milestone is a marker of its own, with no edges.
+        assertThat(count(AiGanttChart.svg(MermaidGanttParser.parse("gantt\n  m :milestone, 2026-11-23, 0d")),
+                "<path class=\"ai-gantt-edge")).isZero();
+        // An end past the span drawn isn't drawn.
+        final long nine = MermaidGantt.wallClock(2026, 11, 23, 9, 0, 0, 0);
+        final String zoomed = AiGanttChart.svg(MermaidGanttParser.parse("""
+                gantt
+                    dateFormat YYYY-MM-DD HH:mm:ss
+                    logged on :2026-11-23 09:00:00, 2026-11-23 17:00:00
+                    %% events Logon-User | Logoff-User
+                """), new long[]{nine - HOUR, nine + HOUR}, AiGanttChart.WIDTH);
+        assertThat(zoomed).contains("Logon-User").doesNotContain("Logoff-User");
+    }
+
+    @Test
+    void aNamePickedOutHasItsBarsHighlightedAndTheOthersDimmedAndTheLegendSaysSo() {
+        final MermaidGantt gantt = MermaidGanttParser.parse("""
+                gantt
+                    Chrome :2026-11-23, 1d
+                    Word :2026-11-24, 1d
+                    Chrome :2026-11-25, 1d
+                """);
+
+        // Bars, markers and legend items say which name they are of, for a click to pick it out.
+        final String plain = AiGanttChart.svg(gantt, null, AiGanttChart.WIDTH, null);
+        assertThat(plain).contains("class=\"ai-gantt-bar ai-gantt-c1\" " + AiGanttChart.SERIES_ATTRIBUTE
+                                   + "=\"ai-gantt-c1\"")
+                .contains("<g class=\"ai-gantt-legend-item\" " + AiGanttChart.SERIES_ATTRIBUTE + "=\"ai-gantt-c2\" "
+                          + "tabindex=\"0\" role=\"button\" aria-pressed=\"false\" aria-label=\"Pick out Word\">")
+                .doesNotContain("ai-gantt--dimmed");
+
+        final String picked = AiGanttChart.svg(gantt, null, AiGanttChart.WIDTH, "ai-gantt-c2");
+        assertThat(count(picked, "<rect class=\"ai-gantt-bar ai-gantt-c1 ai-gantt--dimmed\"")).isEqualTo(2);
+        assertThat(count(picked, "<rect class=\"ai-gantt-bar ai-gantt-c2\"")).isOne();
+        assertThat(picked).contains(AiGanttChart.SERIES_ATTRIBUTE + "=\"ai-gantt-c2\" tabindex=\"0\" "
+                                    + "role=\"button\" aria-pressed=\"true\"")
+                .contains("class=\"ai-gantt-legend-item ai-gantt--dimmed\" " + AiGanttChart.SERIES_ATTRIBUTE
+                          + "=\"ai-gantt-c1\"");
+        // Picking it again, or the background, clears it.
+        assertThat(AiGanttChart.toggled("ai-gantt-c2", "ai-gantt-c2")).isNull();
+        assertThat(AiGanttChart.toggled("ai-gantt-c1", "ai-gantt-c2")).isEqualTo("ai-gantt-c2");
+        assertThat(AiGanttChart.toggled(null, "ai-gantt-c2")).isEqualTo("ai-gantt-c2");
+        assertThat(AiGanttChart.toggled("ai-gantt-c2", null)).isNull();
+    }
+
     private static Task task(final String name, final long start, final long end) {
         return new Task(name, null, List.of(), start, end);
+    }
+
+    // The titles shown in bars.
+    private static List<String> barLabels(final String svg) {
+        final Matcher label = Pattern.compile("<text class=\"ai-gantt-bar-label\"[^>]*>([^<]*)</text>").matcher(svg);
+        final List<String> labels = new ArrayList<>();
+        while (label.find()) {
+            labels.add(label.group(1));
+        }
+        return labels;
     }
 
     private static int count(final String text, final String part) {

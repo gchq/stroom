@@ -28,6 +28,7 @@ import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Event;
@@ -40,7 +41,9 @@ import java.util.function.Consumer;
 /// The browser's side of zooming the chat's charts ([AiMermaidCharts], [AiGanttChart]): a drag across a chart's
 /// plot or axis zooms it to the span dragged (a band shown while dragging; Escape cancels), a double-click on the
 /// plot or its "Reset zoom" button shows the whole period again, and its "Maximise" button is passed on to be shown
-/// in a dialog. The maths are [AiGanttZoom]'s.
+/// in a dialog. A click on a bar, a marker or a legend item (or Enter or Space on a legend item) picks its name out:
+/// its bars highlighted, the others dimmed; a click on it again, or on the chart's background, clears it. A click
+/// isn't a drag: a drag too short to zoom is a click. The maths are [AiGanttZoom]'s.
 ///
 /// The charts are HTML inserted into the conversation (and drawn again as answers are), so nothing is bound to
 /// them: the handlers are on the element that holds them (the conversation, or the dialog), delegated by the event's
@@ -55,6 +58,8 @@ final class AiGanttInteraction {
 
     private final Consumer<Element> onMaximise;
     private HandlerRegistration drag;
+    // True from a drag's zoom until the click its mouse up gives, which isn't a pick.
+    private boolean zoomed;
 
     /// @param onMaximise Shows a chart (its element) in a larger dialog.
     AiGanttInteraction(final Consumer<Element> onMaximise) {
@@ -71,6 +76,7 @@ final class AiGanttInteraction {
         registrations.add(container.addDomHandler(this::onMouseDown, MouseDownEvent.getType()));
         registrations.add(container.addDomHandler(this::onDoubleClick, DoubleClickEvent.getType()));
         registrations.add(container.addDomHandler(this::onClick, ClickEvent.getType()));
+        registrations.add(container.addDomHandler(this::onKeyDown, KeyDownEvent.getType()));
         registrations.add(() -> endDrag(null));
         return registrations;
     }
@@ -87,7 +93,7 @@ final class AiGanttInteraction {
             return;
         }
         // The same escaped SVG as the chart was first drawn with, of the text it was drawn from.
-        plot.setInnerHTML(AiGanttChart.svg(gantt, view, width));
+        plot.setInnerHTML(AiGanttChart.svg(gantt, view, width, highlightOf(chart)));
         if (view == null) {
             chart.removeAttribute(AiMermaidCharts.VIEW_ATTRIBUTE);
         } else {
@@ -120,6 +126,15 @@ final class AiGanttInteraction {
                 draw(chart, viewOf(chart), width);
             }
         }
+    }
+
+    /// @param chart A chart's element.
+    /// @return The series picked out in it (a colour's class), or null for none.
+    static String highlightOf(final Element chart) {
+        final String highlight = chart.getAttribute(AiMermaidCharts.HIGHLIGHT_ATTRIBUTE);
+        return highlight == null || highlight.isEmpty()
+                ? null
+                : highlight;
     }
 
     /// @param chart A chart's element.
@@ -174,6 +189,8 @@ final class AiGanttInteraction {
     }
 
     private void onClick(final ClickEvent event) {
+        final boolean afterZoom = zoomed;
+        zoomed = false;
         if (!MouseUtil.isPrimary(event)) {
             return;
         }
@@ -181,6 +198,9 @@ final class AiGanttInteraction {
         final Element button = ElementUtil.findParent(target, element ->
                 element.getTagName().equalsIgnoreCase("button"), 4);
         if (button == null) {
+            if (!afterZoom) {
+                pick(target, false);
+            }
             return;
         }
         final Element chart = ElementUtil.findParent(button, element ->
@@ -200,6 +220,54 @@ final class AiGanttInteraction {
         }
     }
 
+    private void onKeyDown(final KeyDownEvent event) {
+        final int key = event.getNativeKeyCode();
+        if (key != KeyCodes.KEY_ENTER && key != KeyCodes.KEY_SPACE) {
+            return;
+        }
+        final Element target = event.getNativeEvent().getEventTarget().cast();
+        // A legend item is known by its attributes: an SVG element's className isn't a string in the browser.
+        if (target != null && target.hasAttribute(AiGanttChart.SERIES_ATTRIBUTE)
+            && "button".equals(target.getAttribute("role")) && pick(target, true)) {
+            // Not a scroll of the conversation (Space), nor a press of anything else.
+            event.preventDefault();
+        }
+    }
+
+    // Picks out the name of what was clicked (a bar, a marker or a legend item), or clears what is picked out for
+    // a click on the chart's background. True if a chart was drawn again.
+    private static boolean pick(final Element target, final boolean fromKeyboard) {
+        final Element svg = findSvg(target);
+        final Element chart = findChart(svg);
+        if (chart == null) {
+            return false;
+        }
+        final Element item = ElementUtil.findParent(target, element ->
+                element.hasAttribute(AiGanttChart.SERIES_ATTRIBUTE), 3);
+        final String series = item == null
+                ? null
+                : item.getAttribute(AiGanttChart.SERIES_ATTRIBUTE);
+        final String current = highlightOf(chart);
+        final String picked = AiGanttChart.toggled(current, series);
+        if (picked == null && current == null) {
+            return false;
+        }
+        if (picked == null) {
+            chart.removeAttribute(AiMermaidCharts.HIGHLIGHT_ATTRIBUTE);
+        } else {
+            chart.setAttribute(AiMermaidCharts.HIGHLIGHT_ATTRIBUTE, picked);
+        }
+        draw(chart, viewOf(chart), widthOf(chart));
+        if (fromKeyboard && series != null) {
+            // Drawn again, the legend item is new: the focus goes back to it.
+            final Element again = legendItem(chart, series);
+            if (again != null) {
+                again.focus();
+            }
+        }
+        return true;
+    }
+
     private void startDrag(final Element chart, final Element svg, final double startX) {
         endDrag(null);
         final Element band = ElementUtil.findChild(svg, AiGanttChart.BAND_CLASS);
@@ -217,6 +285,8 @@ final class AiGanttInteraction {
                     // Not if the chart was drawn again (its answer re-rendered) during the drag.
                     if (range != null && Document.get().getBody().isOrHasChild(svg)) {
                         draw(chart, range, widthOf(chart));
+                        // The click this mouse up gives is the drag's, not a pick.
+                        zoomed = true;
                     }
                 }
                 case Event.ONKEYDOWN -> {
@@ -300,6 +370,17 @@ final class AiGanttInteraction {
         } catch (final NumberFormatException e) {
             return 0;
         }
+    }
+
+    // A chart's legend item of a series, or null.
+    private static Element legendItem(final Element chart, final String series) {
+        final NodeList<Element> items = charts(chart, "." + AiGanttChart.LEGEND_ITEM_CLASS);
+        for (int i = 0; i < items.getLength(); i++) {
+            if (series.equals(items.getItem(i).getAttribute(AiGanttChart.SERIES_ATTRIBUTE))) {
+                return items.getItem(i);
+            }
+        }
+        return null;
     }
 
     private static native NodeList<Element> charts(Element root, String selector) /*-{

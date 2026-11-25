@@ -26,9 +26,12 @@ import java.util.List;
 /// Draws a Mermaid gantt chart of the subset ([stroom.ai.shared.MermaidGanttParser]) as SVG, in the chat, with
 /// Stroom's own code (no Mermaid library, nothing run): a lane per section, its tasks packed into as few rows as
 /// don't overlap (as Mermaid's compact display), a bar per task and a diamond per marker, coloured by the task's
-/// name (eight colours, the rest grey), a time axis below and a legend of the names. Every text is escaped; the
-/// colours and lines are CSS classes, themed for light and dark (`ask-stroom-ai.css`). The layout's maths are
-/// here, apart from the markup, so they can be tested.
+/// name (eight colours, the rest grey), a time axis below and a legend of the names. A bar shows its title in it
+/// where it fits, its tooltip its title and duration, and a small diamond at each end its start and end events
+/// (their names where the block gives them) and when they happened. A name can be picked out (a click on its bar
+/// or legend item): its bars highlighted, the others dimmed. Every text is escaped; the colours and lines are CSS
+/// classes, themed for light and dark (`ask-stroom-ai.css`). The layout's maths are here, apart from the markup, so
+/// they can be tested.
 ///
 /// A chart can be drawn zoomed to a span of its period ([AiGanttZoom]): only the tasks the span shows, cut to it,
 /// with ticks for the span; and at another width (a dialog's). The SVG carries its span and plot's bounds as data
@@ -66,6 +69,13 @@ final class AiGanttChart {
     static final String OTHER = "Other";
     /// The most ticks on the axis.
     static final int MAX_TICKS = 8;
+    /// The attribute on a bar, marker or legend item giving the name it is of, as its colour's class (one legend
+    /// item, so one series, holds the grey names together).
+    static final String SERIES_ATTRIBUTE = "data-series";
+    /// The class of a legend item, which a click or Enter picks out.
+    static final String LEGEND_ITEM_CLASS = "ai-gantt-legend-item";
+    /// The class of what isn't of the name picked out.
+    static final String DIMMED_CLASS = "ai-gantt--dimmed";
 
     private static final int PADDING = 12;
     private static final int TITLE_HEIGHT = 26;
@@ -83,6 +93,14 @@ final class AiGanttChart {
     private static final int LEGEND_GAP = 18;
     private static final int LEGEND_NAME_CHARS = 30;
     private static final int MARKER_RADIUS = 5;
+    // A bar's start and end markers, smaller than a milestone's.
+    private static final int EDGE_RADIUS = 4;
+    // A bar's title: its characters' width (at its font size, 9px), the room either side of it, and the fewest
+    // characters shown before an ellipsis (fewer aren't legible as a title).
+    private static final double BAR_LABEL_CHAR_WIDTH = 5.5;
+    private static final double BAR_LABEL_PADDING = 3;
+    private static final int MIN_BAR_LABEL_CHARS = 3;
+    private static final String EDGE_TIME_FORMAT = "%d %b %Y %H:%M:%S";
     // The least gap between two tasks in a row, in pixels.
     private static final double ROW_GAP = 2;
     private static final double MIN_BAR_WIDTH = 2;
@@ -128,6 +146,16 @@ final class AiGanttChart {
     /// @return It drawn as SVG: the tasks the span shows, cut to it; the legend still of all the chart's names, so
     /// the colours stay as they were.
     static String svg(final MermaidGantt gantt, final long[] view, final int width) {
+        return svg(gantt, view, width, null);
+    }
+
+    /// @param gantt     A chart of the subset.
+    /// @param view      The span to draw ([AiGanttZoom#dragRange]), or null for the whole period ([#range]).
+    /// @param width     The width to draw it at, at least [#MIN_WIDTH].
+    /// @param highlight The series picked out (a colour's class, as [#colourClass] gives it), or null for none.
+    /// @return It drawn as SVG, as [#svg(MermaidGantt, long[], int)] gives it, the series picked out highlighted and
+    /// the rest dimmed.
+    static String svg(final MermaidGantt gantt, final long[] view, final int width, final String highlight) {
         final int drawnWidth = Math.max(MIN_WIDTH, width);
         final int plotRight = drawnWidth - PLOT_RIGHT_MARGIN;
         final List<String> names = names(gantt);
@@ -149,7 +177,7 @@ final class AiGanttChart {
             final List<List<Task>> rows = rows(AiGanttZoom.visible(section.tasks(), scale.from(), scale.to()),
                     scale);
             final int laneHeight = Math.max(1, rows.size()) * ROW_HEIGHT + 2 * LANE_PADDING;
-            appendLane(lanes, section, rows, names, scale, drawnWidth, y, laneHeight, laneIndex++);
+            appendLane(lanes, section, rows, names, scale, drawnWidth, y, laneHeight, laneIndex++, highlight);
             y += laneHeight;
         }
         if (gantt.getSections().isEmpty()) {
@@ -166,7 +194,7 @@ final class AiGanttChart {
                 .append("\" visibility=\"hidden\"/>");
         y = plotBottom + AXIS_HEIGHT;
         final int axisBottom = y;
-        y = appendLegend(body, names, y, plotRight);
+        y = appendLegend(body, names, y, plotRight, highlight);
         final int height = y + PADDING;
         final String label = gantt.getTitle() == null
                 ? "Timeline"
@@ -178,6 +206,33 @@ final class AiGanttChart {
                + PLOT_TOP_ATTRIBUTE + "=\"" + plotTop + "\" " + PLOT_BOTTOM_ATTRIBUTE + "=\"" + axisBottom + "\" "
                + WIDTH_ATTRIBUTE + "=\"" + drawnWidth + "\" " + HEIGHT_ATTRIBUTE + "=\"" + height + "\">" + body
                + "</svg>";
+    }
+
+    /// @param name  A bar's title.
+    /// @param width The bar's width, in pixels, as drawn.
+    /// @return What of it is shown in the bar: all of it where it fits, else as many characters as fit, the last an
+    /// ellipsis; null where too few would fit to read.
+    static String barLabel(final String name, final double width) {
+        if (name == null || name.isEmpty()) {
+            return null;
+        }
+        final int fit = (int) Math.floor((width - 2 * BAR_LABEL_PADDING) / BAR_LABEL_CHAR_WIDTH);
+        if (name.length() <= fit) {
+            return name;
+        }
+        return fit - 1 >= MIN_BAR_LABEL_CHARS
+                ? name.substring(0, fit - 1) + "\u2026"
+                : null;
+    }
+
+    /// @param current The series picked out, or null for none.
+    /// @param clicked The series clicked (a bar's or a legend item's), or null for the chart's background.
+    /// @return The series picked out once clicked: the one clicked, unless it is already (then none), and none for
+    /// the background.
+    static String toggled(final String current, final String clicked) {
+        return clicked == null || clicked.equals(current)
+                ? null
+                : clicked;
     }
 
     /// @param scale Where times are drawn.
@@ -373,7 +428,8 @@ final class AiGanttChart {
                                    final int width,
                                    final int top,
                                    final int height,
-                                   final int index) {
+                                   final int index,
+                                   final String highlight) {
         sb.append("<g class=\"ai-gantt-lane").append(index % 2 == 1
                 ? " ai-gantt-lane--odd"
                 : "").append("\">");
@@ -390,7 +446,7 @@ final class AiGanttChart {
         for (int row = 0; row < rows.size(); row++) {
             final int centre = top + LANE_PADDING + row * ROW_HEIGHT + ROW_HEIGHT / 2;
             for (final Task task : rows.get(row)) {
-                appendTask(sb, task, names, scale, centre);
+                appendTask(sb, task, names, scale, centre, highlight);
             }
         }
         sb.append("</g>");
@@ -400,33 +456,88 @@ final class AiGanttChart {
                                    final Task task,
                                    final List<String> names,
                                    final Scale scale,
-                                   final int centre) {
-        final String classes = colourClass(task.name(), names)
+                                   final int centre,
+                                   final String highlight) {
+        final String series = colourClass(task.name(), names);
+        final String classes = series
                                + (task.tags().contains("crit")
                 ? " ai-gantt--crit"
                 : "")
                                + (task.tags().contains("done")
                 ? " ai-gantt--done"
-                : "");
-        final String tooltip = "<title>" + AiChatOverview.escape(task.name() + ": " + format(task.start(),
-                "%d %b %H:%M:%S") + (task.isMarker()
-                ? ""
-                : " to " + format(task.end(), "%d %b %H:%M:%S") + " (" + duration(task.end() - task.start())
-                  + ")")) + "</title>";
+                : "")
+                               + dimmed(series, highlight);
+        final String seriesAttribute = " " + SERIES_ATTRIBUTE + "=\"" + series + "\"";
         if (task.isMarker()) {
-            final double x = scale.position(task.start());
-            sb.append("<path class=\"ai-gantt-marker ").append(classes).append("\" d=\"M").append(number(x))
-                    .append(',').append(centre - MARKER_RADIUS).append(" L").append(number(x + MARKER_RADIUS))
-                    .append(',').append(centre).append(" L").append(number(x)).append(',')
-                    .append(centre + MARKER_RADIUS).append(" L").append(number(x - MARKER_RADIUS)).append(',')
-                    .append(centre).append(" Z\">").append(tooltip).append("</path>");
-        } else {
-            final double left = left(task, scale);
-            sb.append("<rect class=\"ai-gantt-bar ").append(classes).append("\" x=\"").append(number(left))
-                    .append("\" y=\"").append(centre - BAR_HEIGHT / 2).append("\" width=\"")
-                    .append(number(right(task, scale) - left)).append("\" height=\"").append(BAR_HEIGHT)
-                    .append("\" rx=\"2\">").append(tooltip).append("</rect>");
+            final String tooltip = "<title>" + AiChatOverview.escape(task.name() + ": "
+                                                                     + format(task.start(), "%d %b %H:%M:%S"))
+                                   + "</title>";
+            sb.append("<path class=\"ai-gantt-marker ").append(classes).append('"').append(seriesAttribute)
+                    .append(" d=\"").append(diamond(scale.position(task.start()), centre, MARKER_RADIUS))
+                    .append("\">").append(tooltip).append("</path>");
+            return;
         }
+        // A bar's tooltip: its title and how long it lasted (its times are its markers').
+        final String tooltip = "<title>" + AiChatOverview.escape(task.name() + " (" + duration(task.end()
+                                                                                                - task.start()) + ")")
+                               + "</title>";
+        final double left = left(task, scale);
+        final double barWidth = right(task, scale) - left;
+        final int top = centre - BAR_HEIGHT / 2;
+        sb.append("<rect class=\"ai-gantt-bar ").append(classes).append('"').append(seriesAttribute)
+                .append(" x=\"").append(number(left)).append("\" y=\"").append(top).append("\" width=\"")
+                .append(number(barWidth)).append("\" height=\"").append(BAR_HEIGHT).append("\" rx=\"2\">")
+                .append(tooltip).append("</rect>");
+        final String label = barLabel(task.name(), barWidth);
+        if (label != null) {
+            // In a box the bar's size, so it never runs past it; the pointer goes through it to the bar.
+            sb.append("<svg class=\"ai-gantt-bar-label-box").append(dimmed(series, highlight)).append("\" x=\"").append(number(left)).append("\" y=\"")
+                    .append(top).append("\" width=\"").append(number(barWidth)).append("\" height=\"")
+                    .append(BAR_HEIGHT).append("\"><text class=\"ai-gantt-bar-label\" x=\"")
+                    .append(number(BAR_LABEL_PADDING)).append("\" y=\"").append(BAR_HEIGHT - 3).append("\">")
+                    .append(AiChatOverview.escape(label)).append("</text></svg>");
+        }
+        // Its start and end, where the span drawn shows them: a diamond each, naming its event and when it was.
+        if (task.start() >= scale.from()) {
+            appendEdge(sb, scale.position(task.start()), centre, task.startEvent(), "Start", task.start(), series,
+                    highlight);
+        }
+        if (task.end() <= scale.to()) {
+            appendEdge(sb, scale.position(task.end()), centre, task.endEvent(), "End", task.end(), series,
+                    highlight);
+        }
+    }
+
+    private static void appendEdge(final StringBuilder sb,
+                                   final double x,
+                                   final int centre,
+                                   final String event,
+                                   final String otherwise,
+                                   final long time,
+                                   final String series,
+                                   final String highlight) {
+        final String named = event == null
+                ? otherwise
+                : event;
+        // Of the page's text colour, not the bar's, so it shows on the bar.
+        sb.append("<path class=\"ai-gantt-edge").append(dimmed(series, highlight)).append("\" ")
+                .append(SERIES_ATTRIBUTE).append("=\"").append(series).append("\" d=\"")
+                .append(diamond(x, centre, EDGE_RADIUS)).append("\"><title>")
+                .append(AiChatOverview.escape(named + ": " + format(time, EDGE_TIME_FORMAT)))
+                .append("</title></path>");
+    }
+
+    // A diamond's path about a point.
+    private static String diamond(final double x, final int centre, final int radius) {
+        return "M" + number(x) + "," + (centre - radius) + " L" + number(x + radius) + "," + centre + " L"
+               + number(x) + "," + (centre + radius) + " L" + number(x - radius) + "," + centre + " Z";
+    }
+
+    // The class of what isn't of the series picked out; nothing with none picked out.
+    private static String dimmed(final String series, final String highlight) {
+        return highlight == null || highlight.equals(series)
+                ? ""
+                : " " + DIMMED_CLASS;
     }
 
     private static void appendAxis(final StringBuilder sb,
@@ -455,7 +566,8 @@ final class AiGanttChart {
     private static int appendLegend(final StringBuilder sb,
                                     final List<String> names,
                                     final int top,
-                                    final int plotRight) {
+                                    final int plotRight,
+                                    final String highlight) {
         final List<String> entries = new ArrayList<>();
         final List<String> classes = new ArrayList<>();
         int others = 0;
@@ -492,12 +604,19 @@ final class AiGanttChart {
                 x = PLOT_LEFT;
                 y += LEGEND_ROW_HEIGHT;
             }
-            sb.append("<rect class=\"ai-gantt-swatch ").append(classes.get(i)).append("\" x=\"").append(x)
+            // A button of its own: a click, or Enter or Space when focused, picks its name out.
+            final String series = classes.get(i);
+            sb.append("<g class=\"").append(LEGEND_ITEM_CLASS).append(dimmed(series, highlight)).append("\" ")
+                    .append(SERIES_ATTRIBUTE).append("=\"").append(series).append("\" tabindex=\"0\" "
+                                                                                + "role=\"button\" aria-pressed=\"")
+                    .append(series.equals(highlight)).append("\" aria-label=\"")
+                    .append(AiChatOverview.escape("Pick out " + entries.get(i))).append("\">");
+            sb.append("<rect class=\"ai-gantt-swatch ").append(series).append("\" x=\"").append(x)
                     .append("\" y=\"").append(y).append("\" width=\"").append(LEGEND_SWATCH).append("\" height=\"")
                     .append(LEGEND_SWATCH).append("\" rx=\"2\"/>");
             sb.append("<text class=\"ai-gantt-legend-text\" x=\"").append(x + LEGEND_SWATCH + 6).append("\" y=\"")
                     .append(y + LEGEND_SWATCH - 1).append("\">").append(AiChatOverview.escape(text))
-                    .append("</text>");
+                    .append("</text></g>");
             x += width + LEGEND_GAP;
         }
         sb.append("</g>");

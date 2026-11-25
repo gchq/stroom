@@ -166,7 +166,10 @@ class TestAiGanttZoom {
 
         assertThat(count(svg, "<rect class=\"ai-gantt-bar ")).isEqualTo(2);
         assertThat(count(svg, "<path class=\"ai-gantt-marker ")).isEqualTo(1);
-        assertThat(svg).contains("<title>Chrome: 23 Nov 09:00:00 to 23 Nov 10:00:00 (1 h)</title>")
+        assertThat(svg).contains("<title>Chrome (1 h)</title>")
+                // Its start, before the span, has no marker; its end has.
+                .doesNotContain("<title>Start: 23 Nov 2026 09:00:00</title>")
+                .contains("<title>End: 23 Nov 2026 10:00:00</title>")
                 .contains("<title>USB copy: 23 Nov 10:30:00</title>")
                 .doesNotContain("<title>Excel", "<title>Logon")
                 // Both lanes still drawn, so the chart keeps its shape; the legend of all the names, its colours.
@@ -175,8 +178,8 @@ class TestAiGanttZoom {
                 .contains(">09:30</text>", ">11:30</text>")
                 .doesNotContain(">09:00</text>", ">12:00</text>");
         // Every bar inside the plot (162 to 700 at 720 wide), cut at its edges.
-        final Matcher bar = Pattern.compile("<rect class=\"ai-gantt-bar [^\"]+\" x=\"([0-9.]+)\" y=\"[0-9]+\" "
-                                            + "width=\"([0-9.]+)\"").matcher(svg);
+        final Matcher bar = Pattern.compile("<rect class=\"ai-gantt-bar [^\"]+\"[^>]*? x=\"([0-9.]+)\" "
+                                            + "y=\"[0-9]+\" width=\"([0-9.]+)\"").matcher(svg);
         final List<Double> lefts = new ArrayList<>();
         final List<Double> rights = new ArrayList<>();
         while (bar.find()) {
