@@ -21,6 +21,7 @@ import stroom.query.api.token.TokenException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.text.ParseException;
 import java.time.Instant;
@@ -29,6 +30,53 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestToDate {
+
+    @ParameterizedTest
+    @ValueSource(strings = {"2024-02-30T10:00:00", "2023-02-29T10:00:00Z", "2024-04-31T00:00:00+01:00",
+            "2024-04-31T24:00:00Z", "2024-02-30"})
+    void dayThatTheMonthDoesNotHave(final String text) throws ParseException {
+        for (final String function : new String[]{"toDate", "getDayOfMonth", "formatDate"}) {
+            assertThat(eval(function + "(${field})", ValString.create(text)))
+                    .isEqualTo(ValErr.create("'" + text + "' is not a date"));
+        }
+        assertThat(eval("floorDay(${field})", ValString.create(text))).isEqualTo(ValNull.INSTANCE);
+        assertThatThrownBy(() -> eval("floor(2024-07-01T00:00:00Z, 1d, '" + text + "')", ValNull.INSTANCE))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining("Invalid date");
+    }
+
+    @Test
+    void textUsedAsANumberWithADayThatTheMonthDoesNotHave() throws ParseException {
+        final Val text = ValString.create("2024-02-30T10:00:00Z");
+        assertThat(eval("toLong(${field})", text).type()).isEqualTo(Type.ERR);
+        assertThat(eval("toDouble(${field})", text).type()).isEqualTo(Type.ERR);
+        assertThat(eval("${field} = 2024-02-29T10:00:00Z", text)).isEqualTo(ValBoolean.FALSE);
+        assertThat(eval("toLong(${field})", ValString.create("2024-02-29T10:00:00Z")))
+                .isEqualTo(ValLong.create(1_709_200_800_000L));
+        assertThat(eval("${field} = 2024-02-29T10:00:00Z", ValString.create("2024-02-29T10:00:00Z")))
+                .isEqualTo(ValBoolean.TRUE);
+    }
+
+    @Test
+    void literalOfADayThatTheMonthDoesNotHave() {
+        for (final String literal : new String[]{"2024-02-30T10:00:00", "2024-02-30T10:00:00Z"}) {
+            assertThatThrownBy(() -> eval(literal, ValNull.INSTANCE))
+                    .isInstanceOf(TokenException.class)
+                    .hasMessageContaining("Invalid date 'FEBRUARY 30'");
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "2024-02-29T10:00:00Z,2024-02-29T10:00:00Z",
+            "2023-12-31T24:00:00Z,2024-01-01T00:00:00Z",
+            "2024-02-29T24:00:00Z,2024-03-01T00:00:00Z",
+            "2024-03-01T00:00:00Z,2024-03-01T00:00:00Z",
+            "2024-04-30T00:30:00+01:00,2024-04-29T23:30:00Z"})
+    void dayThatTheMonthHas(final String text, final Instant expected) throws ParseException {
+        assertThat(eval("toDate(${field})", ValString.create(text)))
+                .isEqualTo(ValDate.create(expected.toEpochMilli()));
+    }
 
     @Test
     void theTimeZoneIsOnlyNeededForTextWithNoOffset() throws ParseException {

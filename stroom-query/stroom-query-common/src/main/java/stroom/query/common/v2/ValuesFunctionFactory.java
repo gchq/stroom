@@ -61,9 +61,8 @@ public class ValuesFunctionFactory implements ValueFunctionFactory<Values> {
                 if (string != null) {
                     try {
                         return DateUtil.parseNormalDateTimeString(string);
-                    } catch (final NumberFormatException e) {
-//                        throw new MatchException(
-//                                "Unable to parse a date/time from value \"" + string + "\"");
+                    } catch (final IllegalArgumentException e) {
+                        return null;
                     }
                 }
             }

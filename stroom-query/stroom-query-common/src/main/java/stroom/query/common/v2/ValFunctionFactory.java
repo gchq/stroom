@@ -57,7 +57,7 @@ public class ValFunctionFactory implements ValueFunctionFactory<Val> {
                 if (string != null) {
                     try {
                         return DateUtil.parseNormalDateTimeString(string);
-                    } catch (final NumberFormatException e) {
+                    } catch (final IllegalArgumentException e) {
                         return null;
                     }
                 }

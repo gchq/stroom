@@ -25,6 +25,9 @@ import stroom.query.language.token.StructureBuilder;
 import stroom.query.language.token.Tokeniser;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.DateTimeException;
 import java.time.Instant;
@@ -44,6 +47,43 @@ class TestDateExpressionParser {
     void testSimple() {
         testSimple("2015-02-03T01:22:33.056Z");
         testSimple("2016-01-01T00:00:00.000Z");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"2024-02-30T10:00:00Z", "2024-02-30T10:00:00.000Z", "2024-02-30T10:00:00+01:00",
+            "2024-02-30T10:00:00+0100", "2024-02-30T10:00:00", "2024-02-30T24:00:00Z"})
+    void dayThatTheMonthDoesNotHave(final String text) {
+        for (final String value : new String[]{text, text + " + 1h"}) {
+            assertThatThrownBy(() -> DateExpressionParser.parse(value, nowEpochMilli))
+                    .isInstanceOf(DateTimeException.class)
+                    .hasMessageContaining("Invalid date 'FEBRUARY 30'");
+        }
+        assertThatThrownBy(() -> DateExpressionParser.getMs("Time", text))
+                .hasMessageContaining("Invalid date 'FEBRUARY 30'");
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', quoteCharacter = '"', value = {
+            "2024-13-01T10:00:00Z|Invalid value for MonthOfYear (valid values 1 - 12): 13",
+            "2024-13-01T10:00:00+0100|Invalid value for MonthOfYear (valid values 1 - 12): 13",
+            "2024-13-01T10:00:00|Invalid value for MonthOfYear (valid values 1 - 12): 13",
+            "2024-07-01T25:00:00Z|Invalid value for HourOfDay (valid values 0 - 23): 25",
+            "2024-02-30T10:00:00Z[Europe/London]|Invalid date 'FEBRUARY 30'",
+            "2024-07-01T10:00:00Zsoon|unparsed text found at index 19",
+            "soon|could not be parsed at index 0"})
+    void theErrorSaysWhatIsWrong(final String text, final String message) {
+        assertThatThrownBy(() -> DateExpressionParser.parse(text, nowEpochMilli))
+                .isInstanceOf(DateTimeException.class)
+                .hasMessageContaining(message);
+    }
+
+    @Test
+    void dayThatTheMonthHas() {
+        for (final String text : new String[]{"2024-02-29T10:00:00Z", "2024-02-29T11:00:00+0100",
+                "2024-02-29T11:00:00+01"}) {
+            assertThat(DateExpressionParser.parse(text, nowEpochMilli).orElseThrow().toInstant())
+                    .isEqualTo(Instant.parse("2024-02-29T10:00:00Z"));
+        }
     }
 
     private void testSimple(final String time) {

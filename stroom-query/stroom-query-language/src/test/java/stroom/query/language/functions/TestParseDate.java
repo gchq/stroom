@@ -227,6 +227,7 @@ public class TestParseDate extends AbstractFunctionTest<ParseDate> {
             "20240701|Text '20240701' could not be parsed at index 0",
             "2024-07-01Z|Text '2024-07-01Z' could not be parsed at index 10",
             "2024-02-30|Text '2024-02-30' could not be parsed: Invalid date 'FEBRUARY 30'",
+            "2024-02-30T10:00:00|Text '2024-02-30T10:00:00' could not be parsed: Invalid date 'FEBRUARY 30'",
             "2024-13-01|Text '2024-13-01' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 13",
             "2024-13-01T10:00:00|Text '2024-13-01T10:00:00' could not be parsed: Invalid value for MonthOfYear "
             + "(valid values 1 - 12): 13"})
@@ -235,6 +236,54 @@ public class TestParseDate extends AbstractFunctionTest<ParseDate> {
         assertThatThrownBy(() -> evalInLondon("parseDate('" + text + "')", ValNull.INSTANCE))
                 .isInstanceOf(TokenException.class)
                 .hasMessageContaining(message);
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', quoteCharacter = '"', value = {
+            "2024-02-30 10:00|yyyy-MM-dd HH:mm",
+            "2023-02-29|yyyy-MM-dd",
+            "2023-02-29|uuuu-MM-dd",
+            "30 Feb 24|dd MMM yy",
+            "2024-04-31 +02|yyyy-MM-dd X",
+            "2024-04-31 10:00 +02|yyyy-MM-dd HH:mm X",
+            "2024-04-31 10:00 Europe/Paris|yyyy-MM-dd HH:mm VV",
+            "2024-02-30 24:00|yyyy-MM-dd HH:mm",
+            // Each is a different day in the time zone.
+            "2024-02-30 01:00 +02:00 America/New_York|yyyy-MM-dd HH:mm XXX VV",
+            "2024-02-30 12:00 +02:00 America/New_York|yyyy-MM-dd HH:mm XXX VV",
+            "2024-02-30 23:00 -10:00 Asia/Tokyo|yyyy-MM-dd HH:mm XXX VV",
+            "2024-02-30 24:00 -18:00 Pacific/Kiritimati|yyyy-MM-dd HH:mm XXX VV",
+            "2023-02-29 00:00 +18:00 Pacific/Pago_Pago|yyyy-MM-dd HH:mm XXX VV",
+            "2024-04-31 1|yyyy-MM-dd[ HH:mm][ H]"})
+    void dayThatTheMonthDoesNotHave(final String text, final String pattern) throws ParseException {
+        assertThat(evalInLondon("parseDate(${field}, '" + pattern + "')", ValString.create(text)).toString())
+                .contains("Text '" + text + "' could not be parsed: Invalid date");
+        assertThatThrownBy(() -> evalInLondon("parseDate('" + text + "', '" + pattern + "')", ValNull.INSTANCE))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining("Invalid date");
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', quoteCharacter = '"', value = {
+            "2024-02-29|yyyy-MM-dd|2024-02-29T00:00:00Z",
+            "2023-02-28|yyyy-MM-dd|2023-02-28T00:00:00Z",
+            "2024-01-31|yyyy-MM-dd|2024-01-31T00:00:00Z",
+            "2023-12-31 24:00|yyyy-MM-dd HH:mm|2024-01-01T00:00:00Z",
+            "2024-02-29 24:00|yyyy-MM-dd HH:mm|2024-03-01T00:00:00Z",
+            "2023-02-28 24:00|yyyy-MM-dd HH:mm|2023-03-01T00:00:00Z",
+            "2024-11-30 24:00|yyyy-MM-dd HH:mm|2024-12-01T00:00:00Z",
+            "2024-02-29 23:00 -10:00 Asia/Tokyo|yyyy-MM-dd HH:mm XXX VV|2024-03-01T09:00:00Z",
+            "2023-12-31 23:00 -10:00 Asia/Tokyo|yyyy-MM-dd HH:mm XXX VV|2024-01-01T09:00:00Z",
+            "2024-01-01 00:00 +10:00 Pacific/Pago_Pago|yyyy-MM-dd HH:mm XXX VV|2023-12-31T14:00:00Z",
+            "2024-060|yyyy-DDD|2024-02-29T00:00:00Z",
+            "2024-091|yyyy-DDD|2024-03-31T00:00:00Z",
+            "2024-060 02|yyyy-DDD MM|2024-02-29T00:00:00Z",
+            "2024-060 29|yyyy-DDD dd|2024-02-29T00:00:00Z",
+            "2024-W18-3|YYYY-'W'ww-e|2024-04-30T00:00:00Z",
+            "29 Feb 24|dd MMM yy|2024-02-29T00:00:00Z"})
+    void dayThatTheMonthHas(final String text, final String pattern, final Instant expected) throws ParseException {
+        assertThat(evalInLondon("parseDate(${field}, \"" + pattern + "\", 'UTC')", ValString.create(text)))
+                .isEqualTo(ValDate.create(expected.toEpochMilli()));
     }
 
     @Test

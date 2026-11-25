@@ -21,14 +21,19 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
+import java.text.ParsePosition;
+import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAccessor;
 import java.util.Locale;
 
 public final class DateUtil {
@@ -45,6 +50,10 @@ public final class DateUtil {
             DateTimeFormatter.ofPattern(DEFAULT_PATTERN, Locale.ENGLISH);
     private static final DateTimeFormatter FILE_TIME_STROOM_TIME_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH'#'mm'#'ss,SSSXX", Locale.ENGLISH);
+
+    // The last day of a month, 28 or later, can be moved back two days, or on three.
+    private static final int EARLIEST_MOVED_DAY = 26;
+    private static final int LATEST_MOVED_DAY = 3;
 
     private static final String NO_OFFSET_TEXT = "Z";
     /**
@@ -168,10 +177,43 @@ public final class DateUtil {
 
         try {
             // Our format requires a zone offset, e.g. 'Z', '+02', '+00:00', '-02:00', etc.
-            final ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, DEFAULT_ISO_PARSER);
-            return zonedDateTime.toInstant();
+            return parseIso(date).toInstant();
         } catch (final DateTimeParseException e) {
             throw new IllegalArgumentException("Unable to parse date: \"" + date + "\": " + e.getMessage(), e);
+        }
+    }
+
+    private static ZonedDateTime parseIso(final String date) {
+        final ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, DEFAULT_ISO_PARSER);
+        checkDay(date, DEFAULT_ISO_PARSER, zonedDateTime.toLocalDate());
+        return zonedDateTime;
+    }
+
+    /// Checks that text has a day that its month has. A formatter changes one that the month doesn't have, such as 30
+    /// February, to the last that it does. Its strict mode wouldn't, but that refuses other text that is fine, such as
+    /// 24:00.
+    ///
+    /// @param text      The text, which the formatter can read.
+    /// @param formatter The formatter.
+    /// @param date      The date that it was read as.
+    /// @throws DateTimeParseException If the month doesn't have the day.
+    public static void checkDay(final String text, final DateTimeFormatter formatter, final LocalDate date) {
+        // Most dates are nowhere near a day that another could have been changed to. It can have moved by a day for
+        // 24:00, and by two if the text has an offset as well as the time zone that the date is in.
+        final int day = date.getDayOfMonth();
+        if (day > LATEST_MOVED_DAY && day < EARLIEST_MOVED_DAY) {
+            return;
+        }
+        final TemporalAccessor fields = formatter.parseUnresolved(text, new ParsePosition(0));
+        if (fields.isSupported(ChronoField.MONTH_OF_YEAR) && fields.isSupported(ChronoField.DAY_OF_MONTH)) {
+            try {
+                LocalDate.of(date.getYear(),
+                        Math.toIntExact(fields.getLong(ChronoField.MONTH_OF_YEAR)),
+                        Math.toIntExact(fields.getLong(ChronoField.DAY_OF_MONTH)));
+            } catch (final DateTimeException e) {
+                throw new DateTimeParseException(
+                        "Text '" + text + "' could not be parsed: " + e.getMessage(), text, 0, e);
+            }
         }
     }
 
@@ -229,7 +271,7 @@ public final class DateUtil {
                     final long epochMs = parseDateAsMillisSinceEpoch(date);
                     zonedDateTime = Instant.ofEpochMilli(epochMs).atZone(DEFAULT_ZONE_OFFSET);
                 } else {
-                    zonedDateTime = ZonedDateTime.parse(date, DEFAULT_ISO_PARSER);
+                    zonedDateTime = parseIso(date);
                 }
                 return NORMAL_STROOM_TIME_FORMATTER.format(zonedDateTime);
             } catch (final Exception e) {

@@ -124,6 +124,25 @@ class TestRowValueFilter {
         }
     }
 
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "=1970-01-01T00:00:00.000Z|1970-01-01T00:00:00.000Z",
+            ">1969-01-01T00:00:00.000Z|5000;1970-01-01T00:00:00.000Z",
+            // Text that is not a date is not equal to one.
+            "!=1970-01-01T00:00:00.000Z|1h;2d1h30m5s;5000;1.5h 30m;-1.5h;P1D;1M;soon;null"})
+    void filterOfDates(final String filter, final String expected) {
+        for (final Format format : List.of(Format.GENERAL, Format.TEXT, Format.DATE_TIME)) {
+            final Column column = Column.builder()
+                    .id("c")
+                    .name("c")
+                    .format(format)
+                    .columnFilter(new ColumnFilter(filter, true))
+                    .build();
+            assertMatches(RowValueFilter.create(
+                    List.of(column), null, new ExpressionPredicateFactory()), expected);
+        }
+    }
+
     // They are as they were.
     @Test
     void tickOfOtherFormats() {

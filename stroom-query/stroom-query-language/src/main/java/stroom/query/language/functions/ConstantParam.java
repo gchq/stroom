@@ -107,6 +107,7 @@ final class ConstantParam {
                 }
                 final TemporalAccessor temporal = DateUtil.DEFAULT_ISO_PARSER.parseBest(
                         text, ZonedDateTime::from, LocalDateTime::from);
+                stroom.util.date.DateUtil.checkDay(text, DateUtil.DEFAULT_ISO_PARSER, LocalDate.from(temporal));
                 if (temporal instanceof final LocalDateTime local) {
                     return zone -> local;
                 }

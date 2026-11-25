@@ -21,6 +21,7 @@ import stroom.util.exception.ThrowingFunction;
 
 import io.vavr.Tuple;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import java.time.Instant;
@@ -28,12 +29,28 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class TestDateUtil {
+
+    @Test
+    void parseLocalOfADayThatTheMonthDoesNotHave() {
+        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        assertThat(DateUtil.parseLocal("2024-02-29 10:00", formatter, ZoneOffset.UTC))
+                .isEqualTo(LocalDateTime.of(2024, 2, 29, 10, 0));
+        assertThatThrownBy(() -> DateUtil.parseLocal("2024-02-30 10:00", formatter, ZoneOffset.UTC))
+                .isInstanceOf(DateTimeParseException.class)
+                .hasMessageContaining("Invalid date 'FEBRUARY 30'");
+        // In another time zone it is a day that could not have been changed.
+        assertThatThrownBy(() -> DateUtil.parseLocal("2024-02-30T10:00:00Z", null, ZoneOffset.ofHours(18)))
+                .isInstanceOf(DateTimeParseException.class)
+                .hasMessageContaining("Invalid date 'FEBRUARY 30'");
+    }
 
     @TestFactory
     Stream<DynamicTest> testCreateNormalDateTimeString() {
@@ -62,6 +79,10 @@ public class TestDateUtil {
                 .addCase("2010-01-01T23:59:59.123+02:00", "2010-01-01T21:59:59.123Z")
                 .addCase("2010-01-01T23:59:59.123-03:00", "2010-01-02T02:59:59.123Z")
 //                .addCase("2010-01-01T23:59:59.123+02:00:00", "2010-01-01T21:59:59.123Z")
+                .addCase("2024-02-29T10:00:00Z", "2024-02-29T10:00:00.000Z")
+                .addCase("2024-02-29T24:00:00Z", "2024-03-01T00:00:00.000Z")
+                .addThrowsCase("2024-02-30T10:00:00Z", IllegalArgumentException.class)
+                .addThrowsCase("2023-02-29T24:00:00+01:00", IllegalArgumentException.class)
                 .addThrowsCase("2010-01-01T23:59:59", IllegalArgumentException.class) // No zone
                 .addThrowsCase("2010-01-01T23:59:59.123+2", IllegalArgumentException.class) // No short offsets
                 .build();

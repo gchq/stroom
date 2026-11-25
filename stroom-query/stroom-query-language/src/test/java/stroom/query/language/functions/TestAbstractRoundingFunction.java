@@ -259,6 +259,8 @@ class TestAbstractRoundingFunction {
             "floor(${field}, 1d, 5m)|Invalid origin: 5m - it must be a date",
             "floor(${field}, 1d, 'soon')|Invalid origin",
             "floor(${field}, 1d, '2024-02-30')|Invalid origin: Text '2024-02-30' could not be parsed: Invalid date",
+            "floor(${field}, 1d, '2024-02-30T00:00:00')|Invalid date 'FEBRUARY 30'",
+            "floor(${field}, 1d, '2024-02-30T00:00:00Z')|Invalid date 'FEBRUARY 30'",
             "floor(${field}, 1d, 99999999999999999999)|Invalid origin",
             "floor(${field}, 1d, null(), 'Mars/Base')|Unknown time zone 'Mars/Base'",
             "floor(${field}, 1d, null(), 'BST')|Unknown time zone 'BST'. Use a name such as Europe/London",

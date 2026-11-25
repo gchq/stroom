@@ -19,6 +19,8 @@ package stroom.query.common.v2;
 import stroom.query.api.Column;
 import stroom.query.api.Format;
 import stroom.query.api.datasource.FieldType;
+import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.Values;
 
 import org.junit.jupiter.api.Test;
 
@@ -39,5 +41,20 @@ class TestValuesFunctionFactory {
     private static FieldType getFieldType(final Format format) {
         final Column column = Column.builder().format(format).build();
         return new ValuesFunctionFactory(column, 0).getFieldType();
+    }
+
+    @Test
+    void textOfDates() {
+        assertThat(readDate("2024-02-29T10:00:00Z")).isEqualTo(1_709_200_800_000L);
+        // Text that is not a date must not fail the rows that have one.
+        for (final String text : new String[]{"2024-02-30T10:00:00Z", "N/A", "", "1.2", "2024-02-29T10:00:00"}) {
+            assertThat(readDate(text)).as(text).isNull();
+        }
+    }
+
+    private static Long readDate(final String text) {
+        final Column column = Column.builder().format(Format.DATE_TIME).build();
+        return new ValuesFunctionFactory(column, 0).createDateExtractor()
+                .apply(Values.of(ValString.create(text)));
     }
 }

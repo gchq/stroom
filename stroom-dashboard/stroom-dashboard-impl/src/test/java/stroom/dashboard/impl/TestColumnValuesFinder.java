@@ -167,6 +167,33 @@ class TestColumnValuesFinder {
     }
 
     @Test
+    void quickFilterByDateLeavesOutValuesThatAreNotDates() {
+        final ColumnValues result = find(
+                tableSettings(column(COLOUR), column(SHAPE)),
+                ">2024-01-01T00:00:00.000Z",
+                PageRequest.unlimited());
+
+        assertThat(values(result)).isEmpty();
+    }
+
+    @Test
+    void formattingRuleOfDatesIgnoresValuesThatAreNotDates() {
+        final ConditionalFormattingRule rule = ConditionalFormattingRule.builder()
+                .id("rule")
+                .enabled(true)
+                .expression(ExpressionOperator.builder()
+                        .addTerm(COLOUR, Condition.GREATER_THAN, "2024-01-01T00:00:00.000Z")
+                        .build())
+                .build();
+
+        final ColumnValues result = find(
+                tableSettings(column(COLOUR), column(SHAPE)), null, List.of(rule), PageRequest.unlimited());
+
+        assertThat(values(result)).containsExactly("blue", "green", "red", "yellow");
+        assertThat(result.getValues()).extracting(ColumnValue::getMatchingRule).containsOnlyNulls();
+    }
+
+    @Test
     void quickFilterLeavesValuesOutAltogether() {
         final ColumnValues result = find(
                 tableSettings(column(COLOUR), column(SHAPE, ticked("circle"))),
@@ -264,12 +291,19 @@ class TestColumnValuesFinder {
     private ColumnValues find(final TableSettings tableSettings,
                               final String nameFilter,
                               final PageRequest pageRequest) {
+        return find(tableSettings, nameFilter, null, pageRequest);
+    }
+
+    private ColumnValues find(final TableSettings tableSettings,
+                              final String nameFilter,
+                              final List<ConditionalFormattingRule> rules,
+                              final PageRequest pageRequest) {
         return finder.find(
                 dataStore(),
                 resultRequest(tableSettings),
                 column(COLOUR),
                 nameFilter,
-                null,
+                rules,
                 pageRequest,
                 DateTimeSettings.builder().build());
     }

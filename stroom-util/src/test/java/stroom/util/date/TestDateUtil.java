@@ -22,6 +22,9 @@ import stroom.test.common.TestUtil;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -29,8 +32,43 @@ import java.time.temporal.ChronoUnit;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestDateUtil {
+
+    @ParameterizedTest
+    @ValueSource(strings = {"2024-02-30T10:00:00Z", "2023-02-29T10:00:00.000Z", "2024-04-31T00:00:00+01:00",
+            "2024-04-31T00:00:00+0100", "2024-04-31T23:59:59-18", "2024-02-30T24:00:00Z", "2024-06-31T10:00Z"})
+    void dayThatTheMonthDoesNotHave(final String text) {
+        assertThatThrownBy(() -> DateUtil.parseNormalDateTimeString(text))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Unable to parse date: \"" + text + "\": ")
+                .hasMessageContaining("Invalid date '");
+        assertThatThrownBy(() -> DateUtil.parseNormalDateTimeStringToInstant(text))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> DateUtil.parseUnknownString(text))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> DateUtil.normaliseDate(text, false))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid date '");
+        assertThat(DateUtil.normaliseDate(text, true)).isEqualTo(text);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "2024-02-29T10:00:00Z,2024-02-29T10:00:00Z",
+            "2023-02-28T24:00:00Z,2023-03-01T00:00:00Z",
+            "2024-02-29T24:00:00Z,2024-03-01T00:00:00Z",
+            "2023-12-31T24:00:00Z,2024-01-01T00:00:00Z",
+            "2024-03-01T00:00:00Z,2024-03-01T00:00:00Z",
+            "2024-01-31T23:00:00-18:00,2024-02-01T17:00:00Z",
+            "2024-04-30T00:30:00+01:00,2024-04-29T23:30:00Z"})
+    void dayThatTheMonthHas(final String text, final Instant expected) {
+        assertThat(DateUtil.parseNormalDateTimeStringToInstant(text)).isEqualTo(expected);
+        assertThat(DateUtil.parseUnknownString(text)).isEqualTo(expected.toEpochMilli());
+        assertThat(DateUtil.parseNormalDateTimeStringToInstant(DateUtil.normaliseDate(text, false)))
+                .isEqualTo(expected);
+    }
 
     @TestFactory
     Stream<DynamicTest> testSimpleZuluTimes() {

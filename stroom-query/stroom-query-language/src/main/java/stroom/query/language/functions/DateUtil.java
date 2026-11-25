@@ -90,17 +90,7 @@ public final class DateUtil {
      * @throws IllegalArgumentException if date does not parse
      */
     public static long parseNormalDateTimeString(final String date) {
-        if (date == null) {
-            throw new IllegalArgumentException("Unable to parse null date");
-        }
-
-        try {
-            // Our format requires a zone offset, e.g. 'Z', '+02', '+00:00', '-02:00', etc.
-            final ZonedDateTime zonedDateTime = ZonedDateTime.parse(date, DEFAULT_ISO_PARSER);
-            return zonedDateTime.toInstant().toEpochMilli();
-        } catch (final DateTimeParseException e) {
-            throw new IllegalArgumentException("Unable to parse date: \"" + date + "\": " + e.getMessage(), e);
-        }
+        return stroom.util.date.DateUtil.parseNormalDateTimeString(date);
     }
 
     public static ZoneId getTimeZone(final String timeZone) throws ParseException {
@@ -159,11 +149,12 @@ public final class DateUtil {
     private static ZonedDateTime parseInternal(final String value,
                                                final DateTimeFormatter formatter,
                                                final Supplier<ZoneId> zone) {
-        final TemporalAccessor temporalAccessor = Objects.requireNonNullElse(formatter, DEFAULT_ISO_PARSER)
-                .parseBest(value,
-                        ZonedDateTime::from,
-                        LocalDateTime::from,
-                        DateUtil::toDate);
+        final DateTimeFormatter parser = Objects.requireNonNullElse(formatter, DEFAULT_ISO_PARSER);
+        final TemporalAccessor temporalAccessor = parser.parseBest(value,
+                ZonedDateTime::from,
+                LocalDateTime::from,
+                DateUtil::toDate);
+        stroom.util.date.DateUtil.checkDay(value, parser, LocalDate.from(temporalAccessor));
 
         return switch (temporalAccessor) {
             case final ZonedDateTime zonedDateTime -> zonedDateTime;

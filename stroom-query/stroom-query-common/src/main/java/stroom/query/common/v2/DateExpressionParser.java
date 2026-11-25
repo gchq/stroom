@@ -317,15 +317,34 @@ public class DateExpressionParser {
             // Assume a timezone is specified on the string.
             return ZonedDateTime.parse(trimmed);
         } catch (final DateTimeParseException e) {
+            final ZonedDateTime dateTime;
             try {
                 // The offset may have no colon, as formatDate() writes it.
-                return ZonedDateTime.parse(trimmed, DateUtil.DEFAULT_ISO_PARSER);
+                dateTime = ZonedDateTime.parse(trimmed, DateUtil.DEFAULT_ISO_PARSER);
             } catch (final DateTimeParseException ex) {
-                // Ignore error
+                // If no time zone was specified then try and parse as a local datetime.
+                return parseLocal(trimmed, e, ex).atZone(UserTimeZoneUtil.getZoneId(dateTimeSettings));
             }
+            DateUtil.checkDay(trimmed, DateUtil.DEFAULT_ISO_PARSER, dateTime.toLocalDate());
+            return dateTime;
+        }
+    }
 
-            // If no time zone was specified then try and parse as a local datetime.
-            return LocalDateTime.parse(trimmed).atZone(UserTimeZoneUtil.getZoneId(dateTimeSettings));
+    private static LocalDateTime parseLocal(final String trimmed,
+                                            final DateTimeParseException... zonedExceptions) {
+        try {
+            return LocalDateTime.parse(trimmed);
+        } catch (final DateTimeParseException e) {
+            // If there is more text after a local datetime then it is meant to have a time zone, so say what is wrong
+            // with its values.
+            if (e.getErrorIndex() > 0) {
+                for (final DateTimeParseException zonedException : zonedExceptions) {
+                    if (zonedException.getCause() != null) {
+                        throw zonedException;
+                    }
+                }
+            }
+            throw e;
         }
     }
 

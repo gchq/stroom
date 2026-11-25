@@ -177,6 +177,7 @@ final class DateReader {
     static long parseDateTime(final String text, final Supplier<ZoneId> zone) {
         final TemporalAccessor temporal = DateUtil.DEFAULT_ISO_PARSER.parseBest(
                 text, ZonedDateTime::from, LocalDateTime::from);
+        stroom.util.date.DateUtil.checkDay(text, DateUtil.DEFAULT_ISO_PARSER, LocalDate.from(temporal));
         return temporal instanceof final LocalDateTime local
                 ? toMillis(local.atZone(zone.get()).toInstant(), text)
                 : toMillis(Instant.from(temporal), text);
