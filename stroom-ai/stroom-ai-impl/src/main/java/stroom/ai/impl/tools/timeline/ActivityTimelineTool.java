@@ -473,12 +473,18 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                  + "and end, the schema's, a skill's, or inferred from the user's own events; "
                                  + "spans bounded by a key, e.g. a session id; "
                                  + "activity periods, the actions in neither close in time, by host or source) and "
-                                 + "activities rolled up from them (what the user was working on). Events without "
-                                 + "roles are classified from their Events XML (the EventDetail element and "
-                                 + "Action), else the index's fields; the user and time always come from the "
-                                 + "index. Each index's user field: userField, the AGENTS doc's ## Fields, a field "
-                                 + "convention, the index's documentation, else asked. Data-quality flags for "
-                                 + "missing events. Omit sources to ask the user which (or read all you can use). "
+                                 + "activities rolled up from them (what the user was working on). Each source is "
+                                 + "read once; its fields (user, host, type, object...) mapped once per index: "
+                                 + "userField and the call's, the AGENTS doc's ## Fields, the feeding pipelines' "
+                                 + "index plans (each event its own pipeline's where they differ), the index's "
+                                 + "documentation, a convention, else asked. Roles by event type: typeRoles or the "
+                                 + "skill's, the catalogue of the stream's translation, the AGENTS doc's ## Event "
+                                 + "types, the schema's element and Action, else the codes classified (offered as "
+                                 + "## Event types lines). Events XML only for what the index doesn't map, named "
+                                 + "to add to its plan; the user and time always the index's. Past the events cap "
+                                 + "a day-by-day overview comes instead, to pick days. Omit sources to ask the user "
+                                 + "which (over MCP: the AGENTS doc's ## Sources, else the indexes holding the "
+                                 + "user's events, at most 10). Data-quality flags for missing events. "
                                  + "includeTargets adds what was done to the person, apart from their activity.")
                         .chatOnly(" Its tables draw as timelines with gantt_chart (dashboards group) as they are; "
                                   + "the result gives the arguments for the view.")
@@ -617,7 +623,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final TypeRoleLookup roles = new TypeRoleLookup(plan.overrides(), catalogue(provenance),
                 agentsRoles(context, sources));
         final boolean characterising = booleanArg(request, CHARACTERISE_ARG, false) || view != View.DETAIL;
-        final XmlOutcome xml = readXml(context, config, sources, read, plan.fields(), characterising);
+        final XmlOutcome xml = readXml(context, config, sources, read, plan.fields(), roles, characterising);
         final Map<Integer, Map<String, CodeRole>> classifiedNow = new LinkedHashMap<>();
         final Map<Integer, Map<String, CodeRole>> codes = codes(request, context, sources, read, plan.fields(),
                 xml.xml(), roles, classifiedNow);
@@ -1579,15 +1585,17 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     // Classifying
 
     // The automatic sources' events' Events XML, read by StreamId and EventId, only for what the index doesn't map
-    // (decided with the user 2026-11-25): an event whose type the index doesn't hold (no element or event type
-    // field, or none for it), in time order up to the cap; and, characterising, an event of a typed source with no
-    // content mapped (its object, title or text), spread over the period up to characterisation's budget. Never
-    // every event: each path read is named with its index, to add to the index plan.
+    // (decided with the user 2026-11-25): an event whose role its index doesn't settle (no element for the schema's
+    // table, and no event code the call, a skill, its catalogue or an AGENTS doc gives a role), in time order up to
+    // the cap, so the schema's table reads its element and Action from the XML before its code is classified; and,
+    // characterising, an event of a typed source with no content mapped (its object, title or text), spread over the
+    // period up to characterisation's budget. Each path read is named with its index, to add to the index plan.
     private XmlOutcome readXml(final ToolCallContext context,
                                final AiWorkspaceConfig config,
                                final List<Source> sources,
                                final Read read,
                                final Map<Integer, Fields> fields,
+                               final TypeRoleLookup roles,
                                final boolean characterising) {
         final List<Event> forType = new ArrayList<>();
         final Map<Integer, List<Event>> forContent = new LinkedHashMap<>();
@@ -1598,7 +1606,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             }
             final Fields found = fields.getOrDefault(event.source(), Fields.NONE);
             final Map<String, String> extra = read.extras().getOrDefault(event.id(), Map.of());
-            if (!typedByIndex(found, extra)) {
+            if (!typedByIndex(found, extra, roles, event)) {
                 forType.add(event);
             } else if (characterising && event.object() == null && event.title() == null && event.text() == null) {
                 forContent.computeIfAbsent(event.source(), k -> new ArrayList<>()).add(event);
@@ -1657,12 +1665,19 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 xml.unreadable(), pastCap, xml.notAllowed(), cap), paths);
     }
 
-    // True if the index's fields hold the event's type: its element (and Action), or its event code.
-    private static boolean typedByIndex(final Fields fields, final Map<String, String> extra) {
+    // True if the index's fields settle the event's role: its element (and Action) for the schema's table, or an
+    // event code something gives a role.
+    private static boolean typedByIndex(final Fields fields,
+                                        final Map<String, String> extra,
+                                        final TypeRoleLookup roles,
+                                        final Event event) {
         if (fields.element() != null && EventXmlClassifier.isElement(extra.get(fields.element()))) {
             return true;
         }
-        return fields.eventType() != null && NullSafe.isNonBlankString(extra.get(fields.eventType()));
+        final String code = fields.eventType() == null
+                ? null
+                : extra.get(fields.eventType());
+        return NullSafe.isNonBlankString(code) && roles.settles(event.source(), event.streamId(), code);
     }
 
     // Where each event read came from: the streams' meta and producing pipelines, one batched lookup; null where no

@@ -29,7 +29,8 @@ they were idle, and the events missing from the sources.
    ```json
    {"tool": "activity_timeline", "arguments": {"entity": "{user}", "timeFrom": "now()-{days}d", "timeTo": "now()", "sources": "{sources}", "userField": "{user_field}", "view": "{detail}", "skill": "User activity timeline"}}
    ```
-   Events with no roles are classified from their Events XML (or the index's fields). A source that records window
+   Events with no roles take their type's role (the translation's catalogue, the AGENTS doc's `## Event types`, the
+   schema's element and Action), the Events XML read only for what the index doesn't map. A source that records window
    focus is given its roles instead, as an object in sources with its index, fields and roles:
    [[the source recording window focus, its fields and its focus role's conditions, or none]].
 2. Draw each view the result gives with gantt_chart, using the arguments it gives for that view; where it says a view
