@@ -60,6 +60,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.IntFunction;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -145,6 +146,48 @@ class TestE2eCompareActivity extends AbstractE2eTest {
         assertThat(stroomQlValues).contains("Destination,48,45,0,new-2026-05-11-0.example; ");
     }
 
+    @Test
+    void aFeedJoiningTheSourceMidPeriodIsNoChangePointAndEachFeedsDaysAreListed() {
+        // Everyone's events (the person's too) quadruple when a second feed joins the source: its laptops' events.
+        final long desktops = stream("CMP-DESKTOPS");
+        final long laptops = stream("CMP-LAPTOPS");
+        final List<Event> events = new ArrayList<>();
+        final List<Long> streams = new ArrayList<>();
+        for (LocalDate date = FROM; date.isBefore(WINDOW_TO); date = date.plusDays(1)) {
+            if (date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY) {
+                continue;
+            }
+            for (final String person : List.of("p1", "other0", "other1", "other2", "other3", "other4")) {
+                for (int hour = 9; hour < 17; hour++) {
+                    for (int i = 0; i < 2; i++) {
+                        events.add(new Event(at(date, hour, 5 + 25 * i), person, USUAL.get((hour + i) % 3)));
+                        streams.add(desktops);
+                    }
+                    if (!date.isBefore(STEP)) {
+                        for (int i = 0; i < 6; i++) {
+                            events.add(new Event(at(date, hour, 3 + 9 * i), person, USUAL.get((hour + i) % 3)));
+                            streams.add(laptops);
+                        }
+                    }
+                }
+            }
+        }
+        final DocRef elastic = elasticIndex(events, streams::get);
+
+        final Map<String, Object> result = compare(elastic, "user.id", "destination.domain");
+        LOGGER.info(() -> "compare_activity, a feed joining: " + JsonUtil.writeValueAsString(result, true));
+
+        final List<Map<String, Object>> findings = (List<Map<String, Object>>) result.get("findings");
+        assertThat(findings).noneSatisfy(finding -> assertThat(finding).containsEntry("kind", "change")
+                .containsEntry("feature", "events"));
+        final String notes = String.valueOf(result.get("notes"));
+        assertThat(notes).contains("feeds (by StreamId, each stream's feed from its meta): ")
+                // The last weekday before the window's end.
+                .contains(feedOf(desktops) + " " + FROM + " to " + WINDOW_TO.minusDays(3))
+                .contains(feedOf(laptops) + " " + STEP + " to " + WINDOW_TO.minusDays(3))
+                .contains("not scored, as feed " + feedOf(laptops) + " joined the source on " + STEP);
+    }
+
     private Map<String, Object> compare(final DocRef index, final String personField, final String breadthField) {
         return json("compare_activity", args("person", "p1", "personField", personField, "sources",
                 List.of(index.getUuid()), "breadthFields", List.of(breadthField), "windowFrom",
@@ -224,6 +267,11 @@ class TestE2eCompareActivity extends AbstractE2eTest {
     }
 
     private DocRef elasticIndex(final List<Event> events, final long stream) {
+        return elasticIndex(events, i -> stream);
+    }
+
+    // The events in an Elastic Index, each with the stream given for its place.
+    private DocRef elasticIndex(final List<Event> events, final IntFunction<Long> streamOf) {
         node.createIndex(indexName, """
                 {"mappings": {"properties": {
                   "@timestamp": {"type": "date"},
@@ -240,7 +288,7 @@ class TestE2eCompareActivity extends AbstractE2eTest {
                 doc.put("@timestamp", event.time().toString());
                 doc.putObject("user").put("id", event.person());
                 doc.putObject("destination").put("domain", event.destination());
-                doc.put("StreamId", stream);
+                doc.put("StreamId", streamOf.apply(i));
                 doc.put("EventId", i + 1);
                 batch.add(doc);
             }
@@ -297,13 +345,25 @@ class TestE2eCompareActivity extends AbstractE2eTest {
     }
 
     private long stream() {
+        return stream("COMPARE-E2E");
+    }
+
+    // A stream of a feed of its own, named from the prefix.
+    private long stream(final String prefix) {
         final List<Long> id = new ArrayList<>();
+        final String feed = prefix + "-" + Long.toHexString(System.nanoTime()).toUpperCase(Locale.ROOT);
         asUser(admin, () -> id.add(metaService.create(MetaProperties.builder()
-                .feedName("COMPARE-E2E-" + Long.toHexString(System.nanoTime()).toUpperCase(Locale.ROOT))
+                .feedName(feed)
                 .typeName(StreamTypeNames.EVENTS)
                 .createMs(Instant.now().toEpochMilli())
                 .build(), Status.UNLOCKED).getId()));
         return id.getFirst();
+    }
+
+
+    // The feed of a stream made here.
+    private String feedOf(final long stream) {
+        return asUser(admin, () -> metaService.getMeta(stream).getFeedName());
     }
 
 
