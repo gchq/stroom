@@ -23,6 +23,7 @@ import stroom.ai.api.ElasticKeyStreams.Refusal;
 import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
+import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.tools.AbstractWorkspaceTool;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -255,10 +256,12 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     static final String OVERVIEW_FILE = "overview.csv";
     static final String CORRECTIONS_FILE = "corrections.json";
     static final String CACHE_FILE = "characterisation-cache.json";
-    /// The form's key for classifying past the budget.
+    /// The form's key for characterising with the model, asked before the model is called at all.
     static final String BEYOND_FORM = "classify";
-    static final String CLASSIFY_ALL = "Classify them all";
-    static final String CLASSIFY_BUDGET = "Classify up to the budget";
+    static final String CLASSIFY = "Characterise";
+    static final String CLASSIFY_ALL = "Characterise, classifying them all";
+    static final String CLASSIFY_BUDGET = "Characterise, classifying up to the budget";
+    static final String DONT_CLASSIFY = "Don't call the model";
     /// The form's key for the user fields no way found.
     static final String USER_FIELDS_FORM = "timeline-user-fields";
     static final String LEAVE_OUT = "Leave it out";
@@ -602,8 +605,10 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                 .description("Optional: the analyst's corrections to the activities, kept with "
                                              + "this investigation so a re-run keeps them.")
                                 .build())
-                        .addBooleanProperty(RUN_ANYWAY_ARG, "True to classify loose items past the budget, as "
-                                                            + "the user agrees.")
+                        .addBooleanProperty(RUN_ANYWAY_ARG, "True where the user has agreed to classify every "
+                                                            + "loose item: the form asking them first then "
+                                                            + "offers all; where no form can be shown, the only "
+                                                            + "way any is sent to the model.")
                         .addEnumProperty(EVENTS_XML_ARG, List.of(EVENTS_XML_AS_NEEDED, EVENTS_XML_EACH),
                                 "Optional: each to read every event's Events XML (within the cap) and classify "
                                 + "each from its own: slower; for sources whose codes don't settle an event's "
@@ -1383,6 +1388,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 USER_FIELDS_FORM), "No field holding the user was found in these indexes (from the call, an AGENTS "
                                    + "doc's ## Fields, a field convention or the index's documentation). Which is "
                                    + "it?", Map.of("type", "object", "properties", properties));
+        McpElicitations.unlessSentInstead(answer, "Which field holds the user", NAME, "");
         if (answer.action() != ElicitResult.Action.ACCEPT) {
             return;
         }
@@ -2140,6 +2146,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 + "(kept for this index once you confirm):\n" + String.join("\n", lines) + (asked.size() > lines.size()
                 ? "\nand " + (asked.size() - lines.size()) + " more"
                 : ""), Map.of("type", "object", "properties", Map.of("use", field), "required", List.of("use")));
+        McpElicitations.unlessSentInstead(answer, "Use this classification of the event codes?", NAME, "");
         return answer.action() == ElicitResult.Action.ACCEPT
                && USE_CODES.equals(String.valueOf(NullSafe.map(answer.content()).get("use")));
     }
@@ -2694,7 +2701,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 Math.max(1, config.getCharacteriseExcerptChars()), Math.max(1, config.getCharacteriseBatchItems()),
                 Math.max(0, config.getCharacteriseMaxItems()), runAnyway, Math.max(1, config.getJoinWorkers()),
                 zone.zone(), corrections, readCache(workspace, cachePath),
-                count -> askBeyond(request, context, count, config.getCharacteriseMaxItems()));
+                (items, budget, calls) -> askClassify(request, context, items, budget, calls, runAnyway));
         final Characterised characterised = ActivityCharacterisation.characterise(timeline, byId, names,
                 built.spans().stream().filter(TimelineSpans.Span::isItem).toList(), settings, context.sideCalls());
         if (!characterised.cache().isEmpty()) {
@@ -2703,28 +2710,51 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         return characterised;
     }
 
-    private boolean askBeyond(final ToolCall request, final ToolCallContext context, final int count,
-                              final int budget) {
+    // Before any loose item goes to the model, the user is asked (decided by the user, 2026-11-26): all, up to the
+    // budget (offered only past it), or none. Where no form can be shown, only runAnyway sends them.
+    private ActivityCharacterisation.Choice askClassify(final ToolCall request,
+                                                        final ToolCallContext context,
+                                                        final int items,
+                                                        final int budget,
+                                                        final int calls,
+                                                        final boolean runAnyway) {
         if (!context.session().isChat() || !context.userQuestions().canAsk()) {
-            return false;
+            return runAnyway
+                    ? ActivityCharacterisation.Choice.ALL
+                    : ActivityCharacterisation.Choice.UNASKED;
         }
-        final long calls = (count + Math.max(1, limits(context).getCharacteriseBatchItems()) - 1L)
-                           / Math.max(1, limits(context).getCharacteriseBatchItems());
+        final boolean past = items > budget;
+        final List<String> choices = past
+                ? List.of(CLASSIFY_ALL, CLASSIFY_BUDGET, DONT_CLASSIFY)
+                : List.of(CLASSIFY, DONT_CLASSIFY);
         final Map<String, Object> field = new LinkedHashMap<>();
         field.put("type", "string");
-        field.put("title", "Classify them all?");
-        field.put("enum", List.of(CLASSIFY_ALL, CLASSIFY_BUDGET));
-        field.put("default", CLASSIFY_BUDGET);
+        field.put("title", "Characterise with the model?");
+        field.put("enum", choices);
+        field.put("default", past && !runAnyway
+                ? CLASSIFY_BUDGET
+                : choices.getFirst());
         final Map<String, Object> form = new LinkedHashMap<>();
         form.put("type", "object");
         form.put("properties", Map.of(BEYOND_FORM, field));
         form.put("required", List.of(BEYOND_FORM));
+        final String question = "Characterising asks the model, outside this conversation: about " + calls
+                                + " model call(s), " + (items == 0
+                ? "to name the activities"
+                : "to classify " + items + " loose item(s) (messages, prompts" + (past
+                        ? "; past the budget of " + budget
+                        : "") + ") and name the activities") + ". Characterise with the model?";
         final ElicitResult answer = context.userQuestions().ask(NAME, UserQuestions.formCallId(request.id(),
-                BEYOND_FORM), count + " loose items (messages, prompts) are to be classified by the model, past the "
-                              + "budget of " + budget + ": about " + calls + " model call(s). Classify them all?",
-                form);
-        return answer.action() == ElicitResult.Action.ACCEPT
-               && CLASSIFY_ALL.equals(String.valueOf(NullSafe.map(answer.content()).get(BEYOND_FORM)));
+                BEYOND_FORM), question, form);
+        McpElicitations.unlessSentInstead(answer, "Characterise with the model?", NAME, "");
+        final String chosen = answer.action() == ElicitResult.Action.ACCEPT
+                ? String.valueOf(NullSafe.map(answer.content()).get(BEYOND_FORM))
+                : DONT_CLASSIFY;
+        return switch (chosen) {
+            case CLASSIFY, CLASSIFY_ALL -> ActivityCharacterisation.Choice.ALL;
+            case CLASSIFY_BUDGET -> ActivityCharacterisation.Choice.BUDGET;
+            default -> ActivityCharacterisation.Choice.NONE;
+        };
     }
 
     @SuppressWarnings("unchecked")

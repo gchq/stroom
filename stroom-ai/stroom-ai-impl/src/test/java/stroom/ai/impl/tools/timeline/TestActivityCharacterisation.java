@@ -19,6 +19,7 @@ package stroom.ai.impl.tools.timeline;
 import stroom.ai.impl.tools.ModelSideCalls;
 import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Activity;
 import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Characterised;
+import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Choice;
 import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Item;
 import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Placement;
 import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Settings;
@@ -278,15 +279,48 @@ class TestActivityCharacterisation {
     @Test
     void pastTheBudgetTheRestAreLeftUnclassifiedUnlessTheUserAgrees() {
         final Characterised capped = characterise(new Settings(500, 50, 2, false, 1, ZoneOffset.UTC, List.of(),
-                Map.of(), count -> false), model(this::answers));
+                Map.of(), (items, budget, calls) -> Choice.BUDGET), model(this::answers));
         assertThat(capped.asked()).isEqualTo(2);
         assertThat(capped.skipped()).isEqualTo(2);
         assertThat(capped.notes()).anyMatch(note -> note.startsWith("Classified the first 2 of 4 loose items"));
 
         final Characterised agreed = characterise(new Settings(500, 50, 2, false, 1, ZoneOffset.UTC, List.of(),
-                Map.of(), count -> count == 4), model(this::answers));
+                Map.of(), (items, budget, calls) -> Choice.ALL), model(this::answers));
         assertThat(agreed.asked()).isEqualTo(4);
         assertThat(agreed.skipped()).isZero();
+    }
+
+    @Test
+    void theUserIsAskedBeforeAnyItemGoesToTheModelWithinTheBudgetToo() {
+        // Decided by the user (2026-11-26; seen in chat 197, characterised unasked over a year).
+        final List<int[]> asked = new ArrayList<>();
+        final Characterised declined = characterise(new Settings(500, 3, 1_000, false, 1, ZoneOffset.UTC,
+                List.of(), Map.of(), (items, budget, calls) -> {
+                    asked.add(new int[]{items, budget, calls});
+                    return Choice.NONE;
+                }), model(this::answers));
+
+        // Two batches of loose items, and the activities' names.
+        assertThat(asked).singleElement().satisfies(one -> assertThat(one).containsExactly(4, 1_000, 3));
+        assertThat(declined.calls()).isZero();
+        assertThat(declined.notes()).anyMatch(note -> note.startsWith("The activities are labelled from their "
+                                                                      + "evidence"));
+        assertThat(declined.asked()).isZero();
+        assertThat(declined.skipped()).isEqualTo(4);
+        assertThat(declined.notes()).anyMatch(note -> note.startsWith("The user chose not to have the 4 loose "
+                                                                      + "item(s) classified by the model (about 2 "
+                                                                      + "model call(s))"));
+    }
+
+    @Test
+    void whereTheUserCantBeAskedNothingGoesToTheModel() {
+        final Characterised unasked = characterise(new Settings(500, 50, 1_000, false, 1, ZoneOffset.UTC, List.of(),
+                Map.of(), (items, budget, calls) -> Choice.UNASKED), model(this::answers));
+
+        assertThat(unasked.calls()).isZero();
+        assertThat(unasked.skipped()).isEqualTo(4);
+        assertThat(unasked.notes()).anyMatch(note -> note.contains("the user is asked first, and can't be asked "
+                                                                   + "here") && note.contains("runAnyway=true"));
     }
 
     @Test

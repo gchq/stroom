@@ -233,7 +233,7 @@ Builds one user's (or entity's) activity timeline for a period from any Elastic 
       "type" : "string"
     },
     "runAnyway" : {
-      "description" : "True to classify loose items past the budget, as the user agrees.",
+      "description" : "True where the user has agreed to classify every loose item: the form asking them first then offers all; where no form can be shown, the only way any is sent to the model.",
       "type" : "boolean"
     },
     "skill" : {

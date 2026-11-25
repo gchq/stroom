@@ -22,6 +22,7 @@ import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.FakeTabWorkspace;
 import stroom.ai.impl.TabSnapshots;
+import stroom.ai.impl.tools.FormAnswers;
 import stroom.ai.impl.tools.ModelSideCalls;
 import stroom.ai.impl.tools.SessionLimits;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -375,8 +376,15 @@ class TestActivityTimelineTool {
                 "corrections", List.of(Map.of("rename", "a1", "label", "The Q3 proposal")))));
         ((List<Map<String, Object>>) withText.get("sources")).set(0, endpointSource(true));
 
+        // The user agrees first (decided by the user, 2026-11-26: always asked before any item goes to the model).
+        final FormAnswers agreeing = FormAnswers.answering(Map.of(ActivityTimelineTool.BEYOND_FORM,
+                ActivityTimelineTool.CLASSIFY));
         final String first = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
-                withText, false)), chat(model)).text();
+                withText, false)), chat(model, agreeing)).text();
+        assertThat(agreeing.asked()).singleElement().asString()
+                .isEqualTo("Characterising asks the model, outside this conversation: about 2 model call(s), to "
+                           + "classify 2 loose item(s) (messages, prompts) and name the activities. Characterise with "
+                           + "the model?");
 
         assertThat(first).contains("\"The Q3 proposal\"").contains("sent to the model in 1 call(s) outside this "
                                                                     + "conversation: 2 classified;");
@@ -390,8 +398,24 @@ class TestActivityTimelineTool {
         calls.set(0);
         withText.remove("corrections");
         final String second = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
-                withText, false)), chat(model)).text();
+                withText, false)), chat(model, agreeing)).text();
         assertThat(second).contains("\"The Q3 proposal\"");
+        assertThat(calls.get()).isZero();
+
+        // Declined, or no form to ask in: nothing goes to the model. A message sent instead ends the call.
+        new SessionWorkspace(files.workspace(), CHAT).write(WorkspacePath.parse(FOLDER
+                                                                + ActivityTimelineTool.CACHE_FILE), "{}", null);
+        calls.set(0);
+        final String declined = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
+                withText, false)), chat(model, FormAnswers.answering(Map.of(ActivityTimelineTool.BEYOND_FORM,
+                ActivityTimelineTool.DONT_CLASSIFY)))).text();
+        assertThat(declined).contains("The user chose not to have the 2 loose item(s) classified by the model");
+        assertThat(tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(withText,
+                false)), chat(model)).text()).contains("the user is asked first, and can't be asked here");
+        assertThat(tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(withText,
+                false)), chat(model, FormAnswers.sendingInstead("Only the last week, please"))).text())
+                .contains("The user sent a message instead of answering 'Characterise with the model?': \"Only "
+                          + "the last week, please\". Nothing was done.");
         assertThat(calls.get()).isZero();
     }
 
@@ -526,9 +550,13 @@ class TestActivityTimelineTool {
     }
 
     private ToolCallContext chat(final ModelSideCalls sideCalls) {
+        return chat(sideCalls, UserQuestions.NONE);
+    }
+
+    private ToolCallContext chat(final ModelSideCalls sideCalls, final UserQuestions questions) {
         return ToolCallContext.builder(ToolSession.chat(CHAT))
                 .workspace(new SessionWorkspace(files.workspace(), CHAT))
-                .userQuestions(UserQuestions.NONE)
+                .userQuestions(questions)
                 .limits(SessionLimits.lookedUp(AiWorkspaceConfig::new))
                 .sideCalls(sideCalls)
                 .build();

@@ -22,6 +22,7 @@ import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.FakeTabWorkspace;
 import stroom.ai.impl.TabSnapshots;
+import stroom.ai.impl.tools.FormAnswers;
 import stroom.ai.impl.tools.ModelSideCalls;
 import stroom.ai.impl.tools.SessionLimits;
 import stroom.ai.impl.tools.ToolCallContext;
@@ -334,6 +335,21 @@ class TestActivityTimelineAnySource {
         final Questions questions = new Questions(Map.of("use", ActivityTimelineTool.USE_CODES));
         final Map<String, Object> arguments = arguments(Map.of("sources", List.of(Map.of("index", "Codes", "user",
                 "user"))));
+
+        // A message sent instead of confirming the codes ends the call, nothing kept (seen in chat 197 for the
+        // timeline's classify form).
+        assertThat(tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(arguments,
+                false)), chat(FormAnswers.sendingInstead("A-102 is a logoff"), model)).text())
+                .contains("The user sent a message instead of answering 'Use this classification of the event "
+                          + "codes?': \"A-102 is a logoff\". Nothing was done.");
+        assertThat(files.content(EventCodes.FOLDER + "codes-uuid.json")).isEmpty();
+        // Nor is a user field taken from a form put aside: the source names none here.
+        assertThat(tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
+                arguments(Map.of("sources", List.of(Map.of("index", "Codes")))), false)),
+                chat(FormAnswers.sendingInstead("It's the user column"), model)).text())
+                .contains("The user sent a message instead of answering 'Which field holds the user': \"It's the "
+                          + "user column\"");
+        asked.clear();
 
         final String text = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
                 arguments, false)), chat(questions, model)).text();

@@ -51,7 +51,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.function.IntPredicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -249,14 +248,26 @@ final class ActivityCharacterisation {
             }
         }
 
-        // Pass 2: the model, in batches.
+        // Pass 2: the model, in batches, once the user agrees (decided by the user, 2026-11-26: asked before the
+        // model is called at all, for the loose items and the activities' names; seen in chat 197, characterised
+        // unasked over a year, 8,361 items, about 168 model calls).
         final List<String> notes = new ArrayList<>();
-        final Classified classified = classify(loose, activities, settings, sideCalls, notes);
+        final Choice choice = choose(loose, activities, settings, sideCalls);
+        final Classified classified = classify(loose, activities, settings, choice, sideCalls, notes);
         itemPlacements.putAll(classified.placements());
         activities.addAll(classified.newActivities());
 
-        // Names, from the evidence, by the model where there is one.
-        final Map<String, String> labels = labels(activities, classified.cache(), sideCalls, notes);
+        // Names, from the evidence, by the model where there is one and the user agreed.
+        final Map<String, String> labels = labels(activities, classified.cache(), choice == Choice.NONE
+                                                                                   || choice == Choice.UNASKED
+                ? ModelSideCalls.NONE
+                : sideCalls, notes);
+        if ((choice == Choice.NONE || choice == Choice.UNASKED) && !activities.isEmpty()) {
+            notes.add("The activities are labelled from their evidence (their main artifacts and terms), not named "
+                      + "by the model, as " + (choice == Choice.NONE
+                    ? "the user chose."
+                    : "the user wasn't asked."));
+        }
         final List<Activity> named = activities.stream()
                 .map(activity -> activity.labelled(labels.getOrDefault(activity.id(), activity.label())))
                 .toList();
@@ -587,9 +598,33 @@ final class ActivityCharacterisation {
     // ------------------------------------------------------------------------------------------------
     // Pass 2
 
+    // What the user chose to send to the model (Settings#ask), asked once there is something to send: loose items
+    // whose answers aren't cached, or activities whose names aren't. All where there is no model, or nothing to send.
+    private static Choice choose(final List<Item> loose,
+                                 final List<Activity> activities,
+                                 final Settings settings,
+                                 final ModelSideCalls sideCalls) {
+        if (!sideCalls.available()) {
+            return Choice.ALL;
+        }
+        final String profileHash = hash(profilesJson(activities));
+        final int toSend = (int) loose.stream()
+                .filter(item -> !settings.cache().containsKey(cacheKey(item, profileHash)))
+                .count();
+        final boolean naming = !activities.isEmpty() && !settings.cache().containsKey(labelsKey(activities));
+        if (toSend == 0 && !naming) {
+            return Choice.ALL;
+        }
+        final int calls = callsFor(toSend, settings.batchItems()) + (naming
+                ? 1
+                : 0);
+        return settings.ask().choose(toSend, settings.maxItems(), calls);
+    }
+
     private static Classified classify(final List<Item> loose,
                                        final List<Activity> activities,
                                        final Settings settings,
+                                       final Choice choice,
                                        final ModelSideCalls sideCalls,
                                        final List<String> notes) {
         final Map<String, Placement> placements = new LinkedHashMap<>();
@@ -625,13 +660,26 @@ final class ActivityCharacterisation {
             notes.add("Strong links only: " + asked.size() + " loose item(s) (messages, prompts, sessions whose "
                       + "words match no activity) were not classified, as there is no model to ask: "
                       + sideCalls.via() + ".");
-        } else if (asked.size() > settings.maxItems() && !settings.beyondBudget()
-                   && !settings.askBeyond().test(asked.size())) {
-            skipped = asked.size() - settings.maxItems();
-            toAsk = asked.subList(0, settings.maxItems());
-            notes.add("Classified the first " + settings.maxItems() + " of " + asked.size() + " loose items, the "
-                      + "budget (stroom.ai.workspace.characteriseMaxItems); the other " + skipped + " were left "
-                      + "unclassified. Call again with runAnyway=true, as the user agrees, to classify them all.");
+        } else if (!asked.isEmpty()) {
+            final int calls0 = callsFor(asked.size(), settings.batchItems());
+            if (choice == Choice.NONE || choice == Choice.UNASKED) {
+                skipped = asked.size();
+                toAsk = List.of();
+                notes.add(choice == Choice.NONE
+                        ? "The user chose not to have the " + asked.size() + " loose item(s) classified by the model "
+                          + "(about " + calls0 + " model call(s)): they are unclear."
+                        : "The " + asked.size() + " loose item(s) were not sent to the model (about " + calls0
+                          + " model call(s)): the user is asked first, and can't be asked here. Ask them; call "
+                          + "again with runAnyway=true if they agree.");
+            } else if (choice == Choice.BUDGET && asked.size() > settings.maxItems()) {
+                skipped = asked.size() - settings.maxItems();
+                toAsk = asked.subList(0, settings.maxItems());
+                notes.add("Classified the first " + settings.maxItems() + " of " + asked.size() + " loose items, "
+                          + "the budget (stroom.ai.workspace.characteriseMaxItems), as the user chose; the other "
+                          + skipped + " were left unclassified.");
+            } else {
+                toAsk = asked;
+            }
         } else {
             toAsk = asked;
         }
@@ -701,6 +749,12 @@ final class ActivityCharacterisation {
         });
         return new Classified(placements, created, cache, asked.size() - skipped, calls, skipped, reused, failed,
                 failedWhy);
+    }
+
+    // The model calls classifying this many items take, a batch a call.
+    private static int callsFor(final int items, final int batchItems) {
+        final int size = Math.max(1, batchItems);
+        return (items + size - 1) / size;
     }
 
     private static List<List<Item>> batches(final List<Item> items, final int size) {
@@ -1095,13 +1149,12 @@ final class ActivityCharacterisation {
     /// @param excerptChars The most characters of an item's text sent.
     /// @param batchItems   The items a call.
     /// @param maxItems     The most items asked about in a run without the user agreeing.
-    /// @param beyondBudget True if the user agreed to classify past the budget.
+    /// @param beyondBudget True if the user agreed to classify past the budget (runAnyway): what a null `ask` chooses.
     /// @param workers      The batches run at once.
     /// @param zone         The user's zone, for the times sent.
     /// @param corrections  The analyst's corrections, in the order given.
     /// @param cache        Answers from earlier runs, by item text and profiles.
-    /// @param askBeyond    Asks the user whether to classify past the budget, given the items to classify; true if
-    ///                     they agree.
+    /// @param ask          Asks the user before any item goes to the model: all, up to the budget, or none.
     record Settings(int excerptChars,
                     int batchItems,
                     int maxItems,
@@ -1110,13 +1163,16 @@ final class ActivityCharacterisation {
                     ZoneId zone,
                     List<Map<String, Object>> corrections,
                     Map<String, Map<String, Object>> cache,
-                    IntPredicate askBeyond) {
+                    Ask ask) {
 
-        /// Copies the collections; a null `askBeyond` never agrees.
+        /// Copies the collections; a null `ask` chooses all where `beyondBudget`, else up to the budget.
         Settings {
-            askBeyond = askBeyond == null
-                    ? count -> false
-                    : askBeyond;
+            if (ask == null) {
+                final Choice given = beyondBudget
+                        ? Choice.ALL
+                        : Choice.BUDGET;
+                ask = (items, budget, calls) -> given;
+            }
             corrections = corrections == null
                     ? List.of()
                     : List.copyOf(corrections);
@@ -1442,5 +1498,36 @@ final class ActivityCharacterisation {
         Set<String> with(final String other) {
             return byOther.getOrDefault(other, Set.of());
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Asks the user before loose items are sent to the model.
+    @FunctionalInterface
+    interface Ask {
+
+        /// @param items  The loose items to classify (none where only the activities' names are to be asked for).
+        /// @param budget The most classified without agreeing to more ([Settings#maxItems()]).
+        /// @param calls  The model calls characterising takes: classifying them all, and naming the activities.
+        /// @return What the user chose.
+        Choice choose(int items, int budget, int calls);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// What the user chose to send to the model.
+    enum Choice {
+        /// Every item.
+        ALL,
+        /// Up to the budget.
+        BUDGET,
+        /// None.
+        NONE,
+        /// None, as the user couldn't be asked.
+        UNASKED
     }
 }
