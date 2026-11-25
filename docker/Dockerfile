@@ -75,7 +75,7 @@ RUN \
     set -eu; \
     echo "http_proxy: ${http_proxy:-}"; \
     echo "https_proxy: ${https_proxy:-}"; \
-    microdnf install -y \
+    microdnf install -y --nodocs \
         bash \
         ca-certificates \
         curl \
@@ -214,7 +214,7 @@ RUN \
     # Snapshot all current installed packages so we can remove any new ones later \
     rpm -qa --queryformat "%{NAME}\n" | sort > /tmp/current_pkgs; \
     # Needed for groupadd/useradd \
-    microdnf install -y \
+    microdnf install -y --nodocs \
         shadow-utils; \
     if ! getent group "${GROUP_NAME}" >/dev/null 2>&1; then \
         groupadd \
@@ -237,7 +237,7 @@ RUN \
     [[ -n "${added_pkgs}" ]] \
         && microdnf remove -y "${added_pkgs}" ; \
     # Font pkgs needed for ExcelTarget \
-    microdnf install -y \
+    microdnf install -y --nodocs \
         fontconfig \
         dejavu-sans-fonts; \
     # Tidy up any microdnf caches \
@@ -421,7 +421,7 @@ RUN \
     # Snapshot all current installed packages so we can remove any new ones later \
     rpm -qa --queryformat "%{NAME}\n" | sort > /tmp/current_pkgs; \
     # Needed for groupadd/useradd \
-    microdnf install -y \
+    microdnf install -y --nodocs \
         shadow-utils; \
     if ! getent group "${GROUP_NAME}" >/dev/null 2>&1; then \
         groupadd \
