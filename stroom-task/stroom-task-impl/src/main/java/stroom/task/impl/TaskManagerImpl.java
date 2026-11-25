@@ -30,6 +30,7 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.HasUserRef;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
+import stroom.task.api.TerminationCause;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskId;
@@ -129,7 +130,8 @@ class TaskManagerImpl implements TaskManager {
             boolean waiting = true;
             while (waiting) {
                 // Stop all of the current tasks.
-                taskRegistry.list().forEach(TaskContextImpl::terminate);
+                taskRegistry.list().forEach(taskContext ->
+                        taskContext.terminate(TerminationCause.NODE_STOPPING));
 
                 final int currentCount = taskRegistry.list().size();
                 waiting = currentCount > 0;
@@ -193,17 +195,27 @@ class TaskManagerImpl implements TaskManager {
 
     private void doTerminated(final long timeNowMs, final List<TaskProgress> taskProgressList,
                               final List<TaskContextImpl> itemsToKill) {
+        final TerminationCause terminationCause = getTerminationCause();
         LOGGER.trace(() -> LogUtil.message("doTerminated() - itemsToKill.size() {}", itemsToKill.size()));
 
         for (final TaskContextImpl taskContext : itemsToKill) {
             // Try and terminate the task.
             if (!taskContext.isTerminated()) {
                 LOGGER.trace(() -> LogUtil.message("terminating task {}", taskContext.getTaskId()));
-                taskContext.terminate();
+                taskContext.terminate(terminationCause);
             }
             final TaskProgress taskProgress = buildTaskProgress(timeNowMs, taskContext);
             taskProgressList.add(taskProgress);
         }
+    }
+
+    private TerminationCause getTerminationCause() {
+        // Tasks are also terminated as the processing user, e.g. when a session or a search ends, which has no user
+        // account to name.
+        if (securityContext.getUserIdentity() instanceof final HasUserRef hasUserRef) {
+            return TerminationCause.user(NullSafe.get(hasUserRef.getUserRef(), UserRef::toDisplayString));
+        }
+        return TerminationCause.NOT_GIVEN;
     }
 
     public ResultPage<TaskProgress> find(final FindTaskProgressCriteria findTaskProgressCriteria) {
@@ -342,10 +354,15 @@ class TaskManagerImpl implements TaskManager {
 
     @Override
     public void terminate(final TaskId taskId) {
+        terminate(taskId, TerminationCause.NOT_GIVEN);
+    }
+
+    @Override
+    public void terminate(final TaskId taskId, final TerminationCause terminationCause) {
         securityContext.secure(AppPermission.MANAGE_TASKS_PERMISSION, () -> {
             final TaskContextImpl taskContext = taskRegistry.get(taskId);
             if (taskContext != null) {
-                taskContext.terminate();
+                taskContext.terminate(terminationCause);
             }
         });
     }

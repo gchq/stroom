@@ -18,6 +18,7 @@ package stroom.processor.impl;
 
 import stroom.node.api.NodeInfo;
 import stroom.task.api.TaskManager;
+import stroom.task.api.TerminationCause;
 import stroom.task.shared.TaskId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -185,7 +186,7 @@ public class ProcessorTaskHeartbeat {
             processingTasks.forEach((taskId, held) -> {
                 if (held.stroomTaskId() != null) {
                     LOGGER.warn("Self-fencing - terminating processing of task {}", taskId);
-                    taskManager.terminate(held.stroomTaskId());
+                    taskManager.terminate(held.stroomTaskId(), TerminationCause.HEARTBEAT_OVERDUE);
                 } else {
                     // Either the task was claimed but has not started running yet, or the
                     // processing context had no id (only the case in tests). Nothing to

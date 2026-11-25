@@ -25,7 +25,10 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * gh-5699. Returns dead tasks - PROCESSING rows whose heartbeat ({@code status_time_ms}, renewed
@@ -53,6 +56,10 @@ import java.time.Instant;
  * sweep it is stranded forever and its stream silently never processed. See
  * {@link ProcessorTaskDao#sweepQueuedTasks(Instant)}.
  * <p>
+ * This also puts back tasks that hit a fault, once they have waited for {@code stroom.processor.taskRetryDelay}, and
+ * logs a warning of how many are waiting. Faults that do not count are tried again for as long as it takes to put
+ * their cause right, so something has to say that there are some.
+ * <p>
  * A reaped task's version is bumped (see
  * {@link ProcessorTaskDao#reapDeadTasks(Instant)}), which fences the original owner: if that
  * node is alive but unable to renew, its terminal status write fails its version check and is
@@ -70,9 +77,20 @@ public class ProcessorTaskReaper {
      */
     private static final String LOCK_NAME = "ProcessorTaskReaper";
 
+    // The most tasks of each filter to put back to be tried again in one go, so that a fault that affects thousands of
+    // tasks doesn't return them all at once. The rest are put back the next time the job runs. Each filter has its own
+    // limit so that one that can't be run doesn't delay the others.
+    private static final int MAX_RETRY_TASKS_TO_PUT_BACK = 1_000;
+
+    private static final Duration RETRY_WARNING_INTERVAL = Duration.ofHours(1);
+
     private final ClusterLockService clusterLockService;
     private final ProcessorTaskDao processorTaskDao;
     private final Provider<ProcessorConfig> processorConfigProvider;
+
+    // When this node last warned of a filter's tasks waiting to be tried again, by filter id. Each node keeps its own,
+    // so each logs its own warnings. Only used under the cluster lock.
+    private final Map<Integer, Instant> lastRetryWarnings = new HashMap<>();
 
     @Inject
     public ProcessorTaskReaper(final ClusterLockService clusterLockService,
@@ -113,8 +131,44 @@ public class ProcessorTaskReaper {
                     LOGGER.debug(() -> "Sweeping QUEUED/ASSIGNED tasks not touched since " + statusOlderThan);
                     processorTaskDao.sweepQueuedTasks(statusOlderThan);
                 }
+
+                final Map<Integer, Integer> retryTasks = processorTaskDao.countRetryTasksByFilter();
+                warnOfRetryTasks(now, retryTasks);
+                final Instant retryThreshold = now.minus(processorConfig.getTaskRetryDelay());
+                retryTasks.keySet().forEach(filterId -> putBackRetryTasks(filterId, retryThreshold));
             });
         } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+        }
+    }
+
+    private void putBackRetryTasks(final int filterId, final Instant statusOlderThan) {
+        try {
+            final int count = processorTaskDao.putBackRetryTasks(
+                    filterId, statusOlderThan, MAX_RETRY_TASKS_TO_PUT_BACK);
+            if (count > 0) {
+                LOGGER.info("Put back {} tasks of processor filter {} that hit a fault to be tried again",
+                        count, filterId);
+            }
+        } catch (final RuntimeException e) {
+            // This must not stop those of other filters from being put back.
+            LOGGER.error(e::getMessage, e);
+        }
+    }
+
+    private void warnOfRetryTasks(final Instant now, final Map<Integer, Integer> retryTasks) {
+        try {
+            lastRetryWarnings.values().removeIf(lastWarning ->
+                    !lastWarning.plus(RETRY_WARNING_INTERVAL).isAfter(now));
+            retryTasks.forEach((filterId, count) -> {
+                if (lastRetryWarnings.putIfAbsent(filterId, now) == null) {
+                    final String reason = processorTaskDao.findLatestRetryReason(filterId).orElse("unknown");
+                    LOGGER.warn("{} tasks of processor filter {} have hit a fault and are waiting to be tried again. "
+                                + "Latest reason: {}", count, filterId, reason);
+                }
+            });
+        } catch (final RuntimeException e) {
+            // This must not stop tasks from being put back.
             LOGGER.error(e::getMessage, e);
         }
     }

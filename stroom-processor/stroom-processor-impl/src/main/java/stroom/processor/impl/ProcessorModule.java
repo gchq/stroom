@@ -124,9 +124,11 @@ public class ProcessorModule extends AbstractModule {
                         .name(JobNames.PROCESSOR_TASK_REAPER)
                         .description("Return tasks whose processing node has died - detected by a heartbeat " +
                                      "(status time) not renewed within stroom.processor.taskLeaseTimeout - " +
-                                     "to the CREATED state so they can be processed by another node. " +
+                                     "to the CREATED state so they can be processed by another node. Also " +
+                                     "returns tasks that hit a fault, once they have waited for " +
+                                     "stroom.processor.taskRetryDelay, so that they are tried again. " +
                                      "Do not disable this job while tasks are being processed or tasks on " +
-                                     "a failed node will never be recovered")
+                                     "a failed node, and tasks that hit a fault, will never be recovered")
                         .frequencySchedule("1m"))
                 .bindJobTo(ProcessorTaskCreatorJob.class, builder -> builder
                         .name("Processor Task Creator")

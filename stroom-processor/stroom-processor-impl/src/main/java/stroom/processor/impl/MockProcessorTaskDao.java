@@ -44,6 +44,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 @Singleton
@@ -222,13 +223,14 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
-    public ProcessorTask changeTaskStatus(final ProcessorTask processorTask,
-                                          final String nodeName,
-                                          final TaskStatus status,
-                                          final Long startTime,
-                                          final Long endTime,
-                                          final String reason) {
-        return processorTask.copy()
+    public TaskStatusChange changeTaskStatus(final ProcessorTask processorTask,
+                                             final String nodeName,
+                                             final TaskStatus status,
+                                             final Long startTime,
+                                             final Long endTime,
+                                             final String reason,
+                                             final boolean countFault) {
+        return TaskStatusChange.done(processorTask.copy()
                 .nodeName(nodeName)
                 .status(status)
                 .statusTimeMs(System.currentTimeMillis())
@@ -237,8 +239,26 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
                 .runCount(TaskStatus.PROCESSING.equals(status)
                         ? processorTask.getRunCount() + 1
                         : processorTask.getRunCount())
+                .faultCount(countFault
+                        ? processorTask.getFaultCount() + 1
+                        : processorTask.getFaultCount())
                 .reason(reason)
-                .build();
+                .build());
+    }
+
+    @Override
+    public int putBackRetryTasks(final int filterId, final Instant statusOlderThan, final int limit) {
+        return 0;
+    }
+
+    @Override
+    public Map<Integer, Integer> countRetryTasksByFilter() {
+        return Map.of();
+    }
+
+    @Override
+    public Optional<String> findLatestRetryReason(final int filterId) {
+        return Optional.empty();
     }
 
     @Override

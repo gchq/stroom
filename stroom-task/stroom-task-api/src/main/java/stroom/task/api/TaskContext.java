@@ -21,6 +21,7 @@ import stroom.util.shared.NullSafe;
 
 import org.slf4j.Logger;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public interface TaskContext extends Terminator {
@@ -48,6 +49,15 @@ public interface TaskContext extends Terminator {
      * @return The task id of this context.
      */
     TaskId getTaskId();
+
+    /// Get why this task was terminated. If it has been terminated more than once, this is why it was the first time.
+    ///
+    /// @return Why this task was terminated, or empty if it has not been.
+    default Optional<TerminationCause> getTerminationCause() {
+        return isTerminated()
+                ? Optional.of(TerminationCause.NOT_GIVEN)
+                : Optional.empty();
+    }
 
     /**
      * Reset submission time etc.

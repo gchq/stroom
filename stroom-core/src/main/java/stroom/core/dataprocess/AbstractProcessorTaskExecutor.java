@@ -44,6 +44,7 @@ import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.errorhandler.LoggedException;
+import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.errorhandler.RecordErrorReceiver;
 import stroom.pipeline.factory.AbstractElement;
 import stroom.pipeline.factory.Pipeline;
@@ -85,6 +86,7 @@ import stroom.util.io.PreviewInputStream;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ElementId;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
@@ -102,6 +104,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -147,6 +151,9 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
     private Source streamSource;
 
     private long startTime;
+
+    // The first failure to write the error stream, if there have been any.
+    private final AtomicReference<Exception> errorStreamFailure = new AtomicReference<>();
 
     protected AbstractProcessorTaskExecutor(final PipelineFactory pipelineFactory,
                                             final Store store,
@@ -226,11 +233,13 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                         processorTask,
                         recordCount,
                         errorReceiverProxy,
-                        volumeGroupNameProvider)) {
+                        volumeGroupNameProvider,
+                        this::onErrorStreamFailure)) {
             ProcessorTaskDecorator processDecorator = null;
             try {
                 final DefaultErrorWriter errorWriter = new DefaultErrorWriter();
                 errorWriter.addOutputStreamProvider(processInfoOutputStreamProvider);
+                errorWriter.setFailureConsumer(this::onErrorStreamFailure);
                 errorWriterProxy.setErrorWriter(errorWriter);
 
                 processDecorator = getProcessDecorator();
@@ -256,9 +265,18 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             }
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
+            onErrorStreamFailure(e);
         } finally {
             // Delete duplicate output.
             deleteDuplicateOutput(meta, processor);
+        }
+
+        // If the errors have not been recorded then the task can't be allowed to complete, as nothing would say that
+        // there had been any.
+        final Exception failure = errorStreamFailure.get();
+        if (failure != null) {
+            throw ProcessException.create(
+                    "Unable to write the error stream - " + LogUtil.exceptionMessage(failure), failure);
         }
 
         // Produce processing result.
@@ -271,6 +289,10 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             }
         }
         return new ProcessorResultImpl(read, written, markerCounts);
+    }
+
+    private void onErrorStreamFailure(final Exception e) {
+        errorStreamFailure.compareAndSet(null, e);
     }
 
     protected abstract ProcessorTaskDecorator getProcessDecorator();
@@ -527,6 +549,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                 // Ignore exception as we generated it.
                 LOGGER.error("Error while trying to log {} to errorReceiverProxy with message '{}'",
                         severity, e.getMessage(), e2);
+                onErrorStreamFailure(e2);
             }
 
             if (errorReceiverProxy.getErrorReceiver() instanceof final ErrorStatistics errorStatistics) {
@@ -622,6 +645,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
         private final RecordCount recordCount;
         private final ErrorReceiverProxy errorReceiverProxy;
         private final VolumeGroupNameProvider volumeGroupNameProvider;
+        private final Consumer<Exception> failureConsumer;
 
         private OutputStream processInfoOutputStream;
         private Target processInfoStreamTarget;
@@ -635,7 +659,8 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                                         final ProcessorTask processorTask,
                                         final RecordCount recordCount,
                                         final ErrorReceiverProxy errorReceiverProxy,
-                                        final VolumeGroupNameProvider volumeGroupNameProvider) {
+                                        final VolumeGroupNameProvider volumeGroupNameProvider,
+                                        final Consumer<Exception> failureConsumer) {
             this.streamStore = streamStore;
             this.metaData = metaData;
             this.meta = meta;
@@ -646,6 +671,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             this.recordCount = recordCount;
             this.errorReceiverProxy = errorReceiverProxy;
             this.volumeGroupNameProvider = volumeGroupNameProvider;
+            this.failureConsumer = failureConsumer;
         }
 
         @Override
@@ -725,6 +751,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                                     processInfoStreamTarget.close();
                                 } catch (final RuntimeException e) {
                                     LOGGER.error(e::getMessage, e);
+                                    failureConsumer.accept(e);
                                 }
                             }
                         }

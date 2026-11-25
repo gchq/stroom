@@ -16,10 +16,14 @@
 
 package stroom.task.impl;
 
+import stroom.task.api.TerminationCause;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TestTaskContextImpl {
 
@@ -51,6 +55,57 @@ class TestTaskContextImpl {
         final String tree = TaskThreadInfoUtil.getInfo(list);
 
         System.out.println(tree);
+    }
+
+    @Test
+    void test_notTerminated() {
+        final TaskContextImpl taskContext = create();
+
+        assertThat(taskContext.isTerminated()).isFalse();
+        assertThat(taskContext.getTerminationCause()).isEmpty();
+    }
+
+    @Test
+    void test_firstTerminationCauseIsKept() {
+        final TaskContextImpl taskContext = create();
+
+        taskContext.terminate(TerminationCause.user("someone"));
+        taskContext.terminate(TerminationCause.NODE_STOPPING);
+
+        assertThat(taskContext.isTerminated()).isTrue();
+        assertThat(taskContext.getTerminationCause()).contains(TerminationCause.user("someone"));
+    }
+
+    @Test
+    void test_terminationWithoutACauseIsKept() {
+        final TaskContextImpl taskContext = create();
+
+        taskContext.terminate();
+        taskContext.terminate(TerminationCause.NODE_STOPPING);
+
+        assertThat(taskContext.getTerminationCause()).contains(TerminationCause.NOT_GIVEN);
+    }
+
+    @Test
+    void test_terminationCauseIsPassedToChildren() {
+        final TaskContextImpl parent = create();
+        final TaskContextImpl child = create();
+        final TaskContextImpl grandchild = create();
+        final TaskContextImpl terminatedChild = create();
+        parent.addChild(child);
+        child.addChild(grandchild);
+        parent.addChild(terminatedChild);
+        terminatedChild.terminate(TerminationCause.HEARTBEAT_OVERDUE);
+        assertThat(parent.isTerminated()).isFalse();
+
+        parent.terminate(TerminationCause.NODE_STOPPING);
+        final TaskContextImpl lateChild = create();
+        parent.addChild(lateChild);
+
+        assertThat(child.getTerminationCause()).contains(TerminationCause.NODE_STOPPING);
+        assertThat(grandchild.getTerminationCause()).contains(TerminationCause.NODE_STOPPING);
+        assertThat(lateChild.getTerminationCause()).contains(TerminationCause.NODE_STOPPING);
+        assertThat(terminatedChild.getTerminationCause()).contains(TerminationCause.HEARTBEAT_OVERDUE);
     }
 
     private TaskContextImpl create() {

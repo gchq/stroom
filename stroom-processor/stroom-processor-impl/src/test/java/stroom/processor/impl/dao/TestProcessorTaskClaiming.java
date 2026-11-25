@@ -19,6 +19,7 @@ package stroom.processor.impl.dao;
 import stroom.db.util.JooqUtil;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.impl.ProcessorFilterCache;
+import stroom.processor.impl.TaskStatusChange;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
@@ -239,12 +240,12 @@ class TestProcessorTaskClaiming extends AbstractProcessorTest {
         assertThat(processorTaskDao.sweepQueuedTasks(SEED_TIME.plusMillis(1))).isEqualTo(1);
 
         // Its belated dispatch of that task must not stamp over what the sweep did.
-        final ProcessorTask assigned = processorTaskDao.changeTaskStatus(
+        final TaskStatusChange assigned = processorTaskDao.changeTaskStatus(
                 asQueuedByTheMaster, NODE1, TaskStatus.ASSIGNED, SEED_TIME.toEpochMilli(), null);
 
         assertThat(assigned)
                 .describedAs("worst case is a wasted assignment, the same outcome as a lost lease")
-                .isNull();
+                .isEqualTo(TaskStatusChange.lost());
         assertThat(getTaskStatus(taskId))
                 .describedAs("the task stays claimable, so it gets processed rather than stranded")
                 .isEqualTo(TaskStatus.CREATED);

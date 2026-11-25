@@ -19,6 +19,7 @@ package stroom.processor.impl.dao;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.impl.ProgressMonitor;
 import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
+import stroom.processor.impl.TaskStatusChange;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
@@ -30,11 +31,16 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import org.jooq.exception.DataAccessException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.Mockito;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -175,10 +181,10 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         assertThat(processorTaskDao.reapDeadTasks(now.minus(10, ChronoUnit.MINUTES))).isEqualTo(1);
 
         // Our belated attempt to complete it must be abandoned...
-        final ProcessorTask result = processorTaskDao.changeTaskStatus(
+        final TaskStatusChange result = processorTaskDao.changeTaskStatus(
                 taskAsOwned, NODE1, TaskStatus.COMPLETE, now.toEpochMilli(), now.toEpochMilli());
 
-        assertThat(result).isNull();
+        assertThat(result).isEqualTo(TaskStatusChange.lost());
         // ...leaving the row as the reaper set it, not stamped COMPLETE.
         assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.CREATED);
         assertThat(getTaskNodeId(taskId)).isNull();
@@ -188,9 +194,9 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         final ProcessorTask current = processorTaskDao.find(new ExpressionCriteria())
                 .getValues()
                 .getFirst();
-        final ProcessorTask updated = processorTaskDao.changeTaskStatus(
+        final TaskStatusChange updated = processorTaskDao.changeTaskStatus(
                 current, NODE1, TaskStatus.PROCESSING, now.toEpochMilli(), null);
-        assertThat(updated).isNotNull();
+        assertThat(updated.isDone()).isTrue();
         assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.PROCESSING);
     }
 
@@ -206,7 +212,7 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
 
         // Started from the master's queue.
         final ProcessorTask processing = processorTaskDao.changeTaskStatus(
-                queued, NODE1, TaskStatus.PROCESSING, 1L, null);
+                queued, NODE1, TaskStatus.PROCESSING, 1L, null).task();
         assertThat(processing.getRunCount()).isOne();
         assertThat(getTaskRunCount(taskId)).isOne();
 
@@ -214,11 +220,11 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         processorTaskDao.renewTaskHeartbeats(NODE1, Set.of(taskId), 2L);
         assertThat(getTaskRunCount(taskId)).isOne();
         final ProcessorTask retry = processorTaskDao.changeTaskStatus(
-                processing, NODE1, TaskStatus.RETRY, 1L, 2L, "Broken");
+                processing, NODE1, TaskStatus.RETRY, 1L, 2L, "Broken", false).task();
         assertThat(retry.getRunCount()).isOne();
         assertThat(getTaskRunCount(taskId)).isOne();
         final ProcessorTask created = processorTaskDao.changeTaskStatus(
-                retry, null, TaskStatus.CREATED, null, null);
+                retry, null, TaskStatus.CREATED, null, null).task();
         assertThat(created.getRunCount()).isOne();
         assertThat(getTaskRunCount(taskId)).isOne();
 
@@ -240,7 +246,8 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         final ProcessorTask queued = processorTaskDao.queueTasks(Set.of(taskId), NODE1).getFirst();
         assertThat(processorTaskDao.releaseTasks(Set.of(taskId), TaskStatus.QUEUED)).isOne();
 
-        assertThat(processorTaskDao.changeTaskStatus(queued, NODE1, TaskStatus.PROCESSING, 1L, null)).isNull();
+        assertThat(processorTaskDao.changeTaskStatus(queued, NODE1, TaskStatus.PROCESSING, 1L, null))
+                .isEqualTo(TaskStatusChange.lost());
 
         assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.CREATED);
         assertThat(getTaskRunCount(taskId)).isZero();
@@ -253,13 +260,13 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         final long taskId = createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
 
         final ProcessorTask retry = processorTaskDao.changeTaskStatus(
-                findTask(taskId), NODE1, TaskStatus.RETRY, 1L, 2L, "Broken");
+                findTask(taskId), NODE1, TaskStatus.RETRY, 1L, 2L, "Broken", false).task();
         assertThat(retry.getReason()).isEqualTo("Broken");
         assertThat(getTaskReason(taskId)).isEqualTo("Broken");
         assertThat(findTask(taskId).getReason()).isEqualTo("Broken");
 
         final ProcessorTask created = processorTaskDao.changeTaskStatus(
-                retry, null, TaskStatus.CREATED, null, null);
+                retry, null, TaskStatus.CREATED, null, null).task();
         assertThat(created.getReason()).isNull();
         assertThat(getTaskReason(taskId)).isNull();
     }
@@ -271,10 +278,205 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         final long taskId = createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
 
         final ProcessorTask aborted = processorTaskDao.changeTaskStatus(
-                findTask(taskId), NODE1, TaskStatus.ABORTED, 1L, 2L, "x".repeat(1_001));
+                findTask(taskId), NODE1, TaskStatus.ABORTED, 1L, 2L, "x".repeat(1_001), false).task();
 
         assertThat(aborted.getReason()).isEqualTo("x".repeat(1_000));
         assertThat(getTaskReason(taskId)).isEqualTo("x".repeat(1_000));
+    }
+
+    @Test
+    void testFaultIsOnlyCountedIfAskedFor() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final long taskId = createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
+
+        final ProcessorTask counted = processorTaskDao.changeTaskStatus(
+                findTask(taskId), NODE1, TaskStatus.RETRY, 1L, 2L, "Counted", true).task();
+        assertThat(counted.getFaultCount()).isOne();
+        assertThat(getTaskFaultCount(taskId)).isOne();
+
+        final ProcessorTask notCounted = processorTaskDao.changeTaskStatus(
+                counted, NODE1, TaskStatus.RETRY, 1L, 2L, "Not counted", false).task();
+        assertThat(notCounted.getFaultCount()).isOne();
+        assertThat(getTaskFaultCount(taskId)).isOne();
+        assertThat(findTask(taskId).getFaultCount()).isOne();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = TaskStatus.class, names = {"PROCESSING", "CREATED", "RETRY", "ABORTED", "COMPLETE"})
+    void testStatusChangeWhoseReplyIsLostIsDone(final TaskStatus status) {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final long taskId = createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE1, FEED);
+        final ProcessorTask task = findTask(taskId);
+        final ProcessorTaskDaoImpl dao = Mockito.spy((ProcessorTaskDaoImpl) processorTaskDao);
+        Mockito.doAnswer(invocation -> {
+            invocation.callRealMethod();
+            throw new DataAccessException("Expected: connection lost after update");
+        }).doCallRealMethod().when(dao).updateProcessorTask(Mockito.any(), Mockito.any(), Mockito.any());
+
+        final String nodeName = TaskStatus.CREATED.equals(status)
+                ? null
+                : NODE1;
+        final TaskStatusChange change = dao.changeTaskStatus(task, nodeName, status, 1L, 2L, "Reason", true);
+
+        assertThat(change.isDone()).isTrue();
+        assertThat(change.task().getVersion()).isEqualTo(getTaskVersion(taskId)).isEqualTo(task.getVersion() + 1);
+        assertThat(change.task().getRunCount()).isEqualTo(getTaskRunCount(taskId));
+        assertThat(getTaskStatus(taskId)).isEqualTo(status);
+        // Once, though it was tried twice.
+        assertThat(getTaskFaultCount(taskId)).isOne();
+        Mockito.verify(dao, Mockito.times(2)).updateProcessorTask(Mockito.any(), Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    void testStatusChangeIsLostIfTheTaskIsTakenBeforeItIsTriedAgain() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final long taskId = createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
+        final ProcessorTaskDaoImpl dao = Mockito.spy((ProcessorTaskDaoImpl) processorTaskDao);
+        Mockito.doAnswer(invocation -> {
+            // The update isn't made, and another node completes the task.
+            processorTaskDao.changeTaskStatus(findTask(taskId), NODE2, TaskStatus.COMPLETE, 1L, 2L);
+            throw new DataAccessException("Expected");
+        }).doCallRealMethod().when(dao).updateProcessorTask(Mockito.any(), Mockito.any(), Mockito.any());
+
+        assertThat(dao.changeTaskStatus(findTask(taskId), NODE1, TaskStatus.COMPLETE, 1L, 2L))
+                .isEqualTo(TaskStatusChange.lost());
+    }
+
+    @Test
+    void testStatusChangeIsUnknownIfTheDatabaseCannotBeReached() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final long taskId = createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
+        final ProcessorTaskDaoImpl dao = Mockito.spy((ProcessorTaskDaoImpl) processorTaskDao);
+        Mockito.doThrow(new DataAccessException("Expected"))
+                .when(dao).updateProcessorTask(Mockito.any(), Mockito.any(), Mockito.any());
+
+        assertThat(dao.changeTaskStatus(findTask(taskId), NODE1, TaskStatus.COMPLETE, 1L, 2L))
+                .isEqualTo(TaskStatusChange.unknown());
+        assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.PROCESSING);
+    }
+
+    @Test
+    void testStatusIsChangedByAnInterruptedThread() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final long taskId = createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
+        final ProcessorTask task = findTask(taskId);
+        final ProcessorTaskDaoImpl dao = Mockito.spy((ProcessorTaskDaoImpl) processorTaskDao);
+        Mockito.doAnswer(invocation -> {
+            // Interrupted during the first try too, which fails.
+            Thread.currentThread().interrupt();
+            throw new DataAccessException("Expected");
+        }).doCallRealMethod().when(dao).updateProcessorTask(Mockito.any(), Mockito.any(), Mockito.any());
+
+        final TaskStatusChange change;
+        final boolean interrupted;
+        try {
+            Thread.currentThread().interrupt();
+            change = dao.changeTaskStatus(task, null, TaskStatus.CREATED, null, null);
+        } finally {
+            interrupted = Thread.interrupted();
+        }
+
+        assertThat(change.isDone()).isTrue();
+        assertThat(interrupted)
+                .describedAs("the interrupt is passed on once the status has been changed")
+                .isTrue();
+        assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.CREATED);
+    }
+
+    @Test
+    void testRetryTasksArePutBackOnceTheyHaveWaited() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final Instant now = Instant.now();
+        final Instant threshold = now.minus(10, ChronoUnit.MINUTES);
+        final long newest = createProcessorTask(
+                processorFilter1a, TaskStatus.RETRY, NODE1, FEED, now.minus(11, ChronoUnit.MINUTES));
+        final long oldest = createProcessorTask(
+                processorFilter1a, TaskStatus.RETRY, NODE1, FEED, now.minus(12, ChronoUnit.MINUTES));
+        final long waiting = createProcessorTask(
+                processorFilter1a, TaskStatus.RETRY, NODE1, FEED, threshold);
+        final Set<TaskStatus> others = EnumSet.complementOf(EnumSet.of(TaskStatus.RETRY));
+        final Map<TaskStatus, Long> otherTasks = others
+                .stream()
+                .collect(Collectors.toMap(Function.identity(), status -> createProcessorTask(
+                        processorFilter1a, status, NODE1, FEED, now.minus(1, ChronoUnit.DAYS))));
+        final int version = getTaskVersion(oldest);
+
+        // The one that has waited longest goes first.
+        assertThat(processorTaskDao.putBackRetryTasks(processorFilter1a.getId(), threshold, 1)).isOne();
+        assertThat(getTaskStatus(oldest)).isEqualTo(TaskStatus.CREATED);
+        assertThat(getTaskNodeId(oldest)).isNull();
+        assertThat(getTaskVersion(oldest)).isEqualTo(version + 1);
+        assertThat(getTaskStatus(newest)).isEqualTo(TaskStatus.RETRY);
+
+        assertThat(processorTaskDao.putBackRetryTasks(processorFilter1a.getId(), threshold, 10)).isOne();
+        assertThat(getTaskStatus(newest)).isEqualTo(TaskStatus.CREATED);
+        assertThat(getTaskStatus(waiting)).isEqualTo(TaskStatus.RETRY);
+        otherTasks.forEach((status, taskId) -> assertThat(getTaskStatus(taskId)).isEqualTo(status));
+        assertThat(processorTaskDao.putBackRetryTasks(processorFilter1a.getId(), threshold, 10)).isZero();
+    }
+
+    @Test
+    void testRetryTasksOfOneFilterDoNotHoldUpThoseOfAnother() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        processorFilter1b = createProcessorFilter(processor1);
+        final Instant now = Instant.now();
+        final Instant threshold = now.minus(10, ChronoUnit.MINUTES);
+        for (int i = 0; i < 2; i++) {
+            createProcessorTask(processorFilter1a, TaskStatus.RETRY, NODE1, FEED, now.minus(1, ChronoUnit.DAYS));
+        }
+        final long taskId = createProcessorTask(
+                processorFilter1b, TaskStatus.RETRY, NODE1, FEED, now.minus(11, ChronoUnit.MINUTES));
+
+        assertThat(processorTaskDao.putBackRetryTasks(processorFilter1b.getId(), threshold, 1)).isOne();
+
+        assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.CREATED);
+        assertThat(processorTaskDao.countRetryTasksByFilter()).isEqualTo(Map.of(processorFilter1a.getId(), 2));
+    }
+
+    @Test
+    void testRetryTasksKeepTheirFaultsAndReasonWhenPutBack() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final long taskId = createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
+        processorTaskDao.changeTaskStatus(findTask(taskId), NODE1, TaskStatus.RETRY, 1L, 2L, "Broken", true);
+
+        assertThat(processorTaskDao.putBackRetryTasks(
+                processorFilter1a.getId(), Instant.now().plus(1, ChronoUnit.MINUTES), 10)).isOne();
+
+        final ProcessorTask task = findTask(taskId);
+        assertThat(task.getStatus()).isEqualTo(TaskStatus.CREATED);
+        assertThat(task.getFaultCount()).isOne();
+        assertThat(task.getReason()).isEqualTo("Broken");
+        assertThat(task.getStartTimeMs()).isNull();
+        assertThat(task.getEndTimeMs()).isNull();
+    }
+
+    @Test
+    void testRetryTasksAreCountedByFilter() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        processorFilter1b = createProcessorFilter(processor1);
+        assertThat(processorTaskDao.countRetryTasksByFilter()).isEmpty();
+        assertThat(processorTaskDao.findLatestRetryReason(processorFilter1a.getId())).isEmpty();
+
+        for (final String reason : List.of("First", "Last")) {
+            final long taskId = createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
+            processorTaskDao.changeTaskStatus(findTask(taskId), NODE1, TaskStatus.RETRY, 1L, 2L, reason, false);
+        }
+        createProcessorTask(processorFilter1a, TaskStatus.CREATED, null, FEED);
+        createProcessorTask(processorFilter1b, TaskStatus.RETRY, NODE1, FEED, Instant.now());
+
+        assertThat(processorTaskDao.countRetryTasksByFilter())
+                .isEqualTo(Map.of(processorFilter1a.getId(), 2, processorFilter1b.getId(), 1));
+        assertThat(processorTaskDao.findLatestRetryReason(processorFilter1a.getId())).contains("Last");
+        assertThat(processorTaskDao.findLatestRetryReason(processorFilter1b.getId())).isEmpty();
     }
 
     @Test
@@ -424,7 +626,7 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
 
     private long createTaskWithReason(final ProcessorFilter filter) {
         final long taskId = createProcessorTask(filter, TaskStatus.PROCESSING, NODE1, FEED);
-        processorTaskDao.changeTaskStatus(findTask(taskId), NODE1, TaskStatus.RETRY, 1L, 2L, "Broken");
+        processorTaskDao.changeTaskStatus(findTask(taskId), NODE1, TaskStatus.RETRY, 1L, 2L, "Broken", false);
         assertThat(getTaskReason(taskId)).isEqualTo("Broken");
         return taskId;
     }

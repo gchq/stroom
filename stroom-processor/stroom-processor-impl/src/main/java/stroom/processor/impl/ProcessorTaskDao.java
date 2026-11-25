@@ -33,6 +33,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public interface ProcessorTaskDao {
@@ -216,25 +217,27 @@ public interface ProcessorTaskDao {
      */
     int releaseTasks(Set<Long> idSet, TaskStatus currentStatus);
 
-    /// Changes the status of a task with no reason to record. Any reason it had is cleared.
-    /// See [#changeTaskStatus(ProcessorTask, String, TaskStatus, Long, Long, String)].
+    /// Changes the status of a task with no reason to record and no fault to count. Any reason it had is cleared.
+    /// See [#changeTaskStatus(ProcessorTask, String, TaskStatus, Long, Long, String, boolean)].
     ///
     /// @param processorTask The task as the caller last knew it.
     /// @param nodeName      The node that has the task, or null if none does.
     /// @param status        The status to give it.
     /// @param startTime     When processing started, or null.
     /// @param endTime       When processing ended, or null.
-    /// @return The changed task, or null if it was not changed.
-    default ProcessorTask changeTaskStatus(final ProcessorTask processorTask,
-                                           final String nodeName,
-                                           final TaskStatus status,
-                                           final Long startTime,
-                                           final Long endTime) {
-        return changeTaskStatus(processorTask, nodeName, status, startTime, endTime, null);
+    /// @return What happened.
+    default TaskStatusChange changeTaskStatus(final ProcessorTask processorTask,
+                                              final String nodeName,
+                                              final TaskStatus status,
+                                              final Long startTime,
+                                              final Long endTime) {
+        return changeTaskStatus(processorTask, nodeName, status, startTime, endTime, null, false);
     }
 
     /// Changes the status of a task, but only if it still has the version the caller last knew. Setting a task
     /// to [TaskStatus#PROCESSING] starts a new run of it, so its run count goes up in the same update.
+    ///
+    /// This is tried several times if the database can't be reached, and isn't given up if the thread is interrupted.
     ///
     /// @param processorTask The task as the caller last knew it.
     /// @param nodeName      The node that has the task, or null if none does.
@@ -243,13 +246,36 @@ public interface ProcessorTaskDao {
     /// @param endTime       When processing ended, or null.
     /// @param reason        Why the task is given the status, or null if there is nothing to say. This replaces
     ///                      any reason it had.
-    /// @return The changed task, or null if it was not changed.
-    ProcessorTask changeTaskStatus(ProcessorTask processorTask,
-                                   String nodeName,
-                                   TaskStatus status,
-                                   Long startTime,
-                                   Long endTime,
-                                   String reason);
+    /// @param countFault    True if the task's fault count is to go up in the same update.
+    /// @return What happened.
+    TaskStatusChange changeTaskStatus(ProcessorTask processorTask,
+                                      String nodeName,
+                                      TaskStatus status,
+                                      Long startTime,
+                                      Long endTime,
+                                      String reason,
+                                      boolean countFault);
+
+    /// Puts tasks of a filter that hit a fault back to [TaskStatus#CREATED], so that they are tried again. Those that
+    /// have waited longest are put back first. They keep their reason, so that it can be seen why they are being tried
+    /// again.
+    ///
+    /// @param filterId        The id of the filter.
+    /// @param statusOlderThan Only put back tasks that have been waiting since before this.
+    /// @param limit           The most tasks to put back.
+    /// @return The number of tasks that were put back.
+    int putBackRetryTasks(int filterId, Instant statusOlderThan, int limit);
+
+    /// Counts the tasks that hit a fault and are waiting to be tried again.
+    ///
+    /// @return The number of tasks for each filter that has any, by filter id.
+    Map<Integer, Integer> countRetryTasksByFilter();
+
+    /// Finds the reason of the task of a filter that was the last to hit a fault, of those waiting to be tried again.
+    ///
+    /// @param filterId The id of the filter.
+    /// @return The reason, if there is such a task and it has one.
+    Optional<String> findLatestRetryReason(int filterId);
 
     ResultPage<ProcessorTask> find(final ExpressionCriteria criteria);
 

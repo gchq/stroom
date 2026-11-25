@@ -18,6 +18,7 @@ package stroom.processor.impl.dao;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.processor.impl.ProcessorConfig;
+import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProcessorTaskReaper;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
@@ -29,6 +30,8 @@ import org.mockito.Mockito;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -118,13 +121,87 @@ class TestProcessorTaskReaper extends AbstractProcessorTest {
                 .isZero();
     }
 
+    @Test
+    void tasksThatHitAFaultAreTriedAgainAfterADelay() {
+        final ProcessorTaskReaper reaper = getInjector().getInstance(ProcessorTaskReaper.class);
+        final ProcessorFilter filter = createProcessorFilter(createProcessor());
+        final Instant now = Instant.now();
+        // The default delay is 10m.
+        final long due = createProcessorTask(
+                filter, TaskStatus.RETRY, NODE1, FEED, now.minus(Duration.ofMinutes(11)));
+        final long waiting = createProcessorTask(
+                filter, TaskStatus.RETRY, NODE1, FEED, now.minus(Duration.ofMinutes(9)));
+
+        reaper.reap(now);
+
+        assertThat(getTaskStatus(due)).isEqualTo(TaskStatus.CREATED);
+        assertThat(getTaskStatus(waiting)).isEqualTo(TaskStatus.RETRY);
+    }
+
+    @Test
+    void warnsOfWaitingTasksOnceAnHourForEachFilter() {
+        final ProcessorTaskDao dao = Mockito.mock(ProcessorTaskDao.class);
+        final ProcessorTaskReaper reaper = reaper(false, dao);
+        final Instant now = Instant.now();
+
+        Mockito.when(dao.countRetryTasksByFilter()).thenReturn(Map.of(1, 10));
+        Mockito.when(dao.findLatestRetryReason(Mockito.anyInt())).thenReturn(Optional.of("Expected"));
+        reaper.reap(now);
+        Mockito.verify(dao, Mockito.times(1)).findLatestRetryReason(1);
+
+        // None waiting for a moment, as they have been put back, doesn't start the hour again.
+        Mockito.when(dao.countRetryTasksByFilter()).thenReturn(Map.of());
+        reaper.reap(now.plus(Duration.ofMinutes(1)));
+
+        // Another filter has its own hour.
+        Mockito.when(dao.countRetryTasksByFilter()).thenReturn(Map.of(1, 10, 2, 5));
+        reaper.reap(now.plus(Duration.ofMinutes(59)));
+        Mockito.verify(dao, Mockito.times(1)).findLatestRetryReason(1);
+        Mockito.verify(dao, Mockito.times(1)).findLatestRetryReason(2);
+
+        reaper.reap(now.plus(Duration.ofMinutes(60)));
+        Mockito.verify(dao, Mockito.times(2)).findLatestRetryReason(1);
+        Mockito.verify(dao, Mockito.times(1)).findLatestRetryReason(2);
+    }
+
+    @Test
+    void failureToWarnDoesNotStopTasksFromBeingPutBack() {
+        final ProcessorTaskDao dao = Mockito.mock(ProcessorTaskDao.class);
+        Mockito.when(dao.countRetryTasksByFilter()).thenReturn(Map.of(1, 10));
+        Mockito.when(dao.findLatestRetryReason(Mockito.anyInt())).thenThrow(new RuntimeException("Expected"));
+        final Instant now = Instant.now();
+
+        reaper(false, dao).reap(now);
+
+        Mockito.verify(dao).putBackRetryTasks(
+                Mockito.eq(1), Mockito.eq(now.minus(Duration.ofMinutes(10))), Mockito.anyInt());
+    }
+
+    @Test
+    void failureToPutBackTasksOfAFilterDoesNotStopThoseOfOthers() {
+        final ProcessorTaskDao dao = Mockito.mock(ProcessorTaskDao.class);
+        Mockito.when(dao.countRetryTasksByFilter()).thenReturn(Map.of(1, 10, 2, 10));
+        Mockito.when(dao.putBackRetryTasks(Mockito.anyInt(), Mockito.any(), Mockito.anyInt()))
+                .thenThrow(new RuntimeException("Expected"));
+
+        reaper(false, dao).reap(Instant.now());
+
+        Mockito.verify(dao).putBackRetryTasks(Mockito.eq(1), Mockito.any(), Mockito.anyInt());
+        Mockito.verify(dao).putBackRetryTasks(Mockito.eq(2), Mockito.any(), Mockito.anyInt());
+    }
+
     private ProcessorTaskReaper reaper(final boolean claimTasksOnWorker) {
+        return reaper(claimTasksOnWorker, processorTaskDao);
+    }
+
+    private ProcessorTaskReaper reaper(final boolean claimTasksOnWorker, final ProcessorTaskDao dao) {
         final ProcessorConfig processorConfig = Mockito.mock(ProcessorConfig.class);
         Mockito.when(processorConfig.getTaskLeaseTimeout()).thenReturn(StroomDuration.ofMinutes(10));
+        Mockito.when(processorConfig.getTaskRetryDelay()).thenReturn(StroomDuration.ofMinutes(10));
         Mockito.when(processorConfig.isClaimTasksOnWorker()).thenReturn(claimTasksOnWorker);
         return new ProcessorTaskReaper(
                 getInjector().getInstance(ClusterLockService.class),
-                processorTaskDao,
+                dao,
                 () -> processorConfig);
     }
 }

@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 @PipelineScoped
 public class DefaultErrorWriter implements ErrorWriter {
@@ -44,6 +45,14 @@ public class DefaultErrorWriter implements ErrorWriter {
     private static final String COLON = ":";
 
     private List<DestinationProvider> destinationProviders;
+    private Consumer<Exception> failureConsumer;
+
+    /// Sets what is told of each failure to write an error. Failures are logged whether or not there is one.
+    ///
+    /// @param failureConsumer What to tell.
+    public void setFailureConsumer(final Consumer<Exception> failureConsumer) {
+        this.failureConsumer = failureConsumer;
+    }
 
     public void addOutputStreamProvider(final DestinationProvider outputStreamProvider) {
         if (destinationProviders == null) {
@@ -97,14 +106,26 @@ public class DefaultErrorWriter implements ErrorWriter {
                             }
                         } catch (final IOException e) {
                             LOGGER.error(MarkerFactory.getMarker("FATAL"), "Unable to write to error stream", e);
+                            onFailure(e);
                         }
 
                         destinationProvider.returnDestination(destination);
                     }
                 } catch (final IOException e) {
                     LOGGER.error(MarkerFactory.getMarker("FATAL"), "Unable to write to error stream", e);
+                    onFailure(e);
+                } catch (final RuntimeException e) {
+                    // Whatever is reporting the error may catch this and carry on.
+                    onFailure(e);
+                    throw e;
                 }
             }
+        }
+    }
+
+    private void onFailure(final Exception e) {
+        if (failureConsumer != null) {
+            failureConsumer.accept(e);
         }
     }
 }

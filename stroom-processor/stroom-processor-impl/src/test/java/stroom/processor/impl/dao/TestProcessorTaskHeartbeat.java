@@ -23,6 +23,7 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.TaskStatus;
 import stroom.task.api.TaskManager;
+import stroom.task.api.TerminationCause;
 import stroom.task.shared.TaskId;
 
 import org.junit.jupiter.api.Test;
@@ -113,20 +114,20 @@ class TestProcessorTaskHeartbeat extends AbstractProcessorTest {
 
         // Renewal current — nothing terminated, even though the check runs.
         heartbeat.fenceIfRenewalOverdue(t0 + 1_000);
-        Mockito.verify(taskManager, Mockito.never()).terminate(Mockito.any());
+        Mockito.verify(taskManager, Mockito.never()).terminate(Mockito.any(), Mockito.any());
 
         // No successful renewal for longer than the lease — in-flight work is terminated.
         heartbeat.fenceIfRenewalOverdue(t0 + leaseTimeoutMs + 1);
-        Mockito.verify(taskManager).terminate(stroomTaskId);
+        Mockito.verify(taskManager).terminate(stroomTaskId, TerminationCause.HEARTBEAT_OVERDUE);
 
         // A successful renewal resets the clock, so the fence stands down.
         assertThat(heartbeat.renew(t0 + leaseTimeoutMs + 2)).isEqualTo(1);
         heartbeat.fenceIfRenewalOverdue(t0 + leaseTimeoutMs + 3_000);
-        Mockito.verify(taskManager, Mockito.times(1)).terminate(Mockito.any());
+        Mockito.verify(taskManager, Mockito.times(1)).terminate(Mockito.any(), Mockito.any());
 
         // With nothing registered there is nothing to fence, however stale the clock.
         heartbeat.deregister(taskId);
         heartbeat.fenceIfRenewalOverdue(t0 + (10 * leaseTimeoutMs));
-        Mockito.verify(taskManager, Mockito.times(1)).terminate(Mockito.any());
+        Mockito.verify(taskManager, Mockito.times(1)).terminate(Mockito.any(), Mockito.any());
     }
 }

@@ -31,11 +31,17 @@ public interface TaskManager {
     boolean isTerminated(TaskId taskId);
 
     /**
-     * Terminate a task by task id.
+     * Terminate a task by task id, without saying why.
      *
      * @param taskId The id of the task to terminate.
      */
     void terminate(TaskId taskId);
+
+    /// Terminate a task by task id.
+    ///
+    /// @param taskId           The id of the task to terminate.
+    /// @param terminationCause Why it is being terminated.
+    void terminate(TaskId taskId, TerminationCause terminationCause);
 
     TaskProgress getTaskProgress(TaskContext taskContext);
 }
