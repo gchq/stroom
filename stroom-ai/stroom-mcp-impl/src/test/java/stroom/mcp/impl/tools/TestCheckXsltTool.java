@@ -331,6 +331,91 @@ class TestCheckXsltTool {
                 .get("errors")).noneSatisfy(error -> assertThat(error).contains("writes Events elements"));
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    void aFlattenerOfTheEventsIsNotCheckedForEventElementNames() {
+        // Seen in a reference environment: a flattener reading the fork's Events and writing data pairs in the
+        // fork's namespace, a hand-off to the next XSLT, was refused once per pair: "No element 'data' exists
+        // anywhere in the environment's fork of the event-logging schema".
+        holdingFork();
+
+        final Map<String, Object> forked = call(flattener(FORK_NS));
+
+        assertThat(forked.get("errors")).isEqualTo(List.of());
+        assertThat(forked.get("ok")).isEqualTo(true);
+        Mockito.verify(heldSchemas, Mockito.never()).eventSchema(any(XmlSchemaDoc.class));
+        // The same in event-logging:3: its schema isn't read, so nothing says its names weren't checked.
+        final Map<String, Object> standard = call(flattener("event-logging:3"));
+        assertThat(standard.get("errors")).isEqualTo(List.of());
+        assertThat((List<String>) standard.get("warnings"))
+                .noneSatisfy(warning -> assertThat(warning).contains("not checked"));
+        Mockito.verify(heldSchemas, Mockito.never()).eventSchema(anyString());
+        // Its other checks still run.
+        assertThat((List<String>) call(flattener(FORK_NS).replace("<record>", "<record><xsl:value-of "
+                                                                              + "select=\"stroom:nope()\"/>"))
+                .get("errors")).isNotEmpty();
+        Mockito.verify(compileCheck, Mockito.times(2)).compile(anyString());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aDecorationOfTheForkStillHasItsElementNamesChecked() {
+        holdingFork();
+        // Copying the Events it reads, with an element the fork doesn't have.
+        final String copying = """
+                <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="%1$s"
+                 xpath-default-namespace="%1$s" version="3.0">
+                  <xsl:template match="@*|node()"><xsl:copy><xsl:apply-templates select="@*|node()"/></xsl:copy>\
+                </xsl:template>
+                  <xsl:template match="EventDetail"><xsl:copy><xsl:apply-templates/><Bogus/></xsl:copy>\
+                </xsl:template>
+                </xsl:stylesheet>""".formatted(FORK_NS);
+        assertThat((List<String>) call(copying).get("errors")).anySatisfy(error -> assertThat(error)
+                .contains("No element 'Bogus'", "environment's fork of the event-logging schema"));
+        // Writing its Event itself, with an element out of place.
+        final String writing = """
+                <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="%1$s"
+                 xpath-default-namespace="%1$s" version="3.0">
+                  <xsl:template match="Event"><Event><xsl:copy-of select="EventTime"/><EventDetail>\
+                <TypeId>t</TypeId><EventTime/></EventDetail></Event></xsl:template>
+                </xsl:stylesheet>""".formatted(FORK_NS);
+        assertThat((List<String>) call(writing).get("errors")).anySatisfy(error -> assertThat(error)
+                .contains("EventTime", "environment's fork of the event-logging schema"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aSharedModuleWritingAFragmentFromRecordsStillHasItsElementNamesChecked() {
+        // A named template writing an EventSource, reading no Events: checked, its misplaced child refused.
+        holdingFork();
+        final String module = """
+                <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="%s"
+                 xpath-default-namespace="records:2" version="3.0">
+                  <xsl:template name="source"><EventSource><Generator>g</Generator><EventTime/></EventSource>\
+                </xsl:template>
+                </xsl:stylesheet>""".formatted(FORK_NS);
+
+        assertThat((List<String>) call(module).get("errors")).anySatisfy(error -> assertThat(error)
+                .contains("EventTime", "environment's fork of the event-logging schema"));
+    }
+
+    // A flattener of Events in the namespace given: data pairs in that namespace, for the next XSLT.
+    private static String flattener(final String namespace) {
+        return """
+                <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="%1$s"
+                 xmlns:stroom="stroom" xpath-default-namespace="%1$s" version="3.0">
+                  <xsl:template match="/Events"><records><xsl:apply-templates select="Event"/></records>\
+                </xsl:template>
+                  <xsl:template match="Event">
+                    <record>
+                      <data name="time" value="{EventTime/TimeCreated}"/>
+                      <data name="user" value="{EventSource/User/Id}"/>
+                      <data name="host" value="{EventSource/Device/HostName}"/>
+                    </record>
+                  </xsl:template>
+                </xsl:stylesheet>""".formatted(namespace);
+    }
+
     // The test fork of event-logging 4.1.0, in the EVENTS schema group.
     private void holdingFork() {
         final XmlSchemaDoc fork = XmlSchemaDoc.builder().uuid("fork-1").name("Test fork")

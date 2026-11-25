@@ -26,6 +26,7 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.generation.ModuleChecks;
+import stroom.ai.impl.tools.processing.XsltStages;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.EventsNamespaces;
 import stroom.ai.impl.tools.validation.HeldSchemas;
@@ -106,7 +107,8 @@ class CheckXsltTool extends AbstractBuiltInTool {
                              + "version, the stroom namespace declared and only real stroom: functions used (an "
                              + "unknown one comes back with the nearest real name), match and select expressions "
                              + "that would select nothing because the input's namespace is not declared, "
-                             + "event-logging elements the schema has no place for (e.g. EventDetail/ServerEvent), "
+                             + "event-logging elements the schema has no place for (e.g. EventDetail/ServerEvent; "
+                             + "not in an XSLT reading Events and writing no Events or Event, e.g. a flattener), "
                              + "an xsi:schemaLocation naming a schema this Stroom doesn't hold (file:///, three "
                              + "slashes, say), and xsl:import / xsl:include targets that exist as XSLT documents in "
                              + "Stroom. Calls that read the environment, files or network (doc(), unparsed-text(), "
@@ -259,16 +261,21 @@ class CheckXsltTool extends AbstractBuiltInTool {
     }
 
     // The event-logging elements the XSLT writes where the schema has no place for them, as errors; a warning when
-    // the schema can't be read.
+    // the schema can't be read. Not for an output ([XsltStages#isOutput]: reading Events, writing no Events or
+    // Event): seen in a reference environment, a flattener's data pairs, written in the fork's namespace for the
+    // next XSLT, were each refused as no element of the fork.
     private void eventElementProblems(final Element root,
                                       final String xslt,
                                       final String schemaVersion,
                                       final Map<String, String> chosenDocs,
                                       final List<String> errors,
                                       final List<String> warnings) {
+        final List<XmlSchemaDoc> forks = heldSchemas.forks();
+        if (XsltStages.isOutput(xslt, eventsNamespaces(forks))) {
+            return;
+        }
         // An environment's fork: checked against the fork's own schema (the document chosen for the build, else the
         // one this Stroom holds for the namespace).
-        final List<XmlSchemaDoc> forks = heldSchemas.forks();
         for (final XmlSchemaDoc fork : forks) {
             final String namespace = NullSafe.string(fork.getNamespaceURI()).strip();
             if (XmlTrees.named(root, namespace, "*").isEmpty()) {
@@ -313,6 +320,17 @@ class CheckXsltTool extends AbstractBuiltInTool {
         errors.addAll(XsltChecks.eventElementProblems(root, schema));
     }
 
+    // The Events namespaces: event-logging:3's and the forks'.
+    private static Set<String> eventsNamespaces(final List<XmlSchemaDoc> forks) {
+        final Set<String> namespaces = new LinkedHashSet<>();
+        namespaces.add(XsltChecks.EVT);
+        forks.stream()
+                .map(fork -> NullSafe.string(fork.getNamespaceURI()).strip())
+                .filter(namespace -> !namespace.isEmpty())
+                .forEach(namespaces::add);
+        return namespaces;
+    }
+
     // An import writing Events in another namespace than the XSLT itself: their output mixes namespaces, and the
     // schema filter refuses it. Seen in testing: the agent moved a translation to event-logging:3 and dropped the
     // environment's common import, which writes its fork, to make it validate.
@@ -321,9 +339,7 @@ class CheckXsltTool extends AbstractBuiltInTool {
         if (forks.isEmpty() || imports.isEmpty()) {
             return List.of();
         }
-        final Set<String> known = new LinkedHashSet<>();
-        known.add(XsltChecks.EVT);
-        forks.forEach(fork -> known.add(NullSafe.string(fork.getNamespaceURI()).strip()));
+        final Set<String> known = eventsNamespaces(forks);
         final Optional<String> own = EventsNamespaces.writtenBy(xslt, known);
         if (own.isEmpty()) {
             return List.of();
