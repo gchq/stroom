@@ -55,6 +55,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.stream.LongStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -579,6 +580,30 @@ class TestIndexChecks {
         final Map<?, ?> check = (Map<?, ?>) ((List<?>) result.get("checks")).get(1);
         assertThat(check.get("pass")).isEqualTo(false);
         assertThat((String) check.get("why")).contains("search one of them, e.g. 'retry'");
+    }
+
+    @Test
+    void theDashboardsQuerySelectsTheStreamsVerified() {
+        // The many-feeds audit (2026-11-25): the -VERIFY dashboard had no stream term, so an index several feeds
+        // feed showed every feed's events.
+        final DashboardConfig config = IndexChecks.dashboardConfig(WEB, List.of("user.name"), "@timestamp",
+                "2026-09-01T00:00:00.000Z", List.of(7L, 9L));
+        final QueryComponentSettings query = (QueryComponentSettings) config.getComponents().get(0).getSettings();
+
+        assertThat(query.getExpression().getChildren()).containsExactly(IndexChecks.term("@timestamp",
+                ExpressionTerm.Condition.BETWEEN, "2026-09-01T00:00:00.000Z,day()+1d"), IndexChecks.byStream(
+                List.of(7L, 9L)));
+        assertThat(IndexChecks.design(List.of("user.name"), "@timestamp", "x", List.of(7L, 9L)))
+                .containsEntry("streams", "StreamId one of [7, 9] (the streams verified)");
+        // Past the most terms: no stream term, as before.
+        final List<Long> many = LongStream.rangeClosed(1, IndexChecks.MAX_STREAM_TERMS + 1)
+                .boxed()
+                .toList();
+        final QueryComponentSettings wide = (QueryComponentSettings) IndexChecks.dashboardConfig(WEB,
+                List.of("user.name"), "@timestamp", "2026-09-01T00:00:00.000Z", many).getComponents().get(0)
+                .getSettings();
+        assertThat(wide.getExpression().getChildren()).hasSize(1);
+        assertThat(IndexChecks.design(List.of("user.name"), "@timestamp", "x", many)).doesNotContainKey("streams");
     }
 
     @Test

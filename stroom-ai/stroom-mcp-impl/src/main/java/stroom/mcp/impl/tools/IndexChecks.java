@@ -118,6 +118,8 @@ class IndexChecks {
     private static final String MODEL_VERSION = "7.2.0";
     private static final String TEXT_MODEL_VERSION = "7.8.0";
     private static final int PAGE = 100;
+    /// The most streams a verification dashboard's query names, a StreamId term each.
+    static final int MAX_STREAM_TERMS = 50;
     private static final DateTimeFormatter WINDOW = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'.000Z'")
             .withZone(ZoneOffset.UTC);
     // What a stepped record, a record not found and one whose step failed are kept as, by stream and record.
@@ -271,6 +273,24 @@ class IndexChecks {
                                            final List<String> fields,
                                            final String timeField,
                                            final String windowStart) {
+        return dashboardConfig(source, fields, timeField, windowStart, List.of());
+    }
+
+    /// As [#dashboardConfig(DocRef, List, String, String)], its query also selecting the streams verified (a
+    /// StreamId term each, under OR; at most [#MAX_STREAM_TERMS], else none): an index fed by several feeds shows
+    /// only those streams' events (the many-feeds audit, 2026-11-25: the dashboard had no stream term).
+    ///
+    /// @param source      The index doc.
+    /// @param fields      The table's columns.
+    /// @param timeField   The index's time field, or null.
+    /// @param windowStart Where the query's time range starts, or null for no initial query.
+    /// @param streamIds   The streams verified, or none.
+    /// @return The dashboard's settings.
+    static DashboardConfig dashboardConfig(final DocRef source,
+                                           final List<String> fields,
+                                           final String timeField,
+                                           final String windowStart,
+                                           final List<Long> streamIds) {
         final List<String> shown = new ArrayList<>(new LinkedHashSet<>(fields)).stream()
                 .filter(field -> !IDS.contains(field))
                 .toList();
@@ -291,6 +311,9 @@ class IndexChecks {
         final boolean initial = timeField != null && windowStart != null;
         if (initial) {
             expression.addTerm(term(timeField, Condition.BETWEEN, windowStart + ",day()+1d"));
+        }
+        if (!NullSafe.isEmptyCollection(streamIds) && streamIds.size() <= MAX_STREAM_TERMS) {
+            expression.addOperator(byStream(streamIds));
         }
         final List<ComponentConfig> components = List.of(
                 ComponentConfig.builder().type("query").id(QUERY_ID).name("Query")
@@ -1370,6 +1393,30 @@ class IndexChecks {
     static Map<String, Object> design(final List<String> fields,
                                       final String timeField,
                                       final String window) {
+        return design(fields, timeField, window, List.of());
+    }
+
+    /// As [#design(List, String, String)], with the streams its query selects.
+    ///
+    /// @param fields    The table's columns.
+    /// @param timeField The index's time field, or null.
+    /// @param window    Where the query's time range starts, or null.
+    /// @param streamIds The streams its query selects, or none.
+    /// @return The design, for the user's form.
+    static Map<String, Object> design(final List<String> fields,
+                                      final String timeField,
+                                      final String window,
+                                      final List<Long> streamIds) {
+        final Map<String, Object> design = new LinkedHashMap<>(designOf(fields, timeField, window));
+        if (!NullSafe.isEmptyCollection(streamIds) && streamIds.size() <= MAX_STREAM_TERMS) {
+            design.put("streams", "StreamId one of " + ToolText.repr(streamIds) + " (the streams verified)");
+        }
+        return design;
+    }
+
+    private static Map<String, Object> designOf(final List<String> fields,
+                                                final String timeField,
+                                                final String window) {
         final Map<String, Object> design = new LinkedHashMap<>();
         // Every column, one per line, never cut (seen in chat 177: the list cut with "…", so the user couldn't see
         // what they approved).

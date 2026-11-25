@@ -73,6 +73,8 @@ import java.util.TreeSet;
 class VerifyIndexTool extends AbstractBuiltInTool {
 
     static final String NAME = "verify_index";
+    /// The result's key for the streams verified of each feed of a build of several.
+    static final String BY_FEED = "feeds_verified";
     static final String BUILD_ARG = "build";
     static final String INDEX_UUID_ARG = "index_uuid";
     static final String BACKEND_ARG = "backend";
@@ -110,6 +112,8 @@ class VerifyIndexTool extends AbstractBuiltInTool {
     private final PipelineShapes pipelineShapes;
     private final EventsExpectations expectations;
     private Provider<BuildTestIndexes> testIndexesProvider;
+    // What a verification covered of each feed of a build of several; none in tests that make the tool themselves.
+    private Provider<FeedCoverage> coverageProvider;
 
     @Inject
     VerifyIndexTool(final IndexChecks checks,
@@ -140,6 +144,12 @@ class VerifyIndexTool extends AbstractBuiltInTool {
     @Inject
     void setTestIndexes(final Provider<BuildTestIndexes> testIndexes) {
         this.testIndexesProvider = testIndexes;
+    }
+
+    /// @param coverage Counts the streams verified of each feed of a build of several.
+    @Inject
+    void setCoverage(final Provider<FeedCoverage> coverage) {
+        this.coverageProvider = coverage;
     }
 
     @Override
@@ -371,7 +381,7 @@ class VerifyIndexTool extends AbstractBuiltInTool {
                         .map(row -> row.get(timeField))
                         .filter(time -> time != null)
                         .toList());
-        final Map<String, Object> design = IndexChecks.design(fields, timeField, window);
+        final Map<String, Object> design = IndexChecks.design(fields, timeField, window, streamIds);
         final Map<String, Object> dashboard = new LinkedHashMap<>();
         final IndexChecks.Dashboard searchedWith;
         if (!ours) {
@@ -381,9 +391,9 @@ class VerifyIndexTool extends AbstractBuiltInTool {
             dashboard.put("name", name);
             dashboard.put("saved", false);
             searchedWith = IndexChecks.Dashboard.of(probe.uuid(), name,
-                    IndexChecks.dashboardConfig(source, fields, timeField, window));
+                    IndexChecks.dashboardConfig(source, fields, timeField, window, streamIds));
         } else if (existing.isPresent()) {
-            change(call, context, existing.get(), source, fields, timeField, window, design, name);
+            change(call, context, existing.get(), source, fields, timeField, window, streamIds, design, name);
             final DashboardDoc doc = dashboardDoc(existing.get().docRef());
             dashboard.put("uuid", doc.getUuid());
             dashboard.put("name", name);
@@ -393,7 +403,8 @@ class VerifyIndexTool extends AbstractBuiltInTool {
             consent.require(call, context, Consent.Request.confirmation(
                     NAME, "Create the verification dashboard '" + name + "' on index '" + index.name() + "'",
                     design));
-            final DashboardConfig config = IndexChecks.dashboardConfig(source, fields, timeField, window);
+            final DashboardConfig config = IndexChecks.dashboardConfig(source, fields, timeField, window,
+                    streamIds);
             final DashboardDoc made = guard.createFilled(DashboardDoc.TYPE, name, build, ref -> write(
                     dashboardDoc(ref).copy().dashboardConfig(config).build()), false, ROLE);
             dashboard.put("uuid", made.getUuid());
@@ -445,6 +456,12 @@ class VerifyIndexTool extends AbstractBuiltInTool {
         result.put("dashboard", shown);
         ignoredName(call, name).ifPresent(note -> result.put("dashboard_name_ignored", note));
         result.putAll(searchedResult);
+        if (coverageProvider != null) {
+            // A build of several feeds: the streams verified of each, so a feed missing from them is seen (decided
+            // by the user, 2026-11-25).
+            coverageProvider.get().ofBuild(build, streamIds, Map.of()).ifPresent(found -> result.put(BY_FEED,
+                    found));
+        }
         if (Boolean.FALSE.equals(searchedResult.get("passed"))) {
             final List<Map<String, Object>> failed = failedChecks(JsonValues.maps(searchedResult.get("checks")));
             if (!failed.isEmpty()) {
@@ -580,6 +597,7 @@ class VerifyIndexTool extends AbstractBuiltInTool {
                         final List<String> fields,
                         final String timeField,
                         final String window,
+                        final List<Long> streamIds,
                         final Map<String, Object> design,
                         final String name) {
         DashboardDoc doc = dashboardDoc(existing.docRef());
@@ -587,13 +605,14 @@ class VerifyIndexTool extends AbstractBuiltInTool {
         if (doc.getDashboardConfig() == null || doc.getDashboardConfig().getLayoutConstraints() == null) {
             // Made before dashboards were laid out as Stroom's UI needs (it showed them empty): laid out again, its
             // columns kept, so it shows what it searches.
-            doc = write(doc.copy().dashboardConfig(IndexChecks.dashboardConfig(source, shown, timeField, window))
-                    .build());
+            doc = write(doc.copy().dashboardConfig(IndexChecks.dashboardConfig(source, shown, timeField, window,
+                    streamIds)).build());
         }
         if (!shown.equals(fields)) {
             consent.require(call, context, Consent.Request.confirmation(
                     NAME, "Change the columns of dashboard '" + name + "'", design));
-            write(doc.copy().dashboardConfig(IndexChecks.dashboardConfig(source, fields, timeField, window)).build());
+            write(doc.copy().dashboardConfig(IndexChecks.dashboardConfig(source, fields, timeField, window,
+                    streamIds)).build());
         }
     }
 

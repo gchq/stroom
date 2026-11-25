@@ -39,6 +39,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -62,6 +63,8 @@ class CheckEventsTool extends AbstractBuiltInTool {
     static final String EVENTS_XML_ARG = "events_xml";
     static final String SCHEMA_VERSION_ARG = "schema_version";
     static final String STREAM_IDS_ARG = "stream_ids";
+    /// The result's key for what was checked of each feed of a build of several.
+    static final String BY_FEED = "feeds_checked";
     /// The most records read from the streams in all.
     static final int MAX_RECORDS = EventLocations.MAX_RECORDS;
 
@@ -72,6 +75,8 @@ class CheckEventsTool extends AbstractBuiltInTool {
     private final BuildRecords buildRecords;
     private final BuildPlan plan;
     private final EventVersions eventVersions;
+    // What a check covered of each feed of a build of several; none in tests that make the tool themselves.
+    private Provider<FeedCoverage> coverageProvider;
 
     /// @param eventChecks    Validates events against the schemas this Stroom holds.
     /// @param eventStreams   Reads the events of streams.
@@ -95,6 +100,15 @@ class CheckEventsTool extends AbstractBuiltInTool {
         this.buildRecords = buildRecords;
         this.plan = plan;
         this.eventVersions = eventVersions;
+    }
+
+    /// What a check covers of each feed of a build of several (set by injection; none in tests that make the tool
+    /// themselves).
+    ///
+    /// @param coverage Counts each feed's streams checked.
+    @Inject
+    void setCoverage(final Provider<FeedCoverage> coverage) {
+        this.coverageProvider = coverage;
     }
 
     @Override
@@ -233,6 +247,20 @@ class CheckEventsTool extends AbstractBuiltInTool {
                                              final String schemaVersion) {
         final Map<String, Object> result = checkRead(streamIds, schemaVersion, MAX_RECORDS,
                 eventVersions.chosenDocs(context, null));
+        if (coverageProvider != null) {
+            // A build of several feeds: what was checked of each, so a feed missing from it is seen (decided by the
+            // user, 2026-11-25).
+            final Map<Long, Long> records = new LinkedHashMap<>();
+            if (result.get("read") instanceof final Map<?, ?> read) {
+                read.forEach((stream, counts) -> {
+                    if (stream instanceof final Long id && counts instanceof final Map<?, ?> map
+                        && map.get("checked") instanceof final Number checked) {
+                        records.put(id, checked.longValue());
+                    }
+                });
+            }
+            coverageProvider.get().ofStreams(streamIds, records).ifPresent(found -> result.put(BY_FEED, found));
+        }
         if (Boolean.TRUE.equals(result.get("ok"))) {
             final List<DocRef> recorded = recordValidated(streamIds);
             result.put("recorded_for", recorded.stream().map(DocRef::getName).toList());
