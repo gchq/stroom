@@ -101,8 +101,6 @@ class CopyPipelineTool extends AbstractBuiltInTool {
     private Provider<CatalogueNotes> catalogueNotesProvider;
     // The pipelines' inheritance; none in tests that make the tool themselves.
     private Provider<PipelineInheritance> inheritanceProvider;
-    // Where an existing pipeline's translation reads its records; none in tests that make the tool themselves.
-    private Provider<InPlaceInduction> inPlaceProvider;
 
     @Inject
     CopyPipelineTool(final PipelineWrites writes,
@@ -166,16 +164,6 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         this.inheritanceProvider = inheritance;
     }
 
-    /// Tells where a hand-written pipeline's translation reads its records (a pre-processor may feed it), kept with
-    /// the build's start when a copy of it starts the build (set by injection; none in tests that make the tool
-    /// themselves).
-    ///
-    /// @param inPlace The existing pipelines' translations.
-    @Inject
-    void setInPlaceInduction(final Provider<InPlaceInduction> inPlace) {
-        this.inPlaceProvider = inPlace;
-    }
-
     @Override
     public AiToolCategory category() {
         return AiToolCategory.CONTENT;
@@ -224,8 +212,9 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                              + "version (V1.0 to V1.1, an "
                              + "Elasticsearch index -v1 to -v2, with an Elastic Index doc for it) and confirmed or "
                              + "edited by the user, never the original's, and its index name is looked up first: "
-                             + "one that matches anything on the cluster is refused. The user confirms the names "
-                             + "first.")
+                             + "one that matches anything on the cluster is refused. A hand-written translation "
+                             + "the build is offered to start from is copied only once the user has chosen how "
+                             + "the build starts (catalogue_event_types). The user confirms the names first.")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(BUILD_ARG, CreateFeedTool.BUILD_DESCRIPTION)
                         .addStringProperty(SOURCE_UUID_ARG, "Pipeline to copy.")
@@ -274,9 +263,6 @@ class CopyPipelineTool extends AbstractBuiltInTool {
                                   + "new version of a source's own pipeline (e.g. "
                                   + "Acme-Door-V1.2-Events).");
         }
-        // The hand-written pipeline the plan offers to start from, read before the copy is in the build.
-        final Optional<Map<String, Object>> offered = plan.handWrittenToOffer(build)
-                .filter(pipeline -> sourceUuid.equals(ToolText.str(pipeline.get("uuid"))));
         final List<String> notes = new ArrayList<>();
         // Promoted: outside any build (in production), whoever made it.
         final boolean promoted = guard.buildOf(new DocRef(PipelineDoc.TYPE, sourceUuid)).isEmpty();
@@ -291,6 +277,7 @@ class CopyPipelineTool extends AbstractBuiltInTool {
             }
             names.put(entity.getUuid(), name);
         }
+        refuseBeforeStartChosen(build, source, owned);
         refuseInPlace(build, source, owned);
         refuseWorkingCopy(call, source, promoted);
         if (promoted) {
@@ -371,7 +358,6 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         final PipelineDoc changed = data;
         final DocRef ref = guard.create(PipelineDoc.TYPE, pipelineName, build, null, false, role);
         records.update(build, ref, entry -> entry.put("version_of", sourceUuid));
-        offered.ifPresent(pipeline -> startsFromCopy(build, pipeline));
         final PipelineDoc doc = pipelineDocs.write(pipelineDocs.read(ref.getUuid()).copy()
                 .parentPipeline(source.getParentPipeline())
                 .description(source.getDescription())
@@ -433,34 +419,45 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         return plan.withNext(context, build, result);
     }
 
-    // A copy of the hand-written pipeline the plan offers to start from, made before the start was asked (the user
-    // confirms the copy's names in its form): the build starts from it, recorded as the start choice is, so the
-    // copy's XSLT is read back as an existing pipeline's (its TypeIds kept) and the catalogue names its origin. Seen
-    // in eval case 97 on Haiku: copied straight after the survey, its read-back catalogue had no origin and its
-    // TypeIds were refused as not Verb-Object, so promotion was never reached.
-    private void startsFromCopy(final String build, final Map<String, Object> pipeline) {
-        final Map<String, Object> startFrom = new LinkedHashMap<>();
-        startFrom.put("choice", ExistingTranslations.EXISTING);
-        final Map<String, Object> named = new LinkedHashMap<>();
-        named.put("name", pipeline.get("name"));
-        named.put("uuid", pipeline.get("uuid"));
-        startFrom.put("pipeline", named);
-        startFrom.put("at", System.currentTimeMillis());
-        startFrom.put("by", NAME);
-        if (inPlaceProvider != null) {
-            try {
-                inPlaceProvider.get().scope(ToolText.str(pipeline.get("uuid"))).ifPresent(scope -> {
-                    // Where its translation reads its records, which a pre-processor may feed.
-                    startFrom.put(InPlaceInduction.ELEMENT, scope.translation().element());
-                    startFrom.put(InPlaceInduction.PRE_PROCESSED, scope.preProcessed());
-                });
-            } catch (final RuntimeException e) {
-                // Its stages not told: recorded as a translation reading the parser's output, as before.
-                LOGGER.debug(() -> LogUtil.message("Where {}'s translation reads wasn't told: {}",
-                        pipeline.get("name"), e.getMessage()));
-            }
+    // A hand-written translation the build is offered to start from is copied only once the user has chosen how the
+    // build starts (decided by the user, 2026-11-26: a hard gate, not description text): neither the offered
+    // pipeline nor any pipeline running its translation XSLT. Seen in eval cases 97 (twice) and 104 on Haiku:
+    // copied straight after the survey, before catalogue_event_types offered the start, so the user never chose
+    // between a new version, describing it in place and drafting anew. A pipeline running other code (an indexing
+    // pipeline), a translation the tools built and the copy the user chose are copied as before.
+    private void refuseBeforeStartChosen(final String build, final PipelineDoc source, final List<DocRef> owned) {
+        final Map<String, Object> offered = plan.handWrittenToOffer(build).orElse(null);
+        if (offered == null) {
+            return;
         }
-        records.rememberStartFrom(build, startFrom);
+        final String offeredUuid = ToolText.str(offered.get("uuid"));
+        final Set<String> offeredXslts = ownedXslts(offeredUuid);
+        final boolean translation = source.getUuid().equals(offeredUuid)
+                                    || owned.stream().anyMatch(doc -> offeredXslts.contains(doc.getUuid()));
+        if (translation) {
+            throw new ToolRefusal("Build '" + build + "' is offered to start from '" + ToolText.str(offered.get(
+                    "name")) + "', a hand-written translation already serving its feeds, and the user chooses how "
+                                  + "the build starts (a new version of it, or another start), so '"
+                                  + source.getName() + "' isn't copied until they have chosen: call "
+                                  + "catalogue_event_types build=" + build + ", which puts the choice to them, and "
+                                  + "copy it only if they choose a new version. Nothing was copied.");
+        }
+    }
+
+    // The XSLTs a pipeline owns (its translation among them); none where Stroom can't read it.
+    private Set<String> ownedXslts(final String pipelineUuid) {
+        try {
+            final Set<String> xslts = new HashSet<>();
+            owned(pipelineDocs.read(pipelineUuid), List.of()).stream()
+                    .filter(doc -> XsltDoc.TYPE.equals(doc.getType()))
+                    .forEach(doc -> xslts.add(doc.getUuid()));
+            return xslts;
+        } catch (final RuntimeException e) {
+            // Compared by its UUID alone.
+            LOGGER.debug(() -> LogUtil.message("The XSLTs of offered pipeline {} weren't read: {}", pipelineUuid,
+                    e.getMessage()), e);
+            return Set.of();
+        }
     }
 
     // A build describing a pipeline in place (the user's start choice: no new version) copies neither it nor any

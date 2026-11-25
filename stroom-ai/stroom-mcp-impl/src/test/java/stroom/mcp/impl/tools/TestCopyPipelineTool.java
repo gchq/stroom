@@ -236,60 +236,99 @@ class TestCopyPipelineTool {
     }
 
     @Test
-    void aCopyOfTheHandWrittenPipelineOfferedStartsTheBuildFromIt() {
-        // Seen in eval case 97 on Haiku: copied straight after the survey, the start never asked, so its XSLT was
-        // read back as no existing pipeline's (its TypeIds refused as not Verb-Object, the catalogue's origin null).
+    void aCopyOfTheHandWrittenPipelineOfferedIsRefusedUntilTheUserChoosesHowTheBuildStarts() {
+        // Seen in eval cases 97 (twice) and 104 on Haiku: copied straight after the survey, before
+        // catalogue_event_types offered the start, so the user never chose how the build starts.
         source();
         pipelines.feeds.facts.existing = Map.of("name", "ACME-V1 - Indexing", "uuid", "p1");
-        final ToolCallContext context = BuildToolCalls.answering(Map.of("value", true));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("value", true));
 
-        final ToolResult made = call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": "
-                                     + "\"ACME-V2 - Indexing\"}", context);
+        final ToolResult refused = call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": "
+                                        + "\"ACME-V2 - Indexing\"}", user.context());
 
-        assertThat(made.isError()).as(made.text()).isFalse();
-        assertThat(pipelines.world.records().startFrom(BUILD)).hasValueSatisfying(startFrom -> {
-            assertThat(startFrom).containsEntry("choice", ExistingTranslations.EXISTING)
-                    .containsEntry("by", CopyPipelineTool.NAME);
-            assertThat(startFrom.get("pipeline")).isEqualTo(Map.of("name", "ACME-V1 - Indexing", "uuid", "p1"));
-        });
+        assertThat(refused.isError()).isTrue();
+        assertThat(refused.text()).contains("'ACME-V1 - Indexing'", "catalogue_event_types build=" + BUILD,
+                "the user chooses how the build starts", "Nothing was copied");
+        assertThat(user.shown()).isEmpty();
+        assertThat(pipelines.world.records().startFrom(BUILD)).isEmpty();
+        assertNothingCopied();
     }
 
     @Test
-    void aCopyStartsNothingWhereTheToolsBuiltTheOffer() {
-        // A new version of a pipeline the tools built carries its mapping and catalogue: nothing to read back.
+    void aCopyOfAnotherPipelineRunningTheOfferedTranslationIsRefusedToo() {
+        // Another pipeline running the offered translation's XSLT: copying it is a new version of that translation.
+        source();
+        pipelines.productionPipeline("p2", "ACME-V1 - Events", TEMPLATE, PipelineLayers.layer("p2")
+                .property("xsltFilter", "xslt", new DocRef(XsltDoc.TYPE, "x1", "ACME-V1-XSLT")));
+        pipelines.feeds.facts.existing = Map.of("name", "ACME-V1 - Events", "uuid", "p2");
+
+        final ToolResult refused = call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": "
+                                        + "\"ACME-V2 - Indexing\"}", BuildToolCalls.answering(Map.of("value", true)));
+
+        assertThat(refused.isError()).isTrue();
+        assertThat(refused.text()).contains("'ACME-V1 - Events'", "catalogue_event_types build=" + BUILD);
+        assertNothingCopied();
+    }
+
+    @Test
+    void anIndexingPipelineIsCopiedBeforeTheStartIsChosen() {
+        // The gate is on the offered translation: a pipeline running other code (an indexing pipeline) is copied.
+        source();
+        pipelines.world.add(XsltDoc.TYPE, "ACME-V1-Indexing-XSLT", pipelines.world.folder("System/Feeds/Acme").uuid,
+                "xi");
+        pipelines.world.docs.put("xi", XsltDoc.builder().uuid("xi").name("ACME-V1-Indexing-XSLT").version("v0")
+                .data("<xsl:stylesheet/>").build());
+        pipelines.productionPipeline("pi", "ACME-V1 - Search", TEMPLATE, PipelineLayers.layer("pi")
+                .property("xsltFilter", "xslt", new DocRef(XsltDoc.TYPE, "xi", "ACME-V1-Indexing-XSLT")));
+        pipelines.feeds.facts.existing = Map.of("name", "ACME-V1 - Indexing", "uuid", "p1");
+
+        final ToolResult made = call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"pi\", \"new_name\": "
+                                     + "\"ACME-V2 - Search\"}", BuildToolCalls.answering(Map.of("value", true)));
+
+        assertThat(made.isError()).as(made.text()).isFalse();
+        assertThat(PipelineWorld.json(made)).containsEntry("name", "ACME-V2 - Search");
+    }
+
+    @Test
+    void aCopyOfTheOfferIsMadeOnceTheUserChoseToStartFromIt() {
+        // The copy the user chose: the start recorded by catalogue_event_types, left as it is.
+        source();
+        pipelines.feeds.facts.existing = Map.of("name", "ACME-V1 - Indexing", "uuid", "p1");
+        pipelines.feeds.facts.startFrom = Map.of("choice", ExistingTranslations.EXISTING, "pipeline",
+                Map.of("name", "ACME-V1 - Indexing", "uuid", "p1"));
+
+        final ToolResult made = call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": "
+                                     + "\"ACME-V2 - Indexing\"}", BuildToolCalls.answering(Map.of("value", true)));
+
+        assertThat(made.isError()).as(made.text()).isFalse();
+        assertThat(pipelines.world.records().startFrom(BUILD)).isEmpty();
+    }
+
+    @Test
+    void aCopyOfATranslationTheToolsBuiltIsMadeBeforeTheStartIsChosen() {
+        // A new version of a pipeline the tools built carries its mapping and catalogue: nothing to choose.
         source();
         pipelines.feeds.facts.existing = Map.of("name", "ACME-V1 - Indexing", "uuid", "p1");
         pipelines.feeds.facts.keptXslt = "x1";
 
-        call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": \"ACME-V2 - Indexing\"}",
-                BuildToolCalls.answering(Map.of("value", true)));
+        final ToolResult made = call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": "
+                                     + "\"ACME-V2 - Indexing\"}", BuildToolCalls.answering(Map.of("value", true)));
 
+        assertThat(made.isError()).as(made.text()).isFalse();
         assertThat(pipelines.world.records().startFrom(BUILD)).isEmpty();
     }
 
     @Test
-    void aCopyOfAnotherPipelineThanTheOfferStartsNothing() {
+    void aCopyOfAnotherPipelineThanTheOfferIsMade() {
+        // An offer Stroom can't read is compared by its UUID alone.
         source();
         pipelines.feeds.facts.existing = Map.of("name", "Other-Events", "uuid", "other");
 
-        call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": \"ACME-V2 - Indexing\"}",
-                BuildToolCalls.answering(Map.of("value", true)));
+        final ToolResult made = call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": "
+                                     + "\"ACME-V2 - Indexing\"}", BuildToolCalls.answering(Map.of("value", true)));
 
+        assertThat(made.isError()).as(made.text()).isFalse();
         assertThat(pipelines.world.records().startFrom(BUILD)).isEmpty();
-    }
-
-    @Test
-    void aCopyTheUserDeclinesStartsNothing() {
-        source();
-        pipelines.feeds.facts.existing = Map.of("name", "ACME-V1 - Indexing", "uuid", "p1");
-
-        final ToolResult declined = call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", "
-                                         + "\"new_name\": \"ACME-V2 - Indexing\"}",
-                BuildToolCalls.declining().context());
-
-        assertThat(declined.isError()).isTrue();
-        assertThat(pipelines.world.records().startFrom(BUILD)).isEmpty();
-        assertNothingCopied();
     }
 
     @ParameterizedTest
