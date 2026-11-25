@@ -254,6 +254,18 @@ class ProcessorFilterWrites {
     }
 
     /// @param feed A feed's name.
+    /// @return True if a feed of exactly that name exists, so [#feedTerm] can name it.
+    boolean feedExists(final String feed) {
+        try {
+            return feedNames.exact(feed)
+                    .filter(found -> NullSafe.isNonBlankString(found.getUuid()))
+                    .isPresent();
+        } catch (final RuntimeException e) {
+            return false;
+        }
+    }
+
+    /// @param feed A feed's name.
     /// @return The stream type it receives (Raw Events, Raw Reference, ...), from the feed itself; Raw Events when
     /// it can't be read.
     String feedStreamType(final String feed) {

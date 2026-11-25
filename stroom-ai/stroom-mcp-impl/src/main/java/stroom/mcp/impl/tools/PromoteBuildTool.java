@@ -327,6 +327,9 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         // pipelines' filters name the feeds it works from (seen in VS Code: the promoted filter selected the test
         // feed).
         final List<String> sources = facts.sourceFeeds(build, docs);
+        // The feeds the build is for: its filters select them, and the earlier version keeps the rest (decided by the
+        // user, 2026-11-25).
+        final List<String> buildFeeds = facts.buildSourceFeeds(build, docs);
         // What nothing the build promotes uses (an older splitter it replaced, say) stays in the build (decided by the
         // user, 2026-11-18).
         final Set<String> unused = unused(docs, markers);
@@ -336,7 +339,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         // The folder of the source's own its documents go in: the feed's, or one named for it where the feed's
         // folder is a parent of sources (the siblings' convention).
         final SourceFolders sourceFolders = new SourceFolders(guard, documentAccess);
-        final Source source = source(build, docs, destinations, sources, testFeeds, sourceFolders);
+        final Source source = source(build, docs, destinations, buildFeeds, testFeeds, sourceFolders);
         // A feed's source type registry goes beside the feed; its survey doc stays in the build.
         final Map<String, String> besideFeeds = besideFeeds(docs, destinations, sourceFolders);
         // An aggregated feed's modules and a group's output feed of its own: beside the feed (the group's own in its
@@ -387,8 +390,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         docs.stream()
                 .filter(d -> PipelineDoc.TYPE.equals(d.get("type")) && d.get("working_copy_of") != null)
                 .forEach(d -> originals.put(String.valueOf(d.get("uuid")), String.valueOf(d.get("working_copy_of"))));
-        final List<PromotionProcessing.Entry> processing = promotionProcessing.promotionProcessing(moving, sources,
-                keptFeeds, originals);
+        final List<PromotionProcessing.Entry> processing = promotionProcessing.promotionProcessing(moving,
+                buildFeeds, keptFeeds, originals);
         // The promoted pipelines outside the build reading a predecessor's Events (CEF flatteners, indexing): each
         // gains a filter, disabled, reading the new version's Events instead (decided by the user, 2026-11-17). One
         // with a new version of its own in this build is passed over: its new version reads the new Events. So is
@@ -400,7 +403,15 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                         && !predecessors.containsValue(pipeline.getUuid())), processing, testIndexes(build));
         final List<PromotionProcessing.FollowOn> followOns = followed.followOns();
         final List<String> followOnSaid = followOns.stream().map(PromotionProcessing.FollowOn::said).toList();
-        final List<String> warnings = facts.buildChecks(docs);
+        final List<String> warnings = new ArrayList<>(facts.buildChecks(docs));
+        final List<String> leftOut = moving.isEmpty()
+                ? List.of()
+                : promotionProcessing.leftOut(buildFeeds);
+        if (!leftOut.isEmpty()) {
+            warnings.add("No filter selects " + String.join(", ", leftOut) + ": no feed of exactly that name "
+                         + "exists, so the promoted pipelines' filters leave it out (a filter names each feed by "
+                         + "reference)");
+        }
         final List<String> blocking = warnings.stream().filter(w -> w.endsWith(BuildChecks.BLOCKS)).toList();
         if (!blocking.isEmpty()) {
             throw new ToolRefusal("Not promoted: " + String.join(" ", blocking) + ". Do it in the build first, then "
@@ -1315,8 +1326,10 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     private static List<String> processingSaid(final List<PromotionProcessing.Entry> processing) {
         final List<String> said = new ArrayList<>();
         for (final PromotionProcessing.Entry e : processing) {
-            if (e.feed() != null) {
-                said.add(e.pipeline().getName() + ": feed " + e.feed() + " (" + e.streamType() + ")");
+            if (!e.feeds().isEmpty()) {
+                said.add(e.pipeline().getName() + ": " + (e.feeds().size() == 1
+                        ? "feed "
+                        : "feeds ") + String.join(", ", e.feeds()) + " (" + e.streamType() + ")");
             } else {
                 said.add(e.pipeline().getName() + ": " + e.streamType() + " from pipeline " + String.join(", ",
                         e.extraTerms().stream()

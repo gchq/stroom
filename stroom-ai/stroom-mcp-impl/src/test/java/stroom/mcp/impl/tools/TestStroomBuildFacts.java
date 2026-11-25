@@ -24,13 +24,19 @@ import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.ai.impl.tools.streams.StreamReader.RawText;
 import stroom.docref.DocRef;
+import stroom.documentation.shared.DocumentationDoc;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.QueryData;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.util.shared.ResultPage;
 
 import org.junit.jupiter.api.Test;
@@ -151,6 +157,50 @@ class TestStroomBuildFacts {
         // The build's own feed isn't a source of it.
         assertThat(feeds).containsExactly("UPSTREAM");
         Mockito.verifyNoInteractions(processorFilterAccess);
+    }
+
+    @Test
+    void theFeedsABuildIsForAreThoseItNamesNotEveryFeedItsPredecessorReads() {
+        // Decided by the user (2026-11-25): a new version of a translation serving ACME-A and ACME-B, built for
+        // ACME-A, moves only ACME-A; ACME-B stays with the earlier version.
+        final BuildRecords buildRecords = Mockito.mock(BuildRecords.class);
+        Mockito.when(buildRecords.load("b")).thenReturn(Map.of("docs", Map.of(),
+                BuildRecords.SOURCE_FEEDS, List.of("acme-a")));
+        final ProcessorFilterAccess processorFilterAccess = Mockito.mock(ProcessorFilterAccess.class);
+        final ProcessorFilter reading = ProcessorFilter.builder().id(3).pipelineUuid("v1")
+                .queryData(QueryData.builder().expression(ExpressionOperator.builder()
+                        .addTextTerm(MetaFields.FEED, Condition.EQUALS, "ACME-A,ACME-B")
+                        .build()).build())
+                .build();
+        Mockito.when(processorFilterAccess.filtersOf(Mockito.any())).thenReturn(
+                new ProcessorFilterAccess.Filters(List.of(reading), null));
+        final PipelineFeeds pipelineFeeds = new PipelineFeeds(processorFilterAccess, null, null);
+        final StroomBuildFacts facts = new StroomBuildFacts(null, buildRecords, null, null, null, null, null, null,
+                processorFilterAccess, null, pipelineFeeds, null, null);
+        final List<Map<String, Object>> docs = List.of(versionOf("v1"));
+
+        assertThat(facts.sourceFeeds("b", docs)).containsExactly("acme-a", "ACME-A", "ACME-B");
+        // Each once, as first spelt.
+        assertThat(facts.buildSourceFeeds("b", docs)).containsExactly("acme-a");
+
+        // Surveyed, a feed is the build's too.
+        final List<Map<String, Object>> surveyed = List.of(versionOf("v1"), Map.of("type", DocumentationDoc.TYPE,
+                "name", "ACME-B" + StroomBuildFacts.SURVEY, "uuid", "s"));
+        assertThat(facts.buildSourceFeeds("b", surveyed)).containsExactly("acme-a", "ACME-B");
+
+        // A build naming no feed is for every feed its predecessor reads, as before.
+        Mockito.when(buildRecords.load("b")).thenReturn(Map.of("docs", Map.of()));
+        assertThat(facts.buildSourceFeeds("b", docs)).containsExactly("ACME-A", "ACME-B");
+    }
+
+    // A pipeline of the build that is a new version of another.
+    private static Map<String, Object> versionOf(final String before) {
+        final Map<String, Object> doc = new LinkedHashMap<>();
+        doc.put("type", PipelineDoc.TYPE);
+        doc.put("name", "ACME-V1.1-Events");
+        doc.put("uuid", "v2");
+        doc.put("version_of", before);
+        return doc;
     }
 
     @Test

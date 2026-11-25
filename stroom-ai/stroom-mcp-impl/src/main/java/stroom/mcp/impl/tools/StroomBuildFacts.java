@@ -519,6 +519,31 @@ class StroomBuildFacts implements BuildFacts {
     }
 
     @Override
+    public List<String> buildSourceFeeds(final String build, final List<Map<String, Object>> docs) {
+        final List<String> all = sourceFeeds(build, docs);
+        final Set<String> named = new LinkedHashSet<>();
+        try {
+            JsonValues.strings(buildRecords.load(build).get(BuildRecords.SOURCE_FEEDS))
+                    .forEach(feed -> named.add(feed.toLowerCase(Locale.ROOT)));
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Unable to read the record of build {}", build, e);
+        }
+        for (final Map<String, Object> doc : docs) {
+            final String name = String.valueOf(doc.get("name"));
+            if (DocumentationDoc.TYPE.equals(doc.get("type")) && name.endsWith(SURVEY)) {
+                named.add(name.substring(0, name.length() - SURVEY.length()).toLowerCase(Locale.ROOT));
+            }
+        }
+        final Map<String, String> own = new LinkedHashMap<>();
+        all.stream()
+                .filter(feed -> named.contains(feed.toLowerCase(Locale.ROOT)))
+                .forEach(feed -> own.putIfAbsent(feed.toLowerCase(Locale.ROOT), feed));
+        return own.isEmpty()
+                ? all
+                : List.copyOf(own.values());
+    }
+
+    @Override
     public boolean catalogued(final List<Map<String, Object>> docs) {
         for (final Map<String, Object> doc : docs) {
             if (DocumentationDoc.TYPE.equals(doc.get("type"))

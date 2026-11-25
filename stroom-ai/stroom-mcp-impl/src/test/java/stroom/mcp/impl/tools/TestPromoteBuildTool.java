@@ -1510,7 +1510,8 @@ class TestPromoteBuildTool {
         listed.put("role", "Events");
         docs.facts.docs.add(listed);
         Mockito.when(processing.promotionProcessing(any(), any(), any(), any())).thenReturn(List.of(
-                new PromotionProcessing.Entry(version, "Azure-Audit-V1.0-EVENTS", "Raw Events", List.of())));
+                new PromotionProcessing.Entry(version, List.of("Azure-Audit-V1.0-EVENTS"), "Raw Events",
+                        List.of())));
         final Map<String, Object> destinations = Map.of();
         final Map<String, Object> shown = call(destinations, null);
 

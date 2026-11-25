@@ -294,13 +294,16 @@ class PromotionProcessing {
         return expression.copy().children(children).build();
     }
 
-    /// What each promoted pipeline should go on processing: the feeds and stream types of its sample filters.
+    /// What each promoted pipeline should go on processing: the feeds and stream types of its sample filters, and
+    /// the build's source feeds beside them.
     ///
     /// A build on data already in Stroom works from its source feeds (the feed it surveyed, the one a production
     /// pipeline it copies processes, those start_build was given): a translation pipeline processes those, never the
     /// test feeds that held its copies of their records (seen in VS Code: the promoted filter selected the test
     /// feed, named like any other). A pipeline built by stepping only has no sample filters: it processes the
-    /// source feeds.
+    /// source feeds. A pipeline sampled from some of its source feeds processes all of them (decided by the user,
+    /// 2026-11-25: before, a build of two feeds sampled from one promoted a filter selecting only that one), in one
+    /// filter whose feeds are under an OR ([#createPromotionFilters]).
     ///
     /// @param pipelines The pipelines promoted.
     /// @param sources   The build's source feeds.
@@ -321,13 +324,17 @@ class PromotionProcessing {
     /// @param sources   The build's source feeds.
     /// @param testFeeds The build's test feeds.
     /// @param originals The original of each of the build's working copies of a pipeline, by the copy's UUID.
-    /// @return A filter to make for each, in order.
+    /// @return A filter to make for each, in order: one per pipeline and stream type for the feeds it reads, one per
+    /// source pipeline for the Events it reads.
     List<Entry> promotionProcessing(final List<DocRef> pipelines,
                                     final List<String> sources,
                                     final List<String> testFeeds,
                                     final Map<String, String> originals) {
         final Set<String> tests = new HashSet<>();
         testFeeds.forEach(feed -> tests.add(feed.toLowerCase(Locale.ROOT)));
+        final List<String> named = sources.stream()
+                .filter(feed -> NullSafe.isNonBlankString(feed) && filterWrites.feedExists(feed))
+                .toList();
         final List<Entry> plan = new ArrayList<>();
         for (final DocRef pipeline : pipelines) {
             final Map<FeedAndType, List<ExpressionTerm>> targets = new LinkedHashMap<>();
@@ -345,41 +352,78 @@ class PromotionProcessing {
             if (!pipelineOutputs.isIndexing(pipeline.getUuid())) {
                 targets.entrySet().removeIf(entry -> entry.getValue().isEmpty()
                                                      && testFeed(entry.getKey().feed(), tests));
-                if (targets.isEmpty()) {
-                    for (final String feed : sources) {
-                        // The feed's own stream type (a reference feed's is Raw Reference), not Raw Events assumed.
-                        targets.putIfAbsent(new FeedAndType(feed, filterWrites.feedStreamType(feed)), List.of());
-                    }
-                }
+                withSources(targets, named);
             }
-            final Set<List<String>> bySource = new HashSet<>();
-            targets.entrySet().stream()
-                    .sorted(Comparator.comparing((Map.Entry<FeedAndType, List<ExpressionTerm>> entry) ->
-                                    NullSafe.string(entry.getKey().feed()))
-                            .thenComparing(entry -> NullSafe.string(entry.getKey().streamType())))
-                    .forEach(entry -> {
-                        final String feed = entry.getKey().feed();
-                        final String streamType = entry.getKey().streamType();
-                        final List<ExpressionTerm> extra = entry.getValue();
-                        final List<String> sourcesOf = ProcessorFilterWrites.pipelineUuids(extra).stream()
-                                .map(NullSafe::string)
-                                .sorted()
-                                .toList();
-                        if (!sourcesOf.isEmpty()) {
-                            // Named by its source pipeline, not its feed: one filter whatever feeds the sample was
-                            // in (a test feed among them), as the pipeline's Events are those meant.
-                            final List<String> key = new ArrayList<>();
-                            key.add(streamType);
-                            key.addAll(sourcesOf);
-                            if (bySource.add(key)) {
-                                plan.add(new Entry(pipeline, null, streamType, extra));
-                            }
-                        } else if (NullSafe.isNonEmptyString(feed) && !testFeed(feed, tests)) {
-                            plan.add(new Entry(pipeline, feed, streamType, extra));
-                        }
-                    });
+            plan.addAll(entriesOf(pipeline, targets, tests));
         }
         return plan;
+    }
+
+    /// @param sources The build's source feeds.
+    /// @return Those no filter can name, as no feed of exactly that name exists: left out of every filter, which the
+    /// review says.
+    List<String> leftOut(final List<String> sources) {
+        return sources.stream()
+                .filter(feed -> NullSafe.isNonBlankString(feed) && !filterWrites.feedExists(feed))
+                .toList();
+    }
+
+    // The build's source feeds added to a pipeline's sampled feeds, each with its own stream type (a reference
+    // feed's is Raw Reference, not Raw Events assumed): those of a stream type it was sampled in, or all of them when
+    // it was sampled from none. Not for a pipeline reading another pipeline's Events (its sample names that one).
+    private void withSources(final Map<FeedAndType, List<ExpressionTerm>> targets, final List<String> sources) {
+        if (targets.values().stream().anyMatch(terms -> !terms.isEmpty())) {
+            return;
+        }
+        final Set<String> sampledTypes = new HashSet<>();
+        targets.keySet().forEach(target -> sampledTypes.add(target.streamType()));
+        for (final String feed : sources) {
+            final String streamType = filterWrites.feedStreamType(feed);
+            if (sampledTypes.isEmpty() || sampledTypes.contains(streamType)) {
+                targets.putIfAbsent(new FeedAndType(feed, streamType), List.of());
+            }
+        }
+    }
+
+    // A pipeline's entries: one per stream type for the feeds it reads (each feed once, whatever its case), one per
+    // source pipeline (and stream type) for the Events it reads, named by their source rather than their feed.
+    private static List<Entry> entriesOf(final DocRef pipeline,
+                                         final Map<FeedAndType, List<ExpressionTerm>> targets,
+                                         final Set<String> tests) {
+        final Map<String, Map<String, String>> feedsByType = new LinkedHashMap<>();
+        final List<Entry> bySourcePipeline = new ArrayList<>();
+        final Set<List<String>> bySource = new HashSet<>();
+        targets.entrySet().stream()
+                .sorted(Comparator.comparing((Map.Entry<FeedAndType, List<ExpressionTerm>> entry) ->
+                                NullSafe.string(entry.getKey().streamType()))
+                        .thenComparing(entry -> NullSafe.string(entry.getKey().feed()).toLowerCase(Locale.ROOT)))
+                .forEach(entry -> {
+                    final String feed = entry.getKey().feed();
+                    final String streamType = entry.getKey().streamType();
+                    final List<ExpressionTerm> extra = entry.getValue();
+                    final List<String> sourcesOf = ProcessorFilterWrites.pipelineUuids(extra).stream()
+                            .map(NullSafe::string)
+                            .sorted()
+                            .toList();
+                    if (!sourcesOf.isEmpty()) {
+                        // Named by its source pipeline, not its feed: one filter whatever feeds the sample was
+                        // in (a test feed among them), as the pipeline's Events are those meant.
+                        final List<String> key = new ArrayList<>();
+                        key.add(streamType);
+                        key.addAll(sourcesOf);
+                        if (bySource.add(key)) {
+                            bySourcePipeline.add(new Entry(pipeline, List.of(), streamType, extra));
+                        }
+                    } else if (NullSafe.isNonEmptyString(feed) && !testFeed(feed, tests)) {
+                        feedsByType.computeIfAbsent(streamType, type -> new LinkedHashMap<>())
+                                .putIfAbsent(feed.toLowerCase(Locale.ROOT), feed);
+                    }
+                });
+        final List<Entry> out = new ArrayList<>();
+        feedsByType.forEach((streamType, feeds) -> out.add(new Entry(pipeline, List.copyOf(feeds.values()),
+                streamType, List.of())));
+        out.addAll(bySourcePipeline);
+        return out;
     }
 
     /// @param terms     A filter's Pipeline conditions.
@@ -450,9 +494,17 @@ class PromotionProcessing {
         final List<Map<String, Object>> made = new ArrayList<>();
         for (final Entry entry : plan) {
             final String link = links.documentTarget(entry.pipeline());
-            final Optional<ProcessorFilter> covering = coveringFilter(entry);
+            final Map<String, ProcessorFilter> coveredBy = coveredFeeds(entry);
+            final List<String> feeds = entry.feeds().stream()
+                    .filter(feed -> !coveredBy.containsKey(feed))
+                    .toList();
+            final Optional<ProcessorFilter> covering = entry.feeds().isEmpty()
+                    ? coveringFilter(entry, null)
+                    : feeds.isEmpty()
+                            ? Optional.of(coveredBy.get(entry.feeds().getFirst()))
+                            : Optional.empty();
             if (covering.isPresent()) {
-                final Map<String, Object> existing = entryFor(covering.get().getId(), entry, true);
+                final Map<String, Object> existing = entryFor(covering.get().getId(), entry, entry.feeds(), true);
                 existing.put("existing", true);
                 existing.put("note", "no new filter: enabled filter " + covering.get().getId() + " already selects "
                                      + "what arrives");
@@ -461,8 +513,8 @@ class PromotionProcessing {
                 continue;
             }
             final List<ExpressionItem> children = new ArrayList<>();
-            if (entry.feed() != null) {
-                children.add(filterWrites.feedTerm(entry.feed()));
+            if (!feeds.isEmpty()) {
+                children.add(feedsTerm(feeds));
             }
             children.add(ProcessorFilterWrites.term(MetaFields.FIELD_TYPE, entry.streamType()));
             children.addAll(entry.extraTerms());
@@ -474,10 +526,16 @@ class PromotionProcessing {
             final String data = from == null
                     ? "existing data included"
                     : "streams created from " + Instant.ofEpochMilli(from) + " on";
-            final String selects = entry.feed() != null
-                    ? "processes feed " + entry.feed() + " (" + entry.streamType() + "), " + data
+            final String selects = !feeds.isEmpty()
+                    ? "processes " + feedsSaid(feeds) + " (" + entry.streamType() + "), " + data
                     : "processes " + entry.streamType() + " from its source pipeline, " + data;
-            final Map<String, Object> result = entryFor(created.getId(), entry, false);
+            final Map<String, Object> result = entryFor(created.getId(), entry, feeds, false);
+            if (!coveredBy.isEmpty()) {
+                final List<String> already = new ArrayList<>();
+                coveredBy.forEach((feed, filter) -> already.add(feed + " (enabled filter " + filter.getId() + ")"));
+                result.put("already_selected", "no second filter for " + String.join(", ", already) + ": it "
+                                               + "already selects what arrives");
+            }
             if (from != null) {
                 result.put("reads_from", Instant.ofEpochMilli(from).toString());
             }
@@ -534,13 +592,44 @@ class PromotionProcessing {
         }
     }
 
+    // Each of the entry's feeds an enabled filter of the pipeline already selects what arrives from, with that filter.
+    private Map<String, ProcessorFilter> coveredFeeds(final Entry entry) {
+        final Map<String, ProcessorFilter> out = new LinkedHashMap<>();
+        for (final String feed : entry.feeds()) {
+            coveringFilter(entry, feed).ifPresent(filter -> out.put(feed, filter));
+        }
+        return out;
+    }
+
+    /// The condition on a promoted filter's feeds (decided by the user, 2026-11-25): each feed by reference
+    /// (`Feed is <feed>`, so Stroom tracks it as the feed's dependency), several under an OR; never by name or by
+    /// a dictionary.
+    ///
+    /// @param feeds The feeds, at least one.
+    /// @return The one feed's condition, or an OR of each feed's.
+    ExpressionItem feedsTerm(final List<String> feeds) {
+        if (feeds.size() == 1) {
+            return filterWrites.feedTerm(feeds.getFirst());
+        }
+        final ExpressionOperator.Builder any = ExpressionOperator.builder().op(ExpressionOperator.Op.OR);
+        feeds.forEach(feed -> any.addTerm(filterWrites.feedTerm(feed)));
+        return any.build();
+    }
+
+    // The feeds a filter selects, in words: `feed ACME`, or `feeds ACME-A, ACME-B`.
+    private static String feedsSaid(final List<String> feeds) {
+        return (feeds.size() == 1
+                ? "feed "
+                : "feeds ") + String.join(", ", feeds);
+    }
+
     // An enabled filter of the pipeline (its processor on) that selects the streams arriving from now on for this
-    // entry: its feed and type, Events from its source pipeline. A filter by stream id (a build's sample) doesn't.
-    private Optional<ProcessorFilter> coveringFilter(final Entry entry) {
+    // entry: the feed and type, Events from its source pipeline. A filter by stream id (a build's sample) doesn't.
+    private Optional<ProcessorFilter> coveringFilter(final Entry entry, final String feed) {
         final List<String> sources = ProcessorFilterWrites.pipelineUuids(entry.extraTerms());
         final Meta arriving = Meta.builder()
                 .id(-1)
-                .feedName(NullSafe.string(entry.feed()))
+                .feedName(NullSafe.string(feed))
                 .typeName(entry.streamType())
                 .pipelineUuid(sources.isEmpty()
                         ? null
@@ -553,7 +642,7 @@ class PromotionProcessing {
                 continue;
             }
             final ExpressionOperator expression = ProcessorFilterWrites.expressionOf(filter);
-            if (entry.feed() == null && !ProcessorFilterWrites.namesPipeline(expression)) {
+            if (feed == null && !ProcessorFilterWrites.namesPipeline(expression)) {
                 // Any feed's Events: only a filter naming the source pipeline is the same selection.
                 continue;
             }
@@ -644,11 +733,20 @@ class PromotionProcessing {
                && (tests.contains(feed.toLowerCase(Locale.ROOT)) || feed.endsWith(OutputFeeds.TEST_FEED));
     }
 
-    private static Map<String, Object> entryFor(final Integer filterId, final Entry entry, final boolean enabled) {
+    private static Map<String, Object> entryFor(final Integer filterId,
+                                                final Entry entry,
+                                                final List<String> feeds,
+                                                final boolean enabled) {
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("filter_id", filterId);
         result.put("pipeline", entry.pipeline().getName());
-        result.put("feed", entry.feed());
+        if (feeds.size() > 1) {
+            result.put("feeds", feeds);
+        } else {
+            result.put("feed", feeds.isEmpty()
+                    ? null
+                    : feeds.getFirst());
+        }
         result.put("stream_type", entry.streamType());
         result.put("enabled", enabled);
         return result;
@@ -661,17 +759,18 @@ class PromotionProcessing {
     /// A filter to make for a promoted pipeline.
     ///
     /// @param pipeline   The pipeline.
-    /// @param feed       The feed it processes, or null for Events named by their source pipeline.
+    /// @param feeds      The feeds it processes, or none for Events named by their source pipeline.
     /// @param streamType The stream type it processes.
     /// @param extraTerms Its other conditions (Pipeline IS_DOC_REF the source events pipeline).
-    record Entry(DocRef pipeline, String feed, String streamType, List<ExpressionTerm> extraTerms) {
+    record Entry(DocRef pipeline, List<String> feeds, String streamType, List<ExpressionTerm> extraTerms) {
 
         /// @param pipeline   The pipeline.
-        /// @param feed       The feed it processes, or null.
+        /// @param feeds      The feeds it processes, or none.
         /// @param streamType The stream type it processes.
         /// @param extraTerms Its other conditions.
         Entry {
             Objects.requireNonNull(pipeline, "pipeline");
+            feeds = List.copyOf(NullSafe.list(feeds));
             extraTerms = List.copyOf(NullSafe.list(extraTerms));
         }
     }

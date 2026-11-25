@@ -145,6 +145,18 @@ interface BuildFacts {
     /// Never the build's own feeds: in such a build those are test feeds.
     List<String> sourceFeeds(String build, List<Map<String, Object>> docs);
 
+    /// The feeds the build itself is for, among [#sourceFeeds]: those start_build or start_onboarding was given and
+    /// those it surveyed, not every feed the production pipelines it copies process (decided by the user,
+    /// 2026-11-25: a new version of a translation serving feeds A and B, built for A, moves only A; B stays with the
+    /// earlier version). Where the build names none, all of [#sourceFeeds], as before.
+    ///
+    /// @param build A build's name.
+    /// @param docs  Its documents.
+    /// @return The feeds it is for.
+    default List<String> buildSourceFeeds(final String build, final List<Map<String, Object>> docs) {
+        return sourceFeeds(build, docs);
+    }
+
     /// @param surveys The build's survey docs.
     /// @return What they say (`saturated`, `format`, `locations`, `streams`, `sample`), or empty when none can be
     /// read.

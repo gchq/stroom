@@ -137,7 +137,7 @@ class TestPromotionProcessing {
                         ProcessingWorld.EV, version),
                 new PromotionProcessing.FollowOn(cef, w.filter("cef", 7, true, reading, null), ProcessingWorld.EV,
                         version));
-        final List<PromotionProcessing.Entry> processing = List.of(new PromotionProcessing.Entry(built, null,
+        final List<PromotionProcessing.Entry> processing = List.of(new PromotionProcessing.Entry(built, List.of(),
                 "Events", List.of(ProcessorFilterWrites.pipelineTerm(version))));
 
         final PromotionProcessing.Followed followed = w.promotion.withoutDoubleIndexing(followOns, processing,
@@ -175,24 +175,26 @@ class TestPromotionProcessing {
         w.stream(6, "ACME", "Raw Events", null, null);
         w.stream(7, "ACME-MCP-TEST", "Raw Events", null, null);
         w.stream(8, "ACME", "Events", "ev", null);
+        w.feedAt("System/Feeds", "OLD-FEED", "old-feed", "Raw Events");
+        w.feedAt("System/Feeds", "ACME-PROD", "acme-prod", "Raw Events");
 
         final List<PromotionProcessing.Entry> plan = w.promotion.promotionProcessing(List.of(TP, IP, SP),
                 List.of("OLD-FEED"), List.of());
 
-        assertThat(plan).extracting(entry -> entry.pipeline().getName() + "|" + entry.feed() + "|"
+        assertThat(plan).extracting(entry -> entry.pipeline().getName() + "|" + entry.feeds() + "|"
                                              + entry.streamType() + "|" + !entry.extraTerms().isEmpty())
                 .containsExactly(
-                        // The test feed is left out.
-                        "Acme-Events|ACME|Raw Events|false",
+                        // The test feed is left out; the build's source feed is read beside the one sampled.
+                        "Acme-Events|[ACME, OLD-FEED]|Raw Events|false",
                         // Its Pipeline condition, no feed.
-                        "Acme - Indexing|null|Events|true",
+                        "Acme - Indexing|[]|Events|true",
                         // Stepping-only build: the surveyed feed.
-                        "Old-Events|OLD-FEED|Raw Events|false");
+                        "Old-Events|[OLD-FEED]|Raw Events|false");
         // A build on an existing feed: its test feed, whatever it is called, gives way to the feed it works from
         // (seen in VS Code: the promoted filter selected the test feed).
         assertThat(w.promotion.promotionProcessing(List.of(TP), List.of("ACME-PROD"), List.of("ACME")))
-                .extracting(entry -> entry.feed() + "|" + entry.streamType())
-                .containsExactly("ACME-PROD|Raw Events");
+                .extracting(entry -> entry.feeds() + "|" + entry.streamType())
+                .containsExactly("[ACME-PROD]|Raw Events");
 
         w.nextFilterId = 21;
         final List<Map<String, Object>> made = w.promotion.createPromotionFilters(StroomLinks.CHAT,
@@ -213,14 +215,119 @@ class TestPromotionProcessing {
     }
 
     @Test
+    void aBuildOfTwoSourceFeedsSampledFromOneGetsOneFilterSelectingBothByReferenceUnderAnOr() {
+        // Decided by the user (2026-11-25): a filter covers the build's source feeds, not only those sampled; one
+        // filter per pipeline, each feed a `Feed is <feed>` term under an OR (tracked dependencies), never text or
+        // dictionary terms; the Type term as before.
+        w.feedAt("System/Feeds/Acme", "ACME-A", "feed-a", "Raw Events");
+        w.feedAt("System/Feeds/Acme", "ACME-B", "feed-b", "Raw Events");
+        w.pipeline(TP, true, null);
+        w.translation("tp");
+        w.idFilter("tp", 3, 6);
+        w.stream(6, "ACME-A", "Raw Events", null, null);
+
+        final List<PromotionProcessing.Entry> plan = w.promotion.promotionProcessing(List.of(TP),
+                List.of("acme-a", "ACME-B"), List.of());
+
+        // ACME-A once, as the sample spells it.
+        assertThat(plan).singleElement().satisfies(entry -> {
+            assertThat(entry.feeds()).containsExactly("ACME-A", "ACME-B");
+            assertThat(entry.streamType()).isEqualTo("Raw Events");
+        });
+
+        w.nextFilterId = 40;
+        final List<Map<String, Object>> made = w.promotion.createPromotionFilters(StroomLinks.CHAT, plan);
+
+        assertThat(w.created).hasSize(1);
+        final List<ExpressionItem> children = w.lastExpression().getChildren();
+        assertThat(children).hasSize(2);
+        assertThat(children.getFirst()).isEqualTo(ExpressionOperator.builder().op(Op.OR)
+                .addTerm(ExpressionTerm.builder().field("Feed").condition(Condition.IS_DOC_REF)
+                        .docRef(new DocRef("Feed", "feed-a", "ACME-A")).build())
+                .addTerm(ExpressionTerm.builder().field("Feed").condition(Condition.IS_DOC_REF)
+                        .docRef(new DocRef("Feed", "feed-b", "ACME-B")).build())
+                .build());
+        assertThat(children.get(1)).isEqualTo(ProcessorFilterWrites.term("Type", "Raw Events"));
+        assertThat(made.getFirst()).containsEntry("feeds", List.of("ACME-A", "ACME-B"))
+                .doesNotContainKey("feed");
+        assertThat(String.valueOf(made.getFirst().get("user_actions"))).contains("processes feeds ACME-A, ACME-B "
+                                                                                 + "(Raw Events)");
+        // Both feeds' streams are selected, no other feed's.
+        final ExpressionOperator expression = w.lastExpression();
+        assertThat(StreamProcessing.selects(expression, Meta.builder().feedName("ACME-B").typeName("Raw Events")
+                .build())).isTrue();
+        assertThat(StreamProcessing.selects(expression, Meta.builder().feedName("ACME-C").typeName("Raw Events")
+                .build())).isFalse();
+    }
+
+    @Test
+    void aSourceFeedWithNoFeedOfThatNameIsLeftOutAndSaid() {
+        w.feedAt("System/Feeds/Acme", "ACME-A", "feed-a", "Raw Events");
+        w.pipeline(TP, true, null);
+        w.translation("tp");
+
+        final List<PromotionProcessing.Entry> plan = w.promotion.promotionProcessing(List.of(TP),
+                List.of("ACME-A", "ACME-GONE"), List.of());
+
+        assertThat(plan).extracting(PromotionProcessing.Entry::feeds).containsExactly(List.of("ACME-A"));
+        assertThat(w.promotion.leftOut(List.of("ACME-A", "ACME-GONE", " "))).containsExactly("ACME-GONE");
+        // None left out, none said.
+        assertThat(w.promotion.leftOut(List.of("ACME-A"))).isEmpty();
+    }
+
+    @Test
+    void aSourceFeedOfAnotherStreamTypeIsNotAddedToAPipelineSampledFromOne() {
+        // A reference pipeline sampled from its Raw Reference feed doesn't gain the build's Raw Events feed.
+        w.feedAt("System/Feeds/Acme", "ACME-A", "feed-a", "Raw Events");
+        w.feedAt("System/Feeds/Acme", "ACME-REF", "feed-ref", "Raw Reference");
+        w.pipeline(TP, true, null);
+        w.translation("tp");
+        w.idFilter("tp", 3, 6);
+        w.stream(6, "ACME-REF", "Raw Reference", null, null);
+
+        final List<PromotionProcessing.Entry> plan = w.promotion.promotionProcessing(List.of(TP),
+                List.of("ACME-A", "ACME-REF"), List.of());
+
+        assertThat(plan).extracting(entry -> entry.feeds() + "|" + entry.streamType())
+                .containsExactly("[ACME-REF]|Raw Reference");
+    }
+
+    @Test
+    void aFeedAnEnabledFilterAlreadySelectsIsLeftOutOfTheNewFilterAndSaid() {
+        w.feedAt("System/Feeds/Acme", "ACME-A", "feed-a", "Raw Events");
+        w.feedAt("System/Feeds/Acme", "ACME-B", "feed-b", "Raw Events");
+        w.pipeline(TP, true, null);
+        w.translation("tp");
+        w.filter("tp", 5, true, ExpressionOperator.builder().op(Op.AND)
+                .addTerm(ProcessorFilterWrites.term("Feed", "ACME-A"))
+                .addTerm(ProcessorFilterWrites.term("Type", "Raw Events"))
+                .build(), null);
+        w.nextFilterId = 41;
+
+        final List<Map<String, Object>> made = w.promotion.createPromotionFilters(StroomLinks.CHAT, List.of(
+                new PromotionProcessing.Entry(TP, List.of("ACME-A", "ACME-B"), "Raw Events", List.of())));
+
+        assertThat(made.getFirst()).containsEntry("filter_id", 41).containsEntry("feed", "ACME-B")
+                .doesNotContainKey("existing");
+        assertThat(String.valueOf(made.getFirst().get("already_selected"))).contains("ACME-A (enabled filter 5)");
+        assertThat(((ExpressionTerm) w.lastExpression().getChildren().getFirst()).getDocRef().getName())
+                .isEqualTo("ACME-B");
+        // Both already selected: no new filter.
+        final List<Map<String, Object>> again = w.promotion.createPromotionFilters(StroomLinks.CHAT, List.of(
+                new PromotionProcessing.Entry(TP, List.of("ACME-A"), "Raw Events", List.of())));
+        assertThat(again.getFirst()).containsEntry("existing", true).containsEntry("filter_id", 5);
+        assertThat(w.created).hasSize(1);
+    }
+
+    @Test
     void aNewVersionsFilterReadsOnlyStreamsCreatedFromTheTimeTheUserChose() {
         // Decided by the user (2026-11-24, after chat 192): enabled, a new version's filter reading everything
         // reprocesses the whole feed, so both versions' Events exist for old data; the user chooses each time.
         w.pipeline(TP, true, null);
         w.layers(TP.getUuid(), w.layer(TP.getUuid(), "xsltFilter", "XSLTFilter"));
         w.feedAt("System/Feeds/Azure", "Azure-Audit-V1.0-EVENTS", "azure", "Raw Events");
-        final PromotionProcessing.Entry entry = new PromotionProcessing.Entry(TP, "Azure-Audit-V1.0-EVENTS",
-                "Raw Events", List.of());
+        final PromotionProcessing.Entry entry = new PromotionProcessing.Entry(TP,
+                List.of("Azure-Audit-V1.0-EVENTS"), "Raw Events", List.of());
         final long from = Instant.parse("2026-11-24T00:00:00Z").toEpochMilli();
 
         final List<Map<String, Object>> made = w.promotion.createPromotionFilters(StroomLinks.CHAT, List.of(entry),
@@ -252,7 +359,7 @@ class TestPromotionProcessing {
                 List.of("ACME-MCP-TEST"), Map.of("wc", "tp"));
 
         assertThat(plan).singleElement().satisfies(entry -> {
-            assertThat(entry.feed()).isNull();
+            assertThat(entry.feeds()).isEmpty();
             assertThat(entry.streamType()).isEqualTo("Events");
             assertThat(ProcessorFilterWrites.pipelineUuids(entry.extraTerms())).containsExactly("tp");
         });
@@ -270,7 +377,7 @@ class TestPromotionProcessing {
         w.nextFilterId = 23;
 
         final List<Map<String, Object>> made = w.promotion.createPromotionFilters(StroomLinks.CHAT, List.of(
-                new PromotionProcessing.Entry(IP, null, "Events", List.of(PIPELINE_TERM))));
+                new PromotionProcessing.Entry(IP, List.of(), "Events", List.of(PIPELINE_TERM))));
 
         assertThat(String.valueOf(made.getFirst().get("before_enabling")))
                 .contains("drops 'ecs-acme-v2' first")
@@ -299,7 +406,7 @@ class TestPromotionProcessing {
         final DocRef version = new DocRef(PipelineDoc.TYPE, "ev2", "Acme-V1.1-Events");
         w.pipeline(IP, true, null);
         w.lucene("ip", new DocRef("Index", "idx", "ACME-INDEX"));
-        final PromotionProcessing.Entry entry = new PromotionProcessing.Entry(IP, null, "Events",
+        final PromotionProcessing.Entry entry = new PromotionProcessing.Entry(IP, List.of(), "Events",
                 List.of(ProcessorFilterWrites.pipelineTerm(version)));
 
         final List<Map<String, Object>> production = w.promotion.createPromotionFilters(StroomLinks.CHAT,
@@ -331,7 +438,7 @@ class TestPromotionProcessing {
         w.world.add(ElasticIndexDoc.TYPE, "Acme-V2", w.world.folder("System/Feeds/Acme").uuid, "es-v2");
         w.world.docs.put("es-v2", ElasticIndexDoc.builder().uuid("es-v2").name("Acme-V2").version("v0")
                 .indexName("ecs-acme-v2").build());
-        final PromotionProcessing.Entry entry = new PromotionProcessing.Entry(IP, null, "Events",
+        final PromotionProcessing.Entry entry = new PromotionProcessing.Entry(IP, List.of(), "Events",
                 List.of(PIPELINE_TERM));
 
         final List<Map<String, Object>> own = w.promotion.createPromotionFilters(StroomLinks.CHAT, List.of(entry),
@@ -371,7 +478,7 @@ class TestPromotionProcessing {
         w.translation("tp");
 
         w.promotion.createPromotionFilters(StroomLinks.CHAT, List.of(
-                new PromotionProcessing.Entry(TP, "ACME", "Raw Events", List.of())));
+                new PromotionProcessing.Entry(TP, List.of("ACME"), "Raw Events", List.of())));
 
         final ExpressionTerm feed = (ExpressionTerm) w.lastExpression().getChildren().getFirst();
         assertThat(feed).isEqualTo(ExpressionTerm.builder().field("Feed").condition(Condition.IS_DOC_REF)
@@ -395,7 +502,7 @@ class TestPromotionProcessing {
         final List<PromotionProcessing.Entry> plan = w.promotion.promotionProcessing(List.of(TP), List.of("ACME"),
                 List.of("ACME-MCP-TEST"));
 
-        assertThat(plan).extracting(PromotionProcessing.Entry::feed).containsExactly("ACME");
+        assertThat(plan).extracting(PromotionProcessing.Entry::feeds).containsExactly(List.of("ACME"));
     }
 
     @Test
@@ -419,8 +526,8 @@ class TestPromotionProcessing {
         w.nextFilterId = 30;
 
         final List<Map<String, Object>> made = w.promotion.createPromotionFilters(StroomLinks.CHAT, List.of(
-                new PromotionProcessing.Entry(TP, "ACME", "Raw Events", List.of()),
-                new PromotionProcessing.Entry(IP, null, "Events", List.of(PIPELINE_TERM))));
+                new PromotionProcessing.Entry(TP, List.of("ACME"), "Raw Events", List.of()),
+                new PromotionProcessing.Entry(IP, List.of(), "Events", List.of(PIPELINE_TERM))));
 
         assertThat(made.getFirst().get("existing")).isEqualTo(true);
         assertThat(made.getFirst().get("filter_id")).isEqualTo(5);
@@ -441,8 +548,8 @@ class TestPromotionProcessing {
         w.nextFilterId = 31;
 
         final List<Map<String, Object>> made = w.promotion.createPromotionFilters(StroomLinks.CHAT, List.of(
-                new PromotionProcessing.Entry(ProcessingWorld.EV, "ACME", "Raw Events", List.of()),
-                new PromotionProcessing.Entry(IP, null, "Events", List.of(PIPELINE_TERM))));
+                new PromotionProcessing.Entry(ProcessingWorld.EV, List.of("ACME"), "Raw Events", List.of()),
+                new PromotionProcessing.Entry(IP, List.of(), "Events", List.of(PIPELINE_TERM))));
 
         assertThat(String.valueOf(made.get(1).get("before_enabling")))
                 .contains("only once filter 31 (pipeline 'Acme-Events') has processed what the build processed "
