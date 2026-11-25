@@ -1253,9 +1253,11 @@ class IndexChecks {
         }
     }
 
-    // The element running the pipeline's own indexing XSLT ([XsltStages]: where its documents are written), else its
-    // first own XSLT.
-    private String indexingElement(final SteppedPipeline pipeline, final String pipelineUuid) {
+    /// @param pipeline     The indexing pipeline.
+    /// @param pipelineUuid Its UUID.
+    /// @return The element running the pipeline's own indexing XSLT ([XsltStages]: where its documents are
+    /// written, never an Events decorator before it), else its first own XSLT; null for none.
+    String indexingElement(final SteppedPipeline pipeline, final String pipelineUuid) {
         final String first = ownXsltElement(pipeline, pipelineUuid);
         if (xsltStages == null || first == null) {
             return first;
