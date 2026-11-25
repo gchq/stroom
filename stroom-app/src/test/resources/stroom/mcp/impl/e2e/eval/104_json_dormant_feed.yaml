@@ -6,7 +6,10 @@ capabilities: [lifecycle, event_types, hand_written, several_feeds]
 # comparison says EVAL-104-OLD is dormant with its streams and dates, and promotion's one filter selects both. The
 # trap: the dormant feed dropped by its dates, or by its name. The setup's XSLT (hand_written_vpn.xsl) no longer says in
 # its header that the source IP isn't translated: Haiku read that as a gap to fill (round 3, 2026-11-25) and added
-# EventSource/Client/IPAddress, which this case never asks for.
+# EventSource/Client/IPAddress, which this case never asks for. In round 5 (2026-11-26) Haiku asked whether to add it
+# and the user model, given only user_knows, chose it: the request now says the translation stays as it is. The
+# start choice may be offered before compare_feeds (catalogue_event_types offers it, then sends the agent to
+# compare_feeds), so the order checks only the catalogue read back after rebuild_mapping.
 promote: true
 setup:
   hand_written:
@@ -35,14 +38,14 @@ setup:
 
 request: >
   EVAL-104 is our VPN audit feed, translated by a pipeline written by hand. EVAL-104-OLD is a gateway we retired;
-  translate its history too, with the same translation.
+  translate its history too, with the same translation, unchanged.
 user_knows: >
   EVAL-104-OLD's records are the same as EVAL-104's; its old streams are to be translated. Start from the existing
   pipeline when asked and keep its translation as it is. Both feeds' times are UTC.
 expected:
   route:
     start_from: existing
-    calls_in_order: [start_build, survey_feed, survey_feed, compare_feeds, catalogue_event_types, copy_pipeline, rebuild_mapping, catalogue_event_types, promote_build]
+    calls_in_order: [start_build, survey_feed, survey_feed, compare_feeds, copy_pipeline, rebuild_mapping, catalogue_event_types, promote_build]
     forbidden_calls: [draft_translation_mapping]
   records: 4
   records_in_sample: 5
