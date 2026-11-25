@@ -213,7 +213,8 @@ class TestE2eSeveralFeedsBuild extends AbstractE2eTest {
         storeParts(feeds.b(), List.of(Map.entry(Map.of("Feed", feeds.b()), lines(true,
                 "2026-11-03 18:00:01", "2026-11-03 18:05:00"))));
         storeParts(feeds.c(), List.of(Map.entry(Map.of("Feed", feeds.c()), lines(false,
-                "2026-05-09 08:00:01", "2026-05-09 08:05:00"))), System.currentTimeMillis() - Duration.ofDays(200).toMillis());
+                "2026-05-09 08:00:01", "2026-05-09 08:05:00"))),
+                System.currentTimeMillis() - Duration.ofDays(200).toMillis());
         final UserRef readers = user("manyf-site-b-readers", Set.of(AppPermission.USE_MCP_TOOLS));
         asUser(admin, () -> {
             documentPermissionService.setPermission(feedRef(siteB, feeds.b()), readers, DocumentPermission.VIEW);
