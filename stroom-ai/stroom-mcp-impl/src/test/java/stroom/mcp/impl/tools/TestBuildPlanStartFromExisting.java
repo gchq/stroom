@@ -211,6 +211,55 @@ class TestBuildPlanStartFromExisting {
     }
 
     @Test
+    void fromTheExistingPipelineTheCopyThenItsReadBackComeBeforeAnythingElseOfTheTranslation() {
+        // Seen in eval cases 97 and 104 on Haiku: the catalogue listed before the copy, the copy's XSLT edited by
+        // hand before its read-back.
+        facts.startFrom = Map.of("choice", ExistingTranslations.EXISTING, "pipeline", EXISTING);
+        assertThat(plan.awaitingReadBack("b")).hasValueSatisfying(waiting -> {
+            assertThat(waiting.next()).startsWith("copy_pipeline build=b source_uuid=prod-ev first")
+                    .contains("'ACME-V1.0-Events'");
+            assertThat(waiting.unread()).isEmpty();
+        });
+        copied("translation");
+        assertThat(plan.awaitingReadBack("b")).hasValueSatisfying(waiting -> {
+            assertThat(waiting.next()).startsWith("rebuild_mapping uuid=x pipeline_uuid=ev first");
+            assertThat(waiting.unread()).containsExactly("x");
+        });
+        facts.mappings = Map.of("x", FakeBuildFacts.kept("translation", Map.of()));
+        assertThat(plan.awaitingReadBack("b")).isEmpty();
+    }
+
+    @Test
+    void aCopyOfATranslationMadeUnaskedIsReadBackFirstToo() {
+        // The plan's copiedUnasked: a start the offer never asked about is a start from it all the same.
+        copied("translation");
+        assertThat(plan.awaitingReadBack("b")).map(BuildPlan.ReadBack::next).hasValueSatisfying(next ->
+                assertThat(next).startsWith("rebuild_mapping uuid=x"));
+    }
+
+    @Test
+    void nothingAwaitsAReadBackOtherwise() {
+        // A new source, a new version of an indexing pipeline alone, a draft, or a description in place.
+        assertThat(plan.awaitingReadBack("b")).isEmpty();
+        copied("indexing");
+        assertThat(plan.awaitingReadBack("b")).isEmpty();
+        copied("translation");
+        facts.startFrom = Map.of("choice", ExistingTranslations.DRAFT, "pipeline", EXISTING);
+        assertThat(plan.awaitingReadBack("b")).isEmpty();
+        facts.startFrom = Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline", EXISTING);
+        assertThat(plan.awaitingReadBack("b")).isEmpty();
+        assertThat(plan.awaitingReadBack(null)).isEmpty();
+    }
+
+    // The build holds a copy of a pipeline of that stage, and of its XSLT.
+    private void copied(final String stage) {
+        facts.docs = List.of(FakeBuildFacts.doc("Documentation", "s", "ACME - Survey"),
+                FakeBuildFacts.doc("Pipeline", "ev", "ACME-V1.1-Events", "version_of", "prod-ev"),
+                FakeBuildFacts.doc("XSLT", "x", "ACME-V1.1-Events", "version_of", "prod-x"));
+        facts.stages = Map.of("ev", stage);
+    }
+
+    @Test
     void theOfferSaysTheBuildMayBeDescribedInPlace() {
         facts.existing = EXISTING;
         assertThat(String.valueOf(next(status()).get("then"))).contains("described in place", "no new version");

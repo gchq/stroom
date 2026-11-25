@@ -193,6 +193,7 @@ class SaveXsltTool extends AbstractBuiltInTool {
         final TranslationDocs.Source source = TranslationDocs.Source.of(indexPlan);
         final Map<String, Object> result;
         if (uuid != null) {
+            translationDocs.refuseByStart(build, uuid);
             result = translationDocs.updateXslt(call, context, uuid, code, stringArg(call, VERSION_ARG), source,
                     said, ToolArgs.flag(call, DISCARD_HAND_EDIT_ARG), TranslationArgs.handEditChoices(call));
         } else {

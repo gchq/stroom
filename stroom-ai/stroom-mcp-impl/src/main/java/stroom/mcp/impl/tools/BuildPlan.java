@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -708,6 +709,71 @@ public class BuildPlan {
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("How build {} starts wasn't read: {}", build, e.getMessage()), e);
             return Optional.empty();
+        }
+    }
+
+    /// What a build starting from an existing pipeline (the user's choice, or a copy of a translation pipeline made
+    /// without it asked) does before anything else of its translation: the copy made, then its XSLT read back into
+    /// a mapping and catalogue. Seen in eval cases 97 and 104 on Haiku: the copy's XSLT edited by hand, and the
+    /// catalogue listed before the copy, its origin "0 event types", the source notes left with no catalogue.
+    ///
+    /// @param build A build.
+    /// @return The step still to do, and the copy's XSLTs not read back; empty once the build holds a translation
+    /// mapping, or where it doesn't start from an existing pipeline (drafted, described in place, a new source, or
+    /// a new version of an indexing pipeline alone).
+    public Optional<ReadBack> awaitingReadBack(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        try {
+            final Map<String, Object> startFrom = facts.startFrom(build).orElse(null);
+            if (startFrom != null && !ExistingTranslations.EXISTING.equals(startFrom.get("choice"))) {
+                return Optional.empty();
+            }
+            final List<Map<String, Object>> docs = facts.buildDocs(build);
+            final List<Map<String, Object>> copies = docs.stream()
+                    .filter(doc -> PipelineDoc.TYPE.equals(doc.get("type")) && doc.get("version_of") != null)
+                    .filter(doc -> "translation".equals(stageOf(doc)))
+                    .toList();
+            if (startFrom == null && copies.isEmpty()) {
+                return Optional.empty();
+            }
+            final List<Map<String, Object>> xslts = docs.stream()
+                    .filter(doc -> XsltDoc.TYPE.equals(doc.get("type")))
+                    .toList();
+            if (hasMapping(xslts(xslts), KeptMapping.TRANSLATION)) {
+                return Optional.empty();
+            }
+            if (copies.isEmpty()) {
+                // Chosen (a copy made unasked is one already): the copy is to make.
+                final Map<String, Object> pipeline = JsonValues.mapOrEmpty(startFrom.get("pipeline"));
+                return Optional.of(new ReadBack("copy_pipeline build=" + build + " source_uuid=" + ToolText.str(
+                        pipeline.get("uuid")) + " first: the build starts from '" + ToolText.str(pipeline.get(
+                        "name")) + "', copied as a new version, then rebuild_mapping reads the copy's XSLT back "
+                                                + "into its mapping and catalogue", Set.of()));
+            }
+            final Set<String> unread = new LinkedHashSet<>();
+            xslts.stream()
+                    .filter(doc -> doc.get("version_of") != null)
+                    .map(BuildPlan::uuid)
+                    .forEach(unread::add);
+            return Optional.of(new ReadBack("rebuild_mapping uuid=" + unread.stream().findFirst()
+                    .orElse("<the copy's XSLT>") + " pipeline_uuid=" + uuid(copies.getFirst()) + " first: it "
+                                            + "reads the copy's XSLT back into its mapping and catalogue of event "
+                                            + "types, the original's translation kept (what it can't read stays "
+                                            + "as XSLT)", Set.copyOf(unread)));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Build {}'s read-back wasn't checked: {}", build, e.getMessage()), e);
+            return Optional.empty();
+        }
+    }
+
+    // A pipeline's stage, or null where Stroom can't load it.
+    private String stageOf(final Map<String, Object> doc) {
+        try {
+            return facts.pipelineShape(uuid(doc)).stage();
+        } catch (final PipelineUnreadableException e) {
+            return null;
         }
     }
 
@@ -2522,6 +2588,14 @@ public class BuildPlan {
     /// @param reference     Reference data: a table to look values up in, loaded by a reference-data pipeline.
     /// @param referenceOnly Reference data loaded on its own: no translation, Events or index.
     record Kinds(boolean discovery, boolean reference, boolean referenceOnly) {
+
+    }
+
+    /// What a build starting from an existing pipeline does before its translation is changed or catalogued.
+    ///
+    /// @param next   The step, as a sentence naming its call.
+    /// @param unread The copy's XSLTs not read back yet (none before the copy is made).
+    public record ReadBack(String next, Set<String> unread) {
 
     }
 }

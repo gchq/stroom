@@ -540,6 +540,8 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
             // A save: refused first, whatever the mapping, while the build's catch-all is unconfirmed.
             refuseUnconfirmedCatchAll(buildOf(request));
         }
+        // Nor over an XSLT the build's start keeps as it is (described in place, or a copy not read back yet).
+        translationDocs.refuseByStart(request.build(), request.uuid());
         final Optional<Map<String, Object>> early = readMapping(context, b);
         if (early.isPresent()) {
             return early.get();

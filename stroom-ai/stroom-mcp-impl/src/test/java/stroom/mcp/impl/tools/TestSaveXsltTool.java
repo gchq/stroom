@@ -102,6 +102,57 @@ class TestSaveXsltTool {
     }
 
     @Test
+    void aCopysXsltIsNotEditedByHandBeforeItIsReadBack() {
+        // Seen in eval case 97 on Haiku: the copy's XSLT saved by hand straight after copy_pipeline, never read
+        // back, so the build had no mapping and no catalogue.
+        final SaveXsltTool tool = world.saveXsltTool();
+        final String code = HAND.replace("{BODY}", "");
+        final String uuid = String.valueOf(world.call(tool, Map.of("build", BUILD, "name", "n", "code", code))
+                .get("uuid"));
+        world.facts.startFrom = Map.of("choice", ExistingTranslations.EXISTING, "pipeline", Map.of("name",
+                "ACME-Events", "uuid", "prod-ev"));
+        world.facts.docs.add(FakeBuildFacts.doc("Pipeline", "ev", "ACME-Events-V1.1", "version_of", "prod-ev"));
+        world.facts.docs.add(FakeBuildFacts.doc("XSLT", uuid, "n", "version_of", "prod-x"));
+        world.facts.stages = Map.of("ev", "translation");
+
+        final String refused = String.valueOf(world.call(tool, Map.of("build", BUILD, "uuid", uuid, "code",
+                HAND.replace("{BODY}", "<Extra/>"))).get("error"));
+
+        assertThat(refused).contains("Not yet: rebuild_mapping uuid=" + uuid + " pipeline_uuid=ev first",
+                "build_translation_xslt uuid=" + uuid, "Nothing was saved");
+        assertThat(world.xslt(uuid).getData()).isEqualTo(code);
+        // Read back (its mapping kept), it is changed as any other.
+        world.facts.mappings = Map.of(uuid, FakeBuildFacts.kept("translation", Map.of()));
+        assertThat(world.call(tool, Map.of("build", BUILD, "uuid", uuid, "code", HAND.replace("{BODY}",
+                "<Extra/>")))).containsEntry("uuid", uuid);
+    }
+
+    @Test
+    void theXsltABuildDescribesInPlaceIsNotSaved() {
+        // Seen in eval case 109 on Haiku: build_translation_xslt over the described XSLT; the guard's refusal sent
+        // the agent to copy_pipeline, a new version the user had ruled out.
+        final SaveXsltTool tool = world.saveXsltTool();
+        final String code = HAND.replace("{BODY}", "");
+        final String uuid = String.valueOf(world.call(tool, Map.of("build", BUILD, "name", "n", "code", code))
+                .get("uuid"));
+        world.facts.startFrom = Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline", Map.of("name",
+                "ACME-Events", "uuid", "prod-ev"), InPlaceInduction.IN_PLACE, Map.of(InPlaceInduction.XSLT,
+                Map.of("type", "XSLT", "uuid", uuid, "name", "n")));
+
+        final String refused = String.valueOf(world.call(tool, Map.of("build", BUILD, "uuid", uuid, "code",
+                HAND.replace("{BODY}", "<Extra/>"))).get("error"));
+
+        assertThat(refused).contains("describes 'ACME-Events' in place", "its XSLT stays as it is",
+                "catalogue_event_types build=" + BUILD, "Nothing was saved");
+        assertThat(world.xslt(uuid).getData()).isEqualTo(code);
+        // Another XSLT of the build (an indexing one, say) is saved as before.
+        final String other = String.valueOf(world.call(tool, Map.of("build", BUILD, "name", "m", "code", code))
+                .get("uuid"));
+        assertThat(world.call(tool, Map.of("build", BUILD, "uuid", other, "code", HAND.replace("{BODY}",
+                "<Extra/>")))).containsEntry("uuid", other);
+    }
+
+    @Test
     void saveToolsCreateOrUpdateByUuid() {
         final SaveXsltTool tool = world.saveXsltTool();
         final String code = HAND.replace("{BODY}", "");

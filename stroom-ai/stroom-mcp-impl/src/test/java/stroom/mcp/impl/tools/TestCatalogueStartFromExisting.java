@@ -133,6 +133,27 @@ class TestCatalogueStartFromExisting {
                 .contains("start_from is the user's answer: existing or draft");
     }
 
+    @Test
+    void nothingIsListedProposedOrConfirmedBeforeTheCopyIsReadBack() {
+        // Seen in eval case 104 on Haiku: listed before the copy was made, its origin "0 event types from
+        // 'EVAL-104-Events'", the proposals of its TypeIds refused as not Verb-Object, and no catalogue made.
+        facts.startFrom = Map.of("choice", ExistingTranslations.EXISTING, "pipeline", facts.existing);
+
+        assertThat(text(Map.of("build", BUILD, "stream_ids", List.of(7)), BuildToolCalls.context()))
+                .contains("Not yet: copy_pipeline build=" + BUILD + " source_uuid=prod-ev first",
+                        "Then catalogue_event_types build=" + BUILD + " lists the catalogue read back",
+                        "Nothing was recorded");
+        assertThat(text(Map.of("build", BUILD, "confirm", true), BuildToolCalls.context()))
+                .contains("Not yet: copy_pipeline");
+        // Copied, not read back: rebuild_mapping is next.
+        facts.docs.add(FakeBuildFacts.doc("Pipeline", "ev", "ACME-V1.1-Events", "version_of", "prod-ev"));
+        facts.docs.add(FakeBuildFacts.doc("XSLT", "x", "ACME-V1.1-Events", "version_of", "prod-x"));
+        facts.stages = Map.of("ev", "translation");
+        assertThat(text(Map.of("build", BUILD, "proposals", List.of(Map.of("op", "add", "type_id", "1001"))),
+                BuildToolCalls.context())).contains("Not yet: rebuild_mapping uuid=x pipeline_uuid=ev first");
+        Mockito.verifyNoInteractions(sampleStreamTexts);
+    }
+
     private Map<String, Object> call(final Map<String, Object> arguments, final ToolCallContext context) {
         final String text = text(arguments, context);
         assertThat(text).as("a JSON result").startsWith("{");

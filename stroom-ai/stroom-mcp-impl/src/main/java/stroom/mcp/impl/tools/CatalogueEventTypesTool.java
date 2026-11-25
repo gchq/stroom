@@ -428,6 +428,15 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                 return asked.get();
             }
         }
+        // Started from an existing pipeline: its catalogue is read back with the copy's XSLT, so nothing is listed,
+        // proposed or confirmed before that (seen in eval case 104 on Haiku: listed before the copy, its origin "0
+        // event types", the proposals refused as not Verb-Object and the catalogue never made).
+        final Optional<BuildPlan.ReadBack> waiting = plan.awaitingReadBack(build);
+        if (waiting.isPresent()) {
+            throw new ToolRefusal("Not yet: " + waiting.get().next() + ". Then " + NAME + " build=" + build
+                                  + " lists the catalogue read back, to check and put to the user. Nothing was "
+                                  + "recorded.");
+        }
         final Map<String, Object> result = !explain.isEmpty()
                 ? explained(calling, explain)
                 : !proposals.isEmpty()

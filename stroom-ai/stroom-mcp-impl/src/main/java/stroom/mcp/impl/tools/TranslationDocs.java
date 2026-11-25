@@ -16,10 +16,12 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.cef.CefPlan;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.documents.KeptMapping;
@@ -411,6 +413,43 @@ public class TranslationDocs {
         final Map<String, Object> result = summary(saved);
         result.putAll(extra);
         return planProvider.get().withNext(context, build, result);
+    }
+
+    /// Refuses a change to an XSLT that its build's start keeps as it is: the XSLT a build describes in place (no
+    /// new version: the user chose it, and its code is the authority), and a copy's XSLT not read back yet
+    /// (rebuild_mapping comes first, so the original's translation becomes the copy's mapping and catalogue).
+    /// Seen in eval cases 97 and 109 on Haiku: the copy's XSLT edited by hand with no read-back, and a save over
+    /// the described XSLT.
+    ///
+    /// @param given The build the call names, or null: the XSLT's own build where it is in one.
+    /// @param uuid  The XSLT to change.
+    /// @throws ToolRefusal if the build's start keeps it as it is.
+    public void refuseByStart(final String given, final String uuid) {
+        if (uuid == null) {
+            return;
+        }
+        final String build = guard.buildOf(new DocRef(XsltDoc.TYPE, uuid)).orElse(given);
+        if (build == null) {
+            return;
+        }
+        final BuildPlan plan = planProvider.get();
+        final Map<String, Object> startFrom = plan.startFrom(build).orElse(null);
+        if (InPlaceInduction.inPlace(startFrom) && uuid.equals(ToolText.str(JsonValues.mapOrEmpty(JsonValues
+                .mapOrEmpty(startFrom.get(InPlaceInduction.IN_PLACE)).get(InPlaceInduction.XSLT)).get("uuid")))) {
+            throw new ToolRefusal("Build '" + build + "' describes '" + ToolText.str(JsonValues.mapOrEmpty(
+                    startFrom.get("pipeline")).get("name")) + "' in place, as the user chose: its XSLT stays as it "
+                                  + "is (no new version), only the tools' hidden blocks in its description "
+                                  + "change. Its event types change in catalogue_event_types build=" + build
+                                  + "; a change to what it writes is a new version, in a build the user starts for "
+                                  + "it. Nothing was saved.");
+        }
+        plan.awaitingReadBack(build)
+                .filter(waiting -> waiting.unread().contains(uuid))
+                .ifPresent(waiting -> {
+                    throw new ToolRefusal("Not yet: " + waiting.next() + ". Then change the mapping it reads "
+                                          + "back (build_translation_xslt uuid=" + uuid + " changes=...), or the "
+                                          + "code where the mapping can't hold the change. Nothing was saved.");
+                });
     }
 
     /// Replaces an XSLT's code, after check_xslt passes. Only XSLTs the tools created (including working copies of
