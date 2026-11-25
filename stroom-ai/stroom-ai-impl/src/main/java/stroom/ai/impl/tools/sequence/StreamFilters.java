@@ -88,7 +88,9 @@ public final class StreamFilters {
             case IN -> filter.negated()
                     ? not(term(filter, Condition.IN, value, text))
                     : term(filter, Condition.IN, value, text);
-            default -> term(filter, filter.condition(), value, text);
+            default -> filter.negated()
+                    ? not(term(filter, filter.condition(), value, text))
+                    : term(filter, filter.condition(), value, text);
         };
     }
 

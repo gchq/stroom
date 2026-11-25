@@ -230,6 +230,18 @@ class TestEqlQueryWriter {
     }
 
     @Test
+    void aNegatedPatternIsTheConditionNot() {
+        // A person's own acts left out by their logon forms (a target step with logonForms).
+        assertThat(EqlQueryWriter.eqlCondition(new Filter("user", Condition.MATCHES_REGEX, "(.*\\\\)?(alice)",
+                true, true, false), FieldType.KEYWORD)).isEqualTo("not (user regex~ \"(.*\\\\\\\\)?(alice)\")");
+        assertThat(EqlQueryWriter.esqlCondition(new Filter("user", Condition.MATCHES_REGEX, "alice.*", false, true,
+                false), FieldType.KEYWORD)).isEqualTo("NOT (user RLIKE \"alice.*\")");
+        // No ES|QL form for a case-insensitive regex, negated or not.
+        assertThat(EqlQueryWriter.esqlCondition(new Filter("user", Condition.MATCHES_REGEX, "alice.*", true, true,
+                false), FieldType.KEYWORD)).isNull();
+    }
+
+    @Test
     void aLengthIsComparedAsAWholeNumber() {
         assertThat(EqlQueryWriter.eqlCondition(new Filter("cmd", Condition.GREATER_THAN, "1000", false, false, true),
                 FieldType.KEYWORD)).isEqualTo("length(cmd) > 1000");

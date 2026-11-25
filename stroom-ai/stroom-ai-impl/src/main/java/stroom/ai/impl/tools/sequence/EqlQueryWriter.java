@@ -141,7 +141,10 @@ public final class EqlQueryWriter {
             return lengthCondition(filter, type, "length(" + eqlName(filter.field()) + ")", " and ");
         }
         if (filter.negated()) {
-            return negatedIn(filter, type);
+            // A negated pattern (a person's logon forms left out, say): the condition, not.
+            return filter.condition() == Condition.IN
+                    ? negatedIn(filter, type)
+                    : "not (" + eqlCondition(filter.positive(), type) + ")";
         }
         final String name = eqlName(filter.field());
         final boolean text = isText(type);
@@ -319,6 +322,12 @@ public final class EqlQueryWriter {
     static String esqlCondition(final Filter filter, final FieldType type) {
         if (filter.length()) {
             return lengthCondition(filter, type, "LENGTH(" + EsqlHints.name(filter.field()) + ")", " AND ");
+        }
+        if (filter.negated() && filter.condition() != Condition.IN) {
+            final String positive = esqlCondition(filter.positive(), type);
+            return positive == null
+                    ? null
+                    : "NOT (" + positive + ")";
         }
         final boolean text = isText(type);
         final boolean insensitive = filter.caseInsensitive() && text;
@@ -550,7 +559,8 @@ public final class EqlQueryWriter {
     /// @param condition       The condition (IN for NOT_IN, with `negated`).
     /// @param value           The value ('from,to' for BETWEEN, values separated by commas for IN).
     /// @param caseInsensitive True to match text whatever its case.
-    /// @param negated         True for NOT_IN: none of the values.
+    /// @param negated         True for NOT_IN: none of the values; on another condition, events it doesn't match
+    ///                        (a person's logon forms left out, say).
     /// @param length          True to compare the string's length (a whole number of characters), not its value.
     public record Filter(String field,
                          Condition condition,
@@ -579,6 +589,11 @@ public final class EqlQueryWriter {
         /// @return This condition with that value.
         Filter withValue(final String otherValue) {
             return new Filter(field, condition, otherValue, caseInsensitive, negated, length);
+        }
+
+        /// @return This condition, not negated.
+        Filter positive() {
+            return new Filter(field, condition, value, caseInsensitive, false, length);
         }
     }
 

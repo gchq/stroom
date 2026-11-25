@@ -431,8 +431,8 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
                                 .description("Optional: only when the user (or a skill) says logons are written "
                                              + "with a domain (CORP\\jsmith) or as an email: strip_domain (both "
                                              + "forms), lowercase; applied to each step's user field read by "
-                                             + "logonIds. Slower: a pattern over every event in the period. Exact "
-                                             + "by default.")
+                                             + "logonIds, a role=target step's target field too. Slower: a pattern "
+                                             + "over every event in the period. Exact by default.")
                                 .build())
                         .addStringProperty(PERSON_FIELD_ARG, "Optional: the field holding the person id (a "
                                                              + "skill's).")
@@ -499,29 +499,36 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
         // One person's sequences: each step restricted to them in its doc, by person id or by logon id.
         final Map<String, Scope> scopes = new LinkedHashMap<>();
         final Map<String, PersonScope.Target> targets = new LinkedHashMap<>();
+        // Each target doc's actor scope: how their own acts there are read, to leave them out.
+        final Map<String, PersonScope.By> actorsBy = new LinkedHashMap<>();
         final List<GivenStep> scoped = new ArrayList<>();
         for (final GivenStep step : given) {
             scoped.add(step.target()
-                    ? targeted(request, context, step, person, logonIds, scopes, targets)
+                    ? targeted(request, context, step, new Restriction(person, logonIds, logonForms), scopes,
+                            targets, actorsBy)
                     : scoped(request, context, step, person, logonIds, logonForms, scopes));
         }
         final GivenStep scopedUntil = givenUntil == null
                 ? null
                 : scoped(request, context, givenUntil, person, logonIds, logonForms, scopes);
         final ToolResult result = runSteps(request, context, scoped, scopedUntil, fieldNotes);
-        return withScopes(result, scopes, targets, logonForms);
+        return withScopes(result, scopes, targets, actorsBy, logonForms);
     }
 
     // A step of acts done to the person: an IN condition on its doc's target person field, else its target user
     // field holding any of the logon ids; their own acts on themselves left out (NOT_IN on the field they are read
-    // by as the actor, where the doc has one). Keys only, a step can't be: it has no events done to anyone.
+    // by as the actor, where the doc has one). Keys only, a step can't be: it has no events done to anyone. A
+    // logon id is matched in its other written forms only as logonForms ask, on the actor scope's terms (decided by
+    // the user, 2026-11-25): the target field and the actor's own acts left out alike.
     private GivenStep targeted(final ToolCall request,
                                final ToolCallContext context,
                                final GivenStep step,
-                               final String person,
-                               final List<String> logonIds,
+                               final Restriction restriction,
                                final Map<String, Scope> scopes,
-                               final Map<String, PersonScope.Target> targets) {
+                               final Map<String, PersonScope.Target> targets,
+                               final Map<String, PersonScope.By> actorsBy) {
+        final String person = restriction.person();
+        final List<String> logonIds = restriction.logonIds();
         if (step.keysOnly()) {
             throw new WorkspaceException("A keysOnly step says which entities count, so it can't be " + ROLE_KEY
                                          + "=" + TARGET_ROLE + ".");
@@ -541,13 +548,22 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
                 throw new WorkspaceException(DataSourceAccess.describe(doc) + " can't be restricted to acts done to "
                                              + "the person: " + found.leftOut() + ".");
             }
+            if (actor != null && actor.usable()) {
+                actorsBy.put(name, actor.by());
+            }
             return found;
         });
+        final List<Transform> forms = restriction.logonForms();
         final List<Filter> filters = new ArrayList<>(NullSafe.list(step.filters()));
-        filters.add(new Filter(target.field().field(), Condition.IN, String.join(",", target.values()), false));
+        filters.add(personFilter(target.field().field(), target.values(), target.by() == PersonScope.By.LOGON
+                ? forms
+                : List.of()));
         if (target.actorField() != null) {
-            filters.add(new Filter(target.actorField(), Condition.IN, String.join(",", target.actorValues()),
-                    false, true, false));
+            final Filter own = personFilter(target.actorField(), target.actorValues(),
+                    actorsBy.get(doc.getName()) == PersonScope.By.LOGON
+                            ? forms
+                            : List.of());
+            filters.add(new Filter(own.field(), own.condition(), own.value(), own.caseInsensitive(), true, false));
         }
         return new GivenStep(step.index(), filters, step.anyOf(), step.by(), step.missing(), step.runs(),
                 step.fields(), step.keysOnly(), step.transforms(), true);
@@ -637,6 +653,7 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
     private static ToolResult withScopes(final ToolResult result,
                                          final Map<String, Scope> scopes,
                                          final Map<String, PersonScope.Target> targets,
+                                         final Map<String, PersonScope.By> actorsBy,
                                          final List<Transform> logonForms) {
         if (result.isError() || (scopes.isEmpty() && targets.isEmpty())) {
             return result;
@@ -667,11 +684,22 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
         for (final Map.Entry<String, PersonScope.Target> entry : targets.entrySet()) {
             final PersonScope.Target target = entry.getValue();
             NullSafe.consume(target.field().suggestion(), line -> addOnce(suggested, line));
-            listed.add(Map.of("index", entry.getKey(), "role", TARGET_ROLE, "by", target.describe(), "field",
-                    target.field().field(), "field_from", target.field().from(), "values", target.values()));
+            final boolean formsApplied = !logonForms.isEmpty() && (target.by() == PersonScope.By.LOGON
+                                                                   || actorsBy.get(entry.getKey())
+                                                                      == PersonScope.By.LOGON);
+            final String matched = formsApplied
+                    ? "matched with " + PersonScope.describe(logonForms) + ": " + PersonScope.SCRIPTED
+                    : null;
+            final Map<String, Object> one = new LinkedHashMap<>(Map.of("index", entry.getKey(), "role",
+                    TARGET_ROLE, "by", target.describe(), "field", target.field().field(), "field_from",
+                    target.field().from(), "values", target.values()));
+            NullSafe.consume(matched, text -> one.put("matched", text));
+            listed.add(one);
             sb.append("\n- ").append(entry.getKey()).append(" (").append(TARGET_ROLE).append(" steps): ")
                     .append(target.describe()).append(", ").append(target.field().field()).append(" in (")
-                    .append(String.join(", ", target.values())).append(")");
+                    .append(String.join(", ", target.values())).append(")").append(matched == null
+                            ? ""
+                            : ", " + matched);
         }
         if (byLogon) {
             sb.append("\n").append(PersonScope.OTHER_ACCOUNTS);
@@ -1924,5 +1952,14 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
         int mostSequences() {
             return SequenceQueryTool.mostSequences(steps);
         }
+    }
+
+    /// Whom a call's steps are restricted to.
+    ///
+    /// @param person     The person id, or null.
+    /// @param logonIds   Their logon ids; empty for none.
+    /// @param logonForms The logon ids' other written forms to match too; empty to match exactly.
+    private record Restriction(String person, List<String> logonIds, List<Transform> logonForms) {
+
     }
 }

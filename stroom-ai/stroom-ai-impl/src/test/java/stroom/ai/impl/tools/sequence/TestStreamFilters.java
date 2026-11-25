@@ -73,6 +73,18 @@ class TestStreamFilters {
     }
 
     @Test
+    void aNegatedConditionOtherThanAListIsItsTermNot() {
+        final ExpressionOperator expression = StreamFilters.expression(new Step(1, List.of(new Filter("action",
+                Condition.EQUALS, "Copy", false, true, false)), List.of(), List.of("user"), false, 1, List.of(),
+                TYPES, true), "Step 1");
+
+        final ExpressionOperator not = (ExpressionOperator) expression.getChildren().getFirst();
+        assertThat(not.op()).isEqualTo(Op.NOT);
+        assertThat(((ExpressionTerm) not.getChildren().getFirst()).getCondition()).isEqualTo(Condition.EQUALS);
+        assertThat(((ExpressionTerm) not.getChildren().getFirst()).getValue()).isEqualTo("Copy");
+    }
+
+    @Test
     void aStepWithNoConditionsHasNoExpressionAndALengthConditionIsRefused() {
         assertThat(StreamFilters.expression(new Step(1, List.of(), List.of("user"), false, 1, List.of(), TYPES),
                 "Step 1")).isNull();

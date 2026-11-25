@@ -351,6 +351,34 @@ class TestSequenceQueryTool {
     }
 
     @Test
+    void aTargetStepMatchesTheLogonIdsOtherWrittenFormsOnlyAsLogonFormsAsk() {
+        // Decided by the user (2026-11-25): logonForms apply to role=target steps on the actor scope's terms.
+        Mockito.when(agentInstructions.fieldsRuled(Mockito.any(), Mockito.eq(SYSMON))).thenReturn(Map.of(
+                InstructionRules.TARGET_USER_FIELD, new FieldRule(List.of("TargetUserName"), "/")));
+        final Map<String, Object> args = args("2m");
+        final List<Map<String, Object>> steps = new ArrayList<>((List<Map<String, Object>>) args.get("steps"));
+        final Map<String, Object> second = new LinkedHashMap<>(steps.get(1));
+        second.put("role", "target");
+        steps.set(1, second);
+        args.put("steps", steps);
+        args.put("logonIds", List.of("Alice.Chen"));
+        args.put("userField", List.of("user", "SubjectUserName"));
+        args.put("logonForms", List.of("strip_domain", "lowercase"));
+
+        final Map<String, Object> json = JsonUtil.readValue(run(mcp(), args), Map.class);
+
+        // The target field and the actor's own acts left out both by the pattern, in any case.
+        final String pattern = "regex~ \"(.*\\\\\\\\)?(alice\\\\.chen)(@.*)?\"";
+        assertThat(request().query()).contains("TargetUserName " + pattern,
+                "not (SubjectUserName " + pattern + ")");
+        assertThat((List<Map<String, Object>>) json.get("scope")).allSatisfy(scope -> assertThat(scope)
+                .containsEntry("matched", "matched with strip_domain, lowercase: " + PersonScope.SCRIPTED));
+        assertThat(run(chat(UserQuestions.NONE), args)).contains("- Sysmon (target steps): done to them",
+                "matched with strip_domain, lowercase: " + PersonScope.SCRIPTED);
+        // Exact without them: aStepOfActsDoneToThePersonIsRestrictedByItsDocsTargetFieldTheirOwnLeftOut.
+    }
+
+    @Test
     void aTargetStepNeedsAPersonATargetFieldAndAKnownRole() {
         final Map<String, Object> args = args("2m");
         final List<Map<String, Object>> steps = new ArrayList<>((List<Map<String, Object>>) args.get("steps"));

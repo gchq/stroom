@@ -3850,7 +3850,7 @@ Use for any 'X, then Y, within N' question ('did anyone X and then Y within an h
       "type" : "integer"
     },
     "logonForms" : {
-      "description" : "Optional: only when the user (or a skill) says logons are written with a domain (CORP\\jsmith) or as an email: strip_domain (both forms), lowercase; applied to each step's user field read by logonIds. Slower: a pattern over every event in the period. Exact by default.",
+      "description" : "Optional: only when the user (or a skill) says logons are written with a domain (CORP\\jsmith) or as an email: strip_domain (both forms), lowercase; applied to each step's user field read by logonIds, a role=target step's target field too. Slower: a pattern over every event in the period. Exact by default.",
       "items" : {
         "enum" : [ "strip_domain", "lowercase" ],
         "type" : "string"
