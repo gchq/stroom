@@ -876,6 +876,12 @@ public class BuildPlan {
         return out;
     }
 
+    /// @param build A build's name.
+    /// @throws ToolRefusal if the workspace has no build of the name, naming the user's builds.
+    public void refuseUnlessABuild(final String build) {
+        guard.refuseUnlessABuild(build);
+    }
+
     /// Each plan step's state, read from the build.
     ///
     /// @param build A build.

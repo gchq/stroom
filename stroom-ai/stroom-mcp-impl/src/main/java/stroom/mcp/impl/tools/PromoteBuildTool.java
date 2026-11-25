@@ -369,6 +369,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             throw inPlace.nothingToPromote(build);
         }
         if (docs.isEmpty()) {
+            guard.refuseUnlessABuild(build);
             throw new ToolRefusal("Build '" + build + "' has no documents");
         }
         refuseUncatalogued(build, docs);

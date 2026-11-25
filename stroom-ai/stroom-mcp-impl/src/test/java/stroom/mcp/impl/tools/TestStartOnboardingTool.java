@@ -172,10 +172,12 @@ class TestStartOnboardingTool {
 
     @Test
     void buildStatusGivesThePlan() {
+        // A build just started: its folder, nothing in it yet.
+        world.guard().buildFolder("bb");
         final BuildStatusTool status = new BuildStatusTool(plan, new PendingDocumentation());
         final Map<String, Object> result = BuildToolCalls.json(status.execute(BuildToolCalls.call(
-                BuildStatusTool.NAME, "{\"build\": \"b\"}"), BuildToolCalls.context()).text());
-        assertThat(result.get("build")).isEqualTo("b");
+                BuildStatusTool.NAME, "{\"build\": \"bb\"}"), BuildToolCalls.context()).text());
+        assertThat(result.get("build")).isEqualTo("bb");
         assertThat(((Map<?, ?>) result.get("next")).get("step")).isEqualTo("feed");
         assertThat(status.definition().description().toString()).startsWith("Onboarding, any step: ");
         assertThat(status.isReadOnly()).isTrue();
@@ -187,11 +189,13 @@ class TestStartOnboardingTool {
     @SuppressWarnings("unchecked")
     void buildStatusIsBriefUnlessAskedForInFull() {
         // Seen: its 10 KB result saved to the workspace and called for again and again.
+        // A build just started: its folder, nothing in it yet.
+        world.guard().buildFolder("bb");
         final BuildStatusTool status = new BuildStatusTool(plan, new PendingDocumentation());
         final Map<String, Object> brief = BuildToolCalls.json(status.execute(BuildToolCalls.call(
-                BuildStatusTool.NAME, "{\"build\": \"b\"}"), BuildToolCalls.context()).text());
+                BuildStatusTool.NAME, "{\"build\": \"bb\"}"), BuildToolCalls.context()).text());
         final Map<String, Object> full = BuildToolCalls.json(status.execute(BuildToolCalls.call(
-                BuildStatusTool.NAME, "{\"build\": \"b\", \"full\": true}"), BuildToolCalls.context()).text());
+                BuildStatusTool.NAME, "{\"build\": \"bb\", \"full\": true}"), BuildToolCalls.context()).text());
 
         assertThat(brief.keySet()).startsWith("next", "before_promotion", "steps");
         final Map<String, Object> states = (Map<String, Object>) brief.get("steps");

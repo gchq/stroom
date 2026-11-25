@@ -133,6 +133,18 @@ class TestPromoteBuildTool {
     }
 
     @Test
+    void aBuildThatIsntThereIsRefusedNamingTheUsersBuilds() {
+        // Chat 195: build_status and promote_build for a name the workspace has no build of gave an empty plan.
+        world.guard().buildFolder("endpoint-logs-v1.0");
+        world.guard().buildFolder("acme-door-v1.0");
+
+        assertThat(docs.refusal(tool, BuildToolCalls.context(), DocumentationWorld.args(Map.of("build",
+                "endpoint-logs"))))
+                .contains("No build 'endpoint-logs' in the workspace")
+                .contains("Your builds: acme-door-v1.0, endpoint-logs-v1.0.");
+    }
+
+    @Test
     void aBuildDescribingAPipelineInPlaceHasNothingToPromote() {
         // Seen in eval cases 106-109 on Haiku and Sonnet: promote_build called on a build that described the
         // pipeline in place, its review laying out the source notes' working copy and the survey.
@@ -841,6 +853,8 @@ class TestPromoteBuildTool {
 
     @Test
     void aBuildWithNoDocumentsIsRefused() {
+        world.guard().buildFolder("bb");
+
         assertThat(docs.refusal(tool, BuildToolCalls.context(), "{\"build\": \"bb\"}"))
                 .isEqualTo("Build 'bb' has no documents");
     }

@@ -173,7 +173,12 @@ class BuildStatusTool extends AbstractBuiltInTool {
                     ? List.of()
                     : PromotedFeeds.report(promoted, switchOverProvider.get());
             final Map<String, Object> status = new LinkedHashMap<>(plan.status(build, null));
-            if (!promoted.isEmpty() && status.get("documents") instanceof final List<?> held && held.isEmpty()) {
+            final boolean empty = status.get("documents") instanceof final List<?> held && held.isEmpty();
+            if (promoted.isEmpty() && empty) {
+                // A name the workspace has no build of reads as a new build's empty plan (seen in chat 195).
+                plan.refuseUnlessABuild(build);
+            }
+            if (!promoted.isEmpty() && empty) {
                 // Promoted in this session, nothing left in it: what matters now is how its feeds are selected.
                 return JsonResults.of(promotedStatus(build, selection));
             }

@@ -90,6 +90,8 @@ public class WriteGuard {
     static final int FOLDER_LOCKS = 64;
 
     private static final Pattern BUILD = Pattern.compile("^[A-Za-z0-9][A-Za-z0-9_.-]{1,63}$");
+    // The most builds a refusal names.
+    private static final int MAX_BUILDS_LISTED = 30;
     private static final Set<String> TAGS = Set.of(MANAGED, GENERATED);
 
     private final Provider<ExplorerService> explorerServiceProvider;
@@ -220,6 +222,30 @@ public class WriteGuard {
                         .filter(name -> name != null && BUILD.matcher(name).matches())
                         .toList())
                 .orElse(List.of());
+    }
+
+    /// @param build A build's name.
+    /// @throws ToolRefusal if the workspace has no build of the name (a folder the user can view), naming the
+    ///                     user's builds: read as a new build, it would show an empty plan (seen in chat 195).
+    public void refuseUnlessABuild(final String build) {
+        if (buildFolder(build, false).isPresent()) {
+            return;
+        }
+        final List<String> builds = builds().stream()
+                .filter(name -> !PromotionWrites.BACKUPS.equals(name))
+                .sorted()
+                .toList();
+        final String listed = builds.size() > MAX_BUILDS_LISTED
+                ? String.join(", ", builds.subList(0, MAX_BUILDS_LISTED)) + " and " + (builds.size()
+                                                                                       - MAX_BUILDS_LISTED)
+                  + " more"
+                : String.join(", ", builds);
+        throw new ToolRefusal("No build '" + build + "' in the workspace (System/" + workspaceFolder() + "). "
+                              + (builds.isEmpty()
+                ? "You have no builds."
+                : "Your builds: " + listed + ".")
+                              + " Call again with the build's name as it is there; start_onboarding or start_build "
+                              + "begins a new one.");
     }
 
     /// @param build A build's name.

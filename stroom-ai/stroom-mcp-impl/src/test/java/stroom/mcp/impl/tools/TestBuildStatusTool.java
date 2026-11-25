@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.tools.ToolResult;
 import stroom.pipeline.shared.PipelineDoc;
 
 import org.junit.jupiter.api.Test;
@@ -36,7 +37,9 @@ class TestBuildStatusTool {
         // Decided by the user (2026-11-25): a dormant feed is included like the others, its volume stated.
         final FakeBuildFacts facts = new FakeBuildFacts();
         facts.sources = List.of("ACME-A", "ACME-OLD");
-        final BuildPlan plan = new BuildPlan(facts, new BuildWorld().guard(),
+        final BuildWorld world = new BuildWorld();
+        world.guard().buildFolder("acme");
+        final BuildPlan plan = new BuildPlan(facts, world.guard(),
                 new Consent(() -> Mockito.mock(AiAuditLog.class)), new BuildMemory());
         final FeedOverviews overviews = Mockito.mock(FeedOverviews.class);
         final List<Map<String, Object>> each = List.of(Map.of("feed", "ACME-A", "dormant", false),
@@ -54,6 +57,34 @@ class TestBuildStatusTool {
         assertThat(BuildToolCalls.json(tool.execute(BuildToolCalls.call(BuildStatusTool.NAME,
                 "{\"build\": \"acme\"}"), BuildToolCalls.context()).text()))
                 .doesNotContainKey(BuildStatusTool.SOURCE_FEEDS);
+    }
+
+    @Test
+    void aBuildThatIsntThereIsRefusedNamingTheUsersBuilds() {
+        // Chat 195: build_status for a name the workspace has no build of gave an empty plan, "step 1 of 16, create
+        // the feed", as if a new build.
+        final BuildWorld world = new BuildWorld();
+        world.guard().buildFolder("endpoint-logs-v1.0");
+        final BuildPlan plan = new BuildPlan(new FakeBuildFacts(), world.guard(),
+                new Consent(() -> Mockito.mock(AiAuditLog.class)), new BuildMemory());
+        final BuildStatusTool tool = new BuildStatusTool(plan, new PendingDocumentation());
+
+        final ToolResult refused = tool.execute(BuildToolCalls.call(BuildStatusTool.NAME,
+                "{\"build\": \"endpoint-logs\"}"), BuildToolCalls.context());
+
+        assertThat(refused.isError()).isTrue();
+        assertThat(refused.text()).contains("No build 'endpoint-logs' in the workspace")
+                .contains("Your builds: endpoint-logs-v1.0.")
+                .doesNotContain("create_feed");
+        // A build that is there, with nothing in it yet (just started), has its plan.
+        assertThat(tool.execute(BuildToolCalls.call(BuildStatusTool.NAME, "{\"build\": \"endpoint-logs-v1.0\"}"),
+                BuildToolCalls.context()).isError()).isFalse();
+        // With no builds at all, it says so.
+        final BuildStatusTool none = new BuildStatusTool(new BuildPlan(new FakeBuildFacts(),
+                new BuildWorld().guard(), new Consent(() -> Mockito.mock(AiAuditLog.class)), new BuildMemory()),
+                new PendingDocumentation());
+        assertThat(none.execute(BuildToolCalls.call(BuildStatusTool.NAME, "{\"build\": \"x1\"}"),
+                BuildToolCalls.context()).text()).contains("You have no builds");
     }
 
     @Test
