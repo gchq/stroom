@@ -101,6 +101,8 @@ class CopyPipelineTool extends AbstractBuiltInTool {
     private Provider<CatalogueNotes> catalogueNotesProvider;
     // The pipelines' inheritance; none in tests that make the tool themselves.
     private Provider<PipelineInheritance> inheritanceProvider;
+    // Where an existing pipeline's translation reads its records; none in tests that make the tool themselves.
+    private Provider<InPlaceInduction> inPlaceProvider;
 
     @Inject
     CopyPipelineTool(final PipelineWrites writes,
@@ -162,6 +164,16 @@ class CopyPipelineTool extends AbstractBuiltInTool {
     @Inject
     void setInheritance(final Provider<PipelineInheritance> inheritance) {
         this.inheritanceProvider = inheritance;
+    }
+
+    /// Tells where a hand-written pipeline's translation reads its records (a pre-processor may feed it), kept with
+    /// the build's start when a copy of it starts the build (set by injection; none in tests that make the tool
+    /// themselves).
+    ///
+    /// @param inPlace The existing pipelines' translations.
+    @Inject
+    void setInPlaceInduction(final Provider<InPlaceInduction> inPlace) {
+        this.inPlaceProvider = inPlace;
     }
 
     @Override
@@ -358,6 +370,9 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         final PipelineDoc changed = data;
         final DocRef ref = guard.create(PipelineDoc.TYPE, pipelineName, build, null, false, role);
         records.update(build, ref, entry -> entry.put("version_of", sourceUuid));
+        if (plan.startFrom(build).isEmpty() && plan.handWrittenTranslation(sourceUuid)) {
+            startsFromCopy(build, source);
+        }
         final PipelineDoc doc = pipelineDocs.write(pipelineDocs.read(ref.getUuid()).copy()
                 .parentPipeline(source.getParentPipeline())
                 .description(source.getDescription())
@@ -417,6 +432,36 @@ class CopyPipelineTool extends AbstractBuiltInTool {
             result.put("note", String.join("; ", notes));
         }
         return plan.withNext(context, build, result);
+    }
+
+    // A copy of a translation whose XSLT keeps no mapping (one the tools never built), made with no start recorded
+    // (none offered, or the offer not for it): the build starts from it, recorded as the user's choice is, so every
+    // tool reads the copy back as an existing pipeline's (its catalogue put to the user, its TypeIds kept). Decided
+    // by the user (2026-11-26) after the e2e suite showed the tools disagreeing: such a copy held for its read-back,
+    // its catalogue confirmed unasked, or its TypeIds refused as not Verb-Object.
+    private void startsFromCopy(final String build, final PipelineDoc source) {
+        final Map<String, Object> startFrom = new LinkedHashMap<>();
+        startFrom.put("choice", ExistingTranslations.EXISTING);
+        final Map<String, Object> named = new LinkedHashMap<>();
+        named.put("name", source.getName());
+        named.put("uuid", source.getUuid());
+        startFrom.put("pipeline", named);
+        startFrom.put("at", System.currentTimeMillis());
+        startFrom.put("by", NAME);
+        if (inPlaceProvider != null) {
+            try {
+                inPlaceProvider.get().scope(source.getUuid()).ifPresent(scope -> {
+                    // Where its translation reads its records, which a pre-processor may feed.
+                    startFrom.put(InPlaceInduction.ELEMENT, scope.translation().element());
+                    startFrom.put(InPlaceInduction.PRE_PROCESSED, scope.preProcessed());
+                });
+            } catch (final RuntimeException e) {
+                // Its stages not told: recorded as a translation reading the parser's output.
+                LOGGER.debug(() -> LogUtil.message("Where {}'s translation reads wasn't told: {}", source.getName(),
+                        e.getMessage()));
+            }
+        }
+        records.rememberStartFrom(build, startFrom);
     }
 
     // A hand-written translation the build is offered to start from is copied only once the user has chosen how the

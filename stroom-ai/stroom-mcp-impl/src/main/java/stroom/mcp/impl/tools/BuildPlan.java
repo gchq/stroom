@@ -700,6 +700,20 @@ public class BuildPlan {
         }
     }
 
+    /// @param pipelineUuid A pipeline.
+    /// @return True if it is a translation pipeline whose XSLT keeps no mapping (one the tools never built); false
+    /// where Stroom can't load it or it can't be told.
+    public boolean handWrittenTranslation(final String pipelineUuid) {
+        try {
+            return "translation".equals(facts.pipelineShape(pipelineUuid).stage())
+                   && facts.keptXsltUuid(pipelineUuid).isEmpty();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("Whether {} is a hand-written translation wasn't read: {}",
+                    pipelineUuid, e.getMessage()), e);
+            return false;
+        }
+    }
+
     /// The pipeline [#existingToOffer] offers, where its translation is one the tools never built (its XSLT keeps
     /// no mapping): copy_pipeline refuses to copy it (or any pipeline running its translation XSLT) until the user
     /// has chosen how the build starts.

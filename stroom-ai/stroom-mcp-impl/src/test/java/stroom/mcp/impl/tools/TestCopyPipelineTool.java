@@ -319,6 +319,39 @@ class TestCopyPipelineTool {
     }
 
     @Test
+    void aCopyOfAHandWrittenTranslationWithNoStartRecordedStartsTheBuildFromIt() {
+        // Decided by the user (2026-11-26): a copy of a translation whose XSLT keeps no mapping, made with no start
+        // recorded (none offered), starts the build from it as the user's choice would, so every tool reads the
+        // copy back as an existing pipeline's (its catalogue put to the user, its TypeIds kept). Seen in the e2e
+        // suite: such a copy held for its read-back, its catalogue confirmed unasked or its TypeIds refused.
+        source();
+        pipelines.feeds.facts.stages.put("p1", "translation");
+
+        final ToolResult made = call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": "
+                                     + "\"ACME-V2 - Indexing\"}", BuildToolCalls.answering(Map.of("value", true)));
+
+        assertThat(made.isError()).as(made.text()).isFalse();
+        assertThat(pipelines.world.records().startFrom(BUILD)).hasValueSatisfying(startFrom -> {
+            assertThat(startFrom).containsEntry("choice", ExistingTranslations.EXISTING)
+                    .containsEntry("by", CopyPipelineTool.NAME);
+            assertThat(startFrom.get("pipeline")).isEqualTo(Map.of("name", "ACME-V1 - Indexing", "uuid", "p1"));
+        });
+    }
+
+    @Test
+    void aCopyOfATranslationTheToolsBuiltRecordsNoStart() {
+        source();
+        pipelines.feeds.facts.stages.put("p1", "translation");
+        pipelines.feeds.facts.keptXslt = "x1";
+
+        final ToolResult made = call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": "
+                                     + "\"ACME-V2 - Indexing\"}", BuildToolCalls.answering(Map.of("value", true)));
+
+        assertThat(made.isError()).as(made.text()).isFalse();
+        assertThat(pipelines.world.records().startFrom(BUILD)).isEmpty();
+    }
+
+    @Test
     void aCopyOfAnotherPipelineThanTheOfferIsMade() {
         // An offer Stroom can't read is compared by its UUID alone.
         source();
