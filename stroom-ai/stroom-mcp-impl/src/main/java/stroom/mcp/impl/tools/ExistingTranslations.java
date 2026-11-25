@@ -23,7 +23,9 @@ import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.generation.LeafReading;
 import stroom.ai.impl.tools.generation.RuleReading;
 import stroom.ai.impl.tools.generation.XsltReader;
-import stroom.ai.impl.tools.processing.MergedPipeline.TranslationDoc;
+import stroom.ai.impl.tools.processing.XsltStages;
+import stroom.ai.impl.tools.processing.XsltStages.Stage;
+import stroom.ai.impl.tools.processing.XsltStages.StagedXslt;
 import stroom.ai.impl.tools.sample.SourceTypeProfiles;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.docref.DocRef;
@@ -72,23 +74,27 @@ class ExistingTranslations {
     private final DocumentAccess documentAccess;
     private final WriteGuard guard;
     private final PipelineShapes pipelineShapes;
+    private final XsltStages xsltStages;
 
     /// @param registries     The feeds' source type registries.
     /// @param docFinder      Finds a pipeline by name.
     /// @param documentAccess Reads documents as the user.
     /// @param guard          Tells a build's documents from others, and reads tags.
-    /// @param pipelineShapes Reads a pipeline's own XSLT.
+    /// @param pipelineShapes Reads a pipeline as Stroom runs it.
+    /// @param xsltStages     Tells a pipeline's translation XSLT from its others.
     @Inject
     ExistingTranslations(final Provider<SourceTypeRegistries> registries,
                          final Provider<DocFinder> docFinder,
                          final DocumentAccess documentAccess,
                          final WriteGuard guard,
-                         final PipelineShapes pipelineShapes) {
+                         final PipelineShapes pipelineShapes,
+                         final XsltStages xsltStages) {
         this.registries = registries;
         this.docFinder = docFinder;
         this.documentAccess = documentAccess;
         this.guard = guard;
         this.pipelineShapes = pipelineShapes;
+        this.xsltStages = xsltStages;
     }
 
     /// The pipeline translating what the build is to: for a build scoped to some of an aggregated feed's source
@@ -135,25 +141,26 @@ class ExistingTranslations {
         }
     }
 
-    /// What the user is told of the pipeline before choosing: its own XSLT, whether the tools built it, when and by
-    /// whom it was last changed, and the event types it writes (read from its XSLT).
+    /// What the user is told of the pipeline before choosing: its translation XSLT (the translation stage's,
+    /// [XsltStages]: its own or one inherited from its template, never a pre-processor before it), whether the
+    /// tools built it, when and by whom it was last changed, and the event types it writes (read from its XSLT).
     ///
     /// @param pipeline The pipeline ([#find]).
-    /// @return It with `xslt` (`name`, `uuid`), `built_by_tools`, `changed`, `changed_by`, `event_types` and
-    /// `examples` where they can be read.
+    /// @return It with `xslt` (`name`, `uuid`, and `inherited_from` the template that sets it, where it is
+    /// inherited), `built_by_tools`, `changed`, `changed_by`, `event_types` and `examples` where they can be read.
     Map<String, Object> describe(final Map<String, Object> pipeline) {
         final Map<String, Object> out = new LinkedHashMap<>(pipeline);
         final String uuid = String.valueOf(pipeline.get("uuid"));
         try {
-            final Optional<DocRef> own = pipelineShapes.merged(uuid).translationDocs(uuid).stream()
-                    .filter(doc -> !doc.inheritedFromTemplate() && XsltDoc.TYPE.equals(doc.doc().getType()))
-                    .map(TranslationDoc::doc)
-                    .findFirst();
-            if (own.isEmpty()) {
+            // The translation stage's XSLT, its own or one it inherits from its template: not a pre-processor
+            // before it (seen: the first own XSLT, a JSON unpacker, offered as the translation).
+            final Optional<StagedXslt> translation = XsltStages.first(xsltStages.classify(
+                    pipelineShapes.merged(uuid)), Stage.TRANSLATION);
+            if (translation.isEmpty() || translation.get().xslt() == null) {
                 return out;
             }
-            final Optional<XsltDoc> xslt = documentAccess.read(new DocRef(XsltDoc.TYPE, own.get().getUuid()),
-                    XsltDoc.class);
+            final Optional<XsltDoc> xslt = documentAccess.read(new DocRef(XsltDoc.TYPE,
+                    translation.get().xslt().getUuid()), XsltDoc.class);
             if (xslt.isEmpty()) {
                 return out;
             }
@@ -161,6 +168,9 @@ class ExistingTranslations {
             final Map<String, Object> ref = new LinkedHashMap<>();
             ref.put("name", doc.getName());
             ref.put("uuid", doc.getUuid());
+            if (translation.get().inherited()) {
+                ref.put("inherited_from", translation.get().setBy());
+            }
             out.put("xslt", ref);
             out.put("built_by_tools", KeptMapping.readMapping(doc.getDescription()).isPresent()
                                       || guard.tags(new DocRef(XsltDoc.TYPE, doc.getUuid()))

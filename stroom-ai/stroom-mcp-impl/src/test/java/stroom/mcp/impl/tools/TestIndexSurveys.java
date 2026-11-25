@@ -17,13 +17,26 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.processing.MergedPipeline;
 import stroom.ai.impl.tools.processing.MergedPipeline.ElementProperty;
+import stroom.ai.impl.tools.processing.XsltStages;
 import stroom.ai.impl.tools.query.IndexSearches;
 import stroom.ai.impl.tools.query.IndexSearches.Found;
 import stroom.ai.impl.tools.query.IndexSearches.Probe;
+import stroom.ai.impl.tools.streams.SteppingWalks;
 import stroom.ai.impl.tools.streams.StreamReader;
+import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.docref.DocRef;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
+import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineLayer;
+import stroom.pipeline.shared.data.PipelineLink;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.query.api.Column;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
@@ -56,9 +69,39 @@ class TestIndexSurveys {
     private final PipelineIndex pipelineIndex = Mockito.mock(PipelineIndex.class);
     private final IndexSurveys surveys = new IndexSurveys(indexSearches, indexFields, documentAccess,
             Mockito.mock(StreamReader.class), pipelineIndex, Mockito.mock(PipelineShapes.class),
-            Mockito.mock(KeptMappings.class), Mockito.mock(FeedNames.class));
+            Mockito.mock(KeptMappings.class), Mockito.mock(FeedNames.class), new XsltStages(documentAccess,
+            Mockito.mock(HeldSchemas.class), Mockito.mock(SteppingWalks.class)));
     private final List<Probe> searched = new ArrayList<>();
     private final List<Duration> waits = new ArrayList<>();
+
+    @Test
+    void anIndexPlanKeptWithAnIndexingXsltInheritedFromTheTemplateIsRead() {
+        final DocRef template = new DocRef(PipelineDoc.TYPE, "t", "Indexing template");
+        final DocRef child = new DocRef(PipelineDoc.TYPE, "c", "Acme indexing");
+        final DocRef xslt = new DocRef(XsltDoc.TYPE, "x", "Acme indexing XSLT");
+        final Map<String, Object> plan = Map.of("backend", "elasticsearch", "index_name", "acme",
+                "time_field", "@timestamp", "fields", List.of(Map.of("name", "user.name", "type", "keyword",
+                        "source", "EventSource/User/Id")));
+        Mockito.when(documentAccess.read(xslt, XsltDoc.class)).thenReturn(Optional.of(XsltDoc.builder()
+                .uuid("x").name(xslt.getName())
+                .data("<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"3.0\" "
+                      + "xpath-default-namespace=\"event-logging:3\"><xsl:template match=\"/Events\">"
+                      + "<records xmlns=\"records:2\"/></xsl:template></xsl:stylesheet>")
+                .description(KeptMapping.withMapping("", "index", plan))
+                .build()));
+        final MergedPipeline merged = MergedPipeline.of(List.of(
+                new PipelineLayer(template, new PipelineDataBuilder()
+                        .addElement(new PipelineElement("indexingFilter", "XSLTFilter"))
+                        .addElement(new PipelineElement("elasticIndexingFilter", "ElasticIndexingFilter"))
+                        .addLink(new PipelineLink("indexingFilter", "elasticIndexingFilter"))
+                        .addProperty(new PipelineProperty("indexingFilter", "xslt", new PipelinePropertyValue(xslt)))
+                        .build()),
+                new PipelineLayer(child, new PipelineDataBuilder().build())));
+
+        // The child sets nothing itself: the plan is its template's indexing XSLT's.
+        assertThat(surveys.indexPlan(merged, "c")).hasValueSatisfying(found ->
+                assertThat(found).containsEntry("index_name", "acme"));
+    }
 
     @Test
     void aWideIndexIsSurveyedInGroupsOfColumnsJoinedOnTheIds() {

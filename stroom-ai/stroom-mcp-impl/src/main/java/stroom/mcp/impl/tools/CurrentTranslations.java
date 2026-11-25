@@ -24,7 +24,11 @@ import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.SharedFunctions;
 import stroom.ai.impl.tools.generation.SharedTemplate;
 import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.processing.MergedPipeline;
 import stroom.ai.impl.tools.processing.MergedPipeline.TranslationDoc;
+import stroom.ai.impl.tools.processing.XsltStages;
+import stroom.ai.impl.tools.processing.XsltStages.Stage;
+import stroom.ai.impl.tools.processing.XsltStages.StagedXslt;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
@@ -71,6 +75,7 @@ class CurrentTranslations {
     private final PipelineShapes pipelineShapes;
     private final PipelineTemplates templates;
     private final DocumentAccess documentAccess;
+    private final XsltStages xsltStages;
 
     /// @param planProvider   The build's plan: the feeds it works from.
     /// @param facts          Finds the pipelines translating a feed now.
@@ -78,19 +83,22 @@ class CurrentTranslations {
     /// @param pipelineShapes Reads a pipeline's layers as Stroom builds them.
     /// @param templates      Reads how a pipeline's XSLTs use shared ones.
     /// @param documentAccess Reads XSLTs as the user.
+    /// @param xsltStages     Tells a pipeline's translation XSLT from its others.
     @Inject
     CurrentTranslations(final Provider<BuildPlan> planProvider,
                         final BuildFacts facts,
                         final PipelineDocs pipelineDocs,
                         final PipelineShapes pipelineShapes,
                         final PipelineTemplates templates,
-                        final DocumentAccess documentAccess) {
+                        final DocumentAccess documentAccess,
+                        final XsltStages xsltStages) {
         this.planProvider = planProvider;
         this.facts = facts;
         this.pipelineDocs = pipelineDocs;
         this.pipelineShapes = pipelineShapes;
         this.templates = templates;
         this.documentAccess = documentAccess;
+        this.xsltStages = xsltStages;
     }
 
     /// The pipeline translating the build's feed now (its processor filter reads the raw data), with what its own
@@ -145,6 +153,21 @@ class CurrentTranslations {
         return Optional.of(described(pipeline, own, references, maps, uses));
     }
 
+    // A pipeline's translation XSLT: the translation stage's ([XsltStages]), its own or inherited, never a
+    // pre-processor before it; where no XSLT can be told to translate, its first own XSLT.
+    private Optional<DocRef> translationXslt(final String uuid) {
+        final MergedPipeline merged = pipelineShapes.merged(uuid);
+        final Optional<DocRef> staged = XsltStages.first(xsltStages.classify(merged), Stage.TRANSLATION)
+                .map(StagedXslt::xslt);
+        if (staged.isPresent()) {
+            return staged;
+        }
+        return merged.translationDocs(uuid).stream()
+                .filter(entry -> !entry.inheritedFromTemplate() && XsltDoc.TYPE.equals(entry.doc().getType()))
+                .map(TranslationDoc::doc)
+                .findFirst();
+    }
+
     /// @param pipelineUuid A pipeline.
     /// @return The imports of its own XSLTs that name no XSLT ([PipelineShapes#brokenImports(String)]).
     List<String> brokenImports(final String pipelineUuid) {
@@ -181,10 +204,7 @@ class CurrentTranslations {
             }
             try {
                 final PipelineDoc doc = pipelineDocs.read(uuid);
-                final Optional<DocRef> xslt = pipelineShapes.merged(uuid).translationDocs(uuid).stream()
-                        .filter(entry -> !entry.inheritedFromTemplate() && XsltDoc.TYPE.equals(entry.doc().getType()))
-                        .map(TranslationDoc::doc)
-                        .findFirst();
+                final Optional<DocRef> xslt = translationXslt(uuid);
                 if (xslt.isEmpty()) {
                     continue;
                 }

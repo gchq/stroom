@@ -20,6 +20,9 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.processing.MergedPipeline;
+import stroom.ai.impl.tools.processing.XsltStages;
+import stroom.ai.impl.tools.streams.SteppingWalks;
+import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
@@ -55,7 +58,8 @@ class TestCurrentTranslations {
     private final PipelineTemplates templates = Mockito.mock(PipelineTemplates.class);
     private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
     private final CurrentTranslations currentTranslations = new CurrentTranslations(() -> plan, facts,
-            pipelineDocs, pipelineShapes, templates, documentAccess);
+            pipelineDocs, pipelineShapes, templates, documentAccess, new XsltStages(documentAccess,
+            Mockito.mock(HeldSchemas.class), Mockito.mock(SteppingWalks.class)));
 
     @Test
     void theCurrentTranslationIsReadWithWhatItsXsltLooksUp() {

@@ -17,9 +17,20 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.processing.MergedPipeline;
+import stroom.ai.impl.tools.processing.XsltStages;
+import stroom.ai.impl.tools.streams.SteppingWalks;
+import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
+import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineLayer;
+import stroom.pipeline.shared.data.PipelineLink;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyValue;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -37,13 +48,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestExistingTranslations {
 
     private static final String BUILD = "acme";
+    private static final String XSL = "xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"3.0\"";
+    private static final String PRE_PROCESS = "<xsl:stylesheet " + XSL + " xpath-default-namespace=\"http://www.w3"
+                                              + ".org/2013/XSL/json\" xmlns=\"http://www.w3.org/2013/XSL/json\">"
+                                              + "<xsl:template match=\"/\"><map/></xsl:template></xsl:stylesheet>";
+    private static final String TRANSLATION = "<xsl:stylesheet " + XSL + " xpath-default-namespace=\"http://www.w3"
+                                              + ".org/2013/XSL/json\" xmlns=\"event-logging:3\"><xsl:template "
+                                              + "match=\"/map\"><Events><Event><EventDetail><TypeId>1001</TypeId>"
+                                              + "</EventDetail></Event></Events></xsl:template></xsl:stylesheet>";
 
     private final SourceTypeRegistries registries = Mockito.mock(SourceTypeRegistries.class);
     private final DocFinder docFinder = Mockito.mock(DocFinder.class);
     private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
     private final WriteGuard guard = Mockito.mock(WriteGuard.class);
+    private final PipelineShapes pipelineShapes = Mockito.mock(PipelineShapes.class);
     private final ExistingTranslations existing = new ExistingTranslations(() -> registries, () -> docFinder,
-            documentAccess, guard, Mockito.mock(PipelineShapes.class));
+            documentAccess, guard, pipelineShapes, new XsltStages(documentAccess, Mockito.mock(HeldSchemas.class),
+            Mockito.mock(SteppingWalks.class)));
 
     @Test
     void aGroupsPipelineIsTheOneTheRegistryNamesForTheBuildsSourceTypes() {
@@ -94,6 +115,39 @@ class TestExistingTranslations {
     }
 
     @Test
+    void theXsltOfferedIsTheTranslationNotAPreProcessorBeforeIt() {
+        // The pipeline's own XSLTs: a JSON unpacker first, then the translation.
+        xslt("pre", "Unpack nested JSON", PRE_PROCESS);
+        xslt("tr", "ACME-V1.0-EVENTS", TRANSLATION);
+        Mockito.when(pipelineShapes.merged("prod-ev")).thenReturn(MergedPipeline.of(List.of(
+                new PipelineLayer(new DocRef(PipelineDoc.TYPE, "prod-ev", "ACME-V1.0-Events"),
+                        chain(List.of("preFilter", "translationFilter"))
+                                .addProperty(xsltOn("preFilter", "pre"))
+                                .addProperty(xsltOn("translationFilter", "tr"))
+                                .build()))));
+
+        final Map<String, Object> described = existing.describe(Map.of("name", "ACME-V1.0-Events", "uuid",
+                "prod-ev"));
+
+        assertThat(described.get("xslt")).isEqualTo(Map.of("name", "ACME-V1.0-EVENTS", "uuid", "tr"));
+        assertThat(described).containsEntry("built_by_tools", false);
+    }
+
+    @Test
+    void aTranslationInheritedFromAParentPipelineIsOfferedSayingSo() {
+        xslt("tr", "ACME-V1.0-EVENTS", TRANSLATION);
+        final DocRef parent = new DocRef(PipelineDoc.TYPE, "parent", "ACME translation");
+        Mockito.when(pipelineShapes.merged("child")).thenReturn(MergedPipeline.of(List.of(
+                new PipelineLayer(parent, chain(List.of("translationFilter"))
+                        .addProperty(xsltOn("translationFilter", "tr")).build()),
+                new PipelineLayer(new DocRef(PipelineDoc.TYPE, "child", "ACME Site B"),
+                        new PipelineDataBuilder().build()))));
+
+        assertThat(existing.describe(Map.of("name", "ACME Site B", "uuid", "child")).get("xslt"))
+                .isEqualTo(Map.of("name", "ACME-V1.0-EVENTS", "uuid", "tr", "inherited_from", "ACME translation"));
+    }
+
+    @Test
     void thePipelineIsSaidWithWhoWroteItAndItsEventTypes() {
         final Map<String, Object> byHand = new LinkedHashMap<>(Map.of("name", "ACME-V1.0-Events"));
         byHand.put("built_by_tools", false);
@@ -120,6 +174,28 @@ class TestExistingTranslations {
         Mockito.when(registries.registry(BUILD, "ACME")).thenReturn(Optional.of(new SourceTypeRegistries.Found(
                 null, false, state)));
         Mockito.when(guard.buildOf(Mockito.any())).thenReturn(Optional.empty());
+    }
+
+    private void xslt(final String uuid, final String name, final String code) {
+        Mockito.when(documentAccess.read(new DocRef(XsltDoc.TYPE, uuid), XsltDoc.class))
+                .thenReturn(Optional.of(XsltDoc.builder().uuid(uuid).name(name).data(code).build()));
+    }
+
+    private static PipelineDataBuilder chain(final List<String> xsltFilters) {
+        final PipelineDataBuilder data = new PipelineDataBuilder();
+        String previous = null;
+        for (final String element : xsltFilters) {
+            data.addElement(new PipelineElement(element, "XSLTFilter"));
+            if (previous != null) {
+                data.addLink(new PipelineLink(previous, element));
+            }
+            previous = element;
+        }
+        return data;
+    }
+
+    private static PipelineProperty xsltOn(final String element, final String uuid) {
+        return new PipelineProperty(element, "xslt", new PipelinePropertyValue(new DocRef(XsltDoc.TYPE, uuid)));
     }
 
     private void readable(final String uuid, final String name) {

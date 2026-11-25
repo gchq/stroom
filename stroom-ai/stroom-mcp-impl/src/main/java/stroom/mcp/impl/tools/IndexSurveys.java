@@ -22,6 +22,9 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.processing.MergedPipeline;
+import stroom.ai.impl.tools.processing.XsltStages;
+import stroom.ai.impl.tools.processing.XsltStages.Stage;
+import stroom.ai.impl.tools.processing.XsltStages.StagedXslt;
 import stroom.ai.impl.tools.query.IndexSearches;
 import stroom.ai.impl.tools.query.IndexSearches.Found;
 import stroom.ai.impl.tools.query.IndexSearches.Probe;
@@ -31,6 +34,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.XsltDoc;
 import stroom.query.api.Column;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
@@ -81,6 +85,7 @@ class IndexSurveys {
     private final PipelineIndex pipelineIndex;
     private final PipelineShapes pipelineShapes;
     private final KeptMappings keptMappings;
+    private final XsltStages xsltStages;
     private final FeedNames feedNames;
 
     /// @param indexSearches  Searches the index as a dashboard does.
@@ -91,6 +96,7 @@ class IndexSurveys {
     /// @param pipelineShapes Reads a pipeline as Stroom runs it.
     /// @param keptMappings   Reads the plan kept with a pipeline's indexing XSLT.
     /// @param feedNames      Finds a feed by name.
+    /// @param xsltStages     Tells a pipeline's indexing XSLT from its others.
     @Inject
     IndexSurveys(final IndexSearches indexSearches,
                  final IndexFields indexFields,
@@ -99,7 +105,8 @@ class IndexSurveys {
                  final PipelineIndex pipelineIndex,
                  final PipelineShapes pipelineShapes,
                  final KeptMappings keptMappings,
-                 final FeedNames feedNames) {
+                 final FeedNames feedNames,
+                 final XsltStages xsltStages) {
         this.indexSearches = indexSearches;
         this.indexFields = indexFields;
         this.documentAccess = documentAccess;
@@ -108,6 +115,7 @@ class IndexSurveys {
         this.pipelineShapes = pipelineShapes;
         this.keptMappings = keptMappings;
         this.feedNames = feedNames;
+        this.xsltStages = xsltStages;
     }
 
     /// What an existing index holds: the fields Stroom has for the index doc, a sample of its documents (each
@@ -490,7 +498,8 @@ class IndexSurveys {
         return profile;
     }
 
-    /// The pipelines that write to the index, each with the index plan kept with its XSLT when there is one. Found
+    /// The pipelines that write to the index, each with the index plan kept with its indexing XSLT when there is one
+    /// ([#indexPlan]: an inherited one included). Found
     /// by content (a Lucene IndexingFilter names the doc, an Elasticsearch one the index name), then each confirmed
     /// from its effective properties, so a mention elsewhere (a description, foo-v10 for foo-v1) does not count.
     ///
@@ -518,10 +527,7 @@ class IndexSurveys {
             }
             Object plan;
             try {
-                plan = keptMappings.keptMapping(pipeline.getUuid())
-                        .filter(kept -> "index".equals(kept.kind()))
-                        .map(KeptMapping.Kept::payload)
-                        .orElse(null);
+                plan = indexPlan(merged, pipeline.getUuid()).orElse(null);
             } catch (final RuntimeException e) {
                 // Its plan unreadable: still a pipeline that feeds the index, without one.
                 plan = null;
@@ -534,6 +540,31 @@ class IndexSurveys {
             fed.add(entry);
         }
         return fed;
+    }
+
+    /// The index plan kept with a pipeline's indexing XSLT, read from the pipeline as Stroom runs it: the XSLT of
+    /// its indexing stage ([XsltStages]), its own or one it inherits from its template; else the plan kept with its
+    /// own XSLT.
+    ///
+    /// @param merged       The pipeline as Stroom runs it.
+    /// @param pipelineUuid Its UUID.
+    /// @return The plan's JSON, or empty if it keeps none the user can read.
+    Optional<Map<String, Object>> indexPlan(final MergedPipeline merged, final String pipelineUuid) {
+        for (final StagedXslt xslt : XsltStages.of(xsltStages.classify(merged), Stage.INDEXING)) {
+            if (xslt.xslt() == null) {
+                continue;
+            }
+            final Optional<Map<String, Object>> plan = documentAccess.read(xslt.xslt(), XsltDoc.class)
+                    .flatMap(doc -> KeptMapping.readMapping(doc.getDescription()))
+                    .filter(kept -> "index".equals(kept.kind()))
+                    .map(KeptMapping.Kept::payload);
+            if (plan.isPresent()) {
+                return plan;
+            }
+        }
+        return keptMappings.keptMapping(pipelineUuid)
+                .filter(kept -> "index".equals(kept.kind()))
+                .map(KeptMapping.Kept::payload);
     }
 
     private IndexDoc read(final DocRef index) {

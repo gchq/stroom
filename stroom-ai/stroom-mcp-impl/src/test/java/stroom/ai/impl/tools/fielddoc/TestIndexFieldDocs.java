@@ -212,6 +212,28 @@ class TestIndexFieldDocs {
     }
 
     @Test
+    void anIndexFedByPipelinesWhosePlansWriteAFieldFromDifferentSourcesSaysEachInItsFromColumn() {
+        final Map<String, Map<String, List<String>>> fromBy = new LinkedHashMap<>();
+        fromBy.put("user.name", new LinkedHashMap<>(Map.of(
+                IndexFieldDocs.fromCell(PlannedField.of("user.name", "keyword", "EventSource/User/Id")),
+                List.of("Web - Indexing"))));
+        fromBy.get("user.name").put(IndexFieldDocs.fromCell(PlannedField.of("user.name", "keyword",
+                "EventDetail/Authenticate/User/Id")), List.of("Proxy - Indexing", "Mail - Indexing"));
+        fromBy.put("source.ip", Map.of("`EventSource/Client/IPAddress`", List.of("Web - Indexing",
+                "Proxy - Indexing")));
+        final Map<String, String> varying = IndexFieldDocs.varyingFrom(fromBy);
+
+        assertThat(varying).containsOnlyKeys("user.name");
+        final String text = IndexFieldDocs.existingIndexMarkdown(survey(fedByPlan(), true), Map.of("user.name",
+                PlannedField.of("user.name", "keyword", "EventSource/User/Id")), SCHEMA, FieldDocs.COMPACT, null,
+                varying);
+        assertThat(rows(text).get("user.name")).contains("varies by pipeline: `EventSource/User/Id` (Web - "
+                                                        + "Indexing); `EventDetail/Authenticate/User/Id` (Proxy - "
+                                                        + "Indexing, Mail - Indexing)");
+        assertThat(IndexFieldDocs.varyingFrom(null)).isEmpty();
+    }
+
+    @Test
     void anIndexStroomReadsNoDocumentsFromIsDocumentedFromItsMappingSayingSo() {
         final Map<String, Object> survey = survey(List.of(), true);
         survey.put("documents", List.of());

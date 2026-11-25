@@ -43,6 +43,7 @@ import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -156,12 +157,19 @@ class IndexDocumentation {
         Map<String, Object> survey = indexSurveys.surveyIndex(context, ref, 100, true);
         final Map<String, PlannedField> planned = new LinkedHashMap<>();
         final Map<String, List<String>> expected = new LinkedHashMap<>();
+        // Every feeding pipeline's plan: where two write a field from different sources, each is said.
+        final Map<String, Map<String, List<String>>> fromBy = new LinkedHashMap<>();
         for (final Map<String, Object> fed : JsonValues.maps(survey.get("fed_by"))) {
             final FieldPlan plan = planOf(fed.get("plan"));
             if (plan == null) {
                 continue;
             }
-            plan.leafFields().forEach(field -> planned.putIfAbsent(field.name(), field));
+            plan.leafFields().forEach(field -> {
+                planned.putIfAbsent(field.name(), field);
+                fromBy.computeIfAbsent(field.name(), k -> new LinkedHashMap<>())
+                        .computeIfAbsent(IndexFieldDocs.fromCell(field), k -> new ArrayList<>())
+                        .add(String.valueOf(fed.get("name")));
+            });
             if (plan.discovery() == null) {
                 expected.put(String.valueOf(fed.get("name")), plan.leafFields().stream().map(PlannedField::name)
                         .toList());
@@ -211,7 +219,8 @@ class IndexDocumentation {
         final Descriptions described = new Descriptions(descriptions, givenFrom, true,
                 docs.vendorNotes(request.build()));
         // Not in the index: as the user chose.
-        String section = IndexFieldDocs.existingIndexMarkdown(survey, planned, schema, layout, described);
+        String section = IndexFieldDocs.existingIndexMarkdown(survey, planned, schema, layout, described,
+                IndexFieldDocs.varyingFrom(fromBy));
         if (!described.wanted().isEmpty()) {
             // Nothing is written yet: the call made again with the descriptions asks the user again, as no id that
             // would let it skip the form is given to the agent. What was given is kept till it is written.

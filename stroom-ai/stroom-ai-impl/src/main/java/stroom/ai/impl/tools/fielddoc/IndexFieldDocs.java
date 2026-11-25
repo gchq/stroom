@@ -713,6 +713,25 @@ public final class IndexFieldDocs {
                                                final EventSchema schema,
                                                final String layout,
                                                final Descriptions described) {
+        return existingIndexMarkdown(survey, planned, schema, layout, described, Map.of());
+    }
+
+    /// As [#existingIndexMarkdown(Map, Map, EventSchema, String, Descriptions)], for an index fed by several
+    /// pipelines whose plans write some fields from different sources: those fields' From cells say each.
+    ///
+    /// @param survey    The index's survey.
+    /// @param planned   The fields the feeding pipelines' plans write, by name (the first plan's).
+    /// @param schema    The event-logging schema, or null.
+    /// @param layout    [FieldDocs#BY_EVENT_TYPE] or [FieldDocs#COMPACT].
+    /// @param described The field descriptions, or null for none.
+    /// @param varying   The From cell of each field the plans differ on ([#varyingFrom]); empty for none.
+    /// @return The section's text, ending with a new line.
+    public static String existingIndexMarkdown(final Map<String, Object> survey,
+                                               final Map<String, PlannedField> planned,
+                                               final EventSchema schema,
+                                               final String layout,
+                                               final Descriptions described,
+                                               final Map<String, String> varying) {
         final Map<String, Object> index = JsonValues.mapOrEmpty(survey.get("index"));
         final List<Map<String, List<String>>> documents = documents(survey.get("documents"));
         final String target = "elasticsearch".equals(survey.get("backend"))
@@ -815,11 +834,13 @@ public final class IndexFieldDocs {
                 values = FieldDocs.values(perDocument.stream().flatMap(List::stream).toList());
             }
             rows.add(new IndexRow(source, List.of("`" + f + "`", description, ToolText.str(field.get("type")),
-                    plan != null && plan.isConstant()
-                            ? constantSaid(plan)
-                            : !source.isEmpty()
-                                    ? "`" + source + "`"
-                                    : "(not recorded)", held, values)));
+                    NullSafe.map(varying).containsKey(f)
+                            ? varying.get(f)
+                            : plan != null && plan.isConstant()
+                                    ? constantSaid(plan)
+                                    : !source.isEmpty()
+                                            ? "`" + source + "`"
+                                            : "(not recorded)", held, values)));
         }
         // Written by a feeding pipeline's plan, but not in the fields Stroom lists for the index: only documented
         // when the user chose to (write_documentation refuses otherwise), and said as such rather than left out.
@@ -836,6 +857,35 @@ public final class IndexFieldDocs {
         }
         lines.addAll(indexTables(rows, head, layout, null));
         return String.join("\n", lines) + "\n";
+    }
+
+    /// @param field A planned field.
+    /// @return Its From cell: its source path, or the constant it holds.
+    public static String fromCell(final PlannedField field) {
+        if (field.isConstant()) {
+            return constantSaid(field);
+        }
+        return NullSafe.isNonBlankString(field.source())
+                ? "`" + field.source() + "`"
+                : "(not recorded)";
+    }
+
+    /// The From cells of the fields the feeding pipelines' plans write from different sources.
+    ///
+    /// @param fromBy For each field, its From cells ([#fromCell]), each with the pipelines (by name) whose plan
+    ///               writes it so.
+    /// @return For each field with more than one, e.g. "varies by pipeline: `EventSource/User/Id` (A indexing);
+    /// `EventDetail/Authenticate/User/Id` (B indexing)".
+    public static Map<String, String> varyingFrom(final Map<String, Map<String, List<String>>> fromBy) {
+        final Map<String, String> out = new LinkedHashMap<>();
+        NullSafe.map(fromBy).forEach((field, cells) -> {
+            if (cells.size() > 1) {
+                final List<String> each = new ArrayList<>();
+                cells.forEach((cell, pipelines) -> each.add(cell + " (" + String.join(", ", pipelines) + ")"));
+                out.put(field, "varies by pipeline: " + String.join("; ", each));
+            }
+        });
+        return out;
     }
 
     // A constant field's From cell: the value the user asked for, held in every document.
