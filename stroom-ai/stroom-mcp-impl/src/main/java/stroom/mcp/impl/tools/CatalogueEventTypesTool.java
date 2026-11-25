@@ -699,6 +699,28 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                            + "evidence's seed is the draft's, not these).");
     }
 
+    // Whether the build starts from an existing pipeline (copied, or described in place) whose XSLT was read back:
+    // its mapping translates the catalogue already.
+    private boolean readBackStart(final Calling calling) {
+        final Map<String, Object> startFrom = plan.startFrom(calling.build()).orElse(Map.of());
+        return (ExistingTranslations.EXISTING.equals(startFrom.get("choice")) || InPlaceInduction.inPlace(startFrom))
+               && InPlaceInduction.mappingNotRead(startFrom).isEmpty()
+               && calling.catalogue().eventTypes().stream().anyMatch(type ->
+                EventType.EXISTING_PIPELINE.equals(type.basis()));
+    }
+
+    // The existing pipeline a catalogue read back from it names, where the uncatalogued records are left untranslated
+    // as it leaves them: its read-back has no catch-all rule (seen in eval case 105 on Sonnet: the catch-all put to
+    // the user as Unknown events, the agent then added an Unknown rule the original never had); null otherwise.
+    private String untranslatedBy(final Calling calling, final Catalogue catalogue) {
+        if (catalogue.catchAll().confirmed() || catalogue.catchAll().translation() != null
+            || !readBackStart(calling)) {
+            return null;
+        }
+        return NullSafe.nonBlankStringElse(ToolText.str(JsonValues.mapOrEmpty(plan.startFrom(calling.build())
+                .orElse(Map.of()).get("pipeline")).get("name")), "the existing pipeline");
+    }
+
     // Whether the build's catalogue is the one read back from the existing pipeline it starts from or describes in
     // place, not yet confirmed whole (an event type or the catch-all still to confirm).
     private boolean readBack(final Calling calling) {
@@ -1142,8 +1164,9 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             throw new ToolRefusal(notPlaced(unplaced));
         }
         final boolean catchAll = set.isEmpty();
+        final String untranslatedBy = untranslatedBy(calling, catalogue);
         final String shown = catchAll
-                ? CatalogueCatchAll.catchAllShown(check, catalogue)
+                ? CatalogueCatchAll.catchAllShown(check, catalogue, untranslatedBy)
                 : shownSet(calling, set, check, confirming);
         final String digest = Consent.reviewId(binding(shown, set, check));
         if (digest.equals(amendedDigest(confirming))) {
@@ -1172,18 +1195,22 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         final Catalogue now;
         if (catchAll) {
             final Consent.Request request = CatalogueCatchAll.catchAllRequest(check, catalogue,
-                    catchAllForms.catchAllReason(calling));
+                    catchAllForms.catchAllReason(calling), untranslatedBy);
             try {
                 consent.require(calling.call(), calling.context(), request.boundTo(shown));
             } catch (final Consent.SentInstead e) {
                 throw new ToolRefusal(sentInstead(calling.build(), request.summary(), e.sent()));
             } catch (final ToolRefusal e) {
                 if (Consent.notAgreed(request.summary(), NAME, false).equals(e.getMessage())) {
-                    throw new ToolRefusal(CatalogueCatchAll.catchAllDeclined(calling.build(), catalogue, check));
+                    throw new ToolRefusal(CatalogueCatchAll.catchAllDeclined(calling.build(), catalogue, check,
+                            untranslatedBy));
                 }
                 throw e;
             }
-            now = catalogue.withCatchAllConfirmedByUser(catchAllForms.catchAllReason(calling));
+            // Left untranslated as the existing pipeline leaves them: no reason for Unknown kept.
+            now = untranslatedBy == null
+                    ? catalogue.withCatchAllConfirmedByUser(catchAllForms.catchAllReason(calling))
+                    : catalogue.withCatchAllConfirmedByUser();
         } else {
             final String accept = "Accept all " + set.size() + " event type" + (set.size() == 1
                     ? ""
@@ -1258,7 +1285,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             return out;
         }
         final String shown = next.isEmpty()
-                ? CatalogueCatchAll.catchAllShown(check, now)
+                ? CatalogueCatchAll.catchAllShown(check, now, untranslatedBy(calling, now))
                 : shownSet(calling, next, check, confirming);
         final Map<String, Object> result;
         if (calling.context().userQuestions().canAsk()) {
@@ -1303,9 +1330,15 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                   + CatalogueCatchAll.translatedAs(catalogue.catchAll().translation())
                   + "), with no form: don't ask the user about it. "
                 : "")
-                         + "Every event type and the catch-all are confirmed: the catalogue is in the build's source "
-                         + "notes, which draft_translation_mapping (build=) follows, a rule a way of recognising "
-                         + "each event type.");
+                         + (readBackStart(calling)
+                ? "Every event type and the catch-all are confirmed: the catalogue is in the build's source notes. "
+                  + "The copy's mapping, read back from the existing pipeline, translates it already: nothing is "
+                  + "drafted; change the mapping only as the user asks (build_translation_xslt changes=). The "
+                  + "uncatalogued records stay as the existing pipeline leaves them: add no catch-all rule unless "
+                  + "the user asks for one."
+                : "Every event type and the catch-all are confirmed: the catalogue is in the build's source "
+                  + "notes, which draft_translation_mapping (build=) follows, a rule a way of recognising "
+                  + "each event type."));
         // A pipeline described in place: the confirmed catalogue written back beside it (decided 2026-11-25).
         final Optional<Map<String, Object>> inPlace = inPlaceProvider == null
                 ? Optional.empty()

@@ -1074,6 +1074,50 @@ class TestCatalogueEventTypesTool {
     }
 
     @Test
+    void theUncataloguedRecordsOfACatalogueReadBackWithNoCatchAllAreLeftUntranslatedAsTheOriginalLeavesThem() {
+        // Seen in eval case 105 on Sonnet: the catch-all of the catalogue read back from a hand-written pipeline
+        // put to the user as Unknown events, where the original wrote no Event for them; the agent then added an
+        // Unknown rule to the copy, which wrote a fifth event.
+        withAnUncataloguedRecord();
+        readBackCatalogue(Map.of("choice", ExistingTranslations.EXISTING, "pipeline", Map.of("name",
+                "ACME-Events", "uuid", "prod-ev")));
+        readBackDone();
+        final BuildToolCalls.FormUser user = user(McpAnswers.ACCEPT);
+
+        Map<String, Object> step = Map.of();
+        for (int round = 0; round < 10 && !"confirmed".equals(step.get("status")); round++) {
+            step = call(Map.of("build", BUILD, "stream_ids", List.of(7), "confirm", true), user.context());
+        }
+
+        assertThat(step).containsEntry("status", "confirmed");
+        assertThat(String.join("\n", user.shown())).contains("Leave the uncatalogued records (those no event type "
+                                                             + "recognises) untranslated (no Event), as "
+                                                             + "'ACME-Events' leaves them")
+                .doesNotContain("as Unknown events");
+        final Catalogue confirmed = SourceNotes.catalogue(notes());
+        assertThat(confirmed.catchAll().confirmed()).isTrue();
+        assertThat(confirmed.catchAll().allowUnknown()).isNull();
+        // Nothing to draft: the copy's mapping translates the catalogue already.
+        assertThat(String.valueOf(step.get("hint"))).contains("The copy's mapping, read back from the existing "
+                                                              + "pipeline, translates it already",
+                "add no catch-all rule unless the user asks for one").doesNotContain("draft_translation_mapping");
+    }
+
+    @Test
+    void theUncataloguedRecordsOfACatalogueTheAgentProposedAreKeptAsUnknownAsBefore() {
+        withAnUncataloguedRecord();
+        propose(List.of(type("Authenticate-Logon", "Authenticate", "high", "login"),
+                type("Delete-Records", "Delete", "low", "purge")));
+        final BuildToolCalls.FormUser user = user(McpAnswers.ACCEPT);
+
+        confirmAll(user);
+
+        assertThat(String.join("\n", user.shown())).contains("Keep the uncatalogued records (those no event type "
+                                                             + "recognises) as Unknown events")
+                .doesNotContain("untranslated (no Event)");
+    }
+
+    @Test
     void aReadBackCatalogueConfirmedWholeIsListedAsAnyOther() {
         readBackCatalogue(Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline", Map.of("name", "ACME-Events",
                 "uuid", "prod-ev"), InPlaceInduction.IN_PLACE, Map.of(InPlaceInduction.ELEMENT, "translationFilter",
@@ -1115,6 +1159,14 @@ class TestCatalogueEventTypesTool {
                 .map(EventType::readBack)
                 .toList()), null);
         facts.startFrom = startFrom;
+    }
+
+    // The build's copy of the existing pipeline, its XSLT read back (its mapping kept): nothing waits for it.
+    private void readBackDone() {
+        facts.docs.add(FakeBuildFacts.doc("Pipeline", "ev", "ACME-Events-V1.1", "version_of", "prod-ev"));
+        facts.docs.add(FakeBuildFacts.doc("XSLT", "x", "ACME-Events-V1.1", "version_of", "prod-x"));
+        facts.stages = Map.of("ev", "translation");
+        facts.mappings = Map.of("x", FakeBuildFacts.kept("translation", Map.of()));
     }
 
     // The sample with one more record, whose action no event type the tests propose recognises.

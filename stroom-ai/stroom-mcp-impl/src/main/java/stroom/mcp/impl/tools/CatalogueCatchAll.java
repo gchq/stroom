@@ -55,10 +55,31 @@ class CatalogueCatchAll {
     static Consent.Request catchAllRequest(final CatalogueCheckResult check,
                                            final Catalogue catalogue,
                                            final String reason) {
+        return catchAllRequest(check, catalogue, reason, null);
+    }
+
+    /// As [#catchAllRequest(CatalogueCheckResult, Catalogue, String)], for a catalogue read back from an existing
+    /// pipeline that writes no Event for the uncatalogued records: they are left so, as it leaves them.
+    ///
+    /// @param check          The catalogue's check.
+    /// @param catalogue      The catalogue.
+    /// @param reason         Why the uncatalogued records may be Unknown, or null.
+    /// @param untranslatedBy The existing pipeline that leaves them untranslated, or null for Unknown (or the event
+    ///                       the user said).
+    /// @return The confirmation.
+    static Consent.Request catchAllRequest(final CatalogueCheckResult check,
+                                           final Catalogue catalogue,
+                                           final String reason,
+                                           final String untranslatedBy) {
         final Map<String, Object> details = new LinkedHashMap<>();
         details.put("uncatalogued records", check.uncatalogued().records() + " in the sample, of "
                                             + check.uncatalogued().shapes().size() + " shape(s), in the chat");
         final Catalogue.CatchAll.Translation own = catalogue.catchAll().translation();
+        if (untranslatedBy != null && own == null) {
+            return Consent.Request.confirmation(NAME, "Leave the uncatalogued records (those no event type "
+                                                      + "recognises) untranslated (no Event), as '" + untranslatedBy
+                                                      + "' leaves them", details);
+        }
         if (reason != null && own == null) {
             details.put("why", reason);
         }
@@ -86,11 +107,26 @@ class CatalogueCatchAll {
     /// @param catalogue The catalogue.
     /// @return What the user is shown.
     static String catchAllShown(final CatalogueCheckResult check, final Catalogue catalogue) {
+        return catchAllShown(check, catalogue, null);
+    }
+
+    /// As [#catchAllShown(CatalogueCheckResult, Catalogue)], for a catalogue read back from an existing pipeline
+    /// that writes no Event for the uncatalogued records.
+    ///
+    /// @param check          The catalogue's check.
+    /// @param catalogue      The catalogue.
+    /// @param untranslatedBy The existing pipeline that leaves them untranslated, or null.
+    /// @return What the user is shown.
+    static String catchAllShown(final CatalogueCheckResult check,
+                                final Catalogue catalogue,
+                                final String untranslatedBy) {
+        final String become = untranslatedBy != null && catalogue.catchAll().translation() == null
+                ? "left untranslated (no Event), as '" + untranslatedBy + "' leaves them."
+                : "translated as " + translatedAs(catalogue.catchAll().translation()) + ", their fields kept as "
+                  + "Data.";
         final List<String> lines = new ArrayList<>(List.of("**Uncatalogued records**: " + check.uncatalogued().records()
                                                             + " of the sample's records no event type recognises, "
-                                                            + "translated as "
-                                                            + translatedAs(catalogue.catchAll().translation())
-                                                            + ", their fields kept as Data."));
+                                                            + become));
         final List<String> shapes = CatalogueTables.uncataloguedShapes(check);
         if (!shapes.isEmpty()) {
             lines.add("");
@@ -110,9 +146,27 @@ class CatalogueCatchAll {
     static String catchAllDeclined(final String build,
                                    final Catalogue catalogue,
                                    final CatalogueCheckResult check) {
+        return catchAllDeclined(build, catalogue, check, null);
+    }
+
+    /// As [#catchAllDeclined(String, Catalogue, CatalogueCheckResult)], for a catalogue read back from an existing
+    /// pipeline that writes no Event for the uncatalogued records.
+    ///
+    /// @param build          The build.
+    /// @param catalogue      The catalogue.
+    /// @param check          The catalogue's check.
+    /// @param untranslatedBy The existing pipeline that leaves them untranslated, or null.
+    /// @return What the agent is told.
+    static String catchAllDeclined(final String build,
+                                   final Catalogue catalogue,
+                                   final CatalogueCheckResult check,
+                                   final String untranslatedBy) {
+        final String become = untranslatedBy != null && catalogue.catchAll().translation() == null
+                ? "left untranslated (no Event), as '" + untranslatedBy + "' leaves them"
+                : "translated as " + translatedAs(catalogue.catchAll().translation());
         return "The user declined the catch-all: they don't want the " + check.uncatalogued().records()
-               + " uncatalogued records (those no event type recognises) translated as "
-               + translatedAs(catalogue.catchAll().translation()) + ". Nothing is confirmed, and the "
+               + " uncatalogued records (those no event type recognises) " + become + ". Nothing is confirmed, and "
+               + "the "
                + "translation can't be drafted or built until it is. Ask the user in the chat what those records "
                + "should become, then call " + NAME + " build=" + build + " again with their answer: event types "
                + "that recognise them (proposals, op: add; drop: true for records they say to drop), or another "
