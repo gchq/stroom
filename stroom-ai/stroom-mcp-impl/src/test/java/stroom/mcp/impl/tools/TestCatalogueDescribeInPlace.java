@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.processing.XsltStages.How;
 import stroom.ai.impl.tools.processing.XsltStages.Stage;
 import stroom.ai.impl.tools.processing.XsltStages.StagedXslt;
+import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
@@ -136,6 +137,39 @@ class TestCatalogueDescribeInPlace {
         assertThat(world.records().startFrom(BUILD).orElseThrow()).containsEntry("choice",
                 ExistingTranslations.EXISTING).containsEntry(InPlaceInduction.ELEMENT, "translationFilter")
                 .containsEntry(InPlaceInduction.PRE_PROCESSED, false);
+    }
+
+    @Test
+    void aRawSurveyIsRefusedForTheCatalogueOnceAPreProcessedTranslationIsDescribed() {
+        // Seen in eval case 106 on Haiku: the catalogue was listed and confirmed against a survey of the raw records,
+        // the plan's next (survey again at the translation's input) passed over.
+        facts.startFrom = Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline", Map.of("uuid", "prod-ev"),
+                InPlaceInduction.IN_PLACE, Map.of(InPlaceInduction.ELEMENT, "translationFilter",
+                        InPlaceInduction.PRE_PROCESSED, true));
+
+        assertThat(text(Map.of("build", BUILD), BuildToolCalls.context())).contains("Survey again first",
+                "survey_feed feed=ACME-A build=" + BUILD, "translation's input");
+
+        // Surveyed there: on with the catalogue.
+        Mockito.when(builds.surveyStatesInBuild(BUILD)).thenReturn(List.of(Map.of("feed", "ACME-A",
+                SurveyDoc.READ_AT, SurveyDoc.AT_TRANSLATION_INPUT)));
+        assertThat(text(Map.of("build", BUILD), BuildToolCalls.context())).doesNotContain("Survey again first");
+    }
+
+    @Test
+    void theListingOfACatalogueDescribedInPlaceSaysWhereItsEventTypesCameFrom() {
+        facts.startFrom = Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline", Map.of("name", "ACME-Events",
+                "uuid", "prod-ev"), InPlaceInduction.IN_PLACE, Map.of(InPlaceInduction.ELEMENT, "translationFilter",
+                InPlaceInduction.PRE_PROCESSED, false));
+        Mockito.when(sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", "time=2026-11-06T09:00:00Z action=login user=u1\n"), List.of()));
+
+        final Map<String, Object> listed = call(Map.of("build", BUILD, "stream_ids", List.of(7)),
+                BuildToolCalls.context());
+
+        assertThat(String.valueOf(listed.get("origin"))).contains("from 'ACME-Events', the existing pipeline this "
+                                                                  + "build describes in place", "TypeIds kept",
+                "seed is the draft's");
     }
 
     @Test

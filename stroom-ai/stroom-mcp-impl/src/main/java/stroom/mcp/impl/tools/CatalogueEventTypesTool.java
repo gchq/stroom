@@ -654,14 +654,21 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     // came from (decided by the user, 2026-11-24); empty otherwise.
     private Optional<String> origin(final Calling calling) {
         final Map<String, Object> startFrom = plan.startFrom(calling.build()).orElse(Map.of());
-        if (!ExistingTranslations.EXISTING.equals(startFrom.get("choice"))) {
+        final boolean inPlace = InPlaceInduction.inPlace(startFrom);
+        if (!ExistingTranslations.EXISTING.equals(startFrom.get("choice")) && !inPlace) {
             return Optional.empty();
         }
         final int count = calling.catalogue().eventTypes().size();
+        // Described in place too (seen in eval case 108 on Haiku: with no origin, the agent took the listing's seed
+        // for the catalogue, removed the types read back and re-added them, its TypeIds then refused as not
+        // Verb-Object): the event types are the pipeline's, kept as it writes them.
         return Optional.of(count + " event type" + (count == 1
                 ? ""
                 : "s") + " from '" + ToolText.str(JsonValues.mapOrEmpty(startFrom.get("pipeline")).get("name"))
-                           + "', the existing pipeline this build started from (read back from its XSLT).");
+                           + "', the existing pipeline this build " + (inPlace
+                ? "describes in place"
+                : "started from") + " (read back from its XSLT, its TypeIds kept as it writes them; the "
+                           + "evidence's seed is the draft's, not these).");
     }
 
     // A next version's build starts from the promoted catalogue beside the feed it works from, whether or not
@@ -721,7 +728,8 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     // survey for the build was refused for nothing readable, it goes on, and says so (returned). Empty for a build
     // with a survey, or with no streams to survey.
     private Optional<String> unsurveyed(final String build) {
-        if (!builds.surveyStatesInBuild(build).isEmpty()) {
+        final List<Map<String, Object>> states = builds.surveyStatesInBuild(build);
+        if (!states.isEmpty()) {
             // A build of several feeds catalogues once each is surveyed (decided by the user, 2026-11-25): the
             // evidence holds every feed's records (seen in eval case 103: one surveyed, the other never read).
             final List<String> toSurvey = plan.feedsToSurvey(build);
@@ -731,6 +739,21 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                         ? ", then each of " + String.join(", ", toSurvey.subList(1, toSurvey.size()))
                         : "") + ", then compare_feeds build=" + build + ". The catalogue's evidence is every "
                                       + "feed's records.");
+            }
+            // A pre-processed translation described in place (or copied): a survey of the raw records, made before
+            // the start was chosen, isn't what the translation reads (seen in eval case 106 on Haiku: the catalogue
+            // checked and confirmed against it, the plan's next passed over).
+            final Map<String, Object> startFrom = plan.startFrom(build).orElse(null);
+            final List<String> stale = states.stream()
+                    .filter(state -> TranslationInputs.staleSurvey(startFrom, state))
+                    .map(state -> JsonValues.text(state.get("feed")))
+                    .toList();
+            if (!stale.isEmpty()) {
+                throw new ToolRefusal("Survey again first: survey_feed feed=" + NullSafe.nonBlankStringElse(
+                        stale.getFirst(), "<the feed>") + " build=" + build + ". Its translation reads what a "
+                                      + "pre-processor writes, so its records are surveyed at the translation's "
+                                      + "input; the survey made before the start was chosen read them as the parser "
+                                      + "does, and no longer counts.");
             }
             return Optional.empty();
         }
