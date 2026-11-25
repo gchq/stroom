@@ -186,7 +186,8 @@ class TestE2eInsiderTimeline extends AbstractInsiderE2eTest {
                 .contains(name(Source.ENDPOINT), name(Source.PROXY));
         final String spans = read("/outputs/timelines/" + InsiderDataset.LEAVER + "/spans.csv");
         assertThat(spans).contains(",AddGroup by " + admin + ",done to them: " + name(Source.CLOUD) + ",target,");
-        assertThat(spans.lines().filter(line -> !line.endsWith(",target")).toList())
+        // The target rows (t1, t2, ...) left out, the rest are as without them.
+        assertThat(spans.lines().filter(line -> !line.matches("t\\d+,.*")).toList())
                 .isEqualTo(spansWithout.lines().toList());
     }
 
