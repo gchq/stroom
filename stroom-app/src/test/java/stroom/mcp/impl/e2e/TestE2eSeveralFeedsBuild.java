@@ -171,6 +171,8 @@ class TestE2eSeveralFeedsBuild extends AbstractE2eTest {
             json("survey_feed", args("feed", feed, "build", build));
         }
         agreed("compare_feeds", args("build", build));
+        // Copied once the user chooses to start from the hand-written translation (copy_pipeline waits for it).
+        startFromExisting(build);
         final Map<String, Object> copy = agreed("copy_pipeline", args("build", build, "source_uuid",
                 written.pipeline(), "new_name", name + "-Events-V1.1"));
         // A copy of a hand-written translation is promoted once its XSLT is read back and the catalogue read back

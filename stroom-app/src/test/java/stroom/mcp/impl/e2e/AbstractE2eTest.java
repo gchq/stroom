@@ -160,6 +160,8 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
     static final Case CSV_CASE = new Case("csv", "Event Data (Text)", CSV_SAMPLE, CSV_SPLITTER, CSV_XSLT);
     /// The tool that catalogues a source's event types.
     static final String CATALOGUE = CatalogueSteps.CATALOGUE;
+    /// The start choice's option for starting a build from the existing pipeline.
+    static final String START_FROM_EXISTING = "Start from the existing pipeline (recommended)";
     /// A catalogue form's message: how many event types it puts to the user.
     static final Pattern ACCEPT_ALL = Pattern.compile("Accept all (\\d+) event types?");
 
@@ -1522,6 +1524,20 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
                     .as("the hand-written pipeline works").isEqualTo("clean");
         }
         return new HandWritten(raw, pipeline.getUuid(), xsltNode.getUuid());
+    }
+
+    /// The user starts a build from the existing pipeline catalogue_event_types offers (its start choice, which
+    /// copy_pipeline waits for before copying a hand-written translation): asked in a form, answered with the
+    /// existing pipeline; the user agrees to everything after.
+    ///
+    /// @param build A build working from a feed a hand-written translation serves, surveyed.
+    /// @return catalogue_event_types' answer.
+    Map<String, Object> startFromExisting(final String build) {
+        client.answeringWith(choosing(START_FROM_EXISTING));
+        final Map<String, Object> chosen = json(CATALOGUE, args("build", build));
+        client.answeringWith(McpTestClient::agree);
+        assertThat(chosen).as("the start chosen: %s", chosen).containsEntry("status", "start_from_existing");
+        return chosen;
     }
 
     /// Puts a pre-processor XSLT between a pipeline's parser and its translation, as an environment might: the

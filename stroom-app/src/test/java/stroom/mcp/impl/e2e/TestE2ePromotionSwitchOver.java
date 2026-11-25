@@ -237,12 +237,13 @@ class TestE2ePromotionSwitchOver extends AbstractE2eTest {
         return promote(shared, build, List.of(shared.feedA().getName()));
     }
 
-    // A build of V1.1 for the feeds given, promoted: the review and the result. Copied straight after the survey
-    // (the start never asked: the copy starts the build from V1.0), its XSLT read back and the catalogue read back
-    // confirmed, as promotion asks of a copy of a hand-written translation.
+    // A build of V1.1 for the feeds given, promoted: the review and the result. Started from V1.0 as the user
+    // chooses after the survey (copy_pipeline waits for the choice), copied, its XSLT read back and the catalogue
+    // read back confirmed, as promotion asks of a copy of a hand-written translation.
     private Promoted promote(final Shared shared, final String build, final List<String> feeds) {
         json("start_build", args("build", build, "feeds", feeds));
         feeds.forEach(feed -> json("survey_feed", args("feed", feed, "build", build)));
+        startFromExisting(build);
         final Map<String, Object> copy = agreed("copy_pipeline", args("build", build, "source_uuid",
                 shared.pipeline(), "new_name", shared.original() + "-V1.1"));
         assertThat(uuidOf(copy)).isNotNull();

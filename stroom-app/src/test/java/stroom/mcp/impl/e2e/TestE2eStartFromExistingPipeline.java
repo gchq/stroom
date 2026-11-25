@@ -94,6 +94,15 @@ class TestE2eStartFromExistingPipeline extends AbstractE2eTest {
         assertThat(nextTool(status)).isEqualTo(CATALOGUE);
         assertThat(String.valueOf(map(status, "next").get("then"))).contains("how the build starts",
                 "'" + ORIGINAL + "'");
+        // A copy before the user chooses is refused (eval cases 97 and 104 on Haiku: copied straight after the
+        // survey, so the user never chose how the build starts).
+        final int formsBeforeCopy = client.forms().size();
+        assertThat(refusal("copy_pipeline", args("build", BUILD, "source_uuid", original.pipeline(), "new_name",
+                VERSION))).contains("'" + ORIGINAL + "'", "catalogue_event_types build=" + BUILD,
+                "Nothing was copied");
+        assertThat(formsSince(formsBeforeCopy)).isEmpty();
+        assertThat(String.valueOf(json("build_status", args("build", BUILD, "full", true)).get("documents")))
+                .doesNotContain(VERSION);
 
         // 2. The user starts from the existing pipeline: the form says who wrote it and what it translates.
         client.answeringWith(choosing("Start from the existing pipeline (recommended)"));
