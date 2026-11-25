@@ -68,6 +68,8 @@ final class TimeSources {
     static final String TIMEZONE_ARG = "timezone";
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TimeSources.class);
 
+    // The stream meta attribute holding a stream's feed name.
+    private static final String FEED_META = "Feed";
     private static final String FIELD_SOURCE = "field:";
     private static final String META_SOURCE = "meta:";
 
@@ -161,11 +163,14 @@ final class TimeSources {
         TimeZones.guess(zoneless, (Map<String, List<String>>) found.getOrDefault("examples", Map.of()), received)
                 .ifPresent(guess -> answers.putIfAbsent(guess.label(), guess.offset()));
         answers.put("Another zone: I'll name it", NONE);
-        final ChosenZone choice = chosenZone(call, context, consent, action, kept, answers);
-        final String chosen = choice.zone();
         final String where = String.join(", ", zoneless.stream().map(entry -> "'" + TimeZones.readFrom(entry) + "'")
                 .distinct()
                 .toList());
+        if (ToolArgs.raw(call, TIMEZONE_ARG) == null && byFeed(kept.feedZones(), zoneless, where, notes)) {
+            return;
+        }
+        final ChosenZone choice = chosenZone(call, context, consent, action, kept, answers);
+        final String chosen = choice.zone();
         if (chosen == null || NONE.equals(chosen)) {
             notes.add("The times read from " + where + " have no time zone or offset: ask the user which zone the "
                       + "source writes them in (never assume UTC), and draft again with timezone= its IANA name "
@@ -192,6 +197,37 @@ final class TimeSources {
         }
         zoneless.forEach(entry -> entry.put("timezone", chosen));
         notes.add("The times read from " + where + " are read in " + chosen + asChosen + ".");
+    }
+
+    // A build of several feeds whose times the user said are written in different zones (compare_feeds, decided by
+    // the user 2026-11-25): each record's time read in its own feed's zone, from the stream's Feed meta, the zone
+    // most feeds have where a feed isn't listed. True when that is how they are read; false for one zone (or none
+    // kept), which the build's own zone question settles.
+    private static boolean byFeed(final Map<String, String> feedZones,
+                                  final List<Map<String, Object>> zoneless,
+                                  final String where,
+                                  final List<Object> notes) {
+        if (new HashSet<>(feedZones.values()).size() < 2) {
+            return false;
+        }
+        final Map<String, Long> counts = new LinkedHashMap<>();
+        feedZones.values().forEach(zone -> counts.merge(zone, 1L, Long::sum));
+        final String most = counts.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElse("UTC");
+        final Map<String, Object> source = new LinkedHashMap<>();
+        source.put("meta", FEED_META);
+        source.put("map", new LinkedHashMap<>(feedZones));
+        source.put("default", most);
+        zoneless.forEach(entry -> entry.put("timezone", new LinkedHashMap<>(source)));
+        answeredZone(notes);
+        final List<String> each = new ArrayList<>();
+        feedZones.forEach((feed, zone) -> each.add(feed + ": " + zone));
+        notes.add("The times read from " + where + " are read in each feed's own zone, as the user said for this "
+                  + "build (compare_feeds): " + String.join("; ", each) + " (from the stream's " + FEED_META
+                  + " meta; " + most + " for a feed not listed).");
+        return true;
     }
 
     // The draft's notes once the zone is chosen: a time's note saying only that it has none dropped, and the rest
@@ -493,6 +529,20 @@ final class TimeSources {
             } catch (final RuntimeException e) {
                 LOGGER.debug(() -> LogUtil.message("Couldn't read build {}'s time zone: {}", build, e.getMessage()));
                 return Optional.empty();
+            }
+        }
+
+        // Each feed's zone, where the user gave a build of several feeds different ones (compare_feeds); none
+        // otherwise, or when the record can't be read.
+        private Map<String, String> feedZones() {
+            if (records == null || NullSafe.isBlankString(build)) {
+                return Map.of();
+            }
+            try {
+                return records.feedTimeZones(build);
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> LogUtil.message("Couldn't read build {}'s feed zones: {}", build, e.getMessage()));
+                return Map.of();
             }
         }
 

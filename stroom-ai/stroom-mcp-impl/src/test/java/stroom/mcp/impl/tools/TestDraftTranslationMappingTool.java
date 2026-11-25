@@ -210,6 +210,29 @@ class TestDraftTranslationMappingTool {
     }
 
     @Test
+    void aBuildOfFeedsInDifferentZonesReadsEachFeedsTimesInItsOwnZone() {
+        // Decided by the user (2026-11-25): per-feed zones allowed, kept in the build (compare_feeds), and the
+        // translation's time handling honours them: each record's zone from its stream's Feed meta.
+        final String local = "time,user,action\n2026-10-01 10:00:00,bob,login\n2026-10-01 10:04:00,carol,logout\n";
+        Mockito.when(world.sampleStreamTexts.read(List.of(14L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 14", local), List.of()));
+        world.forms = true;
+        world.world.folder("System/" + BuildWorld.WORKSPACE + "/acme-many");
+        world.world.records().rememberFeedComparison("acme-many", Map.of("time_zones", Map.of("ACME-A", "UTC",
+                "ACME-B", "Australia/Sydney", "ACME-C", "UTC")));
+
+        final Map<String, Object> draft = world.call(tool, Map.of("stream_ids", List.of(14), "build", "acme-many"));
+
+        assertThat(world.asked).doesNotContain(TimeSources.ZONE_QUESTION);
+        assertThat(String.valueOf(draft.get("mapping"))).contains("Feed", "Australia/Sydney");
+        assertThat(String.valueOf(draft.get("notes"))).contains("read in each feed's own zone",
+                "ACME-B: Australia/Sydney", "UTC for a feed not listed");
+        // Given as the argument, one zone still wins.
+        assertThat(String.valueOf(world.call(tool, Map.of("stream_ids", List.of(14), "build", "acme-many",
+                TimeSources.TIMEZONE_ARG, "UTC")).get("mapping"))).doesNotContain("Australia/Sydney");
+    }
+
+    @Test
     void aRedraftInTheSameBuildUsesTheZoneTheUserChoseAndAnotherBuildAsksAgain() {
         // Seen in chats 185 and 186: drafted, then drafted again in the same build (with the System/Name the user
         // gave), and the user was asked the zone again, answering UTC both times.
