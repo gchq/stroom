@@ -152,8 +152,10 @@ import java.util.function.Function;
 /// - **Sources**: given by the call (or a skill); else asked in a chat's form ([TimelineSourceChoice]); over MCP,
 ///   every Elastic Index the user can use. A source with roles is read by them, as before (the override, e.g. for a
 ///   source of window focus); one without has its events classified: from their Events XML, read by StreamId and
-///   EventId ([TimelineEventXml], [EventXmlClassifier]), else the index's element field, else the source's own event
-///   codes classified once ([EventCodes]) ([TimelineClassification]). The user and the time come from the index.
+///   EventId ([TimelineEventXml], [EventXmlClassifier]; for an event code nothing settles, a few of its events'
+///   XML, the code classified once and applied to all its events), else the index's element field, else the
+///   source's own event codes classified once ([EventCodes]) ([TimelineClassification]). The user and the time come
+///   from the index.
 /// - **The user field** of each index ([TimelineFields]): the call's (or skill's), the AGENTS doc's `## Fields`, a
 ///   field convention's, the index's documentation, else asked.
 /// - **Pairs** ([PairRule]): the skill's Event chains, the call's, the schema's, and those inferred from the user's
@@ -264,6 +266,9 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     /// chooses.
     static final int MAX_AUTOMATIC_SOURCES = 10;
     /// The paths read from the Events XML where an index doesn't hold an event's type.
+    /// The events of one unsettled event code whose Events XML is read to classify the code (decided with the user
+    /// 2026-11-25): the code is classified once from them and applied to all its events.
+    static final int XML_EVENTS_PER_CODE = 3;
     static final List<String> TYPE_PATHS = List.of("EventDetail/TypeId", "EventDetail/* (the element)",
             "EventDetail/*/Action");
     /// The paths read from the Events XML where an index doesn't hold an event's content.
@@ -480,8 +485,9 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                  + "documentation, a convention, else asked. Roles by event type: typeRoles or the "
                                  + "skill's, the catalogue of the stream's translation, the AGENTS doc's ## Event "
                                  + "types, the schema's element and Action, else the codes classified (offered as "
-                                 + "## Event types lines). Events XML only for what the index doesn't map, named "
-                                 + "to add to its plan; the user and time always the index's. Past the events cap "
+                                 + "## Event types lines). Events XML only for what the index doesn't map (a few "
+                                 + "events per unsettled code, applied to all its events), named to add to its "
+                                 + "plan; the user and time always the index's. Past the events cap "
                                  + "a day-by-day overview comes instead, to pick days. Omit sources to ask the user "
                                  + "which (over MCP: the AGENTS doc's ## Sources, else the indexes holding the "
                                  + "user's events, at most 10). Data-quality flags for missing events. "
@@ -1616,11 +1622,12 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             return new XmlOutcome(Map.of(), XmlRead.NONE, List.of());
         }
         forType.sort(Comparator.comparingLong(Event::time));
+        final List<Event> toRead = sampledByCode(forType, read, fields);
         final int cap = Math.max(0, config.getTimelineMaxXmlEvents());
         final Map<Long, List<Long>> ids = new TreeMap<>();
         final Set<String> seen = new LinkedHashSet<>();
         final Map<Integer, Integer> typeRead = new LinkedHashMap<>();
-        for (final Event event : forType) {
+        for (final Event event : toRead) {
             if (seen.size() >= cap) {
                 break;
             }
@@ -1629,7 +1636,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 typeRead.merge(event.source(), 1, Integer::sum);
             }
         }
-        final int pastCap = (int) forType.stream()
+        final int pastCap = (int) toRead.stream()
                 .map(event -> event.streamId() + ":" + event.eventId())
                 .distinct()
                 .count() - seen.size();
@@ -1663,6 +1670,55 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                                                       + seen.size() + " event(s)"));
         return new XmlOutcome(xml.xml(), new XmlRead(seen.size() + pastCap, xml.xml().size(), xml.missing(),
                 xml.unreadable(), pastCap, xml.notAllowed(), cap), paths);
+    }
+
+    // The events whose XML is read for their type, in the order read: of each unsettled event code, a few events
+    // spread over the period (the first round of every code first, so the cap reaches every code), as the code is
+    // classified once from them and applied to all its events; between the rounds, every event with no code, each
+    // read for itself.
+    private static List<Event> sampledByCode(final List<Event> forType,
+                                             final Read read,
+                                             final Map<Integer, Fields> fields) {
+        final Map<Integer, Map<String, List<Event>>> byCode = new LinkedHashMap<>();
+        final List<Event> uncoded = new ArrayList<>();
+        for (final Event event : forType) {
+            final Fields found = fields.getOrDefault(event.source(), Fields.NONE);
+            final String code = found.eventType() == null
+                    ? null
+                    : read.extras().getOrDefault(event.id(), Map.of()).get(found.eventType());
+            if (NullSafe.isBlankString(code)) {
+                uncoded.add(event);
+            } else {
+                byCode.computeIfAbsent(event.source(), k -> new LinkedHashMap<>())
+                        .computeIfAbsent(code, k -> new ArrayList<>()).add(event);
+            }
+        }
+        final List<List<Event>> samples = new ArrayList<>();
+        byCode.values().forEach(codes -> codes.values().forEach(events -> samples.add(spread(events,
+                XML_EVENTS_PER_CODE))));
+        final List<Event> out = new ArrayList<>();
+        samples.forEach(sample -> out.add(sample.getFirst()));
+        out.addAll(uncoded);
+        for (int round = 1; round < XML_EVENTS_PER_CODE; round++) {
+            for (final List<Event> sample : samples) {
+                if (sample.size() > round) {
+                    out.add(sample.get(round));
+                }
+            }
+        }
+        return out;
+    }
+
+    // At most the given number of the events (in time order), spread from the first to the last.
+    private static List<Event> spread(final List<Event> events, final int most) {
+        if (events.size() <= most) {
+            return events;
+        }
+        final List<Event> out = new ArrayList<>(most);
+        for (int i = 0; i < most; i++) {
+            out.add(events.get((int) Math.round((double) i * (events.size() - 1) / Math.max(1, most - 1))));
+        }
+        return out;
     }
 
     // True if the index's fields settle the event's role: its element (and Action) for the schema's table, or an
@@ -1783,6 +1839,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final Map<Integer, Map<String, CodeRole>> out = new LinkedHashMap<>();
         final Map<Integer, Map<String, Integer>> counts = new LinkedHashMap<>();
         final Set<Integer> settled = new LinkedHashSet<>();
+        final Map<Integer, Map<String, Classified>> fromXml = TimelineClassification.codesFromXml(read.events(),
+                read.extras(), fields, xml);
         for (final Event event : read.events()) {
             final Fields found = fields.get(event.source());
             if (found == null || found.eventType() == null || xml.containsKey(event.streamId() + ":"
@@ -1794,8 +1852,11 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 continue;
             }
             final String code = extra.get(found.eventType());
-            // A code the call, the skill, its stream's catalogue or an AGENTS doc gives a role needs no other.
-            if (code != null && roles.settles(event.source(), event.streamId(), code)) {
+            // A code the call, the skill, its stream's catalogue or an AGENTS doc gives a role needs no other, nor
+            // does one the Events XML of a few of its events classified.
+            if (code != null && fromXml.getOrDefault(event.source(), Map.of()).containsKey(code)) {
+                settled.add(event.source());
+            } else if (code != null && roles.settles(event.source(), event.streamId(), code)) {
                 settled.add(event.source());
             } else if (code != null) {
                 counts.computeIfAbsent(event.source(), s -> new LinkedHashMap<>()).merge(code, 1, Integer::sum);

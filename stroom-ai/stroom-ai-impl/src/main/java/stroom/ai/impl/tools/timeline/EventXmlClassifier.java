@@ -373,6 +373,9 @@ final class EventXmlClassifier {
     enum Route {
         /// From its Events XML.
         XML("Events XML"),
+        /// From the Events XML of a few events of its event code: the code classified once, applied to all its
+        /// events.
+        XML_CODE("Events XML of its code"),
         /// From the element and Action the index holds.
         INDEX_FIELDS("index fields"),
         /// From the source's own event code, classified once and confirmed.

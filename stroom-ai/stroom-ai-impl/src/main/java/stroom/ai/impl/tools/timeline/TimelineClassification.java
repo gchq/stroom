@@ -68,6 +68,7 @@ final class TimelineClassification {
         final List<Event> out = new ArrayList<>();
         final Map<String, Classified> byId = new LinkedHashMap<>();
         final Map<Integer, Map<Route, Integer>> routes = new LinkedHashMap<>();
+        final Map<Integer, Map<String, Classified>> byCode = codesFromXml(events, extras, fields, xml);
         int ignored = 0;
         for (final Event event : events) {
             final Source source = sources.get(event.source());
@@ -79,8 +80,9 @@ final class TimelineClassification {
             }
             final Fields sourceFields = fields.getOrDefault(event.source(), Fields.NONE);
             final Map<String, String> extra = extras.getOrDefault(event.id(), Map.of());
-            final Classified found = classifyOne(event, extra, sourceFields, xml, codes.getOrDefault(event.source(),
-                    Map.of())).withKeys(indexKeys(source, sourceFields, event, extra));
+            final Classified found = classifyOne(event, extra, sourceFields, xml, byCode.getOrDefault(
+                    event.source(), Map.of()), codes.getOrDefault(event.source(), Map.of()))
+                    .withKeys(indexKeys(source, sourceFields, event, extra));
             routes.computeIfAbsent(event.source(), s -> new EnumMap<>(Route.class)).merge(found.route(), 1,
                     Integer::sum);
             final Classified classified = roles.decide(event.source(), event.streamId(), found).orElse(null);
@@ -94,10 +96,61 @@ final class TimelineClassification {
         return new Result(out, byId, routes, ignored, roles.origins());
     }
 
+    /// Each automatic source's event codes classified by the Events XML of the few of their events read (decided
+    /// with the user 2026-11-25): a code once, by its events' most common schema type (the earliest on a tie), to
+    /// apply to all its events.
+    ///
+    /// @param events The events read.
+    /// @param extras Their more fields, by event id.
+    /// @param fields Each automatic source's classifying fields, by its place.
+    /// @param xml    The events' XML read, by `streamId:eventId`.
+    /// @return Each source's codes, by its place, with how one of their events' XML classified them.
+    static Map<Integer, Map<String, Classified>> codesFromXml(final List<Event> events,
+                                                              final Map<String, Map<String, String>> extras,
+                                                              final Map<Integer, Fields> fields,
+                                                              final Map<String, String> xml) {
+        final Map<Integer, Map<String, Map<String, List<Classified>>>> found = new LinkedHashMap<>();
+        if (xml.isEmpty()) {
+            return Map.of();
+        }
+        for (final Event event : events) {
+            final Fields sourceFields = fields.getOrDefault(event.source(), Fields.NONE);
+            final String text = event.streamId() == null || event.eventId() == null
+                    ? null
+                    : xml.get(event.streamId() + ":" + event.eventId());
+            final String code = sourceFields.eventType() == null
+                    ? null
+                    : extras.getOrDefault(event.id(), Map.of()).get(sourceFields.eventType());
+            if (text == null || NullSafe.isBlankString(code)) {
+                continue;
+            }
+            EventXmlClassifier.classify(text)
+                    .filter(classified -> classified.element() != null)
+                    .ifPresent(classified -> found.computeIfAbsent(event.source(), k -> new LinkedHashMap<>())
+                            .computeIfAbsent(code, k -> new LinkedHashMap<>())
+                            .computeIfAbsent(classified.schemaType(), k -> new ArrayList<>())
+                            .add(classified));
+        }
+        final Map<Integer, Map<String, Classified>> out = new LinkedHashMap<>();
+        found.forEach((source, byCode) -> byCode.forEach((code, byType) -> {
+            List<Classified> most = null;
+            for (final List<Classified> same : byType.values()) {
+                if (most == null || same.size() > most.size()) {
+                    most = same;
+                }
+            }
+            if (most != null) {
+                out.computeIfAbsent(source, k -> new LinkedHashMap<>()).put(code, most.getFirst());
+            }
+        }));
+        return out;
+    }
+
     private static Classified classifyOne(final Event event,
                                           final Map<String, String> extra,
                                           final Fields fields,
                                           final Map<String, String> xml,
+                                          final Map<String, Classified> byCode,
                                           final Map<String, CodeRole> codes) {
         if (event.streamId() != null && event.eventId() != null) {
             final String text = xml.get(event.streamId() + ":" + event.eventId());
@@ -118,6 +171,12 @@ final class TimelineClassification {
             return EventXmlClassifier.of(element, fields.action() == null
                     ? null
                     : extra.get(fields.action()), code, null, event.object(), null, Map.of(), Route.INDEX_FIELDS);
+        }
+        if (code != null && byCode.containsKey(code)) {
+            // The code as the XML of a few of its events classified it: its element and Action, not their content.
+            final Classified sampled = byCode.get(code);
+            return EventXmlClassifier.of(sampled.element(), sampled.action(), code, null, event.object(), null,
+                    Map.of(), Route.XML_CODE);
         }
         if (code != null && codes.containsKey(code)) {
             final CodeRole role = codes.get(code);
