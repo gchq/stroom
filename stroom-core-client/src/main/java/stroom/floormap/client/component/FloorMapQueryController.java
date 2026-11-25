@@ -28,9 +28,9 @@ import stroom.query.api.TimeRange;
 import stroom.query.client.component.QueryEditorController;
 import stroom.query.client.component.QueryResultTableController;
 import stroom.query.shared.QueryTablePreferences;
-import stroom.util.client.Console;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
+import stroom.widget.util.client.Console;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;

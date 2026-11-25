@@ -107,7 +107,8 @@ public class PostMessage {
       eventLocation.href = origin;
       var eventHostname = eventLocation.hostname;
       if (eventHostname != hostname) {
-        console.error("Ignoring event as host names do not match: hostname='" + hostname +
+        @stroom.widget.util.client.Console::error(Ljava/lang/String;)(
+          "Ignoring event as host names do not match: hostname='" + hostname +
           "' eventHostname='" + eventHostname + "'");
         return;
       }

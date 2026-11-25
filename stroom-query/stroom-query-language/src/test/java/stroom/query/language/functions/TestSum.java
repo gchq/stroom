@@ -16,12 +16,21 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.language.functions.ref.StoredValues;
+import stroom.query.language.functions.ref.ValueReferenceIndex;
 import stroom.util.date.DateUtil;
 
+import org.junit.jupiter.api.Test;
+
+import java.text.ParseException;
 import java.time.Duration;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 class TestSum extends AbstractFunctionTest<Sum> {
+
+    private static final Val BOOLEAN_ERROR = ValErr.create("Expected a number but got 'true'");
 
     @Override
     Class<Sum> getFunctionType() {
@@ -71,7 +80,84 @@ class TestSum extends AbstractFunctionTest<Sum> {
                         ValInteger.create(1),
                         ValInteger.create(10),
                         ValNull.INSTANCE,
-                        ValInteger.create(100))
+                        ValInteger.create(100)),
+                // Field values are often text.
+                TestCase.of(
+                        "numeric text",
+                        ValDouble.create(111),
+                        ValString.create("1"),
+                        ValString.create("100"),
+                        ValInteger.create(10)),
+                TestCase.ofAggregate(
+                        "aggregate numeric text",
+                        ValDouble.create(111),
+                        ValString.create("1"),
+                        ValString.create("100"),
+                        ValInteger.create(10)),
+                TestCase.of(
+                        "booleans",
+                        BOOLEAN_ERROR,
+                        ValBoolean.TRUE,
+                        ValBoolean.TRUE),
+                TestCase.of(
+                        "boolean and int",
+                        BOOLEAN_ERROR,
+                        ValInteger.create(1),
+                        ValBoolean.TRUE,
+                        ValInteger.create(2)),
+                TestCase.of(
+                        "null and boolean",
+                        BOOLEAN_ERROR,
+                        ValNull.INSTANCE,
+                        ValBoolean.TRUE),
+                TestCase.ofAggregate(
+                        "aggregate single boolean",
+                        BOOLEAN_ERROR,
+                        ValBoolean.TRUE),
+                TestCase.ofAggregate(
+                        "aggregate booleans",
+                        BOOLEAN_ERROR,
+                        ValBoolean.TRUE,
+                        ValBoolean.TRUE),
+                TestCase.ofAggregate(
+                        "aggregate boolean and int",
+                        BOOLEAN_ERROR,
+                        ValInteger.create(1),
+                        ValBoolean.TRUE,
+                        ValInteger.create(2)),
+                TestCase.ofAggregate(
+                        "aggregate error before boolean",
+                        ValErr.create("other"),
+                        ValErr.create("other"),
+                        ValBoolean.TRUE)
         );
+    }
+
+    @Test
+    void mergeKeepsTheError() throws ParseException {
+        final Sum sum = new Sum(Sum.NAME);
+        sum.setParams(new Param[]{new Ref("${val}", 0)});
+        final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
+        sum.addValueReferences(valueReferenceIndex);
+        final Generator generator = sum.createGenerator();
+
+        assertThat(merge(generator, valueReferenceIndex, ValBoolean.TRUE, ValInteger.create(1)))
+                .isEqualTo(BOOLEAN_ERROR);
+        assertThat(merge(generator, valueReferenceIndex, ValInteger.create(1), ValBoolean.TRUE))
+                .isEqualTo(BOOLEAN_ERROR);
+        assertThat(merge(generator, valueReferenceIndex, ValInteger.create(1), ValInteger.create(2)))
+                .isEqualTo(ValDouble.create(3));
+    }
+
+    private Val merge(final Generator generator,
+                      final ValueReferenceIndex valueReferenceIndex,
+                      final Val existing,
+                      final Val added) {
+        final StoredValues existingValues = valueReferenceIndex.createStoredValues();
+        generator.set(Val.of(existing), existingValues);
+        final StoredValues addedValues = valueReferenceIndex.createStoredValues();
+        generator.set(Val.of(added), addedValues);
+        generator.merge(existingValues, addedValues);
+        return generator.eval(existingValues, null);
     }
 }

@@ -28,8 +28,12 @@ import com.google.gwt.user.client.ui.Widget;
 /// was typed.
 ///
 /// A field is found by walking the widgets: panels' children, a [Component]'s own widget, a
-/// [FormGroup]'s control and a [LayerContainer]'s layers (a tabbed screen's tabs, shown or not).
-/// Hidden widgets, and what they hold, are skipped, and so is a read-only component's.
+/// [FormGroup]'s control and a [LayerContainer]'s layers on the page. Hidden widgets, and what they
+/// hold, are skipped, and so is a read-only component's.
+///
+/// A tab that isn't showing is usually off the page (a [stroom.widget.component.client.ControllerLayer]
+/// takes its content off), so its fields aren't found. Tabbed content with checked fields looks in each
+/// tab itself, as a [RefusesInvalidInput].
 public final class InvalidInputs {
 
     private InvalidInputs() {
@@ -91,7 +95,7 @@ public final class InvalidInputs {
             return component.findInvalidInput();
         }
         if (widget instanceof final LayerContainer layerContainer) {
-            // Its layers are a tabbed screen's tabs, each still the screen's when not showing
+            // A layer still on the page is the screen's though it isn't showing
             for (final Widget child : layerContainer.getLayerWidgets()) {
                 final HasInvalidInput found = find(child, false);
                 if (found != null) {

@@ -38,7 +38,6 @@ import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.editor.client.component.CodeEditorController;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
-import stroom.util.client.Console;
 import stroom.util.shared.ResourceKey;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.Controller;
@@ -47,6 +46,7 @@ import stroom.widget.menu.client.Item;
 import stroom.widget.menu.client.ShowMenuEvent;
 import stroom.widget.popup.client.PopupPosition;
 import stroom.widget.popup.client.PopupPosition.PopupLocation;
+import stroom.widget.util.client.Console;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.GWT;
@@ -308,17 +308,21 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
     ///
     /// @param document Document that was returned by the save
     /// @param callback Thing to call when everything is saved.
-    public void onSave(final D document, final Consumer<D> callback) {
+    /// @param failed   What to run instead if it can't be, once the user has been told.
+    public void onSave(final D document, final Consumer<D> callback, final Runnable failed) {
         this.document = document;
 
         // Check if the editor content is dirty and needs saving
         if (assetDirtyState.isDirtyAndNeedsSaveToDraft()) {
             doUpdateContent(assetDirtyState.getPathToEditItem(),
                     editor.getText().getBytes(StandardCharsets.UTF_8),
-                    () -> doOnWrite(callback),
-                    this::doSelectionChangeAfterUpdateContentFailed);
+                    () -> doOnWrite(callback, failed),
+                    () -> {
+                        doSelectionChangeAfterUpdateContentFailed();
+                        failed.run();
+                    });
         } else {
-            doOnWrite(callback);
+            doOnWrite(callback, failed);
         }
     }
 
@@ -336,9 +340,11 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
     /// @param source      The document being saved as a copy.
     /// @param newDocument The document we're Saving As.
     /// @param callback    The lamda to call when this chain is complete.
-    public void onSaveAs(final D source, final D newDocument, final Consumer<D> callback) {
-
-        Console.info("onSaveAs for " + source + " to " + newDocument);
+    /// @param failed      What to run instead if it fails, once the user has been told.
+    public void onSaveAs(final D source,
+                         final D newDocument,
+                         final Consumer<D> callback,
+                         final Runnable failed) {
 
         String updatedContentPath = null;
         byte[] updatedContent = null;
@@ -352,7 +358,7 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
         restFactory.create(DOCUMENT_ASSET_RESOURCE)
                 .method(r -> r.saveAs(source.getUuid(), params))
                 .onSuccess(result -> {
-                    if (result) {
+                    if (Boolean.TRUE.equals(result)) {
                         // Tab becomes the new document so change the reference here
                         this.document = newDocument;
                         // Invoke next in the chain
@@ -360,13 +366,13 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
                     } else {
                         AlertEvent.fireError(this,
                                 "There was an error saving the document to a new document",
-                                null);
+                                failed::run);
                     }
                 })
                 .onFailure(error -> {
                     AlertEvent.fireError(this,
                             "There was an error saving the document to a new document: " + error.getMessage(),
-                            null);
+                            failed::run);
                 })
                 .owner(this)
                 .taskMonitorFactory(taskMonitor())
@@ -572,24 +578,26 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
     }
 
     // Called from onSave() after any saving of content has happened, if that is necessary
-    private void doOnWrite(final Consumer<D> callback) {
+    private void doOnWrite(final Consumer<D> callback, final Runnable failed) {
         // Transfer draft saves to live
         restFactory.create(DOCUMENT_ASSET_RESOURCE)
                 .method(r -> r.saveDraftToLive(document.getUuid()))
                 .onSuccess(result -> {
-                    if (result) {
+                    if (Boolean.TRUE.equals(result)) {
+                        // The draft is now live, so there is nothing to save
+                        serverDirty = false;
                         // Do the original resultConsumer
                         callback.accept(document);
                     } else {
                         AlertEvent.fireError(this,
                                 "Error saving assets",
-                                null);
+                                failed::run);
                     }
                 })
                 .onFailure(error -> {
                     AlertEvent.fireError(this,
                             "Error saving assets: " + error.getMessage(),
-                            null);
+                            failed::run);
                 })
                 .owner(this)
                 .taskMonitorFactory(taskMonitor())
@@ -763,7 +771,7 @@ public class DocumentAssetsTabController<D extends AbstractDoc>
                 .method(r ->
                         r.updateContent(document.getUuid(), update))
                 .onSuccess(result -> {
-                    if (result) {
+                    if (Boolean.TRUE.equals(result)) {
                         // Next link in chain
                         successCallback.run();
                     } else {

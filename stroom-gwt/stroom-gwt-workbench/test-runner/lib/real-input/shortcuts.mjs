@@ -59,12 +59,11 @@ function tabCount(page) {
   return page.evaluate(() => document.querySelectorAll('.tab-bar--curved [role="tab"]').length);
 }
 
-// What the explorer last told screen reader users
-function explorerStatus(page) {
-  return page.evaluate(() => {
-    const status = document.querySelector('[role="navigation"] [role="status"]');
-    return status ? status.textContent : null;
-  });
+// What the explorer last told screen reader users, in each of its statuses: that it is loading, and why
+// an item's key did nothing
+function explorerStatuses(page) {
+  return page.evaluate(() => Array.from(document.querySelectorAll('[role="navigation"] [role="status"]'))
+    .map((status) => status.textContent));
 }
 
 // Whether a dialog with the given title is showing
@@ -104,7 +103,7 @@ export const CHECKS = {
     // A feed can't be renamed: no dialog, and a screen reader is told why
     await focusItem(page, 'EVENTS');
     await page.keyboard.press('F2');
-    await waitFor(page, async () => (await explorerStatus(page)) === 'Feeds can\'t be renamed',
+    await waitFor(page, async () => (await explorerStatuses(page)).includes('Feeds can\'t be renamed'),
       'F2 on a feed tells screen reader users it can\'t be renamed');
     assert.equal(await page.getByLabel('Name', { exact: true }).isVisible(), false, 'no Rename dialog for a feed');
 

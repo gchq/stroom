@@ -30,8 +30,8 @@ import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
 import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;
+import stroom.widget.util.client.Console;
 
-import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -95,7 +95,7 @@ public class ChangeAssigneeController extends Controller {
                                 new ChangeAssignedTo(currentAssignedTo));
                         annotationResourceClient.batchChange(this, request,
                                 values -> {
-                                    GWT.log("Updated " + values + " annotations");
+                                    Console.debug(() -> "Updated " + values + " annotations");
                                     if (values > 0) {
                                         AnnotationChangeEvent.fire(this, null);
                                     }

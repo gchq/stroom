@@ -79,8 +79,11 @@
     outline: none;
 }
 
+/* Days of the months before and after: quieter, but text that can be read and clicked, so the
+   muted text colour rather than the disabled one, which is under 4.5:1 on a light dialog with the
+   transparency option (white at 80% over the page's shade, about #ebebeb) */
 .calendar__day--outside {
-    color: var(--text-color--disabled);
+    color: var(--text-color--muted);
 }
 
 .calendar__day:hover {

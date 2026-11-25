@@ -87,20 +87,23 @@ public class TableBuilderProcessing extends Component {
         return maxMetaCreateTimeMs;
     }
 
-    /// Offers the nodes, choosing the settings' node if it has been shown, else the first.
+    /// Offers the nodes, choosing the settings' node if they have just been shown, else the node
+    /// already chosen if it is still listed (the nodes are listed again each time the panel is
+    /// shown), else the first.
     ///
     /// @param nodes The nodes' names.
     public void setNodes(final List<String> nodes) {
+        final String chosen = this.node.getValue();
         this.node.clear();
         this.node.addItems(nodes);
-        if (selectedNode == null) {
-            if (!nodes.isEmpty()) {
-                //noinspection SequencedCollectionMethodCanBeUsed // Not in GWT
-                this.node.setValue(nodes.get(0));
-            }
-        } else {
+        if (selectedNode != null) {
             this.node.setValue(selectedNode);
             selectedNode = null;
+        } else if (chosen != null && nodes.contains(chosen)) {
+            this.node.setValue(chosen);
+        } else if (!nodes.isEmpty()) {
+            //noinspection SequencedCollectionMethodCanBeUsed // Not in GWT
+            this.node.setValue(nodes.get(0));
         }
     }
 

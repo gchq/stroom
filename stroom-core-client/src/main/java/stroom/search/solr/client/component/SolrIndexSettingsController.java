@@ -20,6 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.document.client.editor.UnsetText;
 import stroom.explorer.client.component.DocSelectionController;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.ExpressionOperator;
@@ -148,12 +149,15 @@ public class SolrIndexSettingsController extends Controller {
     /// @param index The index.
     /// @return A copy of it with the settings shown.
     public SolrIndexDoc write(final SolrIndexDoc index) {
+        // What isn't set is written as it was read, so that showing the settings doesn't change them
+        final SolrConnectionConfig read = index.getSolrConnectionConfig();
         final SolrConnectionConfig connectionConfig = SolrConnectionConfig
                 .builder()
+                // Always the type shown, even if none was read, as the server takes none as a cloud
                 .instanceType(view.getInstanceType())
-                .solrUrls(view.getSolrUrls())
-                .zkHosts(view.getZkHosts())
-                .zkPath(view.getZkPath())
+                .solrUrls(UnsetSettings.linesAsRead(view.getSolrUrls(), read.getSolrUrls()))
+                .zkHosts(UnsetSettings.linesAsRead(view.getZkHosts(), read.getZkHosts()))
+                .zkPath(UnsetText.asRead(view.getZkPath(), read.getZkPath()))
                 .useZk(view.isUseZk())
                 .build();
 
@@ -165,11 +169,11 @@ public class SolrIndexSettingsController extends Controller {
         return index
                 .copy()
                 .collection(collection)
-                .timeField(view.getTimeField())
+                .timeField(UnsetText.asRead(view.getTimeField(), index.getTimeField()))
                 .solrConnectionConfig(connectionConfig)
-                .retentionExpression(expressionEditor.write())
+                .retentionExpression(UnsetSettings.expressionAsRead(
+                        expressionEditor.write(), index.getRetentionExpression()))
                 .defaultExtractionPipeline(pipeline.getSelectedEntityReference())
                 .build();
     }
-
 }

@@ -103,7 +103,8 @@ public class AnalyticProcessingController extends Controller {
 
     /// Shows how a rule or report runs.
     ///
-    /// @param docRef   The rule or report.
+    /// @param docRef   The rule or report's ref, as every tab is given it; not used, as what is
+    ///                 fetched is for the document's own ref.
     /// @param document The rule or report.
     public void read(final DocRef docRef, final AbstractAnalyticRuleDoc document) {
         this.document = document;
@@ -113,20 +114,18 @@ public class AnalyticProcessingController extends Controller {
                 final AnalyticProcessType analyticProcessType = Objects.requireNonNullElse(
                         document.getAnalyticProcessType(),
                         AnalyticProcessType.SCHEDULED_QUERY);
+                // Shows the type's panel and fetches what it shows: the schedules, the streaming
+                // filters, or the table builder's nodes and progress. Before, the scheduled and
+                // streaming ones were fetched again here
                 setProcessType(analyticProcessType);
 
-                if (AnalyticProcessType.SCHEDULED_QUERY.equals(analyticProcessType)) {
-                    scheduledProcessing
-                            .read(docRef);
-                } else if (AnalyticProcessType.STREAMING.equals(analyticProcessType)) {
-                    streamingProcessing
-                            .update(document, document.getQuery());
-                } else if (analyticProcessConfig instanceof TableBuilderAnalyticProcessConfig) {
+                // Only the table builder's settings are held by the document
+                if (AnalyticProcessType.TABLE_BUILDER.equals(analyticProcessType)
+                    && analyticProcessConfig instanceof TableBuilderAnalyticProcessConfig) {
                     //noinspection PatternVariableCanBeUsed // Not in GWT
                     final TableBuilderAnalyticProcessConfig ac =
                             (TableBuilderAnalyticProcessConfig) analyticProcessConfig;
-                    tableBuilderProcessing.read(docRef, ac);
-
+                    tableBuilderProcessing.readSettings(ac);
                 }
             }
         }), taskMonitor());
@@ -166,6 +165,9 @@ public class AnalyticProcessingController extends Controller {
                 break;
             }
             case TABLE_BUILDER: {
+                // Its nodes and progress, as the other types fetch theirs here; the settings, if the
+                // rule has them, are read by read(). Before, a switch to it fetched neither
+                tableBuilderProcessing.show(document.asDocRef());
                 view.setProcessSettings(tableBuilderProcessing);
                 break;
             }

@@ -22,6 +22,7 @@ import stroom.widget.component.client.Component;
 import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.DataGridSelectionEventManager;
 import stroom.widget.quickfilter.client.QuickFilter;
+import stroom.widget.spinner.client.LoadStatus;
 import stroom.widget.spinner.client.SmallBusySpinner;
 import stroom.widget.task.client.TaskMonitorFactory;
 import stroom.widget.text.client.Label;
@@ -72,6 +73,8 @@ public class FieldValuePicker extends Component {
     @UiField
     SmallBusySpinner spinner;
     @UiField
+    LoadStatus loadStatus;
+    @UiField
     DataGrid<FieldValueCount> list;
     @UiField
     Label message;
@@ -91,6 +94,12 @@ public class FieldValuePicker extends Component {
         initWidget(BINDER.createAndBindUi(this));
         // With no rows, the list says "No matches" while the filter is set
         filter.addFilteredGrid(list);
+        // The values' number, or why there are none
+        loadStatus.follow(spinner, () -> message.isVisible()
+                ? message.getText()
+                : values.size() + (values.size() == 1
+                        ? " value"
+                        : " values"));
         list.setPageSize(DataGrid.MASSIVE_LIST_PAGE_SIZE);
 
         final DataGridSelectionEventManager<FieldValueCount> selectionEventManager =

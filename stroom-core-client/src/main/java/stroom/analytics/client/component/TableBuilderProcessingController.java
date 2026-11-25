@@ -82,11 +82,18 @@ public class TableBuilderProcessingController extends Controller {
         view.setOnRefresh(this::refreshTracker);
     }
 
-    /// Shows the table builder processing settings of a rule, and its progress.
+    /// Shows a rule's table builder processing settings; [#show(DocRef)] fetches what goes with them.
     ///
-    /// @param ruleDocRef The rule the settings belong to.
-    /// @param config     The settings to show.
-    public void read(final DocRef ruleDocRef, final TableBuilderAnalyticProcessConfig config) {
+    /// @param config The settings to show.
+    public void readSettings(final TableBuilderAnalyticProcessConfig config) {
+        view.read(config);
+    }
+
+    /// Lists the nodes to run on and fetches a rule's progress, e.g. when a rule that wasn't a
+    /// table builder is switched to one, so has no settings to read.
+    ///
+    /// @param ruleDocRef The rule.
+    public void show(final DocRef ruleDocRef) {
         nodeClient.listAllNodes(
                 list -> {
                     if (!isDisposed() && list != null && !list.isEmpty()) {
@@ -101,7 +108,6 @@ public class TableBuilderProcessingController extends Controller {
                 taskMonitor());
 
         this.ruleDocRef = ruleDocRef;
-        view.read(config);
         refreshTracker();
     }
 

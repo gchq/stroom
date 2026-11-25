@@ -31,6 +31,7 @@
                     <b:ToolbarButton ui:field="refreshStats" svg="REFRESH" title="Refresh Statistics" label="Refresh"/>
                 </b:Toolbar>
                 <spinner:SmallBusySpinner ui:field="spinner"/>
+                <spinner:LoadStatus ui:field="loadStatus" text="Loading statistics"/>
                 <tx:Label ui:field="loading" text="Loading statistics..." visible="false"/>
             </g:FlowPanel>
             <form:FormGroup identity="elasticFieldStatsMode" label="Mode"

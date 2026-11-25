@@ -32,8 +32,8 @@ import stroom.query.shared.QueryTablePreferences;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.RandomId;
 import stroom.widget.component.client.LayerController;
+import stroom.widget.util.client.Console;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -326,7 +326,7 @@ public class ConditionalFormattingRulesController extends LayerController implem
                         .build();
             };
         } catch (final Exception e) {
-            GWT.log(e.getMessage());
+            Console.error(e::getMessage, e);
             throw new RuntimeException(e);
         }
     }

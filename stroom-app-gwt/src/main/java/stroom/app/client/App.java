@@ -20,6 +20,7 @@ import stroom.app.client.gin.AppGinjectorUser;
 import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.widget.component.client.Page;
+import stroom.widget.util.client.Console;
 import stroom.widget.util.client.TextScaleMeter;
 
 import com.google.gwt.core.client.EntryPoint;
@@ -38,11 +39,14 @@ public class App implements EntryPoint {
      * This is the entry point method.
      */
     public void onModuleLoad() {
+        Console.setLevelFromParameter(Location.getParameter(Console.LEVEL_PARAMETER));
+
         // Widths given at the medium text size follow the text as drawn, from the first screen
         TextScaleMeter.install();
 
         final String path = Window.Location.getPath();
-        GWT.log("path: " + path + ", queryString: " + Window.Location.getQueryString());
+        // Only the path, as the query string may hold a secret, e.g. a password reset token
+        Console.debug(() -> "path: " + path);
         if (path.startsWith("/resetPassword")) {
             // A user following a password reset link cannot sign in, so this page is served and revealed
             // without authenticating, in the same way as the sign in page.

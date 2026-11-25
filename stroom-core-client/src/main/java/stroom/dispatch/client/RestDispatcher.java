@@ -16,15 +16,13 @@
 
 package stroom.dispatch.client;
 
-import com.google.gwt.core.client.GWT;
+import stroom.widget.util.client.Console;
+
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestException;
-import com.google.gwt.logging.client.LogConfiguration;
 import org.fusesource.restygwt.client.Dispatcher;
 import org.fusesource.restygwt.client.Method;
-
-import java.util.logging.Logger;
 
 class RestDispatcher implements Dispatcher {
 
@@ -33,17 +31,10 @@ class RestDispatcher implements Dispatcher {
         // Add CSRF header to all API requests — required by SecurityFilter
         builder.setHeader("X-CSRF", "1");
 
-        if (GWT.isClient() && LogConfiguration.loggingIsEnabled()) {
-            final Logger logger = Logger.getLogger(
-                    org.fusesource.restygwt.client.dispatcher.DefaultDispatcher.class.getName());
-            logger.fine("Sending http request: " + builder.getHTTPMethod() + " " + builder.getUrl() +
-                    " ,timeout:" + builder.getTimeoutMillis());
-
-            final String content = builder.getRequestData();
-            if (content != null && !content.isEmpty()) {
-                logger.fine(content);
-            }
-        }
+        // Never the body or the query string, which may hold a secret, e.g. a password
+        Console.debug(() -> "Sending http request: " + builder.getHTTPMethod() + " "
+                            + builder.getUrl().split("\\?")[0]
+                            + ", timeout: " + builder.getTimeoutMillis());
         return builder.send();
     }
 }

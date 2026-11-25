@@ -63,6 +63,16 @@ public final class SolrIndexEditorStories {
               "solrSynchState": {"lastSynchronized": 1700000000000,
                 "messages": ["Synchronised 2 fields from Solr."]}}""";
 
+    // As saved by the settings when they stored what isn't set as blanks, with a retention expression
+    private static final String BLANKS_DOC = """
+            {"type": "SolrIndex", "uuid": "solr-events", "name": "Events (Solr)",
+              "collection": "events", "timeField": "EventTime",
+              "solrConnectionConfig": {"instanceType": "SINGLE_NOOE", "solrUrls": ["http://localhost:8983/solr"],
+                "zkHosts": [""], "zkPath": ""},
+              "fields": FIELDS, "deletedFields": [],
+              "retentionExpression": {"type": "operator", "children": [
+                {"type": "term", "field": "UserId", "condition": "EQUALS", "value": "old-user"}]}}""";
+
     private static final String FIELDS = """
             [{"fldName": "EventTime", "fldType": "DATE", "nativeType": "pdate", "indexed": true, "stored": true},
               {"fldName": "UserId", "fldType": "TEXT", "nativeType": "string", "indexed": true, "stored": true,
@@ -71,6 +81,7 @@ public final class SolrIndexEditorStories {
     private static final String SOLR_TYPES = """
             ["string", "pdate", "pint", "plong", "boolean", "text_general"]""";
 
+    private static final String SLOW_COLLECTION = "slow-collection";
     private static final String UPDATE = "/solrIndex/v1/solr-events";
 
     // A FormGroup gives its control the group's identity as its id
@@ -214,6 +225,60 @@ public final class SolrIndexEditorStories {
                     play.expect(zkPath).toBeDisabled();
                     DocEditors.expectNoProblems(play);
                 })
+                // Typing in a text field makes the index dirty at once, even one character, and moving
+                // through it doesn't. The fields told of a change as a key went down, before it changed
+                // the text, so one character left Save disabled
+                .story("TypingMarksChanged", context -> render(context, FIELDS))
+                .withPlay(SolrIndexEditorStories::typingMarksChanged)
+                // As above, with the blanks the settings used to store
+                .story("TypingMarksChangedWithBlanks", context -> render(context, BLANKS_DOC, FIELDS, false))
+                .withPlay(SolrIndexEditorStories::typingMarksChanged)
+                // Settings changed while the index is saved stay, and the Fields tab asks the server about the
+                // index as saved, where it kept the one from before
+                .story("KeptChangesUseTheSavedIndex", context -> render(context, FIELDS))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(play.getByText("EventTime")).toBeInTheDocument());
+                    openSettings(play);
+                    final Query save = play.getByRole("button", "Save");
+                    final Query collection = play.getByLabelText("Collection");
+                    play.clear(collection);
+                    play.type(collection, SLOW_COLLECTION);
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    play.click(save);
+                    final Query timeField = play.getByLabelText("Main Time Field Name");
+                    play.type(timeField, "Typed");
+                    // Once the reply has been handled
+                    play.sleep(2500);
+                    play.expect(timeField).toHaveValue("Typed");
+                    play.expect(save).not().toHaveAttribute("aria-disabled");
+                    play.click(DocEditors.tab(play, "Fields"));
+                    play.click(play.getByRole("button", "New Index Field"));
+                    play.waitFor(() -> play.expect(screen.getByText("Field Name", "label")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/solrIndex/v1/fetchSolrTypes")
+                                    .withBodyContaining(SLOW_COLLECTION).toSpyMatcher()));
+                    play.click(screen.getByRole("button", StroomDom.button("Cancel")));
+                })
+                // Test Connection sends the instance type shown, as the server takes none as a Solr Cloud
+                .story("TestConnection", context -> render(context, FIELDS))
+                .withPlay(play -> {
+                    openSettings(play);
+                    play.click(play.getByRole("button", StroomDom.button("Test Connection")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/solrIndex/v1/solrConnectionTest")
+                                    .withBodyContaining("SINGLE_NOOE").toSpyMatcher()));
+                })
+                // Changing only the retention expression makes the index dirty
+                .story("RetentionMarksChanged", context -> render(context, BLANKS_DOC, FIELDS, false))
+                .withPlay(play -> {
+                    openSettings(play);
+                    final Query save = play.getByRole("button", "Save");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
+                    play.click(play.getByTitle("Add Term"));
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    DocEditors.expectNoProblems(play);
+                })
                 // The Settings tab as an editable partner for SettingsReadOnly
                 .story("SettingsEditable", context -> render(context, FIELDS, false))
                 .withPlay(play -> {
@@ -227,6 +292,23 @@ public final class SolrIndexEditorStories {
                     play.expect(play.getByText("Read only", ".link-tab-panel__read-only-note")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 });
+    }
+
+    private static void typingMarksChanged(final Play play) {
+        openSettings(play);
+        final Query save = play.getByRole("button", "Save");
+        for (final String label : List.of("Collection", "Solr URLs", "Main Time Field Name")) {
+            final Query field = play.getByLabelText(label);
+            play.click(field);
+            play.keyboard("{ArrowLeft}");
+            play.expect(save).toHaveAttribute("aria-disabled", "true");
+            play.keyboard("x");
+            play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+            // Put back, there is nothing to save
+            play.keyboard("{Backspace}");
+            play.waitFor(() -> play.expect(save).toHaveAttribute("aria-disabled", "true"));
+        }
+        DocEditors.expectNoProblems(play);
     }
 
     // Waits for the Fields tab's fields and synchronisation state
@@ -277,9 +359,20 @@ public final class SolrIndexEditorStories {
     }
 
     private static Widget render(final StoryContext context, final String fields, final boolean readOnly) {
+        return render(context, DOC, fields, readOnly);
+    }
+
+    private static Widget render(final StoryContext context,
+                                 final String json,
+                                 final String fields,
+                                 final boolean readOnly) {
         final RestFixtures fixtures = DocEditors.permissionRoutes(RestFixtures.builder())
-                .get(UPDATE, RestReply.json(DOC.replace("FIELDS", fields)))
-                .put(UPDATE, request -> RestReply.json(request.getBody()))
+                .get(UPDATE, RestReply.json(json.replace("FIELDS", fields)))
+                // A Save of the new collection takes a while (KeptChangesUseTheSavedIndex)
+                .put(UPDATE, request -> RestReply.json(request.getBody())
+                        .delayed(request.getBody().contains(SLOW_COLLECTION)
+                                ? 2000
+                                : 0))
                 .post("/solrIndex/v1/fetchSolrTypes", RestReply.json(SOLR_TYPES))
                 .post("/solrIndex/v1/solrConnectionTest", RestReply.json(
                         "{\"ok\": true, \"message\": \"Solr reachable.\"}"))

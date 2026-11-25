@@ -26,6 +26,7 @@ import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.widget.component.client.Listeners;
 import stroom.widget.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.task.client.TaskMonitorFactory;
+import stroom.widget.util.client.Console;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -124,7 +125,7 @@ public class UiConfigCache implements HasHandlers {
                             }
                         }
                     } catch (final RuntimeException e) {
-                        GWT.log(e.getMessage());
+                        Console.error(e::getMessage, e);
                     }
                 })
                 // Shown to the user; the consumer isn't called, as most can't do without the

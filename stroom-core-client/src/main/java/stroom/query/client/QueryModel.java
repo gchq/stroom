@@ -40,6 +40,7 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.TokenError;
 import stroom.widget.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.task.client.TaskMonitorFactory;
+import stroom.widget.util.client.Console;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -129,7 +130,7 @@ public class QueryModel implements HasHandlers {
      * that they no longer want data and search has ended. Do not destroy search results.
      */
     public void stop() {
-        GWT.log("SearchModel - stop()");
+        Console.debug("QueryModel - stop()");
 
         terminate(currentNode, currentQueryKey);
         setSearching(false);
@@ -147,7 +148,7 @@ public class QueryModel implements HasHandlers {
      * begin.
      */
     public void reset(final DestroyReason destroyReason) {
-        GWT.log("SearchModel - reset()");
+        Console.debug("QueryModel - reset()");
 
         // Stop previous search if there is one.
         deleteStore(currentNode, currentQueryKey, destroyReason);
@@ -178,7 +179,7 @@ public class QueryModel implements HasHandlers {
                                final boolean storeHistory,
                                final String queryInfo,
                                final ExpressionOperator additionalQueryExpression) {
-        GWT.log("SearchModel - startNewSearch()");
+        Console.debug("QueryModel - startNewSearch()");
 
         // Destroy the previous search and ready all components for a new search to begin.
         reset(DestroyReason.NO_LONGER_NEEDED);
@@ -287,7 +288,7 @@ public class QueryModel implements HasHandlers {
                             }
                         }
                     } catch (final RuntimeException e) {
-                        GWT.log(e.getMessage());
+                        Console.error(e::getMessage, e);
                     }
                     resultConsumer.accept(result);
                 })
@@ -301,7 +302,7 @@ public class QueryModel implements HasHandlers {
                                     new ErrorMessage(Severity.ERROR, throwable.toString())));
                         }
                     } catch (final RuntimeException e) {
-                        GWT.log(e.getMessage());
+                        Console.error(e::getMessage, e);
                     }
                     resultConsumer.accept(null);
                 })
@@ -313,14 +314,14 @@ public class QueryModel implements HasHandlers {
     private void deleteStore(final String node, final QueryKey queryKey, final DestroyReason destroyReason) {
         if (queryKey != null) {
             resultStoreModel.destroy(node, queryKey, destroyReason, (ok) ->
-                    GWT.log("Destroyed store " + queryKey), taskMonitorFactory);
+                    Console.debug(() -> "Destroyed store " + queryKey), taskMonitorFactory);
         }
     }
 
     private void terminate(final String node, final QueryKey queryKey) {
         if (queryKey != null) {
             resultStoreModel.terminate(node, queryKey, (ok) ->
-                    GWT.log("Terminate search " + queryKey), taskMonitorFactory);
+                    Console.debug(() -> "Terminate search " + queryKey), taskMonitorFactory);
         }
     }
 
@@ -355,7 +356,7 @@ public class QueryModel implements HasHandlers {
                                 try {
                                     update(response);
                                 } catch (final RuntimeException e) {
-                                    GWT.log(e.getMessage());
+                                    Console.error(e::getMessage, e);
                                     // update() is what sees the search finish, so stop it here
                                     endSearchWithError(e.toString());
                                 }

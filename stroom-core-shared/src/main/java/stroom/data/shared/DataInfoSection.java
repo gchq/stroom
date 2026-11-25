@@ -27,6 +27,12 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class DataInfoSection {
 
+    /// The title of the section about the stream itself.
+    public static final String STREAM = "Stream";
+    /// The key of the entry in the [#STREAM] section that is the stream's classification, as shown to
+    /// the user.
+    public static final String CLASSIFICATION = "Classification";
+
     @JsonProperty
     private final String title;
     @JsonProperty

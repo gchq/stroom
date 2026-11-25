@@ -26,7 +26,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,6 +40,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SuppressWarnings("checkstyle:localvariablename")
 class TestExpressionParser extends AbstractExpressionParserTest {
@@ -335,7 +338,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("${val1}+${val2}",
                 2,
                 Val.of(ValBoolean.TRUE, ValBoolean.TRUE),
-                ValAssertions.valDouble(2));
+                out -> assertThat(out).isEqualTo(ValErr.create("Expected a number but got 'true'")));
     }
 
     @Test
@@ -343,7 +346,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("${val1}+${val2}+''",
                 2,
                 Val.of(ValBoolean.TRUE, ValBoolean.TRUE),
-                ValAssertions.valString("2"));
+                out -> assertThat(out).isEqualTo(ValErr.create("Expected a number but got 'true'")));
     }
 
     @Test
@@ -351,7 +354,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
         compute("${val1}+${val2}+'test'",
                 2,
                 Val.of(ValBoolean.TRUE, ValBoolean.TRUE),
-                ValAssertions.valString("2test"));
+                out -> assertThat(out).isEqualTo(ValErr.create("Expected a number but got 'true'")));
     }
 
     @Test
@@ -1706,7 +1709,34 @@ class TestExpressionParser extends AbstractExpressionParserTest {
                         TestCase.of("(4+4)/2+2", ValDouble.create(6)),
                         TestCase.of("(4+4)/(2+2)", ValDouble.create(2)),
                         TestCase.of("4+4/2+2*3", ValDouble.create(12)),
-                        TestCase.of("8%3", ValDouble.create(2))
+                        TestCase.of("8%3", ValDouble.create(2)),
+                        // Addition and subtraction are worked out left to right.
+                        TestCase.of("10-3+2", ValDouble.create(9)),
+                        TestCase.of("10+3-2", ValDouble.create(11)),
+                        TestCase.of("10-3-2", ValDouble.create(5)),
+                        TestCase.of("100-10-5+3", ValDouble.create(88)),
+                        TestCase.of("10-3+2-4+1", ValDouble.create(6)),
+                        TestCase.of("10-(3+2)", ValDouble.create(5)),
+                        TestCase.of("10-2*3+4", ValDouble.create(8)),
+                        TestCase.of("10--3+2", ValDouble.create(15)),
+                        TestCase.of("-10-3+2", ValDouble.create(-11)),
+                        // Division, multiplication and modulus are worked out left to right.
+                        TestCase.of("8/4*2", ValDouble.create(4)),
+                        TestCase.of("8*4/2", ValDouble.create(16)),
+                        TestCase.of("10%4*3", ValDouble.create(6)),
+                        TestCase.of("10*4%3", ValDouble.create(1)),
+                        TestCase.of("10%6/2", ValDouble.create(2)),
+                        TestCase.of("20/6%2", ValDouble.create(20D / 6 % 2)),
+                        TestCase.of("10-7%4+2", ValDouble.create(9)),
+                        // Order comes before all of them and is worked out left to right.
+                        TestCase.of("2^3^2", ValDouble.create(64)),
+                        TestCase.of("20-2^3+1", ValDouble.create(13)),
+                        TestCase.of("2*3^2", ValDouble.create(18)),
+                        // The same with fields and functions.
+                        TestCase.of("${val1}-${val2}+${val3}",
+                                ValDouble.create(9), Val.of(10, 3, 2)),
+                        TestCase.of("max(${val1})-max(${val2})+max(${val3})",
+                                ValDouble.create(9), Val.of(10, 3, 2))
                 )
                 .map(testCase -> DynamicTest.dynamicTest(testCase.toString(), () ->
                         compute(testCase.expression,
@@ -1963,6 +1993,174 @@ class TestExpressionParser extends AbstractExpressionParserTest {
                                 "-add(${val1}, ${val2})",
                                 ValDouble.create((val1.toDouble() + val2.toDouble()) * -1),
                                 val1, val2)
+                )
+                .map(testCase -> DynamicTest.dynamicTest(testCase.toString(), () ->
+                        assertThatItEvaluatesTo(
+                                testCase.expression,
+                                testCase.expectedResult,
+                                testCase.inputValues)));
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testChainedComparisons() {
+        return Stream.of(
+                        // Equal and not equal are worked out left to right.
+                        TestCase.of("2=2=true()", ValBoolean.TRUE),
+                        TestCase.of("true()=2=2", ValBoolean.FALSE),
+                        TestCase.of("3=3!=false()", ValBoolean.TRUE),
+                        TestCase.of("3!=3=false()", ValBoolean.TRUE),
+                        TestCase.of("3!=4!=false()", ValBoolean.TRUE),
+                        TestCase.of("2=(2=true())", ValBoolean.FALSE),
+                        // Greater than and less than come before them, on either side.
+                        TestCase.of("3<5=true()", ValBoolean.TRUE),
+                        TestCase.of("true()=3<5", ValBoolean.TRUE),
+                        TestCase.of("5>3=2<4", ValBoolean.TRUE),
+                        TestCase.of("5>=5!=4<=3", ValBoolean.TRUE),
+                        // Greater than and less than are worked out left to right.
+                        TestCase.of("1<2<true()", ValBoolean.FALSE),
+                        TestCase.of("3>2>=true()", ValBoolean.TRUE),
+                        // Arithmetic comes before all of them.
+                        TestCase.of("1+1=4/2=true()", ValBoolean.TRUE),
+                        // The same with fields.
+                        TestCase.of("${val1}=${val2}=true()", ValBoolean.TRUE, Val.of(2, 2))
+                )
+                .map(testCase -> DynamicTest.dynamicTest(testCase.toString(), () ->
+                        assertThatItEvaluatesTo(
+                                testCase.expression,
+                                testCase.expectedResult,
+                                testCase.inputValues)));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"=1", "1=", "1==1", "1=2=", "1<=", "1<>2", "1<2<"})
+    void testBadComparisons(final String expression) {
+        assertThatThrownBy(() -> createExpression(expression, exp -> {
+        })).hasStackTraceContaining(TokenException.class.getSimpleName());
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testExponents() {
+        return Stream.of(
+                        TestCase.of("1e5", ValDouble.create(100000)),
+                        TestCase.of("1E5", ValDouble.create(100000)),
+                        TestCase.of("1e+5", ValDouble.create(100000)),
+                        TestCase.of("1e-3", ValDouble.create(0.001)),
+                        TestCase.of("1.5e3", ValDouble.create(1500)),
+                        TestCase.of("1e0", ValDouble.create(1)),
+                        TestCase.of("-1e5", ValDouble.create(-100000)),
+                        TestCase.of("2*1e3", ValDouble.create(2000)),
+                        TestCase.of("2 * 1e3", ValDouble.create(2000)),
+                        TestCase.of("1e3-1", ValDouble.create(999)),
+                        TestCase.of("1e3+1e-1", ValDouble.create(1000.1)),
+                        TestCase.of("1-1e-1", ValDouble.create(0.9)),
+                        TestCase.of("(1e3)/1e1", ValDouble.create(100)),
+                        TestCase.of("add(1e1,2e1)", ValDouble.create(30)),
+                        TestCase.of("1e3>=1000", ValBoolean.TRUE),
+                        TestCase.of("1e3!=1000", ValBoolean.FALSE),
+                        TestCase.of("${val1}/1e3", ValDouble.create(5), Val.of(5000))
+                )
+                .map(testCase -> DynamicTest.dynamicTest(testCase.toString(), () ->
+                        assertThatItEvaluatesTo(
+                                testCase.expression,
+                                testCase.expectedResult,
+                                testCase.inputValues)));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"1e", "1e+", "1ee5", "1e5x", "1e5e5", "1e5.5", "1e999"})
+    void testBadExponents(final String expression) {
+        assertThatThrownBy(() -> createExpression(expression, exp -> {
+        })).hasStackTraceContaining(TokenException.class.getSimpleName());
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testNullArithmetic() {
+        return Stream.of(
+                        TestCase.of("null()+1", ValNull.INSTANCE),
+                        TestCase.of("1+null()", ValNull.INSTANCE),
+                        TestCase.of("null()+null()", ValNull.INSTANCE),
+                        TestCase.of("1+null()+2", ValNull.INSTANCE),
+                        TestCase.of("add(1,2,null())", ValNull.INSTANCE),
+                        TestCase.of("null()-1", ValNull.INSTANCE),
+                        TestCase.of("1-null()", ValNull.INSTANCE),
+                        TestCase.of("null()*2", ValNull.INSTANCE),
+                        TestCase.of("null()/2", ValNull.INSTANCE),
+                        TestCase.of("null()%2", ValNull.INSTANCE),
+                        TestCase.of("null()^2", ValNull.INSTANCE),
+                        TestCase.of("-null()", ValNull.INSTANCE),
+                        TestCase.of("${val1}+${val2}", ValNull.INSTANCE, Val.of(ValLong.create(1), ValNull.INSTANCE)),
+                        // Null can be given a value.
+                        TestCase.of("if(isNull(${val1}),0,${val1})+${val2}",
+                                ValDouble.create(1),
+                                Val.of(ValNull.INSTANCE, ValLong.create(1))),
+                        // Text is still joined without the nulls.
+                        TestCase.of("'a'+null()", ValString.create("a")),
+                        TestCase.of("null()+'a'+'b'", ValString.create("ab")),
+                        // Sum still ignores nulls.
+                        TestCase.of("sum(1,null(),2)", ValDouble.create(3))
+                )
+                .map(testCase -> DynamicTest.dynamicTest(testCase.toString(), () ->
+                        assertThatItEvaluatesTo(
+                                testCase.expression,
+                                testCase.expectedResult,
+                                testCase.inputValues)));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"'5'-3", "3-'5'", "'5'*3", "'5'/3", "'5'%3", "'5'^3", "subtract('5',3)"})
+    void testTextInArithmetic(final String expression) {
+        compute(expression, out ->
+                assertThat(out.toString()).isEqualTo("ERR: Expected a number but got '5'"));
+    }
+
+    @Test
+    void testLongTextInArithmetic() {
+        compute("${val1}-1",
+                Val.of("x".repeat(1000)),
+                out -> assertThat(out.toString())
+                        .isEqualTo("ERR: Expected a number but got '" + "x".repeat(100) + "...'"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "true()*2",
+            "true()-1",
+            "true()+1",
+            "1+true()",
+            "true()+true()",
+            "add(1,2,true())",
+            "true()+null()",
+            // The boolean is added to the number before the text is joined.
+            "1+true()+'a'"})
+    void testBooleanInArithmetic(final String expression) {
+        compute(expression, out ->
+                assertThat(out.toString()).isEqualTo("ERR: Expected a number but got 'true'"));
+    }
+
+    @Test
+    void testXmlInArithmetic() {
+        compute("${val1}+1",
+                Val.of(ValXml.create("<a/>".getBytes(StandardCharsets.UTF_8))),
+                out -> assertThat(out.toString()).startsWith("ERR: Expected a number but got '"));
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testAddValuesOtherThanPlainNumbers() {
+        return Stream.of(
+                        // Booleans can still be joined to text.
+                        TestCase.of("true()+'a'", ValString.create("truea")),
+                        TestCase.of("'a'+true()", ValString.create("atrue")),
+                        // As for the other operators, the first value that can't be added gives the result.
+                        TestCase.of("null()+true()", ValNull.INSTANCE),
+                        // Booleans can be counted by making them numbers.
+                        TestCase.of("sum(if(true(),1,0),if(false(),1,0),toInteger(true()))", ValDouble.create(2)),
+                        // Dates and durations are numbers.
+                        TestCase.of("${val1}+${val2}",
+                                ValDate.create(1500),
+                                Val.of(ValDate.create(1000), ValDuration.create(500))),
+                        TestCase.of("${val1}+${val2}",
+                                ValDuration.create(1500),
+                                Val.of(ValDuration.create(1000), ValDuration.create(500)))
                 )
                 .map(testCase -> DynamicTest.dynamicTest(testCase.toString(), () ->
                         assertThatItEvaluatesTo(

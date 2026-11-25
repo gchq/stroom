@@ -111,6 +111,7 @@ import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.hyperlink.client.HyperlinkEvent;
 import stroom.widget.quickfilter.client.QuickFilterTooltipUtil;
 import stroom.widget.selection.client.SelectionPopup;
+import stroom.widget.util.client.Console;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -439,7 +440,7 @@ public class TableController extends DashboardPaneController
                 }
             }
         } catch (final RuntimeException e) {
-            GWT.log(e.getMessage());
+            Console.error(e::getMessage, e);
         }
     }
 
@@ -802,7 +803,7 @@ public class TableController extends DashboardPaneController
             fireColumnAndDataUpdate();
 
         } catch (final RuntimeException e) {
-            GWT.log(e.getMessage());
+            Console.error(e::getMessage, e);
         }
 
         ignoreRangeChange = false;
@@ -1160,7 +1161,7 @@ public class TableController extends DashboardPaneController
                 fixedRules.add(fixed);
             }
             if (!Objects.equals(rules, fixedRules)) {
-                GWT.log("Fixed conditional formatting rules");
+                Console.debug("Fixed conditional formatting rules");
                 setSettings(getTableComponentSettings().copy().conditionalFormattingRules(fixedRules).build());
             }
         }
@@ -1335,7 +1336,7 @@ public class TableController extends DashboardPaneController
                         setDataInternal(result);
                     }
                 } catch (final Exception e) {
-                    GWT.log(e.getMessage());
+                    Console.error(e::getMessage, e);
                 } finally {
                     pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
                 }
@@ -1352,7 +1353,7 @@ public class TableController extends DashboardPaneController
                         setDataInternal(result);
                     }
                 } catch (final Exception e) {
-                    GWT.log(e.getMessage());
+                    Console.error(e::getMessage, e);
                 } finally {
                     afterRefresh.run();
                     pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());

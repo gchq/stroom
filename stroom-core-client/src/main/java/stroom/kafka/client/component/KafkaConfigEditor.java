@@ -24,6 +24,7 @@ import stroom.document.client.component.CodeTabController;
 import stroom.document.client.component.DocumentationTabController;
 import stroom.document.client.editor.DocumentEditor;
 import stroom.document.client.editor.LinkTabPanel;
+import stroom.document.client.editor.UnsetText;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.kafka.shared.KafkaConfigResource;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
@@ -82,7 +83,7 @@ public class KafkaConfigEditor extends DocumentEditor<KafkaConfigDoc> {
                     return config;
                 },
                 (config, docRef, doc) -> config.setText(doc.getData()),
-                (config, doc) -> doc.copy().data(config.getText()).build());
+                (config, doc) -> doc.copy().data(UnsetText.asRead(config.getText(), doc.getData())).build());
         addDocumentationTab(DOCUMENTATION,
                 documentationTabProvider,
                 KafkaConfigDoc::getDescription,

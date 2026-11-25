@@ -196,7 +196,9 @@ public class DocumentUserPermissionsList extends Component {
     }
 
     private boolean isUserEnabled(final DocumentUserPermissions documentUserPermissions) {
-        return NullSafe.get(documentUserPermissions, DocumentUserPermissions::getUserRef, UserRef::isEnabled);
+        return NullSafe.test(documentUserPermissions,
+                DocumentUserPermissions::getUserRef,
+                UserRef::isEnabled);
     }
 
     private static SafeHtml permissionsToExplicitTypeIcons(final DocumentUserPermissions row,

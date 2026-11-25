@@ -25,6 +25,7 @@ import stroom.data.client.component.ItemSelectionController;
 import stroom.data.client.component.MarkerList;
 import stroom.data.client.component.MarkerListController;
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
+import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestHandler;
 import stroom.gwt.workbench.client.app.rest.RestReply;
@@ -38,16 +39,20 @@ import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
+import stroom.widget.button.client.Button;
 import stroom.widget.text.client.HtmlPane;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /// Stories for Stroom's [DataViewerController] (the data preview of a stream: its Info, Error, Data
@@ -55,7 +60,8 @@ import java.util.function.Supplier;
 ///
 /// Fixtures answer the requests [DataViewerController] makes:
 /// the stream's meta (`GET /meta/v1/{id}`), its child stream types
-/// (`GET /data/v1/{id}/parts/{part}/child-types`) and the data (`POST /data/v1/fetch`).
+/// (`GET /data/v1/{id}/parts/{part}/child-types`), its Info (`GET /data/v1/{id}/info`) and the data
+/// (`POST /data/v1/fetch`).
 ///
 /// The data preview pages by part or record (the 'View Source' link opens the
 /// source view, see `SourceStories`), and shows markers in its Error tab, for streams of
@@ -72,6 +78,9 @@ public final class SourceViewerStories {
 
     // A tab's label (a link tab also holds a hidden copy of its label, for its size)
     private static final String TAB_LABEL = ".tab-bar--link .tab-bar__label";
+
+    // The classification banner's text
+    private static final String BANNER = ".classification-label";
 
     // The Ace editor's lines
     private static final String ACE_LINES = ".ace_line";
@@ -104,6 +113,60 @@ public final class SourceViewerStories {
     private static final RestFixtures STREAM_NAVIGATION_FIXTURES = streamFixtures(3003, EVENTS,
             "[\"Meta Data\", \"Context\"]",
             request -> RestReply.json(segmented(request.getBody())).delayed(60));
+
+    // The data is slow, so that its reply comes after that of a tab chosen since
+    private static final int SLOW_DATA_MILLIS = 400;
+    private static final long SECOND_STREAM_ID = 3004;
+    private static final RestFixtures TAB_FIXTURES = streamFixtures(3003, EVENTS,
+            "[\"Meta Data\", \"Context\"]",
+            request -> RestReply.json(segmented(request.getBody())).delayed(
+                    DataFixtures.get(request.getBody(), "sourceLocation", "childType") == null
+                            ? SLOW_DATA_MILLIS
+                            : 30));
+    private static final RestFixtures STREAMS_FIXTURES = RestFixtures.builder()
+            .addAll(streamFixtures(3003, EVENTS, "[\"Meta Data\", \"Context\"]",
+                    request -> RestReply.json(segmented(request.getBody())).delayed(60)))
+            .get("/meta/v1/" + SECOND_STREAM_ID, RestReply.json("{\"id\": " + SECOND_STREAM_ID
+                                                               + ", \"feedName\": \"TEST_FEED\", "
+                                                               + "\"typeName\": \"Events\"}"))
+            .get(childTypesPath(SECOND_STREAM_ID), RestReply.json("[]").delayed(30))
+            .get("/data/v1/" + SECOND_STREAM_ID + "/info", RestReply.json(info(SECOND_STREAM_ID)))
+            .build();
+
+    // The first stream's details are slow, and the second's data; there is no third
+    private static final long MISSING_STREAM_ID = 3005;
+    private static final RestFixtures LOCATIONS_FIXTURES = RestFixtures.builder()
+            .get("/meta/v1/3003", RestReply.json("{\"id\": 3003, \"feedName\": \"TEST_FEED\", "
+                                                + "\"typeName\": \"Events\"}").delayed(SLOW_DATA_MILLIS))
+            .get(childTypesPath(3003), RestReply.json("[\"Meta Data\", \"Context\"]"))
+            .get("/meta/v1/" + MISSING_STREAM_ID, RestReply.json("null"))
+            .addAll(streamFixtures(SECOND_STREAM_ID, EVENTS, "[]",
+                    request -> RestReply.json(segmented(request.getBody())).delayed(
+                            DataFixtures.getLong(request.getBody(), 0, "sourceLocation", "metaId")
+                            == SECOND_STREAM_ID
+                                    ? SLOW_DATA_MILLIS
+                                    : 30)))
+            .build();
+    // The child types can't be had, but the data's reply has them
+    private static final RestFixtures NO_CHILD_TYPES_FIXTURES = RestFixtures.builder()
+            .get("/meta/v1/3003", RestReply.json("{\"id\": 3003, \"feedName\": \"TEST_FEED\", "
+                                                + "\"typeName\": \"Events\"}"))
+            .get(childTypesPath(3003), RestReply.error(500, "No child types"))
+            .get("/data/v1/3003/info", RestReply.json(info(3003)))
+            .post(DataFixtures.FETCH_PATH, request -> RestReply.json(segmented(request.getBody())))
+            .build();
+
+    // The first fetch, the first of another record and the first of another tab fail
+    private static final RestFixtures FAILING_FIXTURES = RestFixtures.builder()
+            .route(RequestMatcher.post(DataFixtures.FETCH_PATH), RestReply.error(500, "First failure"),
+                    RestReply.json(segmented("{\"sourceLocation\": {\"metaId\": 3003, \"recordIndex\": 0}}")),
+                    RestReply.error(500, "Second failure"),
+                    RestReply.json(segmented("{\"sourceLocation\": {\"metaId\": 3003, \"recordIndex\": 1}}")),
+                    RestReply.error(500, "Third failure"))
+            // After the fetches, which theirs doesn't reply to
+            .addAll(streamFixtures(3003, EVENTS, "[\"Meta Data\", \"Context\"]",
+                    request -> RestReply.json(segmented(request.getBody()))))
+            .build();
 
     private static final RestFixtures HIGHLIGHT_FIXTURES = streamFixtures(4004, RAW_EVENTS, "[]",
             request -> RestReply.json(highlightSource()).delayed(60));
@@ -194,6 +257,215 @@ public final class SourceViewerStories {
                     play.click(play.screen().findByText(TextMatch.containing("View as Hex")));
                     play.waitFor(() -> play.expect("the last fetch", lastFetch).toMatch("\"displayMode\":\"HEX\""));
                     waitForEditorText(play, "|<event>|");
+
+                    // It stays chosen after visiting Info, where it is off (it was once turned off by it)
+                    play.click(play.getByRole("tab", "Info"));
+                    play.waitFor(() -> play.expect(play.getByText("Stream Id")).toBeVisible());
+                    expectFetchAsPressed(play, play.getByRole("tab", "Data Preview"), "\"displayMode\":\"HEX\"");
+                    waitForEditorText(play, "|<event>|");
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                })
+                // Changing tab: the tab's data is asked for at once, shown once, and not replaced by a late
+                // reply to the tab before
+                .story("ChangeTab", context -> render(context, TAB_FIXTURES, location(3003)))
+                .withPlay(play -> {
+                    final Supplier<Object> lastFetch = lastFetch(play);
+                    waitForEditorText(play, "<event>record 0</event>");
+                    final Query editor = play.querySelector(".ace_editor");
+                    final Query separator = play.querySelector(".tab-bar--link .tab-bar__separator");
+                    play.run("count the texts shown", () -> countTexts(editor.element().get()));
+                    final Value<Element> separatorBefore = play.capture("separatorBefore", separator.element());
+
+                    // Asked for as the tab is pressed (it once waited, as paging does)
+                    expectFetchAsPressed(play, play.getByRole("tab", "Context"), "\"childType\":\"Context\"");
+                    waitForEditorText(play, "<context>ctx</context>");
+                    // It was once shown in the last tab's mode, then again in its own
+                    play.expect("the texts shown", () -> getTextCount(editor.element().get())).toBe(1);
+                    // The tab bar isn't laid out again (which replaces its separators) when no tab is
+                    // shown or hidden; it once was for each tab, which made the browser lay the page out
+                    play.expect("the separator is the same", () ->
+                            separator.element().get() == separatorBefore.get()).toBe(true);
+
+                    // The data's reply comes after Meta's, and was once shown in its place
+                    play.click(play.getByRole("tab", "Data Preview"));
+                    play.waitFor(() -> play.expect("the last fetch", lastFetch)
+                            .not().toMatch("\"childType\":\"Context\""));
+                    play.click(play.getByRole("tab", "Meta"));
+                    waitForEditorText(play, "<meta>record 0</meta>");
+                    play.sleep(SLOW_DATA_MILLIS * 2);
+                    waitForEditorText(play, "<meta>record 0</meta>");
+                    play.expect(play.getByRole("tab", "Meta")).toHaveAttribute("aria-selected", "true");
+
+                    // Nor is a late reply shown on Info, which is asked for once
+                    play.click(play.getByRole("tab", "Data Preview"));
+                    play.click(play.getByRole("tab", "Info"));
+                    play.waitFor(() -> play.expect(play.getByText("Stream Id")).toBeVisible());
+                    play.sleep(SLOW_DATA_MILLIS * 2);
+                    play.expect(play.getByRole("tab", "Info")).toHaveAttribute("aria-selected", "true");
+                    play.expect("the Info requests", requestCount(play, "GET /data/v1/3003/info")).toBe(1);
+
+                    // Paging waits, so that pressing Next then Last asks for one record, not two
+                    play.click(play.getByRole("tab", "Data Preview"));
+                    waitForEditorText(play, "<event>record 0</event>");
+                    final Supplier<Object> fetches = requestCount(play, "POST " + DataFixtures.FETCH_PATH);
+                    final Value<Object> fetchesBefore = play.capture("fetchesBefore", fetches);
+                    final Query next = play.getByTitle("Next record");
+                    final Query last = play.getByTitle("Last record");
+                    final Value<Integer> sentAsPressed = play.capture("sentAsPressed", () -> {
+                        click(next.element().get());
+                        click(last.element().get());
+                        return (Integer) fetches.get() - (Integer) fetchesBefore.get();
+                    });
+                    play.expect("the fetches sent as they were pressed", sentAsPressed).toBe(0);
+                    waitForEditorText(play, "<event>record 2</event>");
+                    play.expect("the fetches", () ->
+                            (Integer) fetches.get() - (Integer) fetchesBefore.get()).toBe(1);
+
+                    // The stream's child types are asked for once
+                    play.expect("the child types requests", requestCount(play, "GET " + childTypesPath(3003)))
+                            .toBe(1);
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                })
+                // Choosing a stream while on Info, as from the data browser's list
+                .story("ChooseStreamOnInfo", context -> renderStreams(context, STREAMS_FIXTURES, true))
+                .withPlay(play -> {
+                    waitForEditorText(play, "<event>record 0</event>");
+                    play.expect(play.getByText("CLASS 3003")).toBeVisible();
+                    play.click(play.getByRole("tab", "Info"));
+                    play.waitFor(() -> play.expect(play.getByText("3003")).toBeVisible());
+                    play.click(play.getByRole("button", "Second stream"));
+                    // The first stream's Info isn't shown for the second while it loads, nor its
+                    // classification; the second's comes with its Info
+                    play.expect(play.queryByText("3003")).toBeNull();
+                    play.waitFor(() -> play.expect(play.getByText(String.valueOf(SECOND_STREAM_ID))).toBeVisible());
+                    play.expect(play.queryByText("CLASS 3003")).toBeNull();
+                    play.expect(play.getByText("CLASS " + SECOND_STREAM_ID, BANNER)).toBeVisible();
+                    // The second stream has no Meta
+                    play.waitFor(() -> play.expect(play.queryByRole("tab", "Meta")).toBeNull());
+
+                    // Its child types are known, so its data is asked for at once (they were once asked for
+                    // again first)
+                    expectFetchAsPressed(play, play.getByRole("tab", "Data Preview"),
+                            "\"metaId\":" + SECOND_STREAM_ID);
+                    waitForEditorText(play, "<event>record 0</event>");
+                    play.expect("the child types requests",
+                            requestCount(play, "GET " + childTypesPath(SECOND_STREAM_ID))).toBe(1);
+
+                    // Moving through the streams asks only for the one stopped at
+                    final Query second = play.getByRole("button", "Second stream");
+                    final Supplier<Object> firstTypes = requestCount(play, "GET " + childTypesPath(3003));
+                    final Value<Object> firstTypesBefore = play.capture("firstTypesBefore", firstTypes);
+                    final Query first = play.getByRole("button", "First stream");
+                    play.run("move to the first stream and back", () -> {
+                        click(first.element().get());
+                        click(second.element().get());
+                    });
+                    play.sleep(400);
+                    play.expect("the first stream's child types requests", () ->
+                            (Integer) firstTypes.get() - (Integer) firstTypesBefore.get()).toBe(0);
+                    waitForEditorText(play, "<event>record 0</event>");
+                    play.expect(play.getByText("CLASS " + SECOND_STREAM_ID)).toBeVisible();
+
+                    // Choosing a stream then Info, before the stream's replies, still shows its tabs
+                    final Query info = play.getByRole("tab", "Info");
+                    play.run("choose the first stream then Info", () -> {
+                        click(first.element().get());
+                        press(info.element().get());
+                    });
+                    play.waitFor(() -> play.expect(play.getByText("3003")).toBeVisible());
+                    play.waitFor(() -> play.expect(play.getByRole("tab", "Meta")).toBeVisible());
+                    play.expect(play.getByRole("tab", "Info")).toHaveAttribute("aria-selected", "true");
+                    play.expect(play.queryByText("CLASS " + SECOND_STREAM_ID)).toBeNull();
+                    play.expect(play.getByText("CLASS 3003", BANNER)).toBeVisible();
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                })
+                // Choosing streams by location, as from an annotation's linked events: a late reply for one
+                // chosen before isn't shown
+                .story("ChooseLocation", context -> renderStreams(context, LOCATIONS_FIXTURES, false))
+                .withPlay(play -> {
+                    final Supplier<Object> lastFetch = lastFetch(play);
+                    final Query first = play.getByRole("button", "First stream");
+                    final Query second = play.getByRole("button", "Second stream");
+                    final Query missing = play.getByRole("button", "Missing stream");
+                    final TextMatch error = TextMatch.containing("Stream does not exist");
+
+                    // The first stream's details come after the second's
+                    play.run("choose the first stream then the second", () -> {
+                        click(first.element().get());
+                        click(second.element().get());
+                    });
+                    play.waitFor(() -> play.expect(play.getByText("CLASS " + SECOND_STREAM_ID)).toBeVisible());
+                    play.sleep(SLOW_DATA_MILLIS * 2);
+                    play.expect("the last fetch", lastFetch).toMatch("\"metaId\":" + SECOND_STREAM_ID);
+
+                    // The second stream's data comes after the missing stream's error
+                    play.click(first);
+                    play.waitFor(() -> play.expect(play.getByText("CLASS 3003")).toBeVisible());
+                    play.click(second);
+                    play.waitFor(() -> play.expect("the last fetch", lastFetch)
+                            .toMatch("\"metaId\":" + SECOND_STREAM_ID));
+                    play.click(missing);
+                    play.waitFor(() -> play.expect(play.getByText(error)).toBeVisible());
+                    play.sleep(SLOW_DATA_MILLIS * 2);
+                    play.expect(play.getByText(error)).toBeVisible();
+                    play.expect(play.queryByText("CLASS 3003")).toBeNull();
+                    play.expect(play.queryByText("CLASS " + SECOND_STREAM_ID)).toBeNull();
+
+                    // With no stream, pressing a tab does nothing (it once failed)
+                    play.click(play.getByRole("tab", "Info"));
+                    play.click(play.getByRole("tab", "Data Preview"));
+                    // and the next stream is shown
+                    play.click(first);
+                    waitForEditorText(play, "<event>record 0</event>");
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                })
+                // A stream whose child types can't be had: they are asked for once, and the tabs the data's
+                // reply says it has stay when Info is pressed
+                .story("ChildTypesFail", context -> render(context, NO_CHILD_TYPES_FIXTURES, location(3003)))
+                .withPlay(play -> {
+                    waitForEditorText(play, "<event>record 0</event>");
+                    play.expect(play.getByRole("tab", "Meta")).toBeVisible();
+                    play.click(play.getByRole("tab", "Info"));
+                    play.waitFor(() -> play.expect(play.getByText("Stream Id")).toBeVisible());
+                    play.expect(play.getByRole("tab", "Meta")).toBeVisible();
+                    play.click(play.getByRole("tab", "Meta"));
+                    waitForEditorText(play, "<meta>record 0</meta>");
+                    play.expect("the child types requests", requestCount(play, "GET " + childTypesPath(3003)))
+                            .toBe(1);
+                })
+                // A fetch that fails: its error is shown in place of the data, and it can be tried again
+                // (once, no error was shown and the button pressed stayed disabled)
+                .story("FetchFails", context -> render(context, FAILING_FIXTURES, location(3003)))
+                .withPlay(play -> {
+                    final Query refresh = play.querySelector(".item-navigator .refresh-button");
+                    final Query next = play.getByTitle("Next record");
+                    // The stream's first: how many records there are isn't known
+                    play.waitFor(() -> play.expect(play.getByText(TextMatch.containing("First failure")))
+                            .toBeVisible());
+                    play.expect(play.getByText("Record 1 of ?")).toBeVisible();
+                    play.expect(next).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByRole("tab", "Data Preview")).toHaveAttribute("aria-selected", "true");
+                    play.expect(refresh).not().toHaveAttribute("aria-disabled");
+                    play.click(refresh);
+                    waitForEditorText(play, "<event>record 0</event>");
+                    play.expect(play.queryByText(TextMatch.containing("First failure"))).not().toBeVisible();
+                    play.expect(play.getByText("Record 1 of 3")).toBeVisible();
+
+                    // Another record's
+                    play.click(next);
+                    play.waitFor(() -> play.expect(play.getByText(TextMatch.containing("Second failure")))
+                            .toBeVisible());
+                    play.expect(play.getByText("Record 2 of 3")).toBeVisible();
+                    play.expect(next).not().toHaveAttribute("aria-disabled");
+                    play.expect(play.getByText("CLASS 3003")).toBeVisible();
+                    play.click(refresh);
+                    waitForEditorText(play, "<event>record 1</event>");
+
+                    // Another tab's, which is the one chosen
+                    play.click(play.getByRole("tab", "Meta"));
+                    play.waitFor(() -> play.expect(play.getByText(TextMatch.containing("Third failure")))
+                            .toBeVisible());
+                    play.expect(play.getByRole("tab", "Meta")).toHaveAttribute("aria-selected", "true");
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                 })
                 // A range of the source with a highlight, as the dashboard's text pane asks for
@@ -232,6 +504,45 @@ public final class SourceViewerStories {
         // A 460px high frame
         harness.add(EditorWidgets.frame(controller.asWidget(), "auto", "460px"));
         return harness.asWidget();
+    }
+
+    // The viewer, with buttons that choose a stream, as from a list of streams (the first chosen to
+    // begin with) or by its location
+    private static Widget renderStreams(final StoryContext context,
+                                        final RestFixtures fixtures,
+                                        final boolean byMeta) {
+        final ScreenHarness harness = ScreenHarness.create(context, fixtures);
+        final DataViewerController controller = dataController(harness);
+        harness.own(controller);
+        final Consumer<Long> choose = byMeta
+                ? metaId -> controller.fetchData(meta(metaId))
+                : metaId -> controller.fetchData(location(metaId));
+        if (byMeta) {
+            choose.accept(3003L);
+        }
+
+        harness.add(streamButton(harness, "First stream", () -> choose.accept(3003L)));
+        harness.add(streamButton(harness, "Second stream", () -> choose.accept(SECOND_STREAM_ID)));
+        if (!byMeta) {
+            harness.add(streamButton(harness, "Missing stream", () -> choose.accept(MISSING_STREAM_ID)));
+        }
+        harness.add(EditorWidgets.frame(controller.asWidget(), "auto", "460px"));
+        return harness.asWidget();
+    }
+
+    private static Widget streamButton(final ScreenHarness harness, final String text, final Runnable onClick) {
+        final Button button = new Button();
+        button.setText(text);
+        harness.addRegistration(button.addClickHandler(event -> onClick.run()));
+        return button;
+    }
+
+    private static Meta meta(final long metaId) {
+        return Meta.builder()
+                .id(metaId)
+                .feedName("TEST_FEED")
+                .typeName(EVENTS)
+                .build();
     }
 
     /// Creates the controller and its components, as GIN would.
@@ -291,8 +602,69 @@ public final class SourceViewerStories {
         };
     }
 
+    /// How many requests have been made whose method and path are as given.
+    private static Supplier<Object> requestCount(final Play play, final String methodAndPath) {
+        final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
+        return () -> {
+            int count = 0;
+            for (final List<Object> call : requests.getCalls()) {
+                if (String.valueOf(call.get(0)).startsWith(methodAndPath)) {
+                    count++;
+                }
+            }
+            return count;
+        };
+    }
+
+    // Expects a fetch to have been sent by the time a tab's press has been handled
+    private static void expectFetchAsPressed(final Play play, final Query tab, final String fetch) {
+        final Supplier<Object> lastFetch = lastFetch(play);
+        final Value<Object> sent = play.capture("the last fetch as the tab is pressed", () -> {
+            press(tab.element().get());
+            return lastFetch.get();
+        });
+        play.expect("the last fetch as the tab was pressed", sent).toMatch(fetch);
+    }
+
+    private static native void press(Element element) /*-{
+        ['mousedown', 'mouseup'].forEach(function (type) {
+            element.dispatchEvent(new $wnd.MouseEvent(type, {bubbles: true, button: 0}));
+        });
+    }-*/;
+
+    private static native void click(Element element) /*-{
+        element.click();
+    }-*/;
+
+    // Counts the texts (that aren't empty) an Ace editor is given from now on
+    private static native void countTexts(Element aceEditor) /*-{
+        var session = aceEditor.env.editor.session;
+        var setValue = session.setValue;
+        aceEditor.textCount = 0;
+        session.setValue = function (text) {
+            if (text) {
+                aceEditor.textCount++;
+            }
+            return setValue.apply(this, arguments);
+        };
+    }-*/;
+
+    private static native int getTextCount(Element aceEditor) /*-{
+        return aceEditor.textCount;
+    }-*/;
+
     // ---------------------------------------------------------------------------------------
     // Fixtures
+
+    private static String childTypesPath(final long metaId) {
+        return "/data/v1/" + metaId + "/parts/0/child-types";
+    }
+
+    private static String info(final long metaId) {
+        return "[{\"title\": \"Stream\", \"entries\": ["
+               + "{\"key\": \"Stream Id\", \"value\": \"" + metaId + "\"}, "
+               + "{\"key\": \"Classification\", \"value\": \"CLASS " + metaId + "\"}]}]";
+    }
 
     private static RestFixtures streamFixtures(final long metaId,
                                                final String typeName,
@@ -302,7 +674,8 @@ public final class SourceViewerStories {
                 .get("/meta/v1/" + metaId, RestReply.json("{\"id\": " + metaId
                                                           + ", \"feedName\": \"TEST_FEED\", \"typeName\": "
                                                           + DataFixtures.quote(typeName) + "}"))
-                .get("/data/v1/" + metaId + "/parts/0/child-types", RestReply.json(childTypesJson))
+                .get(childTypesPath(metaId), RestReply.json(childTypesJson))
+                .get("/data/v1/" + metaId + "/info", RestReply.json(info(metaId)))
                 .post(DataFixtures.FETCH_PATH, fetch)
                 .build();
     }
@@ -359,14 +732,19 @@ public final class SourceViewerStories {
         final String childTypeJson = childType != null
                 ? ", \"childType\": " + DataFixtures.quote(String.valueOf(childType))
                 : "";
-        return dataResult(3003, EVENTS, data, "SEGMENTED", hex
+        final long metaId = DataFixtures.getLong(requestBody, 3003, "sourceLocation", "metaId");
+        final String childTypes = metaId == SECOND_STREAM_ID
+                ? ""
+                : "\"Meta Data\", \"Context\"";
+        return dataResult(metaId, EVENTS, data, "SEGMENTED", hex
                         ? "HEX"
                         : "TEXT",
                 "\"recordIndex\": " + record + childTypeJson
                 + ", \"dataRange\": {\"charOffsetFrom\": 0, \"charOffsetTo\": " + (data.length() - 1) + "}",
                 "\"totalCharacterCount\": {\"count\": " + data.length() + ", \"exact\": true}, "
                 + "\"totalBytes\": " + data.length() + ", "
-                + "\"availableChildStreamTypes\": [\"Meta Data\", \"Context\"], "
+                + "\"classification\": \"CLASS " + metaId + "\", "
+                + "\"availableChildStreamTypes\": [" + childTypes + "], "
                 + "\"totalItemCount\": {\"count\": 3, \"exact\": true}, "
                 + "\"itemRange\": {\"offset\": " + record + ", \"length\": 1}");
     }

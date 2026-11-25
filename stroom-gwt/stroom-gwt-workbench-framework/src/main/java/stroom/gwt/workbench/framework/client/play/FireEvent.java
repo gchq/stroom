@@ -37,7 +37,7 @@ public final class FireEvent {
             "focus", "blur", "mouseenter", "mouseleave", "pointerenter", "pointerleave", "scroll", "load");
     private static final List<String> NON_CANCELABLE = Arrays.asList(
             "focus", "blur", "focusin", "focusout", "mouseenter", "mouseleave", "pointerenter",
-            "pointerleave", "scroll", "load", "input", "change");
+            "pointerleave", "scroll", "load", "input", "change", "dragleave", "dragend");
 
     private final Play play;
 
@@ -119,6 +119,44 @@ public final class FireEvent {
     /// @param init   The event's options, e.g. `EventInit.create().at(360, 150)`.
     public void mouseMove(final Query target, final EventInit init) {
         fire("mouseMove", target, init);
+    }
+
+    /// Fires `dragstart`, as a drag of the element starts. Each drag event carries a new, empty
+    /// `DataTransfer`, as a drag's does, which the handlers can set data and effects on.
+    ///
+    /// @param target The element dragged.
+    public void dragStart(final Query target) {
+        fire("dragStart", target, null);
+    }
+
+    /// Fires `dragover`, as a drag passes over the element.
+    ///
+    /// @param target The element dragged over.
+    /// @param init   The event's options, e.g. `EventInit.create().relativeTo(row, 10, 2)`.
+    public void dragOver(final Query target, final EventInit init) {
+        fire("dragOver", target, init);
+    }
+
+    /// Fires `dragleave`, as a drag leaves the element.
+    ///
+    /// @param target The element left.
+    public void dragLeave(final Query target) {
+        fire("dragLeave", target, null);
+    }
+
+    /// Fires `drop`, as a drag is dropped on the element.
+    ///
+    /// @param target The element dropped on.
+    /// @param init   The event's options, e.g. `EventInit.create().relativeTo(row, 10, 2)`.
+    public void drop(final Query target, final EventInit init) {
+        fire("drop", target, init);
+    }
+
+    /// Fires `dragend`, as the drag of the element ends.
+    ///
+    /// @param target The element that was dragged.
+    public void dragEnd(final Query target) {
+        fire("dragEnd", target, null);
     }
 
     /// Fires `mouseover`.
@@ -346,6 +384,9 @@ public final class FireEvent {
         }
         if ("wheel".equals(type)) {
             return "WheelEvent";
+        }
+        if (type.startsWith("drag") || "drop".equals(type)) {
+            return "DragEvent";
         }
         if ("input".equals(type)) {
             return "InputEvent";

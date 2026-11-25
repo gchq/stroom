@@ -21,6 +21,7 @@ import stroom.cell.tickbox.client.TickBoxState;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
+import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -68,6 +69,38 @@ public final class TickBoxCellStories {
                 // Some rows ticked, so the header is half-ticked
                 .story("InGrid", context -> grid(context, true, "Bravo"))
                 .withPlay(TickBoxCellStories::playInGrid)
+                // A row's box and the header's are whole and centred in their column (CHECKBOX_COL, 22px)
+                // at compact and Default density: at Default the cell's side padding put the box against
+                // the column's right edge
+                .story("BoxFitsItsColumn", context -> grid(context, true, "Bravo"))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(rowTickBox(play, "Alpha")).toBeInTheDocument());
+                    final Query mark = play.within(rowTickBox(play, "Alpha")).querySelector(".tick-box__mark");
+                    final Query cell = rowTickBox(play, "Alpha").closest(".data-grid__cell");
+                    final Query headerMark = play.querySelector(HEADER_TICK_BOX + " > .tick-box__mark");
+                    final Query header = play.querySelector(HEADER_TICK_BOX).closest(".data-grid__header-cell");
+                    // At the page's density, then at the other of compact and Default, then back
+                    final Value<Boolean> compact = play.capture("compact at first", TickBoxCellStories::isCompact);
+                    expectCentred(play, mark, cell, "a row's");
+                    expectCentred(play, headerMark, header, "the header's");
+                    play.run("change the density", () -> setCompact(!compact.get()));
+                    expectCentred(play, mark, cell, "a row's, at the other density,");
+                    expectCentred(play, headerMark, header, "the header's, at the other density,");
+                    play.run("change the density back", () -> setCompact(compact.get()));
+                })
+                // A wider column holding a tick box, e.g. an Enabled column (ENABLED_COL), keeps its box
+                // at the left, under its left-aligned header, as before
+                .story("WideColumnKeepsItsBoxLeft", context -> grid(context, true,
+                        ColumnSizeConstants.ENABLED_COL, "Bravo"))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(rowTickBox(play, "Alpha")).toBeInTheDocument());
+                    final Query mark = play.within(rowTickBox(play, "Alpha")).querySelector(".tick-box__mark");
+                    final Query cell = rowTickBox(play, "Alpha").closest(".data-grid__cell");
+                    play.expect("the box nearer its cell's left than its right", () ->
+                            mark.element().get().getAbsoluteLeft() - cell.element().get().getAbsoluteLeft()
+                            < cell.element().get().getAbsoluteRight() - mark.element().get().getAbsoluteRight())
+                            .toBe(true);
+                })
                 // A grid the user can't change: read-only tick boxes (the normal box with a grey tick), no
                 // header tick box, and clicks do nothing
                 .story("ReadOnly", context -> grid(context, false, "Bravo", "Delta"))
@@ -120,6 +153,28 @@ public final class TickBoxCellStories {
         play.expect(play.querySelector(HEADER_TICK_BOX)).toHaveAttribute("title", HALF_TICKED);
     }
 
+    // Checks a drawn box is whole and centred, to a pixel, in its cell or header
+    private static void expectCentred(final Play play, final Query mark, final Query cell, final String which) {
+        play.expect(which + " box's left edge within its cell", () ->
+                mark.element().get().getAbsoluteLeft()
+                >= cell.element().get().getAbsoluteLeft()).toBe(true);
+        play.expect(which + " box's right edge within its cell", () ->
+                mark.element().get().getAbsoluteRight()
+                <= cell.element().get().getAbsoluteRight()).toBe(true);
+        play.expect(which + " box centred in its cell, to a pixel", () -> Math.abs(
+                (mark.element().get().getAbsoluteLeft() - cell.element().get().getAbsoluteLeft())
+                - (cell.element().get().getAbsoluteRight() - mark.element().get().getAbsoluteRight()))
+                <= 1).toBe(true);
+    }
+
+    private static native boolean isCompact() /*-{
+        return $doc.documentElement.classList.contains("stroom-density-compact");
+    }-*/;
+
+    private static native void setCompact(boolean compact) /*-{
+        $doc.documentElement.classList.toggle("stroom-density-compact", compact);
+    }-*/;
+
     /// @return The tick box in the row with the name.
     private static Query rowTickBox(final Play play, final String name) {
         return play.within(play.getByText(name).closest("[role='row']")).querySelector(".tick-box");
@@ -130,6 +185,18 @@ public final class TickBoxCellStories {
     /// @param updatable Whether the user can change the ticks: if so, the header has a tick box.
     /// @param ticked    The names that start ticked.
     private static Widget grid(final StoryContext context, final boolean updatable, final String... ticked) {
+        return grid(context, updatable, ColumnSizeConstants.CHECKBOX_COL, ticked);
+    }
+
+    /// A grid of [#NAMES] with a tick box column of a width, e.g. an Enabled column's.
+    ///
+    /// @param updatable Whether the user can change the ticks: if so, the header has a tick box.
+    /// @param width     The tick box column's width.
+    /// @param ticked    The names that start ticked.
+    private static Widget grid(final StoryContext context,
+                               final boolean updatable,
+                               final int width,
+                               final String... ticked) {
         final Spy onChange = context.fn(ON_CHANGE);
         final Set<String> selected = new LinkedHashSet<>(List.of(ticked));
         final DataGrid<String> grid = new DataGrid<>();
@@ -175,9 +242,9 @@ public final class TickBoxCellStories {
                 onChange.call(String.join(",", inOrder(selected)));
                 grid.redrawHeaders();
             });
-            grid.addColumn(column, header, ColumnSizeConstants.CHECKBOX_COL);
+            grid.addColumn(column, header, width);
         } else {
-            grid.addColumn(column, "", ColumnSizeConstants.CHECKBOX_COL);
+            grid.addColumn(column, "", width);
         }
         grid.addResizableColumn(DataGridUtil.textColumnBuilder((String name) -> name).build(), "Name", 200);
         grid.setRowData(NAMES);

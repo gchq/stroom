@@ -47,7 +47,7 @@ public class ColumnHeaderHtmlUtil {
                              final HtmlBuilder hb) {
         hb.div(div -> writeHeader(column, div),
                 Attribute.className("column-header"),
-                Attribute.title(getColumnInfoString(column).asString()));
+                Attribute.title(getColumnInfoString(column)));
     }
 
     public static void writeHeader(final Column column,
@@ -80,31 +80,32 @@ public class ColumnHeaderHtmlUtil {
         return SvgImageUtil.toSafeHtml(svgImage, "icon-wrap");
     }
 
-    private static SafeHtml getColumnInfoString(final Column column) {
-        final HtmlBuilder hb = new HtmlBuilder();
+    // Plain text, as the attribute escapes it
+    private static String getColumnInfoString(final Column column) {
+        final StringBuilder sb = new StringBuilder();
 
         if (column.getFormat() != null && column.getFormat().getType() != null) {
-            hb.append("Format: ").append(column.getFormat().getType().getDisplayValue()).append('\n');
+            sb.append("Format: ").append(column.getFormat().getType().getDisplayValue()).append('\n');
         }
 
-        hb.append("Expression: ").append(column.getExpression()).append('\n');
+        sb.append("Expression: ").append(column.getExpression()).append('\n');
 
         if (column.getSort() != null && column.getSort().getDirection() != null) {
-            hb.append("Sort: ").append(column.getSort().getDirection().getDisplayValue()).append('\n');
-            hb.append("Sort Priority: ").append(column.getSort().getOrder() + 1).append('\n');
+            sb.append("Sort: ").append(column.getSort().getDirection().getDisplayValue()).append('\n');
+            sb.append("Sort Priority: ").append(column.getSort().getOrder() + 1).append('\n');
         }
 
         if (column.getGroup() != null) {
-            hb.append("Group Level: ").append(column.getGroup() + 1).append('\n');
+            sb.append("Group Level: ").append(column.getGroup() + 1).append('\n');
         }
 
         if (column.getColumnValueSelection() != null) {
             if (column.getColumnValueSelection().isInvert()) {
-                hb.append("Selection Excluded: ");
+                sb.append("Selection Excluded: ");
             } else {
-                hb.append("Selection Included: ");
+                sb.append("Selection Included: ");
             }
-            hb.append(NullSafe
+            sb.append(NullSafe
                             .stream(column.getColumnValueSelection().getValues())
                             .collect(Collectors.joining(",")))
                     .append('\n');
@@ -112,29 +113,29 @@ public class ColumnHeaderHtmlUtil {
 
         if (column.getFilter() != null) {
             if (column.getFilter().getIncludes() != null && !column.getFilter().getIncludes().isBlank()) {
-                hb.append("Filter Includes: ").append(column.getFilter().getIncludes()).append('\n');
+                sb.append("Filter Includes: ").append(column.getFilter().getIncludes()).append('\n');
             }
             if (column.getFilter().getExcludes() != null && !column.getFilter().getExcludes().isBlank()) {
-                hb.append("Filter Excludes: ").append(column.getFilter().getExcludes()).append('\n');
+                sb.append("Filter Excludes: ").append(column.getFilter().getExcludes()).append('\n');
             }
             if (!column.getFilter().getIncludeDictionaries().isEmpty()) {
                 final Set<String> dictionaryNames = column.getFilter().getIncludeDictionaries().stream()
                         .map(DocRef::getDisplayValue).collect(Collectors.toSet());
-                hb.append("Includes Dictionaries: ").append(dictionaryNames.toString()).append("\n");
+                sb.append("Includes Dictionaries: ").append(dictionaryNames.toString()).append("\n");
             }
             if (!column.getFilter().getExcludeDictionaries().isEmpty()) {
                 final Set<String> dictionaryNames = column.getFilter().getExcludeDictionaries().stream()
                         .map(DocRef::getDisplayValue).collect(Collectors.toSet());
-                hb.append("Excludes Dictionaries: ").append(dictionaryNames.toString()).append("\n");
+                sb.append("Excludes Dictionaries: ").append(dictionaryNames.toString()).append("\n");
             }
         }
 
         if (column.getColumnFilter() != null && column.getColumnFilter().getFilter() != null &&
             !column.getColumnFilter().getFilter().isBlank() &&
             column.getColumnFilter().isEnabled()) {
-            hb.append("Column Filter: ").append(column.getColumnFilter().getFilter()).append('\n');
+            sb.append("Column Filter: ").append(column.getColumnFilter().getFilter()).append('\n');
         }
 
-        return hb.toSafeHtml();
+        return sb.toString();
     }
 }

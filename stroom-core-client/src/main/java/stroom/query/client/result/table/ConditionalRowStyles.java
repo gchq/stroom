@@ -23,8 +23,8 @@ import stroom.query.api.TextAttributes;
 import stroom.query.client.result.table.cf.ConditionalFormattingDynamicStyles;
 import stroom.query.client.result.table.cf.ConditionalFormattingSwatchUtil;
 import stroom.widget.util.client.ClassNameBuilder;
+import stroom.widget.util.client.Console;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.RowStyles;
 
 import java.util.HashMap;
@@ -76,7 +76,7 @@ public class ConditionalRowStyles<T> implements RowStyles<T> {
             for (final ConditionalFormattingRule rule : rules) {
                 final ConditionalFormattingRule existing = conditionalFormattingRules.put(rule.getId(), rule);
                 if (existing != null) {
-                    GWT.log("Duplicate conditional formatting rule id");
+                    Console.warn("Duplicate conditional formatting rule id");
                 }
             }
         }

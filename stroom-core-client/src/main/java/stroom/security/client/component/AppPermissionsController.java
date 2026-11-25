@@ -22,7 +22,6 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
-import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Inject;
@@ -65,8 +64,6 @@ public class AppPermissionsController extends ContentTabController {
         });
 
         appPermissionsEdit.setOnChange(change -> {
-            GWT.log("valueChange, isRefreshUsers: " + change.isRefreshUsers()
-                    + ", isRefreshDetails: " + change.isRefreshDetails());
             if (change.isRefreshUsers()) {
                 refresh();
             }

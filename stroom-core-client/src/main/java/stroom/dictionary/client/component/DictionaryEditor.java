@@ -25,6 +25,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.component.DocumentationTabController;
 import stroom.document.client.editor.DocumentEditor;
 import stroom.document.client.editor.LinkTabPanel;
+import stroom.document.client.editor.UnsetText;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.svg.shared.SvgImage;
@@ -102,7 +103,9 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
                     return wordsTab;
                 },
                 (wordsTab, docRef, doc) -> wordsTab.setWords(doc.getData()),
-                (wordsTab, doc) -> doc.copy().data(wordsTab.getWords()).build());
+                (wordsTab, doc) -> doc.copy()
+                        .data(UnsetText.asRead(wordsTab.getWords(), doc.getData()))
+                        .build());
         addTab(IMPORTS,
                 () -> {
                     final ImportsTabController importsTab = importsTabProvider.get();
@@ -122,7 +125,9 @@ public class DictionaryEditor extends DocumentEditor<DictionaryDoc> {
                     return documentation;
                 },
                 (documentation, docRef, doc) -> documentation.setText(doc.getDescription()),
-                (documentation, doc) -> doc.copy().description(documentation.getText()).build());
+                (documentation, doc) -> doc.copy()
+                        .description(UnsetText.asRead(documentation.getText(), doc.getDescription()))
+                        .build());
         addTab(PERMISSIONS,
                 permissionsProvider::get,
                 (permissions, docRef, doc) -> permissions.setDocRef(docRef));

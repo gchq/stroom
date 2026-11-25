@@ -19,6 +19,7 @@ package stroom.widget.spinner.client;
 import stroom.widget.task.client.Task;
 import stroom.widget.task.client.TaskMonitor;
 import stroom.widget.task.client.TaskMonitorFactory;
+import stroom.widget.util.client.Console;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -77,7 +78,7 @@ public class LargeBusySpinner extends Composite implements TaskMonitorFactory {
                 taskCount--;
 
                 if (taskCount < 0) {
-                    GWT.log("Negative task count");
+                    Console.warn("Negative task count");
                 }
 
                 setVisible(taskCount > 0);

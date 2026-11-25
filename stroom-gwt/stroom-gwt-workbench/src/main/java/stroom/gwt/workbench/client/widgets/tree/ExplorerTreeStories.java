@@ -146,6 +146,15 @@ public final class ExplorerTreeStories {
                     play.keyboard("{Enter}");
                     play.waitFor(() -> play.expect(play.spy(ON_OPEN)).toHaveBeenCalledWith("Dashboards"));
                 })
+                // An item's tooltip is its name, where it showed an apostrophe as &#39;
+                .story("TooltipIsTheName", context -> tree(context,
+                        new ExplorerFixture(ExplorerFixture.folder("System",
+                                ExplorerFixture.doc("Bob's <new> \"Feed\" & more", "Feed"))),
+                        new Options()))
+                .withPlay(play -> {
+                    final Query name = play.findByText("Bob's <new> \"Feed\" & more");
+                    play.expect(name).toHaveAttribute("title", "Bob's <new> \"Feed\" & more");
+                })
                 // Quick filter - type in the bar to filter the tree (folders open to reveal matches)
                 .story("Filtered", context -> {
                     final Paragraph echo = echo("Filter: \"feed\"");

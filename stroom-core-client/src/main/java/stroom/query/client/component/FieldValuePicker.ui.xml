@@ -19,6 +19,7 @@
         <g:FlowPanel styleName="field-value-picker__header">
             <tx:Label ui:field="scope" addStyleNames="field-value-picker__scope" wordWrap="false"/>
             <spinner:SmallBusySpinner ui:field="spinner" addStyleNames="field-value-picker__spinner"/>
+            <spinner:LoadStatus ui:field="loadStatus" text="Loading values"/>
         </g:FlowPanel>
         <g:FlowPanel styleName="field-value-picker__values">
             <dg:DataGrid ui:field="list" profile="LISTBOX" fitContent="true" accessibleName="Values"

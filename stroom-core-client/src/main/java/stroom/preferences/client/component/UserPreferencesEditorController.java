@@ -29,6 +29,9 @@ import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.ControllerLayer;
 import stroom.widget.component.client.HasControllerNode;
+import stroom.widget.form.client.HasInvalidInput;
+import stroom.widget.form.client.InvalidInputs;
+import stroom.widget.form.client.RefusesInvalidInput;
 import stroom.widget.popup.client.PopupSize;
 import stroom.widget.popup.client.PopupType;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -40,12 +43,15 @@ import stroom.widget.tab.client.TabDataImpl;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 
 /// The user's preferences ([UserPreferencesEditor]), made for one use: it fetches the saved
 /// preferences, shows them in tabs and applies each change as it is made. OK saves them, Cancel
 /// goes back to the saved ones.
-public class UserPreferencesEditorController extends Controller {
+public class UserPreferencesEditorController extends Controller implements RefusesInvalidInput {
 
     private static final TabData THEME = new TabDataImpl("Theme");
     private static final TabData EDITOR = new TabDataImpl("Editor");
@@ -55,14 +61,16 @@ public class UserPreferencesEditorController extends Controller {
     private final UserPreferencesEditor view;
     private final UserPreferencesManager userPreferencesManager;
     private final ThemePreferencesController themePreferences;
-    private final ControllerLayer themePreferencesLayer;
     private final EditorPreferencesController editorPreferences;
-    private final ControllerLayer editorPreferencesLayer;
     private final TimePreferencesController timePreferences;
-    private final ControllerLayer timePreferencesLayer;
     private final KeyBindingPreferencesController keyBindingPreferences;
-    private final ControllerLayer keyBindingPreferencesLayer;
+    // Each tab's content and the layer that shows it, in the tabs' order
+    private final Map<TabData, Controller> tabs = new LinkedHashMap<>();
+    private final Map<TabData, ControllerLayer> layers = new LinkedHashMap<>();
     private UserPreferences fetchedUserPreferences;
+    // Set once Cancel has gone back to the saved preferences, so a field that commits its edit as
+    // it loses the focus (e.g. the custom format, as the dialog goes) can't apply it again
+    private boolean cancelled;
 
     /// Made by GIN, with its content and its tabs.
     ///
@@ -88,20 +96,16 @@ public class UserPreferencesEditorController extends Controller {
         initWidget(view);
         this.userPreferencesManager = userPreferencesManager;
         this.themePreferences = own(themePreferences);
-        themePreferencesLayer = new ControllerLayer(themePreferences);
         this.editorPreferences = own(editorPreferences);
-        editorPreferencesLayer = new ControllerLayer(editorPreferences);
         this.timePreferences = own(timePreferences);
-        timePreferencesLayer = new ControllerLayer(timePreferences);
         this.keyBindingPreferences = own(keyBindingPreferences);
-        keyBindingPreferencesLayer = new ControllerLayer(keyBindingPreferences);
 
         view.setSetAsDefaultVisible(clientSecurityContext
                 .hasAppPermission(AppPermission.MANAGE_PROPERTIES_PERMISSION));
-        view.addTab(THEME);
-        view.addTab(EDITOR);
-        view.addTab(DATE_AND_TIME);
-        view.addTab(KEYBOARD_SHORTCUTS);
+        addTab(THEME, themePreferences);
+        addTab(EDITOR, editorPreferences);
+        addTab(DATE_AND_TIME, timePreferences);
+        addTab(KEYBOARD_SHORTCUTS, keyBindingPreferences);
         switchTab(THEME);
 
         view.setOnTabSelected(this::switchTab);
@@ -157,6 +161,7 @@ public class UserPreferencesEditorController extends Controller {
                 e.hide();
             }
         } else {
+            cancelled = true;
             userPreferencesManager.setCurrentPreferences(fetchedUserPreferences);
             // Ensure screens revert to the old prefs
             triggerThemeChange(userPreferencesManager.getCurrentPreferences());
@@ -164,19 +169,41 @@ public class UserPreferencesEditorController extends Controller {
         }
     }
 
+    /// Refuses to keep the preferences while a tab, shown or not, holds a field whose input can't be
+    /// kept, e.g. a custom format Java can't use: shows that tab, says why under the field and focuses
+    /// it.
+    ///
+    /// @return Whether it refused.
+    @Override
+    public boolean refuseInvalidInput() {
+        for (final Entry<TabData, Controller> entry : tabs.entrySet()) {
+            final HasInvalidInput input = InvalidInputs.find(entry.getValue().asWidget());
+            if (input != null) {
+                switchTab(entry.getKey());
+                InvalidInputs.show(input);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void addTab(final TabData tabData, final Controller content) {
+        tabs.put(tabData, content);
+        layers.put(tabData, new ControllerLayer(content));
+        view.addTab(tabData);
+    }
+
     private void switchTab(final TabData tabData) {
-        if (Objects.equals(THEME, tabData)) {
-            view.showTab(tabData, themePreferencesLayer);
-        } else if (Objects.equals(EDITOR, tabData)) {
-            view.showTab(tabData, editorPreferencesLayer);
-        } else if (Objects.equals(DATE_AND_TIME, tabData)) {
-            view.showTab(tabData, timePreferencesLayer);
-        } else if (Objects.equals(KEYBOARD_SHORTCUTS, tabData)) {
-            view.showTab(tabData, keyBindingPreferencesLayer);
+        final ControllerLayer layer = layers.get(tabData);
+        if (layer != null) {
+            view.showTab(tabData, layer);
         }
     }
 
     private void onChange() {
+        if (cancelled) {
+            return;
+        }
         final UserPreferences before = userPreferencesManager.getCurrentUserPreferences();
         UserPreferences after = write(before);
 
@@ -199,6 +226,10 @@ public class UserPreferencesEditorController extends Controller {
     }
 
     private void onSetAsDefault() {
+        // A field that can't be kept, e.g. a custom format Java can't use, is never everyone's
+        if (refuseInvalidInput()) {
+            return;
+        }
         ConfirmEvent.fire(this,
                 "Are you sure you want to set the current preferences as the defaults for ALL users?" +
                 "\nThis will not change individual users' saved preferences.",

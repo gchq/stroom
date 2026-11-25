@@ -21,7 +21,9 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.component.DocumentationTabController;
 import stroom.document.client.editor.LinkTabPanel;
+import stroom.document.client.editor.SaveQueue;
 import stroom.document.client.editor.TabbedController;
+import stroom.document.client.editor.UnsetText;
 import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
 import stroom.receive.rules.shared.ReceiveDataRules;
@@ -58,6 +60,7 @@ public class RuleSetEditor extends TabbedController<ReceiveDataRules> {
     private final RestFactory restFactory;
     private final FieldListController fieldList;
     private final ToolbarButton saveButton;
+    private final SaveQueue saveQueue = new SaveQueue();
     private boolean dirty;
     private Consumer<Boolean> onDirtyChange = dirty -> {
     };
@@ -109,7 +112,9 @@ public class RuleSetEditor extends TabbedController<ReceiveDataRules> {
                     return documentation;
                 },
                 (documentation, docRef, rules) -> documentation.setText(rules.getDescription()),
-                (documentation, rules) -> rules.copy().description(documentation.getText()).build());
+                (documentation, rules) -> rules.copy()
+                        .description(UnsetText.asRead(documentation.getText(), rules.getDescription()))
+                        .build());
         setDefaultTab(RULES_TAB);
         // A tab's menu (e.g. to close others) is the app's
         own(getTabView().getTabBar().addShowMenuHandler(this::fireEvent));
@@ -137,22 +142,38 @@ public class RuleSetEditor extends TabbedController<ReceiveDataRules> {
         this.onDirtyChange = Objects.requireNonNull(onDirtyChange, "onDirtyChange");
     }
 
-    /// Saves the rules, and reads them back.
+    /// Saves the rules, and reads them back, unless they were changed while being saved.
     public void save() {
         final ReceiveDataRules updated = write();
-        if (updated != null) {
+        // Saved once a save in progress has finished, if there is anything to save
+        if (updated != null && saveQueue.start(this::saveIfDirty, () -> {
+        })) {
             restFactory.create(RULES_RESOURCE)
                     .method(resource -> resource.update(updated))
-                    .onSuccess(persistedRules -> {
-                        read(persistedRules);
+                    .onSuccess(persistedRules -> saveQueue.succeeded(() -> {
+                        // What was changed while they were being saved is kept
+                        if (hasChangedSince(updated)) {
+                            keepChanges(persistedRules.asDocRef(), updated, persistedRules);
+                        } else {
+                            read(persistedRules);
+                        }
                         onChange();
+                    }))
+                    .onFailure(error -> {
+                        AlertEvent.fireError(
+                                this,
+                                "Unable to save Receive Data Rules", error.getMessage(),
+                                null);
+                        saveQueue.failed();
                     })
-                    .onFailure(error -> AlertEvent.fireError(
-                            this,
-                            "Unable to save Receive Data Rules", error.getMessage(),
-                            null))
                     .owner(this)
                     .exec();
+        }
+    }
+
+    private void saveIfDirty() {
+        if (dirty) {
+            save();
         }
     }
 

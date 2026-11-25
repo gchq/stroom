@@ -161,14 +161,15 @@
     border: thin solid var(--focus-border);
 }
 
-/* The help icon, above the fill. Its colour is the same wherever the group is, so the rule is two
-   classes deep to outweigh an icon colour that a container gives its icons (e.g. the annotation
-   editor's .icon-colour__grey setting blocks). */
+/* The help icon, above the fill, in its label's colour in both themes (it was the icon buttons'
+   blue in the light theme). Its colour is the same wherever the group is, so the rule is two classes
+   deep to outweigh an icon colour that a container gives its icons (e.g. the annotation editor's
+   .icon-colour__grey setting blocks). */
 .form-group__help .form-group__help-icon {
     position: relative;
     width: 16px;
     height: 16px;
-    color: var(--navigation-icon-button__color);
+    color: var(--form-group__label-color);
 }
 
 /* The help button is a little taller than the label text. Let it overlap the label row rather than

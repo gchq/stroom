@@ -36,6 +36,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.widget.component.client.Controller;
 import stroom.widget.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.task.client.TaskMonitorFactory;
+import stroom.widget.util.client.Console;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
@@ -152,8 +153,8 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                 try {
                     val = URL.decodeQueryString(val);
                 } catch (final RuntimeException e) {
-                    GWT.log("Cannot decode a URL query string parameter=" + key +
-                            " value=" + val, e);
+                    // Not its value, which may be a secret
+                    Console.warn("Cannot decode URL query string parameter " + key, e);
                 }
 
                 out.putIfAbsent(key, val);

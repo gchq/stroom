@@ -235,7 +235,8 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     public void moveColumn(final int fromIndex, final int toIndex) {
         final Column column = getColumn(fromIndex);
         if (column != null) {
-            final List<Column> columns = tableController.getTableComponentSettings().getColumns();
+            // A copy, as changing the settings' own list would change what was written with it
+            final List<Column> columns = getColumns();
             columns.remove(column);
 
             final int destIndex = toIndex - columnsStartIndex;
@@ -246,6 +247,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
             } else {
                 columns.add(destIndex, column);
             }
+            updateColumns(columns);
 
             tableController.onChange();
         }

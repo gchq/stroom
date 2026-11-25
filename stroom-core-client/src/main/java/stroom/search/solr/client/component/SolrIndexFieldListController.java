@@ -20,6 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.document.client.editor.HasSavedDocument;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
@@ -48,7 +49,7 @@ import java.util.stream.Collectors;
 /// A Solr index's fields ([SolrIndexFieldList]), by name, and its schema's synchronisation state:
 /// New and Edit open a field's editor with the types Solr offers, Remove removes those selected once
 /// confirmed, unless the index is read only ([Contexts#READ_ONLY]).
-public class SolrIndexFieldListController extends Controller {
+public class SolrIndexFieldListController extends Controller implements HasSavedDocument<SolrIndexDoc> {
 
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
 
@@ -188,18 +189,28 @@ public class SolrIndexFieldListController extends Controller {
                     .sorted(Comparator.comparing(SolrIndexField::getFldName, String.CASE_INSENSITIVE_ORDER))
                     .collect(Collectors.toList());
 
-            final SolrSynchState state = document.getSolrSynchState();
-            if (state != null) {
-                view.setSyncState(
-                        state.getLastSynchronized() == null
-                                ? null
-                                : dateTimeFormatter.format(state.getLastSynchronized()),
-                        NullSafe.list(state.getMessages()));
-            } else {
-                view.setSyncState(null, List.of());
-            }
+            showSyncState(document);
         }
         refresh();
+    }
+
+    @Override
+    public void setSavedDocument(final SolrIndexDoc written, final SolrIndexDoc saved) {
+        this.index = saved;
+        showSyncState(saved);
+    }
+
+    private void showSyncState(final SolrIndexDoc index) {
+        final SolrSynchState state = index.getSolrSynchState();
+        if (state != null) {
+            view.setSyncState(
+                    state.getLastSynchronized() == null
+                            ? null
+                            : dateTimeFormatter.format(state.getLastSynchronized()),
+                    NullSafe.list(state.getMessages()));
+        } else {
+            view.setSyncState(null, List.of());
+        }
     }
 
     /// @param document The index's document.
@@ -225,8 +236,14 @@ public class SolrIndexFieldListController extends Controller {
             }
         });
         return document.copy()
-                .fields(fields)
-                .deletedFields(new ArrayList<>(toDelete.values()))
+                // A copy, as editing changes the list, which would change what was written with it
+                .fields(fields == null
+                        ? null
+                        : new ArrayList<>(fields))
+                // None is written as it was read, so that showing the fields doesn't change them
+                .deletedFields(toDelete.isEmpty() && document.getDeletedFields() == null
+                        ? null
+                        : new ArrayList<>(toDelete.values()))
                 .build();
     }
 }
