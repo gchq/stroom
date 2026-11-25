@@ -47,7 +47,8 @@ request: >
   translation serve both, and make the index for their events.
 user_knows: >
   Site-A's AGENTS doc applies to the shared documents. Site B's analysts may read only Site B's events: one index
-  per feed. Start from the existing pipeline when asked; keep its translation as it is. Both feeds' times are UTC.
+  per feed. Start from the existing pipeline when asked; keep its translation as it is: src_ip stays untranslated,
+  as the original leaves it (ignored on purpose), and heartbeats stay dropped. Both feeds' times are UTC.
 expected:
   route:
     start_from: existing
