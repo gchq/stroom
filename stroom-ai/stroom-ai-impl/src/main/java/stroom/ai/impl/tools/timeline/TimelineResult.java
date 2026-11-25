@@ -580,6 +580,17 @@ final class TimelineResult {
         return map;
     }
 
+    // An activity's minor parts, said apart so they stay in view without shaping its name (asked for by the user,
+    // 2026-11-26; seen in chat 197: a 6-second archive named seven hours of build work).
+    static String alsoInIt(final Activity activity) {
+        final List<String> minor = activity.minorParts().stream()
+                .map(part -> part.artifact() + " (" + Math.round(part.activeMs() / 6_000.0) / 10.0 + " min)")
+                .toList();
+        return minor.isEmpty()
+                ? ""
+                : "; also in it: " + String.join(", ", minor);
+    }
+
     private static Map<String, Object> characterisation(final Characterised characterised,
                                                         final Files files,
                                                         final int sessions) {
@@ -598,6 +609,12 @@ final class TimelineResult {
             one.put("active_minutes", Math.round(activity.activeMs() / 6_000.0) / 10.0);
             one.put("applications", activity.applications());
             one.put("artifacts", activity.artifacts());
+            if (!activity.minorParts().isEmpty()) {
+                final List<Map<String, Object>> minor = new ArrayList<>();
+                activity.minorParts().forEach(part -> minor.add(Map.of("artifact", part.artifact(),
+                        "active_minutes", Math.round(part.activeMs() / 6_000.0) / 10.0)));
+                one.put("also_in_it", minor);
+            }
             one.put("terms", activity.terms());
             activities.add(one);
         }
@@ -845,6 +862,7 @@ final class TimelineResult {
                                 activity.applications())).append(activity.artifacts().isEmpty()
                                 ? ""
                                 : "; artifacts: " + String.join(", ", activity.artifacts()))
+                        .append(alsoInIt(activity))
                         .append(activity.fromModel()
                                 ? " (a theme the model found in several items)"
                                 : "").append('\n');
