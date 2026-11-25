@@ -77,6 +77,22 @@ public class KryoDataWriter implements DataWriter {
         output.write(bytes);
     }
 
+    /// Writes a number that is not negative in as few bytes as it needs, from one to five.
+    ///
+    /// @param value The number.
+    @Override
+    public void writeVarInt(final int value) {
+        output.writeVarInt(value, true);
+    }
+
+    /// Writes bytes without their length, so the reader must know it.
+    ///
+    /// @param bytes The bytes.
+    @Override
+    public void writeRawBytes(final byte[] bytes) {
+        output.write(bytes);
+    }
+
     @Override
     public void close() {
         output.close();

@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v8.0]
 
+* `countUnique()` is deprecated, though it works as before. Use the new `countDistinct()` or `dcount()` instead.
+
+  **Don't change an existing table builder rule to use either.** The values that the rule has already stored for
+  `countUnique()` can't be read by them, so its counts would be wrong or it would stop. Make the change in a copy
+  of the rule and disable the original. The copy has its own store and processes streams again from its minimum
+  stream create time, so it can raise detections that the original has already raised. The same applies to
+  changing between `countDistinct()` and `dcount()`, or changing the accuracy of `dcount()`.
+
+  Renaming a rule also gives it a new, empty store, but loses what it had stored and doesn't process those streams
+  again.
+
 * The `+` operator and the `add()` function now return null if any value is null, the same as the other
   arithmetic operators. Previously they ignored nulls, so `5 + null()` was `5`. Joining text still ignores
   nulls, but numbers before the text are added first, so `5 + null() + 'x'` is now `x` and not `5x`. The

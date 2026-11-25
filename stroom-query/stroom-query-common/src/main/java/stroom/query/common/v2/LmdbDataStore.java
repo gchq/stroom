@@ -812,7 +812,10 @@ public class LmdbDataStore implements DataStore {
 
                         // Get the existing entry for this key.
                         final ByteBuffer existingValueBuffer = db.get(writeTxn, lmdbKV.key());
-                        final ByteBuffer newValueBuffer = lmdbRowValueFactory.useOutput(output -> {
+                        final int expectedSize = LmdbRowValueFactory.getMergedSize(
+                                existingValueBuffer.remaining(),
+                                lmdbKV.val().remaining());
+                        final ByteBuffer newValueBuffer = lmdbRowValueFactory.useOutput(expectedSize, output -> {
                             boolean merged = false;
                             while (existingValueBuffer.remaining() > 0) {
                                 final int startPos = existingValueBuffer.position();
@@ -849,8 +852,12 @@ public class LmdbDataStore implements DataStore {
                             }
                         });
 
-                        final boolean ok = put(writeTxn, db, lmdbKV.key(), newValueBuffer);
-                        bufferFactory.release(newValueBuffer);
+                        final boolean ok;
+                        try {
+                            ok = put(writeTxn, db, lmdbKV.key(), newValueBuffer);
+                        } finally {
+                            bufferFactory.release(newValueBuffer);
+                        }
 
                         if (!ok) {
                             LOGGER.debug(() -> "Unable to update");

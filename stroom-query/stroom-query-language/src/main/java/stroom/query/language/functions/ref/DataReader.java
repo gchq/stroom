@@ -38,6 +38,17 @@ public interface DataReader extends AutoCloseable {
 
     byte[] readBytes();
 
+    /// Reads a number written by [DataWriter#writeVarInt(int)].
+    ///
+    /// @return The number, which is only negative if what was read is not valid.
+    int readVarInt();
+
+    /// Reads bytes written by [DataWriter#writeRawBytes(byte[])].
+    ///
+    /// @param length The number of bytes.
+    /// @return The bytes.
+    byte[] readRawBytes(int length);
+
     @Override
     void close();
 }

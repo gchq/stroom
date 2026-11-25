@@ -86,6 +86,24 @@ public class ValueReferenceIndex {
         return add(new ValListReference(list.size(), name));
     }
 
+    /// Adds a sketch that the number of unique values is estimated from.
+    ///
+    /// @param name      The name of the function that uses it.
+    /// @param precision The precision of the sketch.
+    /// @return A reference to the sketch.
+    public HllReference addHll(final String name, final int precision) {
+        return add(new HllReference(list.size(), name, precision));
+    }
+
+    /// Adds a counter of unique values.
+    ///
+    /// @param name  The name of the function that uses it.
+    /// @param limit The most unique values that are counted exactly.
+    /// @return A reference to the counter.
+    public DistinctCounterReference addDistinctCounter(final String name, final int limit) {
+        return add(new DistinctCounterReference(list.size(), name, limit));
+    }
+
     public FieldValReference addFieldValue(final String name, final int fieldIndex) {
         final FieldValReference valueReference =
                 new FieldValReference(list.size(), fieldIndex, name);

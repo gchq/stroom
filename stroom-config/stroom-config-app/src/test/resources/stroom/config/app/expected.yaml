@@ -78,6 +78,7 @@ appConfig:
         maxReaders: 10
         maxStoreSize: "10G"
         readAheadEnabled: true
+      maxCountDistinctValues: 10000
       maxPayloadSize: "1G"
       maxPutsBeforeCommit: 10000
       maxSortedItems: 500000
@@ -1213,6 +1214,7 @@ appConfig:
       map:
         minUntrimmedSize: 100000
         trimmedSizeLimit: 500000
+      maxCountDistinctValues: 10000
       maxPayloadSize: "1G"
       maxPutsBeforeCommit: 10000
       maxSortedItems: 500000

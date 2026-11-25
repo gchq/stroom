@@ -28,6 +28,7 @@ import stroom.query.api.Sort;
 import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableSettings;
+import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValString;
@@ -55,6 +56,10 @@ abstract class AbstractDataStoreTest {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDataStoreTest.class);
 
     private final List<DataStore> createdStores = new CopyOnWriteArrayList<>();
+
+    // The context of stores that are created, and the messages of the last one that was.
+    ExpressionContext expressionContext = new ExpressionContext();
+    ErrorConsumerImpl lastErrorConsumer;
 
     @BeforeAll
     static void beforeAll() {
@@ -269,6 +274,120 @@ abstract class AbstractDataStoreTest {
                 createRows(rows, newParentRow, currentDepth + 1, maxDepth, count, columns);
             }
         }
+    }
+
+    /// Check that the estimated and exact counts of unique values are the same for few values.
+    void countDistinctTest() {
+        final TableSettings tableSettings = countDistinctTable();
+        final DataStore dataStore = createUnlimitedDataStore(tableSettings);
+        addCountDistinctRows(dataStore, 0, 500);
+        assertThat(countDistinctRows(dataStore, tableSettings)).containsExactlyInAnyOrder(
+                List.of("a", "500", "500", "1000"),
+                List.of("b", "1", "1", "500"));
+    }
+
+    /// Check that only a group with more unique values than the limit has an estimate for its exact count.
+    void countDistinctLimitTest() {
+        expressionContext = ExpressionContext.builder().maxCountDistinctValues(10_000).build();
+        final TableSettings tableSettings = countDistinctTable();
+        final DataStore dataStore = createUnlimitedDataStore(tableSettings);
+        for (int i = 0; i < 20_000; i++) {
+            dataStore.accept(Val.of(ValString.create("over"), ValLong.create(i)));
+        }
+        for (int i = 0; i < 10_000; i++) {
+            dataStore.accept(Val.of(ValString.create("under"), ValLong.create(i)));
+        }
+        final List<List<String>> rows = countDistinctRows(dataStore, tableSettings);
+        assertThat(rows).hasSize(2);
+        for (final List<String> row : rows) {
+            if (row.getFirst().equals("over")) {
+                assertThat(row.get(2)).isEqualTo(row.get(1));
+                // Within 3 standard errors.
+                assertThat(Long.parseLong(row.get(2))).isBetween(19_514L, 20_486L);
+            } else {
+                assertThat(row.get(2)).isEqualTo("10000");
+            }
+        }
+        assertThat(lastErrorConsumer.getErrorMessages()).isEmpty();
+    }
+
+    /// Create a table of the unique values in each group, estimated and exact, and how many rows there are.
+    ///
+    /// @return The settings of the table.
+    TableSettings countDistinctTable() {
+        return TableSettings.builder()
+                .addColumns(Column.builder()
+                        .id("Group")
+                        .name("Group")
+                        .expression(ParamUtil.create("Group"))
+                        .format(Format.TEXT)
+                        .group(0)
+                        .build())
+                .addColumns(Column.builder()
+                        .id("Approx")
+                        .name("Approx")
+                        .expression("dcount(${Value})")
+                        .format(Format.NUMBER)
+                        .build())
+                .addColumns(Column.builder()
+                        .id("Exact")
+                        .name("Exact")
+                        .expression("countDistinct(${Value})")
+                        .format(Format.NUMBER)
+                        .build())
+                .addColumns(Column.builder()
+                        .id("Count")
+                        .name("Count")
+                        .expression("count()")
+                        .format(Format.NUMBER)
+                        .build())
+                .build();
+    }
+
+    /// Add rows to group a with each value twice, and to group b with all the same value.
+    ///
+    /// @param dataStore The store to add the rows to.
+    /// @param from      The first value to add to group a.
+    /// @param to        One more than the last value to add to group a.
+    void addCountDistinctRows(final DataStore dataStore, final int from, final int to) {
+        for (int i = from; i < to; i++) {
+            dataStore.accept(Val.of(ValString.create("a"), ValString.create("value" + i)));
+            dataStore.accept(Val.of(ValString.create("a"), ValString.create("value" + i)));
+            dataStore.accept(Val.of(ValString.create("b"), ValString.create("same")));
+        }
+    }
+
+    /// Complete a store and get its rows.
+    ///
+    /// @param dataStore     The store to complete.
+    /// @param tableSettings The settings of the table.
+    /// @return The values of each row.
+    List<List<String>> countDistinctRows(final DataStore dataStore, final TableSettings tableSettings) {
+        try {
+            dataStore.getCompletionState().signalComplete();
+            dataStore.getCompletionState().awaitCompletion();
+        } catch (final InterruptedException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+        return getRowValues(dataStore, tableSettings);
+    }
+
+    /// Get the rows of a store.
+    ///
+    /// @param dataStore     The store.
+    /// @param tableSettings The settings of the table.
+    /// @return The values of each row.
+    List<List<String>> getRowValues(final DataStore dataStore, final TableSettings tableSettings) {
+        final ResultRequest tableResultRequest = ResultRequest.builder()
+                .componentId("componentX")
+                .addMappings(tableSettings)
+                .requestedRange(new OffsetRange(0, 100))
+                .build();
+        return ((TableResult) new TableResultCreator().create(dataStore, tableResultRequest))
+                .getRows()
+                .stream()
+                .map(Row::getValues)
+                .toList();
     }
 
     void noValuesTest() {
