@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.AiAuditLog;
 import stroom.pipeline.shared.PipelineDoc;
 
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /// build_status: what it says beside the plan's steps.
 class TestBuildStatusTool {
+
+    @Test
+    void aBuildOfSeveralFeedsGivesEachFeedsStreamsAndDates() {
+        // Decided by the user (2026-11-25): a dormant feed is included like the others, its volume stated.
+        final FakeBuildFacts facts = new FakeBuildFacts();
+        facts.sources = List.of("ACME-A", "ACME-OLD");
+        final BuildPlan plan = new BuildPlan(facts, new BuildWorld().guard(),
+                new Consent(() -> Mockito.mock(AiAuditLog.class)), new BuildMemory());
+        final FeedOverviews overviews = Mockito.mock(FeedOverviews.class);
+        final List<Map<String, Object>> each = List.of(Map.of("feed", "ACME-A", "dormant", false),
+                Map.of("feed", "ACME-OLD", "dormant", true));
+        Mockito.when(overviews.overviews(List.of("ACME-A", "ACME-OLD"))).thenReturn(each);
+        final BuildStatusTool tool = new BuildStatusTool(plan, new PendingDocumentation());
+        tool.setOverviews(() -> overviews);
+
+        final Map<String, Object> status = BuildToolCalls.json(tool.execute(BuildToolCalls.call(
+                BuildStatusTool.NAME, "{\"build\": \"acme\"}"), BuildToolCalls.context()).text());
+
+        assertThat(status.get(BuildStatusTool.SOURCE_FEEDS)).isEqualTo(each);
+        // One feed: nothing more than before.
+        facts.sources = List.of("ACME-A");
+        assertThat(BuildToolCalls.json(tool.execute(BuildToolCalls.call(BuildStatusTool.NAME,
+                "{\"build\": \"acme\"}"), BuildToolCalls.context()).text()))
+                .doesNotContainKey(BuildStatusTool.SOURCE_FEEDS);
+    }
 
     @Test
     void aNewEventsVersionsFollowOnPipelinesArePointedAtReviewCoverageBeforePromotion() {

@@ -50,6 +50,8 @@ class BuildStatusTool extends AbstractBuiltInTool {
     static final String SKIP_STAGE_ARG = "skip_stage";
     /// The key of the line saying an aggregated feed's groups import different versions of its shared modules.
     static final String MODULE_VERSIONS = "module_versions";
+    /// The key of each feed's streams and dates, for a build of several feeds.
+    static final String SOURCE_FEEDS = "source_feeds";
     /// The key of the line pointing a new events version's follow-on pipelines at review_coverage.
     static final String FOLLOW_ON_REVIEW = "follow_on_review";
     // First, so a result too large to show in full still shows them.
@@ -66,6 +68,8 @@ class BuildStatusTool extends AbstractBuiltInTool {
     private Provider<ProcessorFilters> filtersProvider;
     // How a promoted build's feeds are selected; none in tests that make the tool themselves.
     private Provider<PromotionSwitchOver> switchOverProvider;
+    // Each feed of a build of several: its streams and dates; none in tests that make the tool themselves.
+    private Provider<FeedOverviews> overviewsProvider;
 
     @Inject
     BuildStatusTool(final BuildPlan plan, final PendingDocumentation pendingDocs) {
@@ -98,6 +102,15 @@ class BuildStatusTool extends AbstractBuiltInTool {
     @Inject
     void setSwitchOver(final Provider<PromotionSwitchOver> switchOver) {
         this.switchOverProvider = switchOver;
+    }
+
+    /// How each feed of a build of several is described: its streams, size and dates, and whether it is dormant
+    /// (set by injection; none in tests that make the tool themselves).
+    ///
+    /// @param overviews Describes each feed.
+    @Inject
+    void setOverviews(final Provider<FeedOverviews> overviews) {
+        this.overviewsProvider = overviews;
     }
 
     @Override
@@ -168,6 +181,14 @@ class BuildStatusTool extends AbstractBuiltInTool {
                 status.put(PromotedFeeds.FEED_SELECTION, selection.isEmpty()
                         ? List.of(EACH_ONCE)
                         : selection);
+            }
+            if (overviewsProvider != null) {
+                // A build of several feeds: each feed's streams and dates, a dormant one included like the others
+                // (decided by the user, 2026-11-25).
+                final List<String> feeds = plan.buildFeeds(build);
+                if (feeds.size() > 1) {
+                    status.put(SOURCE_FEEDS, overviewsProvider.get().overviews(feeds));
+                }
             }
             final List<String> skipped = plan.skippedByUser(build);
             if (!skipped.isEmpty()) {
