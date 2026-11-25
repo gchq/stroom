@@ -213,8 +213,9 @@ class RebuildMappingTool extends AbstractBuiltInTool {
                              + "original sample streams (or stream_ids given), and only when every record's output "
                              + "is the same, and the user confirms, are the mapping and the regenerated XSLT saved. "
                              + "The sample's fields a hand-written XSLT never reads go in ignored_fields (left_out), "
-                             + "as it leaves them out. Then step_sample, and write_documentation again. Reads Stroom until it saves; saves "
-                             + "only an XSLT in a build (a new version's, copy_pipeline, for a promoted one).")
+                             + "as it leaves them out. Then step_sample, and write_documentation again. Reads "
+                             + "Stroom until it saves; saves only an XSLT in a build (a new version's, "
+                             + "copy_pipeline, for a promoted one).")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(UUID_ARG, "The translation XSLT whose mapping to rebuild.")
                         .addProperty(STREAM_IDS_ARG, BuildTranslationXsltTool.streamIdsSchema(
@@ -310,11 +311,7 @@ class RebuildMappingTool extends AbstractBuiltInTool {
                     : "The mapping couldn't be read back: give build_translation_xslt the whole mapping "
                       + "instead (draft_translation_mapping drafts one from the samples).");
             if (base == null) {
-                unreadable(ref, rebuilt.mapping() == null
-                        ? "nothing in it reads as a mapping" + (unlaid
-                        ? ": it isn't laid out as the generator writes one (a template per rule)"
-                        : "")
-                        : "it reads back with problems: " + String.join("; ", first(rebuilt.problems(), 3)), result);
+                unreadable(ref, whyNotRead(rebuilt), result);
             }
             return result;
         }
@@ -594,6 +591,18 @@ class RebuildMappingTool extends AbstractBuiltInTool {
                         + "a rule or failed (step_records over them says which), Unknown ones are kept as Unknown. "
                         + "Event types the sample lacks are in " + CatalogueEventTypesTool.NAME + "'s check.");
         return out;
+    }
+
+    /// @param rebuilt A mapping read back with none ([RebuiltMapping#mapping] null), or with problems.
+    /// @return Why it can't be used, in words: nothing in it reads as a mapping (and whether it isn't laid out as the
+    /// generator writes one), or the first problems it reads back with.
+    static String whyNotRead(final RebuiltMapping rebuilt) {
+        final boolean unlaid = rebuilt.notes().stream().anyMatch(note -> note.startsWith("no record template"));
+        return rebuilt.mapping() == null
+                ? "nothing in it reads as a mapping" + (unlaid
+                ? ": it isn't laid out as the generator writes one (a template per rule)"
+                : "")
+                : "it reads back with problems: " + String.join("; ", first(rebuilt.problems(), 3));
     }
 
     // A copied translation XSLT that can't be read back, in a build starting from an existing pipeline (the user's

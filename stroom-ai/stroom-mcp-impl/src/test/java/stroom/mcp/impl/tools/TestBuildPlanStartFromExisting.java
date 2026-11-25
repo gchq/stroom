@@ -163,6 +163,29 @@ class TestBuildPlanStartFromExisting {
     }
 
     @Test
+    void aPipelineDescribedInPlaceWhoseXsltCouldntBeReadBackHasItsCatalogueProposedFromTheSurvey() {
+        // Decided by the user (2026-11-25): no mapping read back, so no catalogue read back to confirm; its event
+        // types are proposed from the survey's evidence, as for a new translation, and the plan says why.
+        facts.startFrom = Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline", EXISTING, InPlaceInduction.IN_PLACE,
+                Map.of(InPlaceInduction.MAPPING_NOT_READ, "nothing in it reads as a mapping"));
+        final Map<String, Object> result = status();
+
+        assertThat(next(result).get("step")).isEqualTo(BuildPlan.CATALOGUE);
+        assertThat(call(result).get("tool")).isEqualTo(CatalogueEventTypesTool.NAME);
+        assertThat(String.valueOf(next(result).get("then"))).contains("'ACME-V1.0-Events'",
+                "couldn't be read back into a mapping (nothing in it reads as a mapping)", "proposals=",
+                "timeline role", "beside the pipeline", "no new version").doesNotContain("read back from");
+
+        // Catalogued: done, said without a mapping.
+        facts.catalogued = true;
+        final Map<String, Object> done = status();
+        assertThat(done.get("next")).isNull();
+        assertThat(String.valueOf(done.get(InPlaceInduction.IN_PLACE))).contains("described in place",
+                "its XSLT couldn't be read back into a mapping", "nothing to promote")
+                .doesNotContain("its mapping and the link");
+    }
+
+    @Test
     void aRawSurveyNoLongerCountsOnceAPreProcessedTranslationIsDescribedInPlace() {
         // Decided 2026-11-25: its records are read at the translation's input; the survey made before the choice
         // read them as the parser does, so the plan has it made again (survey_feed resets it), no stream_ids asked.

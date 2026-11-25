@@ -137,6 +137,73 @@ class TestE2eDescribeInPlace extends AbstractE2eTest {
     }
 
     @Test
+    void anXsltThatCantBeReadBackIsDescribedAsFarAsItCanBeItsCatalogueFromTheSurvey() {
+        // Decided by the user (2026-11-25): its events made in a function (no template per record), so no mapping is
+        // read back. What can be is described: the catalogue and its timeline roles from the survey, the source
+        // notes beside the pipeline and the hidden link to them in the XSLT's description, the user's text kept; no
+        // mapping block, and the result says why. Nothing is drafted in place.
+        final String unreadable = textResource("hand_written_vpn_unreadable.xsl");
+        final HandWritten vpn = handWritten("System/Feeds/UnreadPlace", "UNREADPLACE", unreadable,
+                "UNREADPLACE-Events", "Event Data (JSON)", List.of(addRootObject()), "Raw Events", SAMPLE);
+        editXslt(vpn.xslt(), doc -> doc.copy().description(USERS_TEXT).build());
+        final String build = "unreadplace-described";
+        json("start_build", args("build", build, "feeds", List.of("UNREADPLACE")));
+        json("survey_feed", args("feed", "UNREADPLACE", "build", build));
+
+        client.answeringWith(choosing(IN_PLACE));
+        final Map<String, Object> described = json(CATALOGUE, args("build", build));
+        client.answeringWith(McpTestClient::agree);
+        dump("described in place, unreadable", described);
+        assertThat(described).as("described: %s", described).containsEntry("status", "described_in_place")
+                .doesNotContainKey("not_written");
+        assertThat(String.valueOf(described.get("mapping_not_read"))).startsWith("nothing in it reads as a mapping");
+        assertThat(String.valueOf(described.get("hint"))).contains("couldn't be read back into a mapping",
+                "proposals=");
+        // Nothing written in the XSLT yet: no mapping, and no notes to link to.
+        assertThat(readXslt(vpn.xslt()).getDescription()).isEqualTo(USERS_TEXT);
+        final Map<String, Object> status = json("build_status", args("build", build));
+        dump("build_status, unreadable", status.get("next"));
+        assertThat(nextTool(status)).isEqualTo(CATALOGUE);
+        assertThat(String.valueOf(map(status, "next").get("then"))).contains("couldn't be read back into a mapping",
+                "proposals=");
+        assertThat(refusal("draft_translation_mapping", args("build", build, "stream_ids", List.of(vpn.raw()))))
+                .contains("couldn't be read back into a mapping", "Nothing drafted");
+
+        // The catalogue proposed from the survey's evidence, each with its timeline role, and confirmed.
+        final Map<String, Object> listed = json(CATALOGUE, args("build", build, "stream_ids", List.of(vpn.raw())));
+        dump("catalogue listed, unreadable", listed);
+        assertThat(String.valueOf(listed.get("origin"))).contains("proposed from the survey's evidence");
+        proposed(build, List.of(vpn.raw()), List.of(
+                withKeys(eventType("Logon-VPN", "Authenticate", "high", when("action", "equals", "login")),
+                        "action", "Logon"),
+                withKeys(eventType("Logoff-VPN", "Authenticate", "high", when("action", "equals", "logout")),
+                        "action", "Logoff"),
+                eventType("Change-Setting", "Update", "high", when("action", "equals", "config_change"))));
+        final Map<String, Object> confirmed = confirmedCatalogue(build);
+        dump("catalogue confirmed, unreadable", confirmed);
+
+        // The notes beside the pipeline, linked from the XSLT's description: the user's text kept, its code as it
+        // was, no mapping.
+        final XsltDoc xslt = readXslt(vpn.xslt());
+        assertThat(xslt.getData()).isEqualTo(unreadable);
+        assertThat(xslt.getDescription()).startsWith(USERS_TEXT);
+        assertThat(KeptMapping.readMapping(xslt.getDescription())).isEmpty();
+        final DocRef notes = KeptMapping.readSourceNotes(xslt.getDescription()).orElseThrow();
+        assertThat(folderOf(notes.getUuid())).isEqualTo("System/Feeds/UnreadPlace");
+        final Map<String, Object> beside = catalogueNear("System/Feeds/UnreadPlace");
+        assertThat(list(beside, "event_types")).extracting(type -> type.get("type_id"))
+                .containsExactlyInAnyOrder("Logon-VPN", "Logoff-VPN", "Change-Setting");
+        assertThat(list(beside, "event_types")).filteredOn(type -> "Logon-VPN".equals(type.get("type_id")))
+                .singleElement().satisfies(type -> assertThat(type).containsEntry("timeline_role", "active"));
+        assertThat(list(beside, "event_types")).filteredOn(type -> "Logoff-VPN".equals(type.get("type_id")))
+                .singleElement().satisfies(type -> assertThat(type).containsEntry("timeline_role", "idle"));
+        assertThat((List<String>) beside.get("checked_feeds")).containsExactly("UNREADPLACE");
+        final Map<String, Object> done = json("build_status", args("build", build));
+        assertThat(done).doesNotContainKey("next");
+        assertThat(String.valueOf(done.get("in_place"))).contains("couldn't be read back into a mapping");
+    }
+
+    @Test
     void anIndexBuiltOnAPipelineDescribedInPlaceIsPromotedAloneThePipelineLeftWhereItIs() {
         // Decided by the user (2026-11-25): an in-place build may build an index on the described pipeline;
         // promote_build moves only that, the pipeline and its XSLT "described in place, not promoted".

@@ -100,15 +100,25 @@ public final class TranslationInputText {
     /// @param documents The translation's input for each record stepped, in order (blank ones are skipped).
     /// @return The field names, each once.
     public static List<String> fieldNames(final List<String> documents) {
+        return of(documents).map(TranslationInputText::fieldNames).orElse(List.of());
+    }
+
+    /// As [#fieldNames(List)], of the text [#of] made.
+    ///
+    /// @param text The translation's input as one text, or null.
+    /// @return The field names, each once; none for XML.
+    public static List<String> fieldNames(final Text text) {
+        if (text == null || text.format() != Format.JSON) {
+            return List.of();
+        }
         final Set<String> names = new LinkedHashSet<>();
-        of(documents).filter(text -> text.format() == Format.JSON)
-                .map(text -> ToolJson.loads(text.text()))
-                .filter(List.class::isInstance)
-                .ifPresent(records -> ((List<?>) records).forEach(record -> {
-                    if (record instanceof final Map<?, ?> fields) {
-                        fields.keySet().forEach(key -> names.add(String.valueOf(key)));
-                    }
-                }));
+        if (ToolJson.loads(text.text()) instanceof final List<?> records) {
+            records.forEach(record -> {
+                if (record instanceof final Map<?, ?> fields) {
+                    fields.keySet().forEach(key -> names.add(String.valueOf(key)));
+                }
+            });
+        }
         return List.copyOf(names);
     }
 

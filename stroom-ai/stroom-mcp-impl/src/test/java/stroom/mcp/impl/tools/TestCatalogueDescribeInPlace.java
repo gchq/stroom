@@ -173,6 +173,25 @@ class TestCatalogueDescribeInPlace {
     }
 
     @Test
+    void theListingOfACatalogueDescribedWithoutAMappingSaysItsEventTypesComeFromTheSurvey() {
+        facts.startFrom = Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline", Map.of("name", "ACME-Events",
+                "uuid", "prod-ev"), InPlaceInduction.IN_PLACE, Map.of(InPlaceInduction.ELEMENT, "translationFilter",
+                InPlaceInduction.PRE_PROCESSED, false, InPlaceInduction.MAPPING_NOT_READ,
+                "nothing in it reads as a mapping"));
+        Mockito.when(sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", "time=2026-11-06T09:00:00Z action=login user=u1\n"), List.of()));
+
+        final Map<String, Object> listed = call(Map.of("build", BUILD, "stream_ids", List.of(7)),
+                BuildToolCalls.context());
+
+        assertThat(String.valueOf(listed.get("origin"))).contains("'ACME-Events', the existing pipeline this "
+                                                                  + "build describes in place",
+                "couldn't be read back into a mapping (nothing in it reads as a mapping)", "proposed from the "
+                                                                                          + "survey's evidence")
+                .doesNotContain("TypeIds kept");
+    }
+
+    @Test
     void theUserNarrowsTheSurveyByNamingTheFeeds() {
         final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("choice",
                 CatalogueEventTypesTool.START_IN_PLACE, "answer", "only acme-b for now"));
@@ -190,6 +209,31 @@ class TestCatalogueDescribeInPlace {
         assertThat(text(Map.of("build", BUILD), user.context())).contains("names none of the feeds",
                 "survey_feeds=");
         Mockito.verify(inPlace, Mockito.never()).describe(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void anXsltThatCouldntBeReadBackIsDescribedAsFarAsItCanBeTheHintSayingWhy() {
+        // Decided by the user (2026-11-25): no mapping; its catalogue proposed from the survey's evidence.
+        Mockito.when(inPlace.describe(any(), eq(BUILD), anyString(), any(), anyList())).thenAnswer(inv -> {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("status", "described_in_place");
+            out.put(InPlaceInduction.MAPPING_NOT_READ, "nothing in it reads as a mapping");
+            out.put("feeds", inv.getArgument(4));
+            return out;
+        });
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("choice",
+                CatalogueEventTypesTool.START_IN_PLACE, "answer", "All 2 feeds"));
+
+        final Map<String, Object> result = call(Map.of("build", BUILD), user.context());
+
+        assertThat(result).containsEntry("status", "described_in_place")
+                .containsEntry(InPlaceInduction.MAPPING_NOT_READ, "nothing in it reads as a mapping");
+        assertThat(String.valueOf(result.get("hint"))).contains("couldn't be read back into a mapping (nothing in "
+                                                                + "it reads as a mapping)", "no mapping is kept",
+                "survey each feed (ACME-A, ACME-B)", "proposals=", "timeline role", "beside the pipeline",
+                "No new version", "Say why to the user").doesNotContain("checks the catalogue read back");
+        assertThat(JsonValues.strings(world.records().load(BUILD).get(BuildRecords.SOURCE_FEEDS))).contains("ACME-A",
+                "ACME-B");
     }
 
     @Test

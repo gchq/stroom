@@ -20,8 +20,10 @@ import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.catalogue.EventType;
+import stroom.ai.impl.tools.catalogue.Way;
 import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.draft.SourceNotes;
+import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.processing.XsltStages;
 import stroom.ai.impl.tools.processing.XsltStages.Stage;
@@ -101,6 +103,11 @@ class TestInPlaceInduction {
               </xsl:template>
               <xsl:template match="map"/>
             </xsl:stylesheet>""";
+    // A hand-written translation no reader of the tools' reads back: its events made in the root template.
+    private static final String UNREADABLE = "<xsl:stylesheet xmlns=\"event-logging:3\" "
+                                             + "xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"3.0\">"
+                                             + "<xsl:template match=\"/\"><Events Version=\"4.1.0\"/>"
+                                             + "</xsl:template></xsl:stylesheet>";
     // A pre-processor before it: JSON in, the same JSON out.
     private static final String PRE_PROCESS = "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
                                               + "xpath-default-namespace=\"http://www.w3.org/2013/XSL/json\" "
@@ -249,6 +256,107 @@ class TestInPlaceInduction {
                 .containsEntry("written", true)
                 .doesNotContainKey("mapping");
         assertThat(JsonValues.strings(recorded.get(InPlaceInduction.FEEDS))).containsExactly("VPN-A", "VPN-B");
+    }
+
+    @Test
+    void theSampleFieldsTheTranslationNeverReadsAreLeftOutOfTheMappingKeptWithIt() {
+        // Decided by the user (2026-11-25; seen in eval case 105): src_ip, which the XSLT never reads, is left out
+        // on purpose, so a translation regenerated from the mapping logs what the original did.
+        final SampleFieldNames sampleFields = Mockito.mock(SampleFieldNames.class);
+        Mockito.when(sampleFields.of(any(), anyString(), anyString(), anyString())).thenReturn(List.of("ts",
+                "action", "user", "src_ip", "host"));
+        induction.setSampleFieldNames(() -> sampleFields);
+        final InPlaceInduction.Scope scope = induction.scope("hand-pipeline").orElseThrow();
+
+        final Map<String, Object> described = induction.describe(BuildToolCalls.context(), BUILD, "VPN", scope,
+                List.of("VPN-A"));
+
+        Mockito.verify(sampleFields).of(any(), Mockito.eq(BUILD), Mockito.eq("hand-pipeline"),
+                Mockito.eq("translationFilter"));
+        assertThat(String.valueOf(described.get("left_out"))).startsWith("left out, as the original: src_ip ");
+        final KeptMapping.Kept kept = KeptMapping.readMapping(((XsltDoc) world.docs.get("hand-xslt"))
+                .getDescription()).orElseThrow();
+        assertThat(TranslationMapping.parse(kept.payload().get("mapping")).ignoredFields()).containsExactly(
+                "src_ip");
+    }
+
+    @Test
+    void withNoSampleFieldsNothingIsLeftOut() {
+        final SampleFieldNames sampleFields = Mockito.mock(SampleFieldNames.class);
+        Mockito.when(sampleFields.of(any(), anyString(), anyString(), anyString())).thenReturn(List.of());
+        induction.setSampleFieldNames(() -> sampleFields);
+
+        final Map<String, Object> described = induction.describe(BuildToolCalls.context(), BUILD, "VPN",
+                induction.scope("hand-pipeline").orElseThrow(), List.of("VPN-A"));
+
+        assertThat(described).containsEntry("status", "described_in_place").doesNotContainKey("left_out");
+        assertThat(TranslationMapping.parse(KeptMapping.readMapping(((XsltDoc) world.docs.get("hand-xslt"))
+                .getDescription()).orElseThrow().payload().get("mapping")).ignoredFields()).isEmpty();
+    }
+
+    @Test
+    void anXsltThatCantBeReadBackIsDescribedAsFarAsItCanBeWithoutAMapping() {
+        // Decided by the user (2026-11-25): no mapping block; the catalogue (and its timeline roles) made from the
+        // survey, as for a new translation; the source notes beside the pipeline and the link to them in the XSLT's
+        // description once confirmed; the result says the mapping couldn't be read and why.
+        world.docs.put("hand-xslt", XsltDoc.builder().uuid("hand-xslt").name("VPN-Events").version("v0")
+                .data(UNREADABLE).description(USERS_TEXT).build());
+        final InPlaceInduction.Scope scope = induction.scope("hand-pipeline").orElseThrow();
+
+        final Map<String, Object> described = induction.describe(BuildToolCalls.context(), BUILD, "VPN", scope,
+                List.of("VPN-A", "VPN-B"));
+
+        assertThat(described).containsEntry("status", "described_in_place").doesNotContainKey("not_written");
+        assertThat(String.valueOf(described.get("mapping_not_read"))).startsWith("nothing in it reads as a mapping");
+        assertThat(JsonValues.strings(described.get("event_types"))).isEmpty();
+        // Nothing written in the XSLT yet: no mapping, and no notes to link to until the catalogue is made.
+        assertThat(((XsltDoc) world.docs.get("hand-xslt")).getDescription()).isEqualTo(USERS_TEXT);
+        final Map<String, Object> recorded = JsonValues.mapOrEmpty(world.records().startFrom(BUILD).orElseThrow()
+                .get(InPlaceInduction.IN_PLACE));
+        assertThat(recorded).containsKey(InPlaceInduction.MAPPING_NOT_READ).doesNotContainKey("mapping")
+                .containsEntry("written", false);
+        assertThat(InPlaceInduction.mappingNotRead(world.records().startFrom(BUILD).orElseThrow()))
+                .hasValueSatisfying(why -> assertThat(why).startsWith("nothing in it reads as a mapping"));
+        assertThat(JsonValues.strings(recorded.get(InPlaceInduction.FEEDS))).containsExactly("VPN-A", "VPN-B");
+
+        // The catalogue made from the survey and confirmed (as catalogue_event_types makes it): its notes made
+        // beside the pipeline, the link to them written in the XSLT's description, the user's text kept, no mapping.
+        catalogueNotes.write(null, BUILD, "VPN", new Catalogue(List.of(new EventType("vpn-login", "Logins", null,
+                "Authenticate", "Logon", null, null, null, null, List.of(new Way(List.of(Condition.fromJson(Map.of(
+                "field", "action", "equals", "login"))), List.of())), false, EventType.USER_CONFIRMED, "high", null,
+                EventType.CONFIRMED)), null, null).withCatchAllConfirmedByUser());
+        final Map<String, Object> said = induction.confirmed(BuildToolCalls.context(), BUILD).orElseThrow();
+
+        assertThat(said).doesNotContainKey("not_written");
+        assertThat(String.valueOf(said.get("notes"))).contains("beside the pipeline");
+        final XsltDoc after = (XsltDoc) world.docs.get("hand-xslt");
+        assertThat(after.getData()).isEqualTo(UNREADABLE);
+        assertThat(after.getDescription()).startsWith(USERS_TEXT);
+        assertThat(KeptMapping.readMapping(after.getDescription())).isEmpty();
+        final DocRef notes = KeptMapping.readSourceNotes(after.getDescription()).orElseThrow();
+        assertThat(world.documentAccess.parent(notes).orElseThrow().getUuid()).isEqualTo(world.folder(FOLDER).uuid);
+        assertThat(world.guard().buildOf(notes)).isEmpty();
+        assertThat(SourceNotes.catalogue(SourceNotes.readNotes(world.body(notes.getUuid()))).eventTypes())
+                .extracting(EventType::typeId).containsExactly("vpn-login");
+        assertThat(JsonValues.mapOrEmpty(JsonValues.mapOrEmpty(world.records().startFrom(BUILD).orElseThrow()
+                .get(InPlaceInduction.IN_PLACE)).get("notes"))).containsEntry("uuid", notes.getUuid());
+    }
+
+    @Test
+    void anUnreadableXsltWithoutEditOrCreateSaysWhoCanAtConfirmation() {
+        world.docs.put("hand-xslt", XsltDoc.builder().uuid("hand-xslt").name("VPN-Events").version("v0")
+                .data(UNREADABLE).description(USERS_TEXT).build());
+        Mockito.when(world.documentAccess.canEdit(any())).thenReturn(false);
+        Mockito.when(world.documentAccess.canCreate(any(), anyString())).thenReturn(false);
+        induction.describe(BuildToolCalls.context(), BUILD, "VPN", induction.scope("hand-pipeline").orElseThrow(),
+                List.of("VPN-A"));
+        catalogueNotes.write(null, BUILD, "VPN", new Catalogue(List.of(), null, null).withCatchAllConfirmedByUser());
+
+        final Map<String, Object> said = induction.confirmed(BuildToolCalls.context(), BUILD).orElseThrow();
+
+        assertThat(String.valueOf(said.get("not_written"))).contains("Create (Documentation)",
+                "kept in this build only");
+        assertThat(((XsltDoc) world.docs.get("hand-xslt")).getDescription()).isEqualTo(USERS_TEXT);
     }
 
     @Test

@@ -235,7 +235,7 @@ public class BuildPlan {
             "feed:reference", "samples:reference", "reference_processed:disabled", "reference_processed:running",
             "stepped:no_reference", "index:discovery", "translation:redraft", CATALOGUE + ":offer",
             CATALOGUE + ":existing_copy", CATALOGUE + ":existing_rebuild", CATALOGUE + ":existing_confirm",
-            CATALOGUE + ":in_place_confirm");
+            CATALOGUE + ":in_place_confirm", CATALOGUE + ":in_place_unread");
     // The steps before the translation, which a reference-only build keeps.
     private static final Set<String> SOURCE_STEPS = Set.of("feed", "samples", "converter");
 
@@ -1294,8 +1294,15 @@ public class BuildPlan {
         if (CATALOGUE.equals(nextStep) && inPlace) {
             // Described in place: the catalogue read back from its XSLT, checked against the feeds' records and
             // confirmed.
-            version = JsonValues.mapOrEmpty(startFrom.get("pipeline"));
-            processing = "in_place_confirm";
+            final Map<String, Object> described = new LinkedHashMap<>(JsonValues.mapOrEmpty(
+                    startFrom.get("pipeline")));
+            // Its XSLT couldn't be read back (decided by the user, 2026-11-25): its catalogue from the survey.
+            final Optional<String> notRead = InPlaceInduction.mappingNotRead(startFrom);
+            notRead.ifPresent(why -> described.put("why", why));
+            version = described;
+            processing = notRead.isPresent()
+                    ? "in_place_unread"
+                    : "in_place_confirm";
         } else if (CATALOGUE.equals(nextStep) && inducting) {
             // Starting from the existing pipeline: its copy, then its XSLT read back, then the catalogue confirmed.
             final String unread = xslts.stream()
@@ -1443,10 +1450,14 @@ public class BuildPlan {
             result.put("next", start);
         } else if (inPlace && !builtOnInPlace) {
             // Described in place and catalogued: nothing to promote (no new version).
-            result.put(InPlaceInduction.IN_PLACE, "Done: the pipeline is described in place (its mapping and the "
-                                                  + "link to its source notes in its translation XSLT's "
-                                                  + "description, its confirmed catalogue in the notes beside it). "
-                                                  + "No new version, nothing to promote.");
+            result.put(InPlaceInduction.IN_PLACE, InPlaceInduction.mappingNotRead(startFrom)
+                    .map(why -> "Done: the pipeline is described in place as far as it can be: its XSLT couldn't be "
+                                + "read back into a mapping (" + why + "), so none is kept; its confirmed catalogue "
+                                + "is in the notes beside it, linked from its translation XSLT's description. No new "
+                                + "version, nothing to promote.")
+                    .orElse("Done: the pipeline is described in place (its mapping and the link to its source notes "
+                            + "in its translation XSLT's description, its confirmed catalogue in the notes beside "
+                            + "it). No new version, nothing to promote."));
         } else {
             final Map<String, Object> shown = new LinkedHashMap<>();
             shown.put("step", "promoted");
@@ -1628,6 +1639,14 @@ public class BuildPlan {
                     + "' (described in place) with its check against the surveyed feeds' records: propose changes "
                     + "only for what is worth a look, then confirm=true puts it to the user; once confirmed it is "
                     + "written back beside the pipeline (no new version)");
+            case CATALOGUE + ":in_place_unread" -> call(CatalogueEventTypesTool.NAME, args("build", build,
+                            "stream_ids", raw),
+                    "'" + ToolText.str(NullSafe.map(args.version()).get("name")) + "' is described in place, but its "
+                    + "XSLT couldn't be read back into a mapping (" + ToolText.str(NullSafe.map(args.version())
+                            .get("why")) + "), so no catalogue was read back: it lists the evidence of the surveyed "
+                    + "feeds' records; propose the event types (proposals=), each checked against the records with "
+                    + "its timeline role, then confirm=true puts them to the user; once confirmed the catalogue is "
+                    + "written beside the pipeline, linked from its XSLT (no new version)");
             case CATALOGUE + ":existing_confirm" -> call(CatalogueEventTypesTool.NAME, args("build", build,
                             "stream_ids", raw),
                     "lists the catalogue read back from '" + ToolText.str(NullSafe.map(args.version()).get("name"))

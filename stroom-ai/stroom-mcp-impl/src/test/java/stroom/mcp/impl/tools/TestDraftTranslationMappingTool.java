@@ -113,6 +113,19 @@ class TestDraftTranslationMappingTool {
     }
 
     @Test
+    void aBuildDescribingInPlaceAnXsltThatCouldntBeReadBackIsStillNeverDraftedAndSaysWhy() {
+        world.world.records().rememberStartFrom("vpn", Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline",
+                Map.of("name", "VPN-Events", "uuid", "p"), InPlaceInduction.IN_PLACE, Map.of(
+                        InPlaceInduction.MAPPING_NOT_READ, "nothing in it reads as a mapping")));
+
+        final Map<String, Object> refused = world.call(tool, Map.of("build", "vpn", "stream_ids", List.of(7)));
+
+        assertThat(String.valueOf(refused.get("error"))).contains("describes 'VPN-Events' in place",
+                "couldn't be read back into a mapping (nothing in it reads as a mapping)", "a new version",
+                "catalogue_event_types build=vpn", "Nothing drafted").doesNotContain("its mapping is read from");
+    }
+
+    @Test
     void aBuildWhoseUserChoseToDraftIsDrafted() {
         // The third start choice: a new translation drafted from the sample, as for a new source.
         world.world.records().rememberStartFrom("vpn", Map.of("choice", ExistingTranslations.DRAFT));

@@ -25,6 +25,7 @@ import stroom.ai.impl.tools.catalogue.EventType;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.generation.DumpMode;
+import stroom.ai.impl.tools.generation.FieldsLeftOut;
 import stroom.ai.impl.tools.generation.RebuiltMapping;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltReader;
@@ -89,6 +90,9 @@ class InPlaceInduction {
     /// The kept mapping's key saying it was read from a hand-written XSLT, not generated: `at`, `build`, `xslt` (the
     /// UUID of the XSLT it was read from) and `note`.
     static final String INDUCTED = "inducted";
+    /// The record's key, and the result's, saying why the XSLT couldn't be read back into a mapping: it is
+    /// described as far as it can be, without one (decided by the user, 2026-11-25).
+    static final String MAPPING_NOT_READ = "mapping_not_read";
     // The record's keys of what was written in place.
     static final String XSLT = "xslt";
     private static final String NOTES = "notes";
@@ -109,6 +113,8 @@ class InPlaceInduction {
     private final Provider<BuildRecords> buildRecords;
     private final LongSupplier clock;
     private final ContentStorePacks packs;
+    // The sample's fields where the translation reads them; none in tests that make it themselves.
+    private Provider<SampleFieldNames> sampleFieldNames;
 
     @Inject
     InPlaceInduction(final PipelineShapes pipelineShapes,
@@ -161,6 +167,26 @@ class InPlaceInduction {
         this.buildRecords = buildRecords;
         this.clock = clock;
         this.packs = new ContentStorePacks(documentAccess);
+    }
+
+    /// The sample's fields where the translation reads them (set by injection; none in tests that make it
+    /// themselves): those the XSLT never reads are left out of the mapping read back from it.
+    ///
+    /// @param sampleFieldNames Reads the sample's fields.
+    @Inject
+    void setSampleFieldNames(final Provider<SampleFieldNames> sampleFieldNames) {
+        this.sampleFieldNames = sampleFieldNames;
+    }
+
+    /// @param startFrom A build's start ([BuildRecords#startFrom]), or null.
+    /// @return Why the pipeline it describes in place had its XSLT described without a mapping (it couldn't be read
+    /// back); empty for a build that describes none in place, or whose mapping was read.
+    static Optional<String> mappingNotRead(final Map<String, Object> startFrom) {
+        if (!inPlace(startFrom)) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(JsonValues.mapOrEmpty(startFrom.get(IN_PLACE)).get(MAPPING_NOT_READ))
+                .map(String::valueOf);
     }
 
     /// @param startFrom A build's start ([BuildRecords#startFrom]), or null.
@@ -243,13 +269,16 @@ class InPlaceInduction {
         out.put("pipelines", scope.users().users().stream().map(user -> user.pipeline().getName()).toList());
         out.put(FEEDS, feeds);
         if (rebuilt.mapping() == null || !rebuilt.problems().isEmpty()) {
-            out.put("status", "not_read");
-            out.put("rebuilt", rebuilt.summary());
-            out.put("hint", "The XSLT couldn't be read back into a mapping (rebuilt says what): nothing was written. "
-                            + "Copy it as a new version, or draft a new translation, instead.");
-            return out;
+            return describedUnread(context, build, scope, xslt, feeds, RebuildMappingTool.whyNotRead(rebuilt),
+                    rebuilt, out);
         }
-        payload.put(MAPPING, rebuilt.mapping().toJson(DumpMode.COMPACT));
+        // The sample's fields the XSLT never reads, left out on purpose (decided by the user, 2026-11-25; seen in
+        // eval case 105): a translation regenerated from the mapping logs what the original did.
+        final List<String> leftOut = sampleFieldNames == null
+                ? List.of()
+                : FieldsLeftOut.of(code, rebuilt.mapping(), sampleFieldNames.get().of(context, build,
+                        scope.pipeline().getUuid(), scope.translation().element()));
+        payload.put(MAPPING, FieldsLeftOut.ignoring(rebuilt.mapping(), leftOut).toJson(DumpMode.COMPACT));
         final Map<String, Object> inducted = new LinkedHashMap<>();
         inducted.put("at", StreamProcessing.iso(clock.getAsLong()));
         inducted.put("build", build);
@@ -314,6 +343,76 @@ class InPlaceInduction {
         out.put("status", "described_in_place");
         out.put("rebuilt", rebuilt.summary());
         out.put("event_types", catalogue.eventTypes().stream().map(EventType::typeId).toList());
+        if (!leftOut.isEmpty()) {
+            out.put("left_out", FieldsLeftOut.said(leftOut) + " (the sample's fields its XSLT never reads, in the "
+                                + "mapping's ignored_fields: a translation regenerated from it doesn't log them, as "
+                                + "the original doesn't; map one only when the user asks for it)");
+        }
+        out.put(WRITTEN, written);
+        if (!notWritten.isEmpty()) {
+            out.put(NOT_WRITTEN, whoCan(notWritten));
+        }
+        if (!packed.isEmpty()) {
+            out.put(CONTENT_PACK, inPack(packed));
+        }
+        return out;
+    }
+
+    // Described as far as it can be, its XSLT not read back into a mapping (decided by the user, 2026-11-25): no
+    // mapping block; the catalogue, and its timeline roles, made from the survey as for a new translation (the notes
+    // already beside the pipeline carried in, where there are some); the notes beside the pipeline and the link to
+    // them in the XSLT's description written once there are notes to link (now, for those already beside it, else
+    // once the catalogue is confirmed), the user's text kept.
+    private Map<String, Object> describedUnread(final ToolCallContext context,
+                                                final String build,
+                                                final Scope scope,
+                                                final XsltDoc xslt,
+                                                final List<String> feeds,
+                                                final String why,
+                                                final RebuiltMapping rebuilt,
+                                                final Map<String, Object> out) {
+        final DocRef xsltRef = scope.translation().xslt();
+        final DocRef pipeline = scope.pipeline();
+        final Optional<String> xsltPack = packs.packOf(xsltRef);
+        final Optional<String> pipelinePack = packs.packOf(pipeline);
+        final Optional<DocRef> original = pipelinePack.isPresent()
+                ? Optional.empty()
+                : besidePipeline(pipeline);
+        original.ifPresent(found -> catalogueNotes.carryInto(build, pipeline));
+        catalogueNotes.catalogue(build).ifPresent(carried -> catalogueNotes.write(context.session(), build, build,
+                carried.withCheckedFeeds(feeds)));
+        final List<String> notWritten = new ArrayList<>();
+        final List<String> packed = new ArrayList<>();
+        xsltPack.ifPresent(pack -> packed.add("XSLT '" + xslt.getName() + "' is in " + pack));
+        pipelinePack.ifPresent(pack -> packed.add("the pipeline '" + NullSafe.nonBlankStringElse(pipeline.getName(),
+                documentAccess.path(pipeline)) + "', beside which its source notes go, is in " + pack));
+        boolean linked = false;
+        if (original.isPresent() && xsltPack.isEmpty()) {
+            linked = documentAccess.canEdit(xsltRef) && writeXslt(xslt, null, original.get());
+            if (!linked) {
+                notWritten.add("Edit on XSLT '" + documentAccess.path(xsltRef) + "', for the link to its source "
+                               + "notes");
+            }
+        }
+        remember(build, scope, xslt.getName(), feeds, original.orElse(null), linked, null);
+        final Map<String, Object> startFrom = new LinkedHashMap<>(buildRecords.get().startFrom(build)
+                .orElse(Map.of()));
+        final Map<String, Object> described = new LinkedHashMap<>(JsonValues.mapOrEmpty(startFrom.get(IN_PLACE)));
+        described.put(MAPPING_NOT_READ, why);
+        startFrom.put(IN_PLACE, described);
+        buildRecords.get().rememberStartFrom(build, startFrom);
+        final Map<String, Object> written = new LinkedHashMap<>();
+        written.put("xslt_description", linked
+                ? "the link to its source notes, in a hidden block (its code and the text above it kept); no "
+                  + "mapping"
+                : null);
+        written.put(NOTES, original.map(notes -> ref(notes, notes.getName())).orElse(null));
+        out.put("status", "described_in_place");
+        out.put(MAPPING_NOT_READ, why);
+        out.put("rebuilt", rebuilt.summary());
+        out.put("event_types", catalogueNotes.catalogue(build)
+                .map(catalogue -> catalogue.eventTypes().stream().map(EventType::typeId).toList())
+                .orElse(List.of()));
         out.put(WRITTEN, written);
         if (!notWritten.isEmpty()) {
             out.put(NOT_WRITTEN, whoCan(notWritten));
@@ -346,13 +445,27 @@ class InPlaceInduction {
         final Map<String, Object> out = new LinkedHashMap<>();
         final List<String> notWritten = new ArrayList<>();
         final String notesUuid = JsonValues.text(JsonValues.mapOrEmpty(described.get(NOTES)).get("uuid"));
-        final Optional<DocRef> original = notesUuid.isEmpty()
+        Optional<DocRef> original = notesUuid.isEmpty()
                 ? Optional.empty()
                 : documentAccess.findDocRef(notesUuid);
         final List<String> packed = new ArrayList<>();
-        final Optional<String> pipelinePack = packs.packOf(new DocRef(PipelineDoc.TYPE, JsonValues.text(
-                JsonValues.mapOrEmpty(startFrom.get("pipeline")).get("uuid"))));
-        if (original.isPresent() && documentAccess.canEdit(original.get())) {
+        final Map<String, Object> pipelineRef = JsonValues.mapOrEmpty(startFrom.get("pipeline"));
+        final DocRef pipeline = new DocRef(PipelineDoc.TYPE, JsonValues.text(pipelineRef.get("uuid")),
+                JsonValues.text(pipelineRef.get("name")));
+        final Optional<String> pipelinePack = packs.packOf(pipeline);
+        final Optional<DocRef> folder = original.isEmpty() && pipelinePack.isEmpty()
+                ? documentAccess.parent(pipeline)
+                : Optional.empty();
+        if (folder.isPresent() && documentAccess.canCreate(folder.get(), DocumentationDoc.TYPE)) {
+            // No notes beside the pipeline yet (none could be made when it was described, or its XSLT couldn't be
+            // read back, so the catalogue was made from the survey since): made now, by someone who may.
+            original = madeBeside(build, pipeline, folder.get());
+            original.ifPresent(made -> {
+                described.put(NOTES, ref(made, made.getName()));
+                out.put(NOTES, "the confirmed catalogue in source notes made beside the pipeline: '"
+                               + made.getName() + "'");
+            });
+        } else if (original.isPresent() && documentAccess.canEdit(original.get())) {
             writtenBack(build, original.get());
             out.put(NOTES, "the confirmed catalogue written back to '" + original.get().getName() + "'");
         } else if (pipelinePack.isPresent()) {
@@ -363,6 +476,7 @@ class InPlaceInduction {
         }
         final Map<String, Object> keptMapping = JsonValues.mapOrEmpty(described.get(MAPPING));
         final String xsltUuid = JsonValues.text(JsonValues.mapOrEmpty(described.get(XSLT)).get("uuid"));
+        final boolean notesMade = original.isPresent() && !original.get().getUuid().equals(notesUuid);
         if (!keptMapping.isEmpty() && !xsltUuid.isEmpty()) {
             final DocRef xsltRef = new DocRef(XsltDoc.TYPE, xsltUuid);
             final Optional<XsltDoc> xslt = documentAccess.read(xsltRef, XsltDoc.class);
@@ -373,13 +487,19 @@ class InPlaceInduction {
                 && writeXslt(xslt.get(), keptMapping, original.orElse(null))) {
                 described.remove(MAPPING);
                 described.put(WRITTEN, true);
-                final Map<String, Object> recorded = new LinkedHashMap<>(startFrom);
-                recorded.put(IN_PLACE, described);
-                buildRecords.get().rememberStartFrom(build, recorded);
                 out.put(XSLT, "its mapping written in the XSLT's description now");
             } else {
                 notWritten.add("Edit on XSLT '" + xsltRef.getUuid() + "', for its mapping");
             }
+        } else if (original.isPresent() && !xsltUuid.isEmpty()
+                   && (notesMade || described.containsKey(MAPPING_NOT_READ))) {
+            // Its mapping written already, or none to keep (it couldn't be read back): the link to its notes.
+            linkWritten(new DocRef(XsltDoc.TYPE, xsltUuid), original.get(), described, out, notWritten, packed);
+        }
+        if (!described.equals(JsonValues.mapOrEmpty(startFrom.get(IN_PLACE)))) {
+            final Map<String, Object> recorded = new LinkedHashMap<>(startFrom);
+            recorded.put(IN_PLACE, described);
+            buildRecords.get().rememberStartFrom(build, recorded);
         }
         if (!notWritten.isEmpty()) {
             out.put(NOT_WRITTEN, whoCan(notWritten));
@@ -388,6 +508,30 @@ class InPlaceInduction {
             out.put(CONTENT_PACK, inPack(packed));
         }
         return Optional.of(out);
+    }
+
+    // The link to the notes written in the XSLT's description (where it isn't already): its mapping written
+    // already, or none to keep; what stops it said.
+    private void linkWritten(final DocRef xsltRef,
+                             final DocRef notes,
+                             final Map<String, Object> described,
+                             final Map<String, Object> out,
+                             final List<String> notWritten,
+                             final List<String> packed) {
+        final Optional<XsltDoc> xslt = documentAccess.read(xsltRef, XsltDoc.class);
+        final Optional<String> xsltPack = packs.packOf(xsltRef);
+        if (xsltPack.isPresent()) {
+            packed.add("XSLT '" + xslt.map(XsltDoc::getName).orElse(xsltRef.getUuid()) + "' is in "
+                       + xsltPack.get());
+        } else if (xslt.isPresent() && documentAccess.canEdit(xsltRef) && writeXslt(xslt.get(), null, notes)) {
+            described.put(WRITTEN, true);
+            out.put(XSLT, "the link to its source notes written in the XSLT's description" + (described.containsKey(
+                    MAPPING_NOT_READ)
+                    ? " (no mapping: it couldn't be read back)"
+                    : ""));
+        } else {
+            notWritten.add("Edit on XSLT '" + xsltRef.getUuid() + "', for the link to its source notes");
+        }
     }
 
     // What the user lacks, and who can write it in place instead: the induction is kept in the build until then.
@@ -430,11 +574,14 @@ class InPlaceInduction {
                 BuildDocumentation.DOC_FIELDS));
     }
 
-    // The XSLT's description with the mapping and the link to the notes in hidden blocks, its code and the user's
-    // own text kept; false where Stroom has no XSLT store.
+    // The XSLT's description with the mapping (where there is one) and the link to the notes in hidden blocks, its
+    // code and the user's own text kept; false where Stroom has no XSLT store.
     @SuppressWarnings("unchecked")
     private boolean writeXslt(final XsltDoc xslt, final Map<String, Object> payload, final DocRef notes) {
-        String description = KeptMapping.withMapping(xslt.getDescription(), KeptMapping.TRANSLATION, payload);
+        // No payload: no mapping kept with it (it couldn't be read back), only the link to its notes.
+        String description = payload == null
+                ? xslt.getDescription()
+                : KeptMapping.withMapping(xslt.getDescription(), KeptMapping.TRANSLATION, payload);
         if (notes != null) {
             description = KeptMapping.withSourceNotes(description, notes);
         }

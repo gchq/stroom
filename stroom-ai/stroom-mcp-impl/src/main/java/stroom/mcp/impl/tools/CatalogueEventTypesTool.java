@@ -616,11 +616,21 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         if ("described_in_place".equals(result.get(STATUS))) {
             // Every feed chosen is the build's to survey: the plan works through them.
             buildRecords.get().addSourceFeeds(calling.build(), feeds.get());
-            result.put(HINT, "Described in place, without asking (hidden blocks only; nothing else changed). Next: "
-                             + "survey each feed (" + String.join(", ", feeds.get()) + "), then " + NAME + " build="
-                             + calling.build() + " checks the catalogue read back against their records and puts it "
-                             + "to the user to confirm; once confirmed it is written back beside the pipeline. No "
-                             + "new version, no promotion.");
+            final Object notRead = result.get(InPlaceInduction.MAPPING_NOT_READ);
+            result.put(HINT, notRead == null
+                    ? "Described in place, without asking (hidden blocks only; nothing else changed). Next: survey "
+                      + "each feed (" + String.join(", ", feeds.get()) + "), then " + NAME + " build="
+                      + calling.build() + " checks the catalogue read back against their records and puts it to the "
+                      + "user to confirm; once confirmed it is written back beside the pipeline. No new version, no "
+                      + "promotion."
+                    : "Described in place as far as it can be: its XSLT couldn't be read back into a mapping ("
+                      + notRead + "), so no mapping is kept with it, and nothing else changed. Its event types come "
+                      + "from the survey instead, as for a new translation. Next: survey each feed ("
+                      + String.join(", ", feeds.get()) + "), then " + NAME + " build=" + calling.build()
+                      + " lists the evidence: propose the event types (proposals=), each checked against the "
+                      + "records with its timeline role, then confirm=true puts them to the user; once confirmed "
+                      + "the catalogue goes in source notes beside the pipeline, linked from the XSLT's description "
+                      + "(the user's text kept). No new version, no promotion. Say why to the user.");
             plan.nextStep(calling.build(), null).ifPresent(next -> result.put("next", next));
         }
         return result;
@@ -666,6 +676,15 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         final boolean inPlace = InPlaceInduction.inPlace(startFrom);
         if (!ExistingTranslations.EXISTING.equals(startFrom.get("choice")) && !inPlace) {
             return Optional.empty();
+        }
+        final Optional<String> notRead = InPlaceInduction.mappingNotRead(startFrom);
+        if (notRead.isPresent()) {
+            // Described without a mapping (decided by the user, 2026-11-25): nothing read back, its event types the
+            // survey's.
+            return Optional.of("'" + ToolText.str(JsonValues.mapOrEmpty(startFrom.get("pipeline")).get("name"))
+                               + "', the existing pipeline this build describes in place: its XSLT couldn't be read "
+                               + "back into a mapping (" + notRead.get() + "), so its event types are proposed from "
+                               + "the survey's evidence, as for a new translation.");
         }
         final int count = calling.catalogue().eventTypes().size();
         // Described in place too (seen in eval case 108 on Haiku: with no origin, the agent took the listing's seed

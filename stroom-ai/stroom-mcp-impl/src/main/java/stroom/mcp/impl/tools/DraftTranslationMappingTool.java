@@ -569,7 +569,14 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
             return;
         }
         final String pipeline = ToolText.str(JsonValues.mapOrEmpty(startFrom.get("pipeline")).get("name"));
-        throw new ToolRefusal(inPlace
+        final Optional<String> notRead = InPlaceInduction.mappingNotRead(startFrom);
+        throw new ToolRefusal(notRead.isPresent()
+                ? "Build '" + build + "' describes '" + pipeline + "' in place, as the user chose: its XSLT "
+                  + "couldn't be read back into a mapping (" + notRead.get() + "), so none is kept with it, and "
+                  + "nothing is drafted in place. A translation drafted anew is a new version, in a build the user "
+                  + "starts for it. Its event types are catalogued from the survey in catalogue_event_types build="
+                  + build + ". Nothing drafted."
+                : inPlace
                 ? "Build '" + build + "' describes '" + pipeline + "' in place, as the user chose: its mapping is "
                   + "read from its XSLT, and nothing is drafted. Its event types change in catalogue_event_types "
                   + "build=" + build + ". Nothing drafted."
