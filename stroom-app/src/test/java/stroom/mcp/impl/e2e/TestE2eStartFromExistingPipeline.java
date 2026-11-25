@@ -135,6 +135,12 @@ class TestE2eStartFromExistingPipeline extends AbstractE2eTest {
                 .containsEntry("no_event", 1);
         assertThat((List<String>) map(rebuilt, "catalogue").get("event_types"))
                 .containsExactlyInAnyOrder("vpn-login", "vpn-login-failed", "vpn-logout", "vpn-config-change");
+        // The sample's field the original never reads is left out on purpose, as the original leaves it (decided by
+        // the user, 2026-11-25; seen in eval case 105): the regenerated XSLT doesn't log it as a field no rule reads.
+        assertThat(String.valueOf(rebuilt.get("left_out"))).startsWith("left out, as the original: src_ip ");
+        final Map<String, Object> keptMapping = (Map<String, Object>) KeptMapping.readMapping(
+                readXslt(copyXslt).getDescription()).orElseThrow().payload().get("mapping");
+        assertThat((List<String>) keptMapping.get("ignored_fields")).containsExactly("src_ip");
 
         // 5. The catalogue read back, checked against the sample and confirmed, its summary naming its origin.
         final Map<String, Object> afterRebuild = json("build_status", args("build", BUILD));

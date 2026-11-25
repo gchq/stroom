@@ -415,6 +415,14 @@ public record TranslationMapping(String input,
                 functions, module, seenSourceTypes);
     }
 
+    /// @param ignored The input fields left out of the events on purpose (`ignored_fields`).
+    /// @return This mapping with those.
+    public TranslationMapping withIgnoredFields(final List<String> ignored) {
+        return new TranslationMapping(input, root, record, xmlNamespace, jsonLayout, jsonFields, xmlFields, pairs,
+                extract, forEach, nilValues, dropWhen, common, events, unmatched, ignored, logUnmappedFields, style,
+                imports, shared, functions, module, seenSourceTypes);
+    }
+
     /// @param log Whether fields no rule reads are logged.
     /// @return This mapping with that set.
     public TranslationMapping withLogUnmappedFields(final boolean log) {

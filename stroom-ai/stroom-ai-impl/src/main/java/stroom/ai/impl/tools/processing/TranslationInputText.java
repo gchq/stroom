@@ -94,6 +94,24 @@ public final class TranslationInputText {
         return Optional.of(new Text(merged(roots), Format.XML, roots.size()));
     }
 
+    /// The names of the records' fields, as the translation reads them: each record's top-level keys (XML of JSON)
+    /// or `data` names (Stroom's records), in the order first seen; none for any other XML.
+    ///
+    /// @param documents The translation's input for each record stepped, in order (blank ones are skipped).
+    /// @return The field names, each once.
+    public static List<String> fieldNames(final List<String> documents) {
+        final Set<String> names = new LinkedHashSet<>();
+        of(documents).filter(text -> text.format() == Format.JSON)
+                .map(text -> ToolJson.loads(text.text()))
+                .filter(List.class::isInstance)
+                .ifPresent(records -> ((List<?>) records).forEach(record -> {
+                    if (record instanceof final Map<?, ?> fields) {
+                        fields.keySet().forEach(key -> names.add(String.valueOf(key)));
+                    }
+                }));
+        return List.copyOf(names);
+    }
+
     /// @param element An element of Stroom's XML of JSON: `map`, `array`, `string`, `number`, `boolean` or `null`.
     /// @return Its JSON value: a map, a list, a string, a number (as written), a boolean or null.
     static Object json(final Element element) {

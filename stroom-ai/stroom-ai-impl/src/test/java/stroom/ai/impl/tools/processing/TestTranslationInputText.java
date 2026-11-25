@@ -58,6 +58,33 @@ class TestTranslationInputText {
     }
 
     @Test
+    void theFieldNamesAreEachRecordsTopLevelKeysInTheOrderFirstSeen() {
+        final List<String> names = TranslationInputText.fieldNames(List.of(
+                "<array " + JSON + "><map><string key=\"ts\">t</string><string key=\"action\">login</string>"
+                + "<map key=\"inner\"><number key=\"x\">1</number></map></map>"
+                + "<map><string key=\"action\">logout</string><string key=\"src_ip\">1.2.3.4</string></map>"
+                + "</array>"));
+
+        // The nested object's own keys are not the record's fields.
+        assertThat(names).containsExactly("ts", "action", "inner", "src_ip");
+    }
+
+    @Test
+    void theFieldNamesOfStroomsRecordsAreTheirDataNames() {
+        assertThat(TranslationInputText.fieldNames(List.of("<records xmlns=\"records:2\"><record>"
+                + "<data name=\"action\" value=\"login\"/><data name=\"user\"><data name=\"id\" value=\"jb\"/>"
+                + "</data></record><record><data name=\"host\" value=\"h\"/></record></records>")))
+                .containsExactly("action", "user", "host");
+    }
+
+    @Test
+    void otherXmlAndNothingParsedHaveNoFieldNames() {
+        assertThat(TranslationInputText.fieldNames(List.of("<Events><Event/></Events>"))).isEmpty();
+        assertThat(TranslationInputText.fieldNames(List.of("", "not xml"))).isEmpty();
+        assertThat(TranslationInputText.fieldNames(List.of())).isEmpty();
+    }
+
+    @Test
     void theSameDocumentSteppedForEveryRecordIsReadOnce() {
         final String whole = "<array " + JSON + "><map><string key=\"a\">1</string></map>"
                              + "<map><string key=\"a\">2</string></map></array>";

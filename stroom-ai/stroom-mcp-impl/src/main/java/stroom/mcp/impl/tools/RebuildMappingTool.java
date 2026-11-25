@@ -31,11 +31,13 @@ import stroom.ai.impl.tools.catalogue.CatalogueFromMapping;
 import stroom.ai.impl.tools.catalogue.EventType;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.generation.FieldsLeftOut;
 import stroom.ai.impl.tools.generation.RebuiltMapping;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.generation.XsltReader;
 import stroom.ai.impl.tools.processing.MergedPipeline.TranslationDoc;
+import stroom.ai.impl.tools.processing.TranslationInputText;
 import stroom.ai.impl.tools.processing.XsltStages;
 import stroom.ai.impl.tools.processing.XsltStages.Stage;
 import stroom.ai.impl.tools.processing.XsltStages.StagedXslt;
@@ -210,7 +212,8 @@ class RebuildMappingTool extends AbstractBuiltInTool {
                              + "XSLT regenerated from it is then stepped beside the XSLT over the pipeline's "
                              + "original sample streams (or stream_ids given), and only when every record's output "
                              + "is the same, and the user confirms, are the mapping and the regenerated XSLT saved. "
-                             + "Then step_sample, and write_documentation again. Reads Stroom until it saves; saves "
+                             + "The sample's fields a hand-written XSLT never reads go in ignored_fields (left_out), "
+                             + "as it leaves them out. Then step_sample, and write_documentation again. Reads Stroom until it saves; saves "
                              + "only an XSLT in a build (a new version's, copy_pipeline, for a promoted one).")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(UUID_ARG, "The translation XSLT whose mapping to rebuild.")
@@ -378,7 +381,23 @@ class RebuildMappingTool extends AbstractBuiltInTool {
                 return result;
             }
         }
-        return save(call, context, result, new Rebuild(ref, base, upgraded, rebuilt, regenerated.xslt(), proof));
+        // Read back from a hand-written translation: the sample's fields it never reads are left out on purpose, so
+        // the regenerated XSLT logs what it did (decided by the user, 2026-11-25; seen in eval case 105).
+        final List<String> leftOut = base == null
+                ? FieldsLeftOut.of(code, rebuilt.mapping(), TranslationInputText.fieldNames(proof.inputs()))
+                : List.of();
+        final XsltGenerator.Generated ignoring = leftOut.isEmpty()
+                ? null
+                : XsltGenerator.generate(FieldsLeftOut.ignoring(rebuilt.mapping(), leftOut), schema, version);
+        if (ignoring == null || !ignoring.ok()) {
+            return save(call, context, result, new Rebuild(ref, base, upgraded, rebuilt, rebuilt.mapping(),
+                    regenerated.xslt(), proof, List.of()));
+        }
+        result.put("left_out", FieldsLeftOut.said(leftOut) + " (the sample's fields it never reads, in the "
+                               + "mapping's ignored_fields: the regenerated XSLT doesn't log them, as the original "
+                               + "didn't; map one only when the user asks for it)");
+        return save(call, context, result, new Rebuild(ref, base, upgraded, rebuilt, FieldsLeftOut.ignoring(
+                rebuilt.mapping(), leftOut), ignoring.xslt(), proof, leftOut));
     }
 
     // Asked, then saved: the mapping, and the XSLT regenerated from it. The hand edit is carried by the rebuilt
@@ -408,6 +427,9 @@ class RebuildMappingTool extends AbstractBuiltInTool {
         if (!rebuilt.importedCalls().isEmpty()) {
             details.put("calling imported functions", first(rebuilt.importedCalls(), 20));
         }
+        if (!rebuild.leftOut().isEmpty()) {
+            details.put("fields never read", FieldsLeftOut.said(rebuild.leftOut()));
+        }
         if (!differences.isEmpty()) {
             details.put("differences", differences.subList(0, Math.min(20, differences.size())).stream()
                     .map(d -> d.get("path"))
@@ -423,7 +445,7 @@ class RebuildMappingTool extends AbstractBuiltInTool {
                           + " records stepped"
                         : differences.size() + " output paths differ, as shown"), details));
         final Map<String, Object> saved = translationDocs.updateXslt(call, context, rebuild.ref().getUuid(),
-                rebuild.regenerated(), null, TranslationDocs.Source.of(rebuilt.mapping()), said, true, null);
+                rebuild.regenerated(), null, TranslationDocs.Source.of(rebuild.mapping()), said, true, null);
         final Map<String, Object> summary = new LinkedHashMap<>();
         for (final String key : List.of("type", "uuid", "name", "version")) {
             summary.put(key, saved.get(key));
@@ -532,7 +554,8 @@ class RebuildMappingTool extends AbstractBuiltInTool {
         });
         final List<Map<String, Object>> sorted = new ArrayList<>(differences.values());
         sorted.sort(Comparator.comparingInt((Map<String, Object> d) -> -(Integer) d.get("records")));
-        return new Proof(before.outputs().size(), sorted, existingRun(before.outputs()));
+        return new Proof(before.outputs().size(), sorted, existingRun(before.outputs()),
+                new ArrayList<>(before.inputs().values()));
     }
 
     /// How the XSLT as it is (an existing pipeline's, a build starting from it) ran over the sample: the records
@@ -767,7 +790,12 @@ class RebuildMappingTool extends AbstractBuiltInTool {
     }
 
     // The records stepped, the output paths that differ, and how the XSLT as it is ran over them.
-    private record Proof(int records, List<Map<String, Object>> differences, Map<String, Object> existingRun) {
+    // Stepped both ways: the records, the paths whose values differ, how the XSLT as it is ran, and each record's
+    // input at the XSLT (the fields the translation reads).
+    private record Proof(int records,
+                         List<Map<String, Object>> differences,
+                         Map<String, Object> existingRun,
+                         List<String> inputs) {
 
     }
 
@@ -776,13 +804,16 @@ class RebuildMappingTool extends AbstractBuiltInTool {
 
     }
 
-    // What is saved, once confirmed.
+    // What is saved, once confirmed: the mapping read back (with the sample's fields a hand-written XSLT never
+    // reads left out, those fields listed), and the XSLT regenerated from it.
     private record Rebuild(DocRef ref,
                            TranslationMapping base,
                            boolean upgraded,
                            RebuiltMapping rebuilt,
+                           TranslationMapping mapping,
                            String regenerated,
-                           Proof proof) {
+                           Proof proof,
+                           List<String> leftOut) {
 
     }
 }

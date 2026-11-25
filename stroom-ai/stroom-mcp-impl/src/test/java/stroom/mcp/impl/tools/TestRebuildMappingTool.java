@@ -53,6 +53,33 @@ class TestRebuildMappingTool {
     private static final String EVENT = "<Events xmlns=\"event-logging:3\"><Event><EventSource><Generator>vpnd"
                                         + "</Generator></EventSource></Event></Events>";
 
+    // A hand-written JSON translation: it reads ts, action and user, never src_ip.
+    private static final String HAND_WRITTEN_JSON = """
+            <xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" \
+            xpath-default-namespace="http://www.w3.org/2013/XSL/json" version="3.0">
+              <xsl:template match="/">
+                <Events Version="4.1.0"><xsl:apply-templates select="array/map"/></Events>
+              </xsl:template>
+              <xsl:template match="map[string[@key='action'] = 'login']">
+                <Event>
+                  <EventTime><TimeCreated><xsl:value-of select="string[@key='ts']"/></TimeCreated></EventTime>
+                  <EventSource>
+                    <System><Name>Example VPN</Name><Environment>Production</Environment></System>
+                    <Generator>vpnd</Generator>
+                    <Device><HostName>vpn-gw-1</HostName></Device>
+                    <User><Id><xsl:value-of select="string[@key='user']"/></Id></User>
+                  </EventSource>
+                  <EventDetail>
+                    <TypeId>vpn-login</TypeId>
+                    <Description>A user logged in to the VPN</Description>
+                    <Authenticate><Action>Logon</Action><User><Id><xsl:value-of select="string[@key='user']"/>\
+            </Id></User></Authenticate>
+                  </EventDetail>
+                </Event>
+              </xsl:template>
+              <xsl:template match="map"/>
+            </xsl:stylesheet>""";
+
     private final TranslationWorld world = new TranslationWorld();
     private final PipelineIndex pipelineIndex = Mockito.mock(PipelineIndex.class);
     private final SampleStreams sampleStreams = Mockito.mock(SampleStreams.class);
@@ -411,6 +438,52 @@ class TestRebuildMappingTool {
         assertThat(result).containsEntry("mode", "mapping lost").doesNotContainKey("read_back");
         assertThat(records.readBackFailed(BUILD)).isEmpty();
         assertThat(records.readBackFailed(null)).isEmpty();
+    }
+
+    @Test
+    void theSampleFieldsAHandWrittenXsltNeverReadsAreLeftOutOfTheMappingReadBack() {
+        // Decided by the user (2026-11-25; seen in eval case 105): the regenerated XSLT logs what the original did,
+        // not "No rule reads field src_ip", and the form and result say so; mapping src_ip is the user's request.
+        world.world.docs.put(uuid, world.xslt(uuid).copy().description(null).data(HAND_WRITTEN_JSON)
+                .updateUser("bob").build());
+        Mockito.when(world.stepping.outputs(any(), any(), any(), anyString(), isNull(), anyInt())).thenAnswer(inv ->
+                new PipelineStepping.Outputs(Map.of("7:1", EVENT), Map.of("7:1", "<array xmlns=\""
+                        + "http://www.w3.org/2013/XSL/json\"><map><string key=\"ts\">2026-11-03T08:00:01.000Z"
+                        + "</string><string key=\"action\">login</string><string key=\"user\">jb</string>"
+                        + "<string key=\"src_ip\">198.51.100.7</string></map></array>"), false));
+        world.forms = true;
+        world.answers.put("Save the mapping rebuilt", "yes");
+
+        final Map<String, Object> done = call(Map.of());
+
+        assertThat(done).as("rebuilt: %s", done).containsKey("saved").containsEntry("mode", "mapping lost");
+        assertThat(String.valueOf(done.get("left_out"))).startsWith("left out, as the original: src_ip")
+                .contains("ignored_fields");
+        assertThat(world.shown).singleElement().asString().contains("left out, as the original: src_ip");
+        final XsltDoc saved = world.xslt(uuid);
+        final TranslationMapping kept = TranslationMapping.parse(KeptMapping.readMapping(saved.getDescription())
+                .orElseThrow().payload().get("mapping"));
+        assertThat(kept.ignoredFields()).containsExactly("src_ip");
+        // Its regenerated XSLT reads src_ip as left out on purpose: never logged as a field no rule reads.
+        assertThat(saved.getData()).contains("'src_ip'");
+        assertThat(XsltCode.normalise(saved.getData())).isEqualTo(XsltCode.normalise(generated(kept)));
+    }
+
+    @Test
+    void aGeneratedXsltWhoseMappingWasLostLeavesNothingOut() {
+        // It logs its own unread fields: the mapping read back from it adds none to ignored_fields.
+        world.world.docs.put(uuid, world.xslt(uuid).copy().description(null).updateUser("bob").build());
+        Mockito.when(world.stepping.outputs(any(), any(), any(), anyString(), isNull(), anyInt())).thenAnswer(inv ->
+                new PipelineStepping.Outputs(Map.of("7:1", EVENT), Map.of("7:1", "<records xmlns=\"records:2\">"
+                        + "<record><data name=\"never_read\" value=\"x\"/></record></records>"), false));
+        world.forms = true;
+        world.answers.put("Save the mapping rebuilt", "yes");
+
+        final Map<String, Object> done = call(Map.of());
+
+        assertThat(done).as("rebuilt: %s", done).containsKey("saved").doesNotContainKey("left_out");
+        assertThat(TranslationMapping.parse(KeptMapping.readMapping(world.xslt(uuid).getDescription())
+                .orElseThrow().payload().get("mapping")).ignoredFields()).doesNotContain("never_read");
     }
 
     // The XSLT rewritten by hand into nothing a mapping reads, its kept mapping gone with its description.
