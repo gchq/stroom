@@ -38,6 +38,7 @@ import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
+import stroom.ai.impl.tools.instructions.InstructionRules.SourcesRule;
 import stroom.ai.impl.tools.instructions.InstructionRules.TypeRoleRule;
 import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.query.DataSourceDocumentation;
@@ -630,6 +631,50 @@ class TestActivityTimelineAnySource {
         assertThat((List<Map<String, Object>>) result.get("left_out")).singleElement().satisfies(left ->
                 assertThat(left).containsEntry("index", "Codes").containsEntry("why", "no events of pat in the "
                                                                                       + "period"));
+    }
+
+    @Test
+    void overMcpWithNoSourcesAnAgentsDocsDefaultSourcesAreRead() {
+        week();
+        Mockito.when(agentInstructions.sourcesRuled(Mockito.any(), Mockito.eq(InstructionRules.TIMELINE_SOURCES)))
+                .thenReturn(Optional.of(new SourcesRule(List.of("Events", "No such index"), "/")));
+        final Map<String, Object> arguments = arguments(Map.of());
+        arguments.remove("sources");
+
+        final Map<String, Object> result = json(mcp(), arguments);
+
+        assertThat((String) result.get("sources_chosen")).isEqualTo("the AGENTS doc's ## Sources (/); not one "
+                                                                     + "Elastic Index you can use: No such index");
+        assertThat((List<Map<String, Object>>) result.get("sources")).extracting(source -> source.get("index"))
+                .containsExactly("Events");
+        // Codes, which the doc doesn't name, isn't even probed.
+        assertThat(streams.scanned()).allSatisfy(side -> assertThat(side.index()).isEqualTo(EVENTS));
+    }
+
+    @Test
+    void overMcpPastTenIndexesHoldingTheUsersEventsTheCallingModelChooses() {
+        final List<DocRef> many = new ArrayList<>();
+        final Map<String, String> mapping = Map.of("@timestamp", "date", "user", "keyword");
+        for (int i = 0; i < ActivityTimelineTool.MAX_AUTOMATIC_SOURCES + 1; i++) {
+            final DocRef doc = new DocRef(ElasticIndexDoc.TYPE, "many-" + i, "Many " + i);
+            many.add(doc);
+            streams.add(doc, "@timestamp", mapping).add(new LinkedHashMap<>(Map.of("@timestamp", at("09:00"),
+                    "user", "pat")));
+        }
+        Mockito.when(dataSourceAccess.listUsable()).thenReturn(many);
+        Mockito.when(dataSourceAccess.find(Mockito.anyString())).thenAnswer(invocation -> many.stream()
+                .filter(doc -> doc.getUuid().equals(invocation.getArgument(0)))
+                .toList());
+        final Map<String, Object> arguments = arguments(Map.of("userField", "user"));
+        arguments.remove("sources");
+
+        final String text = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
+                arguments, false)), mcp()).text();
+
+        assertThat(text).contains("11 Elastic Indexes hold pat's events in the period, more than the 10 a timeline "
+                                  + "reads unasked").contains("- Many 0 (many-0): ").contains("user field user");
+        // Probed, never read.
+        assertThat(streams.scanned()).hasSize(ActivityTimelineTool.MAX_AUTOMATIC_SOURCES + 1);
     }
 
     @Test

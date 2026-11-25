@@ -260,6 +260,9 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     static final double ELEMENT_SHARE = 0.9;
     /// The most event codes listed in the confirming form.
     static final int CODES_SHOWN = 15;
+    /// The most sources read when every supported index is taken with no form to ask: past it, the calling model
+    /// chooses.
+    static final int MAX_AUTOMATIC_SOURCES = 10;
     /// The paths read from the Events XML where an index doesn't hold an event's type.
     static final List<String> TYPE_PATHS = List.of("EventDetail/TypeId", "EventDetail/* (the element)",
             "EventDetail/*/Action");
@@ -907,7 +910,14 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final boolean ask = given == null || (given instanceof final String text && (text.isBlank()
                                                                                     || ASK_SOURCES.equalsIgnoreCase(
                 text.strip())));
-        if (ask || (given instanceof final String text && ALL_SOURCES.equalsIgnoreCase(text.strip()))) {
+        final TimelineSourceChoice.Chosen ruled = ask && !(context.session().isChat()
+                                                           && context.userQuestions().canAsk())
+                ? agentsSources(context)
+                : null;
+        if (ruled != null) {
+            ruled.indexes().forEach(doc -> specs.add(Map.of(INDEX_KEY, doc.getUuid())));
+            chosen = ruled.how();
+        } else if (ask || (given instanceof final String text && ALL_SOURCES.equalsIgnoreCase(text.strip()))) {
             final TimelineSourceChoice.Chosen choice = ask
                     ? sourceChoice.choose(request, context, NAME)
                     : new TimelineSourceChoice.Chosen(sourceChoice.supported(), true, "all supported data sources, "
@@ -1029,6 +1039,24 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             notes.add(new SourceNote(automatic.name(), automatic.doc().getName(), automatic.user().field(),
                     automatic.user().from(), transformNote(automatic.transforms()), null, automatic.by(), null,
                     automatic.suggestions()));
+        }
+        // Every supported index taken with no form to ask: only those holding the user's events are read, and past
+        // about ten the calling model chooses (decided with the user 2026-11-25).
+        if (all && !context.session().isChat() && sources.size() > MAX_AUTOMATIC_SOURCES) {
+            final StringBuilder sb = new StringBuilder().append(sources.size()).append(" Elastic Indexes hold ")
+                    .append(entity).append("'s events in the period, more than the ").append(MAX_AUTOMATIC_SOURCES)
+                    .append(" a timeline reads unasked. Call again with sources naming those to read (an AGENTS doc "
+                            + "at the top of the tree may name a default: ## Sources, - timeline: <index>, ...):");
+            for (int i = 0; i < sources.size(); i++) {
+                final TimelineOverview.Counted counted = TimelineOverview.count(elasticEsqlProvider.get(),
+                        sources.get(i), timeField(sources.get(i).doc()), period.timeRange(),
+                        TimelineOverview.atLeastASecond(deadline), context.stopped());
+                sb.append("\n- ").append(sources.get(i).doc().getName()).append(" (").append(sources.get(i).doc()
+                        .getUuid()).append("): ").append(counted.events() < 0
+                        ? "events not counted"
+                        : counted.events() + " event(s)").append(", user field ").append(sources.get(i).userField());
+            }
+            throw new WorkspaceException(sb.toString());
         }
         if (sources.isEmpty()) {
             final StringBuilder sb = new StringBuilder("No source holds ").append(entity)
@@ -2240,6 +2268,37 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         } catch (final PermissionException e) {
             throw new WorkspaceException(what + ": you can't use Elastic Index '" + doc.getName() + "'.");
         }
+    }
+
+    // The default sources an AGENTS doc at the top of the tree names (## Sources, - timeline: ...), each an Elastic
+    // Index the user can use; null where none is named, or none named can be used.
+    private TimelineSourceChoice.Chosen agentsSources(final ToolCallContext context) {
+        final InstructionRules.SourcesRule rule = agentInstructions.sourcesRuled(context.session(),
+                InstructionRules.TIMELINE_SOURCES).orElse(null);
+        if (rule == null) {
+            return null;
+        }
+        final List<DocRef> found = new ArrayList<>();
+        final List<String> missing = new ArrayList<>();
+        for (final String name : rule.sources()) {
+            final List<DocRef> docs = dataSourceAccess.find(name).stream()
+                    .filter(doc -> ElasticIndexDoc.TYPE.equals(doc.getType()))
+                    .toList();
+            if (docs.size() == 1) {
+                if (!found.contains(docs.getFirst())) {
+                    found.add(docs.getFirst());
+                }
+            } else {
+                missing.add(name);
+            }
+        }
+        if (found.isEmpty()) {
+            return null;
+        }
+        return new TimelineSourceChoice.Chosen(found, false, "the AGENTS doc's ## Sources (" + rule.from() + ")"
+                                                              + (missing.isEmpty()
+                ? ""
+                : "; not one Elastic Index you can use: " + String.join(", ", missing)));
     }
 
     // The data source a source names, by uuid or name: any the user can use.
