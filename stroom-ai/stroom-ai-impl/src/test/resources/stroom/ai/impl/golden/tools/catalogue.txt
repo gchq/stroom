@@ -1763,6 +1763,10 @@ Draws a table of times as a timeline in the chat: gives a ```mermaid gantt block
       "description" : "The column of each row's end time; a row without one is a marker.",
       "type" : "string"
     },
+    "endEvent" : {
+      "description" : "The column naming the event each row ends at.",
+      "type" : "string"
+    },
     "label" : {
       "description" : "The column naming what each row is (e.g. the application).",
       "type" : "string"
@@ -1785,6 +1789,10 @@ Draws a table of times as a timeline in the chat: gives a ```mermaid gantt block
     },
     "start" : {
       "description" : "The column of each row's start time (ISO 8601, UTC if no zone, or epoch ms).",
+      "type" : "string"
+    },
+    "startEvent" : {
+      "description" : "The column naming the event each row starts at (e.g. Logon-User), shown on its start marker.",
       "type" : "string"
     },
     "timeZone" : {
