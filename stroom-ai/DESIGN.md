@@ -1279,6 +1279,10 @@ data and, when a question or a skill asks, the backing Event XML.
 
 #### 2c. Timelines from any source (built 2026-11-24)
 
+*Superseded in part (2026-11-25):* the reading below ("Classified from the Events XML" first) is replaced by
+[Many feeds, shared translations and the timeline's reading](#many-feeds-shared-translations-and-the-timelines-reading-decided-2026-11-25):
+fields once per index, one scan per source, roles once per event type, Events XML only where the index can't give.
+
 Seen in chat 190: a user seen only in web proxy logs (Netskope) got 0 sessions, as sessions began only at a focus
 event, which only endpoint logs have; 4,606 actions in no session, empty tables, nothing to chart. Decided with the
 user (2026-11-24): the timeline works out what it can by itself, from any source normalised to the event-logging
@@ -2147,6 +2151,14 @@ Organisation field, never by feed; each feed's first and last day listed.
   `XsltUsers` (pipelines running the XSLT, their feeds, an estimate at roughly 30 s a survey call); the source
   notes moved beside the pipeline, the build keeping a working copy; the drift check passes a mapping read from the
   same XSLT (`inducted.xslt`); a raw survey made before a pre-processed start is stale.
+* Timeline reading: `RoleConditions`, `StreamFields`, `TypeRoleLookup`, `TimelineReading`, `TimelineOverview`; AGENTS
+  `## Event types` and `## Sources` (`- timeline:`, read from the root doc over MCP only). Choices made in the build
+  (the user to confirm): an event's field is its stream's producing pipeline's where that pipeline is one of the
+  plans', else the plan field the document holds (an indexed StreamId is an Events stream, produced by the
+  translation, and telling its indexing pipeline needs the processor filters, Manage Processors); the Events XML is
+  still read for the type of events nothing else settles (capped), so indexes like eval 78's work over MCP without a
+  model; role conditions compare values exactly in memory (Elasticsearch analysed text fields); the pre-count is one
+  ES|QL query per source each run; a feed's joining or leaving suppresses change points within 7 days.
 * Eval cases 102 to 105 (several feeds: `setup.hand_written.other_feeds`, `expected.several_feeds`) and 106 to 109
   (in place: `description`, `pre_process`, `shared_with`, `expected.in_place`).
 

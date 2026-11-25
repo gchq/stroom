@@ -111,12 +111,15 @@ for that user alone as the streaming join reads a side, and worked out in code.
 - Each index's user field: the call's (`userField`, a source's `user`), else the AGENTS doc's `## Fields`
   (`- user: ...`), else a field convention's (`user.name`, `UserId`), else the index's documentation, else asked.
   The result says each index's field and where it came from. The user and time always come from the index.
-- A source without roles has its events classified from their Events XML (read by StreamId and EventId, capped by
-  `timelineMaxXmlEvents`): Authenticate Logon, ScreenUnlock, Connect and Reconnect make the user active; Logoff,
-  ScreenLock and Disconnect idle; Process Execute and Terminate open and close; other elements are actions of that
-  kind. Where the XML is gone, the index's element field (with its Action field) classifies them, else the source's
-  own codes, classified once by the model and confirmed by the user. Roles (`focus`, `open`, `close`, `idle_start`,
-  `idle_end`, `actions`, as conditions) override this, e.g. for window focus, which the schema has no element for.
+- Each index is read once (one scan of the user's events in the period); its fields are found once (the call's,
+  AGENTS `## Fields`, the feeding pipelines' index plans, the index documentation's From column, conventions).
+  Roles are decided once per event type: the call's or skill's, the catalogue of the stream's translation, AGENTS
+  `## Event types` (`- <type>: <role>`), the schema's element and Action where indexed (Authenticate Logon,
+  ScreenUnlock, Connect and Reconnect active; Logoff, ScreenLock and Disconnect idle; Process Execute and Terminate
+  open and close; other elements actions of that kind), else the source's own codes classified once. Events XML is
+  read only for what the index can't give, and the result names the paths to add to the index plan. Window focus
+  has no schema element: roles (`focus`, `open`, `close`, `idle_start`, `idle_end`, `actions`) give it.
+- A period whose events pass the cap gives a day-by-day overview instead, to pick days from.
 - Spans: a focus session runs from a focus to the next focus, an idle start, or the idle cap (30 minutes by
   default, `idleCap`). A pair (`Process/Execute` to `Process/Terminate` by ProcessId, a lock to its unlock, a skill's
   Event chains, a source's `pairs`, or two types inferred from the user's own events: alternating for 90% of keys,

@@ -145,7 +145,7 @@ always offered); **Requires**, **Unlocked by**, **Documents** (`permissions()`);
 
 | Tool | What it does | Category | Read-only | Group | Requires | Unlocked by | Documents | Flags |
 |------|--------------|----------|-----------|-------|----------|-------------|-----------|-------|
-| `activity_timeline` | One user's (or entity's, or person's: a person id or several logon ids) activity timeline from any Elastic Index sources (asked, or all, where not given), worked out in code: detail spans (focus sessions where a source records window focus; pairs from a start to its end, the schema's, a skill's or inferred; spans bounded by a key such as a session id; activity periods), events without roles classified from their Events XML (else the index's fields or codes), each index's person or user field found and said (by person id or by logon id), daily totals, missing events flagged, each source's first and last events where the period has none; activities rolled up (`characterise`, or `view` activities); what was learned offered for the skill's Event chains | search | yes | timelines | | | Use | slot |
+| `activity_timeline` | One user's (or entity's, or person's: a person id or several logon ids) activity timeline from any Elastic Index sources (asked, or all, where not given), worked out in code: detail spans (focus sessions where a source records window focus; pairs from a start to its end, the schema's, a skill's or inferred; spans bounded by a key such as a session id; activity periods), fields mapped once per index and roles decided once per event type (call or skill, the translation's catalogue, AGENTS `## Event types`, the schema's element and Action, else codes classified once), one scan per source, Events XML only for what the index can't give, a day-by-day overview past the events cap, each index's person or user field found and said (by person id or by logon id), daily totals, missing events flagged, each source's first and last events where the period has none; activities rolled up (`characterise`, or `view` activities); what was learned offered for the skill's Event chains | search | yes | timelines | | | Use | slot |
 | `ask_user` | Asks the user questions in a form, with options to pick, and waits for the answers | core | yes | | | | | trusted |
 | `check_instructions` | The AGENTS docs that apply in a folder, or a draft, checked: what the tools can't apply as written in the sections they read, and what would work better, each with a fix | core | yes | | | | View, Use | |
 | `check_skill` | A skill's problems and suggestions, each with a fix: structure, parameters, example calls against the tools' schemas and policies, data sources and fields, hand edits, vague steps, values that should be parameters, charts, near-duplicates, use | core | yes | skills | | | View, Use | |
@@ -1987,6 +1987,29 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
   no conditions; a `typeRoles` role that isn't one; a bad period, `idleCap` (1 minute to 24 hours), `view` or
   `lanes`; the user declining the sources form.
 
+**Reading (2026-11-25, replaces "classified from the Events XML" first).**
+* Fields once per index: user, person, host, event type, element, action, application, title, object, text,
+  session and process id, each by the call's, AGENTS `## Fields` (new keys `title`/`window title`, `text`/`message`,
+  `session`/`session id`, `feed`), the feeding pipelines' plans (`TimelineFields.PLAN_PATHS` for paths with no
+  convention), the From column, then conventions. Where pipelines' plans differ, every field is fetched and each event
+  takes its own pipeline's (`StreamFields`, one batched `StreamProvenance` lookup; where the stream's producer isn't
+  one of the plans' pipelines, the plan field the document holds); `fields`, `fields_by_pipeline` per source.
+* One scan per source (`scans` in the result), filtered by user and period only; roles told in memory
+  (`RoleConditions`: EQUALS with wildcards, IN, NOT, regex, comparisons, BETWEEN; values compared exactly unless
+  case-insensitive, where Elasticsearch would analyse a text field).
+* Roles once per event type (`TypeRoleLookup`): the call's or skill's `typeRoles` / Event chains; the catalogue of the
+  stream's translation (`StreamProvenance.timelineRoles`); AGENTS `## Event types`; the type's own (the schema table,
+  else codes classified once); codes the model classified come back as `event_types_lines_to_offer` for
+  propose_instructions; `roles_from` per source.
+* Events XML: for type only for events nothing settles (no element value, no settled code), capped at
+  `timelineMaxXmlEvents`; for content only when characterising, for typed events with no object, title or text,
+  capped at `characteriseMaxItems`; `events_xml.paths_read` names each path and index to add to the index plan.
+* Long ranges: one ES|QL count with first and last per source before reading; past `timelineMaxEvents`, a day-by-day
+  overview by aggregation (events per day by source and type, active days, the 62 busiest, `overview.csv`) and a
+  "pick days" next step; sources matched by a script or several user fields aren't counted.
+* Sources over MCP with no form: a root AGENTS doc's `## Sources` line `- timeline: A, B`; else the supported
+  indexes holding the user's events; past 10, refused with the list for the calling model to choose.
+
 ### `propose_timeline_dashboard`
 
 Content · read-only · chat only · timelines group · Classes: `ProposeTimelineDashboardTool`,
@@ -2208,6 +2231,11 @@ of its own: the tool policies decide who may compare a person's activity.
   (over `InMemoryAggregates`); e2e `TestE2eCompareActivity` (ES|QL and StroomQL agree) and
   `TestE2eInsiderCompareActivity` (the insider dataset's plants found, its decoys not flagged, and what was done to
   the leaver and the compromised account found apart, the person's own findings the same with or without it).
+
+**Several feeds (2026-11-25).** Feeds are told apart by a `feed` field (the call's or AGENTS'), else by
+StreamId buckets resolved through `StreamProvenance`; the notes list each feed's first and last day; a change point
+within 7 days of a feed joining or leaving is not scored, said in the notes; coverage stays by day across the
+index (a day with no events from any feed is a gap); peers by the Organisation field.
 
 ### `current_results`
 
