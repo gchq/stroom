@@ -101,7 +101,6 @@ class TestPromoteBuildTool {
     private final DocumentationWorld docs = new DocumentationWorld();
     private final BuildWorld world = docs.world;
     private final PromotionProcessing processing = Mockito.mock(PromotionProcessing.class);
-    private final ProcessorFilterWrites filterWrites = Mockito.mock(ProcessorFilterWrites.class);
     // The tidy-up's view of Stroom: what reads a test feed, its streams, a test index's shards, what uses either.
     private final ProcessorFilters processorFilters = Mockito.mock(ProcessorFilters.class);
     private final MetaService metaService = Mockito.mock(MetaService.class);
@@ -109,7 +108,7 @@ class TestPromoteBuildTool {
     private final DocDependencyService dependencies = Mockito.mock(DocDependencyService.class);
     private final PromoteBuildTool tool = new PromoteBuildTool(docs.facts, new PromotionLayout(docs.places),
             docs.places, world.guard(), world.records(), docs.translation.consent, processing,
-            filterWrites, Mockito.mock(OutputFeeds.class), docs.writes,
+            Mockito.mock(OutputFeeds.class), docs.writes,
             world.documentAccess, docs.translation.history, docs.pendingDocs,
             new PromotionTidyUp(world.guard(), world.records(), world.documentAccess, () -> processorFilters,
                     () -> metaService, () -> indexResource, () -> dependencies));
@@ -1628,7 +1627,6 @@ class TestPromoteBuildTool {
         Mockito.when(processing.createFollowOnFilters(any(), any(), any())).thenReturn(List.of(new LinkedHashMap<>(
                 Map.of("filter_id", 41, "pipeline", "ACME-CEF", "reads", "ACME-V1.1-Events", "in_place_of",
                         "ACME-V1.0-Events", "copied_from", 5, "enabled", false))));
-        Mockito.when(filterWrites.filters(any())).thenReturn(List.of(old));
         tool.setSwitchOver(() -> new PromotionSwitchOver(() -> processorFilters, new PipelineFeeds(
                 Mockito.mock(ProcessorFilterAccess.class), world.documentAccess, null), () -> dependencies,
                 Mockito.mock(StreamProcessing.class)), null);

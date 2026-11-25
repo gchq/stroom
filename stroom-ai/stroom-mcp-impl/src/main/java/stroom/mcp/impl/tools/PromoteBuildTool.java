@@ -108,7 +108,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     private final BuildRecords buildRecords;
     private final Consent consent;
     private final PromotionProcessing promotionProcessing;
-    private final ProcessorFilterWrites filterWrites;
     private final OutputFeeds outputFeeds;
     private final DocumentWrites writes;
     private final DocumentAccess documentAccess;
@@ -140,7 +139,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                      final BuildRecords buildRecords,
                      final Consent consent,
                      final PromotionProcessing promotionProcessing,
-                     final ProcessorFilterWrites filterWrites,
                      final OutputFeeds outputFeeds,
                      final DocumentWrites writes,
                      final DocumentAccess documentAccess,
@@ -154,7 +152,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         this.buildRecords = buildRecords;
         this.consent = consent;
         this.promotionProcessing = promotionProcessing;
-        this.filterWrites = filterWrites;
         this.outputFeeds = outputFeeds;
         this.writes = writes;
         this.documentAccess = documentAccess;
