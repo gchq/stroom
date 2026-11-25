@@ -99,6 +99,8 @@ public class BuildPlan {
     public static final String STAGE_FINISH = "finish";
     /// The status's key for the survey of each feed of a build of several.
     static final String FEED_SURVEYS = "feed_surveys";
+    /// The status's key for the indexes of a build indexed one index per feed.
+    static final String INDEX_PER_FEED = "index_per_feed";
     /// The reference data stage: a table to look values up in, loaded by a reference-data pipeline.
     public static final String STAGE_REFERENCE = "1 reference";
 
@@ -1003,6 +1005,14 @@ public class BuildPlan {
         done.put("index", hasIndexDoc || (discovery && !indexing.isEmpty())
                           || indexing.stream().anyMatch(copies::contains));
         done.put("indexing_pipeline", !indexing.isEmpty());
+        // One index per feed, as the user chose (create_index_doc): an index doc and an indexing pipeline for each
+        // feed, not one for them all.
+        final PerFeedIndexing perFeedIndexing = perFeedIndexing(build, of(byType, "Index"),
+                of(byType, "ElasticIndex"), indexing);
+        if (!perFeedIndexing.feeds().isEmpty()) {
+            done.put("index", perFeedIndexing.withoutIndex().isEmpty());
+            done.put("indexing_pipeline", perFeedIndexing.withoutPipeline().isEmpty());
+        }
         done.put("index_template", agreed);
         // A working copy of a production indexing pipeline is stepped clean in the build; indexing production Events
         // into its index, after promotion, is the user's.
@@ -1285,12 +1295,14 @@ public class BuildPlan {
             result.put("works_from", sources);
         }
         perFeed.said().ifPresent(said -> result.put(FEED_SURVEYS, said));
+        perFeedIndexing.said().ifPresent(said -> result.put(INDEX_PER_FEED, said));
         if (next != null && !onlyExistingData) {
             final Map<String, Object> shown = new LinkedHashMap<>();
             shown.put("step", nextStep);
             shown.put("do", next.get("what"));
             shown.put("call", call.call());
-            shown.put("then", call.then() + documentationAfterStep(nextStep, translation, documented));
+            shown.put("then", call.then() + documentationAfterStep(nextStep, translation, documented)
+                              + perFeedIndexing.after(nextStep));
             shown.put("progress", progress(steps, nextStep));
             result.put("next", shown);
         } else if (onlyExistingData) {
@@ -1310,6 +1322,32 @@ public class BuildPlan {
             result.put("next", shown);
         }
         return result;
+    }
+
+    // For a build the user chose to index one index per feed: which feeds have no index doc named for them yet,
+    // and which no indexing pipeline writing their index.
+    private PerFeedIndexing perFeedIndexing(final String build,
+                                            final List<Map<String, Object>> luceneIndexes,
+                                            final List<Map<String, Object>> elasticIndexes,
+                                            final List<Map<String, Object>> indexing) {
+        final List<String> feeds = facts.indexPerFeed(build);
+        if (feeds.isEmpty()) {
+            return PerFeedIndexing.NONE;
+        }
+        final List<String> named = new ArrayList<>();
+        luceneIndexes.forEach(doc -> named.addAll(FeedIndexSplit.feedsNamed(feeds, String.valueOf(doc.get("name")))));
+        elasticIndexes.forEach(doc -> named.addAll(FeedIndexSplit.feedsNamed(feeds,
+                String.valueOf(doc.get("name")))));
+        final List<String> written = new ArrayList<>();
+        indexing.forEach(pipeline -> facts.indexNameOf(uuid(pipeline)).ifPresent(name -> written.addAll(
+                FeedIndexSplit.feedsNamed(feeds, name))));
+        return new PerFeedIndexing(feeds, without(feeds, named), without(feeds, written));
+    }
+
+    private static List<String> without(final List<String> feeds, final List<String> found) {
+        return feeds.stream()
+                .filter(feed -> found.stream().noneMatch(feed::equalsIgnoreCase))
+                .toList();
     }
 
     // Which of the feeds the build is for are surveyed, and covered: each feed's survey doc read on its own. Only for
@@ -2385,6 +2423,46 @@ public class BuildPlan {
             out.put("not_covered", uncovered);
             out.put("note", "Each feed the build is for is surveyed and covered on its own (survey_feed build=... "
                             + "feed=<each>): next names them in turn.");
+            return Optional.of(out);
+        }
+    }
+
+    /// A build indexed one index per feed, as the user chose ([#status]).
+    ///
+    /// @param feeds           The feeds the build is for; none for a build not indexed one per feed.
+    /// @param withoutIndex    Those no index doc of the build is named for yet.
+    /// @param withoutPipeline Those no indexing pipeline of the build writes the index of yet.
+    record PerFeedIndexing(List<String> feeds, List<String> withoutIndex, List<String> withoutPipeline) {
+
+        /// A build not indexed one index per feed.
+        static final PerFeedIndexing NONE = new PerFeedIndexing(List.of(), List.of(), List.of());
+
+        /// @param step The plan's next step.
+        /// @return What to add to its `then`: the feed it is for next; empty for other steps, or another build.
+        String after(final String step) {
+            if ("index".equals(step) && !withoutIndex.isEmpty()) {
+                return "; one index per feed, as the user chose: this one for " + withoutIndex.getFirst()
+                       + ", named for it (e.g. '" + withoutIndex.getFirst() + "-Index'), then one for each of the "
+                       + "rest";
+            }
+            if ("indexing_pipeline".equals(step) && !withoutPipeline.isEmpty()) {
+                return "; one indexing pipeline per feed's index, as the user chose: this one writing "
+                       + withoutPipeline.getFirst() + "'s index, named for it, then one for each of the rest (each "
+                       + "processes only its feed's Events)";
+            }
+            return "";
+        }
+
+        /// @return What the build status says of it: `feeds`, `without_index` and `without_pipeline`; empty for a
+        /// build not indexed one per feed.
+        Optional<Map<String, Object>> said() {
+            if (feeds.isEmpty()) {
+                return Optional.empty();
+            }
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("feeds", feeds);
+            out.put("without_index", withoutIndex);
+            out.put("without_pipeline", withoutPipeline);
             return Optional.of(out);
         }
     }

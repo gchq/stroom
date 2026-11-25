@@ -118,6 +118,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     private final PromotionRoleRoots roleLocations;
     private final PromotionReview layoutReview;
     private final PromotionWrites stepWrites;
+    // A build indexed one index per feed; none in tests that make the tool themselves.
+    private Provider<FeedIndexes> perFeedIndexesProvider;
     // An aggregated feed's modules and the reference data its pipelines load; none in tests that make the tool
     // themselves.
     private Provider<SourceTypeGroups> groupsProvider;
@@ -233,6 +235,15 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                       + "the promoted pipelines' processor filters are made as the user (Manage Processors), only "
                       + "once they approve.")
                 .build();
+    }
+
+    /// Where a build of one index per feed is read (set by injection; none in tests that make the tool
+    /// themselves).
+    ///
+    /// @param feedIndexes The build's per-feed indexing.
+    @Inject
+    void setPerFeedIndexes(final Provider<FeedIndexes> feedIndexes) {
+        this.perFeedIndexesProvider = feedIndexes;
     }
 
     @Override
@@ -410,8 +421,12 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         docs.stream()
                 .filter(d -> PipelineDoc.TYPE.equals(d.get("type")) && d.get("working_copy_of") != null)
                 .forEach(d -> originals.put(String.valueOf(d.get("uuid")), String.valueOf(d.get("working_copy_of"))));
-        final List<PromotionProcessing.Entry> processing = promotionProcessing.promotionProcessing(moving,
+        // One index per feed, as the user chose: each indexing pipeline's filter selects its own feed's Events.
+        final List<PromotionProcessing.Entry> planned = promotionProcessing.promotionProcessing(moving,
                 buildFeeds, keptFeeds, originals);
+        final List<PromotionProcessing.Entry> processing = perFeedIndexesProvider == null
+                ? planned
+                : perFeedIndexesProvider.get().narrowed(build, planned);
         // The promoted pipelines outside the build reading a predecessor's Events (CEF flatteners, indexing): each
         // gains a filter, disabled, reading the new version's Events instead (decided by the user, 2026-11-17). One
         // with a new version of its own in this build is passed over: its new version reads the new Events. So is

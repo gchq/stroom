@@ -111,15 +111,7 @@ class FeedIndexSplit {
             return Optional.of(out);
         }
         final String text = (NullSafe.string(docName) + " " + NullSafe.string(indexName)).toLowerCase(Locale.ROOT);
-        final List<String> matched = feeds.stream()
-                .filter(feed -> text.contains(feed.toLowerCase(Locale.ROOT)))
-                .toList();
-        // A feed's name inside another's (ACME in ACME-B) is that other's.
-        final List<String> named = matched.stream()
-                .filter(feed -> matched.stream().noneMatch(other -> other.length() > feed.length()
-                                                                    && other.toLowerCase(Locale.ROOT)
-                                                                            .contains(feed.toLowerCase(Locale.ROOT))))
-                .toList();
+        final List<String> named = feedsNamed(feeds, text);
         final List<String> without = feedsWithoutIndex(build, feeds);
         if (named.size() != 1) {
             throw new ToolRefusal("The user chose one index per feed for build '" + build + "': name this index doc "
@@ -139,6 +131,21 @@ class FeedIndexSplit {
                 ? "."
                 : "; still to make, one each: " + String.join(", ", still) + "."));
         return Optional.of(out);
+    }
+
+    /// @param feeds The feeds a build is for.
+    /// @param text  An index's name (its doc's, and its Elasticsearch index's), any case.
+    /// @return The feeds it names; a feed's name inside another's (ACME in ACME-B) is that other's.
+    static List<String> feedsNamed(final List<String> feeds, final String text) {
+        final String lower = NullSafe.string(text).toLowerCase(Locale.ROOT);
+        final List<String> matched = feeds.stream()
+                .filter(feed -> lower.contains(feed.toLowerCase(Locale.ROOT)))
+                .toList();
+        return matched.stream()
+                .filter(feed -> matched.stream().noneMatch(other -> other.length() > feed.length()
+                                                                    && other.toLowerCase(Locale.ROOT)
+                                                                            .contains(feed.toLowerCase(Locale.ROOT))))
+                .toList();
     }
 
     // The user's choice: given as index_split= (on their word), else asked in a form.

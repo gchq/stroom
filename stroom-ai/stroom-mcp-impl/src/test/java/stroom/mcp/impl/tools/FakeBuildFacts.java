@@ -64,6 +64,10 @@ final class FakeBuildFacts implements BuildFacts {
     List<String> buildSources;
     // Whether the user confirmed how a build of several feeds' surveys differ (compare_feeds).
     boolean feedsCompared;
+    // The feeds, where the user chose one index per feed.
+    List<String> indexPerFeed = List.of();
+    // The index each indexing pipeline writes to, by its UUID.
+    Map<String, String> indexNames = new LinkedHashMap<>();
     // The build whose own registry holds the scope it chose, or null.
     String scopeRecordedBy;
     List<String> checks = List.of();
@@ -267,6 +271,16 @@ final class FakeBuildFacts implements BuildFacts {
         final Map<String, Object> combined = new LinkedHashMap<>(states.getFirst());
         combined.put("saturated", states.stream().allMatch(state -> Boolean.TRUE.equals(state.get("saturated"))));
         return Optional.of(combined);
+    }
+
+    @Override
+    public List<String> indexPerFeed(final String build) {
+        return indexPerFeed;
+    }
+
+    @Override
+    public Optional<String> indexNameOf(final String pipelineUuid) {
+        return Optional.ofNullable(indexNames.get(pipelineUuid));
     }
 
     @Override

@@ -165,6 +165,19 @@ interface BuildFacts {
         return false;
     }
 
+    /// @param build A build.
+    /// @return The feeds it is for, where the user chose one index per feed (create_index_doc); none otherwise.
+    default List<String> indexPerFeed(final String build) {
+        return List.of();
+    }
+
+    /// @param pipelineUuid An indexing pipeline.
+    /// @return The name of the index it writes to: its Lucene index doc's, or its Elasticsearch index's; empty when
+    /// it writes to none (or can't be read).
+    default Optional<String> indexNameOf(final String pipelineUuid) {
+        return Optional.empty();
+    }
+
     /// @param surveys The build's survey docs.
     /// @return What they say (`saturated`, `format`, `locations`, `streams`, `sample`), or empty when none can be
     /// read.

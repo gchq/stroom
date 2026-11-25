@@ -164,6 +164,55 @@ class TestBuildPlanSeveralFeeds {
     }
 
     @Test
+    void oneIndexPerFeedNeedsAnIndexAndAnIndexingPipelineForEachFeed() {
+        facts.sources = List.of("ACME-A", "ACME-B");
+        facts.feedsCompared = true;
+        facts.indexPerFeed = List.of("ACME-A", "ACME-B");
+        facts.docs = new ArrayList<>(List.of(FakeBuildFacts.doc("Pipeline", "ev", "ACME-Events"),
+                FakeBuildFacts.doc("XSLT", "x", "ACME-Events"), FakeBuildFacts.doc("Index", "ia", "ACME-A-Index"),
+                FakeBuildFacts.doc("Pipeline", "pa", "ACME-A-Indexing")));
+        facts.stages = Map.of("ev", "translation", "pa", "indexing");
+        facts.mappings = Map.of("x", FakeBuildFacts.kept("translation", Map.of()));
+        facts.stepped = true;
+        facts.validated = true;
+        facts.events = List.of(9L);
+        facts.indexNames.put("pa", "ACME-A-Index");
+        survey("ACME-A", true, "json lines");
+        survey("ACME-B", true, "json lines");
+
+        Map<String, Object> result = plan.status("b", null);
+
+        assertThat(state(result, "index")).isEqualTo("to do");
+        assertThat(state(result, "indexing_pipeline")).isEqualTo("to do");
+        assertThat(result.get(BuildPlan.INDEX_PER_FEED)).isEqualTo(Map.of("feeds", List.of("ACME-A", "ACME-B"),
+                "without_index", List.of("ACME-B"), "without_pipeline", List.of("ACME-B")));
+        if ("index".equals(next(result).get("step"))) {
+            assertThat(String.valueOf(next(result).get("then"))).contains("this one for ACME-B",
+                    "'ACME-B-Index'");
+        }
+
+        facts.docs.add(FakeBuildFacts.doc("Index", "ib", "ACME-B-Index"));
+        result = plan.status("b", null);
+        assertThat(state(result, "index")).isEqualTo("done");
+        assertThat(state(result, "indexing_pipeline")).isEqualTo("to do");
+
+        facts.docs.add(FakeBuildFacts.doc("Pipeline", "pb", "ACME-B-Indexing"));
+        facts.stages = Map.of("ev", "translation", "pa", "indexing", "pb", "indexing");
+        facts.indexNames.put("pb", "ACME-B-Index");
+        assertThat(state(plan.status("b", null), "indexing_pipeline")).isEqualTo("done");
+    }
+
+    @Test
+    void oneSharedIndexIsAsBefore() {
+        facts.sources = List.of("ACME-A", "ACME-B");
+        facts.docs = new ArrayList<>(List.of(FakeBuildFacts.doc("Index", "i", "ACME-Index")));
+
+        final Map<String, Object> result = plan.status("b", null);
+
+        assertThat(result).doesNotContainKey(BuildPlan.INDEX_PER_FEED);
+    }
+
+    @Test
     void theExistingDataStartListsEveryFeed() {
         facts.sources = List.of("ACME-A", "ACME-B");
 

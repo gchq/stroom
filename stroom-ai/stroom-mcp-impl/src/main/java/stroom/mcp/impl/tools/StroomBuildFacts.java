@@ -106,6 +106,8 @@ class StroomBuildFacts implements BuildFacts {
 
     private Provider<SourceTypeRegistries> registriesProvider;
     private Provider<ExistingTranslations> existingProvider;
+    // Says which Lucene index a pipeline writes to; none in tests that make this themselves.
+    private Provider<IndexingRuns> indexingRunsProvider;
     private final WriteGuard guard;
     private final BuildRecords buildRecords;
     private final DocumentAccess documentAccess;
@@ -544,6 +546,47 @@ class StroomBuildFacts implements BuildFacts {
         return own.isEmpty()
                 ? all
                 : List.copyOf(own.values());
+    }
+
+    /// Where a Lucene indexing pipeline's index is read (set by injection; none in tests that make this themselves).
+    ///
+    /// @param indexingRuns Says which Lucene index a pipeline writes to.
+    @Inject
+    void setIndexingRuns(final Provider<IndexingRuns> indexingRuns) {
+        this.indexingRunsProvider = indexingRuns;
+    }
+
+    @Override
+    public List<String> indexPerFeed(final String build) {
+        try {
+            if (!BuildRecords.INDEX_PER_FEED.equals(buildRecords.feedComparison(build).get("index"))) {
+                return List.of();
+            }
+            final List<String> feeds = buildSourceFeeds(build, buildDocs(build));
+            return feeds.size() < 2
+                    ? List.of()
+                    : feeds;
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Unable to read build {}'s index choice", build, e);
+            return List.of();
+        }
+    }
+
+    @Override
+    public Optional<String> indexNameOf(final String pipelineUuid) {
+        try {
+            if (indexingRunsProvider != null) {
+                final Optional<DocRef> lucene = indexingRunsProvider.get().luceneIndex(pipelineUuid);
+                if (lucene.isPresent()) {
+                    return Optional.ofNullable(lucene.get().getName());
+                }
+            }
+            return elasticDestination(pipelineUuid).map(destination -> String.valueOf(destination.get(
+                    "index name")));
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Unable to read the index pipeline {} writes to", pipelineUuid, e);
+            return Optional.empty();
+        }
     }
 
     @Override

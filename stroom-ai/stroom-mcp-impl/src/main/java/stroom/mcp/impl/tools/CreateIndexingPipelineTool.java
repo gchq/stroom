@@ -45,6 +45,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -99,6 +100,8 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
     private final DocumentAccess documentAccess;
     private final WriteGuard guard;
     private final BuildPlan plan;
+    // A build indexed one index per feed; none in tests that make the tool themselves.
+    private Provider<FeedIndexes> feedIndexesProvider;
 
     @Inject
     CreateIndexingPipelineTool(final CreatePipelineTool pipelines,
@@ -287,18 +290,47 @@ class CreateIndexingPipelineTool extends AbstractBuiltInTool {
         } else {
             properties.addAll(elasticProperties(call, shape, openProperties, indexUuid));
         }
+        // One index per feed, as the user chose: this pipeline writes one feed's index (named for it), and
+        // processes only that feed's Events.
+        final Optional<String> forFeed = feedIndexesProvider == null
+                ? Optional.empty()
+                : feedIndexesProvider.get().feedOfIndex(build, indexNamesOf(call, indexUuid));
         final Map<String, Object> made = pipelines.fromTemplate(call, context, new FromTemplate(build, name,
                 templateUuid, properties, "", null, List.of(), false,
                 // An indexing pipeline reads Events, not the raw sample.
                 true, null, null));
         final Map<String, Object> result = new LinkedHashMap<>(made);
         result.put("backend", shape.backend());
+        forFeed.ifPresent(feed -> result.put("for_feed", "Writes " + feed + "'s index (one index per feed, as the "
+                                                         + "user chose): process only " + feed + "'s Events with "
+                                                         + "it"));
         if (lucene && !missing.missing().isEmpty()) {
             // The index lacks fields the XSLT's plan writes (made without plan=): the agreed plan supplies them.
             result.put("index_fields_added", indexFields.addLuceneFields(context.session(),
                     new DocRef(LuceneIndexDoc.TYPE, indexUuid), missing.plan()).get("added"));
         }
         return result;
+    }
+
+    // The names of the index a call gives: its index doc's (Lucene or Elastic), and its Elasticsearch index's.
+    private String indexNamesOf(final ToolCall call, final String indexUuid) {
+        final List<String> names = new ArrayList<>();
+        if (indexUuid != null) {
+            documentAccess.findDocRef(indexUuid).map(DocRef::getName).ifPresent(names::add);
+        }
+        if (stringArg(call, INDEX_NAME_ARG) != null) {
+            names.add(stringArg(call, INDEX_NAME_ARG));
+        }
+        return String.join(" ", names);
+    }
+
+    /// Where a build of one index per feed is read (set by injection; none in tests that make the tool
+    /// themselves).
+    ///
+    /// @param feedIndexes The build's per-feed indexing.
+    @Inject
+    void setFeedIndexes(final Provider<FeedIndexes> feedIndexes) {
+        this.feedIndexesProvider = feedIndexes;
     }
 
     /// A discovery pipeline of its own, the last resort where this Stroom has no discovery template at all (asked

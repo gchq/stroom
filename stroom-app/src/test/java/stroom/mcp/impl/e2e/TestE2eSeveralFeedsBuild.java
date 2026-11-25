@@ -19,6 +19,7 @@ package stroom.mcp.impl.e2e;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.mcp.impl.McpTestClient;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.processor.api.ProcessorFilterService;
@@ -188,6 +189,119 @@ class TestE2eSeveralFeedsBuild extends AbstractE2eTest {
                 made.getFirst().get("filter_id"))).orElseThrow());
         assertThat(feedsOf(filter.getQueryData().getExpression())).containsExactlyInAnyOrder(feedA, feedB,
                 feedC);
+    }
+
+    @Test
+    void oneIndexPerFeedPutsEachFeedsDocumentsInItsOwnIndex() {
+        // Three feeds of one VPN translated by a production pipeline: their Events are in each feed. B is readable
+        // by a group the others aren't, so one index per feed is proposed, and chosen.
+        final String name = "MANYI";
+        final String siteA = "System/Feeds/" + name + "/Site-A";
+        final String siteB = "System/Feeds/" + name + "/Site-B";
+        final List<String> feeds = List.of(name + "-A", name + "-B", name + "-C");
+        final HandWritten written = handWritten(siteA, feeds.get(0), textResource("hand_written_vpn.xsl"),
+                name + "-Events", "Event Data (JSON)", List.of(PipelineProperty.builder().element("jsonParser")
+                        .name("addRootObject").value(new PipelinePropertyValue(false)).build()), RAW,
+                vpnSample("2026-11-03T08:00:01.000Z"));
+        create(FeedDoc.TYPE, feeds.get(1), folder(siteB));
+        create(FeedDoc.TYPE, feeds.get(2), folder(siteA));
+        storeParts(feeds.get(1), List.of(Map.entry(Map.of("Feed", feeds.get(1)), vpnSample(
+                "2026-11-03T09:00:01.000Z"))));
+        storeParts(feeds.get(2), List.of(Map.entry(Map.of("Feed", feeds.get(2)), vpnSample(
+                "2026-11-03T10:00:01.000Z"))));
+        feedFilter(feeds.get(1), RAW, written.pipeline());
+        feedFilter(feeds.get(2), RAW, written.pipeline());
+        final UserRef readers = user("manyi-site-b-readers", Set.of(AppPermission.USE_MCP_TOOLS));
+        asUser(admin, () -> {
+            documentPermissionService.setPermission(feedRef(siteB, feeds.get(1)), readers, DocumentPermission.VIEW);
+            return null;
+        });
+        processAll();
+        final Map<String, Long> events = new LinkedHashMap<>();
+        for (final String feed : feeds) {
+            events.put(feed, streamsOf(feed).stream()
+                    .filter(meta -> "Events".equals(meta.getTypeName()))
+                    .map(meta -> meta.getId())
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("No Events in " + feed)));
+        }
+        final String build = "manyi-v1-0";
+        json("start_build", args("build", build, "feeds", feeds));
+
+        // One index doc per feed, the first asking (one per feed proposed, the readers differing).
+        final Map<String, Object> plan = map(client.json("draft_index_mapping", Map.of("backend", "lucene",
+                "index_name", feeds.get(0) + "-Index", "convention", "stroom-flat", "events_stream_ids",
+                List.of(events.get(feeds.get(0))))), "plan");
+        final Map<String, String> indexUuids = new LinkedHashMap<>();
+        for (final String feed : feeds) {
+            final Map<String, Object> index = agreed("create_index_doc", args("build", build, "backend", "lucene",
+                    "name", feed + "-Index", "time_field", plan.get("time_field"), "plan", plan));
+            assertThat(map(index, "feeds")).containsEntry("index_split", "per_feed").containsEntry("for_feed", feed);
+            indexUuids.put(feed, uuidOf(index));
+        }
+        final Map<String, Object> status = json("build_status", args("build", build));
+        assertThat(map(status, "index_per_feed")).containsEntry("without_index", List.of())
+                .containsEntry("without_pipeline", feeds);
+
+        // One indexing pipeline per feed's index, each processing only its feed's Events.
+        final String xslt = uuidOf(client.json("save_xslt", Map.of("build", build, "name", name + "-Indexing-XSLT",
+                "index_plan", plan)));
+        final String template = String.valueOf(templates("indexing").stream()
+                .filter(candidate -> "Indexing".equals(candidate.get("name")))
+                .findFirst()
+                .orElseThrow()
+                .get("uuid"));
+        final Map<String, String> pipelines = new LinkedHashMap<>();
+        for (final String feed : feeds) {
+            final Map<String, Object> made = agreed("create_indexing_pipeline", args("build", build, "name",
+                    feed + "-Indexing", "template_uuid", template, "xslt_uuid", xslt, "index_uuid",
+                    indexUuids.get(feed), "events_stream_ids", List.of(events.get(feed))));
+            assertThat(String.valueOf(made.get("for_feed"))).contains("Writes " + feed + "'s index");
+            pipelines.put(feed, uuidOf(made));
+            assertThat(json("step_sample", args("pipeline_uuid", uuidOf(made), "stream_ids",
+                    List.of(events.get(feed))))).containsEntry("verdict", "clean");
+        }
+        assertThat(refusal("create_processor_filter", args("pipeline_uuid", pipelines.get(feeds.get(0)),
+                "stream_ids", List.of(events.get(feeds.get(0)), events.get(feeds.get(1))), "source_pipeline_uuid",
+                written.pipeline()))).contains("writes " + feeds.get(0) + "'s index",
+                events.get(feeds.get(1)) + " (" + feeds.get(1) + ") are of another feed");
+        for (final String feed : feeds) {
+            agreed("create_processor_filter", args("pipeline_uuid", pipelines.get(feed), "stream_ids",
+                    List.of(events.get(feed)), "source_pipeline_uuid", written.pipeline()));
+        }
+        processAll();
+        flushIndexShards();
+
+        // Each feed's documents in its own index, and no other feed's.
+        for (final String feed : feeds) {
+            for (final String other : feeds) {
+                final Map<String, Object> found = json("search_events", args("index", indexUuids.get(feed),
+                        "where", List.of(Map.of("field", "StreamId", "value", String.valueOf(events.get(other)))),
+                        "limit", 3, "allStreams", true, "timeFrom", "2000-01-01T00:00:00.000Z"));
+                assertThat(number(found.get("total"))).as("%s's events in %s's index", other, feed)
+                        .isEqualTo(feed.equals(other)
+                                ? 1
+                                : 0);
+            }
+        }
+        assertThat(map(json("build_status", args("build", build)), "index_per_feed"))
+                .containsEntry("without_pipeline", List.of());
+
+        // Promoted: each indexing pipeline's filter selects its own feed's Events only.
+        final Map<String, Object> review = json("promote_build", args("build", build));
+        dump("promote_build review", review);
+        final Map<String, Object> promoted = agreed("promote_build", args("build", build, "reviewed",
+                review.get("review_id")));
+        dump("promote_build", promoted);
+        for (final String feed : feeds) {
+            final List<ProcessorFilter> filters = asUser(admin, () -> processorFilterService.find(
+                    new DocRef(PipelineDoc.TYPE, pipelines.get(feed))).getValues().stream()
+                    .filter(filter -> !filter.isDeleted())
+                    .toList());
+            assertThat(filters).as("%s's indexing filters", feed).isNotEmpty()
+                    .anySatisfy(filter -> assertThat(feedsOf(filter.getQueryData().getExpression()))
+                            .containsExactly(feed));
+        }
     }
 
     // A feed surveyed for the build, as next names the call.

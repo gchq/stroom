@@ -42,6 +42,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -103,6 +104,8 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
     private final BuildRecords buildRecords;
     private final Consent consent;
     private final BuildPlan plan;
+    // A build indexed one index per feed; none in tests that make the tool themselves.
+    private Provider<FeedIndexes> feedIndexesProvider;
 
     @Inject
     CreateProcessorFilterTool(final ProcessorFilterWrites filterWrites,
@@ -127,6 +130,15 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
         this.buildRecords = buildRecords;
         this.consent = consent;
         this.plan = plan;
+    }
+
+    /// Where a build of one index per feed is read (set by injection; none in tests that make the tool
+    /// themselves).
+    ///
+    /// @param feedIndexes The build's per-feed indexing.
+    @Inject
+    void setFeedIndexes(final Provider<FeedIndexes> feedIndexes) {
+        this.feedIndexesProvider = feedIndexes;
     }
 
     @Override
@@ -255,6 +267,11 @@ class CreateProcessorFilterTool extends AbstractBuiltInTool {
         final Optional<String> uncovered = plan.buildOf(ref).flatMap(build -> plan.uncovered(build, streamIds));
         if (uncovered.isPresent()) {
             throw new ToolRefusal(uncovered.get());
+        }
+        if (feedIndexesProvider != null) {
+            // One index per feed, as the user chose: an indexing pipeline processes only its own feed's Events.
+            plan.buildOf(ref).ifPresent(build -> feedIndexesProvider.get().refuseOtherFeeds(build, pipelineUuid,
+                    streamIds));
         }
         final Map<String, Object> destination = agreements.elasticDestination(pipelineUuid).orElse(null);
         final List<ProcessorFilter> filters = filterWrites.filters(ref);
