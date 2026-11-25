@@ -127,7 +127,7 @@ class TestRareValues {
         // Joined in the window: everything is new for them, so nothing is.
         firstActive.put("joiner", IN_WINDOW.minusSeconds(3_600));
 
-        final List<Held> held = RareValues.held(picked, holders, WINDOW, firstActive);
+        final List<Held> held = RareValues.held(picked, holders, WINDOW, firstActive, (who, time) -> false);
 
         assertThat(held).singleElement().satisfies(one -> {
             assertThat(one.isNew()).isTrue();
@@ -147,6 +147,20 @@ class TestRareValues {
     }
 
     @Test
+    void aValueFirstHeldOnADayAnApprovedExceptionExplainsIsntNew() {
+        final Picked picked = RareValues.pick("destination.domain", 20, table(List.of(
+                value("migration.vendor.example", 1, IN_WINDOW))));
+        final Table holders = new Table(List.of(holder("migration.vendor.example", "migrator", IN_WINDOW)), false, 1,
+                List.of(), "q");
+
+        final List<Held> held = RareValues.held(picked, holders, WINDOW, Map.of("migrator", BEFORE),
+                (who, time) -> "migrator".equals(who) && time.equals(IN_WINDOW));
+
+        assertThat(held).singleElement().satisfies(one -> assertThat(one.isNew()).isFalse());
+        assertThat(RareValues.findings("S", picked, held, "w", ZoneOffset.UTC)).isEmpty();
+    }
+
+    @Test
     void moreNewRareValuesScoreALittleMoreUpToTwiceTheThreshold() {
         final List<Map<String, String>> values = new ArrayList<>();
         final List<Map<String, String>> holders = new ArrayList<>();
@@ -156,7 +170,7 @@ class TestRareValues {
         }
         final Picked picked = RareValues.pick("f", 20, table(values));
         final List<Held> held = RareValues.held(picked, new Table(holders, false, 1, List.of(), "q"), WINDOW,
-                Map.of("p", BEFORE));
+                Map.of("p", BEFORE), (who, time) -> false);
 
         final Finding finding = RareValues.findings("S", picked, held, "w", ZoneOffset.UTC).get("p");
 

@@ -164,6 +164,10 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     static final int SCREEN_DAYS = 365;
     // The offset of a source's feeds aggregate.
     private static final String FEEDS = "feeds";
+    // A screen's aggregate of each keyword field's distinct values, to offer for rare.
+    private static final String FIELDS = "fields";
+    // A screen's aggregate of the rare field's values.
+    private static final String RARE_TABLE = "rare";
     static final String INCLUDE_TARGETS_ARG = "includeTargets";
     static final String TARGET_PERSON_FIELD_ARG = "targetPersonField";
     static final String TARGET_USER_FIELD_ARG = "targetUserField";
@@ -800,10 +804,10 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
             final Planned source = usable.get(i);
             PopulationScreen.queries(batch, i + ":", source, where, from, to, zone.zone(), peers);
             if (rare != null && source.rareField() != null) {
-                batch.add(i + ":rare", List.of(RareValues.byValue(source.source(), where, source.scope().field(),
-                        rare, from, to)));
+                batch.add(i + ":" + RARE_TABLE, List.of(RareValues.byValue(source.source(), where,
+                        source.scope().field(), rare, from, to)));
             } else if (rare == null && !source.keywordFields().isEmpty()) {
-                batch.add(i + ":fields", List.of(RareValues.cardinality(source.source(), where,
+                batch.add(i + ":" + FIELDS, List.of(RareValues.cardinality(source.source(), where,
                         source.keywordFields(), from, to)));
             }
         }
@@ -813,12 +817,13 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
 
         final Map<String, List<ActivityScoring.Finding>> findings = new LinkedHashMap<>();
         final Map<String, Integer> people = new LinkedHashMap<>();
-        final Map<String, Integer> sourceWide = new LinkedHashMap<>();
+        final Map<String, Set<String>> sourceWide = new LinkedHashMap<>();
         final List<ScreenResult.Rare> rareFound = new ArrayList<>();
         final Map<String, List<RareValues.FieldValues>> rareFields = new LinkedHashMap<>();
         final List<RareValues.Picked> picked = new ArrayList<>();
         final List<Map<String, Instant>> firstActive = new ArrayList<>();
         final Set<String> rebaselined = new LinkedHashSet<>();
+        final Map<String, Map<String, PopulationScreen.Hours>> hoursOf = new LinkedHashMap<>();
         int peopleRead = 0;
         for (int i = 0; i < usable.size(); i++) {
             final Planned source = usable.get(i);
@@ -828,7 +833,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                     .filter(entry -> entry.getKey().startsWith(prefix))
                     .forEach(entry -> {
                         notes.addAll(entry.getValue().notes());
-                        if (entry.getValue().cutShort()) {
+                        if (entry.getValue().cutShort() && !entry.getKey().equals(prefix + FIELDS)) {
                             notes.add(name + ": the aggregate of " + entry.getKey().substring(prefix.length())
                                       + " reached the row limit (" + ActivityProfiles.MAX_ROWS + ") in a slice: "
                                       + "some people's values are approximate; where narrows the screen.");
@@ -892,6 +897,8 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                 NullSafe.consume(score.rebased(), day -> rebaselined.add(who + " from " + day));
                 everyone.add(score.features());
                 scores.put(who, score);
+                NullSafe.consume(PopulationScreen.hours(score.features(), periods.windowFrom()), own ->
+                        hoursOf.computeIfAbsent(who, k -> new LinkedHashMap<>()).put(name, own));
                 if (located != null) {
                     locations.put(who, ActivityLocation.locate(name, score.spec(), located.getOrDefault(who, empty),
                             source.pointField() != null).findings());
@@ -907,17 +914,18 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                 own.addAll(locations.getOrDefault(who, List.of()));
                 own.stream()
                         .filter(ActivityScoring.Finding::sourceWide)
-                        .forEach(finding -> sourceWide.merge("[" + name + "] " + ActivityScoring.label(
-                                finding.feature()) + " from " + finding.window().split(" to ")[0], 1, Integer::sum));
+                        .forEach(finding -> sourceWide.computeIfAbsent("[" + name + "] " + ActivityScoring.label(
+                                finding.feature()) + " from " + finding.window().split(" to ")[0],
+                                k -> new LinkedHashSet<>()).add(who));
                 findings.computeIfAbsent(who, k -> new ArrayList<>()).addAll(own);
             });
-            if (rare != null && tables.containsKey(prefix + "rare")) {
-                picked.add(RareValues.pick(rare, daily.size(), tables.get(prefix + "rare")));
+            if (rare != null && tables.containsKey(prefix + RARE_TABLE)) {
+                picked.add(RareValues.pick(rare, daily.size(), tables.get(prefix + RARE_TABLE)));
             } else {
                 picked.add(null);
-                if (tables.containsKey(prefix + "fields")) {
+                if (tables.containsKey(prefix + FIELDS)) {
                     final List<RareValues.FieldValues> offered = RareValues.usable(source.keywordFields(),
-                            tables.get(prefix + "fields"));
+                            tables.get(prefix + FIELDS));
                     if (!offered.isEmpty()) {
                         rareFields.put(name, offered.stream().limit(RareValues.LISTED).toList());
                     }
@@ -946,7 +954,11 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
             final int at = holderAt.indexOf(i);
             final List<RareValues.Held> held = at < 0
                     ? List.of()
-                    : RareValues.held(one, holderTables.get(at), windowStart, firstActive.get(i));
+                    : RareValues.held(one, holderTables.get(at), windowStart, firstActive.get(i), (who, time) -> {
+                        final Spec theirs = dates.spec(who, periods, Unit.WEEK, zone.zone());
+                        final LocalDate day = time.atZone(zone.zone()).toLocalDate();
+                        return theirs.onLeave(day) || theirs.exception(day).isPresent();
+                    });
             if (at >= 0) {
                 queriesRun += holderTables.get(at).queries();
             }
@@ -963,8 +975,37 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         if (rare != null && rareFound.isEmpty()) {
             notes.add("No source has the field " + rare + " (rare): no rare values.");
         }
-        final PopulationScreen.Ranking ranking = PopulationScreen.ranked(findings, periods.windowFrom());
+        final PopulationScreen.Ranking ranking = PopulationScreen.ranked(findings, periods.windowFrom(), hoursOf);
         final List<PopulationScreen.Ranked> ranked = ranking.ranked();
+        notes.addAll(rankingNotes(ranking, rebaselined));
+        final Set<String> rankedPeople = new LinkedHashSet<>();
+        ranked.forEach(one -> rankedPeople.add(one.person()));
+        final List<String> unflagged = findings.keySet().stream().filter(who -> !rankedPeople.contains(who))
+                .sorted().toList();
+        notes.add("Screened " + findings.size() + " people in " + usable.size() + " source(s) from "
+                  + queriesRun + " aggregate queries (every person in each: by day and by month a slice, by hour "
+                  + "a week; never a query a person). Scored as one person's comparison would score them, each "
+                  + "against their own baseline" + (peers
+                ? " and peers"
+                : ": peers: true adds their " + element + "'s") + ".");
+        final List<String> shared = new ArrayList<>();
+        sourceWide.forEach((line, who) -> shared.add(line + ": " + who.size() + " people's own shift matched "
+                                                     + "everyone else's (a change in the source, not theirs)"));
+        final ScreenResult.Run run = new ScreenResult.Run(periods, units, zone,
+                conditions.stream().map(Condition::text).toList(), planned, people, findings.size(), ranked, unflagged,
+                sortedFindings(findings), rareFound, rareFields,
+                shared.stream().limit(CompareResult.SOURCE_WIDE_SHOWN).toList(), notes,
+                queriesRun, folder);
+        final List<WorkspacePath> files = ScreenResult.write(workspace, run);
+        final Map<String, Object> structured = ScreenResult.structured(run, files);
+        return context.session().isChat()
+                ? ToolResult.text(ScreenResult.markdown(run, files)).withStructuredContent(structured)
+                : ToolResult.text(JsonUtil.writeValueAsString(structured, false)).withStructuredContent(structured);
+    }
+
+    // What the ranking left out, and who was re-baselined, as the notes say it.
+    private static List<String> rankingNotes(final PopulationScreen.Ranking ranking, final Set<String> rebaselined) {
+        final List<String> notes = new ArrayList<>();
         if (!rebaselined.isEmpty()) {
             notes.add(rebaselined.size() + " people re-baselined from a lasting change of their own months before "
                       + "the window (a new role or team?: their new normal by the window): " + String.join(", ",
@@ -991,29 +1032,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
             notes.add(ranking.earlier() + " lasting change(s) dated before the window (and drifts that are the same "
                       + "step) not ranked: in the findings file.");
         }
-        final Set<String> rankedPeople = new LinkedHashSet<>();
-        ranked.forEach(one -> rankedPeople.add(one.person()));
-        final List<String> unflagged = findings.keySet().stream().filter(who -> !rankedPeople.contains(who))
-                .sorted().toList();
-        notes.add("Screened " + findings.size() + " people in " + usable.size() + " source(s) from "
-                  + queriesRun + " aggregate queries (every person in each: by day and by month a slice, by hour "
-                  + "a week; never a query a person). Scored as one person's comparison would score them, each "
-                  + "against their own baseline" + (peers
-                ? " and peers"
-                : ": peers: true adds their " + element + "'s") + ".");
-        final List<String> shared = new ArrayList<>();
-        sourceWide.forEach((line, count) -> shared.add(line + ": " + count + " people's own shift matched everyone "
-                                                       + "else's (a change in the source, not theirs)"));
-        final ScreenResult.Run run = new ScreenResult.Run(periods, units, zone,
-                conditions.stream().map(Condition::text).toList(), planned, people, findings.size(), ranked, unflagged,
-                sortedFindings(findings), rareFound, rareFields,
-                shared.stream().limit(CompareResult.SOURCE_WIDE_SHOWN).toList(), notes,
-                queriesRun, folder);
-        final List<WorkspacePath> files = ScreenResult.write(workspace, run);
-        final Map<String, Object> structured = ScreenResult.structured(run, files);
-        return context.session().isChat()
-                ? ToolResult.text(ScreenResult.markdown(run, files)).withStructuredContent(structured)
-                : ToolResult.text(JsonUtil.writeValueAsString(structured, false)).withStructuredContent(structured);
+        return notes;
     }
 
     // Each person's findings, largest first.

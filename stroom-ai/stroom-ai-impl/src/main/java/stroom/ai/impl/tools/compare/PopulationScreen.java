@@ -71,6 +71,8 @@ final class PopulationScreen {
     static final int REBASE_AFTER_DAYS = 28;
     /// The fewest days of baseline a person re-baselined must keep before the window.
     static final int REBASE_KEEP_DAYS = 56;
+    /// The minutes a day's first (last) activity must be before (after) every baseline day's to be ranked.
+    static final int HOUR_MARGIN = 60;
     static final String DAILY = "daily";
     static final String HOURLY = "hourly";
     static final String POPULATION = "population";
@@ -387,14 +389,19 @@ final class PopulationScreen {
     /// activity shares (the source's); a finding of a kind and feature that at least [#COMMON_SHARE] of the people
     /// (and [#MIN_COMMON]) have over overlapping days, the population's (everyone's browsing stepping up together); a
     /// window with no activity at all, an absence (leave not given); a day's count (one-off busy days are everyone's:
-    /// a day is ranked by when its activity was); a category the person already used (only one new to them is
+    /// a day is ranked by when its activity was, and only outside the hours of every day of their baseline in the
+    /// source); a category the person already used (only one new to them is
     /// ranked); and a lasting change dated before the window,
     /// with a drift of the same feature (that step), their new normal by the window.
     ///
     /// @param findings   Each person's findings, across the sources.
     /// @param windowFrom The window's first day.
+    /// @param hours      Each person's hours in each source's baseline ([#hours]); a person or source missing has
+    ///                   every day's time ranked.
     /// @return The people with any finding ranked, highest first (then by person), and what wasn't ranked.
-    static Ranking ranked(final Map<String, List<Finding>> findings, final LocalDate windowFrom) {
+    static Ranking ranked(final Map<String, List<Finding>> findings,
+                          final LocalDate windowFrom,
+                          final Map<String, Map<String, Hours>> hours) {
         // Each kind and feature's findings, by person, with the days they span.
         final Map<String, Map<String, List<LocalDate[]>>> spans = new TreeMap<>();
         findings.forEach((who, all) -> all.stream()
@@ -425,7 +432,8 @@ final class PopulationScreen {
                     absent++;
                     continue;
                 }
-                if (isDayVolume(finding) || isUsualCategory(finding)) {
+                if (isDayVolume(finding) || isUsualCategory(finding)
+                    || isWithinHours(finding, hours.getOrDefault(person.getKey(), Map.of()).get(finding.source()))) {
                     continue;
                 }
                 if (isEarlierChange(finding, windowFrom) || (finding.kind() == ActivityScoring.Kind.DRIFT
@@ -550,6 +558,42 @@ final class PopulationScreen {
     private static boolean isDayVolume(final Finding finding) {
         return finding.kind() == ActivityScoring.Kind.DAY && !finding.feature().equals(ActivityScoring.FIRST)
                && !finding.feature().equals(ActivityScoring.LAST);
+    }
+
+    /// A person's hours in one source's baseline: their earliest first and latest last activity of any day, in
+    /// minutes since midnight.
+    ///
+    /// @param features   Their daily features in the source.
+    /// @param windowFrom The window's first day: the days before it are the baseline's.
+    /// @return Their hours, or null where the baseline has no day with activity.
+    static Hours hours(final Map<String, Map<LocalDate, Double>> features, final LocalDate windowFrom) {
+        final double earliest = features.getOrDefault(ActivityScoring.FIRST, Map.of()).entrySet().stream()
+                .filter(day -> day.getKey().isBefore(windowFrom))
+                .mapToDouble(Map.Entry::getValue)
+                .min()
+                .orElse(Double.NaN);
+        final double latest = features.getOrDefault(ActivityScoring.LAST, Map.of()).entrySet().stream()
+                .filter(day -> day.getKey().isBefore(windowFrom))
+                .mapToDouble(Map.Entry::getValue)
+                .max()
+                .orElse(Double.NaN);
+        return Double.isNaN(earliest) || Double.isNaN(latest)
+                ? null
+                : new Hours(earliest, latest);
+    }
+
+    // A day's first or last activity within the hours of every day of their baseline in the source (an hour's
+    // margin): a sparse source's times wander within the working day; a night outside any day of theirs is ranked.
+    private static boolean isWithinHours(final Finding finding, final Hours hours) {
+        if (hours == null || finding.kind() != ActivityScoring.Kind.DAY) {
+            return false;
+        }
+        if (finding.feature().equals(ActivityScoring.FIRST)) {
+            return finding.value() >= hours.earliest() - HOUR_MARGIN;
+        } else if (finding.feature().equals(ActivityScoring.LAST)) {
+            return finding.value() <= hours.latest() + HOUR_MARGIN;
+        }
+        return false;
     }
 
     // A rise in a category the person already used (a median above nothing): their work's ebb and flow, as
@@ -776,6 +820,18 @@ final class PopulationScreen {
                 return null;
             }
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A person's hours in one source's baseline.
+    ///
+    /// @param earliest Their earliest first activity of any day, in minutes since midnight.
+    /// @param latest   Their latest last activity of any day, likewise.
+    record Hours(double earliest, double latest) {
+
     }
 
 

@@ -50,7 +50,7 @@ class TestPopulationScreen {
                 week("new:host", 20)));
         findings.put("nothing", List.of());
 
-        final Ranking ranking = PopulationScreen.ranked(findings, WINDOW_FROM);
+        final Ranking ranking = PopulationScreen.ranked(findings, WINDOW_FROM, Map.of());
 
         assertThat(ranking.ranked()).extracting(PopulationScreen.Ranked::person)
                 .containsExactly("three-things", "one-thing");
@@ -73,7 +73,7 @@ class TestPopulationScreen {
             findings.put("q" + i, List.of());
         }
 
-        final Ranking ranking = PopulationScreen.ranked(findings, WINDOW_FROM);
+        final Ranking ranking = PopulationScreen.ranked(findings, WINDOW_FROM, Map.of());
 
         assertThat(ranking.ranked()).extracting(PopulationScreen.Ranked::person).containsExactly("later");
         assertThat(ranking.common()).containsEntry("S|week|events", 4);
@@ -90,7 +90,7 @@ class TestPopulationScreen {
         }
 
         // 3 of 13 is under a quarter (4).
-        assertThat(PopulationScreen.ranked(findings, WINDOW_FROM).ranked()).hasSize(3);
+        assertThat(PopulationScreen.ranked(findings, WINDOW_FROM, Map.of()).ranked()).hasSize(3);
     }
 
     @Test
@@ -113,7 +113,7 @@ class TestPopulationScreen {
                 finding(Kind.WEEK, "category:Job Search", "2026-07-06 to 2026-07-12", 0, 4, 6),
                 finding(Kind.CHANGE, "events", "2026-08-01", 50, 90, 5)));
 
-        final Ranking ranking = PopulationScreen.ranked(findings, WINDOW_FROM);
+        final Ranking ranking = PopulationScreen.ranked(findings, WINDOW_FROM, Map.of());
 
         assertThat(ranking.ranked()).singleElement().satisfies(person -> {
             assertThat(person.findings()).extracting(Finding::feature)
@@ -122,6 +122,43 @@ class TestPopulationScreen {
         });
         assertThat(ranking.absent()).isEqualTo(1);
         assertThat(ranking.earlier()).isEqualTo(2);
+    }
+
+    @Test
+    void aDaysTimeIsRankedOnlyOutsideTheHoursOfEveryBaselineDay() {
+        final Map<String, Map<LocalDate, Double>> features = new LinkedHashMap<>();
+        final Map<LocalDate, Double> first = new TreeMap<>();
+        final Map<LocalDate, Double> last = new TreeMap<>();
+        // Baseline days from 08:00 to 17:00 at the widest; a window day's times aren't the baseline's.
+        first.put(LocalDate.of(2026, 5, 4), 480.0);
+        first.put(LocalDate.of(2026, 5, 5), 540.0);
+        last.put(LocalDate.of(2026, 5, 4), 1_020.0);
+        last.put(LocalDate.of(2026, 5, 5), 960.0);
+        first.put(LocalDate.of(2026, 6, 2), 30.0);
+        last.put(LocalDate.of(2026, 6, 2), 1_430.0);
+        features.put(ActivityScoring.FIRST, first);
+        features.put(ActivityScoring.LAST, last);
+        final PopulationScreen.Hours hours = PopulationScreen.hours(features, WINDOW_FROM);
+        assertThat(hours).isEqualTo(new PopulationScreen.Hours(480, 1_020));
+        assertThat(PopulationScreen.hours(Map.of(), WINDOW_FROM)).isNull();
+
+        final Map<String, List<Finding>> findings = new LinkedHashMap<>();
+        findings.put("p", List.of(
+                // An hour past their latest day: within; more: outside.
+                finding(Kind.DAY, ActivityScoring.LAST, "2026-06-03", 900, 1_080, 9),
+                finding(Kind.DAY, ActivityScoring.LAST, "2026-06-04", 900, 1_200, 8),
+                finding(Kind.DAY, ActivityScoring.FIRST, "2026-06-05", 540, 430, 7),
+                finding(Kind.DAY, ActivityScoring.FIRST, "2026-06-06", 540, 30, 6),
+                // A week's time isn't held to the hours.
+                finding(Kind.WEEK, ActivityScoring.FIRST, "2026-06-08 to 2026-06-14", 540, 660, 5)));
+
+        final Ranking ranking = PopulationScreen.ranked(findings, WINDOW_FROM, Map.of("p", Map.of("S", hours)));
+
+        assertThat(ranking.ranked()).singleElement().satisfies(person -> assertThat(person.findings())
+                .extracting(Finding::window).containsExactly("2026-06-04", "2026-06-06", "2026-06-08 to 2026-06-14"));
+        // Without their hours (a source with none), every day's time is ranked.
+        assertThat(PopulationScreen.ranked(findings, WINDOW_FROM, Map.of()).ranked().getFirst().findings())
+                .hasSize(5);
     }
 
     @Test

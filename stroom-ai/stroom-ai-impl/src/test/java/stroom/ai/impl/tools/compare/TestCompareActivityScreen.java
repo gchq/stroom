@@ -155,7 +155,8 @@ class TestCompareActivityScreen {
                                           + "source_wide,evidence,alternative");
         assertThat(String.valueOf(json.get("next_step"))).startsWith("Next: compare_activity with person ");
         assertThat(String.valueOf(json.get("notes"))).contains("Screened 12 people in 1 source(s)")
-                .contains("never a query a person");
+                .contains("never a query a person")
+                .doesNotContain("row limit");
         // No rare field: the fields that could be screened for one (none here has many values).
         assertThat(json).doesNotContainKey("rare");
     }

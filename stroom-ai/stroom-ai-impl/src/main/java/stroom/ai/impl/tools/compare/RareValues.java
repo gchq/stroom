@@ -35,6 +35,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.function.BiPredicate;
 import java.util.regex.Pattern;
 
 /// A population screen's rare values (`rare`): the values of one keyword field held by very few of the people
@@ -141,7 +142,8 @@ final class RareValues {
         for (int i = 0; i < counted.size(); i++) {
             metrics.add(new Metric(Kind.DISTINCT, counted.get(i), ActivityProfiles.DISTINCT_PREFIX + i));
         }
-        return new AggregateQuery(source, where, from, to, Bucket.NONE, List.of(), metrics, 1);
+        // One row: a limit of two, so it is never taken for cut short.
+        return new AggregateQuery(source, where, from, to, Bucket.NONE, List.of(), metrics, 2);
     }
 
     /// The fields to offer for `rare`: those with many distinct values ([#MANY_VALUES]), most first.
@@ -253,17 +255,19 @@ final class RareValues {
     }
 
     /// Finds each rare value's holders and whether it is new for each: first held in the window by someone active
-    /// in the source before it.
+    /// in the source before it, not on a day their leave or an approved exception explains.
     ///
     /// @param picked      The rare values picked.
     /// @param holders     The [#holders] table.
     /// @param windowFrom  The window's start.
     /// @param firstActive Each person's first activity in the source.
+    /// @param explained   True for a person's time their leave or an approved exception explains.
     /// @return The rare values with their holders, fewest people first, then those new to someone, then the newest.
     static List<Held> held(final Picked picked,
                            final Table holders,
                            final Instant windowFrom,
-                           final Map<String, Instant> firstActive) {
+                           final Map<String, Instant> firstActive,
+                           final BiPredicate<String, Instant> explained) {
         final Map<String, List<Holder>> byValue = new LinkedHashMap<>();
         for (final Map<String, String> row : holders.rows()) {
             final String value = NullSafe.trim(row.get(AggregateQuery.groupColumn(0)));
@@ -273,7 +277,8 @@ final class RareValues {
                 continue;
             }
             final Instant active = firstActive.get(who);
-            final boolean isNew = !first.isBefore(windowFrom) && active != null && active.isBefore(windowFrom);
+            final boolean isNew = !first.isBefore(windowFrom) && active != null && active.isBefore(windowFrom)
+                                  && !explained.test(who, first);
             byValue.computeIfAbsent(value, k -> new ArrayList<>()).add(new Holder(who, first,
                     (long) ActivityProfiles.number(row.get(ActivityProfiles.EVENTS)), isNew));
         }
