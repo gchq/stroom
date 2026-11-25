@@ -133,7 +133,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -156,7 +158,8 @@ import java.util.function.Function;
 ///   every Elastic Index the user can use. A source with roles is read by them, as before (the override, e.g. for a
 ///   source of window focus); one without has its events classified: from their Events XML, read by StreamId and
 ///   EventId ([TimelineEventXml], [EventXmlClassifier]; for an event code nothing settles, a few of its events'
-///   XML, the code classified once and applied to all its events), else the index's element field, else the
+///   XML read first, so the cap reaches every code, the code classified once from them and applied to all its
+///   events, the rest of its events' XML read within the cap only for the keys it holds), else the index's element field, else the
 ///   source's own event codes classified once ([EventCodes]) ([TimelineClassification]). The user and the time come
 ///   from the index.
 /// - **The user field** of each index ([TimelineFields]): the call's (or skill's), the AGENTS doc's `## Fields`, a
@@ -502,9 +505,9 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                  + "typeRoles or the "
                                  + "skill's, the catalogue of the stream's translation, the AGENTS doc's ## Event "
                                  + "types, the schema's element and Action, else the codes classified (offered as "
-                                 + "## Event types lines). Events XML only for what the index doesn't map (a few "
-                                 + "events per unsettled code, applied to all its events), named to add to its "
-                                 + "plan; the user and time always the index's. Past the events cap "
+                                 + "## Event types lines). Events XML only for what the index doesn't map (an "
+                                 + "unsettled code classified once from a few of its events, read first, the rest "
+                                 + "read for their keys within the cap), named to add to its plan; the user and time always the index's. Past the events cap "
                                  + "a day-by-day overview comes instead, to pick days. Omit sources to ask the user "
                                  + "which (over MCP: the AGENTS doc's ## Sources, else the indexes holding the "
                                  + "user's events, at most 10). Data-quality flags for missing events. "
@@ -1652,7 +1655,9 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final Map<Long, List<Long>> ids = new TreeMap<>();
         final Set<String> seen = new LinkedHashSet<>();
         final Map<Integer, Integer> typeRead = new LinkedHashMap<>();
-        for (final Event event : toRead) {
+        final List<Event> inOrder = new ArrayList<>(toRead);
+        inOrder.addAll(restOfCodes(forType, toRead, read, fields));
+        for (final Event event : inOrder) {
             if (seen.size() >= cap) {
                 break;
             }
@@ -1661,10 +1666,13 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 typeRead.merge(event.source(), 1, Integer::sum);
             }
         }
+        // Past the cap: only those needed to classify (a code's sample, or an event with no code); the rest of a
+        // code's events are classified by it whatever.
         final int pastCap = (int) toRead.stream()
                 .map(event -> event.streamId() + ":" + event.eventId())
                 .distinct()
-                .count() - seen.size();
+                .filter(key -> !seen.contains(key))
+                .count();
         final int budget = Math.max(0, config.getCharacteriseMaxItems());
         final Map<Integer, Integer> contentRead = new LinkedHashMap<>();
         for (final Map.Entry<Integer, List<Event>> source : forContent.entrySet()) {
@@ -1712,7 +1720,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 xml.unreadable(), pastCap, xml.notAllowed(), cap), paths);
     }
 
-    // The events whose XML is read for their type, in the order read: of each unsettled event code, a few events
+    // The events whose XML is needed for their type, in the order read: of each unsettled event code, a few events
     // spread over the period (the first round of every code first, so the cap reaches every code), as the code is
     // classified once from them and applied to all its events; between the rounds, every event with no code, each
     // read for itself.
@@ -1744,6 +1752,28 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 if (sample.size() > round) {
                     out.add(sample.get(round));
                 }
+            }
+        }
+        return out;
+    }
+
+    // The rest of the coded events, in time order: their XML read after every code's sample, while the cap allows,
+    // not to classify them (their code is) but for the keys only it holds (e.g. a window's handle in Data, which a
+    // pair is inferred by).
+    private static List<Event> restOfCodes(final List<Event> forType,
+                                           final List<Event> sampled,
+                                           final Read read,
+                                           final Map<Integer, Fields> fields) {
+        final Set<Event> taken = Collections.newSetFromMap(new IdentityHashMap<>());
+        taken.addAll(sampled);
+        final List<Event> out = new ArrayList<>();
+        for (final Event event : forType) {
+            final Fields found = fields.getOrDefault(event.source(), Fields.NONE);
+            final String code = found.eventType() == null
+                    ? null
+                    : read.extras().getOrDefault(event.id(), Map.of()).get(found.eventType());
+            if (!taken.contains(event) && NullSafe.isNonBlankString(code)) {
+                out.add(event);
             }
         }
         return out;

@@ -909,7 +909,7 @@ class TestActivityTimelineAnySource {
     }
 
     @Test
-    void anUnsettledCodesXmlIsReadForAFewOfItsEventsAndItsClassificationAppliedToAll() {
+    void anUnsettledCodeIsClassifiedOnceFromAFewOfItsEventsReadFirstAndTheRestReadForKeysWithinTheCap() {
         for (int i = 0; i < 10; i++) {
             typed("09:" + (10 + 4 * i), 9, "proc-start", null);
             xml.put("9:" + eventId, "<Event><EventDetail><TypeId>proc-start</TypeId><Process><Action>Execute"
@@ -923,23 +923,42 @@ class TestActivityTimelineAnySource {
         Mockito.when(agentInstructions.fieldsRuled(Mockito.any(), Mockito.eq(EVENTS))).thenReturn(Map.of(
                 InstructionRules.EVENT_TYPE_FIELD, new FieldRule(List.of("TypeId"), "/")));
 
-        final Map<String, Object> result = json(mcp(), arguments(Map.of()));
+        // An XML cap of a few events per code: each code's few read first, classified once, applied to all.
+        final int perCode = ActivityTimelineTool.XML_EVENTS_PER_CODE;
+        final Map<String, Object> result = json(mcpWithXmlCap(2 * perCode), arguments(Map.of()));
 
-        // A few events of each code read, not every one; the code classified once and applied to all its events.
         final ArgumentCaptor<Map<Long, List<Long>>> ids = ArgumentCaptor.forClass(Map.class);
         Mockito.verify(eventXml, Mockito.times(1)).read(Mockito.any(), ids.capture(), Mockito.anyInt(),
                 Mockito.any(), Mockito.any());
-        final int perCode = ActivityTimelineTool.XML_EVENTS_PER_CODE;
         assertThat(ids.getValue().values().stream().mapToInt(List::size).sum()).isEqualTo(2 * perCode);
         final Map<String, Object> source = ((List<Map<String, Object>>) result.get("sources")).getFirst();
         assertThat(source).containsEntry("classified_by", Map.of("Events XML", 2L * perCode,
                 "Events XML of its code", 20L - 2L * perCode));
+        // Every code classified within the cap: none past it.
         assertThat((Map<String, Object>) result.get("events_xml")).containsEntry("read", 2L * perCode)
                 .containsEntry("past_the_cap", 0L);
         assertThat((Map<String, Object>) source.get("roles_from")).containsOnlyKeys(TypeRoleLookup.FROM_SCHEMA);
-        // The schema's process pair applies to the codes (each pair keyed by the process id where it was read).
         assertThat(files.content(FOLDER + ActivityTimelineTool.SPANS_FILE).orElseThrow())
                 .contains("proc-start to proc-end");
+
+        // Within a larger cap the rest of the codes' events are read too, for the keys only their XML holds (each
+        // process's id): every process paired.
+        final Map<String, Object> whole = json(mcp(), arguments(Map.of()));
+        assertThat(((List<Map<String, Object>>) whole.get("sources")).getFirst()).containsEntry("classified_by",
+                Map.of("Events XML", 20L));
+        assertThat(files.content(FOLDER + ActivityTimelineTool.SPANS_FILE).orElseThrow().lines()
+                .filter(line -> line.contains("proc-start to proc-end")).count()).isEqualTo(10);
+    }
+
+    private ToolCallContext mcpWithXmlCap(final int cap) {
+        return ToolCallContext.builder(new ToolSession(ToolSession.Kind.MCP, "mcp-1",
+                        new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "A client")))
+                .workspace(new SessionWorkspace(files.workspace(), CHAT))
+                .userQuestions(UserQuestions.NONE)
+                .limits(SessionLimits.lookedUp(() -> new AiWorkspaceConfig(null, null, null, null, null, null, null,
+                        null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                        null, null, cap)))
+                .build();
     }
 
     @Test
