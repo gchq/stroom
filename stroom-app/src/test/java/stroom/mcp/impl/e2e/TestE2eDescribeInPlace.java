@@ -165,6 +165,9 @@ class TestE2eDescribeInPlace extends AbstractE2eTest {
         assertThat(nextTool(status)).isEqualTo("survey_feed");
         final Map<String, Object> surveyed = json("survey_feed", args("feed", "PREDESC", "build", build));
         assertThat(surveyed).containsEntry("read_at", "translation_input");
+        // Surveyed at the translation's input: the plan moves on to the catalogue (seen in eval case 106 on Haiku:
+        // the build's combined survey left out where it read, and the plan asked for the survey again).
+        assertThat(nextTool(json("build_status", args("build", build)))).isEqualTo(CATALOGUE);
         dump("survey at the translation's input", surveyed);
         assertThat(String.valueOf(surveyed.get("shapes"))).contains("action");
         final Map<String, Object> listed = json(CATALOGUE, args("build", build, "stream_ids", List.of(vpn.raw())));
