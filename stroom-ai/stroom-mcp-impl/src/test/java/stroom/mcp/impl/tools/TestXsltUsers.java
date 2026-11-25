@@ -132,6 +132,9 @@ class TestXsltUsers {
         assertThat(found.namedIn("Just acme-ab please")).containsExactly("ACME-AB");
         assertThat(found.namedIn("ACME-A and ACME-AB")).containsExactly("ACME-A", "ACME-AB");
         assertThat(found.namedIn("neither")).isEmpty();
+        // A name ending the user's sentence (seen in eval case 107 on Haiku: "EVAL-107 and EVAL-107-B." kept one).
+        assertThat(found.namedIn("Both feeds: acme-a and acme-ab.")).containsExactly("ACME-A", "ACME-AB");
+        assertThat(found.namedIn("acme-ab.x")).isEmpty();
         assertThat(found.narrowedTo(null)).isEmpty();
     }
 

@@ -237,8 +237,9 @@ class XsltUsers {
         List<String> namedIn(final String text) {
             final String said = NullSafe.string(text).toLowerCase(Locale.ROOT);
             return feeds().stream()
+                    // A whole name: no name character either side, a full stop ending the sentence allowed.
                     .filter(feed -> said.matches("(?s).*(?<![\\w.-])" + Pattern.quote(
-                            feed.toLowerCase(Locale.ROOT)) + "(?![\\w.-]).*"))
+                            feed.toLowerCase(Locale.ROOT)) + "(?![\\w-])(?!\\.[\\w-]).*"))
                     .toList();
         }
     }
