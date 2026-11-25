@@ -67,6 +67,9 @@ create_headers_file() {
 
 create_headers_file
 
+# We want new files writeable to group
+#umask 0007
+
 # In case anyone tries to run the container as root drop down
 if [ "$(id -u)" = '0' ]; then
     #runs all args as user USER_ID:GROUP_ID, rather than as root

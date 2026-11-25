@@ -70,6 +70,7 @@ FROM redhat/ubi10-minimal:10.3-1795196920@sha256:d63890a635f8f19177bce1775f74f58
 
 # bash, jq, openssl and curl are required for Kubernetes lifecycle scripts, which interact with the API.
 # curl is also required for the docker compose healthcheck
+# util-linux needed for setpriv in entrypoint
 RUN \
     set -eu; \
     echo "http_proxy: ${http_proxy:-}"; \
@@ -80,7 +81,8 @@ RUN \
         curl \
         glibc-langpack-en \
         jq \
-        openssl; \
+        openssl \
+        util-linux; \
     microdnf clean all
 
 # Re-define the JAVA_HOME for our custom JRE
@@ -209,6 +211,8 @@ CMD [ \
 
 RUN \
     set -eu; \
+    # Snapshot all current installed packages so we can remove any new ones later \
+    rpm -qa --queryformat "%{NAME}\n" | sort > /tmp/current_pkgs; \
     # Needed for groupadd/useradd \
     microdnf install -y \
         shadow-utils; \
@@ -223,31 +227,39 @@ RUN \
         --gid ${GROUP_ID} \
         --shell /sbin/nologin \
         --no-create-home ${USER_NAME}; \
+    # shadow-utils was only needed for groupadd/useradd, so now can be removed \
+    # along with any deps it pulled in \
+    rpm -qa --queryformat "%{NAME}\n" | sort > /tmp/new_pkgs; \
+    # Get a list of all added packages then remove them if there are any
+    added_pkgs="$(comm -13 /tmp/current_pkgs /tmp/new_pkgs)"; \
+    rm /tmp/current_pkgs /tmp/new_pkgs; \
+    echo "[${added_pkgs}]"; \
+    [[ -n "${added_pkgs}" ]] \
+        && microdnf remove -y "${added_pkgs}" ; \
+    # Font pkgs needed for ExcelTarget \
     microdnf install -y \
         fontconfig \
         dejavu-sans-fonts; \
-    # was needed for groupadd/useradd, so now can be removed \
-    microdnf remove -y \
-        shadow-utils; \
+    # Tidy up any microdnf caches \
     microdnf clean all; \
-    mkdir -p /stroom/config; \
-    mkdir -p /stroom/config_fallback; \
-    mkdir -p /stroom/content_pack_import; \
-    mkdir -p /stroom/content_index; \
-    mkdir -p /stroom/data_feed_identities; \
-    mkdir -p /stroom/git_repo; \
-    mkdir -p /stroom/lmdb; \
-    mkdir -p /stroom/lmdb_library; \
-    mkdir -p /stroom/logs/access; \
-    mkdir -p /stroom/logs/app; \
-    mkdir -p /stroom/logs/migration; \
-    mkdir -p /stroom/logs/user; \
-    mkdir -p /stroom/output; \
-    mkdir -p /stroom/planb; \
-    mkdir -p /stroom/reference_data; \
-    mkdir -p /stroom/reference_staging_data; \
-    mkdir -p /stroom/search_results; \
-    mkdir -p /stroom/volumes; \
+    mkdir -p /stroom/config \
+        /stroom/config_fallback \
+        /stroom/content_pack_import \
+        /stroom/content_index \
+        /stroom/data_feed_identities \
+        /stroom/git_repo \
+        /stroom/lmdb \
+        /stroom/lmdb_library \
+        /stroom/logs/access \
+        /stroom/logs/app \
+        /stroom/logs/migration \
+        /stroom/logs/user \
+        /stroom/output \
+        /stroom/planb \
+        /stroom/reference_data \
+        /stroom/reference_staging_data \
+        /stroom/search_results \
+        /stroom/volumes; \
     chown -R "$USER_ID:$GROUP_ID"  /stroom; \
     # Give the group the same perms as the user so any user with GID 0 can run stroom in \
     # the same way as UID 1000 \
@@ -282,6 +294,8 @@ COPY \
     /stroom/config_fallback/config.yml
 
 # Our jlink generateed custom java runtime environment
+# No chmod needed, they go in as
+# -rwxr-xr-x 1 root root
 COPY \
     --from=stroom_jlink_stage \
     /javaruntime \
@@ -330,6 +344,7 @@ VOLUME /stroom/git_repo/
 VOLUME /stroom/lmdb/
 
 # lmdb binaries that are extracted from the stroom jar on each boot.
+# This will be mounted on tmpfs so will appear owned by root:root
 VOLUME /stroom/lmdb_library/
 
 # Create Docker volume for SLF4J output
@@ -403,6 +418,8 @@ CMD ["./start.sh"]
 
 RUN \
     set -eu; \
+    # Snapshot all current installed packages so we can remove any new ones later \
+    rpm -qa --queryformat "%{NAME}\n" | sort > /tmp/current_pkgs; \
     # Needed for groupadd/useradd \
     microdnf install -y \
         shadow-utils; \
@@ -417,22 +434,30 @@ RUN \
         --gid ${GROUP_ID} \
         --shell /sbin/nologin \
         --no-create-home ${USER_NAME}; \
-    # was needed for groupadd/useradd, so now can be removed \
-    microdnf remove -y \
-        shadow-utils; \
-    mkdir -p /stroom-proxy/certs; \
-    mkdir -p /stroom-proxy/config; \
-    mkdir -p /stroom-proxy/config_fallback; \
-    mkdir -p /stroom-proxy/content; \
-    mkdir -p /stroom-proxy/data; \
-    mkdir -p /stroom-proxy/data_feed_identities; \
-    mkdir -p /stroom-proxy/failures; \
-    mkdir -p /stroom-proxy/logs/access; \
-    mkdir -p /stroom-proxy/logs/app; \
-    mkdir -p /stroom-proxy/logs/receive; \
-    mkdir -p /stroom-proxy/logs/send; \
-    mkdir -p /stroom-proxy/zip_file_ingest; \
-    mkdir -p /stroom-proxy/zip_file_ingest_failed; \
+    # shadow-utils was only needed for groupadd/useradd, so now can be removed \
+    # along with any deps it pulled in \
+    rpm -qa --queryformat "%{NAME}\n" | sort > /tmp/new_pkgs; \
+    # Get a list of all added packages then remove them if there are any
+    added_pkgs="$(comm -13 /tmp/current_pkgs /tmp/new_pkgs)"; \
+    rm /tmp/current_pkgs /tmp/new_pkgs; \
+    echo "[${added_pkgs}]"; \
+    [[ -n "${added_pkgs}" ]] \
+        && microdnf remove -y "${added_pkgs}" ; \
+    # Tidy up any microdnf caches \
+    microdnf clean all; \
+    mkdir -p /stroom-proxy/certs \
+        /stroom-proxy/config \
+        /stroom-proxy/config_fallback \
+        /stroom-proxy/content \
+        /stroom-proxy/data \
+        /stroom-proxy/data_feed_identities \
+        /stroom-proxy/failures \
+        /stroom-proxy/logs/access \
+        /stroom-proxy/logs/app \
+        /stroom-proxy/logs/receive \
+        /stroom-proxy/logs/send \
+        /stroom-proxy/zip_file_ingest \
+        /stroom-proxy/zip_file_ingest_failed; \
     chown -R "$USER_ID:$GROUP_ID" /stroom-proxy; \
     # Give the group the same perms as the user so any user with GID 0 can run proxy in \
     # the same way as UID 1000 \
@@ -457,6 +482,8 @@ COPY \
     /stroom-proxy/config_fallback/config.yml
 
 # Our jlink generateed custom java runtime environment
+# No chmod needed, they go in as
+# -rwxr-xr-x 1 root root
 COPY \
     --from=stroom_proxy_jlink_stage \
     /javaruntime \

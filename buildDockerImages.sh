@@ -20,7 +20,7 @@
 # for development purposes.
 # Releases to Dockerhub will be done by travis
 
-set -e
+set -eo pipefail
 
 #shellcheck disable=SC2034
 {
@@ -43,7 +43,6 @@ show_usage() {
 
 do_gradle_build() {
   local gradle_args=(
-    "clean"
     "build"
     "-x" "test"
   )
@@ -63,14 +62,19 @@ do_docker_builds() {
   DOCKER_IMAGE_TAG="local-SNAPSHOT"
   CURRENT_GIT_COMMIT="$(git rev-parse HEAD)"
 
+  # Shared docker context root and dockerfile for stroom and proxy
+  # '--target' defines build stage to build
+  local extra_docker_args=(
+    #"--no-cache"
+    #"--progress=plain"
+  )
+
   echo -e "${GREEN}Building stroom docker image" \
     "${BLUE}gchq/stroom:${DOCKER_IMAGE_TAG}${NC} for commit" \
     "${BLUE}${CURRENT_GIT_COMMIT}${NC}"
 
-  # Shared docker context root and dockerfile for stroom and proxy
-  # '--target' defines build stage to build
- 
   docker build \
+    "${extra_docker_args[@]}" \
     --target stroom_final_stage \
     --tag gchq/stroom:${DOCKER_IMAGE_TAG} \
     --build-arg GIT_COMMIT="${CURRENT_GIT_COMMIT}" \
@@ -82,6 +86,7 @@ do_docker_builds() {
     "${BLUE}${CURRENT_GIT_COMMIT}${NC}"
 
   docker build \
+    "${extra_docker_args[@]}" \
     --target stroom_proxy_final_stage \
     --tag gchq/stroom-proxy:${DOCKER_IMAGE_TAG} \
     --build-arg GIT_COMMIT="${CURRENT_GIT_COMMIT}" \
@@ -107,10 +112,10 @@ main() {
   if [ "$mode" = "skipGradle" ]; then
     echo -e "${GREEN}Skipping gradle build${NC}"
   else
-    do_gradle_build || exit 1
+    do_gradle_build
   fi
 
-  do_docker_builds || exit 1
+  do_docker_builds
 
   echo -e "${GREEN}Done${NC}"
 }
