@@ -932,6 +932,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                 }
             }
         }
+        refuseEmptyBaseline(firstActive, windowStart, periods, zone.zone());
         // The rare values' holders, in a second round: one aggregate a source, filtered to its rare values.
         final List<AggregateQuery> holderQueries = new ArrayList<>();
         final List<Integer> holderAt = new ArrayList<>();
@@ -1001,6 +1002,27 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         return context.session().isChat()
                 ? ToolResult.text(ScreenResult.markdown(run, files)).withStructuredContent(structured)
                 : ToolResult.text(JsonUtil.writeValueAsString(structured, false)).withStructuredContent(structured);
+    }
+
+    // A screen ranks each person against their own baseline: with no event before the window in any source (a window
+    // over all the data) there is nothing to rank against, so it's refused with the first event's day.
+    private static void refuseEmptyBaseline(final List<Map<String, Instant>> firstActive, final Instant windowStart,
+                                            final Periods periods, final ZoneId zone) {
+        final Optional<Instant> first = firstActive.stream()
+                .flatMap(people -> people.values().stream())
+                .min(Comparator.naturalOrder());
+        if (first.isEmpty() || first.get().isBefore(windowStart)) {
+            return;
+        }
+        final LocalDate firstDay = first.get().atZone(zone).toLocalDate();
+        throw new WorkspaceException("The baseline (" + periods.baselineFrom() + " to "
+                                     + periods.baselineTo().minusDays(1) + ") holds no events in any source: the "
+                                     + "first is on " + firstDay + ", in the window (" + periods.windowFrom()
+                                     + " to " + periods.windowTo().minusDays(1) + "). A screen ranks each person "
+                                     + "against their own baseline, so give a later " + WINDOW_FROM_ARG
+                                     + " with " + BASELINE_FROM_ARG + "=" + firstDay + ", or leave "
+                                     + WINDOW_FROM_ARG + " out (the last " + SCREEN_WINDOW_DAYS + " days of "
+                                     + SCREEN_DAYS + "). Nothing was ranked.");
     }
 
     // What the ranking left out, and who was re-baselined, as the notes say it.

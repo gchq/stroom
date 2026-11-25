@@ -2261,6 +2261,8 @@ every aggregate (one aggregate per slice for everyone; about 250 slice queries p
 a person's score is the sum of their 3 largest, at most one per source and feature; the top 10 with their top 3
 findings, the count of others scored, `people.csv`, `findings.csv` (every finding, ranked or not) and `rare.csv`, and
 a next step (compare_activity or activity_timeline on one person). Defaults: 365 days, the last 182 the window.
+Refused when no source has an event before the window (a window over all the data leaves an empty baseline), with
+the first event's day to give as `baselineFrom` (eval 111, Haiku, 2026-11-26).
 Ranking rules (`PopulationScreen`): re-baselined from a person's own lasting change point (28+ days into the
 baseline, 56+ days before the window: a role change); not ranked: a finding shared by everyone else's data, one
 that 25% of people (and at least 3) have over overlapping days, an empty window, a day's count (days rank only by a

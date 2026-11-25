@@ -224,6 +224,21 @@ class TestCompareActivityScreen {
     }
 
     @Test
+    void aWindowOverAllTheDataLeavesNoBaselineAndIsRefused() {
+        // Eval case 111 (Haiku, 2026-11-26): the window was every month the data covers, so everyone was ranked
+        // against an empty baseline.
+        final Map<String, Object> whole = arguments();
+        whole.put(CompareActivityTool.WINDOW_FROM_ARG, FROM.toString());
+        whole.remove(CompareActivityTool.BASELINE_FROM_ARG);
+
+        assertThat(error(whole)).contains("The baseline")
+                .contains("holds no events in any source")
+                .contains("the first is on " + FROM)
+                .contains("baselineFrom=" + FROM)
+                .contains("Nothing was ranked");
+    }
+
+    @Test
     void aScreenIsOfEveryoneAndWhereAndRareAreForAScreen() {
         final Map<String, Object> withPerson = arguments();
         withPerson.put(CompareActivityTool.PERSON_ARG, "riser");
