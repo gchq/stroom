@@ -804,8 +804,22 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         final List<Map<String, Object>> followOnFilters = followOns.isEmpty()
                 ? List.of()
                 : promotionProcessing.createFollowOnFilters(context.links(), followOns, filters);
-        final Map<String, Object> result = promoted(context, build, plan, folders, tree, done, warnings, filters,
-                followOnFilters, keeps, !predecessors.isEmpty());
+        // What the tidy-up deleted isn't left in the workspace (seen in chat 195: the test feed listed as left, and
+        // as deleted).
+        final Set<String> tidiedAway = tidy.deleted(tidied);
+        final String asPromoted = tidiedAway.isEmpty()
+                ? tree
+                : layout.promotionTree(plan, creating, tidiedAway) + PromotionRoleRoots.rootsNote(roots)
+                  + PromotionLayout.warningsNote(layoutWarnings)
+                  + PromotionTidyUp.layoutNote(plan, testFeeds, tidy, true);
+        final Set<String> leftSaid = plan.stream()
+                .filter(p -> PromotionLayout.KEEP.equals(p.action())
+                             && tidiedAway.contains(String.valueOf(p.doc().get("uuid"))))
+                .map(p -> PromotionWrites.leftInTheWorkspace(ref(p.doc())))
+                .collect(Collectors.toSet());
+        done.removeIf(leftSaid::contains);
+        final Map<String, Object> result = promoted(context, build, plan, folders, asPromoted, done, warnings,
+                filters, followOnFilters, keeps, !predecessors.isEmpty());
         final List<String> selection = PromotedFeeds.remember(context, build, processing, filters,
                 switchOverProvider == null
                         ? null
@@ -1797,10 +1811,13 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             result.put("updated_in_place", updated);
         }
         result.put("promoted", done);
-        result.put("hint", "Show the user the layout as promoted, exactly as it is (a code block, the same tree they "
-                           + "approved), with each folder's link to open it in Stroom" + (updated.isEmpty()
+        // The links after the code block (seen in chat 195: written in it, as '?action=...' text, neither valid nor
+        // clickable).
+        result.put("hint", "Show the user the layout as promoted, exactly as it is, in a code block, with no links "
+                           + "in it (the same tree they approved); then, after the code block, each folder's link "
+                           + "(folders) to open it in Stroom" + (updated.isEmpty()
                 ? ""
-                : " and each document updated in place") + ".");
+                : ", and each document updated in place (updated_in_place)") + ", as Markdown links.");
         if (!warnings.isEmpty()) {
             result.put("promoted_with_warnings", warnings);
         }

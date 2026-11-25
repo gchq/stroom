@@ -70,6 +70,12 @@ class PromotionWrites {
         this.history = history;
     }
 
+    /// @param ref A document the promotion leaves in the workspace.
+    /// @return What its step says was done.
+    static String leftInTheWorkspace(final DocRef ref) {
+        return "left " + ref.getType() + " '" + ref.getName() + "' in the workspace";
+    }
+
     /// One step, carried out: what was done.
     ///
     /// @param step    The step of the approved layout.
@@ -78,7 +84,7 @@ class PromotionWrites {
     String carryOut(final PromotionLayout.Step step, final Map<String, WriteGuard.Folder> folders) {
         final DocRef ref = PromoteBuildTool.ref(step.doc());
         return switch (step.action()) {
-            case PromotionLayout.KEEP -> "left " + ref.getType() + " '" + ref.getName() + "' in the workspace";
+            case PromotionLayout.KEEP -> leftInTheWorkspace(ref);
             case PromotionLayout.DISCARD -> {
                 guard.delete(ref);
                 yield UNCHANGED_COPY.equals(step.target())

@@ -753,6 +753,18 @@ class PromotionTidyUp {
                     : approval.withOption(TIDY_UP, CHOICE_TITLE, true);
         }
 
+        /// @param tidied What the tidy-up did to each item, in their order ([PromotionTidyUp#apply]).
+        /// @return The UUIDs of the items it deleted.
+        Set<String> deleted(final List<Map<String, Object>> tidied) {
+            final Set<String> deleted = new HashSet<>();
+            for (int i = 0; i < Math.min(items.size(), tidied.size()); i++) {
+                if (Boolean.TRUE.equals(tidied.get(i).get("deleted"))) {
+                    deleted.add(items.get(i).doc().getUuid());
+                }
+            }
+            return deleted;
+        }
+
         /// What the promotion's result says of the tidy-up.
         ///
         /// @param result  The result.

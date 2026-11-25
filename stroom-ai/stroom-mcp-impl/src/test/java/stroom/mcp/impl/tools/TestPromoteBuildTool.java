@@ -1372,6 +1372,16 @@ class TestPromoteBuildTool {
                 Map.of("document", "Index 'ACME-INDEX-MCP-TEST'", "shards_deleted", 3, "deleted", true),
                 Map.of("document", "Dashboard 'ACME-INDEX-MCP-TEST-VERIFY'", "deleted", true)));
         assertThat(String.valueOf(promoted.get("hint"))).contains("Say what the tidy-up did (tidied_up)");
+        // Chat 195: what the tidy-up deleted isn't said to be left in the workspace, in the layout nor the steps.
+        assertThat(String.valueOf(promoted.get("layout"))).contains("Left in the workspace: ACME - Survey "
+                                                                    + "(Documentation)")
+                .doesNotContain("Left in the workspace: ACME-MCP-TEST");
+        assertThat(asList(promoted.get("promoted")))
+                .noneMatch(step -> String.valueOf(step).contains("ACME-MCP-TEST"))
+                .contains("left Documentation 'ACME - Survey' in the workspace");
+        // Chat 195: each folder's link after the layout's code block, never in it.
+        assertThat(String.valueOf(promoted.get("hint"))).contains("in a code block, with no links in it")
+                .contains("after the code block, each folder's link (folders)");
         // Its layout and tidy-up are for the user to see as they are: content to show, which Stroom AI's chat gives
         // its model whole, not in a stub (seen in chat 188: 9,856 characters stubbed, without layout or tidied_up,
         // and the agent read the saved result twice).

@@ -471,6 +471,17 @@ class PromotionLayout {
     /// @param creating The folders to create.
     /// @return The tree, as text to show in the chat.
     String promotionTree(final List<Step> plan, final List<String> creating) {
+        return promotionTree(plan, creating, Set.of());
+    }
+
+    /// The tree, as [#promotionTree(List, List)] gives it, once promoted: what the tidy-up deleted isn't left in the
+    /// workspace.
+    ///
+    /// @param plan     The promotion's steps.
+    /// @param creating The folders to create.
+    /// @param gone     The UUIDs of the documents deleted since, none of them left in the workspace.
+    /// @return The tree, as text to show in the chat.
+    String promotionTree(final List<Step> plan, final List<String> creating, final Set<String> gone) {
         final Map<String, List<String>> placed = new LinkedHashMap<>();
         final List<String> written = new ArrayList<>();
         final List<String> kept = new ArrayList<>();
@@ -493,9 +504,13 @@ class PromotionLayout {
                         written.add(name + " (" + type + ")");
                     }
                 }
-                case KEEP -> (NOT_USED.equals(step.target())
-                        ? unused
-                        : kept).add(name + " (" + type + ")");
+                case KEEP -> {
+                    if (!gone.contains(String.valueOf(doc.get("uuid")))) {
+                        (NOT_USED.equals(step.target())
+                                ? unused
+                                : kept).add(name + " (" + type + ")");
+                    }
+                }
                 default -> {
                     // A discarded working copy isn't shown.
                 }
