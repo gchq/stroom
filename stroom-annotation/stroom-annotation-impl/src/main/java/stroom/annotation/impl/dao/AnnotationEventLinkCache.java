@@ -102,7 +102,7 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
     }
 
     private long getLinkCount() {
-        return NullSafe.get(getCurrentMap(), map -> map.values().stream()
+        return NullSafe.getLong(getCurrentMap(), map -> map.values().stream()
                 .mapToLong(Collection::size)
                 .sum());
     }

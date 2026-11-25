@@ -67,6 +67,7 @@ dependencies {
 
     testImplementation libs.commons.lang
     testImplementation libs.jaxb.api
+    testImplementation libs.logback.classic
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
