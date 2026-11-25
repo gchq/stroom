@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v8.0-beta.3] - 2026-11-25
+
+* Build : Fix missing user home in CI build dockerfile.
+
+
 ## [v8.0-beta.2] - 2026-11-25
 
 * Feature : Change docker images to be based off RedHat's Universal Base Image (UBI10-minimal). Also change the docker images to run as a non-root user and to use a custom JRE rather than the JDK.
@@ -759,6 +764,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Bug : Tell screen readers when an expression's field values, or an Elastic index's fields or statistics, take a while to load, and how that ended.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v8.0-beta.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v8.0-beta.3...HEAD
+[v8.0-beta.3]: https://github.com/gchq/stroom/compare/v8.0-beta.2...v8.0-beta.3
 [v8.0-beta.2]: https://github.com/gchq/stroom/compare/v8.0-beta.1...v8.0-beta.2
 [v8.0-beta.1]: https://github.com/gchq/stroom/compare/v7.14-beta.19...v8.0-beta.1
