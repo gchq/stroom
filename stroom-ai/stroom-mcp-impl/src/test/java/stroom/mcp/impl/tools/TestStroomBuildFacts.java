@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.processing.ProcessorFilterAccess;
 import stroom.ai.impl.tools.sample.Shapes;
 import stroom.ai.impl.tools.sample.SourceTypeProfiles;
+import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.ai.impl.tools.streams.StreamReader.RawText;
@@ -86,6 +87,20 @@ class TestStroomBuildFacts {
         assertThat(StroomBuildFacts.combine(List.of(state(true, null, 5, 61))).orElseThrow().get("locations"))
                 .isNull();
         assertThat(StroomBuildFacts.combine(List.of())).isEmpty();
+    }
+
+    @Test
+    void surveysReadAtTheTranslationsInputSaySoTogether() {
+        // Seen in eval case 106 on Haiku: the survey read at the translation's input, the combined state left out
+        // where it read, and the plan asked for the survey again and again.
+        final Map<String, Object> atInput = state(true, "json array", 5, 1);
+        atInput.put(SurveyDoc.READ_AT, SurveyDoc.AT_TRANSLATION_INPUT);
+        final Map<String, Object> raw = state(true, "json array", 6, 1);
+
+        assertThat(StroomBuildFacts.combine(List.of(atInput)).orElseThrow()).containsEntry(SurveyDoc.READ_AT,
+                SurveyDoc.AT_TRANSLATION_INPUT);
+        assertThat(StroomBuildFacts.combine(List.of(atInput, raw)).orElseThrow()).doesNotContainKey(SurveyDoc.READ_AT);
+        assertThat(StroomBuildFacts.combine(List.of(raw)).orElseThrow()).doesNotContainKey(SurveyDoc.READ_AT);
     }
 
     @Test

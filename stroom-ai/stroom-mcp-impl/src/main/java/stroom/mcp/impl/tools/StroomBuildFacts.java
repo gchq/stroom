@@ -726,6 +726,10 @@ class StroomBuildFacts implements BuildFacts {
                     .forEach(readWhole::add);
         }
         survey.put(READ_WHOLE, new ArrayList<>(readWhole));
+        // Where the records were read: at the translation's input only where every survey read them there.
+        if (states.stream().allMatch(state -> SurveyDoc.AT_TRANSLATION_INPUT.equals(state.get(SurveyDoc.READ_AT)))) {
+            survey.put(SurveyDoc.READ_AT, SurveyDoc.AT_TRANSLATION_INPUT);
+        }
         survey.put("format", states.stream()
                 .map(state -> state.get("format"))
                 .filter(format -> format != null && !"".equals(format))
