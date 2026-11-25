@@ -884,7 +884,7 @@ Checks a skill, saved (by name) or a draft (its markdown), and gives its problem
       "type" : "string"
     },
     "folder" : {
-      "description" : "The folder of its skills doc, where two share a name.",
+      "description" : "The folder of its skills doc, where two share a name; with markdown, the folder the draft is for.",
       "type" : "string"
     },
     "markdown" : {
