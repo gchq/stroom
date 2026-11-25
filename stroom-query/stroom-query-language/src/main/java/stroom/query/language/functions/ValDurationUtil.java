@@ -249,8 +249,11 @@ public class ValDurationUtil {
         return null;
     }
 
-    // Some sources quote their text.
-    private static String removeQuotes(final String text) {
+    /// Removes the quotes that some sources put around their text.
+    ///
+    /// @param text The text.
+    /// @return The text without quotes.
+    static String removeQuotes(final String text) {
         final Matcher matcher = QUOTED_PATTERN.matcher(text);
         return matcher.matches()
                 ? matcher.group(1).trim()

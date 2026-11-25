@@ -155,7 +155,10 @@ class ParseDate extends AbstractFunction {
         } else if (!hasPattern && val instanceof ValNumber) {
             return ValDate.create(DateReader.readMillis(val, zone));
         }
-        return ValDate.create(DateUtil.parse(text, formatter, zone));
+        // A pattern may have spaces at its start or end.
+        return ValDate.create(DateUtil.parse(hasPattern
+                ? text
+                : text.trim(), formatter, zone));
     }
 
     @Override

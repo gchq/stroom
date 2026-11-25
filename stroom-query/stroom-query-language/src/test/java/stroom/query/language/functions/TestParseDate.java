@@ -299,4 +299,21 @@ public class TestParseDate extends AbstractFunctionTest<ParseDate> {
     private static Val evalWithNoSettings(final String input, final Val field) throws ParseException {
         return DateFunctionTestUtil.eval(DateFunctionTestUtil.NO_SETTINGS, input, field);
     }
+
+    @Test
+    void spacesAroundTextWithNoPattern() throws ParseException {
+        final Val expected = ValDate.create(1_720_000_800_000L);
+        final String text = " 2024-07-03T10:00:00Z ";
+        assertThat(DateFunctionTestUtil.eval(
+                DateFunctionTestUtil.LONDON, "parseDate('" + text + "')", ValNull.INSTANCE)).isEqualTo(expected);
+        assertThat(DateFunctionTestUtil.eval(
+                DateFunctionTestUtil.LONDON, "parseDate(${field})", ValString.create(text))).isEqualTo(expected);
+        // A pattern can have spaces of its own.
+        assertThat(DateFunctionTestUtil.eval(
+                DateFunctionTestUtil.LONDON, "parseDate(${field}, ' yyyy-MM-dd')", ValString.create(" 2024-07-03")))
+                .isEqualTo(ValDate.create(1_719_961_200_000L));
+        assertThat(DateFunctionTestUtil.eval(
+                DateFunctionTestUtil.LONDON, "parseDate(${field}, 'yyyy-MM-dd')", ValString.create(" 2024-07-03"))
+                .type()).isEqualTo(Type.ERR);
+    }
 }

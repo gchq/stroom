@@ -27,8 +27,8 @@ import java.util.function.Supplier;
 @FunctionDef(
         name = Average.NAME,
         aliases = Average.ALIAS,
-        commonReturnType = ValDouble.class,
-        commonReturnDescription = "The average (mean) of all the values",
+        commonReturnType = Val.class,
+        commonReturnDescription = "The average (mean) of all the values. The average of durations is a duration.",
         signatures = {
                 @FunctionSignature(
                         category = FunctionCategory.AGGREGATE,
@@ -127,11 +127,10 @@ class Average extends AbstractManyChildFunction implements AggregateFunction {
                     return ValNull.INSTANCE;
                 }
             }
-            final Double total = current.toDouble();
-            if (total == null) {
-                return ValErr.create("Can't average a " + current.type().getName());
-            }
-            return ValDouble.create(total / count);
+            final Val average = DateArithmetic.average(current, count);
+            return average != null
+                    ? average
+                    : ValErr.create("Can't average a " + current.type().getName());
         }
 
         @Override
@@ -168,13 +167,13 @@ class Average extends AbstractManyChildFunction implements AggregateFunction {
             if (!value.type().isValue()) {
                 return value;
             }
-            final Double val = value.toDouble();
-            if (val == null) {
-                return Type.PERIOD.equals(value.type())
-                        ? ValErr.create("Can't average a " + value.type().getName())
-                        : value;
+            final Val average = DateArithmetic.average(value, childGenerators.length);
+            if (average != null) {
+                return average;
             }
-            return ValDouble.create(val / childGenerators.length);
+            return Type.PERIOD.equals(value.type())
+                    ? ValErr.create("Can't average a " + value.type().getName())
+                    : value;
         }
     }
 }

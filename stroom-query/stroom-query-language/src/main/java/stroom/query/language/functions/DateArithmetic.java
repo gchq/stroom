@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.time.Period;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.function.Supplier;
 
 /// The arithmetic of dates, durations and periods.
@@ -159,11 +160,63 @@ final class DateArithmetic {
         } else if (isPeriod(left) || isPeriod(right)) {
             // One length of time goes into another a number of times.
             final double result = toFixed(left, right).toDouble() / toFixed(right, left).toDouble();
-            return ValDouble.create(checkNumber(result, left, right));
+            return ValDouble.create(checkNumber(result, left, right, "/"));
         } else if (isDuration(left) && !isDuration(right)) {
-            return createDuration(checkNumber(left.toDouble() / right.toDouble(), left, right));
+            return createDuration(checkNumber(left.toDouble() / right.toDouble(), left, right, "/"));
         }
         return null;
+    }
+
+    /// Gets the remainder of dividing one value by another.
+    ///
+    /// @param left  The value to divide.
+    /// @param right The value to divide it by.
+    /// @return The remainder, or `null` if there is no rule for the two types.
+    static Val modulo(final Val left, final Val right) {
+        if (!isAmount(left) || isDate(right)) {
+            return null;
+        }
+        final Val dividend = toFixed(left, right);
+        final Val divisor = toFixed(right, left);
+        if (divisor.hasFractionalPart()) {
+            return createDuration(checkNumber(dividend.toDouble() % divisor.toDouble(), dividend, divisor, "%"));
+        } else if (divisor.toLong() == 0) {
+            throw notANumber(dividend, divisor, "%");
+        }
+        return ValDuration.create(dividend.toLong() % divisor.toLong());
+    }
+
+    /// Gets the average of some values from their total.
+    ///
+    /// @param total The total of the values, which is not null or an error.
+    /// @param count The number of values, which is not zero.
+    /// @return A duration if the total is a duration or a period of only days, otherwise a number, or `null` if the
+    ///         total is not a number.
+    static Val average(final Val total, final long count) {
+        final Double number = total.toDouble();
+        if (number == null) {
+            return null;
+        }
+        return isAmount(total)
+                ? createDuration(number / count)
+                : ValDouble.create(number / count);
+    }
+
+    /// Gets the standard deviation of some values, as a duration if that is what they are.
+    ///
+    /// @param values      The values as numbers.
+    /// @param hasDuration Whether any of them is a duration.
+    /// @return A duration or a number.
+    static Val standardDeviation(final List<Double> values, final boolean hasDuration) {
+        final double result = Statistics.standardDeviation(values.toArray(new Double[0]));
+        if (!hasDuration) {
+            return ValDouble.create(result);
+        }
+        try {
+            return createDuration(result);
+        } catch (final ArithmeticException e) {
+            return ValErr.create(e.getMessage());
+        }
     }
 
     /// Changes the sign of a value.
@@ -229,6 +282,19 @@ final class DateArithmetic {
                 : val;
     }
 
+    /// Reads text that is compared with a period, so that `1M` is equal to `'1M'` as well as to `'P1M'`.
+    ///
+    /// @param other The value that it is compared with.
+    /// @param val   The value.
+    /// @return A period if it is text of one and the other value is a period, otherwise the value.
+    static Val readPeriodFor(final Val other, final Val val) {
+        return other instanceof ValPeriod
+               && val instanceof ValString
+               && ValPeriodUtil.parsePeriod(val) instanceof final ValPeriod period
+                ? period
+                : val;
+    }
+
     private static boolean hasNoOrder(final Val val) {
         return val instanceof final ValPeriod period && !period.hasOnlyDays();
     }
@@ -274,11 +340,18 @@ final class DateArithmetic {
         return ValDuration.create(Math.round(millis));
     }
 
-    private static double checkNumber(final double result, final Val left, final Val right) {
+    private static double checkNumber(final double result,
+                                      final Val left,
+                                      final Val right,
+                                      final String operator) {
         if (Double.isNaN(result) || Double.isInfinite(result)) {
-            throw new ArithmeticException("Result of " + left + " / " + right + " is not a number");
+            throw notANumber(left, right, operator);
         }
         return result;
+    }
+
+    private static ArithmeticException notANumber(final Val left, final Val right, final String operator) {
+        return new ArithmeticException("Result of " + left + " " + operator + " " + right + " is not a number");
     }
 
     private static int toInt(final double value) {
@@ -300,7 +373,11 @@ final class DateArithmetic {
         return Type.PERIOD.equals(val.type());
     }
 
-    private static boolean isAmount(final Val val) {
+    /// Tells whether a value is a length of time.
+    ///
+    /// @param val The value.
+    /// @return True if it is a duration or a period.
+    static boolean isAmount(final Val val) {
         return isDuration(val) || isPeriod(val);
     }
 }

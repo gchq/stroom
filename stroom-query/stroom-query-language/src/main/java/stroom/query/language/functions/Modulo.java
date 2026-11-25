@@ -23,22 +23,23 @@ package stroom.query.language.functions;
                 Modulo.ALIAS1,
                 Modulo.ALIAS2},
         commonCategory = FunctionCategory.MATHEMATICS,
-        commonReturnType = ValDouble.class,
+        commonReturnType = Val.class,
         signatures = @FunctionSignature(
                 description = "Calculates the modulus after dividing the dividend by the divisor. If more than one " +
                         "divisor is provided then the each subsequent divisor will be used to calculate the modulus " +
                         "using the previous result as the dividend, e.g. " + Modulo.ALIAS2 + "(100, 30, 4) " +
-                        "returns 2, i.e. (100 % 30) % 4.",
+                        "returns 2, i.e. (100 % 30) % 4. The remainder of a duration is a duration, e.g. " +
+                        "100m % 1h is 40m.",
                 returnDescription = "The remainder (modulus) after dividing the dividend by the divisor.",
                 args = {
                         @FunctionArg(
                                 name = "dividend",
-                                description = "The number to divide by the divisor.",
-                                argType = ValNumber.class),
+                                description = "The number or duration to divide by the divisor.",
+                                argType = Val.class),
                         @FunctionArg(
                                 name = "divisor",
-                                description = "The number to divide the dividend by.",
-                                argType = ValNumber.class,
+                                description = "The number or duration to divide the dividend by.",
+                                argType = Val.class,
                                 isVarargs = true,
                                 minVarargsCount = 1)
                 }))
@@ -59,6 +60,18 @@ class Modulo extends NumericFunction {
     }
 
     static class Calc extends Calculator {
+
+        @Override
+        Val calc(final Val current, final Val value) {
+            try {
+                final Val result = DateArithmetic.modulo(current, value);
+                return result != null
+                        ? result
+                        : super.calc(current, value);
+            } catch (final RuntimeException e) {
+                return ValErr.create(e.getMessage());
+            }
+        }
 
         @Override
         double op(final double cur, final double val) {

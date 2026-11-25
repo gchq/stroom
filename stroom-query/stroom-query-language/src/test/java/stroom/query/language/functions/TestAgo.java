@@ -60,7 +60,23 @@ class TestAgo {
             "ago('1d 2h')|2024-03-30T09:00:00Z",
             // A period backwards, so it keeps its local time.
             "ago('-1d')|2024-04-01T11:00:00Z",
-            "ago('-P1D')|2024-04-01T11:00:00Z"})
+            "ago('-P1D')|2024-04-01T11:00:00Z",
+            "ago('- 1 d')|2024-04-01T11:00:00Z",
+            "ago('-1M')|2024-04-30T11:00:00Z",
+            "ago('-P1M')|2024-04-30T11:00:00Z",
+            "ago('p1d')|2024-03-30T12:00:00Z",
+            "ago(\" '1d' \")|2024-03-30T12:00:00Z",
+            "ago('+1d')|2024-03-30T12:00:00Z",
+            "ago('+P1D')|2024-03-30T12:00:00Z",
+            "ago('+PT2H')|2024-03-31T09:00:00Z",
+            "ago('+1h')|2024-03-31T10:00:00Z",
+            "ago(\"'1h'\")|2024-03-31T10:00:00Z",
+            "ago(\"'1d'\")|2024-03-30T12:00:00Z",
+            "ago('1.5h 30m')|2024-03-31T09:00:00Z",
+            "ago('-1.5h 30m')|2024-03-31T13:00:00Z",
+            "ago('0.5w')|2024-03-27T23:00:00Z",
+            "ago('1500us')|2024-03-31T10:59:59.999Z",
+            "ago('1500000ns')|2024-03-31T10:59:59.999Z"})
     void times(final String expression, final Instant expected) throws ParseException {
         final ValDate date = ValDate.create(expected.toEpochMilli());
         assertThat(DateFunctionTestUtil.eval(CONTEXT, expression, ValNull.INSTANCE)).isEqualTo(date);
@@ -106,14 +122,20 @@ class TestAgo {
     @CsvSource(delimiter = '|', value = {
             "ago(5)|A double is not a duration or period",
             "ago('soon')|is not a number and a unit",
-            "ago('1M 2h')|months and years vary",
+            "ago('1M 2h')|has months or years, so is not a duration",
+            "ago('-1M 2h')|has months or years, so is not a duration",
+            "ago('1H')|Unknown unit 'H'",
+            "ago('1E3')|is not a number and a unit",
+            "ago('+-1h')|is not a number and a unit",
+            "ago('+-1d')|is not a number and a unit",
+            "ago('100000000000w')|too long",
             "ago('1000')|is not a number and a unit",
             "ago('-1000')|is not a number and a unit",
             "ago('--1d')|is not a number and a unit",
             "ago('- -1d')|is not a number and a unit",
             "ago('1 5m')|is not a number and a unit",
             "ago('1m s')|is not a number and a unit",
-            "ago('1.5M')|is not a number and a unit",
+            "ago('1.5M')|has months or years, so is not a duration",
             "ago('PT9999999999999999S')|overflow",
             "ago('2000000000y2000000000y')|overflow"})
     void mistakesThatAreReportedWhenTheExpressionIsParsed(final String expression, final String message) {

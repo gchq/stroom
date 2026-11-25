@@ -19,6 +19,8 @@ package stroom.query.language.functions;
 import stroom.query.language.functions.ref.StoredValues;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
@@ -26,11 +28,13 @@ import java.util.function.Supplier;
         name = InRange.NAME,
         commonCategory = FunctionCategory.LOGIC,
         commonDescription = "Returns true if the value is between the lower and upper bounds, inclusive. " +
-                "All parameters must be either numbers, dates, durations or ISO date strings.",
+                "All parameters must be either numbers, dates, durations or text of them, or ISO date strings with " +
+                "no time.",
         commonReturnType = ValBoolean.class,
         signatures = @FunctionSignature(
                 description = "Returns true if the value is between lower and upper (inclusive). " +
-                              "All parameters must be either numbers, dates, durations or ISO date strings.",
+                              "All parameters must be either numbers, dates, durations or text of them, or ISO date " +
+                              "strings with no time.",
                 args = {
                         @FunctionArg(name = "value", argType = Val.class, description = "The value to test."),
                         @FunctionArg(name = "lower", argType = Val.class, description = "The lower bound."),
@@ -85,8 +89,10 @@ public class InRange extends AbstractManyChildFunction {
                     final LocalDate l = LocalDate.parse(lower.toString());
                     final LocalDate u = LocalDate.parse(upper.toString());
                     return ValBoolean.create((!v.isBefore(l)) && (!v.isAfter(u)));
-                } catch (final Exception e) {
-                    return ValErr.create("Parameters must be valid ISO date strings for between function");
+                } catch (final DateTimeParseException e) {
+                    if (!hasNumericValues(value, lower, upper)) {
+                        return ValErr.create("Parameters must be valid ISO date strings for between function");
+                    }
                 }
             }
 
@@ -110,7 +116,21 @@ public class InRange extends AbstractManyChildFunction {
                 }
             }
 
+            // Text of dates, durations and numbers is read as it is by the comparison operators.
+            if (hasNumericValues(value, lower, upper)) {
+                return ValBoolean.create(compare(value, lower) >= 0 && compare(value, upper) <= 0);
+            }
+
             return ValErr.create(TYPES_MESSAGE);
+        }
+
+        private static boolean hasNumericValues(final Val... vals) {
+            return Arrays.stream(vals).allMatch(val ->
+                    isNumeric(val) || (val instanceof ValString && val.hasNumericValue()));
+        }
+
+        private static int compare(final Val val1, final Val val2) {
+            return ValComparators.GENERIC_CASE_SENSITIVE_COMPARATOR.compare(val1, val2);
         }
 
         private static boolean isNumeric(final Val val) {

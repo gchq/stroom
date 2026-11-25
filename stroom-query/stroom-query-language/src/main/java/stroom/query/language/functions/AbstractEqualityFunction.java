@@ -105,6 +105,8 @@ abstract class AbstractEqualityFunction extends AbstractManyChildFunction {
                 values[i] = val;
             }
 
+            values[0] = DateArithmetic.readPeriodFor(values[1], values[0]);
+            values[1] = DateArithmetic.readPeriodFor(values[0], values[1]);
             final ValErr notComparable = ordering
                     ? DateArithmetic.checkOrder(values[0], values[1])
                     : DateArithmetic.checkEquality(values[0], values[1]);

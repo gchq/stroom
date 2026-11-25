@@ -16,6 +16,13 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.language.functions.ref.KryoDataReader;
+import stroom.query.language.functions.ref.KryoDataWriter;
+import stroom.query.language.functions.ref.StoredValues;
+import stroom.query.language.functions.ref.ValueReferenceIndex;
+
+import com.esotericsoftware.kryo.io.ByteBufferInput;
+import com.esotericsoftware.kryo.io.ByteBufferOutput;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -25,6 +32,7 @@ import java.text.ParseException;
 import java.time.DateTimeException;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -92,7 +100,30 @@ class TestDateArithmetic {
             "min(1h, 25m)|1500000",
             "min(90m, 1d)|5400000",
             "max(90m, 1d)|86400000",
-            "max(1d, 1w)|604800000"})
+            "max(1d, 1w)|604800000",
+            "average(1h, 2h)|5400000",
+            "average(1d, 3d)|172800000",
+            "average(1d, 2h)|46800000",
+            "average(1h, 1000)|1800500",
+            "average(1ms, 2ms)|2",
+            "stDev(1h, 3h)|3600000",
+            "stDev(1d, 3d)|86400000",
+            "stDev(3h, 1h)|3600000",
+            "stDev(1h, 5400000, 2h)|1469694",
+            "stDev(2h, 0)|3600000",
+            // Too many milliseconds for a double to be exact.
+            "parseDuration('9007199254740993') % 10ms|3",
+            "100m % 1h|2400000",
+            "-100m % 1h|-2400000",
+            "100m % 1h % 25m|900000",
+            "25h % 1d|3600000",
+            "3d % 2d|86400000",
+            "1d % 7h|10800000",
+            "100m % 60000|0",
+            "90500ms % 60000|30500",
+            "10ms % 2.5|0",
+            "10ms % 0.4|0",
+            "floor(average(90m, 100m), 1h)|3600000"})
     void durations(final String expression, final long expected) throws ParseException {
         assertThat(eval(expression)).isEqualTo(ValDuration.create(expected));
     }
@@ -120,7 +151,17 @@ class TestDateArithmetic {
             // Numbers are still used as milliseconds.
             "2024-01-01T00:00:00Z + 1000|1704067201000",
             "2024-01-01T00:00:00Z / 1000|1704067200",
-            "1000 / 1s|1"})
+            "1000 / 1s|1",
+            "average(1, 2)|1.5",
+            // The average of dates is worked out from the total of their milliseconds.
+            "average(1970-01-01T00:00:01Z, 1970-01-01T00:00:02Z)|1500",
+            "stDev(1, 3)|1",
+            "stDev(1970-01-01T00:00:01Z, 1970-01-01T00:00:03Z)|1000",
+            "variance(1s, 3s)|1000000",
+            "5000 % 3s|2000",
+            "1h % 2024-01-01T00:00:00Z|3600000",
+            "1970-01-01T01:40:00Z % 1h|2400000",
+            "7 % 4|3"})
     void numbers(final String expression, final double expected) throws ParseException {
         assertThat(eval(expression)).isEqualTo(ValDouble.create(expected));
     }
@@ -149,6 +190,14 @@ class TestDateArithmetic {
             "1h / 0|is not a number",
             "1h * 10000000000000|overflow",
             "5 % 1M|can't be used as a number",
+            "1M % 5|can't be used as a number",
+            "1M % 1h|Can't mix a duration and a period",
+            "1h % 1M|Can't mix a duration and a period",
+            "1h % 0|Result of 1h % 0 is not a number",
+            "1h % 0h|Result of 1h % 0ms is not a number",
+            "1h / 0|Result of 1h / 0 is not a number",
+            "5 % 0|Result of 5.0 % 0.0 is not a number",
+            "1d > '1M'|A period of months or years can't be compared",
             "1h = 1M|Can't compare a duration and a period",
             "1M > 1h|A period of months or years can't be compared",
             "1M < 31d|A period of months or years can't be compared",
@@ -175,6 +224,11 @@ class TestDateArithmetic {
             "inRange(2024-01-01T00:00:00Z, 1d, 7d)|Can't compare a date and a period",
             "inRange(1M, 1h, 2h)|A period of months or years can't be compared",
             "inRange(1h, 1m, 1M)|A period of months or years can't be compared",
+            "inRange('2024-07-03T10:00:00Z', '2024-07-01', '2024-07-31')|must be valid ISO date strings",
+            "inRange(2024-07-03T10:00:00Z, '2024-07-01', '2024-07-31')|must be all numeric or all ISO date strings",
+            "inRange('soon', '1h', '2h')|must be valid ISO date strings",
+            "inRange(1h, 'now', '2h')|must be all numeric or all ISO date strings",
+            "inRange(true(), '0', '2')|must be all numeric or all ISO date strings",
             "formatDuration(1M)|can't be used as a duration",
             "formatDuration(parsePeriod('P1M'))|can't be used as a duration",
             "formatISODuration(1y)|can't be used as a duration",
@@ -202,6 +256,38 @@ class TestDateArithmetic {
             "inRange(2h, 1h, 1d)|true",
             "inRange(2d, 1h, 1d)|false",
             "inRange(2d, 1d, 1w)|true",
+            "1M = '1M'|true",
+            "equals('1M', 1M)|true",
+            "1M = ' 1 M '|true",
+            "1M != '1M'|false",
+            "1M = 'P1M'|true",
+            // Two texts are only text.
+            "equals('1M', 'P1M')|false",
+            "1M = '2M'|false",
+            "1y = '12M'|false",
+            "parsePeriod('P1Y2M') = '1y2M'|true",
+            "1M = 'soon'|false",
+            "1M = ''|false",
+            "1d = '1d'|true",
+            "1d = '24h'|true",
+            "1w = '7d'|true",
+            "1d < '2d'|true",
+            "1d < '25h'|true",
+            "greaterThan('2d', 1d)|true",
+            "inRange(2024-07-03T10:00:00Z, '2024-07-03T09:00:00Z', '2024-07-03T12:00:00+01:00')|true",
+            "inRange(2024-07-03T10:00:00Z, '2024-07-03T09:00:00Z', '2024-07-03T10:30:00+01:00')|false",
+            "inRange('2024-07-03T10:00:00Z', '2024-07-03T09:00:00Z', '2024-07-03T10:00:00Z')|true",
+            "inRange('2024-07-03T10:00:00Z', 2024-07-03T10:00:00Z, 2024-07-03T11:00:00Z)|true",
+            "inRange('2024-07-03T10:00:00Z', 2024-07-03T10:00:01Z, 2024-07-03T11:00:00Z)|false",
+            "inRange(90m, '1h', '2h')|true",
+            "inRange('90m', '1h', '2h')|true",
+            "inRange('150m', '1h', '2h')|false",
+            "inRange('30m', '1h', '2h')|false",
+            "inRange('90m', 1h, 1d)|true",
+            "inRange('10', '9', '11')|true",
+            "inRange(10, '9', '11')|true",
+            "inRange('2024-07-03', '2024-07-01', '2024-07-31')|true",
+            "inRange('2024-08-03', '2024-07-01', '2024-07-31')|false",
             "1M < ${field}|false",
             "1M = ${field}|false"})
     void comparisons(final String expression, final boolean expected) throws ParseException {
@@ -216,7 +302,10 @@ class TestDateArithmetic {
             "round(1.5)|double",
             "1d|period",
             "negate(1h)|duration",
-            "toLong(1d)|long"})
+            "toLong(1d)|long",
+            "average(1h)|duration",
+            "stDev(1h)|duration",
+            "100m % 1h|duration"})
     void types(final String expression, final String expected) throws ParseException {
         assertThat(eval("typeOf(" + expression + ")")).isEqualTo(ValString.create(expected));
     }
@@ -283,6 +372,69 @@ class TestDateArithmetic {
                 assertThat(calculator.calc(val, text)).isEqualTo(val);
             }
         }
+    }
+
+    @Test
+    void averagesOfGroups() throws ParseException {
+        final ValDuration one = ValDuration.create(3_600_000);
+        final ValDuration three = ValDuration.create(10_800_000);
+        final ValPeriod day = ValPeriod.create(0, 0, 1);
+        final ValDuration two = ValDuration.create(7_200_000);
+
+        assertThat(evalGroup("average(${field})", one, three)).isEqualTo(two);
+        assertThat(evalGroup("stDev(${field})", one, three)).isEqualTo(one);
+        assertThat(evalGroup("stDev(${field})", day, ValPeriod.create(0, 0, 3)))
+                .isEqualTo(ValDuration.create(86_400_000));
+        assertThat(evalGroup("average(${field})", day, ValPeriod.create(0, 0, 3)))
+                .isEqualTo(ValDuration.create(172_800_000));
+        // Whichever is first, and whether or not the other is skipped.
+        assertThat(evalGroup("stDev(${field})", ValLong.create(0), two)).isEqualTo(one);
+        assertThat(evalGroup("stDev(${field})", two, ValLong.create(0))).isEqualTo(one);
+        assertThat(evalGroup("stDev(${field})", one, ValString.create("soon"))).isEqualTo(ValDuration.create(0));
+        assertThat(evalGroup("average(${field})", ValLong.create(1), ValLong.create(2)))
+                .isEqualTo(ValDouble.create(1.5));
+        assertThat(evalGroup("stDev(${field})", ValLong.create(1), ValLong.create(3)))
+                .isEqualTo(ValDouble.create(1));
+        assertThat(evalGroup("stDev(${field})", ValDate.create(1), ValDate.create(3)))
+                .isEqualTo(ValDouble.create(1));
+        assertThat(evalGroup("variance(${field})", one, three).type()).isEqualTo(Type.DOUBLE);
+        assertThat(evalGroup("average(${field})", ValPeriod.create(0, 1, 0), day).toString())
+                .contains("Can't average a period");
+        assertThat(evalGroup("average(${field})", ValString.create("a"), ValString.create("b")).toString())
+                .contains("Can't average a string");
+        assertThat(evalGroup("stDev(${field})", ValDuration.create(Long.MIN_VALUE), ValDuration.create(Long.MAX_VALUE))
+                .toString()).contains("too long");
+    }
+
+    // The values in turn, and as results that are merged and then stored.
+    private static Val evalGroup(final String input, final Val first, final Val second) throws ParseException {
+        final FieldIndex fieldIndex = new FieldIndex();
+        fieldIndex.create("field");
+        final Expression expression = new ExpressionParser(new ParamFactory(Map.of()))
+                .parse(DateFunctionTestUtil.LONDON, fieldIndex, input);
+        expression.setStaticMappedValues(Map.of());
+        final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
+        expression.addValueReferences(valueReferenceIndex);
+        final Generator generator = expression.createGenerator();
+
+        final StoredValues inTurn = valueReferenceIndex.createStoredValues();
+        generator.set(new Val[]{first}, inTurn);
+        generator.set(new Val[]{second}, inTurn);
+
+        final StoredValues merged = valueReferenceIndex.createStoredValues();
+        generator.set(new Val[]{first}, merged);
+        final StoredValues other = valueReferenceIndex.createStoredValues();
+        generator.set(new Val[]{second}, other);
+        generator.merge(merged, other);
+
+        final Val result = generator.eval(inTurn, null);
+        assertThat(generator.eval(merged, null)).isEqualTo(result);
+        final ByteBufferOutput output = new ByteBufferOutput(1000);
+        valueReferenceIndex.write(merged, new KryoDataWriter(output));
+        final StoredValues stored = valueReferenceIndex.read(
+                new KryoDataReader(new ByteBufferInput(output.toBytes())));
+        assertThat(generator.eval(stored, null)).isEqualTo(result);
+        return result;
     }
 
     @Test

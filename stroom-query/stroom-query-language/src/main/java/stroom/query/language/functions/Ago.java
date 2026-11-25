@@ -20,7 +20,6 @@ import stroom.query.api.DateTimeSettings;
 import stroom.util.shared.NullSafe;
 
 import java.time.ZoneId;
-import java.util.Locale;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
@@ -60,22 +59,11 @@ class Ago extends AbstractCalendarFunction {
         toAmount(val);
     }
 
-    private static Val parseAmount(final String text) {
-        final boolean negative = text.startsWith("-") && !text.toUpperCase(Locale.ROOT).startsWith("-P");
-        final String unsigned = negative
-                ? text.substring(1).trim()
-                : text;
-        final Val amount = TimeRounder.parseMultiple(unsigned);
-        return negative
-                ? DateArithmetic.negate(amount)
-                : amount;
-    }
-
     private static Val toAmount(final Val val) {
         if (val instanceof ValDuration || val instanceof ValPeriod) {
             return val;
         } else if (val instanceof ValString) {
-            return parseAmount(val.toString().trim());
+            return TimeRounder.parseMultiple(val.toString());
         }
         throw new IllegalArgumentException("A " + val.type().getName() + " is not a duration or period");
     }

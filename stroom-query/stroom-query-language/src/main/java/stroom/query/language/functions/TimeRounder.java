@@ -34,7 +34,6 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.time.zone.ZoneOffsetTransition;
 import java.time.zone.ZoneRules;
-import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
@@ -57,7 +56,8 @@ final class TimeRounder {
     private static final Pattern SPACED_LITERAL_PATTERN =
             Pattern.compile("\\s*+(?:\\d++(?:\\.\\d++)?\\s*+[A-Za-z]++\\s*+)++");
     private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s++");
-    private static final Pattern FRACTION_PATTERN = Pattern.compile("\\d++\\.\\d++(?:ms|[smhd])");
+    private static final Pattern ISO_PATTERN = Pattern.compile("[+-]?[Pp].*");
+    private static final Pattern PERIOD_PATTERN = Pattern.compile("(?:\\d++[dwMy])++");
     private static final int DAYS_PER_WEEK = 7;
     private static final long MILLIS_PER_DAY = Duration.ofDays(1).toMillis();
 
@@ -123,32 +123,50 @@ final class TimeRounder {
         return new TimeRounder(mode, 0, period.toTotalMonths(), period.getDays(), origin);
     }
 
-    /// Reads a duration or period from text, such as `15m`, `1h 30m`, `1.5h`, `PT15M`, `3M` or `P3M`.
+    /// Reads a duration or period from text, such as `15m`, `1h 30m`, `1.5h`, `PT15M`, `3M`, `-1d` or `P3M`.
+    ///
+    /// Whole numbers of days, weeks, months and years are a period. Anything else is a duration, as
+    /// [ValDurationUtil#parseMilliseconds(String)] reads it, but not a number with no unit.
     ///
     /// @param text The text.
     /// @return A duration or period.
     /// @throws DateTimeException   If the text is not a duration or period.
     /// @throws ArithmeticException If it is too long.
     static Val parseMultiple(final String text) {
-        final String trimmed = removeSpaces(text);
-        final String upper = trimmed.toUpperCase(Locale.ROOT);
-        if (upper.startsWith("P") || upper.startsWith("-P")) {
-            return upper.contains("T")
+        final String trimmed = ValDurationUtil.removeQuotes(text.trim());
+        if (ISO_PATTERN.matcher(trimmed).matches()) {
+            return trimmed.toUpperCase(Locale.ROOT).contains("T")
                     ? ValDuration.create(Duration.parse(trimmed))
                     : ValPeriod.create(Period.parse(trimmed));
         }
-        if (FRACTION_PATTERN.matcher(trimmed).matches()) {
-            return ValDuration.create(ValDurationUtil.parseMilliseconds(trimmed));
-        }
-        final List<SimpleDuration> parts = TimeLiteral.parseCompound(trimmed);
-        if (parts.stream().allMatch(TimeLiteral::isPeriod)) {
+        final boolean signed = trimmed.startsWith("-") || trimmed.startsWith("+");
+        final String unsigned = removeSpaces(signed
+                ? trimmed.substring(1)
+                : trimmed);
+        if (PERIOD_PATTERN.matcher(unsigned).matches()) {
             Period period = Period.ZERO;
-            for (final SimpleDuration part : parts) {
+            for (final SimpleDuration part : TimeLiteral.parseCompound(unsigned)) {
                 period = period.plus(TimeLiteral.toPeriod(part));
             }
-            return ValPeriod.create(period);
+            return ValPeriod.create(trimmed.startsWith("-")
+                    ? period.negated()
+                    : period);
         }
-        return ValDuration.create(TimeLiteral.parseCompoundMillis(trimmed));
+        if (isNumber(trimmed)) {
+            throw notAnAmount(text, null);
+        }
+        try {
+            return ValDuration.create(ValDurationUtil.parseMilliseconds(trimmed));
+        } catch (final DateTimeParseException e) {
+            if (ValDurationUtil.PARSE_ERROR_MESSAGE.equals(e.getMessage())) {
+                throw notAnAmount(text, e);
+            }
+            throw e;
+        }
+    }
+
+    private static DateTimeException notAnAmount(final String text, final DateTimeException cause) {
+        return new DateTimeException("'" + text + "' is not a number and a unit, such as 1d", cause);
     }
 
     /// Removes the spaces around the numbers and units of text such as `1 d` or `1h 30m`. Text that isn't like that is
