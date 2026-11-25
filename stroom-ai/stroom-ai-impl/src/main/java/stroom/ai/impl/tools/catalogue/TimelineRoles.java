@@ -216,6 +216,42 @@ public final class TimelineRoles {
         return out.toString();
     }
 
+    /// What a set's own form asks of its roles (decided with the user 2026-11-25: asked in the set's form): the
+    /// event types whose role the schema doesn't settle and no one has given, for the user to say in their answer,
+    /// and those given, for them to change. Seen in eval case 109 on Sonnet: asked only in the table the agent was
+    /// to show first, which it didn't, so the user accepted the set never asked.
+    ///
+    /// @param set A set of event types.
+    /// @return A line for those asked, then one for those given, each where there are any; none where the schema
+    /// settles every role (dropped event types need none).
+    public static List<String> askedInForm(final List<EventType> set) {
+        final List<String> asked = new ArrayList<>();
+        final List<String> given = new ArrayList<>();
+        for (final EventType type : set) {
+            final EventType settled = settled(type);
+            if (settled.drop()) {
+                continue;
+            }
+            if (settled.timelineRole() == null) {
+                asked.add(settled.typeId());
+            } else if (FROM_GIVEN.equals(settled.timelineRoleFrom())) {
+                given.add(settled.typeId() + " " + settled.timelineRole());
+            }
+        }
+        final List<String> lines = new ArrayList<>();
+        if (!asked.isEmpty()) {
+            final boolean one = asked.size() == 1;
+            lines.add(String.join(", ", asked) + ": the schema doesn't settle " + (one
+                    ? "it; say its role"
+                    : "them; say each one's role") + " in your answer (" + String.join(", ", TimelineRole.NAMES)
+                      + "), or leave it for the timeline to judge");
+        }
+        if (!given.isEmpty()) {
+            lines.add("Given: " + String.join(", ", given) + " (yours to change in your answer)");
+        }
+        return lines;
+    }
+
     // Its role in words: an action with its kind, e.g. `action (view)`.
     private static String roleSaid(final EventType type) {
         return TimelineRole.ACTION.label().equals(type.timelineRole())

@@ -340,6 +340,22 @@ class TestCatalogueEventTypesTool {
     }
 
     @Test
+    void theRolesTheSchemaDoesntSettleAreAskedInTheSetsFormItself() {
+        // Seen in eval case 109 on Sonnet: the role was asked only in the table the agent was to show first; it
+        // didn't, and the user accepted the set in its form never asked.
+        propose(List.of(withKeys(type("Authenticate-Logon", "Authenticate", "high", "login"), "action", "Logon"),
+                withKeys(type("Authenticate-Other", "Authenticate", "high", "logout"), "action", "Other")));
+        final BuildToolCalls.FormUser user = user(McpAnswers.ACCEPT);
+        call(Map.of("build", BUILD, "confirm", true), user.context());
+
+        call(Map.of("build", BUILD, "confirm", true), user.context());
+
+        assertThat(user.shown()).first().asString().contains("- timeline roles:\n  - Authenticate-Other: the "
+                                                             + "schema doesn't settle it; say its role in your "
+                                                             + "answer (focus,");
+    }
+
+    @Test
     void aPreProcessedTranslationDescribedInPlaceIsCheckedAtItsInput() {
         // The raw records hold no kind; the pre-processor before the translation writes it (decided 2026-11-25: the
         // catalogue's conditions are checked where the translation reads its records).

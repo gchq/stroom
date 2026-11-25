@@ -132,6 +132,31 @@ class TestTimelineRoles {
     }
 
     @Test
+    void aSetsFormAsksForTheRolesTheSchemaLeavesAndShowsThoseGiven() {
+        // Seen in eval case 109 on Sonnet: the roles were asked only in the table the agent was to show, it didn't,
+        // and the user accepted the set in its form without seeing the question.
+        final List<String> asked = TimelineRoles.askedInForm(List.of(type("Logon-User", "Authenticate", "Logon"),
+                type("Switch-Session", "Authenticate", "Other"), type("Odd-Thing", "Unknown", null),
+                type("Gained-Focus", "Unknown", null).withTimelineRole("active", TimelineRoles.FROM_GIVEN)));
+
+        assertThat(asked).containsExactly(
+                "Switch-Session, Odd-Thing: the schema doesn't settle them; say each one's role in your answer "
+                + "(focus, active, idle, open, close, action, ignore), or leave it for the timeline to judge",
+                "Given: Gained-Focus active (yours to change in your answer)");
+        assertThat(TimelineRoles.askedInForm(List.of(type("Switch-Session", "Authenticate", "Other"))))
+                .containsExactly("Switch-Session: the schema doesn't settle it; say its role in your answer "
+                                 + "(focus, active, idle, open, close, action, ignore), or leave it for the "
+                                 + "timeline to judge");
+        // Every role the schema's: nothing to ask.
+        assertThat(TimelineRoles.askedInForm(List.of(type("Logon-User", "Authenticate", "Logon")))).isEmpty();
+        assertThat(TimelineRoles.askedInForm(List.of())).isEmpty();
+        // A dropped event type writes no events: no role asked.
+        assertThat(TimelineRoles.askedInForm(List.of(new EventType("Heartbeat", "t", null, "Unknown", null, null,
+                null, null, null, List.of(), true, EventType.USER_CONFIRMED, "high", null,
+                EventType.CONFIRMED)))).isEmpty();
+    }
+
+    @Test
     void theRoleIsWrittenToJsonOnlyWhenItHasOneAndReadBack() {
         final EventType plain = type("View-File", "View", null);
         assertThat(plain.toJson()).doesNotContainKeys(EventType.TIMELINE_ROLE, EventType.TIMELINE_ROLE_FROM);

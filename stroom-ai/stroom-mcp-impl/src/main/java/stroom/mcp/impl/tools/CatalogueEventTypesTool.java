@@ -1146,6 +1146,12 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             final Map<String, Object> details = new LinkedHashMap<>();
             details.put("event types", "the " + set.size() + " " + confidenceOf(set) + "-confidence ones "
                                        + "summarised in the chat, as they are");
+            // The roles the schema leaves, asked in the set's own form, and those given (decided with the user
+            // 2026-11-25; seen in eval case 109 on Sonnet: asked only in the table, which the agent didn't show).
+            final List<String> roles = TimelineRoles.askedInForm(set);
+            if (!roles.isEmpty()) {
+                details.put("timeline roles", new Consent.Listed(roles));
+            }
             final DocRef notesDoc = notes.notesDoc(calling.build(), calling.source());
             details.put("every row", notesDoc.getName());
             final Consent.Request request = Consent.Request.confirmation(NAME, formText(accept), details)
