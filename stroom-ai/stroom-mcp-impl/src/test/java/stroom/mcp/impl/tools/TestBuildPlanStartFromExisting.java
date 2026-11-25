@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.AiAuditLog;
+import stroom.ai.impl.tools.sample.SurveyDoc;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -159,6 +160,33 @@ class TestBuildPlanStartFromExisting {
         // Catalogued: the build is done.
         facts.catalogued = true;
         assertThat(status().get("next")).isNull();
+    }
+
+    @Test
+    void aRawSurveyNoLongerCountsOnceAPreProcessedTranslationIsDescribedInPlace() {
+        // Decided 2026-11-25: its records are read at the translation's input; the survey made before the choice
+        // read them as the parser does, so the plan has it made again (survey_feed resets it), no stream_ids asked.
+        facts.survey = Map.of("saturated", true);
+        facts.startFrom = Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline", EXISTING, InPlaceInduction.IN_PLACE,
+                Map.of(InPlaceInduction.ELEMENT, "translationFilter", InPlaceInduction.PRE_PROCESSED, true));
+        final Map<String, Object> stale = status();
+        assertThat(next(stale).get("step")).isEqualTo(BuildPlan.SURVEYED);
+        assertThat(call(stale).get("tool")).isEqualTo("survey_feed");
+        assertThat(arguments(stale).get("feed")).isEqualTo("ACME");
+        assertThat(arguments(stale).containsKey("stream_ids")).isFalse();
+
+        // Surveyed at the translation's input: on to the catalogue.
+        facts.survey = Map.of("saturated", true, SurveyDoc.READ_AT, SurveyDoc.AT_TRANSLATION_INPUT);
+        assertThat(next(status()).get("step")).isEqualTo(BuildPlan.CATALOGUE);
+        // Copied as a new version too: the raw survey made again before the copy.
+        facts.survey = Map.of("saturated", true);
+        facts.startFrom = Map.of("choice", ExistingTranslations.EXISTING, "pipeline", EXISTING,
+                InPlaceInduction.ELEMENT, "translationFilter", InPlaceInduction.PRE_PROCESSED, true);
+        assertThat(next(status()).get("step")).isEqualTo(BuildPlan.SURVEYED);
+        // No pre-processor: the raw survey counts.
+        facts.startFrom = Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline", EXISTING, InPlaceInduction.IN_PLACE,
+                Map.of(InPlaceInduction.ELEMENT, "translationFilter", InPlaceInduction.PRE_PROCESSED, false));
+        assertThat(next(status()).get("step")).isEqualTo(BuildPlan.CATALOGUE);
     }
 
     @Test

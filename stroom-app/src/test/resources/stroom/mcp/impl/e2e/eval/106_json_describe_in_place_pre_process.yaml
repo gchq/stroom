@@ -37,7 +37,7 @@ expected:
   event_types: [Authenticate, Update]
   route:
     start_from: in_place
-    calls_in_order: [survey_feed, catalogue_event_types, catalogue_event_types]
+    calls_in_order: [survey_feed, catalogue_event_types, survey_feed, catalogue_event_types]
     forbidden_calls: [copy_pipeline, rebuild_mapping, draft_translation_mapping, build_translation_xslt,
                       promote_build]
   in_place: {code_unchanged: true, mapping_kept: true, pre_process_untouched: true, notes_beside: true,
@@ -52,6 +52,7 @@ reference:
     - {tool: start_build, arguments: {build: eval-106, feeds: [EVAL-106]}}
     - {tool: survey_feed, arguments: {feed: EVAL-106, build: eval-106}}
     - {tool: catalogue_event_types, arguments: {build: eval-106}, answer: Describe it in place (no new version)}
-    - {tool: survey_feed, arguments: {feed: EVAL-106, build: eval-106, stream_ids: [<raw>]}}
+    # The raw survey before the choice no longer counts: next surveys again at the translation's input.
+    - {tool: survey_feed, arguments: {feed: EVAL-106, build: eval-106}}
     - {tool: catalogue_event_types, arguments: {build: eval-106, stream_ids: [<raw>]}}
     - {tool: catalogue_event_types, arguments: {build: eval-106, confirm: true}, confirm: true}

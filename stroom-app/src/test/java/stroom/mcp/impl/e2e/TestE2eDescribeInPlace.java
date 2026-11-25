@@ -160,8 +160,11 @@ class TestE2eDescribeInPlace extends AbstractE2eTest {
 
         // The survey and the catalogue read the records where the translation reads them: the actions the
         // pre-processor writes, which the raw records lack.
-        final Map<String, Object> surveyed = json("survey_feed", args("feed", "PREDESC", "build", build,
-                "stream_ids", List.of(vpn.raw())));
+        // The raw survey made before the choice no longer counts: the plan's next surveys again, no streams named.
+        final Map<String, Object> status = json("build_status", args("build", build));
+        assertThat(nextTool(status)).isEqualTo("survey_feed");
+        final Map<String, Object> surveyed = json("survey_feed", args("feed", "PREDESC", "build", build));
+        assertThat(surveyed).containsEntry("read_at", "translation_input");
         dump("survey at the translation's input", surveyed);
         assertThat(String.valueOf(surveyed.get("shapes"))).contains("action");
         final Map<String, Object> listed = json(CATALOGUE, args("build", build, "stream_ids", List.of(vpn.raw())));

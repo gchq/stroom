@@ -969,7 +969,17 @@ public class BuildPlan {
         // Done once surveyed, or once a survey for the build was refused for nothing readable (catalogue_event_types
         // then goes on, saying so); not needed once the build has a translation (saved from a mapping, or a copied
         // pipeline's), as the catalogue step isn't.
+        // A pipeline described in place (or copied) whose translation a pre-processor feeds: a survey of the raw
+        // records made before the start was chosen no longer counts; survey_feed reads them again at the
+        // translation's input (decided 2026-11-25).
+        final Map<String, Object> started = facts.startFrom(build).orElse(null);
+        final List<String> staleSurveys = surveys.stream()
+                .filter(doc -> TranslationInputs.staleSurvey(started, facts.surveyState(List.of(doc)).orElse(null)))
+                .map(doc -> String.valueOf(doc.get("name")))
+                .map(name -> name.substring(0, name.length() - StroomBuildFacts.SURVEY.length()))
+                .toList();
         done.put(SURVEYED, (surveyed || !facts.unreadableSurveys(build).isEmpty()) && perFeed.unsurveyed().isEmpty()
+                           && staleSurveys.isEmpty()
                 ? Boolean.TRUE
                 : hasMapping(xslts, "translation") || !translation.isEmpty()
                         ? null
@@ -1260,7 +1270,7 @@ public class BuildPlan {
         }
         // The feed the survey step is for: the first not surveyed yet, or not covered yet; the others as they come.
         final List<String> dueFirst = SURVEYED.equals(nextStep)
-                ? perFeed.first(perFeed.unsurveyed(), sources)
+                ? perFeed.first(perFeed.unsurveyed(), perFeed.first(staleSurveys, sources))
                 : COVERED.equals(nextStep)
                         ? perFeed.first(perFeed.uncovered(), perFeed.first(perFeed.unsurveyed(), sources))
                         : sources;

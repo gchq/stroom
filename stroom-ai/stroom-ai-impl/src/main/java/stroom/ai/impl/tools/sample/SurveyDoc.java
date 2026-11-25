@@ -72,6 +72,12 @@ public final class SurveyDoc {
     /// The state's key for the user's going ahead with the survey as it is (`at`, `streams_read`): covered as far
     /// as they chose, until the survey reads on.
     public static final String ACCEPTED = "accepted";
+    /// The state's key for where its records were read, when not as the parser reads them:
+    /// [#AT_TRANSLATION_INPUT] for a pipeline described in place (or copied) whose translation a pre-processor
+    /// feeds. A survey of the raw records no longer counts for such a build (decided 2026-11-25).
+    public static final String READ_AT = "read_at";
+    /// [#READ_AT]'s value: at the translation's input, the pre-processor's output.
+    public static final String AT_TRANSLATION_INPUT = "translation_input";
     /// The state's key for the streams a call the user agreed to survey the feed with, below the default.
     public static final String FEWER_STREAMS = "fewer_streams";
     /// The state's key for what each stream read was read for, by its id: the source types of the build's scope it
@@ -322,6 +328,9 @@ public final class SurveyDoc {
         }
         if (result.get(FEWER_STREAMS) != null) {
             merged.put(FEWER_STREAMS, result.get(FEWER_STREAMS));
+        }
+        if (result.get(READ_AT) != null) {
+            merged.put(READ_AT, result.get(READ_AT));
         }
         // An aggregated feed's source type field and what each source type's records showed (SourceTypeProfiles):
         // counts add up call by call.

@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.processing.TranslationInputText;
+import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -34,8 +35,9 @@ import java.util.Map;
 import java.util.Optional;
 
 /// The records a build reads at its translation's input (decided with the user 2026-11-25): a hand-written
-/// translation described in place whose pipeline runs a pre-processor before it is surveyed, and its catalogue's
-/// conditions checked, against what the pre-processor writes, not what the parser does. Each stream is stepped
+/// translation described in place (or copied as a new version) whose pipeline runs a pre-processor before it is
+/// surveyed, and its catalogue's conditions checked, against what the pre-processor writes, not what the parser
+/// does. Each stream is stepped
 /// through the pipeline (as the user, which needs the Stepping permission) and the translation element's input
 /// captured a record at a time ([TranslationInputText]). A build without a pre-processor reads its raw streams as
 /// before: the parser's output is the translation's input.
@@ -74,21 +76,36 @@ class TranslationInputs {
         }
     }
 
-    /// @param startFrom A build's start ([BuildRecords#startFrom]).
-    /// @return Where its records are read, when it describes a pipeline in place whose translation a pre-processor
-    /// feeds; else empty.
+    /// @param startFrom A build's start ([BuildRecords#startFrom]), or null.
+    /// @return Where its records are read, when it describes in place (or copies) a pipeline whose translation a
+    /// pre-processor feeds; else empty.
     static Optional<At> at(final Map<String, Object> startFrom) {
-        if (!InPlaceInduction.IN_PLACE.equals(startFrom.get("choice"))) {
+        final Object choice = startFrom == null
+                ? null
+                : startFrom.get("choice");
+        if (!InPlaceInduction.IN_PLACE.equals(choice) && !ExistingTranslations.EXISTING.equals(choice)) {
             return Optional.empty();
         }
-        final Map<String, Object> inPlace = JsonValues.mapOrEmpty(startFrom.get(InPlaceInduction.IN_PLACE));
+        // Described in place: what was described; copied: what the start choice told of the existing pipeline.
+        final Map<String, Object> told = startFrom.get(InPlaceInduction.IN_PLACE) instanceof final Map<?, ?> map
+                ? JsonValues.mapOrEmpty(map)
+                : startFrom;
         final String pipeline = JsonValues.text(JsonValues.mapOrEmpty(startFrom.get("pipeline")).get("uuid"));
-        final String element = JsonValues.text(inPlace.get(InPlaceInduction.ELEMENT));
-        if (!Boolean.TRUE.equals(inPlace.get(InPlaceInduction.PRE_PROCESSED)) || pipeline.isEmpty()
+        final String element = JsonValues.text(told.get(InPlaceInduction.ELEMENT));
+        if (!Boolean.TRUE.equals(told.get(InPlaceInduction.PRE_PROCESSED)) || pipeline.isEmpty()
             || element.isEmpty()) {
             return Optional.empty();
         }
         return Optional.of(new At(pipeline, element));
+    }
+
+    /// @param startFrom A build's start, or null.
+    /// @param state     A survey of one of its feeds ([SurveyDoc#readState]), or null.
+    /// @return True if the build reads its records at its translation's input but the survey read them as the
+    /// parser does (made before the start was chosen): it no longer counts, and is made again.
+    static boolean staleSurvey(final Map<String, Object> startFrom, final Map<String, Object> state) {
+        return state != null && at(startFrom).isPresent()
+               && !SurveyDoc.AT_TRANSLATION_INPUT.equals(state.get(SurveyDoc.READ_AT));
     }
 
     /// Each stream's records at the translation's input, as one text a stream.

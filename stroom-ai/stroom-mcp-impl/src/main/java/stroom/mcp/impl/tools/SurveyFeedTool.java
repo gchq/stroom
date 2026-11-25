@@ -598,9 +598,17 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 : surveyDocuments.load(build, feed).orElse(null);
         // Only the build's own survey doc is carried on from: a survey doc left beside the feed by an earlier
         // promotion (before survey docs stayed in their build, 2026-11-13) is ignored, and the survey starts afresh.
-        final Map<String, Object> read = record == null
+        // A pipeline described in place (or copied) whose translation a pre-processor feeds: its records are read
+        // where the translation reads them, and a survey of the raw records before that no longer counts (decided
+        // 2026-11-25): surveyed again from the start.
+        final boolean atInput = translationInputs != null && translationInputs.get().forBuild(build).isPresent();
+        final Map<String, Object> stored = record == null
                 ? null
                 : SurveyDoc.readState(record.text());
+        final Map<String, Object> read = atInput && stored != null
+                                         && !SurveyDoc.AT_TRANSLATION_INPUT.equals(stored.get(SurveyDoc.READ_AT))
+                ? null
+                : stored;
         // Streams deleted since they were surveyed: their shapes are found again where the data is now.
         final Set<Long> gone = read == null
                 ? Set.of()
@@ -824,6 +832,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         noteScope(result, scopes, reading, depth, keptSources, profiles);
         settleInPart(call, context, request, result, reading, depth, state, !chosen.isEmpty() || exhausted);
         noteGone(result, gone, dropped);
+        if (atInput) {
+            result.put(SurveyDoc.READ_AT, SurveyDoc.AT_TRANSLATION_INPUT);
+        }
         if (kinds != null) {
             result.put(SurveyDoc.KIND_FIELDS, kinds);
         }

@@ -127,6 +127,18 @@ class TestCatalogueDescribeInPlace {
     }
 
     @Test
+    void copyingItRecordsWhereItsTranslationReadsItsRecords() {
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("choice",
+                CatalogueEventTypesTool.START_EXISTING));
+
+        call(Map.of("build", BUILD), user.context());
+
+        assertThat(world.records().startFrom(BUILD).orElseThrow()).containsEntry("choice",
+                ExistingTranslations.EXISTING).containsEntry(InPlaceInduction.ELEMENT, "translationFilter")
+                .containsEntry(InPlaceInduction.PRE_PROCESSED, false);
+    }
+
+    @Test
     void theUserNarrowsTheSurveyByNamingTheFeeds() {
         final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("choice",
                 CatalogueEventTypesTool.START_IN_PLACE, "answer", "only acme-b for now"));

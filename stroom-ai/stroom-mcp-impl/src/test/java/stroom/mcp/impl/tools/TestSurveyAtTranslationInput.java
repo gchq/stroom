@@ -21,8 +21,10 @@ import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.processing.TranslationInputText;
+import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.ai.impl.tools.streams.StreamReader;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.security.api.SecurityContext;
 import stroom.util.json.JsonUtil;
@@ -98,6 +100,30 @@ class TestSurveyAtTranslationInput {
         // The actions only the pre-processor writes are seen; the raw stream is never read for its records.
         assertThat(String.valueOf(result.get("shapes"))).contains("action");
         Mockito.verify(streamReader, Mockito.never()).readHead(eq(STREAM), anyInt(), anyInt());
+        Mockito.verify(inputs).texts(any(), eq(at), eq(List.of(STREAM)), eq(TranslationInputs.SURVEY_RECORDS));
+    }
+
+    @Test
+    void aRawSurveyMadeBeforeTheChoiceIsMadeAgainAtTheInputWithNoStreamsNamed() {
+        // The feed's stream found by the survey itself.
+        final Meta meta = streamReader.meta(STREAM);
+        Mockito.when(streamReader.find(any(), anyInt(), anyBoolean())).thenReturn(new ResultPage<>(List.of(
+                new MetaRow(meta, null, Map.of()))));
+        Mockito.when(inputs.forBuild(BUILD)).thenReturn(Optional.empty());
+        final Map<String, Object> raw = json(tool.execute(BuildToolCalls.call(SurveyFeedTool.NAME,
+                "{\"feed\": \"VPN\", \"build\": \"" + BUILD + "\"}"), BuildToolCalls.context()));
+        assertThat(raw).doesNotContainKey(SurveyDoc.READ_AT);
+
+        // Described in place, its translation fed by a pre-processor: surveyed again, every stream read anew.
+        final TranslationInputs.At at = new TranslationInputs.At("hand-pipeline", "translationFilter");
+        Mockito.when(inputs.forBuild(BUILD)).thenReturn(Optional.of(at));
+        Mockito.when(inputs.texts(any(), eq(at), anyList(), anyInt())).thenReturn(Map.of(STREAM,
+                new TranslationInputText.Text(AT_INPUT, TranslationInputText.Format.JSON, 1)));
+        final Map<String, Object> again = json(tool.execute(BuildToolCalls.call(SurveyFeedTool.NAME,
+                "{\"feed\": \"VPN\", \"build\": \"" + BUILD + "\"}"), BuildToolCalls.context()));
+
+        assertThat(again).containsEntry(SurveyDoc.READ_AT, SurveyDoc.AT_TRANSLATION_INPUT);
+        assertThat(String.valueOf(again.get("shapes"))).contains("action");
         Mockito.verify(inputs).texts(any(), eq(at), eq(List.of(STREAM)), eq(TranslationInputs.SURVEY_RECORDS));
     }
 

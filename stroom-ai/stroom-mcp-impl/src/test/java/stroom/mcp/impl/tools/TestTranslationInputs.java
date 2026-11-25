@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.processing.TranslationInputText;
+import stroom.ai.impl.tools.sample.SurveyDoc;
 import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.Test;
@@ -53,6 +54,22 @@ class TestTranslationInputs {
 
         world.records().rememberStartFrom("vpn", startFrom(true));
         assertThat(inputs.forBuild("vpn")).contains(new TranslationInputs.At("p", "translationFilter"));
+    }
+
+    @Test
+    void aCopyOfAPreProcessedPipelineIsReadAtItsInputAndARawSurveyOfItIsStale() {
+        final Map<String, Object> copied = Map.of("choice", ExistingTranslations.EXISTING, "pipeline",
+                Map.of("uuid", "p"), InPlaceInduction.ELEMENT, "translationFilter", InPlaceInduction.PRE_PROCESSED,
+                true);
+
+        assertThat(TranslationInputs.at(copied)).contains(new TranslationInputs.At("p", "translationFilter"));
+        assertThat(TranslationInputs.at(Map.of("choice", ExistingTranslations.DRAFT))).isEmpty();
+        assertThat(TranslationInputs.at(null)).isEmpty();
+        assertThat(TranslationInputs.staleSurvey(copied, Map.of("saturated", true))).isTrue();
+        assertThat(TranslationInputs.staleSurvey(copied, Map.of(SurveyDoc.READ_AT,
+                SurveyDoc.AT_TRANSLATION_INPUT))).isFalse();
+        assertThat(TranslationInputs.staleSurvey(copied, null)).isFalse();
+        assertThat(TranslationInputs.staleSurvey(Map.of("choice", ExistingTranslations.DRAFT), Map.of())).isFalse();
     }
 
     @Test

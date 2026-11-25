@@ -525,6 +525,11 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         pipeline.put("uuid", described.get("uuid"));
         startFrom.put("pipeline", pipeline);
         startFrom.put(AT, clock.getAsLong());
+        if (ExistingTranslations.EXISTING.equals(choice) && scope.isPresent()) {
+            // Copied: where its translation reads its records, which a pre-processor may feed.
+            startFrom.put(InPlaceInduction.ELEMENT, scope.get().translation().element());
+            startFrom.put(InPlaceInduction.PRE_PROCESSED, scope.get().preProcessed());
+        }
         buildRecords.get().rememberStartFrom(calling.build(), startFrom);
         if (InPlaceInduction.IN_PLACE.equals(choice)) {
             return Optional.of(describeInPlace(calling, scope.orElseThrow()));
