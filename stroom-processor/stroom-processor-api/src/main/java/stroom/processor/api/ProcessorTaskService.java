@@ -21,29 +21,9 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.util.shared.ResultPage;
 
-import java.util.Optional;
-
 public interface ProcessorTaskService {
 
     ResultPage<ProcessorTask> find(final ExpressionCriteria criteria);
 
     ResultPage<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria);
-
-    /// Fetches a task.
-    ///
-    /// @param taskId The id of the task.
-    /// @return The task, or empty if there is none with that id.
-    Optional<ProcessorTask> fetch(long taskId);
-
-    /// Puts a task that has completed or failed back to be run again.
-    ///
-    /// @param taskId The id of the task.
-    /// @return True if the task was changed. False if it was not complete or failed.
-    boolean returnToCreated(long taskId);
-
-    /// Sets a task that is not running to failed, so that it is not run again.
-    ///
-    /// @param taskId The id of the task.
-    /// @return True if the task was changed. False if it was running, deleted or already failed.
-    boolean markFailed(long taskId);
 }
