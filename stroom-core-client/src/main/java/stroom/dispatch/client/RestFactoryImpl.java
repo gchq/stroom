@@ -17,7 +17,6 @@
 package stroom.dispatch.client;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.util.client.Console;
 import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Contexts;
 import stroom.widget.component.client.ControllerNode;
@@ -26,6 +25,7 @@ import stroom.widget.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.task.client.Task;
 import stroom.widget.task.client.TaskMonitor;
 import stroom.widget.task.client.TaskMonitorFactory;
+import stroom.widget.util.client.Console;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -330,11 +330,8 @@ public class RestFactoryImpl implements RestFactory, HasHandlers {
                     resultConsumer.accept(response);
                 }
             } catch (final Throwable t) {
-                Console.debug(t.toString());
-                if (method != null && method.getRequest() != null) {
-                    Console.debug(method.getRequest().toString());
-                }
-                Console.error("Error processing successful response: " + response);
+                // Not the response, which may hold a secret
+                Console.error("Error processing successful response", t);
                 AlertEvent.fireErrorFromException(hasHandlers, t, null);
             } finally {
                 taskMonitor.onEnd(task);

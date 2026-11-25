@@ -49,12 +49,12 @@ class TestSubtract extends AbstractFunctionTest<Subtract> {
                 // Subtract is a numeric function so subtraction of dates gives an error
                 TestCase.of(
                         "2",
-                        ValErr.INSTANCE,
+                        ValErr.create("Expected a number but got '2008-11-18T09:47:50.500'"),
                         ValString.create("2008-11-18T09:47:50.500"),
                         ValString.create("2008-11-18T09:47:50.100")),
                 TestCase.of(
                         "2",
-                        ValErr.INSTANCE,
+                        ValErr.create("Expected a number but got '2008-11-18T09:47:50.548Z'"),
                         ValString.create("2008-11-18T09:47:50.548Z"),
                         ValString.create("2008-11-18T09:47:50.548Z")),
                 TestCase.of(

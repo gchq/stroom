@@ -32,6 +32,8 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.editor.DocumentEditorHost;
 import stroom.document.client.editor.HasCommonTabs;
+import stroom.document.client.editor.PostSave;
+import stroom.document.client.editor.SaveQueue;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.explorer.shared.ExplorerNode;
@@ -49,6 +51,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -304,37 +308,72 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
     public void save(final DocumentTabData tabData, final Runnable onComplete) {
         if (tabData instanceof DocumentEditorHost<?>) {
             final DocumentEditorHost<D> controller = (DocumentEditorHost<D>) tabData;
-            // Not saved while a field holds input that can't be kept, which the field says
-            if (controller.isDirty() && !controller.refuseInvalidInput()) {
-                D document = controller.getEntity();
-                document = controller.write(document);
+            // Nothing is saved once its tab is closed, e.g. by a save that was waiting, as the user has
+            // agreed to lose it. Not saved while a field holds input that can't be kept, which the field
+            // says
+            if (!controller.isDisposed() && controller.isDirty() && !controller.refuseInvalidInput()) {
+                final D document = controller.write(controller.getEntity());
                 if (document != null) {
                     final String validationError = getPreSaveError(document);
                     if (validationError != null) {
                         AlertEvent.fireWarn(this, validationError, onComplete::run);
                         return;
                     }
-                    final D finalDocument = document;
-                    save(getDocRef(document), document,
-                            controller.getPostSaveCallback(),
-                            doc -> {
-                                controller.read(getDocRef(doc), doc);
-                                onComplete.run();
-                            },
-                            throwable -> {
-                                AlertEvent.fireError(
-                                        this,
-                                        "Unable to save document "
-                                        + DocRefUtil.createTypedDocRefString(getDocRef(finalDocument)),
-                                        throwable.getMessage(), null);
-                                onComplete.run();
-                            },
-                            controller);
+                    final SaveQueue saveQueue = controller.getSaveQueue();
+                    // Saved once a save in progress has finished, if there is anything to save
+                    if (saveQueue.start(() -> save(tabData, onComplete), onComplete)) {
+                        saveQueue.guard(() -> save(controller, document, onComplete));
+                    }
                     return;
                 }
             }
         }
         onComplete.run();
+    }
+
+    // Saves a document, as it was written, once its save has been started in the host's queue
+    private void save(final DocumentEditorHost<D> controller, final D document, final Runnable onComplete) {
+        final SaveQueue saveQueue = controller.getSaveQueue();
+        final PostSave<D> postSave = controller.getPostSaveCallback();
+        // What is typed while the document is being saved is kept
+        final AtomicBoolean changed = new AtomicBoolean();
+        final AtomicReference<D> writtenSince = new AtomicReference<>(document);
+        save(getDocRef(document),
+                document,
+                postSave == null
+                        ? null
+                        : (doc, next) -> saveQueue.guard(() -> {
+                            // It may take a while too
+                            changed.set(controller.hasChangedSince(document));
+                            writtenSince.set(controller.write(controller.getEntity()));
+                            postSave.run(doc, next, () -> {
+                                // The user has been told, and can save again
+                                saveQueue.guard(() -> {
+                                    if (!controller.isDisposed()) {
+                                        controller.setSaved(getDocRef(doc), document, doc);
+                                    }
+                                });
+                                saveQueue.failed();
+                                onComplete.run();
+                            });
+                        }),
+                doc -> saveQueue.succeeded(() -> {
+                    if (!controller.isDisposed()) {
+                        controller.readSaved(getDocRef(doc), document, doc,
+                                changed.get() || controller.hasChangedSince(writtenSince.get()));
+                    }
+                    onComplete.run();
+                }),
+                throwable -> {
+                    AlertEvent.fireError(
+                            this,
+                            "Unable to save document "
+                            + DocRefUtil.createTypedDocRefString(getDocRef(document)),
+                            throwable.getMessage(), null);
+                    saveQueue.failed();
+                    onComplete.run();
+                },
+                controller);
     }
 
     /**
@@ -360,33 +399,8 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                 return;
             }
 
-            final Consumer<ExplorerNode> newDocumentConsumer = newNode -> {
-                final DocRef newDocRef = newNode.getDocRef();
-                final Consumer<D> saveConsumer = saved -> {
-                    // Read the new document into this controller.
-                    controller.setReadOnly(false);
-                    controller.read(newDocRef, saved);
-                    // Record that the open document has been switched.
-                    documentTabManager.remove(docRef, tabData);
-                    documentTabManager.put(newDocRef, tabData);
-                };
-
-                final Consumer<D> loadConsumer = document -> {
-                    // Write to the newly created document.
-                    document = controller.write(document);
-                    // Save the new document and read it back into the controller.
-                    save(newDocRef,
-                            document,
-                            controller.getPostSaveAsCallback(),
-                            saveConsumer,
-                            null,
-                            controller);
-                };
-
-                // If the user has created a new document then load it.
-                load(newDocRef, loadConsumer, throwable -> {
-                }, controller);
-            };
+            final Consumer<ExplorerNode> newDocumentConsumer = newNode ->
+                    saveAs(tabData, controller, docRef, newNode.getDocRef());
 
             // Ask the user to create a new document.
             ShowCreateDocumentDialogEvent.fire(
@@ -398,6 +412,57 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                     true,
                     newDocumentConsumer);
         }
+    }
+
+    // Saves what a document's editor shows as a copy, which the editor then shows, once any save of the
+    // document in progress has finished (however it ended), as its reply would show the original again
+    private void saveAs(final DocumentTabData tabData,
+                        final DocumentEditorHost<D> controller,
+                        final DocRef docRef,
+                        final DocRef newDocRef) {
+        final SaveQueue saveQueue = controller.getSaveQueue();
+        final Runnable again = () -> saveAs(tabData, controller, docRef, newDocRef);
+        if (controller.isDisposed() || !saveQueue.start(again, again)) {
+            return;
+        }
+
+        final RestErrorHandler errorHandler = throwable -> {
+            AlertEvent.fireError(
+                    this,
+                    "Unable to save document " + DocRefUtil.createTypedDocRefString(newDocRef),
+                    throwable.getMessage(), null);
+            saveQueue.failed();
+        };
+
+        final Consumer<D> saveConsumer = saved -> saveQueue.succeeded(() -> {
+            if (!controller.isDisposed()) {
+                // Read the new document into this controller.
+                controller.setReadOnly(false);
+                controller.read(newDocRef, saved);
+                // Record that the open document has been switched.
+                documentTabManager.remove(docRef, tabData);
+                documentTabManager.put(newDocRef, tabData);
+            }
+        });
+
+        final Consumer<D> loadConsumer = loaded -> saveQueue.guard(() -> {
+            // Write to the newly created document.
+            final D document = controller.write(loaded);
+            final PostSave<D> postSaveAs = controller.getPostSaveAsCallback();
+            // Save the new document and read it back into the controller.
+            save(newDocRef,
+                    document,
+                    postSaveAs == null
+                            ? null
+                            : (doc, next) -> saveQueue.guard(() ->
+                                    postSaveAs.run(doc, next, saveQueue::failed)),
+                    saveConsumer,
+                    errorHandler,
+                    controller);
+        });
+
+        // If the user has created a new document then load it.
+        saveQueue.guard(() -> load(newDocRef, loadConsumer, errorHandler, controller));
     }
 
     @Override

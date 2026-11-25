@@ -624,6 +624,68 @@ public final class DashboardPaneStories {
                             splitter.element().get(), exclude.element().get())).toBe(true);
                     DashboardPlays.expectNoProblems(play);
                 })
+                // A dashboard table's Filter dialog focuses the field of the tab it opens on: the Filter
+                // tab's editor at first, as the query editor's does (the editor wasn't focused). The
+                // dialog is kept for the table, so it opens again on the tab it was left on, here
+                // Include Exclude, whose Include box is focused
+                .story("TableFilterFocusesItsEditor", DashboardSupport.story(
+                        DashboardDocs.QUERY_TABLE_DASHBOARD, routes -> {
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+                    StroomDom.clickHeader(play, DashboardPlays.header(play, "Name"));
+                    play.click(DashboardPlays.menuItem(screen, "Filter"));
+                    final Play dialog = DashboardPlays.dialog(screen, "Filter 'Name'");
+                    play.waitFor(() -> play.expect(dialog.querySelector(".ace_text-input")).toHaveFocus());
+
+                    play.click(dialog.getByText("Include Exclude", StroomDom.LINK_TAB_LABEL));
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByRole("dialog", "Filter 'Name'")).toBeNull());
+                    StroomDom.clickHeader(play, DashboardPlays.header(play, "Name"));
+                    play.click(DashboardPlays.menuItem(screen, "Filter"));
+                    final Play again = DashboardPlays.dialog(screen, "Filter 'Name'");
+                    play.waitFor(() -> play.expect(again.querySelector("textarea#filterInclude")).toHaveFocus());
+                    DashboardPlays.expectNoProblems(play);
+                })
+                // Clearing a column's filter and pressing OK removes it (the old filter used to stay,
+                // as an empty editor gave back the column's own filter)
+                .story("TableFilterCleared", DashboardSupport.story(
+                        DashboardDocs.QUERY_TABLE_DASHBOARD, routes -> {
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+                    final Play dialog = openNameFilter(play);
+                    play.keyboard("foo");
+                    play.waitFor(() -> play.expect(dialog.querySelector(".ace_content").textContent())
+                            .toMatch(TextMatch.containing("foo")));
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByRole("dialog", "Filter 'Name'")).toBeNull());
+
+                    final Play again = openNameFilter(play);
+                    play.waitFor(() -> play.expect(again.querySelector(".ace_content").textContent())
+                            .toMatch(TextMatch.containing("foo")));
+                    play.keyboard("{Control>}a{/Control}{Backspace}");
+                    play.waitFor(() -> play.expect(again.querySelector(".ace_content").textContent())
+                            .not().toMatch(TextMatch.containing("foo")));
+                    play.click(again.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByRole("dialog", "Filter 'Name'")).toBeNull());
+
+                    final Play third = openNameFilter(play);
+                    // Typed so the play waits for the editor to draw its text: then any old filter
+                    // shows with it
+                    play.keyboard("bar");
+                    play.waitFor(() -> play.expect(third.querySelector(".ace_content").textContent())
+                            .toMatch(TextMatch.containing("bar")));
+                    play.expect(third.querySelector(".ace_content").textContent())
+                            .not().toMatch(TextMatch.containing("foo"));
+                    DashboardPlays.expectNoProblems(play);
+                })
                 // The column values filter's whitelist is sent with the table's next search
                 .story("TableColumnValuesFilter", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
                         routes -> routes.route(COLUMN_VALUES_REQUEST, RestReply.json(COLUMN_VALUES))))
@@ -1322,6 +1384,17 @@ public final class DashboardPaneStories {
         // The popup's 'alpha' is after the table's on the page
         play.waitFor(() -> play.expect(screen.getAllByText("alpha")).toHaveLength(2));
         play.click(screen.getAllByText("alpha").nth(1));
+    }
+
+    // Opens the Name column's Filter dialog from its header's menu, on its Filter tab with the
+    // editor focused, ready to type in
+    private static Play openNameFilter(final Play play) {
+        final Play screen = play.screen();
+        StroomDom.clickHeader(play, DashboardPlays.header(play, "Name"));
+        play.click(DashboardPlays.menuItem(screen, "Filter"));
+        final Play dialog = DashboardPlays.dialog(screen, "Filter 'Name'");
+        play.waitFor(() -> play.expect(dialog.querySelector(".ace_text-input")).toHaveFocus());
+        return dialog;
     }
 
     // Runs the query and opens the Name column's values filter from its header's icon

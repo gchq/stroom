@@ -29,9 +29,11 @@ import java.util.function.Supplier;
         commonReturnType = Val.class,
         commonReturnDescription = "The sum of all values",
         commonDescription = "Adds the value of all arguments together. Minimum of two arguments. Can be expressed as " +
-                "'${field1}+${field2}'. A duration, e.g. 2h, or a period, e.g. 1d or 1M, can be added to a date. A " +
-                "period is added on the calendar in the time zone of the query, so adding 1d keeps the local time " +
-                "when the clocks change, and adding 24h does not.",
+                "'${field1}+${field2}'. If any argument is a string then the arguments that are not null are joined " +
+                "together. Otherwise returns null if any argument is null, or an error if any argument is not a " +
+                "number, date, duration or period. A duration, e.g. 2h, or a period, e.g. 1d or 1M, can be added to " +
+                "a date. A period is added on the calendar in the time zone of the query, so adding 1d keeps the " +
+                "local time when the clocks change, and adding 24h does not.",
         signatures = @FunctionSignature(
                 args = @FunctionArg(
                         name = "arg",
@@ -66,7 +68,7 @@ class Add extends NumericFunction {
         private final Supplier<ZoneId> zone;
         private final boolean summing;
 
-        private Calc(final Supplier<ZoneId> zone, final boolean summing) {
+        Calc(final Supplier<ZoneId> zone, final boolean summing) {
             this.zone = zone;
             this.summing = summing;
         }
@@ -122,8 +124,6 @@ class Add extends NumericFunction {
         @Override
         public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
             boolean concat = false;
-            boolean hasNull = false;
-            boolean hasAmount = false;
             final Val[] vals = new Val[childGenerators.length];
             for (int i = 0; i < vals.length; i++) {
                 final Val val = childGenerators[i].eval(storedValues, childDataSupplier);
@@ -132,13 +132,11 @@ class Add extends NumericFunction {
                 } else if (val instanceof ValString) {
                     concat = true;
                 }
-                hasNull |= val.type().isNull();
-                hasAmount |= Type.DURATION.equals(val.type()) || Type.PERIOD.equals(val.type());
 
                 vals[i] = val;
             }
 
-            // If any of the input values are strings then concatenate them all.
+            // If any of the input values are strings then concatenate them all, leaving out nulls.
             if (concat) {
                 final StringBuilder sb = new StringBuilder();
                 for (final Val val : vals) {
@@ -149,18 +147,7 @@ class Add extends NumericFunction {
                 return ValString.create(sb.toString());
             }
 
-            // A date that is missing stays missing, as it does when a duration or period is subtracted from it.
-            if (hasNull && hasAmount) {
-                return ValNull.INSTANCE;
-            }
-
-            Val value = ValNull.INSTANCE;
-            for (final Val val : vals) {
-                if (val.type().isValue()) {
-                    value = calculator.calc(value, val);
-                }
-            }
-            return value;
+            return calculate(vals, calculator);
         }
     }
 }

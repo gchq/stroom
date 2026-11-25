@@ -32,8 +32,8 @@ import stroom.widget.task.client.TaskEndEvent;
 import stroom.widget.task.client.TaskEndEvent.TaskEndHandler;
 import stroom.widget.task.client.TaskStartEvent;
 import stroom.widget.task.client.TaskStartEvent.TaskStartHandler;
+import stroom.widget.util.client.Console;
 
-import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -78,7 +78,7 @@ public class AppPageController extends Controller
         taskCount++;
 
         if (taskCount < 0) {
-            GWT.log("Negative task count");
+            Console.warn("Negative task count");
         }
 
         if (taskCount > 0) {
@@ -93,7 +93,7 @@ public class AppPageController extends Controller
         taskCount--;
 
         if (taskCount < 0) {
-            GWT.log("Negative task count");
+            Console.warn("Negative task count");
         }
 
         if (taskCount == 0) {

@@ -20,6 +20,7 @@ import stroom.document.client.component.CodeTabController;
 import stroom.document.client.component.DocumentationTabController;
 import stroom.document.client.editor.DocumentEditor;
 import stroom.document.client.editor.LinkTabPanel;
+import stroom.document.client.editor.UnsetText;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.widget.tab.client.TabData;
@@ -59,7 +60,7 @@ public class XsltEditor extends DocumentEditor<XsltDoc> {
                     return xslt;
                 },
                 (xslt, docRef, doc) -> xslt.setText(doc.getData()),
-                (xslt, doc) -> doc.copy().data(xslt.getText()).build());
+                (xslt, doc) -> doc.copy().data(UnsetText.asRead(xslt.getText(), doc.getData())).build());
         addDocumentationTab(DOCUMENTATION,
                 documentationTabProvider,
                 XsltDoc::getDescription,

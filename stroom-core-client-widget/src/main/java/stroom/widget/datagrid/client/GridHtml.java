@@ -58,6 +58,10 @@ final class GridHtml<R> {
 
     // A tick box in a cell is a check box to assistive technology
     private static final String CHECK_BOX_ROLE = "role=\"checkbox\"";
+    // The grid tick box's class, and the modifier a cell drawing one is given
+    private static final String TICK_BOX_CELL_CLASS_NAME = "tick-box--cell";
+    private static final String TICK_BOX_MODIFIER = "data-grid__cell--tick-box";
+    private static final String HEADER_TICK_BOX_MODIFIER = "data-grid__header-cell--tick-box";
 
     private final ColumnModel<Column<R, ?>> columnModel;
     private final Map<Column<R, ?>, Header<?>> headers;
@@ -104,6 +108,14 @@ final class GridHtml<R> {
             if (header != null && header.getHeaderStyleNames() != null) {
                 classes.append(' ').append(header.getHeaderStyleNames());
             }
+            final SafeHtmlBuilder content = new SafeHtmlBuilder();
+            if (header != null) {
+                header.render(new Context(0, i, header.getKey()), content);
+            }
+            final SafeHtml headerHtml = content.toSafeHtml();
+            if (isTickBoxColumn(i, headerHtml.asString())) {
+                classes.append(' ').append(HEADER_TICK_BOX_MODIFIER);
+            }
 
             sb.appendHtmlConstant("<div class=\"")
                     .appendEscaped(classes.toString())
@@ -116,11 +128,6 @@ final class GridHtml<R> {
                         : "none") + "\"");
             }
             sb.appendHtmlConstant(">");
-            final SafeHtmlBuilder content = new SafeHtmlBuilder();
-            if (header != null) {
-                header.render(new Context(0, i, header.getKey()), content);
-            }
-            final SafeHtml headerHtml = content.toSafeHtml();
             if (sortable && header != null) {
                 sb.appendHtmlConstant("<div class=\"data-grid__sort\">"
                                       + "<div class=\"data-grid__sort-name\">");
@@ -208,6 +215,9 @@ final class GridHtml<R> {
                 final SafeHtmlBuilder cell = new SafeHtmlBuilder();
                 column.render(context, row, cell);
                 content.append(nameTickBoxes(cell.toSafeHtml(), i));
+                if (isTickBoxColumn(i, cell.toSafeHtml().asString())) {
+                    classes.append(' ').append(TICK_BOX_MODIFIER);
+                }
             }
             content.appendHtmlConstant("</div>");
 
@@ -296,8 +306,13 @@ final class GridHtml<R> {
         if (cellStyles != null && !cellStyles.isEmpty()) {
             classes.append(' ').append(cellStyles);
         }
+        final SafeHtmlBuilder cell = new SafeHtmlBuilder();
+        column.render(context, row, cell);
+        if (isTickBoxColumn(index, cell.toSafeHtml().asString())) {
+            classes.append(' ').append(TICK_BOX_MODIFIER);
+        }
         sb.appendHtmlConstant("<div class=\"").appendEscaped(classes.toString()).appendHtmlConstant("\"><div>");
-        column.render(context, row, sb);
+        sb.append(cell.toSafeHtml());
         sb.appendHtmlConstant("</div></div>");
     }
 
@@ -330,6 +345,31 @@ final class GridHtml<R> {
             }
         }
         return -1;
+    }
+
+    // Whether a column is a tick box column (CHECKBOX_COL, 22px), its cell or header drawing only a
+    // tick box. Its cells and header are marked so the grid's stylesheet centres the box at every
+    // density; a wider column holding a tick box (e.g. an Enabled column, ENABLED_COL, 66px) keeps it
+    // under its left-aligned header. The width is the one the column was declared with (scaled with
+    // the text size), not its width now, so a user's resize doesn't mark some rows and not others.
+    // It scales with the text size, so the test is under twice CHECKBOX_COL, which a tick box column
+    // stays under and an Enabled column over at every size
+    private boolean isTickBoxColumn(final int index, final String html) {
+        return columnModel.getSizing(index).getWidth() < 2 * ColumnSizeConstants.CHECKBOX_COL
+               && isOnlyTickBox(html);
+    }
+
+    /// Tells whether a cell's or header's HTML is only a grid tick box ([stroom.cell.tickbox.client.TickBoxCell]'s
+    /// one div, `tick-box--cell`), not a tick box with other content, e.g. a value and its tick box.
+    ///
+    /// @param html The HTML the cell or header drew.
+    /// @return True if it is only a tick box.
+    static boolean isOnlyTickBox(final String html) {
+        final String trimmed = html.trim();
+        return trimmed.startsWith("<div")
+               && trimmed.indexOf("<div", 1) < 0
+               && trimmed.endsWith("</div>")
+               && trimmed.contains(TICK_BOX_CELL_CLASS_NAME);
     }
 
     private static void appendAlignment(final StringBuilder classes,

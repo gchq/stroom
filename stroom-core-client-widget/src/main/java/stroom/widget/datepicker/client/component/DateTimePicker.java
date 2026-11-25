@@ -25,6 +25,7 @@ import stroom.widget.datepicker.client.TimeOffset;
 import stroom.widget.datepicker.client.TimeRecord;
 import stroom.widget.datepicker.client.UTCDate;
 import stroom.widget.text.client.Label;
+import stroom.widget.util.client.Console;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
@@ -211,11 +212,11 @@ public class DateTimePicker extends Component {
         if (hour == 0) {
             final DateRecord dateAfter = dateTimeModel.parseDate(value);
             if (!dateBefore.equals(dateAfter)) {
-                GWT.log("Fix hour for DST: " + dateBefore + " -> " + dateAfter);
+                Console.debug(() -> "Fix hour for DST: " + dateBefore + " -> " + dateAfter);
                 value.setTime(value.getTime() + DateTimeModel.MILLIS_IN_HOUR);
                 updateTime();
             } else if (previousHour == 23 && this.hour.getIntValue() == 1) {
-                GWT.log("Fix hour for DST wrap: " + dateBefore + " -> " + dateAfter);
+                Console.debug(() -> "Fix hour for DST wrap: " + dateBefore + " -> " + dateAfter);
                 value.setTime(value.getTime() - DateTimeModel.MILLIS_IN_HOUR);
                 updateTime();
             }
@@ -295,7 +296,7 @@ public class DateTimePicker extends Component {
 
         final long newOffsetMs = dateTimeModel.getOffsetMillis(date);
         if (allowOffsetChange && newOffsetMs != currentOffsetMs) {
-            GWT.log("Offset changed: " + currentOffsetMs + " -> " + newOffsetMs);
+            Console.debug(() -> "Offset changed: " + currentOffsetMs + " -> " + newOffsetMs);
             final UTCDate newDate = UTCDate.create(
                     datePickerTime.getFullYear(),
                     datePickerTime.getMonth(),

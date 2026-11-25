@@ -21,8 +21,8 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.CommonAlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.widget.component.client.AppRoot;
+import stroom.widget.util.client.Console;
 
-import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -89,7 +89,7 @@ public class AlertPlugin implements AlertEvent.Handler, ConfirmEvent.Handler {
                     }
                 }
             } catch (final RuntimeException exception) {
-                GWT.log(exception.getMessage());
+                Console.error(exception::getMessage, exception);
             } finally {
                 queue.remove(0);
                 if (!queue.isEmpty()) {

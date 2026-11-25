@@ -17,6 +17,7 @@
 package stroom.pipeline.stepping.client.component;
 
 import stroom.pipeline.shared.XPathFilter;
+import stroom.pipeline.shared.XPathFilter.SearchType;
 import stroom.widget.component.client.Controller;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.component.client.HasControllerNode;
@@ -70,8 +71,18 @@ public class XPathFilterEditorController extends Controller {
 
     private void read(final XPathFilter xPathFilter) {
         view.setXPath(xPathFilter.getPath());
-        view.setSearchType(xPathFilter.getSearchType());
-        view.setMatchType(xPathFilter.getMatchType());
+        // A filter saved before it had a search type (null) was an XPath one: shown as XPath if it has
+        // a path other than All text's, otherwise as All text, so OK can write it and keeps its path
+        view.setSearchType(xPathFilter.getSearchType() != null
+                ? xPathFilter.getSearchType()
+                : xPathFilter.getPath() != null && !xPathFilter.getPath().isEmpty()
+                  && !"//*".equals(xPathFilter.getPath())
+                        ? SearchType.XPATH
+                        : SearchType.ALL);
+        // A filter saved without a condition is shown with a new filter's, so OK can write it
+        view.setMatchType(xPathFilter.getMatchType() == null
+                ? XPathFilter.DEFAULT_MATCH_TYPE
+                : xPathFilter.getMatchType());
         view.setValue(xPathFilter.getValue() == null
                 ? ""
                 : xPathFilter.getValue());

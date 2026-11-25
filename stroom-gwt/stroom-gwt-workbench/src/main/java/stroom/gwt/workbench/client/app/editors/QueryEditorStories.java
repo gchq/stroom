@@ -686,6 +686,20 @@ public final class QueryEditorStories {
                     play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocumentEditors.expectNoProblems(play);
                 })
+                // OK with nothing entered for a column that has no filter changes nothing, so the query
+                // isn't changed (it used to be given an empty filter)
+                .story("ColumnFilterOkUnchanged", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    executeAndOpenColumnMenu(play, "Count");
+                    play.click(screen.findByText("Filter", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = dialog(screen, "Filter 'Count'");
+                    play.waitFor(() -> play.expect(dialog.querySelector(".ace_text-input")).toHaveFocus());
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByRole("dialog", "Filter 'Count'")).toBeNull());
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // The query's column filter has no Include/Exclude tab (unlike a dashboard's)
                 .story("QuerySideFilterHasNoIncludeExcludeTab", context -> render(context, FIXTURES))
                 .withPlay(play -> {
@@ -870,6 +884,36 @@ public final class QueryEditorStories {
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             QueryFixtures.SEARCH.withJsonBodyContaining("{\"queryTablePreferences\": {\"columns\": "
                                     + "[{\"format\": {\"type\": \"DURATION\"}}, {}, {}, {}]}}").toSpyMatcher());
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // OK refuses a custom date format Java can't use, which the server failed on, and choosing
+                // the standard format the list last showed leaves Custom and clears the error
+                .story("FormatInvalidCustom", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    executeAndOpenColumnMenu(play, "Name");
+                    play.click(screen.findByText("Format", StroomDom.MENU_ITEM_TEXT));
+                    final Play dialog = dialog(screen, "Format 'Name'");
+                    play.click(dialog.querySelector(StroomDom.SELECTION_BOX));
+                    play.click(screen.findByText("Date Time", ".selection-popup *"));
+                    play.click(dialog.findByRole("checkbox", "Use Preferences"));
+                    final Query custom = dialog.getByRole("checkbox", "Custom");
+                    play.click(custom);
+                    final Query customFormat = dialog.getByLabelText("Custom Format");
+                    play.clear(customFormat);
+                    play.type(customFormat, "dd/bb/yyyy");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(customFormat).toHaveAttribute("aria-invalid", "true"));
+                    play.expect(dialog.getByText("Unknown pattern letter 'b'")).toBeInTheDocument();
+                    play.expect(screen.queryByText("Format 'Name'", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.click(dialog.getByLabelText("Format"));
+                    play.click(screen.findByText("yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+                            ".selection-popup .selection-item-cell__text"));
+                    play.waitFor(() -> play.expect(custom).not().toBeChecked());
+                    play.expect(customFormat).not().toHaveAttribute("aria-invalid", "true");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Format 'Name'", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Conditional formatting: the rules list, a new rule, then OK

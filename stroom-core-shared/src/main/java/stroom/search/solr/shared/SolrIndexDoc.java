@@ -201,7 +201,9 @@ public class SolrIndexDoc extends AbstractDoc {
                Objects.equals(solrConnectionConfig, solrIndexDoc.solrConnectionConfig) &&
                Objects.equals(fields, solrIndexDoc.fields) &&
                Objects.equals(timeField, solrIndexDoc.timeField) &&
-               Objects.equals(defaultExtractionPipeline, solrIndexDoc.defaultExtractionPipeline);
+               Objects.equals(defaultExtractionPipeline, solrIndexDoc.defaultExtractionPipeline) &&
+               Objects.equals(deletedFields, solrIndexDoc.deletedFields) &&
+               Objects.equals(retentionExpression, solrIndexDoc.retentionExpression);
     }
 
     @Override
@@ -212,7 +214,9 @@ public class SolrIndexDoc extends AbstractDoc {
                 solrConnectionConfig,
                 fields,
                 timeField,
-                defaultExtractionPipeline);
+                defaultExtractionPipeline,
+                deletedFields,
+                retentionExpression);
     }
 
     @Override

@@ -17,8 +17,8 @@
 package stroom.dispatch.client;
 
 import stroom.util.client.JSONUtil;
+import stroom.widget.util.client.Console;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONValue;
@@ -81,12 +81,13 @@ public class RestError {
                 try {
                     unwrapped = getThrowableFromJsonResponse(method, throwable, responseText);
                 } catch (final Exception e) {
-                    GWT.log("Error parsing response as json: " + e.getMessage());
+                    // Not all are JSON. Not why, which quotes the response
+                    Console.debug("Error parsing response as json");
                     try {
                         // Try parsing it as text
                         unwrapped = getThrowableFromStringResponse(method, throwable, responseText);
                     } catch (final Exception e2) {
-                        GWT.log("Error parsing response as text: " + e.getMessage());
+                        Console.warn("Error parsing response as text");
                     }
                 }
             }

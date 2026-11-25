@@ -105,6 +105,12 @@ public final class QuickFilterStories {
                     // The button says it opens a dialog, and whether it is open
                     play.expect(helpButton).toHaveAttribute("aria-haspopup", "dialog");
                     play.expect(helpButton).toHaveAttribute("aria-expanded", "false");
+                    // Its icon is a form group help icon's colour, a label's, in both themes (it was
+                    // the icon buttons' blue in the light theme)
+                    play.expect("the help icon's colour a label's", () -> {
+                        final Element button = helpButton.element().get();
+                        return iconColour(button).equals(labelColour(button));
+                    }).toBe(true);
                     play.click(helpButton);
                     // The shared help popup, a dialog named for what it helps with
                     final Query help = play.screen().findByRole("dialog", "Quick Filter Syntax Help");
@@ -332,6 +338,21 @@ public final class QuickFilterStories {
         style.setProperty("fontSize", "0.85rem");
         return row;
     }
+
+    // The colour a button's icon is drawn in
+    private static native String iconColour(Element button) /*-{
+        return $wnd.getComputedStyle(button.querySelector("svg")).color;
+    }-*/;
+
+    // The colour a form group's label is drawn in, where an element is
+    private static native String labelColour(Element element) /*-{
+        var probe = $doc.createElement("span");
+        probe.style.color = "var(--form-group__label-color)";
+        element.parentNode.appendChild(probe);
+        var colour = $wnd.getComputedStyle(probe).color;
+        probe.parentNode.removeChild(probe);
+        return colour;
+    }-*/;
 
 
     // --------------------------------------------------------------------------------

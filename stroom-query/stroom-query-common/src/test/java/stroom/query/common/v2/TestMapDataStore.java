@@ -19,7 +19,6 @@ package stroom.query.common.v2;
 import stroom.query.api.QueryKey;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.TableSettings;
-import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 
 import org.junit.jupiter.api.Test;
@@ -39,7 +38,7 @@ class TestMapDataStore extends AbstractDataStoreTest {
                      final String subDir) {
         final FieldIndex fieldIndex = new FieldIndex();
         final ErrorConsumerImpl errorConsumer = new ErrorConsumerImpl();
-        final ExpressionContext expressionContext = new ExpressionContext();
+        lastErrorConsumer = errorConsumer;
         return new MapDataStore(
                 componentId,
                 tableSettings,
@@ -60,6 +59,16 @@ class TestMapDataStore extends AbstractDataStoreTest {
     @Test
     void nestedTest() {
         super.nestedTest();
+    }
+
+    @Test
+    void countDistinctTest() {
+        super.countDistinctTest();
+    }
+
+    @Test
+    void countDistinctLimitTest() {
+        super.countDistinctLimitTest();
     }
 
     @Test

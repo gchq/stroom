@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
+## [v8.0]
+
+* `countUnique()` is deprecated, though it works as before. Use the new `countDistinct()` or `dcount()` instead.
+
+  **Don't change an existing table builder rule to use either.** The values that the rule has already stored for
+  `countUnique()` can't be read by them, so its counts would be wrong or it would stop. Make the change in a copy
+  of the rule and disable the original. The copy has its own store and processes streams again from its minimum
+  stream create time, so it can raise detections that the original has already raised. The same applies to
+  changing between `countDistinct()` and `dcount()`, or changing the accuracy of `dcount()`.
+
+  Renaming a rule also gives it a new, empty store, but loses what it had stored and doesn't process those streams
+  again.
+
+* The `+` operator and the `add()` function now return null if any value is null, the same as the other
+  arithmetic operators. Previously they ignored nulls, so `5 + null()` was `5`. Joining text still ignores
+  nulls, but numbers before the text are added first, so `5 + null() + 'x'` is now `x` and not `5x`. The
+  `sum()` function still ignores nulls, but `sum(a) + sum(b)` is null if either sum is null.
+
+  **Review expressions in dashboards and queries that add fields that may have no value.** Use
+  `if(isNull(x), 0, x)` to treat a null as `0`, or `concat()` to join values as text.
+
+* The `+` operator and the `add()` function now give an error if any value is a boolean or XML and no value
+  is text, the same as the other arithmetic operators. Previously a boolean counted as `1` or `0`, so
+  `true() + 1` was `2`, and XML was ignored. Use `if(x, 1, 0)` to treat a boolean as a number.
+
+* The `sum()` function now gives an error if any value is a boolean. Previously a boolean counted as `1` or
+  `0`.
+
+  **Review uses of `sum()` that count booleans**, e.g. change `sum(a = b)` to `sum(if(a = b, 1, 0))`.
+
 ## [v7.14]
 
 * Wildcard values for Elasticsearch `keyword` fields are now matched **case-sensitively**, so `Admin*` no

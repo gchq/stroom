@@ -116,7 +116,7 @@ public class JobNodeAndInfo {
 
     @JsonIgnore
     public int getTaskLimit() {
-        return NullSafe.get(jobNode, JobNode::getTaskLimit);
+        return NullSafe.getInt(jobNode, JobNode::getTaskLimit);
     }
 
     @JsonIgnore
@@ -126,7 +126,7 @@ public class JobNodeAndInfo {
 
     @JsonIgnore
     public boolean isEnabled() {
-        return NullSafe.get(jobNode, JobNode::isEnabled);
+        return NullSafe.getBoolean(jobNode, JobNode::isEnabled);
     }
 
     // ---------------------------------

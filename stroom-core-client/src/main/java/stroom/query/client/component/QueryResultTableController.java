@@ -80,6 +80,7 @@ import stroom.widget.datagrid.client.DataGrid;
 import stroom.widget.datagrid.client.MessagePanel;
 import stroom.widget.datagrid.client.PagerPanel;
 import stroom.widget.hyperlink.client.HyperlinkEvent;
+import stroom.widget.util.client.Console;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -399,7 +400,7 @@ public class QueryResultTableController
                 }
             }
         } catch (final RuntimeException e) {
-            GWT.log(e.getMessage());
+            Console.error(e::getMessage, e);
         }
     }
 
@@ -459,7 +460,7 @@ public class QueryResultTableController
                         setDataInternal(result);
                     }
                 } catch (final Exception e) {
-                    GWT.log(e.getMessage());
+                    Console.error(e::getMessage, e);
                 } finally {
                     pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
                 }
@@ -484,7 +485,7 @@ public class QueryResultTableController
                         setDataInternal(result);
                     }
                 } catch (final Exception e) {
-                    GWT.log(e.getMessage());
+                    Console.error(e::getMessage, e);
                 }
                 pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
             });
@@ -530,15 +531,12 @@ public class QueryResultTableController
 
     @Override
     public void setData(final Result componentResult) {
-        GWT.log("setData");
-
         if (!pause) {
             setDataInternal(componentResult);
         }
     }
 
     private void setDataInternal(final Result componentResult) {
-        GWT.log("setDataInternal");
         final MessagePanel messagePanel = pagerView.getMessagePanel();
         messagePanel.hideMessage();
 
@@ -630,7 +628,7 @@ public class QueryResultTableController
                 selectionModel.clear();
             }
         } catch (final RuntimeException e) {
-            GWT.log(e.getMessage());
+            Console.error(e::getMessage, e);
         }
 
         ignoreRangeChange = false;

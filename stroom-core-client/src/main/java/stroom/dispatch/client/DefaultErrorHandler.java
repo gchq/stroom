@@ -20,8 +20,8 @@ import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.GwtStringBuilderOutputStream;
 import stroom.util.shared.EntityServiceException;
+import stroom.widget.util.client.Console;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HasHandlers;
 import org.fusesource.restygwt.client.FailedStatusCodeException;
 import org.fusesource.restygwt.client.Method;
@@ -47,9 +47,9 @@ public class DefaultErrorHandler implements RestErrorHandler {
         final Method method = error.getMethod();
         final Throwable throwable = error.getException();
         if (method != null && method.getRequest() != null) {
-            GWT.log(method.getRequest().toString());
+            Console.debug(() -> method.getRequest().toString());
         }
-        GWT.log(throwable.getMessage(), throwable);
+        Console.error(throwable::getMessage, throwable);
 
         String message = throwable.getMessage();
         String details = null;

@@ -149,6 +149,30 @@ public final class FieldValuePickerStories {
                             .toBeInTheDocument();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
+                // Screen readers are told that slow values are loading, then how many there are
+                .story("SlowValuesAnnounced", context -> QueryWidgets.editor(context,
+                        expression(Condition.EQUALS, "error"),
+                        request -> QueryWidgets.statusValues().reply(request).delayed(2500)))
+                .withPlay(play -> {
+                    final Play picker = openPicker(play, "Status = error");
+                    final Query status = picker.querySelector("[role='status']");
+                    play.expect(status).toHaveTextContent("");
+                    play.waitFor(2000, () -> play.expect(status).toHaveTextContent("Loading values"));
+                    play.waitFor(3000, () -> play.expect(status)
+                            .toHaveTextContent(TextMatch.regex("^\\d+ values$", "")));
+                    expectNoProblems(play);
+                })
+                // and why, if they can't be fetched
+                .story("SlowFailureAnnounced", context -> QueryWidgets.editor(context,
+                        expression(Condition.EQUALS, "error"),
+                        request -> RestReply.error(500, "Index not found").delayed(2500)))
+                .withPlay(play -> {
+                    final Play picker = openPicker(play, "Status = error");
+                    final Query status = picker.querySelector("[role='status']");
+                    play.waitFor(2000, () -> play.expect(status).toHaveTextContent("Loading values"));
+                    play.waitFor(3000, () -> play.expect(status)
+                            .toHaveTextContent(TextMatch.startingWith("Unable to fetch values")));
+                })
                 // Only for a field whose data source lists its values (not UserId), and only for =,
                 // != and in
                 .story("OnlyForFieldsWithValues", context -> QueryWidgets.editor(context,

@@ -22,6 +22,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginRegistry;
+import stroom.document.client.editor.SaveQueue;
 import stroom.editor.client.ace.IndicatorLines;
 import stroom.editor.client.component.CodeEditor;
 import stroom.editor.client.component.CodeEditorController;
@@ -80,6 +81,7 @@ public class SteppingElementController extends Controller {
     private String pipelineName;
     private boolean refreshRequired = true;
     private boolean loaded;
+    private final SaveQueue saveQueue = new SaveQueue();
     private boolean dirty;
     private DocRef docRef;
     private Document document;
@@ -271,28 +273,35 @@ public class SteppingElementController extends Controller {
     ///
     /// @param onComplete Run when it is saved, has failed to save or had nothing to save.
     public void save(final Runnable onComplete) {
-        if (loaded && isDirty()) {
-            final Document toSave = write();
-
-            final DocumentPlugin<Document> documentPlugin = documentPluginRegistry.get(docRef.getType(),
-                    Document.class);
-            documentPlugin.save(docRef, toSave,
-                    result -> {
-                        document = result;
-                        refreshDirty();
-                        onComplete.run();
-                    },
-                    throwable -> {
-                        AlertEvent.fireError(
-                                this,
-                                "Unable to save document " + docRef,
-                                throwable.getMessage(), null);
-                        onComplete.run();
-                    },
-                    taskMonitor());
+        // Saved again once a save in progress has finished, if there is anything to save
+        if (!isDisposed() && loaded && isDirty()) {
+            if (!saveQueue.start(() -> save(onComplete), onComplete)) {
+                return;
+            }
+            saveQueue.guard(() -> sendSave(onComplete));
         } else {
             onComplete.run();
         }
+    }
+
+    private void sendSave(final Runnable onComplete) {
+        final DocumentPlugin<Document> documentPlugin = documentPluginRegistry.get(docRef.getType(),
+                Document.class);
+        documentPlugin.save(docRef, write(),
+                result -> saveQueue.succeeded(() -> {
+                    document = result;
+                    refreshDirty();
+                    onComplete.run();
+                }),
+                throwable -> {
+                    AlertEvent.fireError(
+                            this,
+                            "Unable to save document " + docRef,
+                            throwable.getMessage(), null);
+                    saveQueue.failed();
+                    onComplete.run();
+                },
+                taskMonitor());
     }
 
     private void read() {

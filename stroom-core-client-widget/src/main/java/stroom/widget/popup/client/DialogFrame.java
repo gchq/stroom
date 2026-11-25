@@ -135,18 +135,12 @@ public class DialogFrame extends Component implements DialogButtons {
         }
         final Runnable restoreFocus = DialogButtonAction.keepFocus(button);
         setEnabled(false);
-        // New's spinner shows on Cancel, as it always has (ISSUES.md)
-        final Button busy = button == shownCreate
-                ? shownDismiss
-                : button;
-        busy.setLoading(true);
+        // The button pressed shows that the dialog is busy
+        button.setLoading(true);
         if (onHideRequest != null) {
             onHideRequest.accept(new HideRequest(action, () -> {
                 setEnabled(true);
-                if (shownOk != null) {
-                    shownOk.setLoading(false);
-                }
-                shownDismiss.setLoading(false);
+                button.setLoading(false);
                 restoreFocus.run();
             }));
         }

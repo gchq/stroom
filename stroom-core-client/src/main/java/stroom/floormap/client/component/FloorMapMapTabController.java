@@ -54,13 +54,13 @@ import stroom.query.client.DateTimeSettingsFactory;
 import stroom.query.client.QueryModel;
 import stroom.query.client.model.ResultStoreModel;
 import stroom.svg.shared.SvgImage;
-import stroom.util.client.Console;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.component.client.Controller;
 import stroom.widget.histogram.client.HistogramDataModel;
 import stroom.widget.histogram.client.HistogramLayout;
+import stroom.widget.util.client.Console;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;

@@ -16,10 +16,12 @@
 
 package stroom.floormap.client.component;
 
+import stroom.docref.DocRef;
 import stroom.document.asset.client.component.DocumentAssetsTabController;
 import stroom.document.client.component.DocumentationTabController;
 import stroom.document.client.editor.DocumentEditor;
 import stroom.document.client.editor.LinkTabPanel;
+import stroom.document.client.editor.PostSave;
 import stroom.floormap.client.query.FloorMapEventQuery;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
@@ -30,7 +32,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /// A floor map's editor: its Map, Editor, Events Query, Settings, Assets, Documentation and
@@ -279,19 +280,32 @@ public class FloorMapEditor extends DocumentEditor<FloorMapDoc> {
     /// @return The Editor tab's flush of its staged changes, then the save of the assets, run once
     /// the document is saved, so a single save persists both.
     @Override
-    public BiConsumer<FloorMapDoc, Consumer<FloorMapDoc>> getPostSaveCallback() {
+    public PostSave<FloorMapDoc> getPostSaveCallback() {
         return this::flushEditorThenSaveAssets;
     }
 
     /// @return The save of the assets to the copy, run once a copy of the document is saved.
     @Override
-    public BiConsumer<FloorMapDoc, Consumer<FloorMapDoc>> getPostSaveAsCallback() {
+    public PostSave<FloorMapDoc> getPostSaveAsCallback() {
         // The assets are copied from the document being saved, even if its Assets tab was never shown
-        return (copy, callback) -> assetsTab.onSaveAs(getDocument(), copy, callback);
+        return (copy, callback, failed) -> assetsTab.onSaveAs(getDocument(), copy, callback, failed);
+    }
+
+    @Override
+    protected void onKeepChanges(final DocRef docRef, final FloorMapDoc saved) {
+        // Reading keeps what they have staged, dropping what the save has persisted
+        if (map != null) {
+            map.read(docRef, saved);
+        }
+        if (editor != null) {
+            editor.read(docRef, saved);
+        }
     }
 
     // Flushes the Editor's staged changes, if any, and only once that succeeds saves the assets
-    private void flushEditorThenSaveAssets(final FloorMapDoc document, final Consumer<FloorMapDoc> callback) {
+    private void flushEditorThenSaveAssets(final FloorMapDoc document,
+                                           final Consumer<FloorMapDoc> callback,
+                                           final Runnable failed) {
         if (editor != null && editor.hasPendingChanges()) {
             editor.onSave(document, doc -> {
                 // The flush has landed in the temporal store: refresh the Map tab so it picks up
@@ -300,10 +314,10 @@ public class FloorMapEditor extends DocumentEditor<FloorMapDoc> {
                 if (map != null) {
                     map.refresh();
                 }
-                assetsTab.onSave(doc, callback);
-            });
+                assetsTab.onSave(doc, callback, failed);
+            }, failed);
         } else {
-            assetsTab.onSave(document, callback);
+            assetsTab.onSave(document, callback, failed);
         }
     }
 }

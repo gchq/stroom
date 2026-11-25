@@ -93,8 +93,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /// A dashboard's body ([DashboardBody]): its panes, laid out in tabs and splits, the query toolbar
 /// that runs its queries, and the Dashboard actions (Design Mode, Add Component, Set Layout
@@ -111,7 +109,6 @@ public class DashboardBodyController
     private static final String VERSION_7_2_0 = Version.of(7, 2, 0).toString();
     private static final String DEFAULT_PARAMS_INPUT = "Params";
 
-    private static final Logger logger = Logger.getLogger(DashboardBodyController.class.getName());
     private final FlexLayout layoutController;
     private final Panes components;
     private final QueryToolbarController queryToolbar;
@@ -353,7 +350,6 @@ public class DashboardBodyController
     }
 
     public void setParamsFromLink(final String params) {
-        logger.log(Level.INFO, "Dashboard setParamsFromLink " + params);
         this.externalLinkParameters = params;
         dashboardContext.setLinkParams(ParamUtil.parse(externalLinkParameters));
     }

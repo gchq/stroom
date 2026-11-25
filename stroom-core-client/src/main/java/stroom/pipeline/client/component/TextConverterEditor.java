@@ -20,6 +20,7 @@ import stroom.document.client.component.CodeTabController;
 import stroom.document.client.component.DocumentationTabController;
 import stroom.document.client.editor.DocumentEditor;
 import stroom.document.client.editor.LinkTabPanel;
+import stroom.document.client.editor.UnsetText;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
@@ -70,7 +71,7 @@ public class TextConverterEditor extends DocumentEditor<TextConverterDoc> {
                     code.setText(doc.getData());
                     code.setMode(editorMode(doc.getConverterType(), code.getText()));
                 },
-                (code, doc) -> doc.copy().data(code.getText()).build());
+                (code, doc) -> doc.copy().data(UnsetText.asRead(code.getText(), doc.getData())).build());
         addTab(SETTINGS,
                 () -> {
                     final TextConverterSettingsController settings = settingsProvider.get();

@@ -18353,6 +18353,10 @@
       "CredentialWithPerms" : {
         "type" : "object",
         "properties" : {
+          "certificateExpiryTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "credential" : {
             "$ref" : "#/components/schemas/Credential"
           },
@@ -18361,6 +18365,10 @@
           },
           "edit" : {
             "type" : "boolean"
+          },
+          "expiryWarningPeriodMs" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },

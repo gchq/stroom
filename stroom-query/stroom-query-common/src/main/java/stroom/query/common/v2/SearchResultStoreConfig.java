@@ -51,6 +51,7 @@ public class SearchResultStoreConfig extends AbstractResultStoreConfig implement
                 DEFAULT_MAX_STRING_FIELD_LENGTH,
                 DEFAULT_VALUE_QUEUE_SIZE,
                 DEFAULT_MAX_SORTED_ITEMS,
+                DEFAULT_MAX_COUNT_DISTINCT_VALUES,
                 DEFAULT_LMDB_CONFIG);
         this.mapConfig = DEFAULT_MAP_CONFIG;
         this.joinMaxRows = DEFAULT_JOIN_MAX_ROWS;
@@ -58,8 +59,8 @@ public class SearchResultStoreConfig extends AbstractResultStoreConfig implement
         this.maxWindowCopiesPerEvent = DEFAULT_MAX_WINDOW_COPIES_PER_EVENT;
     }
 
-    /// Creates the config with the default limit on the copies of each event that a StroomQL window
-    /// makes.
+    /// Creates the config with the default limits on the copies of each event that a StroomQL window
+    /// makes and on the unique values that `countDistinct()` counts exactly.
     ///
     /// @param maxPutsBeforeCommit  The most puts into the store before it is committed.
     /// @param offHeapResults       Whether results are stored off heap.
@@ -94,6 +95,7 @@ public class SearchResultStoreConfig extends AbstractResultStoreConfig implement
                 mapConfig,
                 joinMaxRows,
                 joinMaxSize,
+                null,
                 null);
     }
 
@@ -110,7 +112,8 @@ public class SearchResultStoreConfig extends AbstractResultStoreConfig implement
                                    @JsonProperty("joinMaxRows") final Long joinMaxRows,
                                    @JsonProperty("joinMaxSize") final ByteSize joinMaxSize,
                                    @JsonProperty("maxWindowCopiesPerEvent")
-                                   final Integer maxWindowCopiesPerEvent) {
+                                   final Integer maxWindowCopiesPerEvent,
+                                   @JsonProperty("maxCountDistinctValues") final Integer maxCountDistinctValues) {
         super(Objects.requireNonNullElse(maxPutsBeforeCommit, DEFAULT_MAX_PUTS_BEFORE_COMMIT),
                 Objects.requireNonNullElse(offHeapResults, DEFAULT_OFF_HEAP_RESULTS),
                 Objects.requireNonNullElse(minPayloadSize, DEFAULT_MIN_PAYLOAD_SIZE),
@@ -118,6 +121,7 @@ public class SearchResultStoreConfig extends AbstractResultStoreConfig implement
                 Objects.requireNonNullElse(maxStringFieldLength, DEFAULT_MAX_STRING_FIELD_LENGTH),
                 Objects.requireNonNullElse(valueQueueSize, DEFAULT_VALUE_QUEUE_SIZE),
                 Objects.requireNonNullElse(maxSortedItems, DEFAULT_MAX_SORTED_ITEMS),
+                Objects.requireNonNullElse(maxCountDistinctValues, DEFAULT_MAX_COUNT_DISTINCT_VALUES),
                 Objects.requireNonNullElse(lmdbConfig, DEFAULT_LMDB_CONFIG));
         this.mapConfig = Objects.requireNonNullElse(mapConfig, DEFAULT_MAP_CONFIG);
         this.joinMaxRows = Objects.requireNonNullElse(joinMaxRows, DEFAULT_JOIN_MAX_ROWS);

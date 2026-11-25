@@ -20,9 +20,9 @@ import stroom.widget.component.client.AppRoot;
 import stroom.widget.component.client.ControllerDialog;
 import stroom.widget.menu.client.component.MenuController;
 import stroom.widget.popup.client.PopupType;
+import stroom.widget.util.client.Console;
 import stroom.widget.util.client.InputModality;
 
-import com.google.gwt.core.client.GWT;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -104,8 +104,9 @@ public class MenuManager {
             controller.setName(event.getName());
         } else if (MenuOpener.isMarked(event.getOpener())) {
             controller.setLabelledBy(MenuOpener.ensureId(event.getOpener()));
-        } else if (!GWT.isProdMode()) {
-            GWT.log("Menu shown with no accessible name; give it one with ShowMenuEvent.Builder#name");
+        } else {
+            // For developers only, so not a warning, which production logs
+            Console.debug("Menu shown with no accessible name; give it one with ShowMenuEvent.Builder#name");
         }
     }
 

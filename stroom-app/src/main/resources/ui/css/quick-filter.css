@@ -72,10 +72,10 @@
     height: 24px;
 }
 
-/* Its icons are in the colour of a form group's help icon: the colour a toolbar button's icon takes
-   (toolbar-button.css) */
+/* Its icons are in the colour of a form group's help icon, its label's colour, in both themes (they
+   were the icon buttons' blue in the light theme) */
 .quick-filter__button {
-    --icon-button__color: var(--navigation-icon-button__color);
+    --icon-button__color: var(--form-group__label-color);
 }
 
 /* ... except the recent filters' drop-down arrow, which is every field's drop-down arrow (a selection

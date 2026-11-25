@@ -187,7 +187,7 @@ public class AppUserPermissionsList extends Component {
     }
 
     private boolean isUserEnabled(final AppUserPermissions appUserPermissions) {
-        return NullSafe.get(appUserPermissions, AppUserPermissions::getUserRef, UserRef::isEnabled);
+        return NullSafe.test(appUserPermissions, AppUserPermissions::getUserRef, UserRef::isEnabled);
     }
 
     /// @param dataProvider Gives the list its rows, a page at a time.

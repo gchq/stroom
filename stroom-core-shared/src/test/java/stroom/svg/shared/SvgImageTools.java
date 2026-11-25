@@ -40,7 +40,8 @@ public class SvgImageTools {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SvgImageTools.class);
 
     //    private static final Pattern HEX_COLOUR_PATTERN = Pattern.compile("#[0-9a-fA-F]+");
-    private static final Pattern HEX_COLOUR_PATTERN = Pattern.compile("(?<=(fill|stroke):)#[0-9a-fA-F]+");
+    private static final Pattern HEX_COLOUR_PATTERN = Pattern.compile(
+            "(?<=(fill|stroke)(:|=\"))#[0-9a-fA-F]+");
     private static final String COLOURS_HTML_HEADER = """
             <!DOCTYPE html>
             <html lang="en">

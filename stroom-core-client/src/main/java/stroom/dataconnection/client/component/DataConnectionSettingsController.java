@@ -38,6 +38,7 @@ import stroom.dataconnection.shared.LdapSettings;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.document.client.editor.HasSavedDocument;
 import stroom.editor.client.component.CodeEditorController;
 import stroom.importexport.client.ImportUtil;
 import stroom.util.shared.NullSafe;
@@ -70,7 +71,7 @@ import java.util.function.Consumer;
 /// every type are kept, so switching type and back loses nothing, and a value the document left
 /// unset is kept unset while its default is shown, so reading a document and writing it back changes
 /// nothing.
-public class DataConnectionSettingsController extends Controller {
+public class DataConnectionSettingsController extends Controller implements HasSavedDocument<DataConnectionDoc> {
 
     private static final DataConnectionResource DATA_CONNECTION_RESOURCE =
             GWT.create(DataConnectionResource.class);
@@ -304,10 +305,15 @@ public class DataConnectionSettingsController extends Controller {
         excelUploadName = null;
         excelRemoved = false;
         excelFile.reset();
-        section.setWorkbook(excel.getFileName(), excel.getFileName() != null);
+        showStoredWorkbook(doc);
         section.setSheet(excel.getSheet());
         section.setHeader(!Boolean.FALSE.equals(excel.getHeader()));
         section.setColumns(NullSafe.list(excel.getColumns()));
+    }
+
+    private void showStoredWorkbook(final DataConnectionDoc doc) {
+        final String fileName = NullSafe.get(doc, DataConnectionDoc::getExcel, ExcelSettings::getFileName);
+        view.getExcel().setWorkbook(fileName, fileName != null);
     }
 
     /// Shows the document's credential in its picker, once looked up. If it can't be shown, as it
@@ -342,6 +348,22 @@ public class DataConnectionSettingsController extends Controller {
                     .owner(this)
                     .taskMonitorFactory(taskMonitor())
                     .exec();
+        }
+    }
+
+    @Override
+    public void setSavedDocument(final DataConnectionDoc written, final DataConnectionDoc saved) {
+        readDoc = saved;
+        // A workbook uploaded, or removed, has been stored, so isn't again: the server has deleted the
+        // upload. One uploaded or removed since is still to be
+        final ResourceKey writtenKey = NullSafe.get(written, DataConnectionDoc::getExcel, ExcelSettings::getUploadKey);
+        if (excelUploadKey != null && Objects.equals(excelUploadKey, writtenKey)) {
+            excelUploadKey = null;
+            excelUploadName = null;
+            showStoredWorkbook(saved);
+        } else if (excelRemoved
+                   && NullSafe.get(written, DataConnectionDoc::getExcel, ExcelSettings::getFileName) == null) {
+            excelRemoved = false;
         }
     }
 

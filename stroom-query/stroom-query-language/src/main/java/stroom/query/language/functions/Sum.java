@@ -24,14 +24,16 @@ package stroom.query.language.functions;
         signatures = {
                 @FunctionSignature(
                         category = FunctionCategory.AGGREGATE,
-                        description = "Determines the sum of the value of expression across all grouped records",
+                        description = "Determines the sum of the value of expression across all grouped records. " +
+                                      "Nulls are ignored and a boolean gives an error.",
                         args = @FunctionArg(
                                 name = "expression",
                                 description = "Grouped field or the result of another function",
                                 argType = ValNumber.class)),
                 @FunctionSignature(
                         category = FunctionCategory.MATHEMATICS,
-                        description = "Determines the sum of all the arguments.",
+                        description = "Determines the sum of all the arguments. " +
+                                      "Nulls are ignored and a boolean gives an error.",
                         args = @FunctionArg(
                                 name = "arg",
                                 description = "Field, the result of another function or a constant.",
@@ -44,6 +46,28 @@ class Sum extends AbstractAggregateFunction {
     static final String NAME = "sum";
 
     public Sum(final ExpressionContext expressionContext, final String name) {
-        super(name, Add.Calc.createForSum(expressionContext));
+        super(name, new Calc(expressionContext));
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static final class Calc extends Add.Calc {
+
+        private Calc(final ExpressionContext expressionContext) {
+            super(new QueryZone(expressionContext), true);
+        }
+
+        @Override
+        Val calc(final Val current, final Val value) {
+            // As for the + operator, a boolean is not a number. Text is still allowed as it may hold a number.
+            if (Type.BOOLEAN.equals(value.type())) {
+                return current.type().isError()
+                        ? current
+                        : NumericFunction.getResultForNonNumber(value);
+            }
+            return super.calc(current, value);
+        }
     }
 }

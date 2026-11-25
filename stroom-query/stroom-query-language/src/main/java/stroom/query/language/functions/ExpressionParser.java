@@ -43,24 +43,22 @@ public class ExpressionParser {
     // A function of the old window clause, which is refused with what to write instead.
     private static final String REMOVED_PERIOD_FUNCTION = "period";
 
+    // The levels of BODMAS, highest first. The operators of a level are equal, so are applied left to right,
+    // e.g. 10 - 3 + 2 is (10 - 3) + 2.
     // We deliberately exclude brackets as they are treated as an unnamed function.
-    private static final TokenType[] BODMAS = new TokenType[]{
-            TokenType.ORDER,
-            TokenType.DIVISION,
-            TokenType.MULTIPLICATION,
-            TokenType.MODULUS,
-            TokenType.PLUS,
-            TokenType.MINUS,
-    };
+    private static final List<Set<TokenType>> BODMAS_LEVELS = List.of(
+            Set.of(TokenType.ORDER),
+            Set.of(TokenType.DIVISION, TokenType.MULTIPLICATION, TokenType.MODULUS),
+            Set.of(TokenType.PLUS, TokenType.MINUS));
 
-    private static final TokenType[] EQUALITY = new TokenType[]{
-            TokenType.EQUALS,
-            TokenType.NOT_EQUALS,
-            TokenType.GREATER_THAN,
-            TokenType.GREATER_THAN_OR_EQUAL_TO,
-            TokenType.LESS_THAN,
-            TokenType.LESS_THAN_OR_EQUAL_TO
-    };
+    // The levels of the comparisons, lowest first. The comparisons of a level are equal, so are applied left to
+    // right, e.g. 2 = 2 = true() is (2 = 2) = true().
+    private static final List<Set<TokenType>> COMPARISON_LEVELS = List.of(
+            Set.of(TokenType.EQUALS, TokenType.NOT_EQUALS),
+            Set.of(TokenType.GREATER_THAN,
+                    TokenType.GREATER_THAN_OR_EQUAL_TO,
+                    TokenType.LESS_THAN,
+                    TokenType.LESS_THAN_OR_EQUAL_TO));
 
     private static final Set<TokenType> BODMAS_SET = Set.of(
             TokenType.ORDER,
@@ -353,17 +351,7 @@ public class ExpressionParser {
                                 final FieldIndex fieldIndex) {
         LOGGER.trace(() -> "applyEquality() - " + getObjectString(objects));
 
-        int index = -1;
-        for (final TokenType type : EQUALITY) {
-            for (int i = 0; i < objects.size() && index == -1; i++) {
-                final Object object = objects.get(i);
-                if (object instanceof final Token token) {
-                    if (type.equals(token.getTokenType())) {
-                        index = i;
-                    }
-                }
-            }
-        }
+        final int index = findLastComparison(objects);
 
         // If we don't find an operator then we are done.
         if (index == -1) {
@@ -396,6 +384,18 @@ public class ExpressionParser {
             }
             return function;
         }
+    }
+
+    // Finds the comparison to apply last, which is the rightmost of those in the lowest level there are any of.
+    private int findLastComparison(final List<Object> objects) {
+        for (final Set<TokenType> level : COMPARISON_LEVELS) {
+            for (int i = objects.size() - 1; i >= 0; i--) {
+                if (objects.get(i) instanceof final Token token && level.contains(token.getTokenType())) {
+                    return i;
+                }
+            }
+        }
+        return -1;
     }
 
     private List<Object> applySigns(final List<Object> objects,
@@ -492,31 +492,19 @@ public class ExpressionParser {
         while (!complete) {
 
             // If there is more than one object then apply BODMAS rules.
-            int index = -1;
-            Token operator = null;
-
-            for (final TokenType type : BODMAS) {
-                for (int i = 0; i < result.size() && index == -1; i++) {
-                    final Object object = result.get(i);
-                    if (object instanceof final Token token) {
-                        if (type.equals(token.getTokenType())) {
-                            index = i;
-                            operator = token;
-                        }
-                    }
-                }
-            }
+            final int index = findNextOperator(result);
 
             if (index == -1) {
                 complete = true;
 
             } else if (index == 0) {
-                throw new TokenException(operator, "Unexpected leading operator");
+                throw new TokenException((Token) result.get(index), "Unexpected leading operator");
 
             } else if (index == result.size() - 1) {
-                throw new TokenException(operator, "Unexpected trailing operator");
+                throw new TokenException((Token) result.get(index), "Unexpected trailing operator");
 
             } else {
+                final Token operator = (Token) result.get(index);
                 final Param leftParam = convertParam(result.get(index - 1), expressionContext, fieldIndex);
                 final Param rightParam = convertParam(result.get(index + 1), expressionContext, fieldIndex);
                 final Function function = FunctionFactory.create(expressionContext, operator.getText());
@@ -543,6 +531,18 @@ public class ExpressionParser {
         } else {
             throw new RuntimeException("Unexpected token without joining operator");
         }
+    }
+
+    // Finds the operator to apply next, which is the leftmost of those in the highest level there are any of.
+    private int findNextOperator(final List<Object> objects) {
+        for (final Set<TokenType> level : BODMAS_LEVELS) {
+            for (int i = 0; i < objects.size(); i++) {
+                if (objects.get(i) instanceof final Token token && level.contains(token.getTokenType())) {
+                    return i;
+                }
+            }
+        }
+        return -1;
     }
 
     private List<Object> copyList(final List<Object> list, final int startIndex, final int endIndex) {

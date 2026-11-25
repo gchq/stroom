@@ -73,7 +73,23 @@ public class KryoDataReader implements DataReader, AutoCloseable {
 
     @Override
     public byte[] readBytes() {
-        final int length = input.readInt();
+        return readRawBytes(input.readInt());
+    }
+
+    /// Reads a number written by [KryoDataWriter#writeVarInt(int)].
+    ///
+    /// @return The number, which is only negative if what was read is not valid.
+    @Override
+    public int readVarInt() {
+        return input.readVarInt(true);
+    }
+
+    /// Reads bytes written by [KryoDataWriter#writeRawBytes(byte[])].
+    ///
+    /// @param length The number of bytes.
+    /// @return The bytes.
+    @Override
+    public byte[] readRawBytes(final int length) {
         final byte[] bytes = new byte[length];
         input.readBytes(bytes);
         return bytes;

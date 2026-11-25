@@ -24,6 +24,7 @@ import java.text.ParseException;
 import java.util.List;
 import java.util.function.Supplier;
 
+@Deprecated // Use countDistinct() or dcount()
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = CountUnique.NAME,
@@ -32,7 +33,11 @@ import java.util.function.Supplier;
         commonReturnDescription = "The number of unique values",
         signatures = @FunctionSignature(
                 category = FunctionCategory.AGGREGATE,
-                description = "Determines the number of unique values across all grouped records.",
+                description = "Deprecated, use " + CountDistinct.NAME + " or " + DCount.NAME + " instead as they " +
+                        "are far quicker and take less space if there are many unique values. Don't change an " +
+                        "existing table builder rule to use either, as they can't read the values that it has " +
+                        "stored. Make the change in a copy of the rule instead. Determines the number of unique " +
+                        "values across all grouped records.",
                 args = @FunctionArg(
                         name = "values",
                         description = "Grouped field or the result of another function",

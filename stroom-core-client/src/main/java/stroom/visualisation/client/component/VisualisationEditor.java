@@ -20,6 +20,7 @@ import stroom.document.asset.client.component.DocumentAssetsTabController;
 import stroom.document.client.component.DocumentationTabController;
 import stroom.document.client.editor.DocumentEditor;
 import stroom.document.client.editor.LinkTabPanel;
+import stroom.document.client.editor.PostSave;
 import stroom.security.client.component.DocumentUserPermissionsTabController;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.widget.tab.client.TabData;
@@ -29,8 +30,6 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 /// A visualisation's editor: its Settings, Assets, Documentation and Permissions tabs (see
 /// [DocumentEditor]). Its assets aren't held in the document but in a server-side draft and live
@@ -88,13 +87,13 @@ public class VisualisationEditor extends DocumentEditor<VisualisationDoc> {
     }
 
     @Override
-    public BiConsumer<VisualisationDoc, Consumer<VisualisationDoc>> getPostSaveCallback() {
+    public PostSave<VisualisationDoc> getPostSaveCallback() {
         return assetsTab::onSave;
     }
 
     @Override
-    public BiConsumer<VisualisationDoc, Consumer<VisualisationDoc>> getPostSaveAsCallback() {
+    public PostSave<VisualisationDoc> getPostSaveAsCallback() {
         // The assets are copied from the document being saved, even if its Assets tab was never shown
-        return (copy, callback) -> assetsTab.onSaveAs(getDocument(), copy, callback);
+        return (copy, callback, failed) -> assetsTab.onSaveAs(getDocument(), copy, callback, failed);
     }
 }

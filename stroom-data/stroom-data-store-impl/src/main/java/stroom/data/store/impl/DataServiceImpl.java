@@ -104,6 +104,7 @@ class DataServiceImpl implements DataService {
     private final DocFinder docFinder;
     private final DataFetcher dataFetcher;
     private final DataVolumeService dataVolumeService;
+    private final FeedProperties feedProperties;
 
     @Inject
     DataServiceImpl(final ResourceStore resourceStore,
@@ -141,6 +142,7 @@ class DataServiceImpl implements DataService {
         this.tempDirProvider = tempDirProvider;
         this.docFinder = docFinder;
         this.dataVolumeService = dataVolumeService;
+        this.feedProperties = feedProperties;
 
         this.dataFetcher = new DataFetcher(streamStore,
                 feedProperties,
@@ -265,11 +267,11 @@ class DataServiceImpl implements DataService {
         if (metaRow == null) {
             final List<DataInfoSection.Entry> entries = new ArrayList<>(1);
             entries.add(new DataInfoSection.Entry("Deleted Stream Id", String.valueOf(id)));
-            sections.add(new DataInfoSection("Stream", entries));
+            sections.add(new DataInfoSection(DataInfoSection.STREAM, entries));
 
         } else {
             final Meta meta = metaRow.getMeta();
-            sections.add(new DataInfoSection("Stream", getStreamEntries(meta)));
+            sections.add(new DataInfoSection(DataInfoSection.STREAM, getStreamEntries(meta)));
 
             final List<Entry> processorEntries = getProcessorEntries(meta);
             if (NullSafe.hasItems(processorEntries)) {
@@ -428,6 +430,9 @@ class DataServiceImpl implements DataService {
         entries.add(new DataInfoSection.Entry("Effective", getDateTimeString(meta.getEffectiveMs())));
         entries.add(new DataInfoSection.Entry("Stream Type", meta.getTypeName()));
         entries.add(new DataInfoSection.Entry("Feed", meta.getFeedName()));
+        entries.add(new DataInfoSection.Entry(
+                DataInfoSection.CLASSIFICATION,
+                feedProperties.getDisplayClassification(meta.getFeedName())));
         addEncodingInfo(meta, entries);
 
         final DataVolume dataVolume = dataVolumeService.findDataVolume(meta.getId());

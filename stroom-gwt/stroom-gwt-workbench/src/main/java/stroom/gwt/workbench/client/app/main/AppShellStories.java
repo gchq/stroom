@@ -90,6 +90,8 @@ public final class AppShellStories {
     /// The name of the spy recording the registry's answers in `LocateOnlyForExplorerTabs`.
     static final String LOCATE_SPY = "getExplorerDocRef";
 
+    // A filter the tree can't be fetched with
+    private static final String FAILING_FILTER = "zzz";
     // The explorer panel is Explorer's '.explorer'
     private static final String NAVIGATION = ".explorer";
     // The document tabs' labels
@@ -386,6 +388,84 @@ public final class AppShellStories {
                     play.expect(dialog.queryByRole("spinbutton", "Minutes")).toBeNull();
                     expectNoProblems(play);
                 })
+                // Escape undoes a custom format typed but not yet committed: the field still has the
+                // focus as the dialog goes, and its blur used to apply the cancelled format again
+                // after Cancel had gone back to the saved one. Info's dates show the format in use
+                // ("x", moment's epoch milliseconds, would add 1700000000000 to the time)
+                .story("EscapeUndoesCustomFormat", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Dictionaries");
+                    play.keyboard("gu");
+                    final Play dialog = screen.within(screen.findByText("User Preferences", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.click(dialog.getByText("Date and Time", StroomDom.LINK_TAB_LABEL));
+                    play.click(dialog.getByRole("checkbox", "Custom"));
+                    final Query customFormat = dialog.within(dialog.getByText("Custom Format", "label")
+                            .closest(".form-group")).querySelector("input");
+                    play.type(customFormat, "x");
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.queryByText("User Preferences", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    rightClick(play, navTree(play).getByText("Countries"));
+                    play.click(screen.findByText("Show Info", StroomDom.MENU_ITEM_TEXT));
+                    play.waitFor(() -> play.expect(screen.getByText("2023-11-14T22:13:20.000Z"))
+                            .toBeInTheDocument());
+                    play.click(screen.getByRole("button", StroomDom.button("Close")));
+                    expectNoProblems(play);
+                })
+                // OK refuses a custom format Java can't read, saying why under the field, rather than
+                // save a format that breaks every date shown
+                .story("InvalidCustomFormatRefusesOk", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Dictionaries");
+                    play.keyboard("gu");
+                    final Play dialog = screen.within(screen.findByText("User Preferences", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.click(dialog.getByText("Date and Time", StroomDom.LINK_TAB_LABEL));
+                    play.click(dialog.getByRole("checkbox", "Custom"));
+                    final Query customFormat = dialog.within(dialog.getByText("Custom Format", "label")
+                            .closest(".form-group")).querySelector("input");
+                    play.type(customFormat, "#");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(customFormat).toHaveAttribute("aria-invalid", "true"));
+                    play.expect(dialog.getByText("'#' is reserved")).toBeInTheDocument();
+                    play.expect(screen.queryByText("User Preferences", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("User Preferences", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    expectNoProblems(play);
+                })
+                // OK and Set As Default refuse it with another tab showing too, and show its tab: the
+                // tabs not showing are off the page, so the field wasn't found and the format was saved
+                .story("InvalidCustomFormatInHiddenTab", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Dictionaries");
+                    play.keyboard("gu");
+                    final Play dialog = screen.within(screen.findByText("User Preferences", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.click(dialog.getByText("Date and Time", StroomDom.LINK_TAB_LABEL));
+                    play.click(dialog.getByRole("checkbox", "Custom"));
+                    final Query customFormat = dialog.within(dialog.getByText("Custom Format", "label")
+                            .closest(".form-group")).querySelector("input");
+                    play.type(customFormat, "#");
+                    for (final String button : List.of("OK", "Set As Default")) {
+                        play.click(dialog.getByText("Theme", StroomDom.LINK_TAB_LABEL));
+                        play.waitFor(() -> play.expect(dialog.queryByText("Custom Format", "label")).toBeNull());
+                        play.click(dialog.getByRole("button", StroomDom.button(button)));
+                        play.waitFor(() -> play.expect(customFormat).toHaveFocus());
+                        play.expect(customFormat).toHaveAttribute("aria-invalid", "true");
+                        play.expect(screen.queryByText(TextMatch.containing("defaults for ALL users"))).toBeNull();
+                    }
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/preferences/v1").toSpyMatcher());
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("User Preferences", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    expectNoProblems(play);
+                })
                 // The Keyboard Shortcuts tab lists each action the user can bind, one row per
                 // shortcut, with the built-in arrow keys that can't be changed
                 .story("KeyboardShortcutPreferences", context -> render(context, AppShellFixtures.dictTree()))
@@ -632,6 +712,38 @@ public final class AppShellStories {
                                     .toSpyMatcher()));
                     play.expect(navTree(play).getByText("Countries")).toBeInTheDocument();
                     expectNoProblems(play);
+                })
+                // A slow reload is announced to screen readers, and so is its end
+                .story("ReloadAnnounced", context -> render(context, AppShellFixtures.dictTree(),
+                        AppShellStories::slowReloadRoute, builder -> {
+                        }, null))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(navTree(play).getByText("Countries")).toBeInTheDocument());
+                    final Query status = play.querySelector(".explorer-tree [role='status']");
+                    // The first load was quick
+                    play.expect(status).toHaveTextContent("");
+                    play.click(play.getByRole("button", "Reload Explorer Tree"));
+                    play.waitFor(2500, () -> play.expect(status).toHaveTextContent("Loading documents"));
+                    play.waitFor(3000, () -> play.expect(status).toHaveTextContent("Documents loaded"));
+                    expectNoProblems(play);
+                })
+                // Once fetching the tree has failed it can be fetched again. It never was, whatever the
+                // user did, until the page was reloaded
+                .story("FetchAgainAfterFailure", context -> render(context, AppShellFixtures.dictTree(),
+                        AppShellStories::failingFilterRoute, builder -> {
+                        }, null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(navTree(play).getByText("Countries")).toBeInTheDocument());
+                    final Query filter = play.querySelector(NAVIGATION + " .quick-filter__input");
+                    play.type(filter, FAILING_FILTER);
+                    play.click(screen.findByRole("button", StroomDom.button("Close")));
+                    play.clear(filter);
+                    play.type(filter, "Countries");
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post(TreeFixtures.FETCH_EXPLORER_NODES)
+                                    .withBodyContaining("\"Countries\"").toSpyMatcher()));
+                    play.waitFor(() -> play.expect(navTree(play).getByText("Countries")).toBeInTheDocument());
                 })
                 // The main toolbar is shown at the right of the content's tab row, over the content,
                 // but comes first in the page, so the Tab key reaches it before the explorer and the
@@ -1601,6 +1713,23 @@ public final class AppShellStories {
         }
         play.keyboard("{Escape}");
         play.waitFor(() -> play.expect(screen.querySelector(".selection-popup")).toBeNull());
+    }
+
+    // Reload takes a while
+    private static void slowReloadRoute(final RestFixtures.Builder routes) {
+        final ExplorerFixture tree = AppShellFixtures.dictTree();
+        routes.post(TreeFixtures.FETCH_EXPLORER_NODES, request -> RestReply.json(tree.fetch(request.getBody()))
+                .delayed(request.getBody().replace(" ", "").contains("\"refresh\":true")
+                        ? 2500
+                        : 0));
+    }
+
+    // Fetching the tree fails with one filter
+    private static void failingFilterRoute(final RestFixtures.Builder routes) {
+        final ExplorerFixture tree = AppShellFixtures.dictTree();
+        routes.post(TreeFixtures.FETCH_EXPLORER_NODES, request -> request.getBody().contains(FAILING_FILTER)
+                ? RestReply.error(500, "The tree can't be fetched")
+                : RestReply.json(tree.fetch(request.getBody())));
     }
 
     // Answers the save of the user's preferences

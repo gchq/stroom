@@ -95,6 +95,34 @@ public final class CredentialPickerDialogStories {
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
+                // OK with nothing chosen says so, and leaves the dialog open to choose from
+                .story("OkWithNothingChosen", context -> render(context, true))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(screen.getByText("github-token")).toBeInTheDocument());
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith("WARN: No credentials were selected"));
+                    play.click(screen.findByRole("button", StroomDom.button("Close")));
+                    play.waitFor(() -> play.expect(screen.queryByRole("button", StroomDom.button("Close")))
+                            .toBeNull());
+                    play.expect(screen.getByText("Credentials", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.expect(play.spy(ON_PICK)).not().toHaveBeenCalled();
+                    play.click(screen.getByText("gitlab-ssh"));
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ON_PICK)).toHaveBeenCalledWith("gitlab-ssh"));
+                })
+                // Cancel closes the dialog and gives nothing, even with credentials chosen
+                .story("Cancel", CredentialPickerDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(screen.findByText("gitlab-ssh"));
+                    play.click(screen.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Credentials", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.expect(play.spy(ON_PICK)).not().toHaveBeenCalled();
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                })
                 // Credentials left open (the screenshot and the dialog measurement show it)
                 .story("CredentialsOpen", CredentialPickerDialogStories::render)
                 .withPlay(play -> {
@@ -106,10 +134,17 @@ public final class CredentialPickerDialogStories {
     }
 
     private static Widget render(final StoryContext context) {
+        return render(context, false);
+    }
+
+    private static Widget render(final StoryContext context, final boolean realAlerts) {
         final AppScreenGinjector injector = GWT.create(AppScreenGinjector.class);
-        final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
-                .injector(injector)
-                .build();
+        final ScreenHarness.Builder builder = ScreenHarness.builder(context, FIXTURES)
+                .injector(injector);
+        if (realAlerts) {
+            builder.realAlerts();
+        }
+        final ScreenHarness harness = builder.build();
         harness.fn(ON_PICK);
 
         // Shown as ContentStoreContentPackDetailsController shows it, with no help text and nothing

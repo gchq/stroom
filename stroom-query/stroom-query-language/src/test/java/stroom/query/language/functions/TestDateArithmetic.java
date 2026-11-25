@@ -342,9 +342,62 @@ class TestDateArithmetic {
         assertThat(eval(expression)).isEqualTo(ValNull.INSTANCE);
     }
 
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', quoteCharacter = '"', value = {
+            "true() + 1d|Expected a number but got 'true'",
+            "1d + true()|Expected a number but got 'true'",
+            "true() * 1h|Expected a number but got 'true'",
+            "1d - 'soon'|Expected a number but got 'soon'",
+            "'5' * 1d|Expected a number but got '5'",
+            "1h / '2'|Expected a number but got '2'",
+            "1h % '2'|Expected a number but got '2'",
+            "sum(1h, true())|Expected a number but got 'true'",
+            "sum(1d, true())|Expected a number but got 'true'"})
+    void valuesThatAreNotNumbers(final String expression, final String message) throws ParseException {
+        assertThat(eval(expression)).isEqualTo(ValErr.create(message));
+    }
+
     @Test
-    void numbersAreStillAddedToABlank() throws ParseException {
-        assertThat(eval("${field} + 5")).isEqualTo(ValDouble.create(5));
+    void theFirstValueThatIsNotANumberDecidesTheResult() throws ParseException {
+        assertThat(eval("1d + ${field} + true()")).isEqualTo(ValNull.INSTANCE);
+        assertThat(eval("add(1d, ${field}, true())")).isEqualTo(ValNull.INSTANCE);
+        assertThat(eval("add(1d, true(), ${field})").type()).isEqualTo(Type.ERR);
+        assertThat(eval("sum(1d, ${field}, 1d)")).isEqualTo(ValPeriod.create(0, 0, 2));
+    }
+
+    // As an average is, by way of a total.
+    @Test
+    void datesCanBeTotalled() throws ParseException {
+        assertThat(eval("sum(1970-01-01T00:00:01Z, 1970-01-01T00:00:02Z)")).isEqualTo(ValDouble.create(3_000));
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            // Left to right.
+            "2024-03-30T12:00:00Z - 1d + 2h|2024-03-29T14:00:00.000Z",
+            "2024-03-31T12:00:00+01:00 - 1h + 1d - 2h|2024-04-01T08:00:00.000Z",
+            "2024-03-31T09:00:00+01:00 - 1M + 1M|2024-03-29T09:00:00.000Z",
+            "2024-01-01T00:00:00Z + 3h / 2 * 4|2024-01-01T06:00:00.000Z",
+            "2024-01-01T00:00:00Z + 100m % 1h * 2|2024-01-01T01:20:00.000Z",
+            // Exponents.
+            "2024-01-01T00:00:00Z + 1e3 * 1ms|2024-01-01T00:00:01.000Z",
+            "2024-01-01T00:00:00Z + 1E-3 * 1h|2024-01-01T00:00:03.600Z",
+            "2024-01-01T00:00:00Z - 1.5e3 * 1s|2023-12-31T23:35:00.000Z",
+            "2024-01-01T00:00:00-01+1e0 * 1h|2024-01-01T02:00:00.000Z",
+            "2024-01-01T00:00:00+0100-1e1 * 1s|2023-12-31T22:59:50.000Z",
+            "2024-01-01T00:00:00Z+1e2 * 1d|2024-04-09T23:00:00.000Z"})
+    void orderAndExponents(final String expression, final String expected) throws ParseException {
+        assertThat(eval(expression)).isEqualTo(ValDate.create(DateUtil.parseNormalDateTimeString(expected)));
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "1h < 2h = true()|true",
+            "1d = 24h = true()|true",
+            "1h = 2h = false()|true",
+            "2024-01-01T00:00:00Z < 2024-01-02T00:00:00Z != false()|true"})
+    void chainedComparisons(final String expression, final boolean expected) throws ParseException {
+        assertThat(eval(expression)).isEqualTo(ValBoolean.create(expected));
     }
 
     @Test

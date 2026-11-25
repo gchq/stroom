@@ -59,3 +59,20 @@ g.eval
 ```
 > 3
 ```
+
+`countUnique` is deprecated, as it stores every value that it counts. Use `countDistinct`, which is exact up to a limit (10,000 for each group by default) and an estimate above it, or `dcount`, which takes less space:
+``` java
+FieldIndexMap fim = FieldIndexMap.forFields("name", "age", "occupation")
+Generator g = parseExpression("dcount(${name})")
+
+g.addData("JDoe", 45, "Butcher")
+g.addData("JBloggs", 23, "Butcher")
+g.addData("JSmith", 34, "Butcher")
+g.addData("JSmith", 24, "Butcher")
+
+g.eval
+```
+
+```
+> 3
+```

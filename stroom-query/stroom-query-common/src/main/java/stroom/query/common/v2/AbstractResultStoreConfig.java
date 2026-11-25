@@ -16,12 +16,14 @@
 
 package stroom.query.common.v2;
 
+import stroom.query.language.functions.ExpressionContext;
 import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
 @NotInjectableConfig
@@ -34,6 +36,9 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
     static final int DEFAULT_MAX_STRING_FIELD_LENGTH = 1000;
     static final int DEFAULT_VALUE_QUEUE_SIZE = 10_000;
     static final int DEFAULT_MAX_SORTED_ITEMS = 500_000;
+    // The hashes of a group are read and written together, so there must be some limit.
+    static final int HIGHEST_MAX_COUNT_DISTINCT_VALUES = 1_000_000;
+    static final int DEFAULT_MAX_COUNT_DISTINCT_VALUES = ExpressionContext.DEFAULT_MAX_COUNT_DISTINCT_VALUES;
 
     private final int maxPutsBeforeCommit;
     private final boolean offHeapResults;
@@ -42,6 +47,7 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
     private final ByteSize maxPayloadSize;
     private final int maxStringFieldLength;
     private final int maxSortedItems;
+    private final int maxCountDistinctValues;
 
     private final ResultStoreLmdbConfig lmdbConfig;
 
@@ -52,6 +58,7 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
                               final int maxStringFieldLength,
                               final int valueQueueSize,
                               final int maxSortedItems,
+                              final int maxCountDistinctValues,
                               final ResultStoreLmdbConfig lmdbConfig) {
         this.maxPutsBeforeCommit = maxPutsBeforeCommit;
         this.offHeapResults = offHeapResults;
@@ -60,6 +67,7 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
         this.maxStringFieldLength = maxStringFieldLength;
         this.valueQueueSize = valueQueueSize;
         this.maxSortedItems = maxSortedItems;
+        this.maxCountDistinctValues = maxCountDistinctValues;
         this.lmdbConfig = lmdbConfig;
     }
 
@@ -108,6 +116,20 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
         return maxSortedItems;
     }
 
+    /// Gets the most unique values that `countDistinct()` counts exactly for a row.
+    ///
+    /// @return The most unique values.
+    @Min(1)
+    @Max(HIGHEST_MAX_COUNT_DISTINCT_VALUES)
+    @JsonPropertyDescription("The most unique values that countDistinct() counts exactly for each group. The count " +
+            "of a group that has more is an estimate with a standard error of 0.8%. It stores 8 bytes for each value " +
+            "that it counts exactly, so a higher limit can make results much larger and slower to create. A table " +
+            "builder rule keeps the limit that its store was opened with until the node is restarted.")
+    @JsonProperty("maxCountDistinctValues")
+    public int getMaxCountDistinctValues() {
+        return maxCountDistinctValues;
+    }
+
     @JsonProperty("lmdb")
     public ResultStoreLmdbConfig getLmdbConfig() {
         return lmdbConfig;
@@ -123,6 +145,7 @@ public abstract class AbstractResultStoreConfig extends AbstractConfig {
                 ", maxPayloadSize=" + maxPayloadSize +
                 ", maxStringFieldLength=" + maxStringFieldLength +
                 ", maxSortedItems=" + maxSortedItems +
+                ", maxCountDistinctValues=" + maxCountDistinctValues +
                 ", lmdbConfig=" + lmdbConfig +
                 '}';
     }

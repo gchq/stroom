@@ -500,7 +500,12 @@ public class FloorMapLayers extends Component {
                 clearDropIndicator(row);
                 final boolean below = isBelowMidpoint(
                         event.getNativeEvent().getClientY(), row.getElement());
-                reorderTo(dragFromIndex, index + (below
+                // Forgotten here, not only at the drag's end: the move rebuilds the rows, so the
+                // dragged row's dragend never reaches a handler, and a later drop of something
+                // dragged in from elsewhere would move this layer again
+                final int from = dragFromIndex;
+                dragFromIndex = -1;
+                reorderTo(from, index + (below
                         ? 1
                         : 0));
             }, DropEvent.getType());
