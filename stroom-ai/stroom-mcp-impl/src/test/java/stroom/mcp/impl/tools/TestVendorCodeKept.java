@@ -120,6 +120,26 @@ class TestVendorCodeKept {
     }
 
     @Test
+    void anEventTypeReadBackFromAnExistingPipelineIsNotWarnedOf() {
+        // Seen in eval cases 102 and 105 on Haiku: the event types read back from a hand-written translation that
+        // never wrote the vendor's code were warned of as "no longer" writing it, and the agent added it, so the
+        // new version's Events differed from the original's.
+        final EventType readBack = new EventType("vpn-login", "vpn-login", null, "Authenticate", "Logon", null,
+                null, null, null, List.of(way("4624")), false, EventType.EXISTING_PIPELINE, "high", null,
+                EventType.CONFIRMED);
+        final TranslationMapping asWritten = mapping("""
+                [{"name": "vpn-login", "when": [{"field": "event.code", "equals": "4624"}],
+                  "fields": [{"path": "EventDetail/TypeId", "value": "vpn-login"},
+                             {"path": "EventDetail/Authenticate/Action", "value": "Logon"}]}]""");
+
+        assertThat(VendorCodeKept.missing(asWritten, RECORDS, catalogue(readBack), null)).isEmpty();
+        // The same event type drafted is still held to its code.
+        assertThat(VendorCodeKept.missing(asWritten, RECORDS, catalogue(new EventType("vpn-login", "vpn-login",
+                null, "Authenticate", "Logon", null, null, null, null, List.of(way("4624")), false,
+                EventType.USER_CONFIRMED, "high", null, EventType.CONFIRMED)), null)).singleElement();
+    }
+
+    @Test
     void withoutACatalogueNothingIsWarnedOf() {
         assertThat(VendorCodeKept.missing(mapping(KEPT), RECORDS, null, null)).isEmpty();
     }

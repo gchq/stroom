@@ -41,7 +41,8 @@ import java.util.function.IntPredicate;
 /// rules for an event type had lost the Data the draft wrote for its code. A rule is an event type's by the sampled
 /// records it takes of each way of recognising the type ([CatalogueKept]), never by its name or conditions; the
 /// catch-all is not an event type, and records going to it, to no rule or to a drop rule are
-/// [ConfirmedEventTypes]' to say.
+/// [ConfirmedEventTypes]' to say. An event type read back from an existing pipeline ([EventType#EXISTING_PIPELINE])
+/// is held to nothing here: its rules write what that pipeline wrote.
 final class VendorCodeKept {
 
     private VendorCodeKept() {
@@ -80,7 +81,10 @@ final class VendorCodeKept {
         // Each way of each confirmed event type on its own, so a rule is held to its own way's code.
         final Map<String, Missing> missing = new LinkedHashMap<>();
         for (final EventType type : catalogue.eventTypes()) {
-            if (!type.confirmed() || type.drop()) {
+            // One read back from an existing pipeline writes what that pipeline wrote: its vendor's code was never
+            // written as Data, so nothing was lost (seen in eval cases 102 and 105 on Haiku: warned of, the code was
+            // added, and the new version's Events differed from the original's).
+            if (!type.confirmed() || type.drop() || EventType.EXISTING_PIPELINE.equals(type.basis())) {
                 continue;
             }
             final String typeId = CatalogueKept.typeIdOf(type);
