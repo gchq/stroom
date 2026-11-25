@@ -231,7 +231,7 @@ public class BuildPlan {
             "indexed:unstepped", "indexed:running", "indexed:no_index", "indexed:finished", "documented:edited",
             "feed:reference", "samples:reference", "reference_processed:disabled", "reference_processed:running",
             "stepped:no_reference", "index:discovery", CATALOGUE + ":offer", CATALOGUE + ":existing_copy",
-            CATALOGUE + ":existing_rebuild", CATALOGUE + ":existing_confirm");
+            CATALOGUE + ":existing_rebuild", CATALOGUE + ":existing_confirm", CATALOGUE + ":in_place_confirm");
     // The steps before the translation, which a reference-only build keeps.
     private static final Set<String> SOURCE_STEPS = Set.of("feed", "samples", "converter");
 
@@ -966,10 +966,14 @@ public class BuildPlan {
         final Map<String, Object> startFrom = facts.startFrom(build).orElse(null);
         final boolean inducting = startFrom != null
                                   && ExistingTranslations.EXISTING.equals(startFrom.get("choice"));
+        // Described in place (decided with the user 2026-11-25): surveyed and catalogued, no new version.
+        final boolean inPlace = InPlaceInduction.inPlace(startFrom);
         // Until the copy is made and its XSLT read back, whatever catalogue the build holds already (one carried in
         // from the promoted notes beside the feed, confirmed) is no reason to skip them.
         final boolean readBack = !translation.isEmpty() && xslts.stream().noneMatch(x -> x.get("mapping") == null);
-        done.put(CATALOGUE, inducting && !readBack
+        done.put(CATALOGUE, inPlace
+                ? Boolean.valueOf(facts.catalogued(docs))
+                : inducting && !readBack
                 ? Boolean.FALSE
                 : facts.catalogued(docs)
                         ? Boolean.TRUE
@@ -1038,6 +1042,8 @@ public class BuildPlan {
         final Set<String> declined = memory.skippedStages(build);
         final List<Map<String, Object>> steps = assessment
                 ? steps(done, assessmentSkips())
+                : inPlace
+                        ? steps(done, inPlaceSkips())
                 : steps(done, skipped(new Kinds(discovery, reference, referenceOnly),
                 survey != null || surveyRequired, existing, !copies.isEmpty() && !ownFeed,
                 stage1 && !declined.contains(STAGE_EVENTS),
@@ -1149,7 +1155,12 @@ public class BuildPlan {
             // placeholder).
             processing = "surveyed";
         }
-        if (CATALOGUE.equals(nextStep) && inducting) {
+        if (CATALOGUE.equals(nextStep) && inPlace) {
+            // Described in place: the catalogue read back from its XSLT, checked against the feeds' records and
+            // confirmed.
+            version = JsonValues.mapOrEmpty(startFrom.get("pipeline"));
+            processing = "in_place_confirm";
+        } else if (CATALOGUE.equals(nextStep) && inducting) {
             // Starting from the existing pipeline: its copy, then its XSLT read back, then the catalogue confirmed.
             final String unread = xslts.stream()
                     .filter(x -> x.get("mapping") == null)
@@ -1284,6 +1295,12 @@ public class BuildPlan {
             result.put("next", shown);
         } else if (onlyExistingData) {
             result.put("next", start);
+        } else if (inPlace) {
+            // Described in place and catalogued: nothing to promote (no new version).
+            result.put(InPlaceInduction.IN_PLACE, "Done: the pipeline is described in place (its mapping and the "
+                                                  + "link to its source notes in its translation XSLT's "
+                                                  + "description, its confirmed catalogue in the notes beside it). "
+                                                  + "No new version, nothing to promote.");
         } else {
             final Map<String, Object> shown = new LinkedHashMap<>();
             shown.put("step", "promoted");
@@ -1415,7 +1432,8 @@ public class BuildPlan {
             case CATALOGUE + ":offer" -> call(CatalogueEventTypesTool.NAME, args("build", build, "stream_ids", raw),
                     "it first asks the user (in a form) how the build starts: from the existing pipeline '"
                     + ToolText.str(NullSafe.map(args.version()).get("name")) + "' (copied as a new version, its "
-                    + "XSLT read back into a mapping and catalogue; the original isn't touched), or with a new "
+                    + "XSLT read back into a mapping and catalogue; the original isn't touched), described in place "
+                    + "(its XSLT read into a mapping and catalogue kept with it, no new version), or with a new "
                     + "translation drafted; then follow its next");
             case CATALOGUE + ":existing_copy" -> {
                 final Map<String, Object> version = NullSafe.map(args.version());
@@ -1432,6 +1450,12 @@ public class BuildPlan {
                     + "or unread parts shown to them first: accept_differences=, accept_unread= only on their "
                     + "word); the catalogue is read back with it, and the existing version's run over the sample "
                     + "is listed (existing_run)");
+            case CATALOGUE + ":in_place_confirm" -> call(CatalogueEventTypesTool.NAME, args("build", build,
+                            "stream_ids", raw),
+                    "lists the catalogue read back from '" + ToolText.str(NullSafe.map(args.version()).get("name"))
+                    + "' (described in place) with its check against the surveyed feeds' records: propose changes "
+                    + "only for what is worth a look, then confirm=true puts it to the user; once confirmed it is "
+                    + "written back beside the pipeline (no new version)");
             case CATALOGUE + ":existing_confirm" -> call(CatalogueEventTypesTool.NAME, args("build", build,
                             "stream_ids", raw),
                     "lists the catalogue read back from '" + ToolText.str(NullSafe.map(args.version()).get("name"))
@@ -1874,6 +1898,15 @@ public class BuildPlan {
             steps.add(shown);
         }
         return steps;
+    }
+
+    // A pipeline described in place is surveyed and its catalogue confirmed (its source types first, for an
+    // aggregated feed): no translation, pipeline, processing or promotion of its own.
+    private static Set<String> inPlaceSkips() {
+        final Set<String> skipped = new HashSet<>();
+        checklist().forEach(step -> skipped.add(String.valueOf(step.get("step"))));
+        skipped.removeAll(Set.of(SURVEYED, SOURCE_TYPES, CATALOGUE));
+        return skipped;
     }
 
     // An assessment surveys the feed and writes its source type registry: every other step is left out.

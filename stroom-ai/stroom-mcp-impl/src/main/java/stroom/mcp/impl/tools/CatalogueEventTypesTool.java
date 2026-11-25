@@ -142,8 +142,14 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     static final String START_QUESTION = "How should this build start?";
     /// The choice of starting from the existing pipeline.
     static final String START_EXISTING = "Start from the existing pipeline (recommended)";
+    /// The choice of describing the existing pipeline in place (decided with the user 2026-11-25): its XSLT read
+    /// into a mapping and catalogue kept with it, no new version.
+    static final String START_IN_PLACE = "Describe it in place (no new version)";
     /// The choice of drafting a new translation.
     static final String START_DRAFT = "Draft a new translation";
+    /// The question put to the user when a translation described in place serves several feeds.
+    static final String FEEDS_QUESTION = "Which feeds should the survey cover?";
+    static final String SURVEY_FEEDS_ARG = "survey_feeds";
     // The catch-all, as explain= names it.
     private static final List<String> CATCH_ALL_NAMES = List.of("unknown", "uncatalogued records",
             "uncatalogued");
@@ -190,6 +196,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     private final CatalogueCatchAll catchAllForms;
     private Provider<CatalogueNotes> catalogueNotesProvider;
     private Provider<ExistingTranslations> existingProvider;
+    private Provider<InPlaceInduction> inPlaceProvider;
 
     @Inject
     CatalogueEventTypesTool(final RecordSourceNotesTool notes,
@@ -245,6 +252,24 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     @Inject
     void setExistingTranslations(final Provider<ExistingTranslations> existing) {
         this.existingProvider = existing;
+    }
+
+    /// Where an existing pipeline is described in place (set by injection; none in tests that make the tool
+    /// themselves, which offer only the copy and the draft).
+    ///
+    /// @param inPlace The in-place description.
+    @Inject
+    void setInPlaceInduction(final Provider<InPlaceInduction> inPlace) {
+        this.inPlaceProvider = inPlace;
+    }
+
+    /// Where a build's records are read at its translation's input (set by injection; none in tests that make the
+    /// tool themselves): a pipeline described in place whose translation a pre-processor feeds.
+    ///
+    /// @param inputs The translation's inputs.
+    @Inject
+    void setTranslationInputs(final Provider<TranslationInputs> inputs) {
+        recordReading.setTranslationInputs(inputs);
     }
 
     @Override
@@ -348,8 +373,13 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                                 .items(StringSchema.builder().build())
                                 .build())
                         .addStringProperty(START_FROM_ARG, "Only where no form could ask it: the user's answer "
-                                                           + "in the chat to how the build starts, existing or "
-                                                           + "draft.")
+                                                           + "in the chat to how the build starts, existing, "
+                                                           + "in_place or draft.")
+                        .addProperty(SURVEY_FEEDS_ARG, ArraySchema.builder()
+                                .description("Only where no form could ask it: the feeds the user chose in the chat "
+                                             + "for an in-place description's survey.")
+                                .items(StringSchema.builder().build())
+                                .build())
                         .addBooleanProperty(ANSWERED_ARG, "With confirm, after the user wrote a question in the "
                                                           + "form instead of amendments: true once you've "
                                                           + "answered it; the set is put to them again as it is.")
@@ -419,35 +449,46 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         if (existingProvider == null) {
             return Optional.empty();
         }
+        // Chosen to describe it in place, the feeds not yet chosen: asked again.
+        final Optional<Map<String, Object>> pending = inPlacePending(calling);
+        if (pending.isPresent()) {
+            return pending;
+        }
         final Optional<Map<String, Object>> found = plan.existingToOffer(calling.build());
         if (found.isEmpty()) {
             return Optional.empty();
         }
         final Map<String, Object> described = existingProvider.get().describe(found.get());
         final String said = ExistingTranslations.said(described);
+        // Its translation described in place (decided with the user 2026-11-25), where one can be told in it: what
+        // that covers stated first, so the user can narrow the survey.
+        final Optional<InPlaceInduction.Scope> scope = inPlaceProvider == null
+                ? Optional.empty()
+                : inPlaceProvider.get().scope(ToolText.str(described.get("uuid")));
         final String message = "An existing pipeline already translates " + (JsonValues.strings(
                 described.get("source_types")).isEmpty()
                 ? "this feed"
                 : "these source types") + ": " + said + ". " + START_QUESTION + " " + START_EXISTING + ": it is "
                                + "copied as a new version and its XSLT read back into a mapping and a catalogue of "
                                + "event types; what the tools can't read stays as XSLT; the original isn't "
-                               + "touched. Or " + START_DRAFT.toLowerCase(Locale.ROOT) + " from the sample.";
+                               + "touched. " + scope.map(inPlace -> START_IN_PLACE + ": its XSLT read into a mapping "
+                                                                     + "and a catalogue kept with it, in hidden "
+                                                                     + "blocks only (its code and your text "
+                                                                     + "untouched), no new version. "
+                                                                     + inPlace.said() + " ")
+                                       .orElse("")
+                               + "Or " + START_DRAFT.toLowerCase(Locale.ROOT) + " from the sample.";
+        final List<String> options = scope.isPresent()
+                ? List.of(START_EXISTING, START_IN_PLACE, START_DRAFT)
+                : List.of(START_EXISTING, START_DRAFT);
         final ToolCall call = calling.call();
         final ToolCallContext context = calling.context();
         final String given = stringArg(call, START_FROM_ARG);
         final Optional<String> chosen;
         if (given != null && consent.takesChatAnswer(context, NAME, START_QUESTION)) {
-            final String answer = given.strip().toLowerCase(Locale.ROOT);
-            if (!ExistingTranslations.EXISTING.equals(answer) && !ExistingTranslations.DRAFT.equals(answer)) {
-                throw new ToolRefusal(START_FROM_ARG + " is the user's answer: existing or draft, not '" + given
-                                      + "'.");
-            }
-            chosen = Optional.of(ExistingTranslations.EXISTING.equals(answer)
-                    ? START_EXISTING
-                    : START_DRAFT);
+            chosen = Optional.of(chatChoice(given, scope.isPresent()));
         } else {
-            chosen = consent.choose(call, context, NAME, message, List.of(START_EXISTING, START_DRAFT),
-                    START_QUESTION);
+            chosen = consent.choose(call, context, NAME, message, options, START_QUESTION);
         }
         final Map<String, Object> result = new LinkedHashMap<>();
         if (chosen.isEmpty()) {
@@ -458,26 +499,37 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             routes.put(ExistingTranslations.EXISTING, START_EXISTING + ": copied as a new version (copy_pipeline), "
                                                       + "its XSLT read back into a mapping and catalogue "
                                                       + "(rebuild_mapping); the original isn't touched");
+            scope.ifPresent(inPlace -> routes.put(InPlaceInduction.IN_PLACE, START_IN_PLACE + ": its XSLT read into "
+                                                                            + "a mapping and catalogue kept with it "
+                                                                            + "(hidden blocks only), no new version. "
+                                                                            + inPlace.said()));
             routes.put(ExistingTranslations.DRAFT, START_DRAFT + " from the sample, the event types catalogued "
                                                    + "here");
             result.put("routes", routes);
             result.put(HINT, consent.whyInChat(context, NAME, START_QUESTION) + ": ask the user in the chat. "
-                             + message + " Then call again with " + START_FROM_ARG + "=existing or "
-                             + START_FROM_ARG + "=draft, as they answer.");
+                             + message + " Then call again with " + START_FROM_ARG + "=existing"
+                             + (scope.isPresent()
+                    ? ", " + START_FROM_ARG + "=in_place"
+                    : "") + " or " + START_FROM_ARG + "=draft, as they answer.");
             return Optional.of(result);
         }
-        final boolean existing = START_EXISTING.equals(chosen.get());
-        final Map<String, Object> startFrom = new LinkedHashMap<>();
-        startFrom.put("choice", existing
+        final String choice = START_EXISTING.equals(chosen.get())
                 ? ExistingTranslations.EXISTING
-                : ExistingTranslations.DRAFT);
+                : START_IN_PLACE.equals(chosen.get())
+                        ? InPlaceInduction.IN_PLACE
+                        : ExistingTranslations.DRAFT;
+        final Map<String, Object> startFrom = new LinkedHashMap<>();
+        startFrom.put("choice", choice);
         final Map<String, Object> pipeline = new LinkedHashMap<>();
         pipeline.put("name", described.get("name"));
         pipeline.put("uuid", described.get("uuid"));
         startFrom.put("pipeline", pipeline);
         startFrom.put(AT, clock.getAsLong());
         buildRecords.get().rememberStartFrom(calling.build(), startFrom);
-        if (!existing) {
+        if (InPlaceInduction.IN_PLACE.equals(choice)) {
+            return Optional.of(describeInPlace(calling, scope.orElseThrow()));
+        }
+        if (ExistingTranslations.DRAFT.equals(choice)) {
             return Optional.empty();
         }
         result.put(STATUS, "start_from_existing");
@@ -488,6 +540,109 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                          + "against the sample and puts it to the user.");
         plan.nextStep(calling.build(), null).ifPresent(next -> result.put("next", next));
         return Optional.of(result);
+    }
+
+    // The user's answer in the chat to how the build starts, as the form's choice.
+    private static String chatChoice(final String given, final boolean inPlace) {
+        final String answer = given.strip().toLowerCase(Locale.ROOT);
+        if (ExistingTranslations.EXISTING.equals(answer)) {
+            return START_EXISTING;
+        }
+        if (inPlace && InPlaceInduction.IN_PLACE.equals(answer)) {
+            return START_IN_PLACE;
+        }
+        if (ExistingTranslations.DRAFT.equals(answer)) {
+            return START_DRAFT;
+        }
+        throw new ToolRefusal(START_FROM_ARG + " is the user's answer: existing" + (inPlace
+                ? ", in_place"
+                : "") + " or draft, not '" + given + "'.");
+    }
+
+    // A build whose user chose to describe the pipeline in place, not yet described (its feeds to choose): the
+    // choice of feeds asked again; empty otherwise.
+    private Optional<Map<String, Object>> inPlacePending(final Calling calling) {
+        if (inPlaceProvider == null) {
+            return Optional.empty();
+        }
+        final Map<String, Object> startFrom = plan.startFrom(calling.build()).orElse(null);
+        if (!InPlaceInduction.inPlace(startFrom) || startFrom.containsKey(InPlaceInduction.IN_PLACE)) {
+            return Optional.empty();
+        }
+        final String uuid = ToolText.str(JsonValues.mapOrEmpty(startFrom.get("pipeline")).get("uuid"));
+        final InPlaceInduction.Scope scope = inPlaceProvider.get().scope(uuid)
+                .orElseThrow(() -> new ToolRefusal("The pipeline chosen to describe in place (" + uuid + ") has no "
+                                                   + "translation the tools can tell: copy it, or draft a new one"));
+        return Optional.of(describeInPlace(calling, scope));
+    }
+
+    // The pipeline described in place: the feeds to survey chosen first where its XSLT serves several (the count and
+    // estimate stated), then its mapping and catalogue read back and written without asking, where the user may.
+    private Map<String, Object> describeInPlace(final Calling calling, final InPlaceInduction.Scope scope) {
+        final List<String> all = scope.users().feeds().isEmpty()
+                ? plan.worksFrom(calling.build())
+                : scope.users().feeds();
+        final Optional<List<String>> feeds = all.size() > 1
+                ? feedsChosen(calling, scope, all)
+                : Optional.of(all);
+        final Map<String, Object> result = new LinkedHashMap<>();
+        if (feeds.isEmpty()) {
+            consent.askInChat(calling.context(), NAME, FEEDS_QUESTION);
+            result.put(STATUS, "needs_feeds");
+            result.put("feeds", all);
+            result.put(HINT, consent.whyInChat(calling.context(), NAME, FEEDS_QUESTION) + ": ask the user in the "
+                             + "chat. " + scope.said() + " " + FEEDS_QUESTION + " Then call again with "
+                             + SURVEY_FEEDS_ARG + "=[the feeds they chose] (every one, unless they narrow it).");
+            return result;
+        }
+        final Map<String, Object> described = inPlaceProvider.get().describe(calling.context(), calling.build(),
+                calling.source(), scope, feeds.get());
+        result.put(STATUS, described.remove(STATUS));
+        result.putAll(described);
+        if ("described_in_place".equals(result.get(STATUS))) {
+            // Every feed chosen is the build's to survey: the plan works through them.
+            buildRecords.get().addSourceFeeds(calling.build(), feeds.get());
+            result.put(HINT, "Described in place, without asking (hidden blocks only; nothing else changed). Next: "
+                             + "survey each feed (" + String.join(", ", feeds.get()) + "), then " + NAME + " build="
+                             + calling.build() + " checks the catalogue read back against their records and puts it "
+                             + "to the user to confirm; once confirmed it is written back beside the pipeline. No "
+                             + "new version, no promotion.");
+            plan.nextStep(calling.build(), null).ifPresent(next -> result.put("next", next));
+        }
+        return result;
+    }
+
+    // The feeds the user chose for the survey: all, or those their answer names; empty where no form can ask (the
+    // agent asks in the chat).
+    private Optional<List<String>> feedsChosen(final Calling calling,
+                                               final InPlaceInduction.Scope scope,
+                                               final List<String> all) {
+        final Object given = argsMap(calling.call()).get(SURVEY_FEEDS_ARG);
+        if (given instanceof final List<?> names && consent.takesChatAnswer(calling.context(), NAME,
+                FEEDS_QUESTION)) {
+            final List<String> chosen = scope.users().narrowedTo(names.stream().map(String::valueOf).toList());
+            if (chosen.isEmpty()) {
+                throw new ToolRefusal(SURVEY_FEEDS_ARG + " names none of the feeds the XSLT serves: "
+                                      + String.join(", ", all));
+            }
+            return Optional.of(chosen);
+        }
+        final String everyOne = "All " + all.size() + " feeds";
+        final Optional<String> answer = consent.answer(calling.call(), calling.context(), NAME, scope.said(),
+                FEEDS_QUESTION, everyOne);
+        if (answer.isEmpty()) {
+            return Optional.empty();
+        }
+        if (answer.get().equalsIgnoreCase(everyOne)) {
+            return Optional.of(all);
+        }
+        final List<String> named = scope.users().namedIn(answer.get());
+        if (named.isEmpty()) {
+            throw new ToolRefusal("The user's answer names none of the feeds the XSLT serves (" + String.join(", ",
+                    all) + "): \"" + answer.get() + "\". Ask them which, then call again with " + SURVEY_FEEDS_ARG
+                                  + "=[those feeds].");
+        }
+        return Optional.of(named);
     }
 
     // The words a set's summary starts with when the build started from an existing pipeline: where its event types
@@ -1053,6 +1208,17 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                          + "Every event type and the catch-all are confirmed: the catalogue is in the build's source "
                          + "notes, which draft_translation_mapping (build=) follows, a rule a way of recognising "
                          + "each event type.");
+        // A pipeline described in place: the confirmed catalogue written back beside it (decided 2026-11-25).
+        final Optional<Map<String, Object>> inPlace = inPlaceProvider == null
+                ? Optional.empty()
+                : inPlaceProvider.get().confirmed(calling.context(), calling.build());
+        inPlace.ifPresent(written -> {
+            result.put(InPlaceInduction.IN_PLACE, written);
+            result.put(HINT, "Every event type and the catch-all are confirmed. The pipeline was described in place: "
+                             + "the catalogue is written back to the source notes beside it, where its translation "
+                             + "XSLT links to it (in_place says what was written, and who can write what wasn't). No "
+                             + "new version: the build is done.");
+        });
         final Map<String, Object> withNext = plan.withNext(calling.context(), calling.build(), result);
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put(STATUS, CONFIRMED);

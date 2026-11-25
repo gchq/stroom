@@ -101,7 +101,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
     static final String MADE_BY_READ_BACK = "read back from a hand-written translation";
     // The block keys the catalogue_event_types tool keeps, carried from one write of the notes to the next.
     private static final List<String> CATALOGUE_KEYS = List.of(SourceNotes.EVENT_TYPES, SourceNotes.CATCH_ALL,
-            "scope", CONFIRMING, MADE_BY);
+            "scope", Catalogue.CHECKED_FEEDS, CONFIRMING, MADE_BY);
     private final WriteGuard guard;
     private final DocumentAccess documentAccess;
     private final DocumentWrites documentWrites;
@@ -389,6 +389,7 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
                     ? given.get(key)
                     : earlier.get(key);
             if (SourceNotes.EVENT_TYPES.equals(key) && value instanceof List<?>
+                || Catalogue.CHECKED_FEEDS.equals(key) && value instanceof final List<?> feeds && !feeds.isEmpty()
                 || value instanceof final Map<?, ?> map && !map.isEmpty()
                 || value instanceof final String text && !text.isBlank()) {
                 out.put(key, value);

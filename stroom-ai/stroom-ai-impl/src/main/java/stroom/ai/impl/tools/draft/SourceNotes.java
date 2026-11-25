@@ -88,7 +88,8 @@ public final class SourceNotes {
     /// The catalogue's catch-all (`catch_all`): its status, and the agreement for its records (`allow_unknown`).
     public static final String CATCH_ALL = "catch_all";
     /// The keys of the source notes' JSON block that hold the catalogue.
-    public static final List<String> CATALOGUE_KEYS = List.of(EVENT_TYPES, CATCH_ALL, "scope");
+    public static final List<String> CATALOGUE_KEYS = List.of(EVENT_TYPES, CATCH_ALL, "scope",
+            Catalogue.CHECKED_FEEDS);
     /// In what [#applyToDraft] returns: true when the rules are the catalogue's.
     public static final String CATALOGUED = "catalogued";
     /// The notes' key for the user's answers of which value key of each old/new list holds the value before the

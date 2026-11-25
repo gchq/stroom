@@ -26,6 +26,7 @@ import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.draft.PairMatches;
 import stroom.ai.impl.tools.generation.Extraction;
 import stroom.ai.impl.tools.generation.TranslationMapping;
+import stroom.ai.impl.tools.processing.TranslationInputText;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.sample.SplitterSpec;
 import stroom.ai.impl.tools.sample.SurveyDoc;
@@ -33,6 +34,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -58,9 +61,15 @@ class CatalogueReading {
     private static final Map<String, Object> READING_RULE = Map.of("name", "reading", "fields",
             List.of(Map.of("path", "EventDetail/TypeId", "value", "Reading")));
 
+    // Said of records read at a translation's input, as read_with.
+    private static final String READ_AT_INPUT = "the translation's input (the pre-processor's output), stepped through "
+                                                + "the pipeline described in place";
+
     private final SampleStreamTexts sampleStreamTexts;
     private final BuildPlan plan;
     private final TranslationBuilds builds;
+    // Reads a build's records at its translation's input; none in tests that make the tool themselves.
+    private Provider<TranslationInputs> inputs;
 
     /// @param sampleStreamTexts Reads the sample streams.
     /// @param plan              The build's plan: its sample streams.
@@ -72,6 +81,12 @@ class CatalogueReading {
         this.sampleStreamTexts = sampleStreamTexts;
         this.plan = plan;
         this.builds = builds;
+    }
+
+    /// @param inputs Reads a build's records at its translation's input (a pipeline described in place whose
+    ///               translation a pre-processor feeds).
+    void setTranslationInputs(final Provider<TranslationInputs> inputs) {
+        this.inputs = inputs;
     }
 
     /// The scope's records, read as processing will: the build's sample streams (or those given, or those the
@@ -100,7 +115,14 @@ class CatalogueReading {
         if (streams.isEmpty()) {
             throw new ToolRefusal("No sample streams: upload the samples first, or give stream_ids");
         }
-        final SampleStreamTexts.Texts texts = sampleStreamTexts.read(streams);
+        // A pipeline described in place whose translation a pre-processor feeds: its records read where the
+        // translation reads them (decided with the user 2026-11-25), stepped; else the streams as they are.
+        final Optional<TranslationInputs.At> at = inputs == null
+                ? Optional.empty()
+                : inputs.get().forBuild(calling.build());
+        final SampleStreamTexts.Texts texts = at.isPresent()
+                ? translationInputs(calling, at.get(), streams)
+                : sampleStreamTexts.read(streams);
         final Optional<SourceTypeScope> scope = builds.scope(calling.build());
         final SampleStreamTexts.Scoped scoped = scope.map(found -> sampleStreamTexts.scoped(texts, found))
                 .orElse(null);
@@ -109,7 +131,7 @@ class CatalogueReading {
                 : scoped.texts().texts();
         SplitterSpec splitter = BuildTranslationXsltTool.Request.splitter(splitterArg);
         String readWith = null;
-        if (splitter == null) {
+        if (splitter == null && at.isEmpty()) {
             // The build's saved Data Splitter, where it has one (seen in chat 163: called without splitter, the
             // records read with a spec inferred afresh each time).
             final Optional<Map.Entry<String, String>> saved = builds.dataSplitter(calling.build(), null);
@@ -138,9 +160,29 @@ class CatalogueReading {
                 .get(CatalogueEventTypesTool.READING_ARG) == null
                 ? null
                 : reading.orElse(null);
-        return new Records(streams, readWith, draft, sample, scoped == null
+        return new Records(streams, at.isPresent()
+                ? READ_AT_INPUT
+                : readWith == null
+                        ? null
+                        : "the build's Data Splitter '" + readWith + "'", draft, sample, scoped == null
                 ? null
                 : scoped.said(), HeldKindRecords.unpacked(raw, reading.orElse(mapping), matches), given);
+    }
+
+    // Each stream's records at the translation's input, a text a stream ([TranslationInputs]).
+    private SampleStreamTexts.Texts translationInputs(final CatalogueEventTypesTool.Calling calling,
+                                                      final TranslationInputs.At at,
+                                                      final List<Long> streams) {
+        final Map<Long, TranslationInputText.Text> stepped = inputs.get().texts(calling.context(), at, streams,
+                Math.max(1, TranslationInputs.CATALOGUE_RECORDS / Math.max(1, streams.size())));
+        if (stepped.isEmpty()) {
+            throw new ToolRefusal("Stepping streams " + streams + " gave nothing at the translation's input: give "
+                                  + "stream_ids of the pipeline's raw streams");
+        }
+        final Map<String, String> texts = new LinkedHashMap<>();
+        stepped.forEach((stream, text) -> texts.put("stream " + stream, text.text()));
+        return new SampleStreamTexts.Texts(texts, List.of("records read at the translation's input (a "
+                                                          + "pre-processor's output), stepped through the pipeline"));
     }
 
     // How the records are read for the check, as the build will read them: the reading given (over the draft's own),
@@ -295,7 +337,8 @@ class CatalogueReading {
     /// The scope's records, as read for a call.
     ///
     /// @param streams         The sample streams read.
-    /// @param readWith        The name of the build's saved Data Splitter they were read with, or null.
+    /// @param readWith        What they were read with (the build's saved Data Splitter, or the translation's input),
+    ///                        said; or null.
     /// @param draft           The draft made from them (its reading and its rules, the seed's).
     /// @param sample          The records as processing reads them, for the check.
     /// @param scopeSaid       What the scope left out, or null without one.
@@ -314,7 +357,7 @@ class CatalogueReading {
         /// @param result The result it is said in.
         void said(final Map<String, Object> result) {
             if (readWith != null) {
-                result.put("read_with", "the build's Data Splitter '" + readWith + "'");
+                result.put("read_with", readWith);
             }
             if (scopeSaid != null) {
                 result.put("scope", scopeSaid);

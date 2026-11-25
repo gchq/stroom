@@ -215,6 +215,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     private final Provider<BuildRecords> buildRecords;
     private final Provider<BuildPlan> plan;
     private final Provider<AiConfig> aiConfigProvider;
+    // Reads a build's records at its translation's input; none in tests that make the tool themselves.
+    private Provider<TranslationInputs> translationInputs;
 
     @Inject
     SurveyFeedTool(final StreamReader streamReader,
@@ -241,6 +243,16 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         this.buildRecords = buildRecords;
         this.plan = plan;
         this.aiConfigProvider = aiConfigProvider;
+    }
+
+    /// Where a build's records are read at its translation's input (set by injection; none in tests that make the
+    /// tool themselves): a pipeline described in place whose translation a pre-processor feeds is surveyed at what
+    /// the pre-processor writes, not the parser (decided with the user 2026-11-25).
+    ///
+    /// @param inputs The translation's inputs.
+    @Inject
+    void setTranslationInputs(final Provider<TranslationInputs> inputs) {
+        this.translationInputs = inputs;
     }
 
     @Override
@@ -715,6 +727,9 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         // The first stream's head, read to choose the source type and kind fields, read once: the survey reads on
         // from it.
         final Map<Long, RawHead> peeked = new LinkedHashMap<>();
+        // A pipeline described in place whose translation a pre-processor feeds: each stream read where the
+        // translation reads it, its records stepped there, as the head the survey reads.
+        peeked.putAll(translationInputHeads(context, build, streams));
         final Heads heads = new Heads(() -> peekRecords(streams.getFirst(), limits, peeked));
         // An aggregated feed's source type field first: the kinds of event are told apart within its source types.
         final PartAttributes attributes = new PartAttributes(streamReader);
@@ -1407,13 +1422,33 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         return Optional.of(KindFields.choose(without));
     }
 
+    // Each stream's records at its translation's input, as one whole head a stream (a part), for a build reading
+    // them there ([TranslationInputs]); none for any other.
+    private Map<Long, RawHead> translationInputHeads(final ToolCallContext context,
+                                                     final String build,
+                                                     final List<Meta> streams) {
+        final Optional<TranslationInputs.At> at = translationInputs == null
+                ? Optional.empty()
+                : translationInputs.get().forBuild(build);
+        if (at.isEmpty()) {
+            return Map.of();
+        }
+        final Map<Long, RawHead> heads = new LinkedHashMap<>();
+        translationInputs.get().texts(context, at.get(), streams.stream().map(Meta::getId).toList(),
+                        TranslationInputs.SURVEY_RECORDS)
+                .forEach((stream, text) -> heads.put(stream, new RawHead(text.text(), false, 1)));
+        return heads;
+    }
+
     // The first stream's start, its records parsed, when they are structured (delimited, JSON, key=value); none for
     // text, or when it can't be read.
     private List<Map<String, Object>> peekRecords(final Meta first,
                                                   final Limits limits,
                                                   final Map<Long, RawHead> peeked) {
         try {
-            final RawHead head = streamReader.readHead(first.getId(), 0, limits.maxChars());
+            final RawHead head = peeked.containsKey(first.getId())
+                    ? peeked.get(first.getId())
+                    : streamReader.readHead(first.getId(), 0, limits.maxChars());
             peeked.put(first.getId(), head);
             final RecordSplitter.Chunk chunk = RecordSplitter.split(head.text(), limits.maxRecords() * SPLIT_MORE,
                     head.truncated());

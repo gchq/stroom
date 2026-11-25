@@ -187,6 +187,23 @@ class CatalogueNotes {
     /// @param source    The source's name, for a new doc's.
     /// @param catalogue The catalogue.
     void write(final ToolSession session, final String build, final String source, final Catalogue catalogue) {
+        write(session, build, source, catalogue, null);
+    }
+
+    /// As [#write(ToolSession, String, String, Catalogue)], with how the catalogue reads its records kept in the
+    /// notes' confirmation (as a reading catalogue_event_types was given is): a translation described in place has
+    /// no mapping in the build for it to read them by.
+    ///
+    /// @param session   The session (the doc must be the build's).
+    /// @param build     The build.
+    /// @param source    The source's name, for a new doc's.
+    /// @param catalogue The catalogue.
+    /// @param reading   The reading keys, or null to keep the reading the notes have.
+    void write(final ToolSession session,
+               final String build,
+               final String source,
+               final Catalogue catalogue,
+               final Map<String, Object> reading) {
         final Optional<WriteGuard.BuildDoc> there = notesDoc(build);
         final String name = there.map(WriteGuard.BuildDoc::name).orElse(source + SourceNotes.NOTES_SUFFIX);
         final String text = there.map(doc -> documentWrites.text(doc.docRef())).orElse("");
@@ -202,6 +219,9 @@ class CatalogueNotes {
         final Map<String, Object> confirming = new LinkedHashMap<>(NullSafe.map(JsonValues.map(
                 notes.get(RecordSourceNotesTool.CONFIRMING))));
         confirming.remove(RecordSourceNotesTool.RECORDS);
+        if (reading != null) {
+            confirming.put(CatalogueEventTypesTool.READING, reading);
+        }
         given.put(RecordSourceNotesTool.CONFIRMING, confirming);
         // A catalogue the tool made stays so (its catch-all still the user's to confirm through it); any other is
         // read back from a hand-written translation.
@@ -218,6 +238,23 @@ class CatalogueNotes {
                     false, null);
             // Notes made after the translation was written: its XSLT links to them now.
             SourceNotesLinks.linkTranslations(guard, documentAccess, build);
+        }
+    }
+
+    /// @param build A build.
+    /// @return Its source notes doc, or empty when it has none.
+    Optional<DocRef> notesDocRef(final String build) {
+        return notesDoc(build).map(WriteGuard.BuildDoc::docRef);
+    }
+
+    /// @param pipeline A pipeline (or feed) outside any build.
+    /// @return The source notes doc beside it: in its folder, or one of the few above it; empty when there is none.
+    Optional<DocRef> notesBeside(final DocRef pipeline) {
+        try {
+            return promotedNotes(pipeline);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No source notes found beside {}: {}", pipeline, e.getMessage()), e);
+            return Optional.empty();
         }
     }
 

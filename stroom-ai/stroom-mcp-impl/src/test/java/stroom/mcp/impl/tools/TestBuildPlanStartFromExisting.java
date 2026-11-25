@@ -140,6 +140,33 @@ class TestBuildPlanStartFromExisting {
         assertThat(TestBuildPlan.states(status()).get(BuildPlan.CATALOGUE)).isEqualTo("not needed");
     }
 
+    @Test
+    void aPipelineDescribedInPlaceIsSurveyedAndCataloguedWithNoNewVersion() {
+        // Described in place (decided with the user 2026-11-25): no translation, pipeline, processing or promotion.
+        facts.startFrom = Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline", EXISTING);
+        final Map<String, Object> result = status();
+        assertThat(next(result).get("step")).isEqualTo(BuildPlan.CATALOGUE);
+        assertThat(call(result).get("tool")).isEqualTo(CatalogueEventTypesTool.NAME);
+        assertThat(String.valueOf(next(result).get("then"))).contains("described in place", "no new version",
+                "'ACME-V1.0-Events'");
+        @SuppressWarnings("unchecked") final List<Map<String, Object>> steps =
+                (List<Map<String, Object>>) result.get("steps");
+        assertThat(steps).filteredOn(step -> !"not needed".equals(step.get("state")))
+                .extracting(step -> step.get("step"))
+                .contains(BuildPlan.SURVEYED, BuildPlan.CATALOGUE)
+                .doesNotContain("translation", "pipeline", "stepped", "processed", "promoted");
+
+        // Catalogued: the build is done.
+        facts.catalogued = true;
+        assertThat(status().get("next")).isNull();
+    }
+
+    @Test
+    void theOfferSaysTheBuildMayBeDescribedInPlace() {
+        facts.existing = EXISTING;
+        assertThat(String.valueOf(next(status()).get("then"))).contains("described in place", "no new version");
+    }
+
     private Map<String, Object> status() {
         return plan.status("b", null);
     }

@@ -654,9 +654,22 @@ class RebuildMappingTool extends AbstractBuiltInTool {
     // The XSLTs a lost mapping's XSLT imports, by name as Stroom resolves them: what a shared template writes is in
     // its own XSLT.
     private Map<String, String> imported(final String code) {
+        return imported(docFinderProvider.get(), documentAccess, code);
+    }
+
+    /// The XSLTs an XSLT imports, by name as Stroom resolves them (one XSLT of that name the user can view): what a
+    /// shared template writes is in its own XSLT.
+    ///
+    /// @param docFinder      Finds XSLTs by name.
+    /// @param documentAccess Reads them, as the user.
+    /// @param code           The XSLT's code.
+    /// @return Each import's code, by its href.
+    static Map<String, String> imported(final DocFinder docFinder,
+                                        final DocumentAccess documentAccess,
+                                        final String code) {
         final Map<String, String> imported = new LinkedHashMap<>();
         for (final String href : new LinkedHashSet<>(XsltReader.read(code).imports())) {
-            final List<DocRef> found = NullSafe.list(docFinderProvider.get().findByName(XsltDoc.TYPE, href, false))
+            final List<DocRef> found = NullSafe.list(docFinder.findByName(XsltDoc.TYPE, href, false))
                     .stream()
                     .filter(ref -> href.equals(ref.getName()))
                     .filter(documentAccess::canView)

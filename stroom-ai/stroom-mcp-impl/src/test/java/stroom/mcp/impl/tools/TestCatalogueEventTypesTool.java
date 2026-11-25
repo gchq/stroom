@@ -24,6 +24,8 @@ import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.draft.SourceNotes;
+import stroom.ai.impl.tools.processing.TranslationInputText;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.util.json.JsonUtil;
@@ -317,6 +319,40 @@ class TestCatalogueEventTypesTool {
         assertThat(answered.eventType("Export-Report").timelineRole()).isEqualTo("idle");
         final Map<String, Object> again = call(Map.of("build", BUILD, "confirm", true), user.context());
         assertThat(map(again.get("catalogue"))).doesNotContainKey("timeline_roles_to_ask");
+    }
+
+    @Test
+    void aPreProcessedTranslationDescribedInPlaceIsCheckedAtItsInput() {
+        // The raw records hold no kind; the pre-processor before the translation writes it (decided 2026-11-25: the
+        // catalogue's conditions are checked where the translation reads its records).
+        final TranslationInputs inputs = Mockito.mock(TranslationInputs.class);
+        final TranslationInputs.At at = new TranslationInputs.At("hand-pipeline", "translationFilter");
+        Mockito.when(inputs.forBuild(BUILD)).thenReturn(Optional.of(at));
+        final List<Map<String, Object>> records = new ArrayList<>();
+        for (int i = 0; i < 6; i++) {
+            records.add(Map.of("op", "OP" + i % 2, "kind", i % 2 == 0
+                    ? "signin"
+                    : "signout", "user", "user" + i));
+        }
+        Mockito.when(inputs.texts(Mockito.any(), Mockito.eq(at), Mockito.eq(List.of(7L)), Mockito.anyInt()))
+                .thenReturn(Map.of(7L, new TranslationInputText.Text(ToolJson.dumps(records),
+                        TranslationInputText.Format.JSON, 1)));
+        tool.setTranslationInputs(() -> inputs);
+
+        final Map<String, Object> checked = call(Map.of("build", BUILD, "stream_ids", List.of(7), "reading",
+                Map.of("input", "json"), "proposals", List.of(Map.of("op", "add", "type_id", "Sign-In", "title",
+                        "Sign in", "description", "A user signed in", "event_detail", "Unknown", "basis",
+                        "agent_knowledge", "confidence", "high", "recognised_by", List.of(Map.of("when",
+                                List.of(Map.of("field", "kind", "equals", "signin")), "names", List.of()))))),
+                plain());
+
+        assertThat(checked).as("checked: %s", checked).containsEntry("status", "checked");
+        assertThat(map(map(checked.get("check")).get("counts")).get("Sign-In")).asString().contains("records=3");
+        // The listing says where the records were read.
+        assertThat(call(Map.of("build", BUILD, "stream_ids", List.of(7)), plain())).containsEntry("read_with",
+                "the translation's input (the pre-processor's output), stepped through the pipeline described in "
+                + "place");
+        Mockito.verify(sampleStreamTexts, Mockito.never()).read(List.of(7L));
     }
 
     @Test
