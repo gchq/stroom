@@ -80,6 +80,15 @@ final class ActivityProfiles {
                                 final Fields fields,
                                 final Instant from,
                                 final Instant to) {
+        return new AggregateQuery(source, scope.filter(), from, to, Bucket.DAY, List.of(), dailyMetrics(fields),
+                MAX_ROWS);
+    }
+
+    /// What a day gives: events, first and last times, each sum and each distinct count.
+    ///
+    /// @param fields The sum and breadth fields.
+    /// @return The metrics.
+    static List<Metric> dailyMetrics(final Fields fields) {
         final List<Metric> metrics = new ArrayList<>();
         metrics.add(new Metric(Kind.COUNT, null, EVENTS));
         metrics.add(new Metric(Kind.MIN_TIME, null, FIRST));
@@ -90,7 +99,7 @@ final class ActivityProfiles {
         for (int i = 0; i < fields.breadth().size(); i++) {
             metrics.add(new Metric(Kind.DISTINCT, fields.breadth().get(i), DISTINCT_PREFIX + i));
         }
-        return new AggregateQuery(source, scope.filter(), from, to, Bucket.DAY, List.of(), metrics, MAX_ROWS);
+        return metrics;
     }
 
     /// @return The person's events by hour.

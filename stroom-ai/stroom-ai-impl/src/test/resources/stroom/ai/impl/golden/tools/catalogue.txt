@@ -917,7 +917,7 @@ offered in modes:
 
 ### Description
 
-Compares one person's activity in a window with their own baseline, from index aggregates only, never the events: volume (events, active hours, sums), rhythm (first and last of the day, hour of the week), breadth (distinct values) and novelty (values first seen). Scored in code: robust z-scores, change points with their date, drifts, values started and stopped; coverage gaps (by day across every feed of the source: a day with none from any is a gap, not quiet), leave, source-wide shifts, feeds joining or leaving (each feed's first and last day listed) and fields starting or stopping being held (e.g. a person id only from a reprocessed range) are checked first. Gives at most 20 ranked findings, each an indicator with its evidence and an alternative explanation (never a conclusion about the person: say so), a line a month, and CSV files of the daily profile and monthly rollup. Give person (the person id) or logonIds where there is none. includeTargets scores what was done to the person apart (a group granted, a reset, MFA changed, failed logons against them; about 2 more queries a month per source). Categories and location are on by default where a source has a category or country field (about 1 more query a month each per source). peers (only when the question compares them with their team or organisation) also compares them with the others of their UserDetails Organisation, read from one event each (about 1 more query a month per source); accessField is asked for too. A date alone is a whole day in timeZone: windowFrom 2026-06-01 and windowTo 2026-06-30 are all of June. Drill into flagged days with activity_timeline.
+Compares one person's activity in a window with their own baseline, from index aggregates only, never the events: volume (events, active hours, sums), rhythm (first and last of the day, hour of the week), breadth (distinct values) and novelty (values first seen). Scored in code: robust z-scores, change points with their date, drifts, values started and stopped; coverage gaps (by day across every feed of the source: a day with none from any is a gap, not quiet), leave, source-wide shifts, feeds joining or leaving (each feed's first and last day listed) and fields starting or stopping being held (e.g. a person id only from a reprocessed range) are checked first. Gives at most 20 ranked findings, each an indicator with its evidence and an alternative explanation (never a conclusion about the person: say so), a line a month, and CSV files of the daily profile and monthly rollup. Give person (the person id) or logonIds where there is none. includeTargets scores what was done to the person apart (a group granted, a reset, MFA changed, failed logons against them; about 2 more queries a month per source). Categories and location are on by default where a source has a category or country field (about 1 more query a month each per source). peers (only when the question compares them with their team or organisation) also compares them with the others of their UserDetails Organisation, read from one event each (about 1 more query a month per source); accessField is asked for too. A date alone is a whole day in timeZone: windowFrom 2026-06-01 and windowTo 2026-06-30 are all of June. scope: population (no person) screens everyone in the sources instead, each against their own baseline by the same aggregates and scoring (12 months by default), ranked: the top 10 with their findings, how many others were scored, where to limit the events screened, rare for a keyword field's values few people hold. Drill into flagged days with activity_timeline.
 
 ### Parameters
 
@@ -1022,6 +1022,15 @@ Compares one person's activity in a window with their own baseline, from index a
       "description" : "Optional: the person field, where the AGENTS doc's ## Fields or the convention don't give it.",
       "type" : "string"
     },
+    "rare" : {
+      "description" : "scope population only: a keyword field (a domain, process, host) whose values held by very few people (at most 3 or 1% of those screened) are listed, ranked by rarity and by how new they are for the person (one more aggregate a source). Off unless given: the result then lists the fields with many values.",
+      "type" : "string"
+    },
+    "scope" : {
+      "description" : "person (default): one person's comparison. population: a screen of everyone in the sources (no person or logonIds), each against their own baseline, ranked; the window by default the last 182 days of 365; leave and exceptions may start with a person id (P10001 2026-05-11..2026-05-15: reason).",
+      "enum" : [ "person", "population" ],
+      "type" : "string"
+    },
     "sources" : {
       "description" : "The indexes by name or uuid (default: every Elastic and Lucene index you can use with a person or user field).",
       "items" : {
@@ -1056,6 +1065,30 @@ Compares one person's activity in a window with their own baseline, from index a
     "userField" : {
       "description" : "Optional: the user (logon id) field, likewise.",
       "type" : "string"
+    },
+    "where" : {
+      "description" : "scope population only: conditions every event screened meets, all of them, e.g. [{\"field\": \"process.name\", \"value\": \"powershell.exe\"}]; a source without the field is left out.",
+      "items" : {
+        "description" : "One condition on an index field.",
+        "properties" : {
+          "condition" : {
+            "description" : "EQUALS (default, exact) or IN.",
+            "enum" : [ "EQUALS", "IN" ],
+            "type" : "string"
+          },
+          "field" : {
+            "description" : "The index's field.",
+            "type" : "string"
+          },
+          "value" : {
+            "description" : "The value; IN: values separated by commas.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "field" ],
+        "type" : "object"
+      },
+      "type" : "array"
     },
     "windowFrom" : {
       "description" : "The window's first day: a date (yyyy-MM-dd, from the start of that day), an ISO 8601 time or Stroom's now()-30d (default 30 days before windowTo).",
@@ -1392,7 +1425,7 @@ offered in modes: AGENT, ASK, PLAN
 
 ### Description
 
-Runs an ES|QL query on an Elastic Index, answered by Elasticsearch itself: for totals, counts, top N and grouped or bucketed questions (e.g. events per hour with BUCKET(@timestamp, 1 hour)); use run_stroomql for row-level work or any other data source. Not for ordered sequences (X then Y within N, in one doc or across several): joins of STATS results get them wrong; use sequence_query. Not for one person's activity: what they did and when, or how it differs from their own baseline or their peers'; use activity_timeline or compare_activity. Give pipeline: the commands after FROM (written for you), e.g. '| WHERE event.action == "allowed" | STATS total = SUM(bytes) BY user.name | SORT total DESC | LIMIT 10'. Allowed: WHERE, EVAL, STATS ... BY, SORT, LIMIT, KEEP, DROP, RENAME, DISSECT, GROK, MV_EXPAND. Field names are the index's own (describe_data_source gives them); group by a keyword field, not text. STATS ... BY a multi-valued field counts a document under each value. Work out derived values and cut-offs in the query, not in your reply: EVAL for a conversion (e.g. '| EVAL hours = ROUND(seconds / 3600.0, 1)'), WHERE after STATS for a threshold (e.g. '| WHERE hours > 8'). A LIMIT is added if the pipeline has none; the result says when rows were cut short and how many there are in all: never call cut-short rows a full ranking or a total. Counts and sums come straight from Elasticsearch and may include documents from streams the user can't see or that have been deleted, so they can differ from Stroom searches (run_stroomql) and dashboards: when the user needs figures that match those exactly, use a Stroom search (run_stroomql). FIRST and LAST are reserved: name columns e.g. first_seen and last_seen. In RLIKE, @ matches any string: escape it, or use LIKE for simple patterns. ES|QL has no IF: use CASE(condition, then, else). Patterns: first seen, MIN(@timestamp) BY user, value; spraying or scans, COUNT_DISTINCT(target) BY source; an index's baseline vs recent, one STATS with COUNT(*) WHERE @timestamp < x per period; a cold-start guard, WHERE on a history count. The rows are written to a table in the workspace too, for the table tool.
+Runs an ES|QL query on an Elastic Index, answered by Elasticsearch itself: for totals, counts, top N and grouped or bucketed questions (e.g. events per hour with BUCKET(@timestamp, 1 hour)); use run_stroomql for row-level work or any other data source. Not for ordered sequences (X then Y within N, in one doc or across several): joins of STATS results get them wrong; use sequence_query. Not for one person's activity: what they did and when, or how it differs from their own baseline or their peers'; use activity_timeline or compare_activity, nor who stands out across everyone (each person against their own baseline); use compare_activity with scope population. Give pipeline: the commands after FROM (written for you), e.g. '| WHERE event.action == "allowed" | STATS total = SUM(bytes) BY user.name | SORT total DESC | LIMIT 10'. Allowed: WHERE, EVAL, STATS ... BY, SORT, LIMIT, KEEP, DROP, RENAME, DISSECT, GROK, MV_EXPAND. Field names are the index's own (describe_data_source gives them); group by a keyword field, not text. STATS ... BY a multi-valued field counts a document under each value. Work out derived values and cut-offs in the query, not in your reply: EVAL for a conversion (e.g. '| EVAL hours = ROUND(seconds / 3600.0, 1)'), WHERE after STATS for a threshold (e.g. '| WHERE hours > 8'). A LIMIT is added if the pipeline has none; the result says when rows were cut short and how many there are in all: never call cut-short rows a full ranking or a total. Counts and sums come straight from Elasticsearch and may include documents from streams the user can't see or that have been deleted, so they can differ from Stroom searches (run_stroomql) and dashboards: when the user needs figures that match those exactly, use a Stroom search (run_stroomql). FIRST and LAST are reserved: name columns e.g. first_seen and last_seen. In RLIKE, @ matches any string: escape it, or use LIKE for simple patterns. ES|QL has no IF: use CASE(condition, then, else). Patterns: first seen, MIN(@timestamp) BY user, value; spraying or scans, COUNT_DISTINCT(target) BY source; an index's baseline vs recent, one STATS with COUNT(*) WHERE @timestamp < x per period; a cold-start guard, WHERE on a history count. The rows are written to a table in the workspace too, for the table tool.
 
 ### Parameters
 

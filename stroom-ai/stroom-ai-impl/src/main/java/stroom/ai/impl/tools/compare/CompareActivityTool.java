@@ -77,6 +77,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -86,6 +87,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
@@ -145,6 +147,21 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     /// field here.
     static final String EVENT_CATEGORY = "event.category";
     static final String PEER_ELEMENT_ARG = "peerElement";
+    static final String SCOPE_ARG = "scope";
+    /// The scope of one person's comparison (the default).
+    static final String PERSON_SCOPE = "person";
+    /// The scope of a population screen: everyone in the sources, each against their own baseline, ranked.
+    static final String POPULATION = "population";
+    static final String WHERE_ARG = "where";
+    static final String RARE_ARG = "rare";
+    static final String EQUALS = "EQUALS";
+    static final String IN = "IN";
+    private static final Pattern PERSON_DATES = Pattern.compile("\\s*([^\\s:]+):?\\s+(\\d{4}-\\d{2}-\\d{2}.*)",
+            Pattern.DOTALL);
+    /// The days a population screen's window is by default.
+    static final int SCREEN_WINDOW_DAYS = 182;
+    /// The days a population screen's baseline and window are together by default (long enough for a drift).
+    static final int SCREEN_DAYS = 365;
     // The offset of a source's feeds aggregate.
     private static final String FEEDS = "feeds";
     static final String INCLUDE_TARGETS_ARG = "includeTargets";
@@ -295,10 +312,39 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                  + "others of their UserDetails Organisation, read from one event each (about 1 "
                                  + "more query a month per source); accessField is asked for too. A date alone is "
                                  + "a whole day in timeZone: windowFrom 2026-06-01 "
-                                 + "and windowTo 2026-06-30 are all of June.")
+                                 + "and windowTo 2026-06-30 are all of June. scope: population (no person) screens "
+                                 + "everyone in the sources instead, each against their own baseline by the same "
+                                 + "aggregates and scoring (12 months by default), ranked: the top "
+                                 + PopulationScreen.TOP + " with their findings, how many others were scored, "
+                                 + "where to limit the events screened, rare for a keyword field's values few "
+                                 + "people hold.")
                         .chatOnly(" Drill into flagged days with activity_timeline.")
                         .build())
                 .parameters(ObjectSchema.builder()
+                        .addEnumProperty(SCOPE_ARG, List.of(PERSON_SCOPE, POPULATION), "person (default): one "
+                                + "person's comparison. population: a screen of everyone in the sources (no person "
+                                + "or logonIds), each against their own baseline, ranked; the window by default the "
+                                + "last " + SCREEN_WINDOW_DAYS + " days of " + SCREEN_DAYS + "; leave and "
+                                + "exceptions may start with a person id (P10001 2026-05-11..2026-05-15: reason).")
+                        .addProperty(WHERE_ARG, ArraySchema.builder()
+                                .items(ObjectSchema.builder()
+                                        .description("One condition on an index field.")
+                                        .addStringProperty("field", "The index's field.")
+                                        .addEnumProperty("condition", List.of(EQUALS, IN), "EQUALS (default, "
+                                                                                          + "exact) or IN.")
+                                        .addStringProperty("value", "The value; IN: values separated by commas.")
+                                        .required("field")
+                                        .build())
+                                .description("scope population only: conditions every event screened meets, "
+                                             + "all of them, e.g. [{\"field\": \"process.name\", \"value\": "
+                                             + "\"powershell.exe\"}]; a source without the field is left out.")
+                                .build())
+                        .addStringProperty(RARE_ARG, "scope population only: a keyword field (a domain, process, "
+                                                     + "host) whose values held by very few people (at most "
+                                                     + RareValues.MIN_PEOPLE + " or 1% of those screened) are "
+                                                     + "listed, ranked by rarity and by how new they are for the "
+                                                     + "person (one more aggregate a source). Off unless given: "
+                                                     + "the result then lists the fields with many values.")
                         .addStringProperty(PERSON_ARG, "The person id, as the indexes' person field holds it.")
                         .addProperty(LOGON_IDS_ARG, stringArraySchema("Logon ids (accounts) to use where an index "
                                                                       + "has no person field, each kept visible; "
@@ -402,6 +448,14 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
 
     @Override
     protected ToolResult run(final ToolCall request, final ToolCallContext context) {
+        if (population(request)) {
+            return screen(request, context);
+        }
+        if (!NullSafe.isBlankString(stringArg(request, RARE_ARG)) || argsMap(request).get(WHERE_ARG) != null) {
+            throw new WorkspaceException(WHERE_ARG + " and " + RARE_ARG + " are for " + SCOPE_ARG + ": " + POPULATION
+                                         + " (a screen of everyone); one person's comparison reads all their "
+                                         + "events.");
+        }
         final SessionWorkspace workspace = sessionWorkspace(context);
         final AiWorkspaceConfig config = limits(context);
         final String person = stringArg(request, PERSON_ARG);
@@ -412,7 +466,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         }
         final ToolTimeZone zone = timeZone(request, context);
         final long now = System.currentTimeMillis();
-        final Periods periods = periods(request, zone, now);
+        final Periods periods = periods(request, zone, now, DEFAULT_WINDOW_DAYS, DEFAULT_BASELINE_DAYS);
         final Unit unit = unit(stringArg(request, UNIT_ARG));
         final List<LocalDate[]> leave = leave(stringListArg(request, LEAVE_ARG));
         final Spec spec = new Spec(periods.baselineFrom(), periods.baselineTo(), periods.windowFrom(),
@@ -674,6 +728,571 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         return context.session().isChat()
                 ? ToolResult.text(CompareResult.markdown(run, files)).withStructuredContent(structured)
                 : ToolResult.text(JsonUtil.writeValueAsString(structured, false)).withStructuredContent(structured);
+    }
+
+    // --------------------------------------------------------------------------------
+    // The population screen
+
+    // True for scope population; a person or logon ids with it refused, as a screen is of everyone.
+    private boolean population(final ToolCall request) {
+        final String scope = NullSafe.trim(stringArg(request, SCOPE_ARG)).toLowerCase(Locale.ROOT);
+        if (scope.isEmpty() || PERSON_SCOPE.equals(scope)) {
+            return false;
+        }
+        if (!POPULATION.equals(scope)) {
+            throw new WorkspaceException(SCOPE_ARG + " must be " + PERSON_SCOPE + " or " + POPULATION + ", not '"
+                                         + scope + "'.");
+        }
+        if (!NullSafe.isBlankString(stringArg(request, PERSON_ARG))
+            || !NullSafe.list(stringListArg(request, LOGON_IDS_ARG)).isEmpty()) {
+            throw new WorkspaceException(SCOPE_ARG + ": " + POPULATION + " screens everyone in the sources: give no "
+                                         + PERSON_ARG + " or " + LOGON_IDS_ARG + " (or drop " + SCOPE_ARG
+                                         + " to compare one person).");
+        }
+        return true;
+    }
+
+    // Every person in the sources scored against their own baseline from aggregates with the person field a group
+    // (one aggregate a slice for everyone), ranked; the rare values of a field where asked.
+    private ToolResult screen(final ToolCall request, final ToolCallContext context) {
+        final SessionWorkspace workspace = sessionWorkspace(context);
+        final AiWorkspaceConfig config = limits(context);
+        final ToolTimeZone zone = timeZone(request, context);
+        final long now = System.currentTimeMillis();
+        final Periods periods = periods(request, zone, now, SCREEN_WINDOW_DAYS, SCREEN_DAYS - SCREEN_WINDOW_DAYS);
+        // Every unit unless one is asked for: a night, a month and the weeks between each show other plants.
+        final List<Unit> units = NullSafe.isBlankString(stringArg(request, UNIT_ARG))
+                ? List.of(Unit.DAY, Unit.WEEK, Unit.MONTH)
+                : List.of(unit(stringArg(request, UNIT_ARG)));
+        final PersonDates dates = PersonDates.read(stringListArg(request, LEAVE_ARG),
+                stringListArg(request, EXCEPTIONS_ARG));
+        final List<Condition> conditions = conditions(argsMap(request).get(WHERE_ARG));
+        final Map<String, List<String>> where = new LinkedHashMap<>();
+        conditions.forEach(condition -> where.merge(condition.field(), condition.values(), (a, b) -> a.stream()
+                .filter(b::contains)
+                .toList()));
+        final String rare = NullSafe.isBlankString(stringArg(request, RARE_ARG))
+                ? null
+                : stringArg(request, RARE_ARG).strip();
+        final boolean peers = booleanArg(request, PEERS_ARG, false);
+        final String element = peerElement(stringArg(request, PEER_ELEMENT_ARG));
+        final List<String> notes = new ArrayList<>(periods.notes());
+        unscreened(request, notes);
+        final List<Planned> planned = planScreen(request, context, where.keySet(), rare,
+                optionalBooleanArg(request, CATEGORIES_ARG), optionalBooleanArg(request, LOCATION_ARG), notes);
+        final List<Planned> usable = planned.stream().filter(Planned::usable).toList();
+        usable.forEach(source -> notes.addAll(source.defaults()));
+        final String folder = FOLDER + POPULATION + "/" + (conditions.isEmpty()
+                ? ""
+                : safe(String.join("_", conditions.stream().map(Condition::text).toList())) + "/");
+        final AggregateRunner runner = new CachedAggregates(runnerProvider.get(), workspace,
+                WorkspacePath.parse(folder + CACHE_FILE));
+        final Context runContext = new Context(zone.zone(), config.getQueryTimeLimit().getDuration(),
+                config.getJoinWorkers(), context.stopped());
+        final Instant from = periods.baselineFrom().atStartOfDay(zone.zone()).toInstant();
+        final Instant to = periods.windowTo().atStartOfDay(zone.zone()).toInstant();
+        final Instant windowStart = periods.windowFrom().atStartOfDay(zone.zone()).toInstant();
+
+        context.progress().report("Aggregating everyone in " + usable.size() + " source(s) for "
+                                  + periods.describe());
+        final PopulationScreen.Batch batch = new PopulationScreen.Batch();
+        for (int i = 0; i < usable.size(); i++) {
+            final Planned source = usable.get(i);
+            PopulationScreen.queries(batch, i + ":", source, where, from, to, zone.zone(), peers);
+            if (rare != null && source.rareField() != null) {
+                batch.add(i + ":rare", List.of(RareValues.byValue(source.source(), where, source.scope().field(),
+                        rare, from, to)));
+            } else if (rare == null && !source.keywordFields().isEmpty()) {
+                batch.add(i + ":fields", List.of(RareValues.cardinality(source.source(), where,
+                        source.keywordFields(), from, to)));
+            }
+        }
+        final List<Table> ran = runner.run(batch.queries(), runContext);
+        int queriesRun = ran.stream().mapToInt(Table::queries).sum();
+        final Map<String, Table> tables = batch.read(ran);
+
+        final Map<String, List<ActivityScoring.Finding>> findings = new LinkedHashMap<>();
+        final Map<String, Integer> people = new LinkedHashMap<>();
+        final Map<String, Integer> sourceWide = new LinkedHashMap<>();
+        final List<ScreenResult.Rare> rareFound = new ArrayList<>();
+        final Map<String, List<RareValues.FieldValues>> rareFields = new LinkedHashMap<>();
+        final List<RareValues.Picked> picked = new ArrayList<>();
+        final List<Map<String, Instant>> firstActive = new ArrayList<>();
+        final Set<String> rebaselined = new LinkedHashSet<>();
+        int peopleRead = 0;
+        for (int i = 0; i < usable.size(); i++) {
+            final Planned source = usable.get(i);
+            final String name = source.source().name();
+            final String prefix = i + ":";
+            tables.entrySet().stream()
+                    .filter(entry -> entry.getKey().startsWith(prefix))
+                    .forEach(entry -> {
+                        notes.addAll(entry.getValue().notes());
+                        if (entry.getValue().cutShort()) {
+                            notes.add(name + ": the aggregate of " + entry.getKey().substring(prefix.length())
+                                      + " reached the row limit (" + ActivityProfiles.MAX_ROWS + ") in a slice: "
+                                      + "some people's values are approximate; where narrows the screen.");
+                        }
+                    });
+            screenAudit(context, source, tables, prefix);
+            final Map<String, Table> daily = PopulationScreen.byPerson(tables.get(prefix + PopulationScreen.DAILY));
+            final Map<String, Table> hourly = PopulationScreen.byPerson(tables.get(prefix
+                                                                                   + PopulationScreen.HOURLY));
+            final Table populationTable = tables.get(prefix + PopulationScreen.POPULATION);
+            final Map<String, Map<String, Table>> seen = new LinkedHashMap<>();
+            for (final String field : source.fields().breadth()) {
+                seen.put(field, PopulationScreen.byPerson(tables.get(prefix + PopulationScreen.SEEN + field)));
+            }
+            final Map<String, Table> categories = tables.containsKey(prefix + PopulationScreen.CATEGORIES)
+                    ? PopulationScreen.byPerson(tables.get(prefix + PopulationScreen.CATEGORIES))
+                    : Map.of();
+            final Map<String, Table> located = tables.containsKey(prefix + PopulationScreen.LOCATION)
+                    ? PopulationScreen.byPerson(tables.get(prefix + PopulationScreen.LOCATION))
+                    : null;
+            final List<FeedSpan> feeds = tables.containsKey(prefix + PopulationScreen.FEEDS)
+                    ? feeds(source, tables.get(prefix + PopulationScreen.FEEDS), zone, notes)
+                    : List.of();
+            final Map<String, PeerData> peerData = new LinkedHashMap<>();
+            if (peers && tables.containsKey(prefix + PopulationScreen.ACTIVE)) {
+                peopleRead += screenPeers(context, workspace, element, source,
+                        tables.get(prefix + PopulationScreen.ACTIVE), daily, MAX_PEOPLE - peopleRead, peerData,
+                        notes);
+            } else if (peers) {
+                notes.add(name + " has no StreamId and EventId fields, so the peers' groups can't be read from "
+                          + "their events: screened without peers.");
+            }
+            people.put(name, daily.size());
+            final Table empty = new Table(List.of(), false, 0, List.of(), null);
+            final Map<String, Instant> first = new LinkedHashMap<>();
+            final PopulationScreen.Everyone everyone = new PopulationScreen.Everyone();
+            final Map<String, PopulationScreen.PersonScore> scores = new LinkedHashMap<>();
+            final Map<String, List<ActivityScoring.Finding>> locations = new LinkedHashMap<>();
+            for (final Map.Entry<String, Table> person : daily.entrySet()) {
+                final String who = person.getKey();
+                final Table hours = hourly.getOrDefault(who, empty);
+                final Map<String, List<ActivityProfiles.Seen>> values = new LinkedHashMap<>();
+                final Set<String> valuesCutShort = new LinkedHashSet<>();
+                seen.forEach((field, byPerson) -> {
+                    values.put(field, PopulationScreen.seen(byPerson.getOrDefault(who, empty)));
+                    if (tables.get(prefix + PopulationScreen.SEEN + field).cutShort()) {
+                        valuesCutShort.add(field);
+                    }
+                });
+                final Spec given = dates.spec(who, periods, Unit.WEEK, zone.zone());
+                final SourceData data = new SourceData(name, source.label() + " " + who, source.fields(),
+                        ActivityProfiles.days(person.getValue(), hours, source.fields(), zone.zone()),
+                        ActivityProfiles.hourOfWeek(hours, zone.zone()), values, valuesCutShort,
+                        ActivityProfiles.population(populationTable), peerData.get(who),
+                        PopulationScreen.categories(categories.get(who))).withFeeds(feeds)
+                        .withFieldSpans(ActivityProfiles.fieldSpans(source.scope().field(), source.fields(),
+                                populationTable));
+                // A lasting change months before the window (a new role) re-baselines them from it: their new
+                // normal.
+                final PopulationScreen.PersonScore score = PopulationScreen.person(given, data, units);
+                NullSafe.consume(score.rebased(), day -> rebaselined.add(who + " from " + day));
+                everyone.add(score.features());
+                scores.put(who, score);
+                if (located != null) {
+                    locations.put(who, ActivityLocation.locate(name, score.spec(), located.getOrDefault(who, empty),
+                            source.pointField() != null).findings());
+                }
+                firstEvent(person.getValue()).ifPresent(time -> first.put(who, time));
+            }
+            firstActive.add(first);
+            // Each finding against everyone else's in the source: a shift the population shares is listed apart.
+            scores.forEach((who, score) -> {
+                final List<ActivityScoring.Finding> own = new ArrayList<>();
+                score.findings().forEach(finding -> own.add(everyone.checked(finding, score.features(),
+                        score.spec())));
+                own.addAll(locations.getOrDefault(who, List.of()));
+                own.stream()
+                        .filter(ActivityScoring.Finding::sourceWide)
+                        .forEach(finding -> sourceWide.merge("[" + name + "] " + ActivityScoring.label(
+                                finding.feature()) + " from " + finding.window().split(" to ")[0], 1, Integer::sum));
+                findings.computeIfAbsent(who, k -> new ArrayList<>()).addAll(own);
+            });
+            if (rare != null && tables.containsKey(prefix + "rare")) {
+                picked.add(RareValues.pick(rare, daily.size(), tables.get(prefix + "rare")));
+            } else {
+                picked.add(null);
+                if (tables.containsKey(prefix + "fields")) {
+                    final List<RareValues.FieldValues> offered = RareValues.usable(source.keywordFields(),
+                            tables.get(prefix + "fields"));
+                    if (!offered.isEmpty()) {
+                        rareFields.put(name, offered.stream().limit(RareValues.LISTED).toList());
+                    }
+                }
+            }
+        }
+        // The rare values' holders, in a second round: one aggregate a source, filtered to its rare values.
+        final List<AggregateQuery> holderQueries = new ArrayList<>();
+        final List<Integer> holderAt = new ArrayList<>();
+        for (int i = 0; i < usable.size(); i++) {
+            if (picked.get(i) != null && !picked.get(i).values().isEmpty()) {
+                holderQueries.add(RareValues.holders(usable.get(i).source(), where, usable.get(i).scope().field(),
+                        rare, picked.get(i).values().stream().map(RareValues.Value::value).toList(), from, to));
+                holderAt.add(i);
+            }
+        }
+        final List<Table> holderTables = holderQueries.isEmpty()
+                ? List.of()
+                : runner.run(holderQueries, runContext);
+        for (int i = 0; i < usable.size(); i++) {
+            final RareValues.Picked one = picked.get(i);
+            if (one == null) {
+                continue;
+            }
+            final Planned source = usable.get(i);
+            final int at = holderAt.indexOf(i);
+            final List<RareValues.Held> held = at < 0
+                    ? List.of()
+                    : RareValues.held(one, holderTables.get(at), windowStart, firstActive.get(i));
+            if (at >= 0) {
+                queriesRun += holderTables.get(at).queries();
+            }
+            if (one.cutShort()) {
+                notes.add(source.source().name() + ": " + rare + "'s values were cut short at "
+                          + ActivityProfiles.MAX_ROWS + ": rare values may be missing; where narrows the screen.");
+            }
+            final String note = RareValues.hostnameNote(one, source.allFields(), source.categoryField()).orElse(null);
+            rareFound.add(new ScreenResult.Rare(source.source().name(), one, held, note));
+            RareValues.findings(source.source().name(), one, held, periods.windowFrom() + " to "
+                                                                   + periods.windowTo().minusDays(1), zone.zone())
+                    .forEach((who, finding) -> findings.computeIfAbsent(who, k -> new ArrayList<>()).add(finding));
+        }
+        if (rare != null && rareFound.isEmpty()) {
+            notes.add("No source has the field " + rare + " (rare): no rare values.");
+        }
+        final PopulationScreen.Ranking ranking = PopulationScreen.ranked(findings, periods.windowFrom());
+        final List<PopulationScreen.Ranked> ranked = ranking.ranked();
+        if (!rebaselined.isEmpty()) {
+            notes.add(rebaselined.size() + " people re-baselined from a lasting change of their own months before "
+                      + "the window (a new role or team?: their new normal by the window): " + String.join(", ",
+                    rebaselined.stream().limit(RareValues.LISTED).toList()) + (rebaselined.size() > RareValues.LISTED
+                    ? ", ..."
+                    : "") + ".");
+        }
+        if (!ranking.common().isEmpty()) {
+            notes.add("Not ranked, as many of the people screened share them (the population's, not a person's): "
+                      + String.join("; ", ranking.common().entrySet().stream()
+                    .limit(RareValues.LISTED)
+                    .map(entry -> {
+                        final String[] parts = entry.getKey().split("\\|", 3);
+                        return parts[1] + " " + ActivityScoring.label(parts[2]) + " in " + parts[0] + " ("
+                               + entry.getValue() + " people)";
+                    })
+                    .toList()) + ". They are in the findings file.");
+        }
+        if (ranking.absent() > 0) {
+            notes.add(ranking.absent() + " window(s) with no activity at all where the baseline had some (an absence, "
+                      + "e.g. leave not given) not ranked: in the findings file.");
+        }
+        if (ranking.earlier() > 0) {
+            notes.add(ranking.earlier() + " lasting change(s) dated before the window (and drifts that are the same "
+                      + "step) not ranked: in the findings file.");
+        }
+        final Set<String> rankedPeople = new LinkedHashSet<>();
+        ranked.forEach(one -> rankedPeople.add(one.person()));
+        final List<String> unflagged = findings.keySet().stream().filter(who -> !rankedPeople.contains(who))
+                .sorted().toList();
+        notes.add("Screened " + findings.size() + " people in " + usable.size() + " source(s) from "
+                  + queriesRun + " aggregate queries (every person in each: by day and by month a slice, by hour "
+                  + "a week; never a query a person). Scored as one person's comparison would score them, each "
+                  + "against their own baseline" + (peers
+                ? " and peers"
+                : ": peers: true adds their " + element + "'s") + ".");
+        final List<String> shared = new ArrayList<>();
+        sourceWide.forEach((line, count) -> shared.add(line + ": " + count + " people's own shift matched everyone "
+                                                       + "else's (a change in the source, not theirs)"));
+        final ScreenResult.Run run = new ScreenResult.Run(periods, units, zone,
+                conditions.stream().map(Condition::text).toList(), planned, people, findings.size(), ranked, unflagged,
+                sortedFindings(findings), rareFound, rareFields,
+                shared.stream().limit(CompareResult.SOURCE_WIDE_SHOWN).toList(), notes,
+                queriesRun, folder);
+        final List<WorkspacePath> files = ScreenResult.write(workspace, run);
+        final Map<String, Object> structured = ScreenResult.structured(run, files);
+        return context.session().isChat()
+                ? ToolResult.text(ScreenResult.markdown(run, files)).withStructuredContent(structured)
+                : ToolResult.text(JsonUtil.writeValueAsString(structured, false)).withStructuredContent(structured);
+    }
+
+    // Each person's findings, largest first.
+    private static Map<String, List<ActivityScoring.Finding>> sortedFindings(
+            final Map<String, List<ActivityScoring.Finding>> findings) {
+        final Map<String, List<ActivityScoring.Finding>> sorted = new LinkedHashMap<>();
+        findings.forEach((who, own) -> sorted.put(who, own.stream()
+                .sorted(Comparator.comparingDouble(ActivityScoring.Finding::score).reversed())
+                .toList()));
+        return sorted;
+    }
+
+    // What one person's comparison offers that a screen doesn't, said where it was asked for.
+    private void unscreened(final ToolCall request, final List<String> notes) {
+        if (booleanArg(request, INCLUDE_TARGETS_ARG, false)) {
+            notes.add(INCLUDE_TARGETS_ARG + " isn't read in a screen: compare_activity on one person reads what was "
+                      + "done to them.");
+        }
+        if (!NullSafe.isBlankString(stringArg(request, ACCESS_FIELD_ARG))) {
+            notes.add(ACCESS_FIELD_ARG + " isn't read in a screen: compare_activity on one person clusters their "
+                      + "access.");
+        }
+        if (argsMap(request).get(LOGON_FORMS_ARG) != null) {
+            notes.add(LOGON_FORMS_ARG + " aren't applied in a screen: each written form of a logon is screened as "
+                      + "its own person.");
+        }
+        if (!NullSafe.list(stringListArg(request, CATEGORY_LIST_ARG)).isEmpty()
+            || !NullSafe.list(stringListArg(request, CATEGORY_CORRECTIONS_ARG)).isEmpty()) {
+            notes.add(CATEGORY_LIST_ARG + " and " + CATEGORY_CORRECTIONS_ARG + " aren't applied in a screen: its "
+                      + "categories are the index's category field's.");
+        }
+    }
+
+    // Each person's group, read from one event each (the first call up to the cap, the rest from what it read), and
+    // each one's peers' days from everyone's daily aggregate; returns how many people's events were read.
+    private int screenPeers(final ToolCallContext context,
+                            final SessionWorkspace workspace,
+                            final String element,
+                            final Planned source,
+                            final Table active,
+                            final Map<String, Table> daily,
+                            final int cap,
+                            final Map<String, PeerData> peerData,
+                            final List<String> notes) {
+        final Map<String, String> groupOf = new LinkedHashMap<>();
+        int read = 0;
+        boolean first = true;
+        for (final String who : daily.keySet()) {
+            final PeerGroups.Found found = peerGroups.find(context.session(), workspace, element,
+                    source.scope().field(), List.of(who), active, first
+                            ? Math.max(0, cap)
+                            : 0, context.stopped());
+            first = false;
+            read += found.read();
+            if (!found.canViewData()) {
+                notes.add("You may not view data, so the people's " + element + " couldn't be read from their "
+                          + "events: no peers.");
+                return read;
+            }
+            if (!found.groups().isEmpty()) {
+                groupOf.put(who, found.groups().getFirst());
+            }
+        }
+        if (groupOf.size() < daily.size()) {
+            notes.add(source.source().name() + ": the " + element + " of " + (daily.size() - groupOf.size())
+                      + " people wasn't read (the cap of " + MAX_PEOPLE + " a call, or no event readable): they "
+                      + "have no peers.");
+        }
+        peerData.putAll(PopulationScreen.peers(groupOf, daily, element));
+        return read;
+    }
+
+    // The earliest first time in a person's daily rows.
+    private static Optional<Instant> firstEvent(final Table daily) {
+        return daily.rows().stream()
+                .map(row -> ActivityProfiles.instant(row.get(ActivityProfiles.FIRST)))
+                .filter(Objects::nonNull)
+                .min(Comparator.naturalOrder());
+    }
+
+    private void screenAudit(final ToolCallContext context,
+                             final Planned source,
+                             final Map<String, Table> tables,
+                             final String prefix) {
+        final List<Table> own = tables.entrySet().stream()
+                .filter(entry -> entry.getKey().startsWith(prefix))
+                .map(Map.Entry::getValue)
+                .toList();
+        audit(context, source, own, own.stream().mapToInt(Table::queries).sum());
+    }
+
+    // Every source to screen, each with its person (else user) field and its fields; those that can't be read
+    // kept, with why.
+    private List<Planned> planScreen(final ToolCall request,
+                                     final ToolCallContext context,
+                                     final Set<String> whereFields,
+                                     final String rare,
+                                     final Boolean categoriesAsked,
+                                     final Boolean locationAsked,
+                                     final List<String> notes) {
+        final List<DocRef> docs = sourceDocs(request);
+        final List<String> personFields = optionalList(stringArg(request, PERSON_FIELD_ARG));
+        final List<String> userFields = optionalList(stringArg(request, USER_FIELD_ARG));
+        final List<String> sums = NullSafe.list(stringListArg(request, SUM_FIELDS_ARG));
+        final List<String> breadth = NullSafe.list(stringListArg(request, BREADTH_FIELDS_ARG));
+        final List<String> categoryFields = optionalList(stringArg(request, CATEGORY_FIELD_ARG));
+        final List<String> countryFields = optionalList(stringArg(request, COUNTRY_FIELD_ARG));
+        final List<Planned> planned = new ArrayList<>();
+        for (final DocRef doc : docs) {
+            final Optional<QueryField> time = dataSourceAccess.timeField(doc);
+            final boolean elastic = ElasticIndexDoc.TYPE.equals(doc.getType());
+            final Map<String, QueryField> fields = new LinkedHashMap<>();
+            EsqlQueryTool.fields(queryServiceProvider.get(), doc).forEach(field -> fields.put(field.getFldName(),
+                    field));
+            if (time.isEmpty()) {
+                planned.add(Planned.leftOut(doc, "it has no time field"));
+                continue;
+            }
+            final List<String> missing = whereFields.stream().filter(field -> !fields.containsKey(field)).toList();
+            if (!missing.isEmpty()) {
+                planned.add(Planned.leftOut(doc, "it has no field " + String.join(", ", missing) + " (" + WHERE_ARG
+                                                 + ")"));
+                continue;
+            }
+            final Optional<TimelineFields.Found> person = timelineFields.find(context.session(), doc,
+                    InstructionRules.PERSON_FIELD, personFields, fields::containsKey);
+            final Optional<TimelineFields.Found> user = person.isPresent()
+                    ? Optional.empty()
+                    : timelineFields.find(context.session(), doc, InstructionRules.USER_FIELD, userFields,
+                            fields::containsKey);
+            final Optional<TimelineFields.Found> who = person.or(() -> user);
+            if (who.isEmpty()) {
+                planned.add(Planned.leftOut(doc, "no field holding the person id or the user was found (a ## Fields "
+                                                 + "'person:' or 'user:' line in the AGENTS doc names one)"));
+                continue;
+            }
+            final String personField = who.get().field();
+            final List<String> breadthFields = breadth.isEmpty()
+                    ? defaultBreadth(context, doc, fields, elastic, personField)
+                    : breadth.stream().filter(fields::containsKey).toList();
+            final Optional<TimelineFields.Found> category = categoryField(context, doc, categoryFields, fields,
+                    elastic);
+            final Optional<TimelineFields.Found> country = countryField(context, doc, countryFields, fields);
+            final List<String> defaults = new ArrayList<>();
+            final boolean categories = onByDefault(categoriesAsked, category, doc.getName(), "categories",
+                    "category", CATEGORIES_ARG, defaults);
+            if (categories && category.isEmpty()) {
+                defaults.add(doc.getName() + ": a screen counts categories from the index's category field only "
+                             + "(categoryField names it), never values classified by the model: none here.");
+            }
+            final boolean location = onByDefault(locationAsked, country, doc.getName(), "location", "country",
+                    LOCATION_ARG, defaults);
+            NullSafe.consume(who.get().suggestion(), line -> defaults.add(doc.getName() + ": " + line));
+            final boolean hasIds = fields.containsKey(EqlSequenceResults.STREAM_ID)
+                                   && fields.containsKey(EqlSequenceResults.EVENT_ID);
+            final String feedBy = timelineFields.find(context.session(), doc, InstructionRules.FEED_FIELD,
+                    List.of(), fields::containsKey).map(TimelineFields.Found::field).orElse(hasIds && elastic
+                    ? EqlSequenceResults.STREAM_ID
+                    : null);
+            final String rareField = rare != null && countable(fields.get(rare), elastic)
+                    ? rare
+                    : null;
+            if (rare != null && rareField == null) {
+                notes.add(doc.getName() + ": " + (fields.containsKey(rare)
+                        ? rare + " can't be grouped by (analysed text or a date): no rare values"
+                        : "it has no field " + rare + ": no rare values") + ".");
+            }
+            final List<String> keywordFields = fields.values().stream()
+                    .filter(field -> field.getFldType() == FieldType.KEYWORD
+                                     || (!elastic && field.getFldType() == FieldType.TEXT))
+                    .map(QueryField::getFldName)
+                    .filter(name -> !name.equals(personField) && !name.equals(time.get().getFldName()))
+                    .sorted()
+                    .toList();
+            planned.add(new Planned(doc, new Source(doc, time.get().getFldName(), elastic),
+                    new Scope(personField, List.of()), new Fields(sums.stream().filter(fields::containsKey).toList(),
+                    breadthFields), (person.isPresent()
+                            ? PersonScope.By.PERSON
+                            : PersonScope.By.LOGON).label() + " (" + personField + " from " + who.get().from() + ")",
+                    hasIds, null, category.map(TimelineFields.Found::field).orElse(null), null,
+                    country.map(TimelineFields.Found::field).orElse(null), elastic
+                            ? fields.keySet().stream().filter(name -> name.endsWith(POINT_SUFFIX)).sorted()
+                                    .findFirst().orElse(null)
+                            : null, null, categories && category.isPresent(), location, defaults, feedBy)
+                    .forScreen(rareField, keywordFields, List.copyOf(fields.keySet())));
+        }
+        if (planned.stream().noneMatch(Planned::usable)) {
+            throw new WorkspaceException("No source can be screened: " + String.join("; ", planned.stream()
+                    .map(p -> p.doc().getName() + ": " + p.leftOut())
+                    .toList()) + ".");
+        }
+        return planned;
+    }
+
+    // The indexes given, else every Elastic and Lucene index the user can use.
+    private List<DocRef> sourceDocs(final ToolCall request) {
+        final List<String> given = NullSafe.list(stringListArg(request, SOURCES_ARG));
+        final List<DocRef> docs = new ArrayList<>();
+        if (given.isEmpty()) {
+            dataSourceAccess.listUsable().stream()
+                    .filter(doc -> ElasticIndexDoc.TYPE.equals(doc.getType())
+                                   || LuceneIndexDoc.TYPE.equals(doc.getType()))
+                    .forEach(docs::add);
+        } else {
+            for (final String name : given) {
+                final List<DocRef> found = dataSourceAccess.find(name);
+                if (found.isEmpty()) {
+                    throw new WorkspaceException("No index you can use is called '" + name + "': list_data_sources "
+                                                 + "gives them.");
+                }
+                docs.add(found.getFirst());
+            }
+        }
+        if (docs.isEmpty()) {
+            throw new WorkspaceException("You can't use any Elastic or Lucene index, so there is nothing to compare.");
+        }
+        return docs;
+    }
+
+    /// Reads a screen's `where`: a list of `{field, condition, value}` (or one), each EQUALS (exact) or IN (values
+    /// separated by commas).
+    ///
+    /// @param given The argument as given, or null.
+    /// @return Each condition.
+    static List<Condition> conditions(final Object given) {
+        final List<?> items;
+        if (given == null) {
+            items = List.of();
+        } else if (given instanceof final List<?> list) {
+            items = list;
+        } else if (given instanceof final Map<?, ?> one) {
+            items = List.of(one);
+        } else if (NullSafe.isBlankString(String.valueOf(given))) {
+            items = List.of();
+        } else {
+            items = parsedConditions(String.valueOf(given));
+        }
+        final List<Condition> conditions = new ArrayList<>();
+        for (final Object item : items) {
+            if (!(item instanceof final Map<?, ?> map) || map.get("field") == null
+                || String.valueOf(map.get("field")).isBlank()) {
+                throw new WorkspaceException(WHERE_ARG + " must be a list of {\"field\": ..., \"value\": ...}, each "
+                                             + "with a field.");
+            }
+            final String field = String.valueOf(map.get("field")).strip();
+            final String condition = map.get("condition") == null || String.valueOf(map.get("condition")).isBlank()
+                    ? EQUALS
+                    : String.valueOf(map.get("condition")).strip().toUpperCase(Locale.ROOT);
+            final String value = map.get("value") == null
+                    ? ""
+                    : String.valueOf(map.get("value"));
+            final List<String> values = switch (condition) {
+                case EQUALS -> List.of(value.strip());
+                case IN -> List.of(value.split(",")).stream().map(String::strip).filter(v -> !v.isEmpty())
+                        .distinct().toList();
+                default -> throw new WorkspaceException(WHERE_ARG + " takes EQUALS (an exact value) or IN (values "
+                                                        + "separated by commas), not " + condition + ": the "
+                                                        + "aggregates filter on exact values.");
+            };
+            if (values.isEmpty() || values.getFirst().isEmpty()) {
+                throw new WorkspaceException(WHERE_ARG + ": give " + field + " a value.");
+            }
+            conditions.add(new Condition(field, values));
+        }
+        return conditions;
+    }
+
+    private static List<?> parsedConditions(final String text) {
+        try {
+            final Object parsed = JsonUtil.readValue(text, Object.class);
+            if (parsed instanceof final List<?> list) {
+                return list;
+            } else if (parsed instanceof final Map<?, ?> one) {
+                return List.of(one);
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "where isn't JSON: " + text, e);
+        }
+        throw new WorkspaceException(WHERE_ARG + " must be a list of {\"field\": ..., \"value\": ...}.");
     }
 
     // --------------------------------------------------------------------------------
@@ -1211,10 +1830,15 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     // --------------------------------------------------------------------------------
     // Arguments
 
-    private Periods periods(final ToolCall request, final ToolTimeZone zone, final long now) {
+    // The periods as given, else by default the window's days before windowTo and the baseline's before it.
+    private Periods periods(final ToolCall request,
+                            final ToolTimeZone zone,
+                            final long now,
+                            final int windowDays,
+                            final int baselineDays) {
         final LocalDate windowTo = endDate(stringArg(request, WINDOW_TO_ARG), zone, now, null);
         final LocalDate windowFrom = startDate(stringArg(request, WINDOW_FROM_ARG), zone, now,
-                windowTo.minusDays(DEFAULT_WINDOW_DAYS));
+                windowTo.minusDays(windowDays));
         final String baselineToArg = stringArg(request, BASELINE_TO_ARG);
         LocalDate baselineTo = endDate(baselineToArg, zone, now, windowFrom);
         final List<String> notes = new ArrayList<>();
@@ -1225,7 +1849,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                       + "the day before.");
         }
         final LocalDate baselineFrom = startDate(stringArg(request, BASELINE_FROM_ARG), zone, now,
-                baselineTo.minusDays(DEFAULT_BASELINE_DAYS));
+                baselineTo.minusDays(baselineDays));
         if (!windowFrom.isBefore(windowTo)) {
             throw new WorkspaceException("The window must start before it ends (" + windowFrom + " to " + windowTo
                                          + ").");
@@ -1478,6 +2102,10 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     /// @param defaults      What was on by default, and why, as the notes say it; and the `## Fields` line to offer
     ///                      where its user (or person) field was found by a guess (a convention or the
     ///                      documentation).
+    /// @param feedBy        The field its feeds are told apart by (a feed field, or StreamId), or null.
+    /// @param rareField     A population screen's rare field, where the index has it; else null.
+    /// @param keywordFields A population screen's keyword fields, to offer for rare values.
+    /// @param allFields     A population screen's index's fields (for the field that groups hostnames).
     record Planned(DocRef doc,
                    Source source,
                    Scope scope,
@@ -1493,11 +2121,63 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                    boolean categories,
                    boolean location,
                    List<String> defaults,
-                   String feedBy) {
+                   String feedBy,
+                   String rareField,
+                   List<String> keywordFields,
+                   List<String> allFields) {
 
-        /// Copies the list.
+        /// Copies the lists.
         Planned {
             defaults = NullSafe.list(defaults).stream().toList();
+            keywordFields = NullSafe.list(keywordFields).stream().toList();
+            allFields = NullSafe.list(allFields).stream().toList();
+        }
+
+        /// One person's source, with nothing of a screen's.
+        ///
+        /// @param doc           Its index.
+        /// @param source        It, for the aggregates; null if left out.
+        /// @param scope         Whose events; null if left out.
+        /// @param fields        The sum and breadth fields; null if left out.
+        /// @param label         Whose events, as the result says it.
+        /// @param hasEventIds   True if it has StreamId and EventId fields.
+        /// @param leftOut       Why it can't be read, or null.
+        /// @param categoryField The index's category field, or null.
+        /// @param accessField   The field of the resources people reach, or null.
+        /// @param countryField  The country field, or null.
+        /// @param pointField    The geo point field (Elastic only), or null.
+        /// @param targeted      What was done to the person, how it is read; null if not asked.
+        /// @param categories    True if its events are counted by category.
+        /// @param location      True if its countries are looked at.
+        /// @param defaults      What was on by default, and why.
+        /// @param feedBy        The field its feeds are told apart by, or null.
+        Planned(final DocRef doc,
+                final Source source,
+                final Scope scope,
+                final Fields fields,
+                final String label,
+                final boolean hasEventIds,
+                final String leftOut,
+                final String categoryField,
+                final String accessField,
+                final String countryField,
+                final String pointField,
+                final Targeted targeted,
+                final boolean categories,
+                final boolean location,
+                final List<String> defaults,
+                final String feedBy) {
+            this(doc, source, scope, fields, label, hasEventIds, leftOut, categoryField, accessField, countryField,
+                    pointField, targeted, categories, location, defaults, feedBy, null, List.of(), List.of());
+        }
+
+        /// @param rare     The screen's rare field, if the index has it, else null.
+        /// @param keywords The keyword fields that could be screened for rare values.
+        /// @param all      Every field of the index.
+        /// @return It, for a population screen.
+        Planned forScreen(final String rare, final List<String> keywords, final List<String> all) {
+            return new Planned(doc, source, scope, fields, label, hasEventIds, leftOut, categoryField, accessField,
+                    countryField, pointField, targeted, categories, location, defaults, feedBy, rare, keywords, all);
         }
 
         /// @param doc The index.
@@ -1537,6 +2217,93 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         /// @return True if it can be read.
         boolean usable() {
             return leftOut == null;
+        }
+    }
+
+    // --------------------------------------------------------------------------------
+
+
+    /// One condition of a population screen's `where`.
+    ///
+    /// @param field  The index field.
+    /// @param values The values it may hold (one for EQUALS).
+    record Condition(String field, List<String> values) {
+
+        /// Copies the values.
+        Condition {
+            values = List.copyOf(values);
+        }
+
+        /// @return It in words, `field = value` or `field in (a, b)`.
+        String text() {
+            return values.size() == 1
+                    ? field + " = " + values.getFirst()
+                    : field + " in (" + String.join(", ", values) + ")";
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A population screen's leave and approved exceptions: each may start with the person it is of
+    /// (`P10001 2026-05-11..2026-05-15: reason`); without one it is everyone's (e.g. a site's shutdown).
+    ///
+    /// @param leave        Everyone's leave.
+    /// @param exceptions   Everyone's exceptions.
+    /// @param leaveOf      Each person's own leave.
+    /// @param exceptionsOf Each person's own exceptions.
+    record PersonDates(List<LocalDate[]> leave,
+                       List<ActivityScoring.Excepted> exceptions,
+                       Map<String, List<LocalDate[]>> leaveOf,
+                       Map<String, List<ActivityScoring.Excepted>> exceptionsOf) {
+
+        /// Reads them.
+        ///
+        /// @param leave      The leave as given.
+        /// @param exceptions The exceptions as given.
+        /// @return Them.
+        static PersonDates read(final List<String> leave, final List<String> exceptions) {
+            final List<String> everyonesLeave = new ArrayList<>();
+            final Map<String, List<String>> ownLeave = new LinkedHashMap<>();
+            split(leave, everyonesLeave, ownLeave);
+            final List<String> everyonesExceptions = new ArrayList<>();
+            final Map<String, List<String>> ownExceptions = new LinkedHashMap<>();
+            split(exceptions, everyonesExceptions, ownExceptions);
+            final Map<String, List<LocalDate[]>> leaveOf = new LinkedHashMap<>();
+            ownLeave.forEach((who, values) -> leaveOf.put(who, CompareActivityTool.leave(values)));
+            final Map<String, List<ActivityScoring.Excepted>> exceptionsOf = new LinkedHashMap<>();
+            ownExceptions.forEach((who, values) -> exceptionsOf.put(who, CompareActivityTool.exceptions(values)));
+            return new PersonDates(CompareActivityTool.leave(everyonesLeave),
+                    CompareActivityTool.exceptions(everyonesExceptions), leaveOf, exceptionsOf);
+        }
+
+        // Each value to everyone's, or to its person's where it starts with one.
+        private static void split(final List<String> values,
+                                  final List<String> everyones,
+                                  final Map<String, List<String>> own) {
+            for (final String value : NullSafe.list(values)) {
+                final Matcher matcher = PERSON_DATES.matcher(NullSafe.string(value));
+                if (matcher.matches() && !DATE.matcher(matcher.group(1)).lookingAt()) {
+                    own.computeIfAbsent(matcher.group(1), k -> new ArrayList<>()).add(matcher.group(2));
+                } else {
+                    everyones.add(value);
+                }
+            }
+        }
+
+        /// @param person  A person.
+        /// @param periods The periods.
+        /// @param unit    The unit.
+        /// @param zone    The zone.
+        /// @return What their scoring is under: everyone's leave and exceptions and their own.
+        Spec spec(final String person, final Periods periods, final Unit unit, final ZoneId zone) {
+            final List<LocalDate[]> theirLeave = new ArrayList<>(leave);
+            theirLeave.addAll(leaveOf.getOrDefault(person, List.of()));
+            final List<ActivityScoring.Excepted> theirExceptions = new ArrayList<>(exceptions);
+            theirExceptions.addAll(exceptionsOf.getOrDefault(person, List.of()));
+            return new Spec(periods.baselineFrom(), periods.baselineTo(), periods.windowFrom(), periods.windowTo(),
+                    unit, theirLeave, zone, theirExceptions);
         }
     }
 }

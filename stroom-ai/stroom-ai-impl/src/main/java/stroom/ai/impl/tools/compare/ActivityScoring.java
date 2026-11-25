@@ -1373,7 +1373,9 @@ final class ActivityScoring {
         /// Access outside the person's cluster.
         ACCESS,
         /// Where the activity came from.
-        LOCATION
+        LOCATION,
+        /// Values held by very few of the population, new for the person (a population screen's `rare`).
+        RARE
     }
 
 

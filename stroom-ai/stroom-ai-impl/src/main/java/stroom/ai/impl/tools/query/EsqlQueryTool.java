@@ -197,6 +197,8 @@ public class EsqlQueryTool extends AbstractWorkspaceTool {
                         .general(". Not for one person's activity: what they did and when, or how it differs from "
                                  + "their own baseline or their peers'")
                         .chatOnly("; use activity_timeline or compare_activity")
+                        .general(", nor who stands out across everyone (each person against their own baseline)")
+                        .chatOnly("; use compare_activity with scope population")
                         .general(". Give pipeline: the commands after FROM (written for you), e.g. '| WHERE "
                                  + "event.action == \"allowed\" | STATS total = SUM(bytes) BY user.name | SORT total "
                                  + "DESC | LIMIT 10'. Allowed: WHERE, EVAL, STATS ... BY, SORT, LIMIT, KEEP, DROP, "
