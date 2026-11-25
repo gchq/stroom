@@ -16,9 +16,11 @@
 
 package stroom.ai.impl.tools.timeline;
 
+import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.timeline.TimelineFields.Found;
+import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.docref.DocRef;
 import stroom.util.shared.NullSafe;
 
@@ -26,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -39,12 +42,59 @@ import java.util.function.Predicate;
 /// source's transform), as that scripts every event in the period.
 public final class PersonScope {
 
+    /// The argument naming the other written forms a person's logon ids are matched in.
+    public static final String LOGON_FORMS_ARG = "logonForms";
+    /// The transforms logonForms may name.
+    public static final List<String> LOGON_FORMS = List.of("strip_domain", "lowercase");
+    /// What a result says where logon ids were matched through a transform.
+    public static final String SCRIPTED = "scripted, slower";
+
     /// What a result by logon id says of the accounts it doesn't name.
     public static final String OTHER_ACCOUNTS = "By logon id: other accounts of the person (an admin or service "
                                                 + "account) aren't included unless named.";
 
     private PersonScope() {
         // Static only.
+    }
+
+    /// The logonForms a call (or a skill's call) gives: exact (none) by default, else other written forms of the
+    /// logon ids, only as the user asks, as each scripts the field over every event in the period.
+    ///
+    /// @param given The argument's value: a list of names, or names separated by commas; null for none.
+    /// @return The transforms, in order.
+    /// @throws WorkspaceException for a name that isn't one of [#LOGON_FORMS].
+    public static List<Transform> logonForms(final Object given) {
+        final List<?> names = given == null
+                ? List.of()
+                : given instanceof final List<?> list
+                        ? list
+                        : List.of(String.valueOf(given).split(","));
+        final List<Transform> forms = new ArrayList<>();
+        for (final Object name : names) {
+            final String text = NullSafe.trim(name == null
+                    ? null
+                    : String.valueOf(name)).toLowerCase(Locale.ROOT);
+            if (text.isEmpty()) {
+                continue;
+            }
+            if (!LOGON_FORMS.contains(text)) {
+                throw new WorkspaceException(LOGON_FORMS_ARG + " takes " + String.join(", ", LOGON_FORMS) + ": '"
+                                             + name + "' isn't one.");
+            }
+            final Transform form = Transform.valueOf(text.toUpperCase(Locale.ROOT));
+            if (!forms.contains(form)) {
+                forms.add(form);
+            }
+        }
+        return forms;
+    }
+
+    /// @param transforms Transforms.
+    /// @return Them as a result says them, e.g. `strip_domain, lowercase`.
+    public static String describe(final List<Transform> transforms) {
+        return String.join(", ", NullSafe.list(transforms).stream()
+                .map(transform -> transform.name().toLowerCase(Locale.ROOT))
+                .toList());
     }
 
     /// Chooses whose events to read in one index.

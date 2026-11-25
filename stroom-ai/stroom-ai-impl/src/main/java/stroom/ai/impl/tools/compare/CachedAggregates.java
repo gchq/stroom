@@ -148,7 +148,10 @@ final class CachedAggregates implements AggregateRunner {
                + query.bucket() + "|" + query.groups() + "|" + query.metrics() + "|" + query.limit()
                + (query.excludes().isEmpty() && query.differing().isEmpty()
                 ? ""
-                : "|" + query.excludes() + "|" + query.differing());
+                : "|" + query.excludes() + "|" + query.differing())
+               + (query.transformed().isEmpty()
+                ? ""
+                : "|transformed " + query.transformed());
     }
 
     private static Instant dayStart(final Instant instant, final ZoneId zone) {

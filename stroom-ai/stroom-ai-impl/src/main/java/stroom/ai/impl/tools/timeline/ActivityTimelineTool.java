@@ -183,11 +183,11 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     static final String USER_FIELD_ARG = "userField";
     static final String PERSON_ARG = "person";
     static final String LOGON_IDS_ARG = "logonIds";
-    static final String LOGON_FORMS_ARG = "logonForms";
+    static final String LOGON_FORMS_ARG = PersonScope.LOGON_FORMS_ARG;
     /// The transforms logonForms may name.
-    static final List<String> LOGON_FORMS = List.of("strip_domain", "lowercase");
+    static final List<String> LOGON_FORMS = PersonScope.LOGON_FORMS;
     /// What a source's note says where its user field was matched through a transform.
-    static final String SCRIPTED = "scripted, slower";
+    static final String SCRIPTED = PersonScope.SCRIPTED;
     static final String PERSON_FIELD_ARG = "personField";
     static final String VIEW_ARG = "view";
     static final String LANES_ARG = "lanes";
@@ -1392,14 +1392,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
 
     // The call's logonForms: strip_domain and lowercase only.
     private static List<Transform> logonForms(final ToolCall request) {
-        final Object given = argsMap(request).get(LOGON_FORMS_ARG);
-        final List<Transform> forms = transforms(given, LOGON_FORMS_ARG);
-        for (final Transform form : forms) {
-            if (!LOGON_FORMS.contains(form.name().toLowerCase(Locale.ROOT))) {
-                throw new WorkspaceException(LOGON_FORMS_ARG + " takes " + String.join(", ", LOGON_FORMS) + ".");
-            }
-        }
-        return forms;
+        return PersonScope.logonForms(argsMap(request).get(LOGON_FORMS_ARG));
     }
 
     // A source's first and last events of the values filtered on, at any time (one aggregate), for a period with

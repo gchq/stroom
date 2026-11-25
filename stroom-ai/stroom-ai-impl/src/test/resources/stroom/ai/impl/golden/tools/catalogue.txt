@@ -985,6 +985,14 @@ Compares one person's activity in a window with their own baseline, from index a
       "description" : "Look for new countries, impossible travel and activity abroad on leave, from the index's country field (countryField, AGENTS 'country:', *.geo.country_iso_code or Country): on by default where it has one; false: off.",
       "type" : "boolean"
     },
+    "logonForms" : {
+      "description" : "Optional: only when the user (or a skill) says logons are written with a domain (CORP\\jsmith) or as an email: strip_domain (both forms), lowercase; applied to the user field of every Elastic source read by logonIds. Slower: a scripted field over every event in the period. Exact by default.",
+      "items" : {
+        "enum" : [ "strip_domain", "lowercase" ],
+        "type" : "string"
+      },
+      "type" : "array"
+    },
     "logonIds" : {
       "description" : "Logon ids (accounts) to use where an index has no person field, each kept visible; other accounts aren't included; matched exactly, so give each written form (jsmith, CORP\\jsmith).",
       "items" : {

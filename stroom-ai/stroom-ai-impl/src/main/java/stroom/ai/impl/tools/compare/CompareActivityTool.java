@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.compare;
 
+import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.tools.AbstractWorkspaceTool;
@@ -25,6 +26,8 @@ import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolDescription;
 import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolResult;
+import stroom.ai.impl.tools.ToolSchema;
+import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolTables;
 import stroom.ai.impl.tools.UserQuestions;
@@ -106,6 +109,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     static final String NAME = "compare_activity";
     static final String PERSON_ARG = "person";
     static final String LOGON_IDS_ARG = "logonIds";
+    static final String LOGON_FORMS_ARG = PersonScope.LOGON_FORMS_ARG;
     static final String PERSON_FIELD_ARG = "personField";
     static final String USER_FIELD_ARG = "userField";
     static final String WINDOW_FROM_ARG = "windowFrom";
@@ -301,6 +305,14 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                                                       + "other accounts aren't included; matched "
                                                                       + "exactly, so give each written form (jsmith, "
                                                                       + "CORP\\jsmith)."))
+                        .addProperty(LOGON_FORMS_ARG, ArraySchema.builder()
+                                .items(new ToolSchema.EnumSchema(null, PersonScope.LOGON_FORMS))
+                                .description("Optional: only when the user (or a skill) says logons are written "
+                                             + "with a domain (CORP\\jsmith) or as an email: strip_domain (both "
+                                             + "forms), lowercase; applied to the user field of every Elastic "
+                                             + "source read by logonIds. Slower: a scripted field over every event "
+                                             + "in the period. Exact by default.")
+                                .build())
                         .addStringProperty(PERSON_FIELD_ARG, "Optional: the person field, where the AGENTS doc's "
                                                              + "## Fields or the convention don't give it.")
                         .addStringProperty(USER_FIELD_ARG, "Optional: the user (logon id) field, likewise.")
@@ -492,6 +504,11 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
             if (peersHere) {
                 queries.add(ActivityProfiles.active(source.source(), source.scope().field(), from, to,
                         ActivityProfiles.MAX_ROWS));
+            }
+            // The person's logon ids in other written forms, as logonForms ask: their field transformed in every
+            // query filtering on it (a scripted field: slower).
+            for (int i = start; i < queries.size(); i++) {
+                queries.set(i, queries.get(i).withTransformed(source.scope().field(), source.scope().transforms()));
             }
             at.add(new int[]{start, queries.size() - start});
         }
@@ -787,6 +804,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         }
         final List<String> personFields = optionalList(stringArg(request, PERSON_FIELD_ARG));
         final List<String> userFields = optionalList(stringArg(request, USER_FIELD_ARG));
+        final List<Transform> logonForms = PersonScope.logonForms(argsMap(request).get(LOGON_FORMS_ARG));
         final List<String> sums = NullSafe.list(stringListArg(request, SUM_FIELDS_ARG));
         final List<String> breadth = NullSafe.list(stringListArg(request, BREADTH_FIELDS_ARG));
         final List<String> categoryFields = optionalList(stringArg(request, CATEGORY_FIELD_ARG));
@@ -835,9 +853,25 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                     List.of(), fields::containsKey).map(TimelineFields.Found::field).orElse(hasIds && elastic
                     ? EqlSequenceResults.STREAM_ID
                     : null);
-            planned.add(new Planned(doc, source, new Scope(scope.field().field(), scope.values()),
+            final List<Transform> forms = scope.by() == PersonScope.By.LOGON
+                    ? logonForms
+                    : List.of();
+            if (!forms.isEmpty() && !elastic) {
+                defaults.add(doc.getName() + ": " + LOGON_FORMS_ARG + " need an Elastic Index (a scripted field in "
+                             + "ES|QL), so its logon ids were matched exactly.");
+            }
+            final List<Transform> applied = elastic
+                    ? forms
+                    : List.of();
+            final List<String> values = applied.isEmpty()
+                    ? scope.values()
+                    : scope.values().stream().map(value -> Transform.applyAll(applied, value)).distinct().toList();
+            planned.add(new Planned(doc, source, new Scope(scope.field().field(), values, applied),
                     new Fields(sumFields, breadthFields), scope.by().label() + " (" + scope.field().field() + " from "
-                                                          + scope.field().from() + ")", hasIds, null,
+                                                          + scope.field().from() + ")" + (applied.isEmpty()
+                            ? ""
+                            : ", matched with " + PersonScope.describe(applied) + ": " + PersonScope.SCRIPTED),
+                    hasIds, null,
                     category.map(TimelineFields.Found::field).orElse(null),
                     accessField != null && fields.containsKey(accessField)
                             ? accessField

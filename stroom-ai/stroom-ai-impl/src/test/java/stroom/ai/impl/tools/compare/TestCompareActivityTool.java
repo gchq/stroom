@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.compare;
 
+import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.FakeTabWorkspace;
@@ -58,6 +59,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.IntStream;
@@ -219,6 +221,34 @@ class TestCompareActivityTool {
 
         assertThat(text).contains("by logon id (user.name from the AGENTS doc's ## Fields (/Security))")
                 .contains(PersonScope.OTHER_ACCOUNTS);
+    }
+
+    @Test
+    void logonIdsAreMatchedExactlyUnlessLogonFormsAskForOtherWrittenForms() {
+        fields.removeIf(field -> field.getFldName().equals("user.id"));
+        // The index writes the account with its domain, in capitals.
+        fixtures.aggregates().source(CompareFixtures.PROXY.getUuid()).forEach(event ->
+                event.put("user.name", "CORP\\" + String.valueOf(event.get("user.id")).toUpperCase(Locale.ROOT)));
+        final Map<String, Object> exact = arguments();
+        exact.remove(CompareActivityTool.PERSON_ARG);
+        exact.put(CompareActivityTool.LOGON_IDS_ARG, List.of("p1"));
+
+        // Exact by default: nothing matches.
+        assertThat(String.valueOf(json(mcp(), exact).get("notes"))).contains("Nothing matched");
+
+        final Map<String, Object> forms = new LinkedHashMap<>(exact);
+        forms.put(CompareActivityTool.LOGON_FORMS_ARG, List.of("strip_domain", "lowercase"));
+        final Map<String, Object> json = json(mcp(), forms);
+
+        assertThat(String.valueOf(sources(json).getFirst().get("by"))).contains(
+                "matched with strip_domain, lowercase: " + PersonScope.SCRIPTED);
+        assertThat(list(json, "findings")).as(String.valueOf(json)).anySatisfy(finding -> assertThat(finding)
+                .containsEntry("kind", "change").containsEntry("feature", "events"));
+        assertThat(fixtures.aggregates().ran()).anySatisfy(query -> assertThat(query.transformed())
+                .containsEntry("user.name", List.of(Transform.STRIP_DOMAIN, Transform.LOWERCASE)));
+        // Only the logon forms.
+        forms.put(CompareActivityTool.LOGON_FORMS_ARG, List.of("file_name"));
+        assertThat(error(forms)).contains("logonForms takes strip_domain, lowercase: 'file_name' isn't one");
     }
 
     @Test

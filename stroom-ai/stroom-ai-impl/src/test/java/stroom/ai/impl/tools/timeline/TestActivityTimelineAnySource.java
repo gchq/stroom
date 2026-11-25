@@ -440,7 +440,7 @@ class TestActivityTimelineAnySource {
         assertThat(tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(arguments(
                 Map.of("logonForms", List.of("file_name"), "sources", List.of(Map.of("index", "Codes", "user",
                         "user")))), false)), mcp()).text())
-                .isEqualTo("Error: logonForms takes strip_domain, lowercase.");
+                .isEqualTo("Error: logonForms takes strip_domain, lowercase: 'file_name' isn't one.");
     }
 
     @Test

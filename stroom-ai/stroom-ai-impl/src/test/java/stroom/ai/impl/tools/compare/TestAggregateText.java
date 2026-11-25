@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.compare;
 
+import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.impl.tools.compare.ActivityProfiles.Fields;
 import stroom.ai.impl.tools.compare.ActivityProfiles.Scope;
 import stroom.ai.impl.tools.compare.AggregateQuery.Source;
@@ -55,6 +56,26 @@ class TestAggregateText {
                 + "| STATS events = COUNT(*), first_t = MIN(`@timestamp`), last_t = MAX(`@timestamp`), s0 = "
                 + "SUM(`bytes_out`), d0 = COUNT_DISTINCT(`destination.domain`) BY b\n"
                 + "| LIMIT 10000");
+    }
+
+    @Test
+    void esqlLogonIdsInOtherWrittenFormsAreMatchedThroughAScriptedFieldOnceTheRangeIsNarrowed() {
+        final AggregateQuery query = ActivityProfiles.hourly(ELASTIC, new Scope("user.name", List.of("jsmith")),
+                FROM, TO).withTransformed("user.name", List.of(Transform.STRIP_DOMAIN, Transform.LOWERCASE));
+
+        assertThat(AggregateText.esql(query, null)).startsWith(
+                "| WHERE `@timestamp` >= TO_DATETIME(\"2026-01-01T00:00:00.000Z\") AND `@timestamp` < "
+                + "TO_DATETIME(\"2026-02-01T00:00:00.000Z\")\n"
+                + "| EVAL transformed_0 = TO_LOWER(REPLACE(REPLACE(`user.name`, \"^.*\\\\\\\\\", \"\"), "
+                + "\"@.*$\", \"\"))\n"
+                + "| WHERE transformed_0 IN (\"jsmith\")\n"
+                + "| EVAL b = DATE_TRUNC(1 hour, `@timestamp`)");
+        // Only a field filtered on is transformed; StroomQL can't.
+        assertThat(ActivityProfiles.hourly(ELASTIC, SCOPE, FROM, TO).withTransformed("host.name",
+                List.of(Transform.LOWERCASE)).transformed()).isEmpty();
+        assertThatThrownBy(() -> AggregateText.stroomQl(ActivityProfiles.hourly(LUCENE, SCOPE, FROM, TO)
+                .withTransformed("user.id", List.of(Transform.LOWERCASE)), ZoneOffset.UTC))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("needs ES|QL");
     }
 
     @Test

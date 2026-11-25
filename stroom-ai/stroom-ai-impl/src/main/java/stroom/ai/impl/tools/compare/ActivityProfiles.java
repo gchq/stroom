@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.compare;
 
+import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.impl.tools.compare.AggregateQuery.Bucket;
 import stroom.ai.impl.tools.compare.AggregateQuery.Kind;
 import stroom.ai.impl.tools.compare.AggregateQuery.Metric;
@@ -458,13 +459,24 @@ final class ActivityProfiles {
 
     /// Whose events an index's aggregates are of.
     ///
-    /// @param field  The field filtered on.
-    /// @param values Its values (the person id, or the logon ids).
-    record Scope(String field, List<String> values) {
+    /// @param field      The field filtered on.
+    /// @param values     Its values (the person id, or the logon ids), as transformed.
+    /// @param transforms What is done to the field's values before they are compared (the call's logonForms);
+    ///                   empty to match exactly.
+    record Scope(String field, List<String> values, List<Transform> transforms) {
 
-        /// Copies the list.
+        /// Copies the lists.
         Scope {
             values = List.copyOf(values);
+            transforms = List.copyOf(NullSafe.list(transforms));
+        }
+
+        /// Matched exactly.
+        ///
+        /// @param field  The person's field.
+        /// @param values Its values.
+        Scope(final String field, final List<String> values) {
+            this(field, values, List.of());
         }
 
         /// @return The filter of the aggregates.

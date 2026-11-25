@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.compare;
 
+import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.docref.DocRef;
 import stroom.util.shared.NullSafe;
 
@@ -42,6 +43,10 @@ import java.util.Map;
 /// @param differing Fields a document must hold a value of, each other than its paired field's (a document whose
 ///                  paired field has no value is kept; a null pair, any value), e.g. events done to someone by
 ///                  someone else; empty for none. ES|QL only: StroomQL can't compare two fields.
+/// @param transformed Filter fields whose values are transformed before they are compared with the filter's values
+///                  (already transformed), e.g. a logon id with its domain stripped and lower case, as the user's
+///                  logonForms ask: a scripted field over every event in the range, slower; empty for none. ES|QL
+///                  only.
 record AggregateQuery(Source source,
                       Map<String, List<String>> filters,
                       Instant from,
@@ -51,7 +56,8 @@ record AggregateQuery(Source source,
                       List<Metric> metrics,
                       int limit,
                       Map<String, List<String>> excludes,
-                      Map<String, String> differing) {
+                      Map<String, String> differing,
+                      Map<String, List<Transform>> transformed) {
 
     /// The bucket's column.
     static final String BUCKET_COLUMN = "b";
@@ -65,6 +71,32 @@ record AggregateQuery(Source source,
         metrics = List.copyOf(NullSafe.list(metrics));
         excludes = new LinkedHashMap<>(NullSafe.map(excludes));
         differing = new LinkedHashMap<>(NullSafe.map(differing));
+        transformed = new LinkedHashMap<>(NullSafe.map(transformed));
+    }
+
+    /// With no field transformed.
+    ///
+    /// @param source    The index.
+    /// @param filters   Each field's values, a document matching one of them for every field; empty for all.
+    /// @param from      The range's start (inclusive).
+    /// @param to        The range's end (exclusive).
+    /// @param bucket    The time bucket grouped by, if any.
+    /// @param groups    The fields grouped by, besides the bucket.
+    /// @param metrics   What each group gives.
+    /// @param limit     The most rows.
+    /// @param excludes  Each field's values a document must not hold.
+    /// @param differing Fields a document must hold a value of, each other than its paired field's.
+    AggregateQuery(final Source source,
+                   final Map<String, List<String>> filters,
+                   final Instant from,
+                   final Instant to,
+                   final Bucket bucket,
+                   final List<String> groups,
+                   final List<Metric> metrics,
+                   final int limit,
+                   final Map<String, List<String>> excludes,
+                   final Map<String, String> differing) {
+        this(source, filters, from, to, bucket, groups, metrics, limit, excludes, differing, Map.of());
     }
 
     /// Without exclusions or differing fields.
@@ -92,7 +124,22 @@ record AggregateQuery(Source source,
     /// @param to   The new end.
     /// @return The same query over another range, e.g. a month's slice.
     AggregateQuery between(final Instant from, final Instant to) {
-        return new AggregateQuery(source, filters, from, to, bucket, groups, metrics, limit, excludes, differing);
+        return new AggregateQuery(source, filters, from, to, bucket, groups, metrics, limit, excludes, differing,
+                transformed);
+    }
+
+    /// @param field      A field filtered on.
+    /// @param transforms What is done to its values before they are compared with the filter's (which are given
+    ///                   transformed); empty for nothing.
+    /// @return The same query with the field transformed, if it filters on it; else as it is.
+    AggregateQuery withTransformed(final String field, final List<Transform> transforms) {
+        if (NullSafe.isEmptyCollection(transforms) || !filters.containsKey(field)) {
+            return this;
+        }
+        final Map<String, List<Transform>> more = new LinkedHashMap<>(transformed);
+        more.put(field, List.copyOf(transforms));
+        return new AggregateQuery(source, filters, from, to, bucket, groups, metrics, limit, excludes, differing,
+                more);
     }
 
     /// @param index A group field's place.

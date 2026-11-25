@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.compare;
 
+import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.impl.tools.compare.AggregateQuery.Bucket;
 import stroom.ai.impl.tools.compare.AggregateQuery.Kind;
 import stroom.ai.impl.tools.compare.AggregateQuery.Metric;
@@ -36,6 +37,8 @@ import java.util.regex.Pattern;
 /// in `"..."`.
 final class AggregateText {
 
+    /// The prefix of the columns a transformed filter field's values are put in before they are compared.
+    static final String TRANSFORMED_PREFIX = "transformed_";
     /// The column a document's `StreamId:EventId` is put in before it is aggregated.
     static final String ONE_EVENT_KEY = "one_event_key";
     private static final Pattern PLAIN_NAME = Pattern.compile("[A-Za-z_@][A-Za-z0-9_@.]*");
@@ -63,10 +66,21 @@ final class AggregateText {
         final List<String> conditions = new ArrayList<>();
         conditions.add(time + " >= TO_DATETIME(" + esqlString(iso(query.from())) + ")");
         conditions.add(time + " < TO_DATETIME(" + esqlString(iso(query.to())) + ")");
+        final List<String> transformedEvals = new ArrayList<>();
+        final List<String> transformedConditions = new ArrayList<>();
         for (final Map.Entry<String, List<String>> filter : query.filters().entrySet()) {
-            conditions.add(esqlName(filter.getKey()) + " IN (" + String.join(", ", filter.getValue().stream()
+            final String values = String.join(", ", filter.getValue().stream()
                     .map(AggregateText::esqlString)
-                    .toList()) + ")");
+                    .toList());
+            final List<Transform> transforms = query.transformed().get(filter.getKey());
+            if (transforms == null || transforms.isEmpty()) {
+                conditions.add(esqlName(filter.getKey()) + " IN (" + values + ")");
+            } else {
+                // A scripted field: the field's values transformed, compared once the range is narrowed.
+                final String column = TRANSFORMED_PREFIX + transformedEvals.size();
+                transformedEvals.add(column + " = " + esqlTransformed(esqlName(filter.getKey()), transforms));
+                transformedConditions.add(column + " IN (" + values + ")");
+            }
         }
         for (final Map.Entry<String, List<String>> exclude : query.excludes().entrySet()) {
             final String name = esqlName(exclude.getKey());
@@ -84,6 +98,10 @@ final class AggregateText {
             }
         }
         commands.add("WHERE " + String.join(" AND ", conditions));
+        if (!transformedEvals.isEmpty()) {
+            commands.add("EVAL " + String.join(", ", transformedEvals));
+            commands.add("WHERE " + String.join(" AND ", transformedConditions));
+        }
         if (query.bucket() == Bucket.HOUR) {
             commands.add("EVAL " + AggregateQuery.BUCKET_COLUMN + " = DATE_TRUNC(1 hour, " + time + ")");
         } else if (query.bucket() == Bucket.DAY) {
@@ -152,6 +170,9 @@ final class AggregateText {
         if (!query.differing().isEmpty()) {
             throw new IllegalArgumentException("Comparing two fields needs ES|QL: " + query.differing());
         }
+        if (!query.transformed().isEmpty()) {
+            throw new IllegalArgumentException("Transforming a field's values needs ES|QL: " + query.transformed());
+        }
         sb.append("\nwhere ").append(String.join("\n  and ", conditions));
         final List<String> grouped = new ArrayList<>();
         final List<String> selected = new ArrayList<>();
@@ -188,6 +209,23 @@ final class AggregateText {
         return sb.append("\nlimit ").append(query.limit())
                 .append("\nselect ").append(String.join(", ", selected))
                 .toString();
+    }
+
+    /// @param name       A field's name, as ES|QL names it.
+    /// @param transforms What is done to its values, in order.
+    /// @return The ES|QL expression of its values transformed, as [Transform#apply(String)] does: lower case;
+    /// without a domain (up to the last backslash, from the first `@`); a path's last part.
+    static String esqlTransformed(final String name, final List<Transform> transforms) {
+        String expression = name;
+        for (final Transform transform : transforms) {
+            expression = switch (transform) {
+                case LOWERCASE -> "TO_LOWER(" + expression + ")";
+                case STRIP_DOMAIN -> "REPLACE(REPLACE(" + expression + ", " + esqlString("^.*\\\\") + ", \"\"), "
+                                     + esqlString("@.*$") + ", \"\")";
+                case FILE_NAME -> "REPLACE(" + expression + ", " + esqlString("^.*[/\\\\]") + ", \"\")";
+            };
+        }
+        return expression;
     }
 
     /// @param name A field's name.

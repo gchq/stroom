@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.compare;
 
+import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.impl.tools.compare.AggregateQuery.Bucket;
 import stroom.ai.impl.tools.compare.AggregateQuery.Metric;
 
@@ -79,8 +80,10 @@ final class InMemoryAggregates implements AggregateRunner {
             if (time == null || time.isBefore(query.from()) || !time.isBefore(query.to())) {
                 continue;
             }
+            // A transformed field's values compared as transformed, as the scripted field does.
             final boolean matches = query.filters().entrySet().stream()
-                    .allMatch(filter -> filter.getValue().contains(String.valueOf(event.get(filter.getKey()))));
+                    .allMatch(filter -> filter.getValue().contains(Transform.applyAll(query.transformed()
+                            .getOrDefault(filter.getKey(), List.of()), String.valueOf(event.get(filter.getKey())))));
             final boolean excluded = query.excludes().entrySet().stream()
                     .anyMatch(exclude -> event.get(exclude.getKey()) != null
                                          && exclude.getValue().contains(String.valueOf(event.get(exclude.getKey()))));
