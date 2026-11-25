@@ -55,6 +55,7 @@ import stroom.util.shared.NullSafe;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -305,6 +306,13 @@ class RebuildMappingTool extends AbstractBuiltInTool {
                       + "XSLT replaces the hand-written one."
                     : "The mapping couldn't be read back: give build_translation_xslt the whole mapping "
                       + "instead (draft_translation_mapping drafts one from the samples).");
+            if (base == null) {
+                unreadable(ref, rebuilt.mapping() == null
+                        ? "nothing in it reads as a mapping" + (unlaid
+                        ? ": it isn't laid out as the generator writes one (a template per rule)"
+                        : "")
+                        : "it reads back with problems: " + String.join("; ", first(rebuilt.problems(), 3)), result);
+            }
             return result;
         }
         if (!rebuilt.lost().isEmpty() && !ToolArgs.flag(call, ACCEPT_UNREAD_ARG)) {
@@ -326,6 +334,10 @@ class RebuildMappingTool extends AbstractBuiltInTool {
             result.put("hint", "The mapping read back from the XSLT doesn't generate: the XSLT writes something a "
                                + "mapping can't (the problems say what). Fix the XSLT or give build_translation_xslt "
                                + "the whole mapping.");
+            if (base == null) {
+                unreadable(ref, "the mapping read back from it doesn't generate: " + String.join("; ",
+                        first(regenerated.problems(), 3)), result);
+            }
             return result;
         }
         final String pipelineUuid = stringArg(call, PIPELINE_UUID_ARG);
@@ -559,6 +571,44 @@ class RebuildMappingTool extends AbstractBuiltInTool {
                         + "a rule or failed (step_records over them says which), Unknown ones are kept as Unknown. "
                         + "Event types the sample lacks are in " + CatalogueEventTypesTool.NAME + "'s check.");
         return out;
+    }
+
+    // A copied translation XSLT that can't be read back, in a build starting from an existing pipeline (the user's
+    // choice, or a copy made unasked): recorded, so the gate holding the catalogue and saves for the read-back lifts
+    // and the translation is drafted anew (decided by the user, 2026-11-25); the result says so.
+    private void unreadable(final DocRef ref, final String why, final Map<String, Object> result) {
+        if (buildRecordsProvider == null) {
+            return;
+        }
+        try {
+            final Optional<String> build = guard.buildOf(ref);
+            if (build.isEmpty()) {
+                return;
+            }
+            final BuildRecords records = buildRecordsProvider.get();
+            final boolean copied = records.entry(build.get(), ref.getUuid()).get("version_of") != null;
+            if (!copied && !inducting(ref)) {
+                return;
+            }
+            final Map<String, Object> xslt = new LinkedHashMap<>();
+            xslt.put("uuid", ref.getUuid());
+            xslt.put("name", ref.getName());
+            final Map<String, Object> failed = new LinkedHashMap<>();
+            failed.put("xslt", xslt);
+            failed.put("why", why);
+            failed.put("at", Instant.now().toString());
+            records.rememberReadBackFailed(build.get(), failed);
+            result.put("read_back", "failed: " + why);
+            result.put("hint", "The copy's XSLT can't be read back into a mapping (" + why + "), so build '"
+                               + build.get() + "' drafts its translation anew instead: draft_translation_mapping "
+                               + "build=" + build.get() + " (allowed now), then build_translation_xslt uuid="
+                               + ref.getUuid() + " with the mapping, replacing the copy's XSLT (the copy stays a "
+                               + "child of the same template; the original isn't touched). Say why to the user; "
+                               + "build_status says the same.");
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("The failed read-back of {} wasn't recorded: {}", ref,
+                    e.getMessage()), e);
+        }
     }
 
     // Whether the XSLT is in a build that started from an existing pipeline (decided by the user, 2026-11-24).

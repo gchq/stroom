@@ -273,6 +273,49 @@ class TestBuildPlanStartFromExisting {
         assertThat(plan.awaitingReadBack(null)).isEmpty();
     }
 
+    @Test
+    void aCopysXsltThatCantBeReadBackIsDraftedAnewSayingWhy() {
+        // Decided by the user (2026-11-25): rebuild_mapping couldn't read the copy's XSLT back, so the gate lifts and
+        // the translation is drafted anew into the copy (a child of the same template).
+        facts.startFrom = Map.of("choice", ExistingTranslations.EXISTING, "pipeline", EXISTING);
+        copied("translation");
+        assertThat(plan.awaitingReadBack("b")).isPresent();
+        facts.readBackFailed = Map.of("xslt", Map.of("uuid", "x", "name", "ACME-V1.1-Events"), "why",
+                "nothing in it reads as a mapping");
+
+        assertThat(plan.awaitingReadBack("b")).isEmpty();
+        final Map<String, Object> uncatalogued = status();
+        // The catalogue first, as for any new translation: its evidence, not a read-back's confirmation.
+        assertThat(next(uncatalogued).get("step")).isEqualTo(BuildPlan.CATALOGUE);
+        assertThat(String.valueOf(next(uncatalogued).get("then"))).startsWith("lists the evidence");
+        assertThat(String.valueOf(uncatalogued.get("read_back"))).contains("'ACME-V1.1-Events'",
+                "nothing in it reads as a mapping", "drafted anew into the copy, a child of the same template");
+
+        facts.catalogued = true;
+        final Map<String, Object> catalogued = status();
+        assertThat(next(catalogued).get("step")).isEqualTo("translation");
+        assertThat(call(catalogued).get("tool")).isEqualTo("draft_translation_mapping");
+        assertThat(arguments(catalogued).get("build")).isEqualTo("b");
+        assertThat(String.valueOf(next(catalogued).get("then"))).contains(
+                "couldn't read the copy's XSLT 'ACME-V1.1-Events' back (nothing in it reads as a mapping)",
+                "build_translation_xslt uuid=x", "a child of the same template", "Say why to the user");
+
+        // Drafted and saved into the copy: on to stepping it, the note gone.
+        facts.mappings = Map.of("x", FakeBuildFacts.kept("translation", Map.of()));
+        final Map<String, Object> drafted = status();
+        assertThat(TestBuildPlan.states(drafted).get("translation")).isEqualTo("done");
+        assertThat(drafted).doesNotContainKey("read_back");
+    }
+
+    @Test
+    void aFailedReadBackLiftsNoGateOfAnInPlaceOrDraftedBuild() {
+        facts.readBackFailed = Map.of("xslt", Map.of("uuid", "x", "name", "ACME-V1.1-Events"), "why", "unread");
+        facts.startFrom = Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline", EXISTING);
+        assertThat(status()).doesNotContainKey("read_back");
+        facts.startFrom = Map.of("choice", ExistingTranslations.DRAFT, "pipeline", EXISTING);
+        assertThat(status()).doesNotContainKey("read_back");
+    }
+
     // The build holds a copy of a pipeline of that stage, and of its XSLT.
     private void copied(final String stage) {
         facts.docs = List.of(FakeBuildFacts.doc("Documentation", "s", "ACME - Survey"),

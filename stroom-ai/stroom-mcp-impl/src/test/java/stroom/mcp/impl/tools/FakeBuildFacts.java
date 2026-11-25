@@ -80,6 +80,8 @@ final class FakeBuildFacts implements BuildFacts {
     // The pipeline already translating what the build is to, and how the user chose to start (none by default).
     Map<String, Object> existing;
     Map<String, Object> startFrom;
+    // The copied XSLT rebuild_mapping couldn't read back (none by default).
+    Map<String, Object> readBackFailed;
     List<String> columns = List.of();
     Function<String, Map<String, Object>> profiler = text -> profileOf("json lines");
     RuntimeException docsFail;
@@ -338,5 +340,10 @@ final class FakeBuildFacts implements BuildFacts {
     @Override
     public Optional<Map<String, Object>> startFrom(final String build) {
         return Optional.ofNullable(startFrom);
+    }
+
+    @Override
+    public Optional<Map<String, Object>> readBackFailed(final String build) {
+        return Optional.ofNullable(readBackFailed);
     }
 }

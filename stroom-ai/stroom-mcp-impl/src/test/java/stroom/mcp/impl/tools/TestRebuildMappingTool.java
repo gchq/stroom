@@ -378,6 +378,49 @@ class TestRebuildMappingTool {
         Mockito.verify(world.heldSchemas, Mockito.never()).eventSchema(TranslationWorld.VERSION);
     }
 
+    @Test
+    void aCopysXsltThatCantBeReadBackIsRecordedSoTheBuildDraftsItAnew() {
+        // Decided by the user (2026-11-25): rebuild_mapping refusing (nothing reads back) lifts the read-back gate.
+        final BuildRecords records = world.world.records();
+        tool.setBuildRecords(() -> records);
+        unreadableByHand();
+        records.update(BUILD, new DocRef(XsltDoc.TYPE, uuid, "ACME-Events"), entry -> entry.put("version_of",
+                "prod-x"));
+
+        final Map<String, Object> result = call(Map.of());
+
+        assertThat(result).containsEntry("mode", "mapping lost");
+        assertThat(String.valueOf(result.get("read_back"))).startsWith("failed: nothing in it reads as a mapping");
+        assertThat(String.valueOf(result.get("hint"))).contains("drafts its translation anew",
+                "draft_translation_mapping build=" + BUILD + " (allowed now)", "build_translation_xslt uuid=" + uuid,
+                "a child of the same template");
+        assertThat(records.readBackFailed(BUILD)).hasValueSatisfying(failed -> {
+            assertThat(failed.get("xslt")).isEqualTo(Map.of("uuid", uuid, "name", "ACME-Events"));
+            assertThat(String.valueOf(failed.get("why"))).isNotBlank();
+        });
+    }
+
+    @Test
+    void anUnreadableXsltOfABuildNotStartingFromAnExistingPipelineIsNotRecorded() {
+        final BuildRecords records = world.world.records();
+        tool.setBuildRecords(() -> records);
+        unreadableByHand();
+
+        final Map<String, Object> result = call(Map.of());
+
+        assertThat(result).containsEntry("mode", "mapping lost").doesNotContainKey("read_back");
+        assertThat(records.readBackFailed(BUILD)).isEmpty();
+        assertThat(records.readBackFailed(null)).isEmpty();
+    }
+
+    // The XSLT rewritten by hand into nothing a mapping reads, its kept mapping gone with its description.
+    private void unreadableByHand() {
+        final XsltDoc doc = world.xslt(uuid);
+        world.world.docs.put(uuid, doc.copy().description(null).data("<xsl:stylesheet "
+                + "xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"3.0\"><xsl:template match=\"/\">"
+                + "<Events xmlns=\"event-logging:3\"/></xsl:template></xsl:stylesheet>").updateUser("bob").build());
+    }
+
     private Map<String, Object> call(final Map<String, Object> more) {
         final Map<String, Object> arguments = new LinkedHashMap<>();
         arguments.put("uuid", uuid);

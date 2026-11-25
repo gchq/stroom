@@ -116,6 +116,8 @@ public class BuildRecords {
     /// The record's key for the feeds whose survey for the build read nothing, each with why
     /// (catalogue_event_types then goes on without the survey, saying so).
     public static final String UNREADABLE_SURVEYS = "unreadable_surveys";
+    /// The record's key of a copied translation XSLT rebuild_mapping couldn't read back ([#rememberReadBackFailed]).
+    public static final String READ_BACK_FAILED = "read_back_failed";
     // The EventSource/System/Name and Environment the user gave for the build's translation.
     private static final String SYSTEM = "system";
     /// The record's key for the user's choice for JSON string values longer than Stroom's JSON parser keeps.
@@ -570,6 +572,33 @@ public class BuildRecords {
     public Map<String, Object> rememberStartFrom(final String build, final Map<String, Object> startFrom) {
         final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
         return save(build, found.orElse(null), state -> state.put(START_FROM, new LinkedHashMap<>(startFrom)));
+    }
+
+    /// @param build A build's name, or null.
+    /// @return The copied translation XSLT rebuild_mapping couldn't read back into a mapping, as
+    /// [#rememberReadBackFailed] kept it (`xslt`: `uuid` and `name`; `why`; `at`); empty when none was (or `build` is
+    /// null).
+    public Optional<Map<String, Object>> readBackFailed(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Optional.empty();
+        }
+        return load(build).get(READ_BACK_FAILED) instanceof final Map<?, ?> kept
+                ? Optional.of(asMap(kept))
+                : Optional.empty();
+    }
+
+    /// Records that rebuild_mapping couldn't read a build's copied translation XSLT back into a mapping (decided by
+    /// the user, 2026-11-25): the gate that holds the catalogue and saves for the read-back lifts, and the translation
+    /// may be drafted anew for the build, whichever node or session calls next.
+    ///
+    /// @param build  A build's name, or null (nothing is recorded).
+    /// @param failed `xslt` (`uuid`, `name`), `why` and `at`.
+    public void rememberReadBackFailed(final String build, final Map<String, Object> failed) {
+        if (NullSafe.isBlankString(build)) {
+            return;
+        }
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        save(build, found.orElse(null), state -> state.put(READ_BACK_FAILED, new LinkedHashMap<>(failed)));
     }
 
     /// @param build A build's name, or null.

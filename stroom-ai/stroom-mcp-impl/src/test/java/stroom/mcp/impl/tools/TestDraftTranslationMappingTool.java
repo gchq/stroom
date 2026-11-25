@@ -82,6 +82,26 @@ class TestDraftTranslationMappingTool {
     }
 
     @Test
+    void aBuildWhoseCopysXsltCouldntBeReadBackIsDraftedAnew() {
+        // Decided by the user (2026-11-25): rebuild_mapping refusing lifts the gate, the translation drafted anew.
+        world.world.records().rememberStartFrom("vpn", Map.of("choice", ExistingTranslations.EXISTING, "pipeline",
+                Map.of("name", "VPN-Events", "uuid", "p")));
+        world.world.records().rememberReadBackFailed("vpn", Map.of("xslt", Map.of("uuid", "x", "name",
+                "VPN-V1.1-Events"), "why", "nothing in it reads as a mapping"));
+        Mockito.when(world.sampleStreamTexts.read(List.of(7L))).thenReturn(new SampleStreamTexts.Texts(
+                Map.of("stream 7", CSV), List.of()));
+
+        final Map<String, Object> draft = world.call(tool, Map.of("build", "vpn", "stream_ids", List.of(7)));
+
+        assertThat(draft).containsKey("mapping").doesNotContainKey("error");
+        // Described in place, it is still never drafted: the failed read-back is a copy's alone.
+        world.world.records().rememberStartFrom("vpn", Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline",
+                Map.of("name", "VPN-Events", "uuid", "p")));
+        assertThat(String.valueOf(world.call(tool, Map.of("build", "vpn", "stream_ids", List.of(7))).get("error")))
+                .contains("describes 'VPN-Events' in place");
+    }
+
+    @Test
     void aBuildDescribingAPipelineInPlaceIsNeverDrafted() {
         world.world.records().rememberStartFrom("vpn", Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline",
                 Map.of("name", "VPN-Events", "uuid", "p")));

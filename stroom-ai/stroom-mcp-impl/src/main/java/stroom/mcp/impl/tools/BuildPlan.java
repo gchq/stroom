@@ -233,7 +233,7 @@ public class BuildPlan {
             "processed:disabled", "processed:running", "index_template:unstepped", "indexed:disabled",
             "indexed:unstepped", "indexed:running", "indexed:no_index", "indexed:finished", "documented:edited",
             "feed:reference", "samples:reference", "reference_processed:disabled", "reference_processed:running",
-            "stepped:no_reference", "index:discovery", CATALOGUE + ":offer", CATALOGUE + ":existing_copy",
+            "stepped:no_reference", "index:discovery", "translation:redraft", CATALOGUE + ":offer", CATALOGUE + ":existing_copy",
             CATALOGUE + ":existing_rebuild", CATALOGUE + ":existing_confirm", CATALOGUE + ":in_place_confirm");
     // The steps before the translation, which a reference-only build keeps.
     private static final Set<String> SOURCE_STEPS = Set.of("feed", "samples", "converter");
@@ -730,6 +730,11 @@ public class BuildPlan {
             if (startFrom != null && !ExistingTranslations.EXISTING.equals(startFrom.get("choice"))) {
                 return Optional.empty();
             }
+            if (facts.readBackFailed(build).isPresent()) {
+                // rebuild_mapping couldn't read the copy's XSLT back: the translation is drafted anew instead
+                // (decided by the user, 2026-11-25), so nothing waits for the read-back.
+                return Optional.empty();
+            }
             final List<Map<String, Object>> docs = facts.buildDocs(build);
             final List<Map<String, Object>> copies = docs.stream()
                     .filter(doc -> PipelineDoc.TYPE.equals(doc.get("type")) && doc.get("version_of") != null)
@@ -1067,8 +1072,16 @@ public class BuildPlan {
         // XSLT read back and the catalogue confirmed are never skipped.
         final boolean copiedUnasked = startFrom == null && copies.stream()
                 .anyMatch(p -> p.get("version_of") != null);
-        final boolean inducting = copiedUnasked || startFrom != null
-                                  && ExistingTranslations.EXISTING.equals(startFrom.get("choice"));
+        // rebuild_mapping couldn't read the copy's XSLT back (decided by the user, 2026-11-25): the translation is
+        // drafted anew, into the copy (a child of the same template), the catalogue first as for any new translation.
+        final Map<String, Object> readBackFailed = copiedUnasked || startFrom != null
+                                                                    && ExistingTranslations.EXISTING.equals(
+                startFrom.get("choice"))
+                ? facts.readBackFailed(build).orElse(null)
+                : null;
+        final boolean inducting = readBackFailed == null && (copiedUnasked || startFrom != null
+                                                             && ExistingTranslations.EXISTING.equals(
+                startFrom.get("choice")));
         // Described in place (decided with the user 2026-11-25): surveyed and catalogued, no new version.
         final boolean inPlace = InPlaceInduction.inPlace(startFrom);
         // Built on the pipeline described in place: an index or a forwarder, promoted alone.
@@ -1079,6 +1092,8 @@ public class BuildPlan {
         final boolean readBack = !translation.isEmpty() && xslts.stream().noneMatch(x -> x.get("mapping") == null);
         done.put(CATALOGUE, inPlace
                 ? Boolean.valueOf(facts.catalogued(docs))
+                : readBackFailed != null
+                ? Boolean.valueOf(facts.catalogued(docs) || hasMapping(xslts, "translation"))
                 : inducting && !readBack
                 ? Boolean.FALSE
                 : facts.catalogued(docs)
@@ -1089,7 +1104,7 @@ public class BuildPlan {
                                         ? null
                                         : Boolean.FALSE);
         done.put("translation", hasMapping(xslts, "translation")
-                                || (existing && !translation.isEmpty()
+                                || (readBackFailed == null && existing && !translation.isEmpty()
                                     && xslts.stream().anyMatch(x -> !"index".equals(x.get("mapping")))));
         done.put("pipeline", !translation.isEmpty() && translation.stream().noneMatch(BuildPlan::hasMissing));
         done.put("stepped", translation.stream().anyMatch(p -> Boolean.TRUE.equals(p.get("stepped"))));
@@ -1238,7 +1253,12 @@ public class BuildPlan {
                 : List.of());
         String edited = null;
         Map<String, Object> version = null;
-        if ("documented".equals(nextStep) && !translation.isEmpty()
+        if ("translation".equals(nextStep) && readBackFailed != null) {
+            // Drafted anew, as rebuild_mapping couldn't read the copy's XSLT back: saved into the copy's XSLT.
+            processing = "redraft";
+            edited = JsonValues.text(JsonValues.mapOrEmpty(readBackFailed.get("xslt")).get("uuid"));
+            version = readBackFailed;
+        } else if ("documented".equals(nextStep) && !translation.isEmpty()
             && checks.stream().anyMatch(check -> check.contains("differs from what its mapping generates"))) {
             // Changed by hand (save_xslt, or in Stroom): documentation would stay stale until the mapping is read
             // back.
@@ -1400,6 +1420,12 @@ public class BuildPlan {
         result.put("steps", steps);
         if (existing) {
             result.put("works_from", sources);
+        }
+        if (readBackFailed != null && !hasMapping(xslts, "translation")) {
+            result.put("read_back", "rebuild_mapping couldn't read the copy's XSLT '" + ToolText.str(
+                    JsonValues.mapOrEmpty(readBackFailed.get("xslt")).get("name")) + "' back into a mapping ("
+                                    + ToolText.str(readBackFailed.get("why")) + "): the translation is drafted "
+                                    + "anew into the copy, a child of the same template, the original untouched.");
         }
         perFeed.said().ifPresent(said -> result.put(FEED_SURVEYS, said));
         perFeedIndexing.said().ifPresent(said -> result.put(INDEX_PER_FEED, said));
@@ -1617,6 +1643,17 @@ public class BuildPlan {
                             ? ""
                             : ", as the build's source type group '" + JsonValues.text(args.scope().get("group"))
                               + "' (group and source_types default to the scope's)"));
+            case "translation:redraft" -> {
+                final Map<String, Object> failed = NullSafe.map(args.version());
+                yield call("draft_translation_mapping", args("stream_ids", args.raw(), "build", args.build()),
+                        "rebuild_mapping couldn't read the copy's XSLT '" + ToolText.str(JsonValues.mapOrEmpty(
+                                failed.get("xslt")).get("name")) + "' back (" + ToolText.str(failed.get("why"))
+                        + "), so the translation is drafted anew: decide what its notes ask, then "
+                        + "build_translation_xslt uuid=" + NullSafe.nonBlankStringElse(args.editedXslt(),
+                                "<the copy's XSLT>") + " with the mapping, stream_ids, the splitter and build: it "
+                        + "replaces the copy's XSLT, the copy staying a child of the same template as the original "
+                        + "(which isn't touched). Say why to the user");
+            }
             case "pipeline" -> call("find_pipeline_templates", args("stage", "translation"),
                     "then create_pipeline from the best candidate: it takes the build's converter and XSLT");
             // The feed's next version (V1.3 for V1.2): a child of the template the pipeline translating it now has.

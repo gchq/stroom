@@ -551,7 +551,8 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
     }
 
     // A build the user chose to start from an existing pipeline (copied, or described in place) is never drafted
-    // anew: its mapping is the one read back from that pipeline's XSLT. Seen in eval cases 103 and 105 on Haiku: a
+    // anew, unless rebuild_mapping couldn't read the copy's XSLT back: its mapping is the one read back from that
+    // pipeline's XSLT. Seen in eval cases 103 and 105 on Haiku: a
     // draft after the copy was read back replaced its mapping, and the records it didn't cover became Unknown events.
     private void refuseExistingStart(final String build) {
         if (build == null || buildRecords == null) {
@@ -560,6 +561,11 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         final Map<String, Object> startFrom = buildRecords.get().startFrom(build).orElse(null);
         final boolean inPlace = InPlaceInduction.inPlace(startFrom);
         if (!inPlace && (startFrom == null || !ExistingTranslations.EXISTING.equals(startFrom.get("choice")))) {
+            return;
+        }
+        if (!inPlace && buildRecords.get().readBackFailed(build).isPresent()) {
+            // rebuild_mapping couldn't read the copy's XSLT back: drafted anew instead (decided by the user,
+            // 2026-11-25).
             return;
         }
         final String pipeline = ToolText.str(JsonValues.mapOrEmpty(startFrom.get("pipeline")).get("name"));

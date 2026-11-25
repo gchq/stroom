@@ -213,6 +213,13 @@ interface BuildFacts {
         return Optional.empty();
     }
 
+    /// @param build A build.
+    /// @return The copied translation XSLT rebuild_mapping couldn't read back ([BuildRecords#readBackFailed]):
+    /// `xslt` and `why`; empty when none was.
+    default Optional<Map<String, Object>> readBackFailed(final String build) {
+        return Optional.empty();
+    }
+
     /// @param pipelineUuid A pipeline.
     /// @return Its processor filters, as processing_status gives them (each with `enabled` and `finished`).
     List<Map<String, Object>> processingFilters(String pipelineUuid);

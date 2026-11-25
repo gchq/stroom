@@ -188,6 +188,17 @@ class StroomBuildFacts implements BuildFacts {
     }
 
     @Override
+    public Optional<Map<String, Object>> readBackFailed(final String build) {
+        try {
+            return buildRecords.readBackFailed(build);
+        } catch (final RuntimeException e) {
+            // Advice: an unreadable record leaves the gate as it was.
+            LOGGER.debug("Unable to read build {}'s read-back", build, e);
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public Map<String, String> unreadableSurveys(final String build) {
         return buildRecords.unreadableSurveys(build);
     }

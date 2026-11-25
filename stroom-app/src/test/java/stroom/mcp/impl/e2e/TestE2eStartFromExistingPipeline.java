@@ -16,10 +16,15 @@
 
 package stroom.mcp.impl.e2e;
 
+import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.docref.DocRef;
 import stroom.mcp.impl.McpTestClient;
+import stroom.pipeline.PipelineStore;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.w3c.dom.Element;
 
@@ -64,6 +69,9 @@ class TestE2eStartFromExistingPipeline extends AbstractE2eTest {
             "EventSource/Client/IPAddress", "field", "src_ip")));
     private static final Map<String, Object> DESTINATIONS = Map.of("XSLT", "Feeds/HandVpn", "Pipeline",
             "Feeds/HandVpn", "Documentation", "Feeds/HandVpn");
+
+    @Inject
+    private PipelineStore pipelineStore;
 
     @Test
     void aHandWrittenPipelineIsInductedChangedAndPromotedAsItsNextVersion() {
@@ -178,6 +186,79 @@ class TestE2eStartFromExistingPipeline extends AbstractE2eTest {
         // The build's survey doc is kept in the workspace at promotion (its feed's lasting survey); the pipeline
         // moved out.
         assertThat(folderOf(copyPipeline)).startsWith(FOLDER);
+    }
+
+    @Test
+    void aCopysXsltThatCantBeReadBackIsDraftedAnewIntoTheCopy() {
+        // Decided by the user (2026-11-25): rebuild_mapping refusing (the XSLT makes its events in a function, no
+        // template per record) lifts the read-back gate; the plan says why and offers drafting the translation anew,
+        // draft_translation_mapping allowed for the build, saved into the copy (a child of the same template).
+        final String feed = "UNREADVPN";
+        final String build = "unreadvpn-v1-1";
+        final HandWritten original = handWritten("System/Feeds/UnreadVpn", feed,
+                textResource("hand_written_vpn_unreadable.xsl"), feed + "-Events", "Event Data (JSON)",
+                List.of(PipelineProperty.builder()
+                        .element("jsonParser")
+                        .name("addRootObject")
+                        .value(new PipelinePropertyValue(false))
+                        .build()), "Raw Events", SAMPLE);
+        json("start_build", args("build", build, "feeds", List.of(feed)));
+        json("survey_feed", args("feed", feed, "build", build));
+        client.answeringWith(choosing("Start from the existing pipeline (recommended)"));
+        assertThat(json(CATALOGUE, args("build", build))).containsEntry("status", "start_from_existing");
+        client.answeringWith(McpTestClient::agree);
+        final Map<String, Object> copy = agreed("copy_pipeline", args("build", build, "source_uuid",
+                original.pipeline(), "new_name", feed + "-Events-V1.1"));
+        final String copyXslt = ((List<Map<String, Object>>) copy.get("copied_documents")).stream()
+                .filter(doc -> "XSLT".equals(doc.get("type")))
+                .map(doc -> (String) doc.get("uuid"))
+                .findFirst()
+                .orElseThrow();
+        final String copyPipeline = uuidOf(copy);
+        // Before the read-back, nothing is drafted.
+        assertThat(refusal("draft_translation_mapping", args("build", build, "stream_ids",
+                List.of(original.raw())))).contains("rebuild_mapping", "Nothing drafted");
+
+        // The read-back fails: recorded, the gate lifted, and why said.
+        final Map<String, Object> rebuilt = json("rebuild_mapping", args("uuid", copyXslt, "pipeline_uuid",
+                copyPipeline, "stream_ids", List.of(original.raw())));
+        dump("rebuild_mapping, unreadable", rebuilt);
+        assertThat(String.valueOf(rebuilt.get("read_back"))).startsWith("failed: ");
+        assertThat(String.valueOf(rebuilt.get("hint"))).contains("drafts its translation anew");
+        final Map<String, Object> status = json("build_status", args("build", build));
+        dump("build_status after the failed read-back", status);
+        assertThat(String.valueOf(status.get("read_back"))).contains("'" + feed + "-Events-V1.1'",
+                "drafted anew into the copy, a child of the same template");
+        assertThat(nextTool(status)).isEqualTo(CATALOGUE);
+        // The catalogue, gated on the read-back before, is made as for any new translation.
+        proposed(build, List.of(original.raw()), List.of(
+                eventType("Logon-VPN", "Authenticate", "high", when("action", "equals", "login")),
+                eventType("Logoff-VPN", "Authenticate", "high", when("action", "equals", "logout")),
+                eventType("Change-Setting", "Update", "high", when("action", "equals", "config_change"))));
+        confirmedCatalogue(build);
+        assertThat(nextTool(json("build_status", args("build", build)))).isEqualTo("draft_translation_mapping");
+
+        // Drafted anew and saved into the copy's XSLT, the copy still the original template's child.
+        final Map<String, Object> draft = json("draft_translation_mapping", args("build", build, "stream_ids",
+                List.of(original.raw()), "system_name", "Example VPN", "environment", "Production"));
+        assertThat(draft).as("drafted: %s", draft).doesNotContainKey("error");
+        final Map<String, Object> saved = agreed("build_translation_xslt", args("uuid", copyXslt, "build", build,
+                "mapping", timeChosen(draftedMapping(draft)), "schema_version", draft.get("schema_version"),
+                "stream_ids", List.of(original.raw()), "change", "Drafted anew: the copy couldn't be read back"));
+        dump("build_translation_xslt into the copy", saved);
+        assertThat(saved.get("ok")).as("saved: %s", saved.get("problems")).isEqualTo(true);
+        assertThat(KeptMapping.readMapping(readXslt(copyXslt).getDescription())).isPresent();
+        assertThat(readXslt(original.xslt()).getData()).as("the original, untouched")
+                .isEqualTo(textResource("hand_written_vpn_unreadable.xsl"));
+        assertThat(parentOf(copyPipeline)).isEqualTo(parentOf(original.pipeline()));
+        final Map<String, Object> after = json("build_status", args("build", build));
+        assertThat(after).doesNotContainKey("read_back");
+    }
+
+    // The template a pipeline inherits, by UUID.
+    private String parentOf(final String pipeline) {
+        return asUser(admin, () -> pipelineStore.readDocument(new DocRef(PipelineDoc.TYPE, pipeline))
+                .getParentPipeline().getUuid());
     }
 
     // The feed and its translation as an environment made them by hand, never through the tools.
