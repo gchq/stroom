@@ -56,6 +56,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
     static final int DEFAULT_CHARACTERISE_BATCH_ITEMS = 50;
     static final int DEFAULT_CHARACTERISE_MAX_ITEMS = 1_000;
     static final int DEFAULT_TIMELINE_MAX_XML_EVENTS = 50_000;
+    static final int DEFAULT_CHARACTERISE_WORKERS = 4;
 
     private final long maxFileBytes;
     private final long maxChatBytes;
@@ -82,6 +83,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
     private final int characteriseBatchItems;
     private final int characteriseMaxItems;
     private final int timelineMaxXmlEvents;
+    private final int characteriseWorkers;
 
     public AiWorkspaceConfig() {
         maxFileBytes = DEFAULT_MAX_FILE_BYTES;
@@ -109,6 +111,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         characteriseBatchItems = DEFAULT_CHARACTERISE_BATCH_ITEMS;
         characteriseMaxItems = DEFAULT_CHARACTERISE_MAX_ITEMS;
         timelineMaxXmlEvents = DEFAULT_TIMELINE_MAX_XML_EVENTS;
+        characteriseWorkers = DEFAULT_CHARACTERISE_WORKERS;
     }
 
     /// The limits, with the default EQL sequence window.
@@ -325,7 +328,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
                 queryTimeLimit, maxQueryLength, maxEventsPerFetch, maxEventBytes, maxStreamStoreReads, maxQueryRows,
                 maxToolArgumentBytes, eqlDefaultMaxspan, joinWorkers, joinPushDownKeys, joinMaxKeys, joinMaxRows,
                 joinTimeLimit, timelineIdleCap, timelineMaxEvents, characteriseExcerptChars, characteriseBatchItems,
-                characteriseMaxItems, null);
+                characteriseMaxItems, null, null);
     }
 
     /// @param maxFileBytes             The largest a workspace file may be, or null for the default.
@@ -361,6 +364,8 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
     ///                                 user agreeing, or null for the default.
     /// @param timelineMaxXmlEvents     The most events whose Events XML an activity timeline reads, or null for the
     ///                                 default.
+    /// @param characteriseWorkers      The calls a characterisation makes to the model at once, or null for the
+    ///                                 default.
     @JsonCreator
     public AiWorkspaceConfig(@JsonProperty("maxFileBytes") final Long maxFileBytes,
                              @JsonProperty("maxChatBytes") final Long maxChatBytes,
@@ -386,7 +391,8 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
                              @JsonProperty("characteriseExcerptChars") final Integer characteriseExcerptChars,
                              @JsonProperty("characteriseBatchItems") final Integer characteriseBatchItems,
                              @JsonProperty("characteriseMaxItems") final Integer characteriseMaxItems,
-                             @JsonProperty("timelineMaxXmlEvents") final Integer timelineMaxXmlEvents) {
+                             @JsonProperty("timelineMaxXmlEvents") final Integer timelineMaxXmlEvents,
+                             @JsonProperty("characteriseWorkers") final Integer characteriseWorkers) {
         this.maxFileBytes = Objects.requireNonNullElse(maxFileBytes, DEFAULT_MAX_FILE_BYTES);
         this.maxChatBytes = Objects.requireNonNullElse(maxChatBytes, DEFAULT_MAX_CHAT_BYTES);
         this.maxUserBytes = Objects.requireNonNullElse(maxUserBytes, DEFAULT_MAX_USER_BYTES);
@@ -415,6 +421,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
                 DEFAULT_CHARACTERISE_BATCH_ITEMS);
         this.characteriseMaxItems = Objects.requireNonNullElse(characteriseMaxItems, DEFAULT_CHARACTERISE_MAX_ITEMS);
         this.timelineMaxXmlEvents = Objects.requireNonNullElse(timelineMaxXmlEvents, DEFAULT_TIMELINE_MAX_XML_EVENTS);
+        this.characteriseWorkers = Objects.requireNonNullElse(characteriseWorkers, DEFAULT_CHARACTERISE_WORKERS);
     }
 
     @JsonPropertyDescription("The largest a single workspace file may be, in bytes.")
@@ -599,6 +606,14 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
         return timelineMaxXmlEvents;
     }
 
+    @JsonPropertyDescription("The calls an activity timeline's characterisation makes to the model at once, outside "
+                             + "the chat's conversation: more is faster, and uses more of the model provider's rate "
+                             + "limit at once.")
+    @JsonProperty("characteriseWorkers")
+    public int getCharacteriseWorkers() {
+        return characteriseWorkers;
+    }
+
     @Override
     public String toString() {
         return "AiWorkspaceConfig{" +
@@ -627,6 +642,7 @@ public class AiWorkspaceConfig extends AbstractConfig implements IsStroomConfig 
                ", characteriseBatchItems=" + characteriseBatchItems +
                ", characteriseMaxItems=" + characteriseMaxItems +
                ", timelineMaxXmlEvents=" + timelineMaxXmlEvents +
+               ", characteriseWorkers=" + characteriseWorkers +
                '}';
     }
 }

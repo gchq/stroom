@@ -30,6 +30,7 @@ import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AiToolAccess;
 import stroom.ai.shared.AiUserActionResult;
+import stroom.ai.shared.AnswerAiElicitationRequest;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.MermaidGantt;
@@ -193,7 +194,7 @@ class TestAskStroomAiActivityTimeline extends AbstractAiIntegrationTest {
                     PropertyPath.fromParts("stroom", "ai"));
             return AbstractConfigUtil.mutateTree(config, path, Map.of(path.merge("workspace"),
                     new AiWorkspaceConfig(null, null, null, null, null, null, null, null, null, null, null, null,
-                            null, null, 4, null, null, null, null, null, null, null, 1, null, null)));
+                            null, null, null, null, null, null, null, null, null, null, 1, null, null, 4)));
         });
         final DocRef modelRef = asUser(user, this::fakeModel);
         model.answeringSideRequests(TestAskStroomAiActivityTimeline::modelAnswer)
@@ -205,7 +206,7 @@ class TestAskStroomAiActivityTimeline extends AbstractAiIntegrationTest {
         asUser(user, () -> askStroomAIService.askStroomAi(new AskStroomAiRequest(chat,
                 AskStroomAiConfig.builder().modelRef(modelRef).build(), null,
                 "What was jsmith working on last week?", AiAgentMode.AGENT)));
-        final List<AiChatMessage> messages = asUser(user, () -> answered(chat.getId()));
+        final List<AiChatMessage> messages = asUser(user, () -> answered(chat));
 
         final ToolResultRecord timeline = result(messages, "activity_timeline");
         assertThat(timeline.error()).as(timeline.text()).isFalse();
@@ -236,7 +237,7 @@ class TestAskStroomAiActivityTimeline extends AbstractAiIntegrationTest {
         asUser(user, () -> askStroomAIService.askStroomAi(new AskStroomAiRequest(chat,
                 AskStroomAiConfig.builder().modelRef(modelRef).build(), null,
                 "What was jsmith working on last week?", AiAgentMode.AGENT)));
-        final List<AiChatMessage> messages = asUser(user, () -> answered(chat.getId()));
+        final List<AiChatMessage> messages = asUser(user, () -> answered(chat));
 
         final ToolResultRecord timeline = result(messages, "activity_timeline");
         assertThat(timeline.error()).as(timeline.text()).isFalse();
@@ -277,7 +278,7 @@ class TestAskStroomAiActivityTimeline extends AbstractAiIntegrationTest {
         asUser(user, () -> askStroomAIService.askStroomAi(new AskStroomAiRequest(chat,
                 AskStroomAiConfig.builder().modelRef(modelRef).build(), null,
                 "Put jsmith's timeline for last week on a dashboard", AiAgentMode.AGENT)));
-        final List<AiChatMessage> messages = asUser(user, () -> answered(chat.getId()));
+        final List<AiChatMessage> messages = asUser(user, () -> answered(chat));
 
         final ToolResultRecord timeline = result(messages, "activity_timeline");
         assertThat(timeline.error()).as(timeline.text()).isFalse();
@@ -628,11 +629,21 @@ class TestAskStroomAiActivityTimeline extends AbstractAiIntegrationTest {
         return ref;
     }
 
-    // The chat's messages once the run has answered (or failed) and has ended.
-    private List<AiChatMessage> answered(final int chatId) {
+    // The chat's messages once the run has answered (or failed) and has ended, the user agreeing to characterise
+    // with the model when asked (decided by the user, 2026-11-26: always asked first).
+    private List<AiChatMessage> answered(final AiChat chat) {
+        final int chatId = chat.getId();
         final Instant until = Instant.now().plus(Duration.ofMinutes(3));
         while (Instant.now().isBefore(until)) {
             final List<AiChatMessage> messages = aiService.getMessages(chatId);
+            for (final AiChatMessage message : messages) {
+                if (message.getMessageType() == AiMessageType.ELICITATION
+                    && JsonUtil.readValue(message.getMessage(), ElicitationRecord.class).status()
+                       == ElicitationRecord.Status.PENDING) {
+                    askStroomAIService.answerElicitation(new AnswerAiElicitationRequest(chat, message.getId(),
+                            "ACCEPT", Map.of("classify", "Characterise")));
+                }
+            }
             final Optional<AiChatMessage> last = messages.stream()
                     .filter(message -> message.getMessageType() == AiMessageType.AI_RESPONSE
                                        || message.getMessageType() == AiMessageType.ERROR)

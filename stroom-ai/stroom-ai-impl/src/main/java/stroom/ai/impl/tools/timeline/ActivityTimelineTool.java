@@ -1767,7 +1767,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         }
         final List<XmlPaths> paths = new ArrayList<>();
         typeRead.forEach((i, count) -> paths.add(new XmlPaths(sources.get(i).name(), sources.get(i).doc().getName(),
-                TYPE_PATHS, count)));
+                unmappedTypePaths(fields.getOrDefault(i, Fields.NONE)), count)));
         contentRead.forEach((i, count) -> paths.add(new XmlPaths(sources.get(i).name(),
                 sources.get(i).doc().getName(), CONTENT_PATHS, count)));
         // The events whose XML was read for their fields aren't read again.
@@ -1866,6 +1866,24 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
 
     // True if the index's fields settle the event's role: its element (and Action) for the schema's table, or an
     // event code something gives a role.
+    // The paths of an event's type the source's index doesn't map, to add to its plan so the timeline reads them
+    // from the index: chat 197 named TypeId too, which its index held.
+    static List<String> unmappedTypePaths(final Fields fields) {
+        final List<String> unmapped = new ArrayList<>();
+        if (fields.eventType() == null) {
+            unmapped.add(TYPE_PATHS.get(0));
+        }
+        if (fields.element() == null) {
+            unmapped.add(TYPE_PATHS.get(1));
+        }
+        if (fields.action() == null) {
+            unmapped.add(TYPE_PATHS.get(2));
+        }
+        return unmapped.isEmpty()
+                ? TYPE_PATHS
+                : List.copyOf(unmapped);
+    }
+
     private static boolean typedByIndex(final Fields fields,
                                         final Map<String, String> extra,
                                         final TypeRoleLookup roles,
@@ -2699,7 +2717,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final boolean runAnyway = booleanArg(request, RUN_ANYWAY_ARG, false);
         final ActivityCharacterisation.Settings settings = new ActivityCharacterisation.Settings(
                 Math.max(1, config.getCharacteriseExcerptChars()), Math.max(1, config.getCharacteriseBatchItems()),
-                Math.max(0, config.getCharacteriseMaxItems()), runAnyway, Math.max(1, config.getJoinWorkers()),
+                Math.max(0, config.getCharacteriseMaxItems()), runAnyway, Math.max(1, config.getCharacteriseWorkers()),
                 zone.zone(), corrections, readCache(workspace, cachePath),
                 (items, budget, calls) -> askClassify(request, context, items, budget, calls, runAnyway));
         final Characterised characterised = ActivityCharacterisation.characterise(timeline, byId, names,

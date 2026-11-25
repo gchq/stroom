@@ -130,6 +130,7 @@ appConfig:
       characteriseBatchItems: 50
       characteriseExcerptChars: 500
       characteriseMaxItems: 1000
+      characteriseWorkers: 4
       eqlDefaultMaxspan: "PT5M"
       joinMaxKeys: 1000000
       joinMaxRows: 10000000

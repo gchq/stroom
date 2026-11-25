@@ -964,7 +964,8 @@ class TestActivityTimelineAnySource {
         assertThat((Map<String, Object>) source.get("roles_from")).containsOnlyKeys(TypeRoleLookup.FROM_SCHEMA);
         assertThat((List<Map<String, Object>>) ((Map<String, Object>) result.get("events_xml")).get("paths_read"))
                 .singleElement().satisfies(paths -> assertThat(paths).containsEntry("paths",
-                        ActivityTimelineTool.TYPE_PATHS).containsEntry("events", 2L));
+                        // Not TypeId: the AGENTS doc's TypeId field holds it (chat 197: named though indexed).
+                        List.of("EventDetail/* (the element)", "EventDetail/*/Action")).containsEntry("events", 2L));
         assertThat(files.content(FOLDER + ActivityTimelineTool.SPANS_FILE).orElseThrow())
                 .contains(",proc-start · notepad.exe,proc-start to proc-end,");
     }
@@ -1018,7 +1019,7 @@ class TestActivityTimelineAnySource {
                 .userQuestions(UserQuestions.NONE)
                 .limits(SessionLimits.lookedUp(() -> new AiWorkspaceConfig(null, null, null, null, null, null, null,
                         null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                        null, null, cap)))
+                        null, null, cap, null)))
                 .build();
     }
 
