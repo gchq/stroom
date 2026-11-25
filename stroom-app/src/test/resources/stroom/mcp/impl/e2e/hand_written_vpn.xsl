@@ -1,6 +1,6 @@
 <?xml version="1.1" encoding="UTF-8"?>
 <!-- A hand-written translation the tools never built: one template per event, chosen by match patterns on the
-     record. The source IP (src_ip) is not translated. -->
+     record. -->
 <xsl:stylesheet xmlns="event-logging:3" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stroom="stroom" xpath-default-namespace="http://www.w3.org/2013/XSL/json" version="3.0">
 
   <xsl:template match="/">

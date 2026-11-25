@@ -4,7 +4,9 @@ capabilities: [lifecycle, event_types, hand_written, several_feeds]
 # EVAL-104 is translated by a hand-written pipeline; EVAL-104-OLD, a retired gateway's feed, last received a stream
 # 200 days ago. The user wants it translated as well (its history matters). The right route surveys both, the
 # comparison says EVAL-104-OLD is dormant with its streams and dates, and promotion's one filter selects both. The
-# trap: the dormant feed dropped by its dates, or by its name.
+# trap: the dormant feed dropped by its dates, or by its name. The setup's XSLT (hand_written_vpn.xsl) no longer says in
+# its header that the source IP isn't translated: Haiku read that as a gap to fill (round 3, 2026-11-25) and added
+# EventSource/Client/IPAddress, which this case never asks for.
 promote: true
 setup:
   hand_written:
