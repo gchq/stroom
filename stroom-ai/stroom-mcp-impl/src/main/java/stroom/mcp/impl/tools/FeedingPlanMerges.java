@@ -110,12 +110,7 @@ class FeedingPlanMerges {
                 final Typed known = typed.putIfAbsent(leaf.name(), new Typed(type(leaf), other.name()));
                 if (known != null && !known.type().isEmpty() && !type(leaf).isEmpty()
                     && !known.type().equals(type(leaf))) {
-                    throw new ToolRefusal("Field '" + leaf.name() + "' is " + known.type() + " in the index plan of '"
-                                          + known.pipeline() + "' but " + type(leaf) + " in the plan of '" + other.name()
-                                          + "', and both write to index '" + indexName + "': one index maps a field "
-                                          + "one way, so no template serves both. Ask the user which type is meant "
-                                          + "and change the other pipeline's plan to it (draft_index_mapping, then "
-                                          + "save its indexing XSLT), or write the pipelines to separate indexes.");
+                    throw new ToolRefusal(conflict(leaf.name(), known, type(leaf), other.name(), indexName));
                 }
             }
             for (final PlannedField field : other.plan().fields()) {
@@ -128,6 +123,19 @@ class FeedingPlanMerges {
             }
         }
         return new Merged(own.withFields(fields), from);
+    }
+
+    // Why a template can't serve two plans typing a field differently, and what to do.
+    private static String conflict(final String field,
+                                   final Typed known,
+                                   final String type,
+                                   final String other,
+                                   final String indexName) {
+        return "Field '" + field + "' is " + known.type() + " in the index plan of '" + known.pipeline() + "' but "
+               + type + " in the plan of '" + other + "', and both write to index '" + indexName + "': one index "
+               + "maps a field one way, so no template serves both. Ask the user which type is meant and change the "
+               + "other pipeline's plan to it (draft_index_mapping, then save its indexing XSLT), or write the "
+               + "pipelines to separate indexes.";
     }
 
     // A field's type as an index maps it: case aside; "" for none.

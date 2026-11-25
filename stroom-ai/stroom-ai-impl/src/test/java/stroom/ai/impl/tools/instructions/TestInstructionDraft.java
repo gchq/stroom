@@ -101,9 +101,10 @@ class TestInstructionDraft {
 
     @Test
     void anIndexFedByPipelinesWhosePlansDifferOffersEachPipelinesField() {
+        final List<PlanField> plans = List.of(new PlanField("UserId", "A indexing"),
+                new PlanField("user.name", "B indexing"));
         final Facts facts = new Facts(List.of(), List.of(new IndexFacts("Proxy", "/Proxy", Set.of("UserId",
-                "user.name"), Map.of(), Map.of(), Map.of(InstructionRules.USER_FIELD, List.of(
-                new PlanField("UserId", "A indexing"), new PlanField("user.name", "B indexing"))))));
+                "user.name"), Map.of(), Map.of(), Map.of(InstructionRules.USER_FIELD, plans))));
 
         assertThat(InstructionDraft.plan("/Proxy", Map.of(), List.of(), facts).questions()).singleElement()
                 .satisfies(question -> assertThat(question.found()).isEqualTo("UserId (the index plan of 'A "

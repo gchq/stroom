@@ -48,7 +48,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.groups.Tuple.tuple;
+import static org.assertj.core.api.Assertions.tuple;
 
 /// Each XSLT of a pipeline classified as pre-process, translation, decoration or indexing: by content, by its place
 /// in the chain, and exactly by stepping a sample record.
