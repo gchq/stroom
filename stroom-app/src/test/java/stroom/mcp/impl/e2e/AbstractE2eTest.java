@@ -16,7 +16,9 @@
 
 package stroom.mcp.impl.e2e;
 
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.processing.MergedPipeline;
 import stroom.ai.shared.AiToolAccess;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
@@ -55,6 +57,7 @@ import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineLink;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.xslt.XsltStore;
@@ -188,6 +191,8 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
     private XsltStore xsltStore;
     @Inject
     private PipelineStore pipelineStore;
+    @Inject
+    private DocumentAccess pipelineAccess;
     @Inject
     private DocumentationStore documentationStore;
     @Inject
@@ -1399,6 +1404,31 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
                             final List<PipelineProperty> properties,
                             final String streamType,
                             final String sample) {
+        return handWritten(folder, feed, xslt, name, template, properties, streamType, sample, true);
+    }
+
+    /// As [#handWritten(String, String, String, String, String, List, String, String)], the pipeline checked to
+    /// step clean only where asked: one a pre-processor is still to be put before ([#withPreProcessor]) may not.
+    ///
+    /// @param folder     The folder, e.g. `System/Feeds/HandVpn`.
+    /// @param feed       The feed's name.
+    /// @param xslt       The translation's code.
+    /// @param name       The XSLT's and the pipeline's name.
+    /// @param template   The translation template the pipeline is a child of.
+    /// @param properties Its further properties.
+    /// @param streamType The stream type its processor filter reads.
+    /// @param sample     The feed's sample.
+    /// @param checked    True to check the pipeline steps the sample clean.
+    /// @return What was made.
+    HandWritten handWritten(final String folder,
+                            final String feed,
+                            final String xslt,
+                            final String name,
+                            final String template,
+                            final List<PipelineProperty> properties,
+                            final String streamType,
+                            final String sample,
+                            final boolean checked) {
         final ExplorerNode node = folder(folder);
         create(FeedDoc.TYPE, feed, node);
         final long raw = storeParts(feed, List.of(Map.entry(Map.of("Feed", feed), sample)));
@@ -1415,9 +1445,41 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
                 .description("Written by hand")
                 .build()));
         feedFilter(feed, streamType, pipeline.getUuid());
-        assertThat(stepSample(pipeline.getUuid(), List.of(raw)).get("verdict")).as("the hand-written pipeline works")
-                .isEqualTo("clean");
+        if (checked) {
+            assertThat(stepSample(pipeline.getUuid(), List.of(raw)).get("verdict"))
+                    .as("the hand-written pipeline works").isEqualTo("clean");
+        }
         return new HandWritten(raw, pipeline.getUuid(), xsltNode.getUuid());
+    }
+
+    /// Puts a pre-processor XSLT between a pipeline's parser and its translation, as an environment might: the
+    /// pipeline's own layer adds the `preFilter` element, links it in before `translationFilter`, and sets both
+    /// XSLTs and the properties given.
+    ///
+    /// @param pipeline    The pipeline.
+    /// @param pre         The pre-processor's XSLT.
+    /// @param translation The translation's XSLT.
+    /// @param properties  The pipeline's other own properties, kept.
+    void withPreProcessor(final String pipeline,
+                          final String pre,
+                          final String translation,
+                          final List<PipelineProperty> properties) {
+        final MergedPipeline merged = asUser(admin, () -> MergedPipeline.load(pipelineAccess, pipeline)
+                .orElseThrow());
+        final List<String> chain = merged.chain();
+        final String before = chain.get(chain.indexOf("translationFilter") - 1);
+        asUser(admin, () -> {
+            final PipelineDoc doc = pipelineStore.readDocument(new DocRef(PipelineDoc.TYPE, pipeline));
+            final PipelineDataBuilder data = new PipelineDataBuilder()
+                    .addElement(new PipelineElement("preFilter", "XSLTFilter"))
+                    .removeLink(new PipelineLink(before, "translationFilter"))
+                    .addLink(new PipelineLink(before, "preFilter"))
+                    .addLink(new PipelineLink("preFilter", "translationFilter"))
+                    .addProperty(property("preFilter", "xslt", new DocRef(XsltDoc.TYPE, pre)))
+                    .addProperty(property("translationFilter", "xslt", new DocRef(XsltDoc.TYPE, translation)));
+            properties.forEach(data::addProperty);
+            pipelineStore.writeDocument(doc.copy().pipelineData(data.build()).build());
+        });
     }
 
     /// A pipeline property naming a document, as Stroom keeps it.
