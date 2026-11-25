@@ -193,6 +193,8 @@ class PromotionRoleRoots {
         final Map<String, String> ownFolders = trialFolders(plan, feedsOwn, placed, markers);
         final boolean feedsOwnGiven = feedsOwnFolderGiven(docs, destinations, placed.source());
         final Map<String, Object> recorded = buildRecords.promotionRoots(build);
+        final Set<String> checked = buildRecords.checkedPromotionRoots(build);
+        final List<String> dropped = new ArrayList<>();
         final List<RoleRoot> out = new ArrayList<>();
         final Map<String, Consent.OpenQuestion> questions = new LinkedHashMap<>();
         final Map<String, Map<String, String>> rootByLabel = new LinkedHashMap<>();
@@ -208,7 +210,21 @@ class PromotionRoleRoots {
             // The feed's own folder given (or chosen) as a role's root is the feed's own location (seen in a user test,
             // 2026-11-18: read as a root elsewhere, it gave <feed>/<feed>/V1.0 with no role folders).
             final String given = roleKeyed(destinations, role);
-            final Object chosen = recorded.get(role);
+            Object chosen = recorded.get(role);
+            final String recordedProblem = chosen instanceof final String root && !root.isBlank()
+                                           && !checked.contains(role)
+                    ? recordedFolderProblem(root)
+                    : null;
+            if (recordedProblem != null) {
+                // Recorded before typed answers were checked (seen in chat 195: "System/feed's location"): never
+                // laid out as the user's choice, but dropped and asked again.
+                LOGGER.debug(() -> LogUtil.message("Role location {} for build {} dropped: {}", role, build,
+                        recordedProblem));
+                buildRecords.forgetPromotionRoot(build, role);
+                dropped.add("The location recorded for " + role + ", '" + chosen + "', " + recordedProblem
+                            + ": choose again.");
+                chosen = null;
+            }
             if (given != null) {
                 final String root = PromotionLayout.givenRoot(given, feedFolder);
                 record(build, role, root, chosen);
@@ -232,7 +248,7 @@ class PromotionRoleRoots {
             }
         }
         askRoleRoots(call, context, build, feedFolder, questions, rootByLabel,
-                feedKeyCoversRoles(docs, placed.source())).forEach((role, root) ->
+                feedKeyCoversRoles(docs, placed.source()), dropped).forEach((role, root) ->
                 out.replaceAll(each -> each.role().equals(role)
                         ? new RoleRoot(role, root, "as the user chose", each.options(), false, null)
                         : each));
@@ -248,13 +264,16 @@ class PromotionRoleRoots {
                                              final String feedFolder,
                                              final Map<String, Consent.OpenQuestion> questions,
                                              final Map<String, Map<String, String>> rootByLabel,
-                                             final boolean feedKeyCovers) {
+                                             final boolean feedKeyCovers,
+                                             final List<String> dropped) {
         if (questions.isEmpty()) {
             return Map.of();
         }
         final String asked = "Where the build's documents of each role go: choose a folder for each (the first is "
                              + "proposed), or '" + OTHER_FOLDER + "' and type its path.";
-        String intro = asked;
+        String intro = dropped.isEmpty()
+                ? asked
+                : String.join(" ", dropped) + " " + asked;
         for (int n = 1; n <= MAX_ROLE_ASKS; n++) {
             final Optional<Map<String, String>> answered = consent.chooseOrTypeEach(call, context,
                     PromoteBuildTool.NAME, intro, questions);
@@ -309,6 +328,20 @@ class PromotionRoleRoots {
             // No folder: said below.
         }
         return "'" + typed + "' is no folder path (e.g. System/Elastic Indices), nor a folder in System";
+    }
+
+    // Why a role's location recorded can't be used as a folder, or null if it can: as a typed answer is checked
+    // ([#typedFolderProblem]), read from System, as it was recorded.
+    private String recordedFolderProblem(final String root) {
+        final String path = root.strip();
+        final String fromSystem = path.regionMatches(true, 0, "System/", 0, "System/".length())
+                ? path.substring("System/".length())
+                : path;
+        return fromSystem.isBlank()
+                ? null
+                : typedFolderProblem(fromSystem) == null
+                        ? null
+                        : "is no folder path (e.g. System/Elastic Indices), nor a folder in System";
     }
 
     // A role's root recorded, replacing the one recorded before, where it differs.

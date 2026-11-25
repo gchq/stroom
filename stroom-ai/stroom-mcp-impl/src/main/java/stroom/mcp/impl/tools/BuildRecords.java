@@ -107,6 +107,9 @@ public class BuildRecords {
     public static final String INDEXING_CHOICES = "indexing_choices";
     /// The key of the roots the user chose for each role's documents at promotion.
     public static final String PROMOTION_ROOTS = "promotion_roots";
+    /// The key of the roles whose root was recorded after it was checked to be a folder (a role recorded before
+    /// typed answers were checked has none).
+    public static final String PROMOTION_ROOTS_CHECKED = "promotion_roots_checked";
     /// The record's key for the kind of work the build was started as, when it was named: `events`, `discovery`,
     /// `reference` or `assessment` (a feed surveyed and its source types registered, nothing onboarded).
     public static final String KIND = "kind";
@@ -365,6 +368,21 @@ public class BuildRecords {
     /// @param root  The folder chosen, from System.
     /// @return The record as saved.
     public Map<String, Object> rememberPromotionRoot(final String build, final String role, final String root) {
+        return rememberPromotionRoot(build, role, root, true);
+    }
+
+    /// Records where a role's documents go at promotion.
+    ///
+    /// @param build   A build's name.
+    /// @param role    The role, e.g. `Indexing`.
+    /// @param root    The folder, from System.
+    /// @param checked True if it was checked to be a folder, as every root is now; false only for one recorded as
+    ///                before typed answers were checked.
+    /// @return The record as saved.
+    Map<String, Object> rememberPromotionRoot(final String build,
+                                              final String role,
+                                              final String root,
+                                              final boolean checked) {
         final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
         return save(build, found.orElse(null), state -> {
             final Map<String, Object> roots = state.get(PROMOTION_ROOTS) instanceof final Map<?, ?> earlier
@@ -372,7 +390,51 @@ public class BuildRecords {
                     : new LinkedHashMap<>();
             roots.put(role, root);
             state.put(PROMOTION_ROOTS, roots);
+            final Set<String> roles = checkedRoles(state);
+            if (checked) {
+                roles.add(role);
+            } else {
+                roles.remove(role);
+            }
+            state.put(PROMOTION_ROOTS_CHECKED, new ArrayList<>(roles));
         });
+    }
+
+    /// @param build A build's name.
+    /// @return The roles whose root was recorded after it was checked to be a folder.
+    public Set<String> checkedPromotionRoots(final String build) {
+        return NullSafe.isBlankString(build)
+                ? Set.of()
+                : checkedRoles(load(build));
+    }
+
+    /// Forgets where a role's documents go at promotion: a location recorded that is no folder, to be asked again.
+    ///
+    /// @param build A build's name.
+    /// @param role  The role, e.g. `Indexing`.
+    /// @return The build's state as saved.
+    public Map<String, Object> forgetPromotionRoot(final String build, final String role) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> {
+            if (state.get(PROMOTION_ROOTS) instanceof final Map<?, ?> earlier) {
+                final Map<String, Object> roots = new LinkedHashMap<>(asMap(earlier));
+                roots.remove(role);
+                state.put(PROMOTION_ROOTS, roots);
+            }
+            final Set<String> roles = checkedRoles(state);
+            if (roles.remove(role)) {
+                state.put(PROMOTION_ROOTS_CHECKED, new ArrayList<>(roles));
+            }
+        });
+    }
+
+    // The roles a state records as checked.
+    private static Set<String> checkedRoles(final Map<String, Object> state) {
+        final Set<String> roles = new LinkedHashSet<>();
+        if (state.get(PROMOTION_ROOTS_CHECKED) instanceof final List<?> list) {
+            list.forEach(role -> roles.add(String.valueOf(role)));
+        }
+        return roles;
     }
 
     /// @param build A build's name.

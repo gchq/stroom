@@ -468,6 +468,39 @@ class TestPromoteBuildTool {
     }
 
     @Test
+    void aRecordedLocationThatIsNoFolderIsDroppedAndAskedAgain() {
+        // Chat 195: "System/feed's location", recorded in an earlier chat before typed answers were checked, was
+        // laid out "as the user chose".
+        endpointFeed();
+        world.records().rememberPromotionRoot(BUILD, "Events", "System/feed's location", false);
+        // A recorded folder path is kept, whether or not it is there yet.
+        world.records().rememberPromotionRoot(BUILD, "Indexing", "System/Elastic Indices/New", false);
+        final SequencedUser user = new SequencedUser(List.of((schema, intro) -> answerAll(schema, null, null)));
+
+        final Map<String, Object> shown = docs.call(tool, asking(user), DocumentationWorld.args(args(Map.of(),
+                null)));
+
+        assertThat(user.schemas()).hasSize(1);
+        assertThat(String.valueOf(user.schemas().getFirst())).contains("Where Events goes")
+                .doesNotContain("Where Indexing goes");
+        assertThat(user.intros().getFirst()).contains("The location recorded for Events, 'System/feed's location', "
+                                                      + "is no folder path");
+        assertThat(String.valueOf(shown.get("layout"))).doesNotContain("feed's location")
+                .contains("- Events: System/Feeds/Endpoint/Events/V1.0 (as the user chose)")
+                .contains("- Indexing: System/Elastic Indices/New/Endpoint/V1.0 (as the user chose)");
+        assertThat(world.records().promotionRoots(BUILD)).isEqualTo(Map.of("Events", "System/Feeds", "Indexing",
+                "System/Elastic Indices/New"));
+        // Not asked, it is dropped all the same: the proposal is laid out, to be reviewed.
+        world.records().rememberPromotionRoot(BUILD, "Events", "System/feed's location", false);
+        assertThat(String.valueOf(review(Map.of()).get("layout"))).doesNotContain("feed's location");
+        assertThat(world.records().promotionRoots(BUILD)).doesNotContainKey("Events");
+        // One recorded since answers are checked is laid out as chosen: a new folder in System, say.
+        world.records().rememberPromotionRoot(BUILD, "Events", "System/Custom Feeds");
+        assertThat(String.valueOf(review(Map.of()).get("layout")))
+                .contains("- Events: System/Custom Feeds/Endpoint/V1.0 (as the user chose)");
+    }
+
+    @Test
     void anAnswerThatIsNeverAFolderIsRefusedWithNothingRecorded() {
         endpointFeed();
         final SequencedUser user = new SequencedUser(List.of(
@@ -496,7 +529,6 @@ class TestPromoteBuildTool {
         endpointFeed();
         world.records().rememberPromotionRoot(BUILD, "Events", "System/feed's location");
         world.records().rememberPromotionRoot(BUILD, "Indexing", "System/feed's location");
-        assertThat(String.valueOf(review(Map.of()).get("layout"))).contains("feed's location");
 
         final Map<String, Object> corrected = review(Map.of("Feed", "/Feeds/Endpoint"));
 
