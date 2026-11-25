@@ -34,9 +34,10 @@ import java.util.function.Supplier;
         signatures = @FunctionSignature(
                 category = FunctionCategory.AGGREGATE,
                 description = "Deprecated, use " + CountDistinct.NAME + " or " + DCount.NAME + " instead as they " +
-                        "take far less space and time if there are many unique values. Rename a table builder " +
-                        "rule when changing it to use either, as they can't read the values that it has stored. " +
-                        "Determines the number of unique values across all grouped records.",
+                        "are far quicker and take less space if there are many unique values. Don't change an " +
+                        "existing table builder rule to use either, as they can't read the values that it has " +
+                        "stored. Make the change in a copy of the rule instead. Determines the number of unique " +
+                        "values across all grouped records.",
                 args = @FunctionArg(
                         name = "values",
                         description = "Grouped field or the result of another function",

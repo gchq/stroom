@@ -10,10 +10,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * `countUnique()` is deprecated, though it works as before. Use the new `countDistinct()` or `dcount()` instead.
 
-  **If you change a table builder rule to use either then also rename the rule**, which gives it a new, empty
-  store. The values that the rule has already stored for `countUnique()` can't be read by them, so its counts
-  would be wrong or it would stop. The same applies to changing between `countDistinct()` and `dcount()`, or
-  changing the accuracy of `dcount()`.
+  **Don't change an existing table builder rule to use either.** The values that the rule has already stored for
+  `countUnique()` can't be read by them, so its counts would be wrong or it would stop. Make the change in a copy
+  of the rule and disable the original. The copy has its own store and processes streams again from its minimum
+  stream create time, so it can raise detections that the original has already raised. The same applies to
+  changing between `countDistinct()` and `dcount()`, or changing the accuracy of `dcount()`.
+
+  Renaming a rule also gives it a new, empty store, but loses what it had stored and doesn't process those streams
+  again.
 
 ## [v7.14]
 
