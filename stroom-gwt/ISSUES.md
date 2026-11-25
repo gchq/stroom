@@ -3054,6 +3054,49 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
 
 Moved here from the sections above (6 November 2026), as they are fixed, with their headings unchanged so links to them still work:
 
+### The data pane was slow to change tab (Info, Data Preview, Meta)
+
+**Reproduced and fixed** 24 November 2026, on master's code: the meta browser in the workbench, with a
+30,000 character preview and instant replies.
+
+* `AbstractTabBar.setTabHidden` laid the whole bar out again even when nothing changed, and the data
+  pane calls it for all five tabs with each reply. Since `261dc10ed6` (4 November 2026, master only)
+  each layout also measured a separator three times, each of which makes the browser lay the page out.
+  The bar is now laid out only if a tab is shown or hidden, or one that isn't showing is chosen, and
+  measures the separator once. (7.14 lays out as often, but without the measuring.)
+* Each fetch waited 100 ms. Now only paging, and choosing a stream, waits. (The navigator disables the
+  button pressed until the reply, so for paging the wait only helps presses of different buttons.)
+* The text was set, and XML formatted, twice for each reply, and twice on going to Info, where it isn't
+  shown. Now once, and not on Info.
+* The child stream types were asked for again on leaving Info if the stream was chosen while on it.
+* A late reply for a tab or stream no longer chosen was shown until the right one came. Now dropped.
+* Found by a review of the fix, and fixed too: one stream's Info or classification could be shown for
+  another chosen while on Info (now none is until its own is known); a late reply for an event or stream chosen by its location; a late reply
+  replacing the "Stream does not exist" error; requests for each stream passed while moving through
+  them; View as Hex lost by visiting Info; a failed child types request sent again for each tab; and
+  an error on pressing a tab with no stream chosen.
+* The data retention rules were read from the database for each row of the stream lists, and twice for
+  Info (`addMatchingRetentionRuleInfo` called `getRules()`). Since `3bddd2d5e7`, so 7.13 and 7.14
+  have it too; it won't be fixed there (decided 24 November 2026).
+
+Going to Data Preview, from the click to the text being drawn (medians of a draft compile):
+192 ms before and 16 ms after, or 509 ms and 72 ms with the CPU slowed four times; to Info, 40 ms and
+16 ms, or 178 ms and 87 ms.
+
+Stories: `Widgets/Editors & Viewers/SourceViewer` `ChangeTab`, `ChooseStreamOnInfo`, `ChooseLocation`,
+`ChildTypesFail` and `StreamNavigation`; test:
+`TestStreamAttributeMapRetentionRuleDecoratorFactory`.
+
+### A failed data fetch wasn't shown in the data pane, nor the classification on Info
+
+**Confirmed** by reading the code **and fixed** 24 November 2026 (the same on 7.14). A failed fetch showed
+no error, and left the navigator button pressed disabled. Its error is now shown in place of the data,
+on the tab chosen, and Refresh tries again. A stream's classification came only with its data, so Info
+had none (or another stream's) until the data had been shown: the server now gives it with the Info.
+
+Stories: `Widgets/Editors & Viewers/SourceViewer` `FetchFails` and `ChooseStreamOnInfo`; test:
+`TestDataServiceImpl`.
+
 ### Editing an activity didn't save the change (on master too)
 
 **Fixed (27 October 2026, in wave 11), reproduced in a story.** OK on Edit Activity validated what

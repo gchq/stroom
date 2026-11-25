@@ -90,7 +90,8 @@ class StreamAttributeMapRetentionRuleDecoratorFactory {
 
     class StreamAttributeMapRetentionRuleDecorator {
 
-        final List<DataRetentionRule> rules;
+        // Read once for all the rows decorated, as reading them goes to the database
+        private final List<DataRetentionRule> rules;
 
         public StreamAttributeMapRetentionRuleDecorator(final List<DataRetentionRule> rules) {
             this.rules = rules;
@@ -100,8 +101,6 @@ class StreamAttributeMapRetentionRuleDecoratorFactory {
             LOGGER.debug("addMatchingRetentionRuleInfo() - meta: {}, attributeMap: {}", meta, attributeMap);
             try {
                 int index = -1;
-
-                final List<DataRetentionRule> rules = getRules();
 
                 // If there are no active rules, then we aren't going to process anything.
                 if (NullSafe.hasItems(rules)) {

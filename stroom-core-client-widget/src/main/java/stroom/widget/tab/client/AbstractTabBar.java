@@ -255,7 +255,12 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
 
     protected void keyboardSelectTab(final TabData tabData) {
         keyboardSelectedTab = tabData;
-        onResize();
+        if (visibleTabs.contains(tabData)) {
+            // As selectTab: only the tab stop moves
+            updateTabStyles();
+        } else {
+            onResize();
+        }
     }
 
     private void updateTabCount() {
@@ -381,9 +386,11 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
                     .map(this::getTab)
                     .filter(tab -> tab != null && !tab.isHidden())
                     .collect(Collectors.toList());
-            fitTabs(shown, getTabSpaceWidth() - getTabSpacing() * Math.max(0, shown.size() - 1));
+            // Measured once, as the browser lays the page out to measure it
+            final int separatorWidth = getSeparatorWidth();
+            fitTabs(shown, getTabSpaceWidth() - getTabSpacing(separatorWidth) * Math.max(0, shown.size() - 1));
 
-            final Set<TabData> displayableTabs = getDisplayableTabs();
+            final Set<TabData> displayableTabs = getDisplayableTabs(separatorWidth);
 
             final int tabCount = tabs.stream().map(this::getTab).filter(Predicate.not(AbstractTab::isHidden))
                     .collect(Collectors.toSet()).size();
@@ -465,11 +472,11 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
      * preferring the direction containing the more recently selected adjacent tab.
      * Hidden tabs are pre-filtered so the walk logic operates on a clean list.
      */
-    private Set<TabData> getDisplayableTabs() {
-        final int selectorWidth = getSelectorRoom();
+    private Set<TabData> getDisplayableTabs(final int separatorWidth) {
+        final int selectorWidth = getSelectorRoom(separatorWidth);
         final int totalWidth = getTabSpaceWidth();
         // Between two tabs: their gap and any separator (as buildTabBar places them)
-        final int tabGap = getTabSpacing();
+        final int tabGap = getTabSpacing(separatorWidth);
 
         // Pre-filter: only consider non-hidden tabs
         final List<TabData> candidateTabs = tabs.stream()
@@ -1164,10 +1171,12 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
     @Override
     public void setTabHidden(final TabData tabData, final boolean hidden) {
         final AbstractTab tab = getTab(tabData);
-        if (tab != null) {
+        // Laying the bar out makes the browser lay the page out, so only if the tab changes: the data
+        // pane says which of its tabs are hidden each time its data arrives
+        if (tab != null && tab.isHidden() != hidden) {
             tab.setHidden(hidden);
+            onResize();
         }
-        onResize();
     }
 
     @Override
@@ -1210,8 +1219,8 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
     }
 
     // The room between two tabs: their gap and the separator between them, if the bar has them
-    private int getTabSpacing() {
-        return getTabGap() + getSeparatorWidth();
+    private int getTabSpacing(final int separatorWidth) {
+        return getTabGap() + separatorWidth;
     }
 
     // A separator's width, measured on one put in the tab list for the purpose, or 0 if the bar
@@ -1229,9 +1238,8 @@ public abstract class AbstractTabBar extends ComplexPanel implements TabBar, Req
 
     // The room the overflow selector takes after the last tab shown: the last tab's gap, the
     // selector's offset, and the selector with its margin before it (tab-selector.css)
-    private int getSelectorRoom() {
+    private int getSelectorRoom(final int separatorWidth) {
         final Element selector = getTabSelector().getElement();
-        final int separatorWidth = getSeparatorWidth();
         if (separatorWidth > 0) {
             CssProperties.set(selector, SELECTOR_SEPARATOR_WIDTH, separatorWidth + "px");
         }
