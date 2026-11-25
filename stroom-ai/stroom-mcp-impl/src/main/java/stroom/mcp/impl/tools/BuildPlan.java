@@ -233,8 +233,9 @@ public class BuildPlan {
             "processed:disabled", "processed:running", "index_template:unstepped", "indexed:disabled",
             "indexed:unstepped", "indexed:running", "indexed:no_index", "indexed:finished", "documented:edited",
             "feed:reference", "samples:reference", "reference_processed:disabled", "reference_processed:running",
-            "stepped:no_reference", "index:discovery", "translation:redraft", CATALOGUE + ":offer", CATALOGUE + ":existing_copy",
-            CATALOGUE + ":existing_rebuild", CATALOGUE + ":existing_confirm", CATALOGUE + ":in_place_confirm");
+            "stepped:no_reference", "index:discovery", "translation:redraft", CATALOGUE + ":offer",
+            CATALOGUE + ":existing_copy", CATALOGUE + ":existing_rebuild", CATALOGUE + ":existing_confirm",
+            CATALOGUE + ":in_place_confirm");
     // The steps before the translation, which a reference-only build keeps.
     private static final Set<String> SOURCE_STEPS = Set.of("feed", "samples", "converter");
 
