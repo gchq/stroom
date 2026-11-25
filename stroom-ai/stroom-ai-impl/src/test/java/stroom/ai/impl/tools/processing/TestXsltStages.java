@@ -46,12 +46,13 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
-/// Each XSLT of a pipeline classified as pre-process, translation, decoration or indexing: by content, by its place
-/// in the chain, and exactly by stepping a sample record.
+/// Each XSLT of a pipeline classified as pre-process, translation, decoration, output or indexing: by content, by
+/// its place in the chain, and exactly by stepping a sample record.
 class TestXsltStages {
 
     private static final String XSL = "xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"3.0\"";
@@ -79,6 +80,21 @@ class TestXsltStages {
                                    + "xmlns=\"records:2\"><xsl:template match=\"/Events\"><records>"
                                    + "<xsl:for-each select=\"Event\"><record/></xsl:for-each></records>"
                                    + "</xsl:template></xsl:stylesheet>";
+    /// Events in the fork flattened to `data` name/value pairs, still in the fork's namespace: a hand-off to the
+    /// next XSLT, writing no `Events` or `Event` (seen in a reference environment's Kafka pipeline).
+    static final String FLATTENER = "<xsl:stylesheet " + XSL + " xpath-default-namespace=\"" + FORK + "\" "
+                                    + "xmlns=\"" + FORK + "\"><xsl:template match=\"/Events\"><records>"
+                                    + "<xsl:apply-templates select=\"Event\"/></records></xsl:template>"
+                                    + "<xsl:template match=\"Event\"><record>"
+                                    + "<data name=\"time\" value=\"{EventTime/TimeCreated}\"/>"
+                                    + "<data name=\"user\" value=\"{EventSource/User/Id}\"/>"
+                                    + "</record></xsl:template></xsl:stylesheet>";
+    /// The flattened pairs to Kafka records.
+    static final String KAFKA = "<xsl:stylesheet " + XSL + " xpath-default-namespace=\"" + FORK + "\" "
+                                + "xmlns=\"kafka-records:2\"><xsl:template match=\"/records\"><kafkaRecords>"
+                                + "<xsl:for-each select=\"record\"><kafkaRecord topic=\"t\">"
+                                + "<xsl:value-of select=\"data[@name='user']/@value\"/></kafkaRecord>"
+                                + "</xsl:for-each></kafkaRecords></xsl:template></xsl:stylesheet>";
 
     private static final DocRef TEMPLATE = new DocRef(PipelineDoc.TYPE, "t", "Event Data (JSON)");
     private static final DocRef CHILD = new DocRef(PipelineDoc.TYPE, "p", "Acme-V1.0-EVENTS");
@@ -202,6 +218,85 @@ class TestXsltStages {
     }
 
     @Test
+    void aFlattenerAfterTheTranslationIsAnOutputNotADecoration() {
+        // Seen in a reference environment: a translation to the fork, a flattener writing data pairs in the fork's
+        // namespace, then the Kafka XSLT. The flattener reads Events and writes no Events or Event.
+        forkHeld();
+        xslt("forked", "Forked translation", TRANSLATION.replace(EVENTS, FORK), true);
+        xslt("flat", "Flattener", FLATTENER, true);
+        xslt("kafka", "Kafka records", KAFKA, true);
+        pipeline(CHILD, null, List.of("translationFilter", "flattenFilter", "kafkaOutputFilter"),
+                Map.of("translationFilter", "forked", "flattenFilter", "flat", "kafkaOutputFilter", "kafka"));
+
+        assertThat(stages.classify(merged("p")))
+                .extracting(StagedXslt::element, StagedXslt::stage)
+                .containsExactly(tuple("translationFilter", Stage.TRANSLATION),
+                        tuple("flattenFilter", Stage.OUTPUT),
+                        tuple("kafkaOutputFilter", Stage.INDEXING));
+        assertThat(XsltStages.first(stages.classify(merged("p")), Stage.OUTPUT).orElseThrow().toMap())
+                .containsEntry("stage", "output");
+
+        // An Events feed's pipeline, with no translation of its own: the same.
+        pipeline(CHILD, null, List.of("flattenFilter", "kafkaOutputFilter"),
+                Map.of("flattenFilter", "flat", "kafkaOutputFilter", "kafka"));
+        assertThat(stages.classify(merged("p"))).extracting(StagedXslt::stage)
+                .containsExactly(Stage.OUTPUT, Stage.INDEXING);
+    }
+
+    @Test
+    void aSteppedFlattenerIsAnOutput() {
+        forkHeld();
+        xslt("forked", "Forked translation", TRANSLATION.replace(EVENTS, FORK), true);
+        xslt("flat", "Flattener", FLATTENER, true);
+        xslt("kafka", "Kafka records", KAFKA, true);
+        pipeline(CHILD, null, List.of("translationFilter", "flattenFilter", "kafkaOutputFilter"),
+                Map.of("translationFilter", "forked", "flattenFilter", "flat", "kafkaOutputFilter", "kafka"));
+        final String events = "<Events xmlns=\"" + FORK + "\"><Event/></Events>";
+        final String flattened = "<records xmlns=\"" + FORK + "\"><record><data name=\"user\" value=\"u\"/>"
+                                 + "</record></records>";
+        final Map<String, SharedElementData> elements = new LinkedHashMap<>();
+        elements.put("translationFilter", data("<map xmlns=\"" + JSON + "\"/>", events));
+        elements.put("flattenFilter", data(events, flattened));
+        elements.put("kafkaOutputFilter", data(flattened, "<kafkaRecords xmlns=\"kafka-records:2\"/>"));
+        Mockito.when(steppingService.step(Mockito.any())).thenReturn(new SteppingResult("s", null, null,
+                new StepLocation(7L, 0L, 1L), new SharedStepData(null, elements), null, true, null, false, true));
+
+        assertThat(stages.classify(merged("p"), pipelineDoc("p"), 7L))
+                .extracting(StagedXslt::stage, StagedXslt::how)
+                .containsExactly(tuple(Stage.TRANSLATION, How.STEPPED), tuple(Stage.OUTPUT, How.STEPPED),
+                        tuple(Stage.INDEXING, How.STEPPED));
+    }
+
+    @Test
+    void anOutputReadsEventsAndWritesNoEventsOrEvent() {
+        final Set<String> namespaces = Set.of(EVENTS, FORK);
+
+        assertThat(XsltStages.isOutput(FLATTENER, namespaces)).as("a flattener").isTrue();
+        assertThat(XsltStages.isOutput(INDEXING, namespaces)).as("an indexing XSLT").isTrue();
+        assertThat(XsltStages.isOutput(DECORATION, namespaces)).as("a decoration copying the Events").isFalse();
+        assertThat(XsltStages.isOutput("<xsl:stylesheet " + XSL + " xpath-default-namespace=\"" + FORK + "\" "
+                                       + "xmlns=\"" + FORK + "\"><xsl:template match=\"/Events\"><Events>"
+                                       + "<xsl:copy-of select=\"Event\"/></Events></xsl:template>"
+                                       + "</xsl:stylesheet>", namespaces)).as("a decoration writing Events").isFalse();
+        assertThat(XsltStages.isOutput("<xsl:stylesheet " + XSL + " xpath-default-namespace=\"" + EVENTS + "\">"
+                                       + "<xsl:template match=\"/\"><xsl:element name=\"Event\" namespace=\""
+                                       + EVENTS + "\"/></xsl:template></xsl:stylesheet>", namespaces))
+                .as("Event written with xsl:element").isFalse();
+        assertThat(XsltStages.isOutput(TRANSLATION, namespaces)).as("a translation").isFalse();
+        // A shared module writing a fragment of an Event from records reads no Events.
+        assertThat(XsltStages.isOutput("<xsl:stylesheet " + XSL + " xmlns=\"" + FORK + "\"><xsl:template "
+                                       + "name=\"source\"><EventSource><Generator>g</Generator></EventSource>"
+                                       + "</xsl:template></xsl:stylesheet>", namespaces))
+                .as("a shared module").isFalse();
+        // Reading Events by a prefixed match.
+        assertThat(XsltStages.isOutput("<xsl:stylesheet " + XSL + " xmlns:e=\"" + FORK + "\"><xsl:template "
+                                       + "match=\"e:Event\"><data name=\"a\" value=\"b\"/></xsl:template>"
+                                       + "</xsl:stylesheet>", namespaces)).isTrue();
+        assertThat(XsltStages.isOutput("<xsl:stylesheet", namespaces)).as("not well-formed").isFalse();
+        assertThat(XsltStages.isOutput(null, namespaces)).isFalse();
+    }
+
+    @Test
     void steppingASampleRecordSaysExactlyWhereTheEventsBegin() {
         // Written with xsl:element, its namespace computed: its content can't tell it writes Events.
         xslt("computed", "Computed translation", "<xsl:stylesheet " + XSL + "><xsl:param name=\"ns\"/>"
@@ -260,6 +355,12 @@ class TestXsltStages {
     }
 
     // ------------------------------------------------------------------------------------------------
+
+    private void forkHeld() {
+        final XmlSchemaDoc fork = Mockito.mock(XmlSchemaDoc.class);
+        Mockito.when(fork.getNamespaceURI()).thenReturn(FORK);
+        Mockito.when(heldSchemas.forks()).thenReturn(List.of(fork));
+    }
 
     private void xslt(final String uuid, final String name, final String code, final boolean canView) {
         fixture.add(new DocRef(XsltDoc.TYPE, uuid, name), XsltDoc.builder().uuid(uuid).name(name).data(code).build(),

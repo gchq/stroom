@@ -38,6 +38,7 @@ import org.w3c.dom.Element;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -54,6 +55,8 @@ import java.util.regex.Pattern;
 /// - **pre-process**: records to records, before the translation, e.g. unpacking nested JSON strings;
 /// - **translation**: records to Events, where the Events namespace first appears;
 /// - **decoration**: Events to Events, after the translation, e.g. adding `UserDetails/Id`;
+/// - **output**: Events to something else that a later XSLT reads, e.g. a flattener writing `data` name/value
+///   pairs for the XSLT that writes Kafka records (decided with the user, 2026-11-25);
 /// - **indexing**: Events to documents (an index's, or another output's).
 ///
 /// Every `XSLTFilter` of the pipeline as Stroom runs it ([MergedPipeline]: its own and its templates', in
@@ -62,6 +65,8 @@ import java.util.regex.Pattern;
 /// namespace of what it writes ([EventsNamespaces#writtenBy]) and of what it reads (its `xpath-default-namespace`,
 /// or a template matching an element of an Events namespace), helped by its place in the chain (an Events writer
 /// after the translation decorates; the last XSLT of a pipeline with an indexing filter, past the Events, indexes).
+/// An XSLT reading Events and writing no `Events` or `Event` ([#isOutput]) doesn't write Events, whatever namespace
+/// it writes in: a flattener may keep the Events namespace for the pairs it hands on.
 ///
 /// Read as the user: an XSLT the user can't view is classified by stepping alone, else [Stage#UNKNOWN].
 public class XsltStages {
@@ -138,6 +143,22 @@ public class XsltStages {
     /// @return The first XSLT of that stage (the translation, say), or empty if there is none.
     public static Optional<StagedXslt> first(final List<StagedXslt> staged, final Stage stage) {
         return of(staged, stage).stream().findFirst();
+    }
+
+    /// Whether an XSLT is an output, by its content: it reads Events (its `xpath-default-namespace` is an Events
+    /// namespace, or a template matches an element of one) and writes no `Events` or `Event` element, in any
+    /// namespace (as a literal result element, an `xsl:element` of that name, or an `xsl:copy` of what it reads).
+    /// A flattener is one, though it may write its pairs in the Events namespace; so is an indexing XSLT. A shared
+    /// module writing a fragment of an Event (`<EventSource>`) from records reads no Events, so it isn't.
+    ///
+    /// @param code       An XSLT's text.
+    /// @param namespaces The Events namespaces: event-logging's and this Stroom's forks'.
+    /// @return True if it is an output; false if it isn't, or isn't well-formed.
+    public static boolean isOutput(final String code, final Collection<String> namespaces) {
+        final String text = XsltVersionHistory.strip(NullSafe.string(code));
+        return XmlTrees.tryParse(text)
+                .map(root -> StageRules.isOutput(root, text, namespaces))
+                .orElse(false);
     }
 
     /// @return The Events namespaces: event-logging's, and those of this Stroom's forks of it.
@@ -222,6 +243,8 @@ public class XsltStages {
         TRANSLATION("translation"),
         /// Events to Events, after the translation.
         DECORATION("decoration"),
+        /// Events to something else a later XSLT reads, e.g. a flattener's name/value pairs.
+        OUTPUT("output"),
         /// Events to documents.
         INDEXING("indexing"),
         /// Not known: the XSLT can't be read, and wasn't stepped.
@@ -318,6 +341,8 @@ public class XsltStages {
     /// The rules, apart from Stroom.
     static final class StageRules {
 
+        private static final Set<String> EVENTS_ELEMENTS = Set.of("Events", "Event");
+
         private StageRules() {
             // Static only.
         }
@@ -331,15 +356,48 @@ public class XsltStages {
             if (root.isEmpty()) {
                 return new Reading(false, false, false, How.CONTENT);
             }
-            final boolean writesEvents = EventsNamespaces.writtenBy(text, namespaces).isPresent();
+            // An output may write in an Events namespace (a flattener's pairs) without writing Events.
+            final boolean writesEvents = EventsNamespaces.writtenBy(text, namespaces).isPresent()
+                                         && !isOutput(root.get(), text, namespaces);
             final boolean writesOther = !writesEvents && XmlTrees.descendantsAndSelf(root.get()).stream()
                     .anyMatch(element -> !XmlTrees.XSL.equals(element.getNamespaceURI()));
             return new Reading(readsEvents(root.get(), text, namespaces), writesEvents, writesOther, How.CONTENT);
         }
 
+        /// @param root       An XSLT's root element.
+        /// @param text       Its text.
+        /// @param namespaces The Events namespaces.
+        /// @return True if it reads Events and writes no `Events` or `Event` ([XsltStages#isOutput]).
+        static boolean isOutput(final Element root, final String text, final Collection<String> namespaces) {
+            return readsEvents(root, text, namespaces) && !writesEventsOrEvent(root);
+        }
+
+        // A literal Events or Event in any namespace, an xsl:element named one, or an xsl:copy (of what it reads,
+        // Events: a decoration's identity template).
+        private static boolean writesEventsOrEvent(final Element root) {
+            for (final Element element : XmlTrees.descendantsAndSelf(root)) {
+                if (!XmlTrees.XSL.equals(element.getNamespaceURI())) {
+                    if (EVENTS_ELEMENTS.contains(element.getLocalName())) {
+                        return true;
+                    }
+                } else if (XmlTrees.isXsl(element, "copy")) {
+                    return true;
+                } else if (XmlTrees.isXsl(element, "element")) {
+                    final String name = element.getAttribute("name").strip();
+                    final String local = name.substring(name.indexOf(':') + 1);
+                    if (EVENTS_ELEMENTS.contains(local)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         // Its xpath-default-namespace (on any element) is an Events namespace, or a template matches an element
         // whose prefix is bound to one.
-        private static boolean readsEvents(final Element root, final String text, final Set<String> namespaces) {
+        private static boolean readsEvents(final Element root,
+                                           final String text,
+                                           final Collection<String> namespaces) {
             final Matcher defaults = XPATH_DEFAULT_NAMESPACE.matcher(text);
             while (defaults.find()) {
                 if (namespaces.contains(defaults.group(1).strip())) {
@@ -418,6 +476,9 @@ public class XsltStages {
                     stage = Stage.DECORATION;
                 } else if (i == lastNonEvents && (reading.writesOther() || hasIndexingFilter)) {
                     stage = Stage.INDEXING;
+                } else if (reading.writesOther()) {
+                    // Past the Events, writing something else for a later XSLT: a flattener, say.
+                    stage = Stage.OUTPUT;
                 } else {
                     // Writing nothing it declares (an identity copy, say), with an XSLT after it: Events on.
                     stage = Stage.DECORATION;
