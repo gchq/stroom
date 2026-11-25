@@ -16,8 +16,6 @@
 
 package stroom.index.impl;
 
-import stroom.index.shared.IndexShard;
-
 import java.util.Optional;
 
 public interface IndexShardWriterCache {
@@ -37,14 +35,4 @@ public interface IndexShardWriterCache {
     void close(IndexShardWriter indexShardWriter);
 
     void shutdown();
-
-    /// Marks for recovery the streams that a closed shard may hold part of, if its last writer stopped
-    /// without a final commit, without opening a writer on it. Does nothing if the shard is open, as
-    /// opening it did the same.
-    ///
-    /// @param indexShard The shard, with its volume.
-    /// @return True if the shard needed nothing or was dealt with. False if another node has it.
-    default boolean recoverPendingStreams(final IndexShard indexShard) {
-        return true;
-    }
 }

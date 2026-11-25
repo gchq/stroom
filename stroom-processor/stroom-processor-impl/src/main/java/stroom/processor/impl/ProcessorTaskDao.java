@@ -228,16 +228,6 @@ public interface ProcessorTaskDao {
                                    Long startTime,
                                    Long endTime);
 
-    /// Changes the status of one task, but only if it has one of the given statuses now. The task's
-    /// version is increased, so that anything still holding the task as it was cannot write over the
-    /// change. A task set to created loses its node and its start and end times, as a reaped task does.
-    ///
-    /// @param taskId          The id of the task.
-    /// @param currentStatuses The statuses the task may have for the change to be made.
-    /// @param newStatus       The status to give it.
-    /// @return True if the task was changed.
-    boolean changeTaskStatus(long taskId, Set<TaskStatus> currentStatuses, TaskStatus newStatus);
-
     ResultPage<ProcessorTask> find(final ExpressionCriteria criteria);
 
     ResultPage<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria);
