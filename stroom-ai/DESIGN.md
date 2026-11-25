@@ -2160,6 +2160,12 @@ Organisation field, never by feed; each feed's first and last day listed.
   still read for the type of events nothing else settles (capped), so indexes like eval 78's work over MCP without a
   model; role conditions compare values exactly in memory (Elasticsearch analysed text fields); the pre-count is one
   ES|QL query per source each run; a feed's joining or leaving suppresses change points within 7 days.
+* Population screen (2026-11-26, from a node test where the model screened with esql_query alone): a mode of
+  compare_activity (`scope: population`; decided with the user: 12 months, the top 10, peers opt-in, `rare` off
+  unless a field is named, rare = at most max(3, 1%) of people); the ranking rules in TOOLS.md, tuned on the insider
+  dataset (the user to review as policy, with the 182-day window); the dataset gained a CDN stream; eval case 111
+  (one flat index, as the harness takes one; Feb to Oct 2026, a smaller scale: a 12-month 12-person index ran the test
+  JVM out of heap) scored against the known answers (`expected.screen`).
 * Eval cases 102 to 105 (several feeds: `setup.hand_written.other_feeds`, `expected.several_feeds`) and 106 to 109
   (in place: `description`, `pre_process`, `shared_with`, `expected.in_place`).
 

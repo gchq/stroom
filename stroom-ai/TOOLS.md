@@ -2255,6 +2255,23 @@ reprocessed range) is a boundary like a feed joining: no change point within 7 d
 field scored only over the days it is held (`ActivityScoring.coverageEdge`, `heldDays`). `logonForms` on request or
 as a skill gives (Elastic: a scripted ES|QL field, "scripted, slower"; StroomQL matched exactly, with a note).
 
+**Population screen (2026-11-26).** `scope: population` (no person or logonIds) scores everyone in the sources against
+their own baselines (peers only with `peers: true`) from the same aggregates and scoring, the person field a group in
+every aggregate (one aggregate per slice for everyone; about 250 slice queries per source per year), and ranks them:
+a person's score is the sum of their 3 largest, at most one per source and feature; the top 10 with their top 3
+findings, the count of others scored, `people.csv`, `findings.csv` (every finding, ranked or not) and `rare.csv`, and
+a next step (compare_activity or activity_timeline on one person). Defaults: 365 days, the last 182 the window.
+Ranking rules (`PopulationScreen`): re-baselined from a person's own lasting change point (28+ days into the
+baseline, 56+ days before the window: a role change); not ranked: a finding shared by everyone else's data, one
+that 25% of people (and at least 3) have over overlapping days, an empty window, a day's count (days rank only by a
+first or last time over 60 minutes outside every baseline day), a rise in a category already used, change points
+before the window. Leave and exceptions may name a person id. `where` (EQUALS or IN) limits what is screened, the
+daily volume staying unfiltered for coverage; `rare` (a keyword field) reports values held by at most max(3, 1% of
+the people screened), new for a person if first held in the window (`RareValues`; a new finding kind `rare`): a field
+of hostnames gets a CDN-noise note and subdomains of a parent with 5+ rare subdomains are left out, naming a
+`*registered_domain` or category field; without `rare` the keyword fields with 20+ values are listed. Not in a
+screen: includeTargets, accessField, logonForms, category lists and model-classified categories (said when asked).
+
 ### `current_results`
 
 search · read-only · checks Use on the results' data source · chat only · Classes: `CurrentResultsTool`,
