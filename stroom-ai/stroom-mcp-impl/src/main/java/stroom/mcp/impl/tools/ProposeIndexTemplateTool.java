@@ -27,6 +27,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.indexing.EcsSchema;
 import stroom.ai.impl.tools.indexing.ExampleTemplates;
 import stroom.ai.impl.tools.indexing.FieldPlan;
@@ -86,6 +87,8 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
 
     /// The result's key for an index name that already holds documents on the cluster.
     static final String EXISTING_INDEX = "existing_index";
+    /// The result's key for the other pipelines writing to the index whose plans the template merges.
+    static final String MERGED_PLANS = "merged_plans";
 
     // The records stepped for the documents the template is checked against.
     private static final int RECORDS = 50;
@@ -98,6 +101,7 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
     private final TemplateReviews reviews;
     private final ExistingIndexes existingIndexes;
     private final ProductionIndexes productionIndexes;
+    private final FeedingPlanMerges planMerges;
 
     @Inject
     ProposeIndexTemplateTool(final IndexPlans plans,
@@ -107,7 +111,8 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
                              final TemplatePipelines pipelines,
                              final TemplateReviews reviews,
                              final ExistingIndexes existingIndexes,
-                             final ProductionIndexes productionIndexes) {
+                             final ProductionIndexes productionIndexes,
+                             final FeedingPlanMerges planMerges) {
         this.plans = plans;
         this.examples = examples;
         this.inputs = inputs;
@@ -116,6 +121,7 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
         this.reviews = reviews;
         this.existingIndexes = existingIndexes;
         this.productionIndexes = productionIndexes;
+        this.planMerges = planMerges;
     }
 
     @Override
@@ -264,6 +270,9 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
         final Map<String, Object> destination = pipelines.destination(pipelineUuid);
         final String index = String.valueOf(destination.get("index name"));
         buildIndexes.requireSameIndex(pipelineUuid, index);
+        // An index fed by several pipelines: one template for every one's fields (a type conflict is refused).
+        final FeedingPlanMerges.Merged merged = planMerges.forIndex(pipelineUuid, plan, index);
+        plan = merged.plan();
         // An index name already holding documents on the cluster, said now so the user can choose another before
         // anything is indexed (the first processing run stops until it is dropped or renamed). A production index is
         // said to be one, never to be dropped (seen in a user's test: told the cluster admin drops it, they deleted
@@ -393,6 +402,10 @@ class ProposeIndexTemplateTool extends AbstractBuiltInTool {
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("template_name", name);
         result.put("index", index);
+        if (!merged.mergedFrom().isEmpty()) {
+            result.put(MERGED_PLANS, "the template holds the fields of every pipeline writing to the index: its "
+                                     + "plan merged with the plans of " + ToolText.list(merged.mergedFrom()));
+        }
         result.put("cluster", destination.get("cluster"));
         existing.ifPresent(warning -> result.put(EXISTING_INDEX, warning));
         result.put("template", body);

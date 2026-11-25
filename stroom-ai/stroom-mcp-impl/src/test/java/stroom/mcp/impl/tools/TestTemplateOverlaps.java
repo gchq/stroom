@@ -60,14 +60,12 @@ class TestTemplateOverlaps {
     }
 
     @Test
-    void anExactOrNonOverlappingOrHigherPriorityOrSameTemplateIsNotWarnedOf() {
+    void anExactOrNonOverlappingOrHigherPriorityTemplateIsNotWarnedOf() {
         assertThat(overlap(agreed("acme-events-v1", "acme-events-v1", "\"index_patterns\": [\"acme-events-v1\"]")))
                 .isEmpty();
         assertThat(overlap(agreed("other", "other-v1", "\"index_patterns\": [\"other*\"]"))).isEmpty();
         assertThat(overlap(agreed("acme-events", "acme-events-v1", "\"index_patterns\": [\"acme-events*\"], "
                                                                    + "\"priority\": 200"))).isEmpty();
-        assertThat(overlap(agreed("acme-events-v2", "acme-events-v2", "\"index_patterns\": [\"acme-*\"]")))
-                .isEmpty();
         final Map<String, Object> elsewhere = agreed("acme-events", "acme-events-v1", "\"index_patterns\": "
                                                                                       + "[\"acme-events*\"]");
         elsewhere.put("cluster", "ES_PROD");
@@ -75,6 +73,26 @@ class TestTemplateOverlaps {
         // The same priority, given or not.
         assertThat(overlap(agreed("acme-events", "acme-events-v1", "\"index_patterns\": [\"acme-*\"], "
                                                                    + "\"priority\": 0"))).isPresent();
+    }
+
+    @Test
+    void anotherPipelinesAgreementOfTheSameNameIsNoLongerTakenForTheSameTemplate() {
+        // Another pipeline writing to the same index: replaced by this one, merged from both plans.
+        assertThat(overlap(agreed("acme-events-v2", "acme-events-v2", "\"index_patterns\": [\"acme-*\"]")))
+                .hasValueSatisfying(warning -> assertThat(warning).contains("also agreed for pipeline 'Old', which "
+                                                                            + "writes to the same index "
+                                                                            + "'acme-events-v2'",
+                        "merges the plans of every pipeline writing to the index"));
+        // Another index's template of the same name: a clash.
+        assertThat(overlap(agreed("acme-events-v2", "acme-mail-v1", "\"index_patterns\": [\"acme-mail-v1\"]")))
+                .hasValueSatisfying(warning -> assertThat(warning).contains("already agreed for pipeline 'Old' "
+                                                                            + "(index 'acme-mail-v1')",
+                        "template_name="));
+        // On another cluster: none.
+        final Map<String, Object> elsewhere = agreed("acme-events-v2", "acme-events-v2", "\"index_patterns\": "
+                                                                                          + "[\"acme-*\"]");
+        elsewhere.put("cluster", "ES_PROD");
+        assertThat(overlap(elsewhere)).isEmpty();
     }
 
     @Test

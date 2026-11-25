@@ -65,7 +65,7 @@ class TemplateOverlaps {
     /// @param pipelineUuid The pipeline the template is for, whose own agreement is left out.
     /// @param indexName    Its index name, perhaps with variables.
     /// @param cluster      Its cluster's name, or null.
-    /// @param templateName The template's name: another agreement of the same name is the same template.
+    /// @param templateName The template's name: another pipeline's agreement of the same name is replaced by it.
     /// @param body         The template's body (its priority is read).
     /// @return A warning for each other agreed template covering the index at the same priority.
     List<String> warnings(final String pipelineUuid,
@@ -99,7 +99,9 @@ class TemplateOverlaps {
     /// @param cluster       This pipeline's cluster, or null.
     /// @param templateName  This template's name.
     /// @param body          This template's body.
-    /// @return The warning, when the other template covers the index on the same cluster at the same priority.
+    /// @return The warning, when the other template covers the index on the same cluster at the same priority, or
+    /// has the same name (committing this one would replace it: for the same index, merged from every feeding
+    /// pipeline's plan; for another index, a clash).
     static Optional<String> overlap(final String otherPipeline,
                                     final Map<String, Object> agreed,
                                     final String indexName,
@@ -108,10 +110,22 @@ class TemplateOverlaps {
                                     final Map<String, Object> body) {
         final String otherName = NullSafe.get(agreed.get("name"), String::valueOf);
         final String otherCluster = NullSafe.get(agreed.get("cluster"), String::valueOf);
-        if (Objects.equals(otherName, templateName)
-            || (cluster != null && otherCluster != null && !cluster.equals(otherCluster))) {
-            // The same template (committing one replaces the other), or another cluster's.
+        if (cluster != null && otherCluster != null && !cluster.equals(otherCluster)) {
+            // Another cluster's.
             return Optional.empty();
+        }
+        if (Objects.equals(otherName, templateName)) {
+            // Agreed for another pipeline: committing this one replaces it. Several pipelines feeding one index
+            // share its template, merged from every one's plan; another index's of the same name is a clash.
+            final String otherIndex = NullSafe.get(agreed.get("index"), String::valueOf);
+            return Optional.of(Objects.equals(otherIndex, indexName)
+                    ? "index template '" + otherName + "' is also agreed for pipeline '" + otherPipeline + "', "
+                      + "which writes to the same index '" + indexName + "': committing this one replaces it. "
+                      + "This template merges the plans of every pipeline writing to the index, so check with the "
+                      + "user that it still maps '" + otherPipeline + "''s fields as agreed before it is committed"
+                    : "index template '" + otherName + "' is already agreed for pipeline '" + otherPipeline
+                      + "' (index '" + otherIndex + "'): committing this one would replace it, and that index "
+                      + "would lose its mappings. Give this template another name (template_name=)");
         }
         final NamedTemplate other;
         try {

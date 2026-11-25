@@ -106,6 +106,7 @@ class TestIndexTemplateTools {
     private final IndexingInputs inputs = Mockito.mock(IndexingInputs.class);
     private final BuildIndexes buildIndexes = Mockito.mock(BuildIndexes.class);
     private final TemplatePipelines pipelines = Mockito.mock(TemplatePipelines.class);
+    private final IndexSurveys indexSurveys = Mockito.mock(IndexSurveys.class);
     private final IndexExamples examples = new IndexExamples(Mockito.mock(DocumentAccess.class), null, null, null,
             Mockito.mock(WriteGuard.class), Mockito.mock(BuildPlan.class), memory, Mockito.mock(DocumentWrites.class));
     private final TemplateReviews reviews = new TemplateReviews(world.feeds.consent, memory, world.pipelineDocs,
@@ -145,6 +146,45 @@ class TestIndexTemplateTools {
         assertThat(rendered.get("index_patterns")).isEqualTo(List.of("ecs-acme-v2"));
         // The plan leaves some written fields unmapped (dynamic false): noted, not blocking.
         assertThat(TemplateCheck.compare(rendered, DOCS, "ecs-acme-v2", ecs()).get("compatible")).isEqualTo(true);
+    }
+
+    @Test
+    void testAnIndexFedByAnotherPipelineGetsATemplateHoldingBothPlansFields() {
+        final FieldPlan plan = FieldPlan.of("elasticsearch", "whatever", "@timestamp", List.of(
+                PlannedField.of("@timestamp", "date", "EventTime/TimeCreated"),
+                PlannedField.of("user.name", "keyword", "EventSource/User/Id")));
+        feeders(FieldPlan.of("elasticsearch", "ecs-acme-v2", "@timestamp", List.of(
+                PlannedField.of("user.name", "keyword", "EventDetail/Authenticate/User/Id"),
+                PlannedField.of("email.subject", "text", "EventDetail/Send/Subject"))));
+
+        final Map<String, Object> shown = propose(args("plan", plan.toJson(), "without_example", true));
+
+        assertThat(String.valueOf(shown.get(ProposeIndexTemplateTool.MERGED_PLANS))).contains("'Acme Mail "
+                                                                                            + "indexing'");
+        assertThat(String.valueOf(shown.get("dev_tools"))).contains("\"email\": {\"properties\": {\"subject\": "
+                                                                    + "{\"type\": \"text\"}}}",
+                "\"user\": {\"properties\": {\"name\": {\"type\": \"keyword\"}}}");
+    }
+
+    @Test
+    void testAFieldTwoPipelinesPlansTypeDifferentlyIsRefusedNamingBoth() {
+        final FieldPlan plan = FieldPlan.of("elasticsearch", "whatever", "@timestamp", List.of(
+                PlannedField.of("@timestamp", "date", "EventTime/TimeCreated"),
+                PlannedField.of("user.name", "keyword", "EventSource/User/Id")));
+        feeders(FieldPlan.of("elasticsearch", "ecs-acme-v2", "@timestamp", List.of(
+                PlannedField.of("user.name", "text", "EventSource/User/Id"))));
+
+        assertThat(refused(proposeTool(), ProposeIndexTemplateTool.NAME, args("plan", plan.toJson(),
+                "without_example", true)))
+                .contains("Field 'user.name' is keyword in the index plan of 'Acme Events indexing' but text in the "
+                          + "plan of 'Acme Mail indexing'", "index 'ecs-acme-v2'");
+    }
+
+    // The pipeline (Acme Events indexing) and another writing to its index with the plan given.
+    private void feeders(final FieldPlan other) {
+        Mockito.when(indexSurveys.feedingPipelines(any(), eq("ecs-acme-v2"))).thenReturn(List.of(
+                Map.of("uuid", "p1", "name", "Acme Events indexing", "path", "/Acme"),
+                Map.of("uuid", "p9", "name", "Acme Mail indexing", "path", "/Acme", "plan", other.toJson())));
     }
 
     @Test
@@ -569,7 +609,7 @@ class TestIndexTemplateTools {
 
     private ProposeIndexTemplateTool proposeTool() {
         return new ProposeIndexTemplateTool(plans, examples, inputs, buildIndexes, pipelines, reviews,
-                world.existingIndexes, world.productionIndexes);
+                world.existingIndexes, world.productionIndexes, new FeedingPlanMerges(indexSurveys));
     }
 
     private CheckIndexTemplateTool checkTool() {

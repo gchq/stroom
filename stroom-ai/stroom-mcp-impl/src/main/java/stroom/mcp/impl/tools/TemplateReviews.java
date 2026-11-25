@@ -233,7 +233,7 @@ class TemplateReviews {
             }
         });
         for (final String key : List.of("compatible", "blocking", "pipeline_changes", "template_name", "index",
-                "cluster", ProposeIndexTemplateTool.EXISTING_INDEX,
+                ProposeIndexTemplateTool.MERGED_PLANS, "cluster", ProposeIndexTemplateTool.EXISTING_INDEX,
                 "self_check", "from_example", "notes", "component_templates")) {
             if (result.containsKey(key)) {
                 Object value = result.get(key);
