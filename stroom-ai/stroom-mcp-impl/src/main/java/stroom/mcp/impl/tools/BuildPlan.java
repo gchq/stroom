@@ -1071,6 +1071,9 @@ public class BuildPlan {
                                   && ExistingTranslations.EXISTING.equals(startFrom.get("choice"));
         // Described in place (decided with the user 2026-11-25): surveyed and catalogued, no new version.
         final boolean inPlace = InPlaceInduction.inPlace(startFrom);
+        // Built on the pipeline described in place: an index or a forwarder, promoted alone.
+        final boolean builtOnInPlace = inPlace && (!indexing.isEmpty() || hasIndexDoc || hasMapping(xslts, "index")
+                                                   || cefBuild);
         // Until the copy is made and its XSLT read back, whatever catalogue the build holds already (one carried in
         // from the promoted notes beside the feed, confirmed) is no reason to skip them.
         final boolean readBack = !translation.isEmpty() && xslts.stream().noneMatch(x -> x.get("mapping") == null);
@@ -1154,7 +1157,8 @@ public class BuildPlan {
         final List<Map<String, Object>> steps = assessment
                 ? steps(done, assessmentSkips())
                 : inPlace
-                        ? steps(done, inPlaceSkips())
+                        ? steps(done, inPlaceSkips(!indexing.isEmpty() || hasIndexDoc || hasMapping(xslts, "index"),
+                        cefBuild))
                 : steps(done, skipped(new Kinds(discovery, reference, referenceOnly),
                 survey != null || surveyRequired, existing, !copies.isEmpty() && !ownFeed,
                 stage1 && !declined.contains(STAGE_EVENTS),
@@ -1410,7 +1414,7 @@ public class BuildPlan {
             result.put("next", shown);
         } else if (onlyExistingData) {
             result.put("next", start);
-        } else if (inPlace) {
+        } else if (inPlace && !builtOnInPlace) {
             // Described in place and catalogued: nothing to promote (no new version).
             result.put(InPlaceInduction.IN_PLACE, "Done: the pipeline is described in place (its mapping and the "
                                                   + "link to its source notes in its translation XSLT's "
@@ -2054,11 +2058,21 @@ public class BuildPlan {
     }
 
     // A pipeline described in place is surveyed and its catalogue confirmed (its source types first, for an
-    // aggregated feed): no translation, pipeline, processing or promotion of its own.
-    private static Set<String> inPlaceSkips() {
+    // aggregated feed): no translation, pipeline or processing of its own. An index or a forwarder built on it
+    // (decided by the user, 2026-11-25) keeps its stage's steps, and promotion, which moves only those.
+    private static Set<String> inPlaceSkips(final boolean indexing, final boolean forwarding) {
         final Set<String> skipped = new HashSet<>();
         checklist().forEach(step -> skipped.add(String.valueOf(step.get("step"))));
         skipped.removeAll(Set.of(SURVEYED, SOURCE_TYPES, CATALOGUE));
+        if (indexing) {
+            stepsOf(STAGE_INDEXING).forEach(skipped::remove);
+        }
+        if (forwarding) {
+            stepsOf(STAGE_OUTPUT).forEach(skipped::remove);
+        }
+        if (indexing || forwarding) {
+            skipped.remove("promoted");
+        }
         return skipped;
     }
 

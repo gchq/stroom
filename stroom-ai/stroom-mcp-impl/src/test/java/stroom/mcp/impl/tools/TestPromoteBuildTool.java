@@ -150,6 +150,42 @@ class TestPromoteBuildTool {
     }
 
     @Test
+    void aBuildDescribingAPipelineInPlaceWithOnlyItsDescriptionHasNothingToPromote() {
+        // The notes' working copy (written back as the catalogue was confirmed) and a test feed are nothing new.
+        listed(doc(FeedDoc.TYPE, "f", "ACME-MCP-TEST", null), docWorkingCopy(doc(DocumentationDoc.TYPE, "n",
+                "ACME source notes", null), "notes-beside"));
+        docs.facts.startFrom = inPlace();
+
+        final String refused = docs.refusal(tool, BuildToolCalls.context(), DocumentationWorld.args(Map.of(
+                "build", BUILD, "destinations", Map.of("Feed", "System/Feeds/Acme"))));
+
+        assertThat(refused).contains("Nothing to promote", "describes 'ACME-Events' in place", "no new version");
+        assertThat(refused).doesNotContain("review_id");
+    }
+
+    @Test
+    void aBuildDescribingAPipelineInPlacePromotesOnlyWhatItMadeNew() {
+        // Decided by the user (2026-11-25): an index and its indexing pipeline built on the described pipeline are
+        // promoted; the described pipeline and its XSLT never are, though listed in the build, and the review says
+        // so.
+        exists("System/Feeds/Acme");
+        listed(doc(FeedDoc.TYPE, "f", "ACME", null), doc(PipelineDoc.TYPE, "ix", "ACME-V1.0-Indexing", "Indexing"),
+                doc(ElasticIndexDoc.TYPE, "ei", "ACME-V1.0-Index", "Indexing"),
+                doc(PipelineDoc.TYPE, "p", "ACME-Events", "Events"), doc(XsltDoc.TYPE, "px", "ACME-Events",
+                        "Events"));
+        docs.facts.startFrom = inPlace();
+
+        final Map<String, Object> shown = review(Map.of("Feed", "System/Feeds/Acme"));
+
+        assertThat(String.valueOf(shown.get("layout"))).contains("ACME-V1.0-Indexing  (Pipeline)",
+                "ACME-V1.0-Index  (ElasticIndex)").doesNotContain("ACME-Events");
+        assertThat(shown.get("described_in_place")).isEqualTo(List.of(
+                "Pipeline 'ACME-Events': described in place, not promoted",
+                "XSLT 'ACME-Events': described in place, not promoted"));
+        assertThat(String.valueOf(shown.get("hint"))).contains("Say the described_in_place too");
+    }
+
+    @Test
     void aBuildStartedFromACopyIsPromotedAsBefore() {
         // The gate is the in-place start's only: a copy (a new version) is promoted.
         exists("System/Feeds/Acme");
@@ -2140,6 +2176,21 @@ class TestPromoteBuildTool {
 
     private static Map<String, Object> doc(final String type, final String uuid, final String name, final String role) {
         return FakeBuildFacts.doc(type, uuid, name, "role", role);
+    }
+
+    private static Map<String, Object> docWorkingCopy(final Map<String, Object> doc, final String of) {
+        final Map<String, Object> copy = new LinkedHashMap<>(doc);
+        copy.put("working_copy_of", of);
+        return copy;
+    }
+
+    // The build's start: pipeline 'ACME-Events' (p) described in place, its translation XSLT px, its notes beside
+    // it notes-beside.
+    private static Map<String, Object> inPlace() {
+        return Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline", Map.of("name", "ACME-Events", "uuid", "p"),
+                InPlaceInduction.IN_PLACE, Map.of(InPlaceInduction.XSLT, Map.of("type", XsltDoc.TYPE, "uuid", "px",
+                        "name", "ACME-Events"), "notes", Map.of("type", DocumentationDoc.TYPE, "uuid",
+                        "notes-beside", "name", "ACME source notes")));
     }
 
 

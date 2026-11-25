@@ -36,6 +36,7 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -133,6 +134,85 @@ class TestE2eDescribeInPlace extends AbstractE2eTest {
         final Map<String, Object> status = json("build_status", args("build", build));
         assertThat(status).containsKey("in_place").doesNotContainKey("next");
         assertThat(readXslt(vpn.xslt()).getData()).isEqualTo(XSLT);
+    }
+
+    @Test
+    void anIndexBuiltOnAPipelineDescribedInPlaceIsPromotedAloneThePipelineLeftWhereItIs() {
+        // Decided by the user (2026-11-25): an in-place build may build an index on the described pipeline;
+        // promote_build moves only that, the pipeline and its XSLT "described in place, not promoted".
+        final HandWritten vpn = vpn("System/Feeds/IdxVpn", "IDXVPN", SAMPLE);
+        final String build = "idxvpn-described";
+        json("start_build", args("build", build, "feeds", List.of("IDXVPN")));
+        json("survey_feed", args("feed", "IDXVPN", "build", build));
+        client.answeringWith(choosing(IN_PLACE));
+        assertThat(json(CATALOGUE, args("build", build))).containsEntry("status", "described_in_place");
+        client.answeringWith(McpTestClient::agree);
+        json(CATALOGUE, args("build", build, "stream_ids", List.of(vpn.raw())));
+        confirmedCatalogue(build);
+        // Nothing new yet: nothing to promote.
+        assertThat(refusal("promote_build", args("build", build))).contains("Nothing to promote",
+                "has made nothing new");
+
+        // The hand-written pipeline's own Events, indexed by the build into a Lucene index of its own.
+        processAll();
+        final List<Long> events = streamIdsOf("IDXVPN").stream()
+                .filter(id -> "Events".equals(meta(id).getTypeName()))
+                .toList();
+        assertThat(events).as("the hand-written pipeline's Events").isNotEmpty();
+        json("get_field_conventions", args("name", "stroom-flat"));
+        final String indexName = "E2E-IDXVPN-" + Long.toHexString(System.nanoTime()).toUpperCase(Locale.ROOT);
+        final Map<String, Object> plan = map(json("draft_index_mapping", args("backend", "lucene", "index_name",
+                indexName, "convention", "stroom-flat", "events_stream_ids", events)), "plan");
+        final Map<String, Object> index = agreed("create_index_doc", args("build", build, "backend", "lucene",
+                "name", indexName, "time_field", plan.get("time_field")));
+        final String indexXslt = uuidOf(json("save_xslt", args("build", build, "name", indexName + "-XSLT",
+                "index_plan", plan)));
+        final Map<String, Object> template = templates("indexing").stream()
+                .filter(candidate -> "lucene".equals(candidate.get("backend")))
+                .findFirst()
+                .orElseThrow();
+        final Map<String, Object> indexing = agreed("create_indexing_pipeline", args("build", build, "name",
+                indexName + " - Indexing", "template_uuid", template.get("uuid"), "xslt_uuid", indexXslt,
+                "index_uuid", uuidOf(index), "events_stream_ids", events));
+        assertThat(json("step_sample", args("pipeline_uuid", uuidOf(indexing), "stream_ids", events)))
+                .containsEntry("verdict", "clean");
+        // Its sample indexed from the described pipeline's Events.
+        agreed("create_processor_filter", args("pipeline_uuid", uuidOf(indexing), "stream_ids", events,
+                "source_pipeline_uuid", vpn.pipeline()));
+        processAll();
+        flushIndexShards();
+        // The plan goes on to the index's steps and promotion, not "nothing to promote".
+        final Map<String, Object> status = json("build_status", args("build", build));
+        assertThat(status).doesNotContainKey("in_place").containsKey("next");
+
+        // The review: the index and its pipeline laid out, the described pipeline and XSLT said not promoted.
+        final ExplorerNode promotedFolder = folder("System/E2E Described Index " + Long.toHexString(
+                System.nanoTime()));
+        final Map<String, Object> destinations = args("Feed", "System/Feeds/IdxVpn", "Index",
+                "System/" + promotedFolder.getName(), "indexing", "System/" + promotedFolder.getName());
+        final Map<String, Object> review = json("promote_build", args("build", build, "destinations",
+                destinations));
+        dump("in-place review", review);
+        assertThat(review).containsEntry("status", "needs_review");
+        assertThat(String.valueOf(review.get("layout"))).contains(indexName + " - Indexing  (Pipeline)")
+                .doesNotContain("IDXVPN-Events");
+        // Once promoted, it goes on indexing the described pipeline's Events.
+        assertThat(String.valueOf(review.get("processing_after_promotion"))).contains(indexName + " - Indexing",
+                "IDXVPN-Events");
+        assertThat((List<String>) review.get("described_in_place")).containsExactly(
+                "Pipeline 'IDXVPN-Events': described in place, not promoted",
+                "XSLT 'IDXVPN-Events': described in place, not promoted");
+
+        final Map<String, Object> promoted = agreed("promote_build", args("build", build, "destinations",
+                destinations));
+        dump("in-place promoted", promoted);
+        assertThat(String.valueOf(promoted.get("promoted"))).contains(indexName + " - Indexing")
+                .doesNotContain("IDXVPN-Events");
+        // The described pipeline and its XSLT where they were, the XSLT's code as it was.
+        assertThat(folderOf(vpn.pipeline())).isEqualTo("System/Feeds/IdxVpn");
+        assertThat(folderOf(vpn.xslt())).isEqualTo("System/Feeds/IdxVpn");
+        assertThat(readXslt(vpn.xslt()).getData()).isEqualTo(XSLT);
+        assertThat(folderOf(uuidOf(indexing))).startsWith("System/" + promotedFolder.getName());
     }
 
     @Test

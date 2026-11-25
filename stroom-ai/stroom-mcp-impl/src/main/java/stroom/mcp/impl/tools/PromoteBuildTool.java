@@ -96,6 +96,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     // What the chat remembers of where a build of feeds in different folders puts its shared documents.
     private static final String SHARED_FOLDER = "shared folder";
     private static final String FOLDER = "folder";
+    private static final String DESCRIBED_IN_PLACE = "described_in_place";
     // What becomes of a build's test feed.
     private static final String TEST_FEED_KEPT = "left in the workspace: the build's test feed, never promoted";
     private static final String TEST_INDEX_KEPT = "left in the workspace: the build's test index, never promoted";
@@ -356,10 +357,17 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     }
 
     private Map<String, Object> promote(final ToolCall call, final ToolCallContext context, final String build) {
-        refuseInPlace(build);
         final Map<String, String> destinations = destinations(call);
         final Object reviewed = argsMap(call).get(REVIEWED_ARG);
-        final List<Map<String, Object>> docs = facts.buildDocs(build);
+        // A build describing a pipeline in place promotes only what it made new (an index, a forwarder): never the
+        // described pipeline or its XSLT (decided by the user, 2026-11-25).
+        final InPlace inPlace = InPlace.of(facts.startFrom(build).orElse(null));
+        final List<Map<String, Object>> docs = inPlace == null
+                ? facts.buildDocs(build)
+                : inPlace.withoutDescribed(facts.buildDocs(build));
+        if (inPlace != null && !inPlace.anyNew(docs)) {
+            throw inPlace.nothingToPromote(build);
+        }
         if (docs.isEmpty()) {
             throw new ToolRefusal("Build '" + build + "' has no documents");
         }
@@ -393,6 +401,10 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         modulesBeside(build, docs, destinations, sourceFolders, markers).forEach(besideFeeds::putIfAbsent);
         final Placed placed = new Placed(testFeeds, source, sourceFolders, group, sources, unused);
         final List<PromotionLayout.Step> plan = plan(docs, destinations, sources, besideFeeds, placed, markers);
+        if (inPlace != null && !inPlace.anyPromoted(plan)) {
+            // Its test feed and survey stay in the build, its notes were written back as it went.
+            throw inPlace.nothingToPromote(build);
+        }
         // Role first, then version (decided by the user, 2026-11-17): each role's root chosen, then every document
         // of a role in its version's folder there, and what documents or searches another beside it.
         final List<PromotionRoleRoots.RoleRoot> chosenRoots = roleLocations.roleRoots(call, context, build, docs,
@@ -591,6 +603,12 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             review.put("hint", review.get("hint") + " Say the changed_in_production too: each is overwritten "
                                + "by its working copy, its production version kept as a backup.");
         }
+        if (inPlace != null) {
+            review.put(DESCRIBED_IN_PLACE, inPlace.said());
+            review.put("hint", review.get("hint") + " Say the described_in_place too: the pipeline the build "
+                               + "describes and its XSLT stay as they are, where they are (their description was "
+                               + "written in place as the build went); only the build's new documents move.");
+        }
         final List<String> notPromoted = notUsed(plan);
         if (!notPromoted.isEmpty()) {
             review.put("not_promoted", notPromoted);
@@ -669,6 +687,9 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         }
         if (!notPromoted.isEmpty()) {
             shortForm.put("not promoted (nothing uses them)", notPromoted);
+        }
+        if (inPlace != null) {
+            shortForm.put("described in place, not promoted", inPlace.said());
         }
         // A new version replacing a promoted one: how much its filter reads is asked each time (decided by the
         // user, 2026-11-24).
@@ -831,23 +852,6 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                 && PromotionLayout.NOT_USED.equals(step.target()))
                 .map(step -> step.doc().get("name") + " (" + step.doc().get("type") + ")")
                 .toList();
-    }
-
-    // A build describing an existing pipeline in place has no new version, so nothing to promote: its hidden blocks
-    // and the source notes beside the pipeline were written as it went (decided with the user 2026-11-25). Refused
-    // before any review (seen in eval cases 106-109 on Haiku and Sonnet: promotion laid out the notes' working copy
-    // and the survey, and the agent put it to the user).
-    private void refuseInPlace(final String build) {
-        final Map<String, Object> startFrom = facts.startFrom(build).orElse(null);
-        if (!InPlaceInduction.inPlace(startFrom)) {
-            return;
-        }
-        final String pipeline = ToolText.str(JsonValues.mapOrEmpty(startFrom.get("pipeline")).get("name"));
-        throw new ToolRefusal("Nothing to promote: build '" + build + "' describes '" + pipeline + "' in place, "
-                              + "with no new version. Its mapping and the link to its source notes are written in "
-                              + "its translation XSLT's description, and its catalogue in the source notes beside "
-                              + "the pipeline, as catalogue_event_types confirmed them (its in_place said what was "
-                              + "written, and who may write what wasn't). The build is done: say so to the user.");
     }
 
     // A build starting from an existing pipeline (the user's choice, or a copy of a hand-written translation
@@ -1954,4 +1958,101 @@ class PromoteBuildTool extends AbstractBuiltInTool {
 
     }
 
+    /// A build describing an existing pipeline in place (decided with the user 2026-11-25): it may build other
+    /// things on it (an index, a forwarder), and promotion moves only those. The described pipeline and its
+    /// translation XSLT are never promoted, nor the source notes it keeps beside the pipeline (written back as the
+    /// catalogue was confirmed), and with nothing new there is nothing to promote.
+    ///
+    /// @param pipeline The described pipeline (`name`, `uuid`).
+    /// @param xslt     Its translation XSLT (`type`, `uuid`, `name`); empty where not recorded.
+    /// @param notes    The UUID of the source notes beside it, or null.
+    record InPlace(Map<String, Object> pipeline, Map<String, Object> xslt, String notes) {
+
+        // The types that alone are nothing new: its test feeds, its survey and notes.
+        private static final Set<String> NOT_NEW_TYPES = Set.of(FeedDoc.TYPE, DocumentationDoc.TYPE);
+
+        /// @param startFrom A build's start, or null.
+        /// @return It, where the build describes a pipeline in place; null otherwise.
+        static InPlace of(final Map<String, Object> startFrom) {
+            if (!InPlaceInduction.inPlace(startFrom)) {
+                return null;
+            }
+            final Map<String, Object> described = JsonValues.mapOrEmpty(startFrom.get(InPlaceInduction.IN_PLACE));
+            final String notes = JsonValues.text(JsonValues.mapOrEmpty(described.get("notes")).get("uuid"));
+            return new InPlace(JsonValues.mapOrEmpty(startFrom.get("pipeline")),
+                    JsonValues.mapOrEmpty(described.get(InPlaceInduction.XSLT)), notes.isEmpty()
+                            ? null
+                            : notes);
+        }
+
+        /// @param docs The build's documents.
+        /// @return Them without the described pipeline and XSLT, or any copy of either.
+        List<Map<String, Object>> withoutDescribed(final List<Map<String, Object>> docs) {
+            final Set<String> described = described();
+            return docs.stream()
+                    .filter(doc -> !described.contains(String.valueOf(doc.get("uuid")))
+                                   && !described.contains(String.valueOf(doc.get("working_copy_of"))))
+                    .toList();
+        }
+
+        /// @param docs The build's documents, without the described ones.
+        /// @return True if any could be new: of a type other than a feed or a Documentation doc.
+        boolean anyNew(final List<Map<String, Object>> docs) {
+            return docs.stream().anyMatch(doc -> !NOT_NEW_TYPES.contains(String.valueOf(doc.get("type"))));
+        }
+
+        /// @param plan The promotion's plan.
+        /// @return True if it moves or writes back anything but a feed and the notes beside the pipeline.
+        boolean anyPromoted(final List<PromotionLayout.Step> plan) {
+            return plan.stream()
+                    .filter(step -> PromotionLayout.MOVE.equals(step.action())
+                                    || PromotionLayout.WRITE_BACK.equals(step.action()))
+                    .map(PromotionLayout.Step::doc)
+                    .anyMatch(doc -> !FeedDoc.TYPE.equals(doc.get("type"))
+                                     && (notes == null || (!notes.equals(String.valueOf(doc.get("uuid")))
+                                                           && !notes.equals(String.valueOf(
+                                                                   doc.get("working_copy_of"))))));
+        }
+
+        /// @return The described pipeline and XSLT, each "described in place, not promoted".
+        List<String> said() {
+            final List<String> out = new ArrayList<>();
+            out.add("Pipeline '" + name(pipeline) + "': described in place, not promoted");
+            if (!xslt.isEmpty()) {
+                out.add("XSLT '" + name(xslt) + "': described in place, not promoted");
+            }
+            return out;
+        }
+
+        /// @param build The build.
+        /// @return The refusal: nothing new to promote.
+        ToolRefusal nothingToPromote(final String build) {
+            // Seen in eval cases 106-109 on Haiku and Sonnet: promotion laid out the notes' working copy and the
+            // survey, and the agent put it to the user.
+            return new ToolRefusal("Nothing to promote: build '" + build + "' describes '" + name(pipeline)
+                                   + "' in place, with no new version, and has made nothing new (an index or a "
+                                   + "forwarder on it would be promoted). Its mapping and the link to its source "
+                                   + "notes are written in its translation XSLT's description, and its catalogue in "
+                                   + "the source notes beside the pipeline, as catalogue_event_types confirmed them "
+                                   + "(its in_place said what was written, and who may write what wasn't). The "
+                                   + "build is done: say so to the user.");
+        }
+
+        private Set<String> described() {
+            final Set<String> out = new LinkedHashSet<>();
+            final String pipelineUuid = JsonValues.text(pipeline.get("uuid"));
+            final String xsltUuid = JsonValues.text(xslt.get("uuid"));
+            if (!pipelineUuid.isEmpty()) {
+                out.add(pipelineUuid);
+            }
+            if (!xsltUuid.isEmpty()) {
+                out.add(xsltUuid);
+            }
+            return out;
+        }
+
+        private static String name(final Map<String, Object> ref) {
+            return NullSafe.nonBlankStringElse(ToolText.str(ref.get("name")), ToolText.str(ref.get("uuid")));
+        }
+    }
 }

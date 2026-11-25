@@ -190,6 +190,28 @@ class TestBuildPlanStartFromExisting {
     }
 
     @Test
+    void anIndexBuiltOnAPipelineDescribedInPlaceKeepsItsStepsAndIsPromoted() {
+        // Decided by the user (2026-11-25): an in-place build may build an index on the described pipeline, which
+        // promotion moves alone.
+        facts.startFrom = Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline", EXISTING);
+        facts.catalogued = true;
+        facts.docs = List.of(FakeBuildFacts.doc("Documentation", "s", "ACME - Survey"),
+                FakeBuildFacts.doc("Pipeline", "ix", "ACME-Indexing"));
+        facts.stages = Map.of("ix", "indexing");
+
+        final Map<String, Object> result = status();
+
+        @SuppressWarnings("unchecked") final List<Map<String, Object>> steps =
+                (List<Map<String, Object>>) result.get("steps");
+        assertThat(steps).filteredOn(step -> !"not needed".equals(step.get("state")))
+                .extracting(step -> step.get("step"))
+                .contains(BuildPlan.CATALOGUE, "index", "indexing_pipeline", "indexed", "promoted")
+                .doesNotContain("translation", "pipeline", "stepped", "processed", "cef_mapping");
+        assertThat(result).doesNotContainKey(InPlaceInduction.IN_PLACE);
+        assertThat(next(result).get("step")).isEqualTo("index");
+    }
+
+    @Test
     void aCopyMadeWithoutTheStartChoiceStillHasItsCatalogueToDo() {
         // Seen in the multi-feed lane's eval runs: a hand-written pipeline copied before catalogue_event_types' start
         // offer was answered, and the plan let the catalogue drop to "not needed".
