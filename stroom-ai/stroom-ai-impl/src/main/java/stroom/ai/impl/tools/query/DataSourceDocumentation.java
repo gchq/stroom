@@ -25,6 +25,10 @@ import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.instructions.AgentInstructions;
+import stroom.ai.impl.tools.processing.MergedPipeline;
+import stroom.ai.impl.tools.processing.XsltStages;
+import stroom.ai.impl.tools.processing.XsltStages.Stage;
+import stroom.ai.impl.tools.processing.XsltStages.StagedXslt;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.api.DocFinder;
@@ -34,9 +38,6 @@ import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
-import stroom.pipeline.shared.data.PipelineData;
-import stroom.pipeline.shared.data.PipelineProperty;
-import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -102,16 +103,19 @@ public class DataSourceDocumentation {
     private final DataSourceAccess dataSourceAccess;
     private final Provider<DocFinder> docFinderProvider;
     private final Provider<DocDependencyService> docDependencyServiceProvider;
+    private final XsltStages xsltStages;
 
     @Inject
     DataSourceDocumentation(final DocumentAccess documentAccess,
                             final DataSourceAccess dataSourceAccess,
                             final Provider<DocFinder> docFinderProvider,
-                            final Provider<DocDependencyService> docDependencyServiceProvider) {
+                            final Provider<DocDependencyService> docDependencyServiceProvider,
+                            final XsltStages xsltStages) {
         this.documentAccess = documentAccess;
         this.dataSourceAccess = dataSourceAccess;
         this.docFinderProvider = docFinderProvider;
         this.docDependencyServiceProvider = docDependencyServiceProvider;
+        this.xsltStages = xsltStages;
     }
 
     /// Gathers a data source's documentation, and records in the audit log the documents read for it.
@@ -164,25 +168,35 @@ public class DataSourceDocumentation {
         return pipelines(sources(dataSource), new ArrayList<>());
     }
 
-    /// Where a field of an index comes from, by the index plan kept with the indexing XSLT of a pipeline feeding
-    /// it (as the build tools keep it).
+    /// The index plans of the pipelines feeding a data source, each read once: for the many lookups of one call
+    /// (a field for the user, the host, the Action...), so the pipelines and their plans aren't read again for each.
+    ///
+    /// @param dataSource A data source the user can use.
+    /// @return The pipelines feeding it ([#feedingPipelines]) and the index plan kept with each one's indexing XSLT.
+    public FeedingPlans feedingPlans(final DocRef dataSource) {
+        return plansOf(feedingPipelines(dataSource));
+    }
+
+    /// @param pipelines Pipelines feeding an index ([#feedingPipelines]).
+    /// @return The index plan kept with each one's indexing XSLT, each read once (only those the user can view).
+    public FeedingPlans plansOf(final List<DocRef> pipelines) {
+        final Map<DocRef, List<FieldPlan>> plans = new LinkedHashMap<>();
+        for (final DocRef pipeline : NullSafe.list(pipelines)) {
+            plans.putIfAbsent(pipeline, plans(pipeline));
+        }
+        return new FeedingPlans(List.copyOf(plans.keySet()), plans);
+    }
+
+    /// Where a field of an index comes from, by the index plan kept with the indexing XSLT of the first pipeline
+    /// feeding it whose plan has it (as the build tools keep it). Several pipelines may feed one index, each with
+    /// its own plan: [FeedingPlans#planned] gives every pipeline's.
     ///
     /// @param pipelines The pipelines feeding the index ([#feedingPipelines]).
     /// @param field     The index field's name.
     /// @return The field as planned, with the pipeline whose plan it is in; empty if no plan the user can read
     /// has it.
     public Optional<Planned> planned(final List<DocRef> pipelines, final String field) {
-        for (final DocRef pipeline : NullSafe.list(pipelines)) {
-            for (final FieldPlan plan : plans(pipeline)) {
-                final Optional<PlannedField> found = plan.leafFields().stream()
-                        .filter(leaf -> leaf.name().equals(field))
-                        .findFirst();
-                if (found.isPresent()) {
-                    return Optional.of(new Planned(found.get(), pipeline));
-                }
-            }
-        }
-        return Optional.empty();
+        return plansOf(pipelines).planned(field).stream().findFirst();
     }
 
     /// The reverse of [#planned]: the fields of an index whose source, in the index plan kept with the indexing XSLT
@@ -197,21 +211,7 @@ public class DataSourceDocumentation {
     /// @return Each such field with the pipeline whose plan it is in, in the pipelines' and plans' order; empty if
     /// none.
     public List<Planned> plannedFrom(final List<DocRef> pipelines, final String path) {
-        final List<Planned> out = new ArrayList<>();
-        if (NullSafe.isBlankString(path)) {
-            return out;
-        }
-        for (final DocRef pipeline : NullSafe.list(pipelines)) {
-            for (final FieldPlan plan : plans(pipeline)) {
-                for (final PlannedField field : NullSafe.list(plan.fields())) {
-                    if (field.items().isEmpty() && field.constant() == null && field.transform() == null
-                        && sourceIs(field.source(), path)) {
-                        out.add(new Planned(field, pipeline));
-                    }
-                }
-            }
-        }
-        return out;
+        return plansOf(pipelines).plannedFrom(path);
     }
 
     /// @param source A planned field's source, an XPath from the Event element.
@@ -246,25 +246,41 @@ public class DataSourceDocumentation {
         return plain;
     }
 
-    // The index plans kept with a pipeline's XSLTs, each the user can view; a plan that doesn't read is none.
+    // The index plans kept with a pipeline's indexing XSLTs, read from the pipeline as Stroom runs it (an XSLT
+    // inherited from its template included), each the user can view; a plan that doesn't read is none. Where no XSLT
+    // can be told to index, any XSLT's index plan. A pipeline whose template can't be read has none (failing
+    // closed: what it inherits can't be known).
     private List<FieldPlan> plans(final DocRef pipeline) {
         final List<FieldPlan> out = new ArrayList<>();
-        final List<PipelineProperty> properties = documentAccess.read(pipeline, PipelineDoc.class)
-                .map(PipelineDoc::getPipelineData)
-                .map(PipelineData::getAddedProperties)
-                .orElse(List.of());
-        for (final PipelineProperty property : NullSafe.list(properties)) {
-            final DocRef xslt = NullSafe.get(property.getValue(), PipelinePropertyValue::getEntity);
-            if (xslt == null || !XsltDoc.TYPE.equals(xslt.getType())) {
+        final MergedPipeline merged = merged(pipeline).orElse(null);
+        if (merged == null) {
+            return out;
+        }
+        final List<StagedXslt> staged = xsltStages.classify(merged);
+        final List<StagedXslt> indexing = XsltStages.of(staged, Stage.INDEXING);
+        for (final StagedXslt xslt : indexing.isEmpty()
+                ? staged
+                : indexing) {
+            if (xslt.xslt() == null) {
                 continue;
             }
-            documentAccess.read(xslt, XsltDoc.class)
+            documentAccess.read(xslt.xslt(), XsltDoc.class)
                     .flatMap(doc -> KeptMapping.readMapping(doc.getDescription()))
                     .filter(kept -> "index".equals(kept.kind()))
                     .flatMap(kept -> plan(kept.payload()))
                     .ifPresent(out::add);
         }
         return out;
+    }
+
+    // The pipeline as Stroom runs it, read as the user; empty where it, or its template, can't be read.
+    private Optional<MergedPipeline> merged(final DocRef pipeline) {
+        try {
+            return MergedPipeline.load(documentAccess, pipeline.getUuid());
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to read pipeline " + pipeline, e);
+            return Optional.empty();
+        }
     }
 
     // The plan, or empty where it doesn't read.
@@ -431,14 +447,12 @@ public class DataSourceDocumentation {
                 .limit(MAX_CLUSTER_PIPELINES)
                 .toList();
         for (final DocRef pipeline : usingCluster) {
-            final List<PipelineProperty> properties = documentAccess.read(pipeline, PipelineDoc.class)
-                    .map(PipelineDoc::getPipelineData)
-                    .map(PipelineData::getAddedProperties)
-                    .orElse(List.of());
-            final boolean writes = NullSafe.list(properties).stream()
-                    .filter(property -> INDEX_NAME_PROPERTY.equals(property.getName()))
-                    .map(property -> NullSafe.get(property.getValue(), PipelinePropertyValue::getString))
-                    .anyMatch(name -> name != null && indexName.matcher(name).matches());
+            // Its effective properties: an index name it inherits from its template counts.
+            final boolean writes = merged(pipeline).map(MergedPipeline::properties).orElse(Map.of()).entrySet()
+                    .stream()
+                    .filter(property -> INDEX_NAME_PROPERTY.equals(property.getKey().name()))
+                    .map(Map.Entry::getValue)
+                    .anyMatch(name -> name instanceof final String text && indexName.matcher(text).matches());
             if (writes) {
                 writing.add(pipeline);
             }
@@ -581,6 +595,96 @@ public class DataSourceDocumentation {
 
 
     // --------------------------------------------------------------------------------
+
+
+    /// The index plans of the pipelines feeding an index, read once. Several pipelines may feed one index, each
+    /// with its own plan: where their plans agree on a field, one field; where they differ, each pipeline's.
+    ///
+    /// @param pipelines The pipelines, in the order found.
+    /// @param plans     The index plans kept with each one's indexing XSLT (none where it keeps none, or can't be
+    ///                  read).
+    public record FeedingPlans(List<DocRef> pipelines, Map<DocRef, List<FieldPlan>> plans) {
+
+        /// Copies the collections.
+        public FeedingPlans {
+            pipelines = List.copyOf(NullSafe.list(pipelines));
+            plans = Map.copyOf(NullSafe.map(plans));
+        }
+
+        /// @return No pipelines, no plans.
+        public static FeedingPlans none() {
+            return new FeedingPlans(List.of(), Map.of());
+        }
+
+        /// @return True if no pipeline's plan was read.
+        public boolean isEmpty() {
+            return plans.values().stream().allMatch(List::isEmpty);
+        }
+
+        /// @param field An index field's name.
+        /// @return The field as each pipeline's plan has it, in the pipelines' order (the first plan of each that
+        /// has it); empty if none has it.
+        public List<Planned> planned(final String field) {
+            final List<Planned> out = new ArrayList<>();
+            for (final DocRef pipeline : pipelines) {
+                for (final FieldPlan plan : plans.getOrDefault(pipeline, List.of())) {
+                    final Optional<PlannedField> found = plan.leafFields().stream()
+                            .filter(leaf -> leaf.name().equals(field))
+                            .findFirst();
+                    if (found.isPresent()) {
+                        out.add(new Planned(found.get(), pipeline));
+                        break;
+                    }
+                }
+            }
+            return out;
+        }
+
+        /// As [DataSourceDocumentation#plannedFrom], over these plans.
+        ///
+        /// @param path An event-logging path; a step `*` matches any one element.
+        /// @return Each field whose source is the path, with the pipeline whose plan it is in, in the pipelines'
+        /// and plans' order; empty if none.
+        public List<Planned> plannedFrom(final String path) {
+            final List<Planned> out = new ArrayList<>();
+            if (NullSafe.isBlankString(path)) {
+                return out;
+            }
+            for (final DocRef pipeline : pipelines) {
+                for (final FieldPlan plan : plans.getOrDefault(pipeline, List.of())) {
+                    for (final PlannedField field : NullSafe.list(plan.fields())) {
+                        if (field.items().isEmpty() && field.constant() == null && field.transform() == null
+                            && sourceIs(field.source(), path)) {
+                            out.add(new Planned(field, pipeline));
+                        }
+                    }
+                }
+            }
+            return out;
+        }
+
+        /// The pipelines feeding the index with plans, by the field each one's plan maps a path to: one entry
+        /// where they agree, one for each field where they differ.
+        ///
+        /// @param path An event-logging path.
+        /// @return The pipelines by the field their plan maps it to (only those mapping it), in the order found.
+        public Map<String, List<DocRef>> fieldsFrom(final String path) {
+            return byField(plannedFrom(path));
+        }
+
+        /// @param planned Fields as plans have them ([#planned], [#plannedFrom]).
+        /// @return The pipelines by field (each pipeline once, at its first field), in the order given.
+        public static Map<String, List<DocRef>> byField(final List<Planned> planned) {
+            final Map<String, List<DocRef>> out = new LinkedHashMap<>();
+            final Set<DocRef> seen = new HashSet<>();
+            for (final Planned one : NullSafe.list(planned)) {
+                if (seen.add(one.pipeline())) {
+                    out.computeIfAbsent(one.field().name(), k -> new ArrayList<>()).add(one.pipeline());
+                }
+            }
+            return out;
+        }
+    }
 
 
     /// A field of an index as the plan kept with a feeding pipeline's indexing XSLT has it.

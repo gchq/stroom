@@ -18,13 +18,17 @@ package stroom.ai.impl.tools.query;
 
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.processing.XsltStages;
 import stroom.ai.impl.tools.query.DataSourceDocumentation.Planned;
+import stroom.ai.impl.tools.streams.SteppingWalks;
+import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.api.DocFinder;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
+import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 
@@ -44,11 +48,13 @@ class TestDataSourceDocumentation {
     private static final DocRef PIPELINE = new DocRef(PipelineDoc.TYPE, "pipe-uuid", "Proxy indexing");
     private static final DocRef XSLT = new DocRef(XsltDoc.TYPE, "xslt-uuid", "Proxy indexing XSLT");
     private static final DocRef HIDDEN = new DocRef(PipelineDoc.TYPE, "hidden-uuid", "Hidden indexing");
+    private static final DocRef CHILD = new DocRef(PipelineDoc.TYPE, "child-uuid", "Proxy indexing (child)");
 
     private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
     private final DataSourceDocumentation documentation = new DataSourceDocumentation(documentAccess,
             Mockito.mock(DataSourceAccess.class), () -> Mockito.mock(DocFinder.class),
-            () -> Mockito.mock(DocDependencyService.class));
+            () -> Mockito.mock(DocDependencyService.class), new XsltStages(documentAccess,
+            Mockito.mock(HeldSchemas.class), Mockito.mock(SteppingWalks.class)));
 
     @Test
     void theFieldsWhoseSourceIsThePathAreFoundInPlanOrder() {
@@ -108,6 +114,22 @@ class TestDataSourceDocumentation {
     }
 
     @Test
+    void aPlanInheritedFromAParentPipelineIsRead() {
+        // The child sets nothing itself: its indexing XSLT, and the plan kept with it, are its parent's.
+        plan(List.of(field("actor.login", "EventSource/User/Id")));
+        Mockito.when(documentAccess.findDocRef(CHILD.getUuid())).thenReturn(Optional.of(CHILD));
+        Mockito.when(documentAccess.read(CHILD, PipelineDoc.class)).thenReturn(Optional.of(PipelineDoc.builder()
+                .uuid(CHILD.getUuid()).name(CHILD.getName()).parentPipeline(PIPELINE)
+                .pipelineData(new PipelineDataBuilder().build())
+                .build()));
+
+        assertThat(documentation.plannedFrom(List.of(CHILD), "EventSource/User/Id"))
+                .extracting(planned -> planned.field().name(), Planned::pipeline)
+                .containsExactly(org.assertj.core.groups.Tuple.tuple("actor.login", CHILD));
+        assertThat(documentation.planned(List.of(CHILD), "actor.login")).isPresent();
+    }
+
+    @Test
     void aSourceIsThePathStepForStep() {
         assertThat(DataSourceDocumentation.sourceIs("EventSource/User/Id", "EventSource/User/Id")).isTrue();
         assertThat(DataSourceDocumentation.sourceIs(" /EventSource/User/Id ", "EventSource/User/Id")).isTrue();
@@ -124,9 +146,11 @@ class TestDataSourceDocumentation {
 
     // The pipeline's indexing XSLT keeps a plan of these fields, as save_xslt keeps it.
     private void plan(final List<Map<String, Object>> fields) {
+        Mockito.when(documentAccess.findDocRef(PIPELINE.getUuid())).thenReturn(Optional.of(PIPELINE));
         Mockito.when(documentAccess.read(PIPELINE, PipelineDoc.class)).thenReturn(Optional.of(PipelineDoc.builder()
                 .uuid(PIPELINE.getUuid()).name(PIPELINE.getName())
                 .pipelineData(new PipelineDataBuilder()
+                        .addElement(new PipelineElement("xsltFilter", "XSLTFilter"))
                         .addProperty(new PipelineProperty("xsltFilter", "xslt", new PipelinePropertyValue(XSLT)))
                         .build())
                 .build()));

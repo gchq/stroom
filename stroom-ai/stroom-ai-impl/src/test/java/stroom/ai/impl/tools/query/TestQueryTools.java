@@ -28,7 +28,10 @@ import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.instructions.AgentInstructions;
+import stroom.ai.impl.tools.processing.XsltStages;
 import stroom.ai.impl.tools.propose.ProposeQueryTool;
+import stroom.ai.impl.tools.streams.SteppingWalks;
+import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
@@ -40,6 +43,7 @@ import stroom.importexport.shared.Dependency;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
+import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.query.api.datasource.ConditionSet;
@@ -265,8 +269,10 @@ class TestQueryTools {
         Mockito.when(documentAccess.canView(Mockito.argThat(docRef -> docRef != null
                                                                     && docRef.getUuid().contains("pipe"))))
                 .thenReturn(true);
+        Mockito.when(documentAccess.findDocRef(pipeline.getUuid())).thenReturn(Optional.of(pipeline));
         Mockito.when(documentAccess.read(pipeline, PipelineDoc.class))
                 .thenReturn(Optional.of(writingTo(pipeline, "stroom-ecs-twitter-v1")));
+        Mockito.when(documentAccess.findDocRef(other.getUuid())).thenReturn(Optional.of(other));
         Mockito.when(documentAccess.read(other, PipelineDoc.class))
                 .thenReturn(Optional.of(writingTo(other, "some-other-index")));
         Mockito.when(documentAccess.parent(index)).thenReturn(Optional.of(folder));
@@ -315,6 +321,7 @@ class TestQueryTools {
                         criteria != null && "touuid:=cluster-uuid".equals(criteria.getPartialName())), Mockito.any()))
                 .thenReturn(ResultPage.createUnboundedList(List.of(new Dependency(pipeline, cluster, true))));
         Mockito.when(documentAccess.canView(pipeline)).thenReturn(true);
+        Mockito.when(documentAccess.findDocRef(pipeline.getUuid())).thenReturn(Optional.of(pipeline));
         Mockito.when(documentAccess.read(pipeline, PipelineDoc.class))
                 .thenReturn(Optional.of(writingTo(pipeline, "STROOM-ECS-TWITTER-V2")));
         Mockito.when(documentAccess.read(pipeline)).thenReturn(Optional.of(PipelineDoc.builder().uuid("pipe-uuid")
@@ -499,7 +506,8 @@ class TestQueryTools {
     private DescribeDataSourceTool describeTool() {
         return new DescribeDataSourceTool(workspace, dataSourceAccess, () -> queryService, agentInstructions,
                 new DataSourceDocumentation(documentAccess, dataSourceAccess, () -> docFinder,
-                        () -> dependencyService), auditLog);
+                        () -> dependencyService, new XsltStages(documentAccess, Mockito.mock(HeldSchemas.class),
+                        Mockito.mock(SteppingWalks.class))), auditLog);
     }
 
     private ValidateStroomQlTool validateTool() {
@@ -581,9 +589,11 @@ class TestQueryTools {
                         | `EventDetail/Send/Destination/User/Id` | `bob`, `carol` |
                         | `Email/Recipient/Name` | The recipient's display name. | keyword | `x` | `Bob B` |
                         """)));
+        Mockito.when(documentAccess.findDocRef(pipeline.getUuid())).thenReturn(Optional.of(pipeline));
         Mockito.when(documentAccess.read(pipeline, PipelineDoc.class)).thenReturn(Optional.of(PipelineDoc.builder()
                 .uuid("pipe-uuid").name("Mail indexing")
                 .pipelineData(new PipelineDataBuilder()
+                        .addElement(new PipelineElement("xsltFilter", "XSLTFilter"))
                         .addProperty(new PipelineProperty("xsltFilter", "xslt", new PipelinePropertyValue(xslt)))
                         .build())
                 .build()));
@@ -649,6 +659,7 @@ class TestQueryTools {
                 .uuid(pipeline.getUuid())
                 .name(pipeline.getName())
                 .pipelineData(new PipelineDataBuilder()
+                        .addElement(new PipelineElement("elasticIndexingFilter", "ElasticIndexingFilter"))
                         .addProperty(new PipelineProperty("elasticIndexingFilter",
                                 DataSourceDocumentation.INDEX_NAME_PROPERTY, new PipelinePropertyValue(indexName)))
                         .build())
