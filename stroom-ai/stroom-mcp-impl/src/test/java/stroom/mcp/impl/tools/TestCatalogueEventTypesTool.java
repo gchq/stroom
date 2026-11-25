@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.ToolCaller;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.catalogue.EventType;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.processing.TranslationInputText;
 import stroom.ai.impl.tools.sample.ToolJson;
@@ -43,6 +44,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
@@ -1040,6 +1042,51 @@ class TestCatalogueEventTypesTool {
     }
 
 
+    @Test
+    void theListingOfACatalogueReadBackFromAnExistingPipelinePutsItToTheUserNext() {
+        // Seen in eval case 106 on Haiku: the catalogue read back from the pipeline described in place, listed with
+        // the draft's "propose the source's event types" and its next proposals=, so the agent stopped there and the
+        // catalogue was never confirmed.
+        readBackCatalogue(Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline", Map.of("name", "ACME-Events",
+                "uuid", "prod-ev"), InPlaceInduction.IN_PLACE, Map.of(InPlaceInduction.ELEMENT, "translationFilter",
+                InPlaceInduction.PRE_PROCESSED, false)));
+
+        final Map<String, Object> listed = call(Map.of("build", BUILD, "stream_ids", List.of(7)), plain());
+
+        assertThat(String.valueOf(listed.get("hint"))).startsWith("These event types are read back from the "
+                                                                  + "existing pipeline's XSLT")
+                .contains("then confirm=true puts them to the user")
+                .doesNotContain("Propose the source's event types");
+        assertThat(map(map(map(listed.get("next")).get("call")).get("arguments"))).containsEntry("confirm", true)
+                .doesNotContainKey("proposals");
+    }
+
+    @Test
+    void theListingOfACatalogueTheAgentProposedAsksForProposalsAsBefore() {
+        propose(List.of(type("Authenticate-Logon", "Authenticate", "high", "login")));
+        facts.startFrom = Map.of("choice", ExistingTranslations.DRAFT, "pipeline", Map.of("name", "ACME-Events",
+                "uuid", "prod-ev"));
+
+        final Map<String, Object> listed = call(Map.of("build", BUILD, "stream_ids", List.of(7)), plain());
+
+        assertThat(String.valueOf(listed.get("hint"))).startsWith("Propose the source's event types");
+        assertThat(map(map(map(listed.get("next")).get("call")).get("arguments"))).containsKey("proposals");
+    }
+
+    @Test
+    void aReadBackCatalogueConfirmedWholeIsListedAsAnyOther() {
+        readBackCatalogue(Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline", Map.of("name", "ACME-Events",
+                "uuid", "prod-ev"), InPlaceInduction.IN_PLACE, Map.of(InPlaceInduction.ELEMENT, "translationFilter",
+                InPlaceInduction.PRE_PROCESSED, false)));
+        final Catalogue catalogue = SourceNotes.catalogue(notes());
+        notesTool.recordCatalogue(plain(), BUILD, BUILD, catalogue.confirmedByUser(Set.of("Authenticate-Logon"))
+                .withCatchAllConfirmedByUser(), null);
+
+        final Map<String, Object> listed = call(Map.of("build", BUILD, "stream_ids", List.of(7)), plain());
+
+        assertThat(String.valueOf(listed.get("hint"))).startsWith("Propose the source's event types");
+    }
+
     // --------------------------------------------------------------------------------
 
 
@@ -1057,6 +1104,17 @@ class TestCatalogueEventTypesTool {
             }
         }
         throw new AssertionError("The catalogue was never confirmed");
+    }
+
+    // The build's catalogue as one read back from an existing pipeline's XSLT (proposed, its TypeIds kept), the
+    // build starting as given.
+    private void readBackCatalogue(final Map<String, Object> startFrom) {
+        propose(List.of(type("Authenticate-Logon", "Authenticate", "high", "login")));
+        final Catalogue catalogue = SourceNotes.catalogue(notes());
+        notesTool.recordCatalogue(plain(), BUILD, BUILD, catalogue.withEventTypes(catalogue.eventTypes().stream()
+                .map(EventType::readBack)
+                .toList()), null);
+        facts.startFrom = startFrom;
     }
 
     // The sample with one more record, whose action no event type the tests propose recognises.

@@ -699,6 +699,19 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                            + "evidence's seed is the draft's, not these).");
     }
 
+    // Whether the build's catalogue is the one read back from the existing pipeline it starts from or describes in
+    // place, not yet confirmed whole (an event type or the catch-all still to confirm).
+    private boolean readBack(final Calling calling) {
+        final Map<String, Object> startFrom = plan.startFrom(calling.build()).orElse(Map.of());
+        final boolean started = ExistingTranslations.EXISTING.equals(startFrom.get("choice"))
+                                || InPlaceInduction.inPlace(startFrom);
+        return started && InPlaceInduction.mappingNotRead(startFrom).isEmpty()
+               && calling.catalogue().eventTypes().stream().anyMatch(type ->
+                EventType.EXISTING_PIPELINE.equals(type.basis()))
+               && (!calling.catalogue().catchAll().confirmed()
+                   || !calling.catalogue().eventTypes().stream().allMatch(EventType::confirmed));
+    }
+
     // A next version's build starts from the promoted catalogue beside the feed it works from, whether or not
     // copy_pipeline has run yet (seen in eval case 70: catalogued before the copy, the confirmed event types were
     // lost): what was carried, said; empty when nothing was.
@@ -837,6 +850,19 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         }
         result.put("catalogue", compact(calling.catalogue()));
         origin(calling).ifPresent(said -> result.put("origin", said));
+        if (readBack(calling)) {
+            // The catalogue read back from the existing pipeline is the proposal: put to the user next. Seen in eval
+            // case 106 on Haiku: told to propose the source's event types from the evidence, the agent stopped with
+            // the catalogue read back never confirmed.
+            result.put(HINT, "These event types are read back from the existing pipeline's XSLT, its TypeIds kept: "
+                             + "they are the proposal, checked against the records (check). Propose changes "
+                             + "(proposals=[{op: change, add or remove, ...}]) only for what is worth a look or the "
+                             + "user asks for; then confirm=true puts them to the user, each event type, then the "
+                             + "catch-all. Nothing is confirmed until they are.");
+            result.put("next", next(calling.build(), Map.of(CONFIRM_ARG, true),
+                    "puts the catalogue read back to the user in its forms, each event type, then the catch-all"));
+            return result;
+        }
         result.put(HINT, "Propose the source's event types (proposals=[{op: add, type_id, title, description, "
                          + "event_detail, action, actor, recognised_by, placements, basis, confidence}]) from this "
                          + "evidence and what you know of the product: a type is what happened, recognised by "
