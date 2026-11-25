@@ -334,4 +334,25 @@ class TestFieldMappingSections {
         assertThat(FieldMappingSections.countsLine(outputs, group)).isEqualTo("Counts are of 2 sample records (1 of "
                 + "stream 73274, 1 of stream 73275).\n\n");
     }
+
+    @Test
+    void aBuildOfSeveralFeedsSaysWhichFeedsStreamsWereStepped() {
+        // The many-feeds audit (2026-11-25): the documentation named no feed, nor which feeds' streams were stepped.
+        final Map<String, String> outputs = new LinkedHashMap<>();
+        outputs.put("10:0", "<Events/>");
+        outputs.put("10:1", "<Events/>");
+        outputs.put("11:0", "<Events/>");
+        final Map<String, String> feedOf = Map.of("10", "ACME-A", "11", "acme-b");
+
+        assertThat(FieldMappingSections.feedsLine(outputs, feedOf, List.of("ACME-A", "ACME-B", "ACME-C")))
+                .isEqualTo("Feeds: ACME-A, ACME-B, ACME-C. Stepped over the streams of ACME-A (1 stream, 2 records), "
+                           + "acme-b (1 stream, 1 records); none of ACME-C's streams were stepped, so what they hold "
+                           + "alone is not seen here.\n\n");
+        // One feed: nothing said, as before.
+        assertThat(FieldMappingSections.feedsLine(outputs, Map.of("10", "ACME", "11", "ACME"), List.of("ACME")))
+                .isEmpty();
+        // Records from two feeds with no build: both named.
+        assertThat(FieldMappingSections.feedsLine(outputs, Map.of("10", "A"), List.of())).startsWith(
+                "Feeds: A, a feed not known.");
+    }
 }

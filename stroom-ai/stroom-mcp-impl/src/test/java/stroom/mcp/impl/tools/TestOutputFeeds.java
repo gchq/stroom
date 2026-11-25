@@ -25,6 +25,7 @@ import stroom.pipeline.shared.data.PipelinePropertyValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -73,6 +74,35 @@ class TestOutputFeeds {
                 ProcessingWorld.BUILD).orElseThrow();
         assertThat(again.uuid()).isEqualTo(made.uuid());
         assertThat(again.made()).isFalse();
+    }
+
+    @Test
+    void aTestFeedForSeveralFeedsSaysWhoseSettingsItTakes() {
+        // The many-feeds audit (2026-11-25): the test feed took the first feed's settings without a word.
+        w.feedAt("System/Feeds", "PROD-FEED-B", "pfb", "Raw Events");
+        w.world.docs.put("pfb", w.feedDoc("pfb").copy().encoding("UTF-8").build());
+
+        final OutputFeeds.OutputFeed made = w.outputFeeds.outputFeed(P1, List.of("PROD-FEED", "PROD-FEED-B"),
+                ProcessingWorld.BUILD).orElseThrow();
+
+        assertThat(w.feedDoc(made.uuid()).getEncoding()).isEqualTo("UTF-16LE");
+        assertThat(w.feedDoc(made.uuid()).getDescription()).contains("from PROD-FEED, PROD-FEED-B's streams",
+                "Its settings are PROD-FEED's (encoding UTF-16LE, stream type Raw Events); PROD-FEED-B (encoding "
+                + "UTF-8) differ");
+        assertThat(w.world.records().entry(ProcessingWorld.BUILD, made.uuid()).get(BuildFeeds.SETTINGS_FROM))
+                .asString().startsWith("Its settings are PROD-FEED's");
+    }
+
+    @Test
+    void feedsAlikeAreSaidToBeSo() {
+        final FeedDoc a = FeedDoc.builder().uuid("a").name("A").encoding("UTF-8").streamType("Raw Events").build();
+        final FeedDoc b = FeedDoc.builder().uuid("b").name("B").encoding("UTF-8").streamType("Raw Events").build();
+        final Map<String, FeedDoc> alike = new LinkedHashMap<>();
+        alike.put("A", a);
+        alike.put("B", b);
+
+        assertThat(BuildFeeds.settingsSaid(alike)).isEqualTo("Its settings are those of A, B, alike.");
+        assertThat(BuildFeeds.settingsSaid(Map.of("A", a))).isEmpty();
     }
 
     @Test

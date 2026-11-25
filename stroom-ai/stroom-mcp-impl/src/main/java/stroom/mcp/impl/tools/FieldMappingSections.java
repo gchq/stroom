@@ -97,6 +97,8 @@ class FieldMappingSections {
     private final ReferenceEvaluation referenceEvaluation;
     private final Provider<DocumentAccess> documentAccessProvider;
     private final SteppedSamples steppedSamples;
+    // Gives the feeds a build is for; none in tests that make this themselves.
+    private Provider<BuildPlan> planProvider;
 
     /// @param stepping        Steps the pipeline over the sample streams.
     /// @param cef             Steps a CEF pipeline, reading its lines and the Events they came from.
@@ -132,6 +134,14 @@ class FieldMappingSections {
         this.referenceEvaluation = referenceEvaluation;
         this.documentAccessProvider = documentAccessProvider;
         this.steppedSamples = steppedSamples;
+    }
+
+    /// Where the feeds a build is for are read (set by injection; none in tests that make this themselves).
+    ///
+    /// @param plan The build plan.
+    @Inject
+    void setPlan(final Provider<BuildPlan> plan) {
+        this.planProvider = plan;
     }
 
     /// The Field mapping section generated from the kept mapping (stepped over the sample streams, with each Event
@@ -510,7 +520,7 @@ class FieldMappingSections {
                 ? groupLine(module)
                 : "") + countsLine(outputs, group
                 ? mapping
-                : null) + (drift.isPresent() && unmarked * 2 > events.size()
+                : null) + feedsLine(build, outputs) + (drift.isPresent() && unmarked * 2 > events.size()
                 ? WrittenEventDocs.writtenEventsMarkdown(schema, events, layout, described)
                 : EventFieldDocs.fieldMappingMarkdown(group
                         ? withCommonParts(mapping)
@@ -627,7 +637,10 @@ class FieldMappingSections {
         final Map<String, List<String>> fromIndex = missing.isEmpty()
                 ? null
                 : examplesFromIndex(context, pipeline, plan, missing);
-        String section = IndexFieldDocs.indexFieldMappingMarkdown(plan, population, summary == null
+        String section = (stepped == null
+                ? ""
+                : feedsLine(build, stepped.outputs())) + IndexFieldDocs.indexFieldMappingMarkdown(plan, population,
+                summary == null
                 ? null
                 : IndexingInputs.byAction(summary), documents, fromIndex, schema, layout, described)
                          + agreedLine(pipeline) + reprocessingNote(pipeline);
@@ -714,6 +727,72 @@ class FieldMappingSections {
             }
         }
         return line + ".\n\n";
+    }
+
+    // For a build of several feeds (or records from several), which feeds' streams were stepped, and the build's
+    // feeds none of whose streams were (the many-feeds audit, 2026-11-25): empty otherwise.
+    private String feedsLine(final String build, final Map<String, String> outputs) {
+        final Map<String, String> feedOf = new LinkedHashMap<>();
+        for (final String key : outputs.keySet()) {
+            final String stream = key.split(":")[0];
+            if (!feedOf.containsKey(stream)) {
+                feedOf.put(stream, feedOfStream(stream));
+            }
+        }
+        final List<String> buildFeeds = planProvider == null || NullSafe.isBlankString(build)
+                ? List.of()
+                : planProvider.get().buildFeeds(build);
+        return feedsLine(outputs, feedOf, buildFeeds);
+    }
+
+    /// @param outputs    The stepped outputs, keyed `stream:record`.
+    /// @param feedOf     Each stream's feed (null where it can't be read).
+    /// @param buildFeeds The feeds the build is for.
+    /// @return The line naming the feeds whose streams were stepped, with their streams and records, and the build's
+    /// feeds none of whose were, ending with a blank line; empty for one feed.
+    static String feedsLine(final Map<String, String> outputs,
+                            final Map<String, String> feedOf,
+                            final List<String> buildFeeds) {
+        final Map<String, int[]> byFeed = new LinkedHashMap<>();
+        final Set<String> streamsSeen = new LinkedHashSet<>();
+        for (final String key : outputs.keySet()) {
+            final String stream = key.split(":")[0];
+            final String feed = NullSafe.nonBlankStringElse(feedOf.get(stream), "a feed not known");
+            final int[] counts = byFeed.computeIfAbsent(feed, k -> new int[2]);
+            if (streamsSeen.add(stream)) {
+                counts[0]++;
+            }
+            counts[1]++;
+        }
+        if (byFeed.size() < 2 && buildFeeds.size() < 2) {
+            return "";
+        }
+        final List<String> stepped = new ArrayList<>();
+        byFeed.forEach((feed, counts) -> stepped.add(feed + " (" + counts[0] + " stream" + (counts[0] == 1
+                ? ""
+                : "s") + ", " + counts[1] + " records)"));
+        final List<String> notStepped = buildFeeds.stream()
+                .filter(feed -> byFeed.keySet().stream().noneMatch(feed::equalsIgnoreCase))
+                .toList();
+        return "Feeds: " + String.join(", ", buildFeeds.isEmpty()
+                ? List.copyOf(byFeed.keySet())
+                : buildFeeds) + ". Stepped over the streams of " + String.join(", ", stepped) + (notStepped.isEmpty()
+                ? ""
+                : "; none of " + String.join(", ", notStepped) + "'s streams were stepped, so what they hold "
+                  + "alone is not seen here") + ".\n\n";
+    }
+
+    // A stream's source feed (an Events stream's raw parent's, as the build's Events are on its test feed), or null
+    // where it can't be read.
+    private String feedOfStream(final String stream) {
+        try {
+            final Meta meta = streamReader.meta(Long.parseLong(stream));
+            return meta.getParentMetaId() == null
+                    ? meta.getFeedName()
+                    : streamReader.meta(meta.getParentMetaId()).getFeedName();
+        } catch (final RuntimeException e) {
+            return null;
+        }
     }
 
     // The pipeline's own XSLT (not its template's).

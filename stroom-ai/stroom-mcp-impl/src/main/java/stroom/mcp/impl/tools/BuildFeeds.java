@@ -27,9 +27,11 @@ import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /// The feeds of builds: a feed made in a build, never one of the same name elsewhere or one differing only in case;
@@ -42,6 +44,8 @@ class BuildFeeds {
     static final String SAMPLE_FILES = "sample_files";
     /// The build record's key naming the existing feeds a test feed holds the Events of.
     static final String OUTPUT_FOR = "output_for";
+    /// The record's key, on a test feed for several source feeds, for whose settings it takes.
+    static final String SETTINGS_FROM = "settings_from";
     /// The build record's key naming the source type group whose own output feed a feed is.
     static final String GROUP_OUTPUT = "group_output_for";
 
@@ -181,9 +185,16 @@ class BuildFeeds {
     /// @param sources The existing feeds the build works from.
     /// @return The test feed, written.
     FeedDoc makeTestFeed(final String build, final String name, final List<String> sources) {
-        final FeedDoc settings = feedNames.exact(sources.getFirst())
-                .flatMap(source -> documentAccess.read(source, FeedDoc.class))
-                .orElse(null);
+        // Each source feed's settings, not only the first's (the many-feeds audit, 2026-11-25): the first feed's
+        // where they differ, and which feed's is said.
+        final Map<String, FeedDoc> settingsByFeed = new LinkedHashMap<>();
+        for (final String source : sources) {
+            feedNames.exact(source)
+                    .flatMap(ref -> documentAccess.read(ref, FeedDoc.class))
+                    .ifPresent(doc -> settingsByFeed.put(source, doc));
+        }
+        final FeedDoc settings = settingsByFeed.values().stream().findFirst().orElse(null);
+        final String settingsSaid = settingsSaid(settingsByFeed);
         final DocRef ref = guard.create(FeedDoc.TYPE, name, build, null, false, null);
         final FeedDoc found = write(read(ref).copy()
                 .encoding(NullSafe.nonBlankStringElse(NullSafe.get(settings, FeedDoc::getEncoding), "UTF-8"))
@@ -191,11 +202,46 @@ class BuildFeeds {
                         "Raw Events"))
                 .description("Build '" + build + "': the Events its pipelines make from " + String.join(", ", sources)
                              + "'s streams. Nothing is uploaded to it; it is never promoted, and is tidied up at "
-                             + "promotion unless the user keeps it.")
+                             + "promotion unless the user keeps it." + (settingsSaid.isEmpty()
+                        ? ""
+                        : " " + settingsSaid))
                 .build());
-        records.update(build, new DocRef(FeedDoc.TYPE, found.getUuid(), found.getName()),
-                entry -> entry.put(OUTPUT_FOR, List.copyOf(sources)));
+        records.update(build, new DocRef(FeedDoc.TYPE, found.getUuid(), found.getName()), entry -> {
+            entry.put(OUTPUT_FOR, List.copyOf(sources));
+            if (!settingsSaid.isEmpty()) {
+                entry.put(SETTINGS_FROM, settingsSaid);
+            }
+        });
         return found;
+    }
+
+    /// @param settingsByFeed Each source feed's document, in order.
+    /// @return Which feed's settings (encoding, stream type) a test feed for several takes, and where they differ;
+    /// empty for one feed.
+    static String settingsSaid(final Map<String, FeedDoc> settingsByFeed) {
+        if (settingsByFeed.size() < 2) {
+            return "";
+        }
+        final String first = settingsByFeed.keySet().iterator().next();
+        final FeedDoc used = settingsByFeed.get(first);
+        final List<String> differ = new ArrayList<>();
+        settingsByFeed.forEach((feed, doc) -> {
+            final List<String> what = new ArrayList<>();
+            if (!Objects.equals(doc.getEncoding(), used.getEncoding())) {
+                what.add("encoding " + doc.getEncoding());
+            }
+            if (!Objects.equals(doc.getStreamType(), used.getStreamType())) {
+                what.add("stream type " + doc.getStreamType());
+            }
+            if (!what.isEmpty()) {
+                differ.add(feed + " (" + String.join(", ", what) + ")");
+            }
+        });
+        return differ.isEmpty()
+                ? "Its settings are those of " + String.join(", ", settingsByFeed.keySet()) + ", alike."
+                : "Its settings are " + first + "'s (encoding " + used.getEncoding() + ", stream type "
+                  + used.getStreamType() + "); " + String.join(", ", differ) + " differ: their Events are written "
+                  + "here all the same.";
     }
 
     /// @param ref A feed.
