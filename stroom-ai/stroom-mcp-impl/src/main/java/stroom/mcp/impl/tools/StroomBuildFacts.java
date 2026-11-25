@@ -547,6 +547,45 @@ class StroomBuildFacts implements BuildFacts {
     }
 
     @Override
+    public boolean feedsCompared(final String build, final List<Map<String, Object>> docs) {
+        try {
+            final Map<String, Object> kept = buildRecords.feedComparison(build);
+            if (kept.get("digest") == null) {
+                return false;
+            }
+            final Set<String> confirmedFor = new LinkedHashSet<>();
+            JsonValues.strings(kept.get("feeds")).forEach(feed -> confirmedFor.add(feed.toLowerCase(Locale.ROOT)));
+            final List<String> feeds = buildSourceFeeds(build, docs);
+            if (!feeds.stream().allMatch(feed -> confirmedFor.contains(feed.toLowerCase(Locale.ROOT)))) {
+                return false;
+            }
+            final Map<String, Map<String, Object>> states = new LinkedHashMap<>();
+            for (final Map<String, Object> doc : docs) {
+                final String name = String.valueOf(doc.get("name"));
+                if (DocumentationDoc.TYPE.equals(doc.get("type")) && name.endsWith(SURVEY)) {
+                    documentAccess.read(new DocRef(DocumentationDoc.TYPE, String.valueOf(doc.get("uuid"))),
+                                    DocumentationDoc.class)
+                            .flatMap(read -> readState(BuildRecords.bodyText(read)))
+                            .ifPresent(state -> states.put(name.substring(0, name.length() - SURVEY.length()),
+                                    state));
+                }
+            }
+            final Map<String, Map<String, Object>> ordered = new LinkedHashMap<>();
+            for (final String feed : feeds) {
+                states.entrySet().stream()
+                        .filter(entry -> entry.getKey().equalsIgnoreCase(feed))
+                        .findFirst()
+                        .ifPresent(entry -> ordered.put(feed, entry.getValue()));
+            }
+            return FeedShapeComparison.compare(ordered).digest().equals(kept.get("digest"));
+        } catch (final RuntimeException e) {
+            // Advice: a record or survey that can't be read leaves the step to do.
+            LOGGER.debug("Unable to read whether build {}'s feeds were compared", build, e);
+            return false;
+        }
+    }
+
+    @Override
     public boolean catalogued(final List<Map<String, Object>> docs) {
         for (final Map<String, Object> doc : docs) {
             if (DocumentationDoc.TYPE.equals(doc.get("type"))

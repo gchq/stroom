@@ -112,6 +112,8 @@ public class BuildPlan {
     // the survey alone finds an aggregated feed's source type field. Seen (evals 58 and 59): the agent went straight
     // on with its own uploads, and an aggregated feed was never recognised.
     static final String SURVEYED = "surveyed";
+    /// The step a build of several feeds' surveys are compared by (compare_feeds), before the catalogue.
+    static final String FEEDS_COMPARED = "feeds_compared";
     /// The step the source's event types are catalogued by (catalogue_event_types), before the translation.
     static final String CATALOGUE = "catalogue";
     // The kind of build that only assesses a feed: its plan ends once its source type registry is written.
@@ -136,6 +138,12 @@ public class BuildPlan {
                                   + "parked for later builds (an assessment: the registry written)",
                     "record_source_types build=... feed=... (then again with reviewed=<its review_id> and "
                     + "group=<a name you suggest>)"),
+            List.of(FEEDS_COMPARED, "A build of several feeds: how their surveys differ (fields or kinds of event "
+                                    + "in some only, formats, time zones), each feed's streams and dates (a dormant "
+                                    + "feed included), and the AGENTS rules their folders give differently, shown to "
+                                    + "the user; they confirm one translation for the union, and answer each feed's "
+                                    + "zone and each conflict",
+                    CompareFeedsTool.NAME + " build=..."),
             List.of(CATALOGUE, "The source's event types catalogued: you propose each event type and how its "
                                + "records are recognised, from the evidence and what you know of the source; each "
                                + "proposal is checked against every sampled record; the user confirms them a set at "
@@ -257,11 +265,12 @@ public class BuildPlan {
         return steps;
     }
 
-    /// @return A new source's steps: without an existing feed's survey rounds or CEF output, which other builds
-    /// take.
+    /// @return A new source's steps: without an existing feed's survey rounds, the comparison of several existing
+    /// feeds, or CEF output, which other builds take.
     public static List<Map<String, Object>> onboardingChecklist() {
         return checklist().stream()
                 .filter(step -> !"covered".equals(step.get("step")) && !SOURCE_TYPES.equals(step.get("step"))
+                                && !FEEDS_COMPARED.equals(step.get("step"))
                                 && !STAGE_OUTPUT.equals(step.get("stage"))
                                 && !STAGE_REFERENCE.equals(step.get("stage")))
                 .toList();
@@ -278,6 +287,9 @@ public class BuildPlan {
         final List<Object> steps = onboardingChecklist().stream().map(item -> item.get("step")).toList();
         if (steps.contains(step)) {
             return "Onboarding step " + (steps.indexOf(step) + 1) + " of " + steps.size() + " (" + step + "): ";
+        }
+        if (FEEDS_COMPARED.equals(step)) {
+            return "Onboarding several existing feeds (" + step + "): ";
         }
         return "any step".equals(step)
                 ? "Onboarding, any step: "
@@ -477,6 +489,16 @@ public class BuildPlan {
             return List.of();
         }
         return facts.sourceFeeds(build, facts.buildDocs(build));
+    }
+
+    /// @param build A build, or null.
+    /// @return The existing feeds the build is for ([BuildFacts#buildSourceFeeds]): those start_build or
+    /// start_onboarding was given and those it surveyed; none for a new source, or no build.
+    public List<String> buildFeeds(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return List.of();
+        }
+        return facts.buildSourceFeeds(build, facts.buildDocs(build));
     }
 
     /// @param build A build, or null.
@@ -932,6 +954,11 @@ public class BuildPlan {
                         : Boolean.FALSE);
         done.put(SOURCE_TYPES, sourceTypesDone(build, surveyState, of(byType, DocumentationDoc.TYPE), sources,
                 assessment));
+        // A build of several feeds: their surveys compared and the union confirmed by the user (decided by the
+        // user, 2026-11-25); not needed for one feed, or a new source.
+        done.put(FEEDS_COMPARED, perFeed.feeds().size() > 1 && !discovery
+                ? (Boolean) facts.feedsCompared(build, docs)
+                : null);
         // How the user chose to start, where a pipeline already translates what the build is to (decided by the user,
         // 2026-11-24): from it, the catalogue is to do (read back from its XSLT, then confirmed) though the build
         // holds its copy's translation.
@@ -1375,6 +1402,10 @@ public class BuildPlan {
                     + "review_id> and group=<a name you suggest>; they choose in a form which source types go in "
                     + "this build's one source type group (one pipeline) and keep or change its name, the rest "
                     + "parked for later builds, and the registry is written");
+            case FEEDS_COMPARED -> call(CompareFeedsTool.NAME, args("build", build),
+                    "show the user its feeds table and differences in the chat; they confirm one translation for "
+                    + "the union, and each feed's zone and AGENTS conflict, in its forms; then carry on with the plan "
+                    + "(next)");
             case CATALOGUE -> call(CatalogueEventTypesTool.NAME, args("build", build, "stream_ids", raw),
                     "lists the evidence; propose the event types (proposals=), each checked against the records, "
                     + "then confirm=true puts them to the user a set at a time");
@@ -1815,15 +1846,16 @@ public class BuildPlan {
         if (sources.size() > 1) {
             start.put("several_feeds", "The build is for " + sources.size() + " feeds (" + named + "): each is "
                                        + "surveyed (survey_feed build=" + build + " feed=<each>, next names them in "
-                                       + "turn), and the translation serves them all.");
+                                       + "turn), their differences shown to the user (compare_feeds), and the "
+                                       + "translation serves them all.");
         }
         return start;
     }
 
     private static List<Map<String, Object>> steps(final Map<String, Boolean> done, final Set<String> skipped) {
         // Not needed when their state is null: a converter for a format that needs none, a template for Lucene.
-        final Set<String> notNeeded = Set.of("converter", SURVEYED, SOURCE_TYPES, CATALOGUE, "index_template",
-                "covered");
+        final Set<String> notNeeded = Set.of("converter", SURVEYED, SOURCE_TYPES, FEEDS_COMPARED, CATALOGUE,
+                "index_template", "covered");
         final List<Map<String, Object>> steps = new ArrayList<>();
         for (final Map<String, Object> item : checklist()) {
             final String step = String.valueOf(item.get("step"));
@@ -1922,7 +1954,8 @@ public class BuildPlan {
                                        final boolean cefBuild) {
         // A discovery build indexes its raw streams: no events pipeline at all (a converter only for delimited text).
         final Set<String> skipped = new HashSet<>(kinds.discovery()
-                ? Set.of(SURVEYED, CATALOGUE, "translation", "pipeline", "stepped", "processed", "unmapped",
+                ? Set.of(SURVEYED, FEEDS_COMPARED, CATALOGUE, "translation", "pipeline", "stepped", "processed",
+                        "unmapped",
                         "validated", "documented")
                 : Set.of());
         if (!kinds.reference()) {
@@ -2183,6 +2216,7 @@ public class BuildPlan {
         map.put("profile_sample", "start");
         map.put("build_data_splitter", "converter");
         map.put("survey_feed", SURVEYED);
+        map.put(CompareFeedsTool.NAME, FEEDS_COMPARED);
         map.put(CatalogueEventTypesTool.NAME, CATALOGUE);
         map.put("save_text_converter", "converter");
         map.put("draft_translation_mapping", "translation");

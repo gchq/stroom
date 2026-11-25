@@ -125,6 +125,15 @@ public class BuildRecords {
     /// The record's key for the other answers the user gave a draft of the build (where records with no time or
     /// date take it from, how many lines of a stack trace to keep), by the draft's argument name.
     public static final String DRAFT_CHOICES = "draft_choices";
+    /// The record's key for what the user confirmed of a build of several feeds (compare_feeds): `digest` (of the
+    /// differences shown), `feeds`, `confirmed` (its date), `time_zones` (each feed's zone, where they differ),
+    /// `agents` (each AGENTS conflict's `value` and `folder` chosen) and `index` ([#INDEX_PER_FEED] or
+    /// [#INDEX_SHARED]).
+    public static final String FEED_COMPARISON = "feed_comparison";
+    /// The [#FEED_COMPARISON] index choice: one index per feed.
+    public static final String INDEX_PER_FEED = "per_feed";
+    /// The [#FEED_COMPARISON] index choice: one index shared by every feed.
+    public static final String INDEX_SHARED = "shared";
     /// The kinds of work a build may be started as.
     public static final List<String> BUILD_KINDS = List.of("events", "discovery", "reference", "assessment");
 
@@ -443,6 +452,54 @@ public class BuildRecords {
     public Map<String, Object> rememberTimeZone(final String build, final Map<String, Object> choice) {
         final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
         return save(build, found.orElse(null), state -> state.put(TIME_ZONE, new LinkedHashMap<>(choice)));
+    }
+
+    /// @param build A build's name, or null.
+    /// @return What the user confirmed of the build's several feeds ([#FEED_COMPARISON]); empty when nothing was
+    /// (or `build` is null).
+    public Map<String, Object> feedComparison(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return Map.of();
+        }
+        return load(build).get(FEED_COMPARISON) instanceof final Map<?, ?> kept
+                ? asMap(kept)
+                : Map.of();
+    }
+
+    /// Records what the user confirmed of the build's several feeds, the keys given replacing those kept.
+    ///
+    /// @param build   A build's name.
+    /// @param changes The keys of [#FEED_COMPARISON] to set.
+    /// @return The record as saved.
+    public Map<String, Object> rememberFeedComparison(final String build, final Map<String, Object> changes) {
+        final Optional<WriteGuard.BuildDoc> found = recordDoc(guardProvider.get().folderContents(build, true));
+        return save(build, found.orElse(null), state -> {
+            final Map<String, Object> kept = state.get(FEED_COMPARISON) instanceof final Map<?, ?> map
+                    ? new LinkedHashMap<>(asMap(map))
+                    : new LinkedHashMap<>();
+            kept.putAll(changes);
+            state.put(FEED_COMPARISON, kept);
+        });
+    }
+
+    /// @param build A build's name, or null.
+    /// @return Each feed's zone for times with none, where the user gave the build's feeds different zones; none
+    /// otherwise.
+    public Map<String, String> feedTimeZones(final String build) {
+        final Map<String, String> out = new LinkedHashMap<>();
+        JsonValues.mapOrEmpty(feedComparison(build).get("time_zones"))
+                .forEach((feed, zone) -> out.put(feed, String.valueOf(zone)));
+        return out;
+    }
+
+    /// @param build A build's name, or null.
+    /// @return The user's answer to each conflict between the AGENTS docs of the build's feeds' folders, by its key
+    /// ([AgentsConflicts]): `value` and `folder`; none when none was asked.
+    public Map<String, Map<String, Object>> agentsChoices(final String build) {
+        final Map<String, Map<String, Object>> out = new LinkedHashMap<>();
+        JsonValues.mapOrEmpty(feedComparison(build).get("agents"))
+                .forEach((key, choice) -> out.put(key, JsonValues.mapOrEmpty(choice)));
+        return out;
     }
 
     /// @param build    A build's name, or null.

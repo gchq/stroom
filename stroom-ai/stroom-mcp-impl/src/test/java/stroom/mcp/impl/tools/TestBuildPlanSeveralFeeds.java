@@ -59,7 +59,25 @@ class TestBuildPlanSeveralFeeds {
         survey("ACME-C", true, "json lines");
         result = plan.status("b", null);
         assertThat(state(result, BuildPlan.SURVEYED)).isEqualTo("done");
-        assertThat(next(result).get("step")).isEqualTo(BuildPlan.CATALOGUE);
+        // Then their differences shown to the user, the union confirmed, before the catalogue.
+        assertThat(next(result).get("step")).isEqualTo(BuildPlan.FEEDS_COMPARED);
+        assertThat(next(result).get("call")).isEqualTo(Map.of("tool", CompareFeedsTool.NAME, "arguments",
+                Map.of("build", "b")));
+
+        facts.feedsCompared = true;
+        assertThat(next(plan.status("b", null)).get("step")).isEqualTo(BuildPlan.CATALOGUE);
+    }
+
+    @Test
+    void oneFeedNeedsNoComparisonAndTheNewSourcesChecklistLeavesItOut() {
+        facts.sources = List.of("ACME");
+        survey("ACME", true, "json lines");
+
+        assertThat(state(plan.status("b", null), BuildPlan.FEEDS_COMPARED)).isEqualTo("not needed");
+        assertThat(BuildPlan.onboardingChecklist()).extracting(step -> step.get("step"))
+                .doesNotContain(BuildPlan.FEEDS_COMPARED);
+        assertThat(BuildPlan.onboardingLabel(CompareFeedsTool.NAME))
+                .isEqualTo("Onboarding several existing feeds (feeds_compared): ");
     }
 
     @Test
@@ -84,6 +102,7 @@ class TestBuildPlanSeveralFeeds {
         facts.stages = Map.of("ev", "translation");
         facts.mappings = Map.of("x", FakeBuildFacts.kept("translation", Map.of()));
         facts.stepped = true;
+        facts.feedsCompared = true;
         survey("ACME-A", true, "json lines");
         survey("ACME-B", false, "json lines");
 

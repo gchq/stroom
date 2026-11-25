@@ -157,6 +157,14 @@ interface BuildFacts {
         return sourceFeeds(build, docs);
     }
 
+    /// @param build A build of several feeds.
+    /// @param docs  Its documents.
+    /// @return Whether the user confirmed how its feeds' surveys differ (compare_feeds) for the surveys as they are
+    /// now: a survey showing something new since asks again.
+    default boolean feedsCompared(final String build, final List<Map<String, Object>> docs) {
+        return false;
+    }
+
     /// @param surveys The build's survey docs.
     /// @return What they say (`saturated`, `format`, `locations`, `streams`, `sample`), or empty when none can be
     /// read.

@@ -62,6 +62,8 @@ final class FakeBuildFacts implements BuildFacts {
     Map<String, Map<String, Object>> surveysByFeed = new LinkedHashMap<>();
     // The feeds the build is for, when they differ from `sources` (null: `sources`).
     List<String> buildSources;
+    // Whether the user confirmed how a build of several feeds' surveys differ (compare_feeds).
+    boolean feedsCompared;
     // The build whose own registry holds the scope it chose, or null.
     String scopeRecordedBy;
     List<String> checks = List.of();
@@ -265,6 +267,11 @@ final class FakeBuildFacts implements BuildFacts {
         final Map<String, Object> combined = new LinkedHashMap<>(states.getFirst());
         combined.put("saturated", states.stream().allMatch(state -> Boolean.TRUE.equals(state.get("saturated"))));
         return Optional.of(combined);
+    }
+
+    @Override
+    public boolean feedsCompared(final String build, final List<Map<String, Object>> buildDocs) {
+        return feedsCompared;
     }
 
     @Override
