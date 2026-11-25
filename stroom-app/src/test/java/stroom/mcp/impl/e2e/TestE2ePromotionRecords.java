@@ -82,6 +82,8 @@ class TestE2ePromotionRecords extends AbstractE2eTest {
                 .orElseThrow();
         agreed("rebuild_mapping", args("uuid", copiedXslt, "stream_ids", List.of(written.raw())));
         surveyed(build, name, List.of(written.raw()));
+        // Listed with its check against the sample first, as the tools ask, then confirmed.
+        json(CATALOGUE, args("build", build, "stream_ids", List.of(written.raw())));
         CatalogueSteps.confirmedCatalogue(client, build);
         final Map<String, Object> first = json("promote_build", args("build", build, "destinations", Map.of()));
         dump("promote_build first review", first);
@@ -110,8 +112,16 @@ class TestE2ePromotionRecords extends AbstractE2eTest {
                 .value(new PipelinePropertyValue(false)).build());
     }
 
+    // A record of each kind of event the hand-written XSLT translates: a read-back event type no sample record
+    // recognises can't have its placements checked, so its catalogue can't be confirmed.
     private static String vpnSample() {
         return "[{\"ts\": \"2026-11-03T08:00:01.000Z\", \"action\": \"login\", \"user\": \"jbloggs\", \"src_ip\": "
-               + "\"198.51.100.7\", \"host\": \"vpn-gw-1\", \"result\": \"success\"}]";
+               + "\"198.51.100.7\", \"host\": \"vpn-gw-1\", \"result\": \"success\"},\n"
+               + " {\"ts\": \"2026-11-03T08:02:45.000Z\", \"action\": \"login\", \"user\": \"asmith\", \"src_ip\": "
+               + "\"198.51.100.9\", \"host\": \"vpn-gw-1\", \"result\": \"failure\"},\n"
+               + " {\"ts\": \"2026-11-03T12:10:00.000Z\", \"action\": \"logout\", \"user\": \"jbloggs\", \"src_ip\": "
+               + "\"198.51.100.7\", \"host\": \"vpn-gw-1\"},\n"
+               + " {\"ts\": \"2026-11-03T09:30:00.000Z\", \"action\": \"config_change\", \"user\": \"admin\", "
+               + "\"host\": \"vpn-gw-1\", \"setting\": \"idle_timeout\", \"new_value\": \"900\"}]";
     }
 }
