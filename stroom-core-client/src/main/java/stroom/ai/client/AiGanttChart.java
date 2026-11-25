@@ -491,8 +491,9 @@ final class AiGanttChart {
         final String label = barLabel(task.name(), barWidth);
         if (label != null) {
             // In a box the bar's size, so it never runs past it; the pointer goes through it to the bar.
-            sb.append("<svg class=\"ai-gantt-bar-label-box").append(dimmed(series, highlight)).append("\" x=\"").append(number(left)).append("\" y=\"")
-                    .append(top).append("\" width=\"").append(number(barWidth)).append("\" height=\"")
+            sb.append("<svg class=\"ai-gantt-bar-label-box").append(dimmed(series, highlight)).append("\" x=\"")
+                    .append(number(left)).append("\" y=\"").append(top).append("\" width=\"")
+                    .append(number(barWidth)).append("\" height=\"")
                     .append(BAR_HEIGHT).append("\"><text class=\"ai-gantt-bar-label\" x=\"")
                     .append(number(BAR_LABEL_PADDING)).append("\" y=\"").append(BAR_HEIGHT - 3).append("\">")
                     .append(AiChatOverview.escape(label)).append("</text></svg>");

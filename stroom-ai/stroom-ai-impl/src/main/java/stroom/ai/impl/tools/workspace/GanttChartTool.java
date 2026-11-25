@@ -66,13 +66,13 @@ public class GanttChartTool extends AbstractWorkspaceTool {
     static final int DEFAULT_MIN_SECONDS = 60;
     /// Bars of a label this close are merged unless the call says otherwise.
     static final int DEFAULT_MERGE_SECONDS = 300;
+    /// What the result says the chat draws, and what it doesn't.
+    public static final String CHAT_DRAWS = "The chat draws only timelines (Mermaid gantt). For any other kind of "
+                                            + "chart (a heat map, network, pie, bars or lines, a map) offer only a "
+                                            + "dashboard (propose_dashboard, or propose_visualisation for the "
+                                            + "attached one), never a chat chart that approximates it.";
     // A date as a lane holds it, e.g. a table's day column.
     private static final Pattern DATE = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
-    /// What the result says the chat draws, and what it doesn't.
-    public static final String CHAT_DRAWS = "The chat draws only timelines (Mermaid gantt). For any other kind of chart "
-                                     + "(a heat map, network, pie, bars or lines, a map) offer only a dashboard "
-                                     + "(propose_dashboard, or propose_visualisation for the attached one), never "
-                                     + "a chat chart that approximates it.";
 
     /// @param workspace The chats' workspaces, which the tool reads and writes.
     @Inject
