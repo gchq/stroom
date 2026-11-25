@@ -1193,6 +1193,23 @@ class TestEvalScore {
                 "checked against [], expected [A, B]", "vpn-session-switch's timeline role is null, expected focus");
     }
 
+    @Test
+    void anEventTypeBesideThePipelineWithNoTimelineRoleIsAProblemNotAScoringFailure() {
+        // Seen in eval case 109 on Sonnet: the type's role was left unset, and the score failed with "null" (a
+        // stream's findFirst of a null role) instead of naming the role missing.
+        final Map<String, Object> expected = Map.of("timeline_roles", Map.of("vpn-session-switch", "focus"));
+        final Map<String, Object> unset = new HashMap<>();
+        unset.put("type_id", "vpn-session-switch");
+        unset.put("status", "confirmed");
+        unset.put("timeline_role", null);
+        final EvalScore score = new EvalScore("109");
+
+        score.scoreInPlace(expected, new EvalScore.InPlace(true, true, "", true, true, Map.of("event_types",
+                List.of(unset))));
+
+        assertThat(score.summary()).contains("vpn-session-switch's timeline role is null, expected focus");
+    }
+
     // A skill case expecting so.
     private static Map<String, Object> skillCase(final Map<String, Object> expected) {
         return Map.of("kind", "skill", "expected", expected);

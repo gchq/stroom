@@ -1525,10 +1525,12 @@ final class EvalScore {
                     "the catalogue was checked against " + found + ", expected " + feeds);
         }
         maps(expected.get("timeline_roles")).forEach((typeId, role) -> {
+            // The type found first, then its role: a type with no role has a null one, which a stream's findFirst
+            // can't hold (seen in case 109 on Sonnet: "scoring failed: null").
             final Object found = types.stream()
                     .filter(type -> typeId.equals(type.get("type_id")))
-                    .map(type -> type.get("timeline_role"))
                     .findFirst()
+                    .map(type -> type.get("timeline_role"))
                     .orElse(null);
             check("timeline role of " + typeId, String.valueOf(role).equals(String.valueOf(found)),
                     typeId + "'s timeline role is " + found + ", expected " + role);
