@@ -145,14 +145,27 @@ class TestE2eStartFromExistingPipeline extends AbstractE2eTest {
         // 5. The catalogue read back, checked against the sample and confirmed, its summary naming its origin.
         final Map<String, Object> afterRebuild = json("build_status", args("build", BUILD));
         assertThat(nextTool(afterRebuild)).isEqualTo(CATALOGUE);
+        // Not changed before the user confirms what the original translates (seen in eval case 97 on Haiku and
+        // Sonnet: the field added straight after the read-back).
+        final String early = refusal("build_translation_xslt", args("uuid", copyXslt, "changes", CHANGE, "stream_ids",
+                List.of(original.raw()), "change", "Source IP written"));
+        assertThat(early).contains("Not yet: catalogue_event_types build=" + BUILD, "Nothing was saved");
         final Map<String, Object> listed = json(CATALOGUE, args("build", BUILD, "stream_ids",
                 List.of(original.raw())));
         dump("catalogue listed", listed);
         assertThat(String.valueOf(listed.get("origin"))).startsWith("4 event types from '" + ORIGINAL + "'");
+        // The catalogue read back is the proposal: its confirmation is next (seen in eval case 106 on Haiku).
+        assertThat(String.valueOf(map(map(listed, "next"), "call").get("arguments"))).contains("confirm=true");
         final Map<String, Object> shown = json(CATALOGUE, args("build", BUILD, "confirm", true));
         dump("catalogue shown", shown);
         assertThat(String.valueOf(shown.get("table"))).startsWith("4 event types from '" + ORIGINAL + "'");
+        final int formsBeforeConfirming = client.forms().size();
         confirmedCatalogue(BUILD);
+        // The heartbeat, which the original translates to no Event, is left so (seen in eval case 105 on Sonnet:
+        // put to the user as an Unknown event, and an Unknown rule added to the copy).
+        assertThat(formsSince(formsBeforeConfirming)).anySatisfy(form -> assertThat(form.message()).startsWith(
+                "Leave the uncatalogued records (those no event type recognises) untranslated (no Event), as '"
+                + ORIGINAL + "' leaves them"));
         assertThat(catalogueOf(BUILD).toString()).contains("vpn-login", "vpn-config-change");
 
         // 6. The change the user asked for: the source IP, written as the mapping says.
