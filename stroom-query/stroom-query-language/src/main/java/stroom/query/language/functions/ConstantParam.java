@@ -25,12 +25,9 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
-import java.util.regex.Pattern;
 
 /// Reads parameters that must be constant.
 final class ConstantParam {
-
-    private static final Pattern DATE_PATTERN = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
 
     private ConstantParam() {
         // Static methods only.
@@ -104,7 +101,7 @@ final class ConstantParam {
                     final Instant instant = Instant.ofEpochMilli(TimeRounder.parseMillis(text));
                     return zone -> instant.atZone(zone).toLocalDateTime();
                 }
-                if (DATE_PATTERN.matcher(text).matches()) {
+                if (DateReader.DATE_PATTERN.matcher(text).matches()) {
                     final LocalDateTime local = LocalDate.parse(text).atStartOfDay();
                     return zone -> local;
                 }

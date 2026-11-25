@@ -37,11 +37,11 @@ import java.util.function.Supplier;
                         args = @FunctionArg(
                                 name = "dateString",
                                 argType = ValString.class,
-                                description = "The date string, e.g. '2014 02 22'"),
-                        description = "Parse dateString as an ISO 8601 date and time, e.g. " +
-                                "'2014-02-22T12:12:12.888Z'. If dateString has no offset then it is in the time " +
-                                "zone of the query. Put dates in quotes, as 2014-02-22 without them is a " +
-                                "subtraction. A number is milliseconds since the epoch."),
+                                description = "The date string, e.g. '2014-02-22'"),
+                        description = "Parse dateString as an ISO 8601 date with an optional time " +
+                                "and offset, e.g. '2014-02-22T12:12:12.888Z' or '2014-02-22'. If dateString has no " +
+                                "offset then it is in the time zone of the query. Put dates in quotes, as " +
+                                "2014-02-22 without them is a subtraction. A number is milliseconds since the epoch."),
                 @FunctionSignature(
                         args = {
                                 @FunctionArg(
@@ -82,8 +82,8 @@ class ParseDate extends AbstractFunction {
     static final String NAME = "parseDate";
 
     private final ExpressionContext expressionContext;
-    private DateTimeFormatter formatter = DateUtil.DEFAULT_ISO_PARSER;
-    private boolean hasPattern;
+    // Null if there is no pattern.
+    private DateTimeFormatter formatter;
     private Supplier<ZoneId> zone;
     private Function zoneFunction;
 
@@ -102,7 +102,6 @@ class ParseDate extends AbstractFunction {
 
         try {
             if (params.length >= 2) {
-                hasPattern = true;
                 final String pattern = ParamParseUtil.parseStringParam(params, 1, name);
                 formatter = FormatterCache.getFormatter(pattern, Mode.PARSE);
             }
@@ -124,7 +123,7 @@ class ParseDate extends AbstractFunction {
                 hasAggregate = function.hasAggregate();
             } else {
                 // Report a mistake now, rather than as an error in every row.
-                final Val val = parse((Val) param, formatter, hasPattern, zoneFunction == null
+                final Val val = parse((Val) param, formatter, zoneFunction == null
                         ? zone
                         : () -> ZoneOffset.UTC);
                 if (zoneFunction == null) {
@@ -142,7 +141,6 @@ class ParseDate extends AbstractFunction {
     // Reads a value as a date. Without a pattern it can be a date or a number of milliseconds. A pattern is of text.
     private static Val parse(final Val val,
                              final DateTimeFormatter formatter,
-                             final boolean hasPattern,
                              final Supplier<ZoneId> zone) {
         if (!val.type().isValue()) {
             return val;
@@ -152,13 +150,13 @@ class ParseDate extends AbstractFunction {
             throw new DateTimeException("A " + val.type().getName() + " is not a date");
         } else if (text.isBlank()) {
             return ValNull.INSTANCE;
-        } else if (!hasPattern && val instanceof ValNumber) {
+        } else if (formatter != null) {
+            // Not trimmed, as a pattern may have spaces at its start or end.
+            return ValDate.create(DateUtil.parse(text, formatter, zone));
+        } else if (val instanceof ValNumber) {
             return ValDate.create(DateReader.readMillis(val, zone));
         }
-        // A pattern may have spaces at its start or end.
-        return ValDate.create(DateUtil.parse(hasPattern
-                ? text
-                : text.trim(), formatter, zone));
+        return ValDate.create(DateReader.parseDate(text.trim(), zone));
     }
 
     @Override
@@ -169,11 +167,8 @@ class ParseDate extends AbstractFunction {
 
         final Generator childGenerator = function.createGenerator();
         return zoneFunction == null
-                ? new Gen(new Generator[]{childGenerator}, formatter, hasPattern, zone)
-                : new Gen(new Generator[]{childGenerator, zoneFunction.createGenerator()},
-                        formatter,
-                        hasPattern,
-                        null);
+                ? new Gen(new Generator[]{childGenerator}, formatter, zone)
+                : new Gen(new Generator[]{childGenerator, zoneFunction.createGenerator()}, formatter, null);
     }
 
     @Override
@@ -190,16 +185,13 @@ class ParseDate extends AbstractFunction {
     private static final class Gen extends AbstractManyChildGenerator {
 
         private final DateTimeFormatter formatter;
-        private final boolean hasPattern;
         private final Supplier<ZoneId> zone;
 
         Gen(final Generator[] childGenerators,
             final DateTimeFormatter formatter,
-            final boolean hasPattern,
             final Supplier<ZoneId> zone) {
             super(childGenerators);
             this.formatter = formatter;
-            this.hasPattern = hasPattern;
             this.zone = zone;
         }
 
@@ -227,7 +219,7 @@ class ParseDate extends AbstractFunction {
             }
 
             try {
-                return parse(val, formatter, hasPattern, rowZone);
+                return parse(val, formatter, rowZone);
             } catch (final RuntimeException e) {
                 return ValErr.create(e.getMessage());
             }

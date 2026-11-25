@@ -219,12 +219,19 @@ class TestDateFunctionInputs {
                     "formatISODuration({})")
             .map(Argument::new)
             .toList();
+    // Numbers and text must be in the pattern.
+    private static final List<Argument> PATTERN_ARGUMENTS = Stream.of(
+                    "parseDuration({}, 'h:mm')",
+                    "parseDuration({}, 's')")
+            .map(Argument::new)
+            .toList();
     // These must be text, or don't treat fields and constants the same.
     private static final List<Argument> VARIED_ARGUMENTS = Stream.of(
                     "formatDate(" + DATE + ", {})",
                     "parseDate('2024', {})",
                     // A number that is written is text that isn't in ISO format.
                     "parseISODuration({})",
+                    "parseDuration('1:30', {})",
                     // The last can be an hour or a time zone.
                     "makeDate(2024, 7, 1, {})")
             .map(Argument::new)
@@ -238,7 +245,8 @@ class TestDateFunctionInputs {
 
     static Stream<Argument> allArguments() {
         return Stream.of(DATE_ARGUMENTS, OLDER_DATE_ARGUMENTS, PARSE_DATE_ARGUMENTS, DATE_OR_DURATION_ARGUMENTS,
-                        OTHER_ARGUMENTS, DURATION_ARGUMENTS, CONSTANT_ARGUMENTS, VARIED_ARGUMENTS, NUMBER_ARGUMENTS)
+                        OTHER_ARGUMENTS, DURATION_ARGUMENTS, PATTERN_ARGUMENTS, CONSTANT_ARGUMENTS, VARIED_ARGUMENTS,
+                        NUMBER_ARGUMENTS)
                 .flatMap(List::stream);
     }
 
@@ -264,7 +272,7 @@ class TestDateFunctionInputs {
 
     static Stream<Argument> fieldArguments() {
         return Stream.of(DATE_ARGUMENTS, OLDER_DATE_ARGUMENTS, PARSE_DATE_ARGUMENTS, DATE_OR_DURATION_ARGUMENTS,
-                        OTHER_ARGUMENTS, DURATION_ARGUMENTS)
+                        OTHER_ARGUMENTS, DURATION_ARGUMENTS, PATTERN_ARGUMENTS)
                 .flatMap(List::stream);
     }
 

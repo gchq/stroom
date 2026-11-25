@@ -96,6 +96,54 @@ public class ValDurationUtil {
         return toDuration(val, ValDurationUtil::parseMilliseconds);
     }
 
+    /// Reads a value as a duration whose text is in a pattern.
+    ///
+    /// @param val     Text in the pattern, a number of the unit of a pattern that is only one unit, or a duration or
+    ///                period of only days.
+    /// @param pattern The pattern, which must be one that can be read.
+    /// @return A duration, or an error if the value is not one. A null or an error is returned as it is and blank
+    ///         text gives null.
+    public static Val toDuration(final Val val, final DurationPattern pattern) {
+        final boolean isPlainNumber = val instanceof ValNumber
+                                      && !(val instanceof ValDuration)
+                                      && !(val instanceof ValDate)
+                                      && DateReader.isLong(val);
+        return isPlainNumber
+                ? toDuration(val.toString(), text -> multiplyUnit(val, pattern))
+                : toDuration(val, text -> parseMilliseconds(text, pattern));
+    }
+
+    // Multiplies as the * operator does.
+    private static long multiplyUnit(final Val number, final DurationPattern pattern) {
+        // With more than one unit, whether a number's text is in the pattern would depend on how many digits it has.
+        final long unitMillis = pattern.getOnlyUnitMillis();
+        if (unitMillis == 0) {
+            throw new DateTimeException("A number can only be read with a pattern of one unit, such as m");
+        }
+        try {
+            return DateArithmetic.multiply(ValDuration.create(unitMillis), number).toLong();
+        } catch (final ArithmeticException e) {
+            throw createTooLongException(number.toString(), e);
+        }
+    }
+
+    private static long parseMilliseconds(final String text, final DurationPattern pattern) {
+        final Long millis;
+        try {
+            millis = pattern.getOnlyUnitMillis() != 0 && TimeRounder.isNumber(text)
+                    ? Long.valueOf(toLong(new BigDecimal(text).multiply(
+                            BigDecimal.valueOf(pattern.getOnlyUnitMillis()))))
+                    : pattern.read(text);
+        } catch (final ArithmeticException e) {
+            throw createTooLongException(text, e);
+        }
+        if (millis == null) {
+            throw new DateTimeParseException(
+                    "Text is not a duration in the pattern '" + pattern + "'", text, 0);
+        }
+        return millis;
+    }
+
     /// Reads a value as the milliseconds of a duration.
     ///
     /// @param val A duration, or any value that [#toDuration(Val)] can read as one.

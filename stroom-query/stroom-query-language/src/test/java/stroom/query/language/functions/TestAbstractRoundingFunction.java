@@ -258,7 +258,7 @@ class TestAbstractRoundingFunction {
             "floor(${field}, 1d, ${field})|not something computed per row",
             "floor(${field}, 1d, 5m)|Invalid origin: 5m - it must be a date",
             "floor(${field}, 1d, 'soon')|Invalid origin",
-            "floor(${field}, 1d, '2024-02-30')|Invalid origin",
+            "floor(${field}, 1d, '2024-02-30')|Invalid origin: Text '2024-02-30' could not be parsed: Invalid date",
             "floor(${field}, 1d, 99999999999999999999)|Invalid origin",
             "floor(${field}, 1d, null(), 'Mars/Base')|Unknown time zone 'Mars/Base'",
             "floor(${field}, 1d, null(), 'BST')|Unknown time zone 'BST'. Use a name such as Europe/London",
@@ -284,6 +284,8 @@ class TestAbstractRoundingFunction {
                 .contains("is not a number of decimal places, a duration or a period: soon");
         assertThat(eval("floor(${field}, 1w, param('origin'))", Map.of("origin", "2024-01-07T00:00:00"), time))
                 .isEqualTo(ValDate.create(Instant.parse("2024-05-11T23:00:00Z").toEpochMilli()));
+        assertThat(eval("floor(${field}, 1d, '+12024-01-01')", Map.of(), time))
+                .isEqualTo(eval("floor(${field}, 1d, '+12024-01-01T00:00:00')", Map.of(), time));
         assertThat(eval("floor(${field}, 1w, param('origin'))", Map.of("origin", "1704585600000"), time))
                 .isEqualTo(ValDate.create(Instant.parse("2024-05-11T23:00:00Z").toEpochMilli()));
         assertThat(eval("floor(${field}, param('by') + 1)", Map.of("by", "1"), ValDouble.create(1.239)).type())

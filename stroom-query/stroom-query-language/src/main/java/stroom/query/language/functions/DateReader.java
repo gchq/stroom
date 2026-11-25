@@ -26,10 +26,14 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalAccessor;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 /// Reads values as dates. The time zone is only asked for if it is needed, so that a date that doesn't depend on it can
 /// be read even if it is not a known time zone.
 final class DateReader {
+
+    /// An ISO 8601 date with no time.
+    static final Pattern DATE_PATTERN = Pattern.compile("[+-]?\\d{4,}-\\d{2}-\\d{2}");
 
     private static final double MAX_LONG = 0x1p63;
 
@@ -144,17 +148,23 @@ final class DateReader {
             }
         }
         try {
-            return parseDateTime(text, zone);
-        } catch (final DateTimeParseException e) {
-            // Not a date and time.
-        }
-        final LocalDate date;
-        try {
-            date = LocalDate.parse(text);
+            return parseDate(text, zone);
         } catch (final DateTimeParseException e) {
             return null;
         }
-        return toMillis(date.atStartOfDay(zone.get()).toInstant(), text);
+    }
+
+    /// Reads text as a date, but not as a number of milliseconds.
+    ///
+    /// @param text An ISO 8601 date with an optional time and offset.
+    /// @param zone Gets the time zone of text that has no offset.
+    /// @return The milliseconds since the epoch.
+    /// @throws DateTimeParseException If the text is not a date.
+    /// @throws DateTimeException      If the date is too large.
+    static long parseDate(final String text, final Supplier<ZoneId> zone) {
+        return DATE_PATTERN.matcher(text).matches()
+                ? toMillis(LocalDate.parse(text).atStartOfDay(zone.get()).toInstant(), text)
+                : parseDateTime(text, zone);
     }
 
     /// Reads text as a date and time.

@@ -16,6 +16,9 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.UserTimeZone;
+import stroom.query.api.UserTimeZone.Use;
 import stroom.query.api.token.TokenException;
 
 import org.junit.jupiter.api.Test;
@@ -39,6 +42,8 @@ public class TestParseDate extends AbstractFunctionTest<ParseDate> {
             "2024-07-01T09:00:00.000||2024-07-01T08:00:00Z",
             "2024-07-01T09:00:00||2024-07-01T08:00:00Z",
             "2024-01-01T09:00:00||2024-01-01T09:00:00Z",
+            "2024-07-01||2024-06-30T23:00:00Z",
+            "2024-01-01||2024-01-01T00:00:00Z",
             "2024 07 01|, 'yyyy MM dd'|2024-06-30T23:00:00Z",
             // An offset or zone in the text or the call wins.
             "2024-07-01T09:00:00Z||2024-07-01T09:00:00Z",
@@ -213,6 +218,49 @@ public class TestParseDate extends AbstractFunctionTest<ParseDate> {
     @Test
     void badTextInAFieldGivesAnError() throws ParseException {
         assertThat(evalInLondon("parseDate(${field})", ValString.create("yesterday")).type()).isEqualTo(Type.ERR);
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', quoteCharacter = '"', value = {
+            "yesterday|Text 'yesterday' could not be parsed at index 0",
+            "2024-07|Text '2024-07' could not be parsed at index 7",
+            "20240701|Text '20240701' could not be parsed at index 0",
+            "2024-07-01Z|Text '2024-07-01Z' could not be parsed at index 10",
+            "2024-02-30|Text '2024-02-30' could not be parsed: Invalid date 'FEBRUARY 30'",
+            "2024-13-01|Text '2024-13-01' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 13",
+            "2024-13-01T10:00:00|Text '2024-13-01T10:00:00' could not be parsed: Invalid value for MonthOfYear "
+            + "(valid values 1 - 12): 13"})
+    void theErrorSaysWhatIsWrong(final String text, final String message) throws ParseException {
+        assertThat(evalInLondon("parseDate(${field})", ValString.create(text))).isEqualTo(ValErr.create(message));
+        assertThatThrownBy(() -> evalInLondon("parseDate('" + text + "')", ValNull.INSTANCE))
+                .isInstanceOf(TokenException.class)
+                .hasMessageContaining(message);
+    }
+
+    @Test
+    void dateWithNoTimeThatHasNoMidnight() throws ParseException {
+        assertThat(evalInLondon("parseDate(${field}, 'yyyy-MM-dd', 'Africa/Cairo')", ValString.create("2024-04-26")))
+                .isEqualTo(ValDate.create(Instant.parse("2024-04-25T22:00:00Z").toEpochMilli()));
+        final ExpressionContext cairo = ExpressionContext.builder()
+                .dateTimeSettings(DateTimeSettings.builder()
+                        .timeZone(UserTimeZone.builder().use(Use.ID).id("Africa/Cairo").build())
+                        .build())
+                .build();
+        assertThat(DateFunctionTestUtil.eval(cairo, "parseDate(${field})", ValString.create("2024-04-26")))
+                .isEqualTo(ValDate.create(Instant.parse("2024-04-25T22:00:00Z").toEpochMilli()));
+    }
+
+    @Test
+    void dateWithNoTimeIsReadAsToDateReadsIt() throws ParseException {
+        for (final String text : new String[]{"2024-07-01", " 2024-07-01 ", "2024-03-31", "1969-12-31", "0001-01-01"}) {
+            assertThat(evalInLondon("parseDate(${field})", ValString.create(text)))
+                    .isEqualTo(evalInLondon("toDate(${field})", ValString.create(text)));
+        }
+        assertThat(evalInLondon("parseDate(${field})", ValString.create("+999999999-01-01")))
+                .isEqualTo(ValErr.create("'+999999999-01-01' is too large to be a date"));
+        assertThat(DateFunctionTestUtil.eval(
+                DateFunctionTestUtil.UNKNOWN_ZONE, "parseDate(${field})", ValString.create("2024-07-01")).toString())
+                .contains("Unknown time zone 'Mars/Base'");
     }
 
     @Test
