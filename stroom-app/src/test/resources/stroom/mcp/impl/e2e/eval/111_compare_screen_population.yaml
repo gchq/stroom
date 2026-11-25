@@ -1,4 +1,4 @@
-name: Who stands out for insider risk across a year of endpoint, proxy and cloud events (a question, nothing built)
+name: Who stands out for insider risk across nine months of endpoint, proxy and cloud events (a question, nothing built)
 kind: question
 capabilities: [compare, elasticsearch, insider]
 # The insider-risk dataset (InsiderDataset) from 2 February to 31 October 2026 (6 background people, a twentieth of
