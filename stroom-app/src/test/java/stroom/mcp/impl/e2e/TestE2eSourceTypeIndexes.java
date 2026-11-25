@@ -729,8 +729,12 @@ class TestE2eSourceTypeIndexes extends AbstractE2eTest {
         assertThat(String.valueOf(handedOver.get("before_enabling")))
                 .contains("'" + group.index() + "' is not emptied: it is a production index")
                 .doesNotContain("delete the shards");
-        assertThat(jsonOf(promoted.get("user_actions"))).doesNotContain("delete its shards")
-                .doesNotContain("\"open_document\"");
+        assertThat(jsonOf(promoted.get("user_actions"))).doesNotContain("delete its shards");
+        // No action opens the production index (to empty it); the switch-over's steps open the earlier version's
+        // pipeline, for the user to change its selection (decided by the user, 2026-11-25).
+        assertThat(list(promoted, "user_actions"))
+                .filteredOn(action -> "open_document".equals(action.get("action")))
+                .allSatisfy(action -> assertThat(String.valueOf(action.get("id"))).startsWith("switch-"));
     }
 
     // --- the steps ---
