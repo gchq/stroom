@@ -247,7 +247,9 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         final List<String> notes = new ArrayList<>();
         // Promoted: outside any build (in production), whoever made it.
         final boolean promoted = guard.buildOf(new DocRef(PipelineDoc.TYPE, sourceUuid)).isEmpty();
-        final List<DocRef> owned = owned(source, changes);
+        // Named as Stroom has them: a pipeline may name a document by its UUID alone (seen in eval case 106 on
+        // Sonnet: a NullPointerException copying one).
+        final List<DocRef> owned = owned(source, changes).stream().map(this::named).toList();
         final Map<String, String> names = new LinkedHashMap<>();
         for (final DocRef entity : owned) {
             String name = entity.getName();
@@ -596,6 +598,17 @@ class CopyPipelineTool extends AbstractBuiltInTool {
     // The XSLTs and text converters the pipeline's own layer names, but not those set_properties replaces: a copy
     // nothing uses, and its name may be the replacement's (seen: v2's XSLT made first, then V1's copied and renamed
     // to the same name, which the build refuses).
+    // A document named as the explorer has it, where its reference holds no name; as it is otherwise, or where the
+    // user can't see it (refused further on, as before).
+    private DocRef named(final DocRef ref) {
+        if (NullSafe.isNonBlankString(ref.getName())) {
+            return ref;
+        }
+        return documentAccess.findDocRef(ref.getUuid())
+                .map(found -> new DocRef(ref.getType(), ref.getUuid(), found.getName()))
+                .orElse(ref);
+    }
+
     private static List<DocRef> owned(final PipelineDoc source, final List<PropertyValue> changes) {
         final Set<String> replaced = new HashSet<>();
         changes.forEach(property -> replaced.add(property.dotted()));

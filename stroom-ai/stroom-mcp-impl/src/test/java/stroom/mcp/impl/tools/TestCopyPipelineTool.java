@@ -89,6 +89,27 @@ class TestCopyPipelineTool {
     }
 
     @Test
+    void aPipelineNamingItsDocumentsByUuidAloneIsCopiedTheirNamesReadFromStroom() {
+        // Seen in eval case 106 on Sonnet: a hand-written pipeline whose properties name their XSLT by UUID alone
+        // (no name in the reference) failed copy_pipeline with a NullPointerException.
+        source();
+        final PipelineDoc doc = pipelines.productionPipeline("p1", "ACME-V1 - Indexing", TEMPLATE,
+                PipelineLayers.layer("p1")
+                        .element("extraFilter", "XSLTFilter")
+                        .link("xsltFilter", "extraFilter")
+                        .property("xsltFilter", "xslt", new DocRef(XsltDoc.TYPE, "x1"))
+                        .property("dsParser", "textConverter", new DocRef(TextConverterDoc.TYPE, "t1")));
+        pipelines.world.docs.put("p1", doc.copy().description("Indexes Acme.").build());
+        final ToolCallContext context = BuildToolCalls.answering(Map.of("value", true));
+
+        final ToolResult made = call("{\"build\": \"" + BUILD + "\", \"source_uuid\": \"p1\", \"new_name\": "
+                                     + "\"ACME-V2 - Indexing\", \"rename\": {\"V1\": \"V2\"}}", context);
+
+        assertThat(made.isError()).as(made.text()).isFalse();
+        assertThat(docNamed("ACME-V2-XSLT")).isInstanceOf(XsltDoc.class);
+    }
+
+    @Test
     void aNewVersionIsTheOriginalWithItsOwnDocumentsCopiedAndRewired() {
         source();
         final ToolCallContext context = BuildToolCalls.answering(Map.of("value", true));
