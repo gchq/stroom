@@ -21,7 +21,6 @@ import stroom.docstore.api.DocumentNotFoundException;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.index.shared.IndexVolume;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
@@ -50,11 +49,8 @@ import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -63,7 +59,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Predicate;
 
 /**
  * Pool API into open index shards.
@@ -83,8 +78,6 @@ public class IndexShardManager {
     private final PathCreator pathCreator;
     private final AtomicBoolean deletingShards = new AtomicBoolean();
     private final Provider<Executor> executorProvider;
-    private final IndexShardResponsibility indexShardResponsibility;
-    private final IndexVolumeDao indexVolumeDao;
 
     @Inject
     IndexShardManager(final IndexStore indexStore,
@@ -95,9 +88,7 @@ public class IndexShardManager {
                       final TaskContextFactory taskContextFactory,
                       final SecurityContext securityContext,
                       final PathCreator pathCreator,
-                      final Provider<Executor> executorProvider,
-                      final IndexShardResponsibility indexShardResponsibility,
-                      final IndexVolumeDao indexVolumeDao) {
+                      final Provider<Executor> executorProvider) {
         this.indexStore = indexStore;
         this.indexShardDao = indexShardDao;
         this.indexShardWriterCache = indexShardWriterCache;
@@ -107,42 +98,6 @@ public class IndexShardManager {
         this.securityContext = securityContext;
         this.pathCreator = pathCreator;
         this.executorProvider = executorProvider;
-        this.indexShardResponsibility = indexShardResponsibility;
-        this.indexVolumeDao = indexVolumeDao;
-    }
-
-    // Finds the shards this node looks after: the ones it owns on local volumes, and its share of the ones
-    // on shared volumes, which belong to no node. See IndexShardResponsibility.
-    private List<IndexShard> findShardsToLookAfter(final Set<IndexShardStatus> statuses) {
-        final Map<Long, IndexShard> shards = new LinkedHashMap<>();
-
-        final FindIndexShardCriteria ownCriteria = FindIndexShardCriteria.matchAll();
-        ownCriteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
-        // An empty set of statuses means shards of any status.
-        if (!statuses.isEmpty()) {
-            ownCriteria.getIndexShardStatusSet().addAll(statuses);
-        }
-        indexShardDao.find(ownCriteria).getValues().forEach(shard -> shards.put(shard.getId(), shard));
-
-        final List<Integer> sharedVolumeIds = indexVolumeDao.getAll()
-                .stream()
-                .filter(IndexVolume::isShared)
-                .map(IndexVolume::getId)
-                .toList();
-        if (!sharedVolumeIds.isEmpty()) {
-            final FindIndexShardCriteria sharedCriteria = FindIndexShardCriteria.matchAll();
-            sharedCriteria.getVolumeIdSet().addAll(sharedVolumeIds);
-            if (!statuses.isEmpty()) {
-                sharedCriteria.getIndexShardStatusSet().addAll(statuses);
-            }
-            indexShardDao.find(sharedCriteria).getValues().forEach(shard -> shards.put(shard.getId(), shard));
-        }
-
-        final Predicate<IndexShard> isResponsible = indexShardResponsibility.createTest();
-        return shards.values()
-                .stream()
-                .filter(isResponsible)
-                .toList();
     }
 
     /**
@@ -153,11 +108,14 @@ public class IndexShardManager {
         securityContext.secure(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             if (deletingShards.compareAndSet(false, true)) {
                 try {
-                    final List<IndexShard> shards = findShardsToLookAfter(Set.of(IndexShardStatus.DELETED));
+                    final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
+                    criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
+                    criteria.getIndexShardStatusSet().add(IndexShardStatus.DELETED);
+                    final ResultPage<IndexShard> shards = indexShardDao.find(criteria);
                     if (NullSafe.hasItems(shards)) {
-                        deleteShardsFromDisk(indexShardWriterCache, ResultPage.createUnboundedList(shards));
+                        deleteShardsFromDisk(indexShardWriterCache, shards);
                     } else {
-                        LOGGER.debug("No matching shards to delete");
+                        LOGGER.debug("No matching shards to delete, criteria: {}", criteria);
                     }
                 } catch (final RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
@@ -215,17 +173,6 @@ public class IndexShardManager {
 
     private void deleteFromDisk(final IndexShard shard) {
         try {
-            // A shard on a shared volume may still be open on another node, which this node's writer cache
-            // knows nothing of. Its files must stay until that node has closed it and given up the lease.
-            // Once it has, the shard can't be opened again as it is marked as deleted.
-            if (indexShardDao != null
-                && NullSafe.test(shard.getVolume(), IndexVolume::isShared)
-                && indexShardDao.isLeased(shard.getId())) {
-                LOGGER.debug(() -> LogUtil.message(
-                        "deleteFromDisk() - Unable to delete index shard {} as a node holds a lease on it",
-                        shard.getId()));
-                return;
-            }
             // Find the index shard dir.
             final Path dir = IndexShardUtil.getIndexPath(shard, pathCreator);
             LOGGER.debug(() -> LogUtil.message("deleteFromDisk() - shard ID: {}, dir: '{}'",
@@ -247,13 +194,13 @@ public class IndexShardManager {
 
     public Long performAction(final FindIndexShardCriteria criteria, final IndexShardAction action) {
         return securityContext.secureResult(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+            final String thisNodeName = nodeInfo.getThisNodeName();
             final ResultPage<IndexShard> shards = indexShardDao.find(criteria);
 
-            // Only perform actions on shards this node looks after, i.e. the ones it owns on local volumes
-            // and its share of the ones on shared volumes.
+            // Only perform actions on shards owned by this node.
             final List<IndexShard> ownedShards = shards
                     .stream()
-                    .filter(indexShardResponsibility.createTest())
+                    .filter(indexShard -> thisNodeName.equals(indexShard.getNodeName()))
                     .toList();
             return performAction(ownedShards, action);
         });
@@ -364,7 +311,10 @@ public class IndexShardManager {
     public void checkRetention() {
         taskContextFactory.current().info(() -> "Checking index shard retention");
         securityContext.secure(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
-            for (final IndexShard shard : findShardsToLookAfter(Set.of())) {
+            final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
+            criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
+            final ResultPage<IndexShard> shards = indexShardDao.find(criteria);
+            for (final IndexShard shard : shards.getValues()) {
                 checkRetention(shard);
             }
         });

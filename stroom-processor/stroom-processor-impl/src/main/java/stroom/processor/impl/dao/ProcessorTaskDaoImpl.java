@@ -1390,38 +1390,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     @Override
-    public boolean changeTaskStatus(final long taskId,
-                                    final Set<TaskStatus> currentStatuses,
-                                    final TaskStatus newStatus) {
-        final long nowMs = System.currentTimeMillis();
-        final boolean toCreated = TaskStatus.CREATED.equals(newStatus);
-        final int count = JooqUtil.withDeadlockRetries(
-                () -> JooqUtil.contextResult(processorDbConnProvider, context -> context
-                        .update(PROCESSOR_TASK)
-                        .set(PROCESSOR_TASK.STATUS, newStatus.getPrimitiveValue())
-                        .set(PROCESSOR_TASK.STATUS_TIME_MS, nowMs)
-                        .set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, toCreated
-                                ? DSL.castNull(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID)
-                                : PROCESSOR_TASK.FK_PROCESSOR_NODE_ID)
-                        .set(PROCESSOR_TASK.START_TIME_MS, toCreated
-                                ? DSL.castNull(PROCESSOR_TASK.START_TIME_MS)
-                                : PROCESSOR_TASK.START_TIME_MS)
-                        .set(PROCESSOR_TASK.END_TIME_MS, toCreated
-                                ? DSL.castNull(PROCESSOR_TASK.END_TIME_MS)
-                                : PROCESSOR_TASK.END_TIME_MS)
-                        .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
-                        .where(PROCESSOR_TASK.ID.eq(taskId))
-                        .and(PROCESSOR_TASK.STATUS.in(currentStatuses
-                                .stream()
-                                .map(TaskStatus::getPrimitiveValue)
-                                .toList()))
-                        .execute()),
-                () -> "changeTaskStatus - taskId: " + taskId + ", newStatus: " + newStatus);
-        LOGGER.debug("changeTaskStatus - taskId: {}, newStatus: {}, count: {}", taskId, newStatus, count);
-        return count > 0;
-    }
-
-    @Override
     public int logicalDeleteByProcessorFilterId(final int processorFilterId) {
         final int count = JooqUtil.withDeadlockRetries(
                 () ->
