@@ -17,6 +17,7 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.AbstractBuiltInTool;
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
@@ -24,6 +25,7 @@ import stroom.ai.impl.tools.ToolPermissions;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.generation.ModuleChecks;
 import stroom.ai.impl.tools.generation.SourceTypeModule;
@@ -343,6 +345,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     }
 
     private Map<String, Object> promote(final ToolCall call, final ToolCallContext context, final String build) {
+        refuseInPlace(build);
         final Map<String, String> destinations = destinations(call);
         final Object reviewed = argsMap(call).get(REVIEWED_ARG);
         final List<Map<String, Object>> docs = facts.buildDocs(build);
@@ -808,6 +811,23 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                                 && PromotionLayout.NOT_USED.equals(step.target()))
                 .map(step -> step.doc().get("name") + " (" + step.doc().get("type") + ")")
                 .toList();
+    }
+
+    // A build describing an existing pipeline in place has no new version, so nothing to promote: its hidden blocks
+    // and the source notes beside the pipeline were written as it went (decided with the user 2026-11-25). Refused
+    // before any review (seen in eval cases 106-109 on Haiku and Sonnet: promotion laid out the notes' working copy
+    // and the survey, and the agent put it to the user).
+    private void refuseInPlace(final String build) {
+        final Map<String, Object> startFrom = facts.startFrom(build).orElse(null);
+        if (!InPlaceInduction.inPlace(startFrom)) {
+            return;
+        }
+        final String pipeline = ToolText.str(JsonValues.mapOrEmpty(startFrom.get("pipeline")).get("name"));
+        throw new ToolRefusal("Nothing to promote: build '" + build + "' describes '" + pipeline + "' in place, "
+                              + "with no new version. Its mapping and the link to its source notes are written in "
+                              + "its translation XSLT's description, and its catalogue in the source notes beside "
+                              + "the pipeline, as catalogue_event_types confirmed them (its in_place said what was "
+                              + "written, and who may write what wasn't). The build is done: say so to the user.");
     }
 
     // A working copy of a promoted pipeline, or of the code it runs (its XSLTs, text converters, an aggregated

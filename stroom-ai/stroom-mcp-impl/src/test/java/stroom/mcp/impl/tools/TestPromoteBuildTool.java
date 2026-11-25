@@ -133,6 +133,34 @@ class TestPromoteBuildTool {
     }
 
     @Test
+    void aBuildDescribingAPipelineInPlaceHasNothingToPromote() {
+        // Seen in eval cases 106-109 on Haiku and Sonnet: promote_build called on a build that described the
+        // pipeline in place, its review laying out the source notes' working copy and the survey.
+        listed(doc(FeedDoc.TYPE, "f", "ACME", null), doc(DocumentationDoc.TYPE, "n", "bb source notes", null));
+        docs.facts.startFrom = Map.of("choice", InPlaceInduction.IN_PLACE, "pipeline", Map.of("name",
+                "ACME-Events", "uuid", "p"));
+
+        final String refused = docs.refusal(tool, BuildToolCalls.context(), DocumentationWorld.args(Map.of(
+                "build", BUILD, "destinations", Map.of("Feed", "System/Feeds/Acme"))));
+
+        assertThat(refused).contains("Nothing to promote", "describes 'ACME-Events' in place",
+                "no new version");
+        // Refused before any review: nothing for the user to approve.
+        assertThat(refused).doesNotContain("review_id");
+    }
+
+    @Test
+    void aBuildStartedFromACopyIsPromotedAsBefore() {
+        // The gate is the in-place start's only: a copy (a new version) is promoted.
+        exists("System/Feeds/Acme");
+        listed(doc(FeedDoc.TYPE, "f", "ACME", null), doc(PipelineDoc.TYPE, "ev", "ACME-V1.1-Events", "Events"));
+        docs.facts.startFrom = Map.of("choice", ExistingTranslations.EXISTING, "pipeline", Map.of("name",
+                "ACME-V1.0-Events", "uuid", "p"));
+
+        assertThat(review(Map.of("Feed", "System/Feeds/Acme"))).containsKey("layout");
+    }
+
+    @Test
     void eachRolesDocumentsGoInTheirRoleThenVersionFolderUnderTheFeed() {
         // Decided by the user (2026-11-17): <root>/<feed>/<Role>/<version>, role folders always, the version from
         // the pipeline's name.
