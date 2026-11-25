@@ -229,6 +229,14 @@ class CompareFeedsTool extends AbstractBuiltInTool {
                 .isEmpty()
                 ? ""
                 : "; the AGENTS rules chosen are the ones the tools apply to the shared documents") + ".");
+        if (answers.agents().keySet().stream().anyMatch(key -> key.startsWith(AgentsConflicts.FIELDS)
+                                                               || key.equals(AgentsConflicts.COMPONENTS))) {
+            // The build's record goes with the build: once promoted, the AGENTS docs where the documents land apply.
+            result.put("after_promotion", "The fields and component templates chosen are used for the build's own "
+                                          + "index and indexing pipelines. Once promoted, offer the user the same "
+                                          + "lines for the AGENTS doc of the folder the shared documents go in "
+                                          + "(propose_instructions), so the tools reading them there use them too.");
+        }
         return plan.withNext(context, build, result);
     }
 

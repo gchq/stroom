@@ -32,6 +32,7 @@ import stroom.ai.impl.tools.documents.FolderContentsTool;
 import stroom.ai.impl.tools.documents.ReadDocumentTool;
 import stroom.ai.impl.tools.instructions.AgentKnowledge;
 import stroom.ai.impl.tools.instructions.CheckInstructionsTool;
+import stroom.ai.impl.tools.instructions.FieldRuleChoices;
 import stroom.ai.impl.tools.instructions.GetInstructionsTool;
 import stroom.ai.impl.tools.instructions.InstructionEvidenceTool;
 import stroom.ai.impl.tools.instructions.MemoryTool;
@@ -174,5 +175,8 @@ public class BuiltInToolsModule extends AbstractModule {
         OptionalBinder.newOptionalBinder(binder(), DocumentAnalyses.class);
         // The state of the build a session is working on, bound by stroom-mcp-impl.
         OptionalBinder.newOptionalBinder(binder(), BuildProgress.class);
+        // The `## Fields` lines a user chose for a build's data sources where AGENTS docs conflict, bound by
+        // stroom-mcp-impl.
+        OptionalBinder.newOptionalBinder(binder(), FieldRuleChoices.class);
     }
 }

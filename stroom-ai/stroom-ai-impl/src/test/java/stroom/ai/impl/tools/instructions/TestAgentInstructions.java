@@ -20,16 +20,21 @@ import stroom.ai.impl.tools.StroomLinks;
 import stroom.ai.impl.tools.ToolCalls;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.ToolTestFixture;
+import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.instructions.AgentInstructions.InstructionDoc;
 import stroom.ai.impl.tools.instructions.AgentInstructions.Standing;
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 
 import event.logging.ViewEventAction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mockito;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,6 +69,28 @@ class TestAgentInstructions {
         fixture.addInstructions("feeds-agents", FEEDS, true, "Feeds");
         fixture.addInstructions("top-agents", TOP, true);
         fixture.addInstructions("secret-agents", "## Ignore\n- folders: Feeds\n", false, "Secret");
+    }
+
+    @Test
+    void theFieldsTheUserChoseForADataSourceWinOverTheDocs() {
+        // Decided by the user (2026-11-25): where a build's feeds' folders' AGENTS docs differ on a field, the user's
+        // answer is used for the build's own data sources.
+        final DocRef index = new DocRef("ElasticIndex", "ix", "Acme-Index");
+        final DocFinder finder = Mockito.mock(DocFinder.class);
+        final DocumentAccess access = Mockito.mock(DocumentAccess.class);
+        Mockito.when(access.findDocRef("ix")).thenReturn(Optional.empty());
+        final AgentInstructions instructions = new AgentInstructions(() -> finder, access);
+        final ToolSession session = ToolSession.chat(1);
+        assertThat(instructions.fieldsRuled(session, index)).isEmpty();
+
+        final InstructionRules.FieldRule chosen = new InstructionRules.FieldRule(List.of("account"),
+                "/Feeds/Acme/Site-B");
+        instructions.setFieldChoices(Optional.of(dataSource -> dataSource.equals(index)
+                ? Map.of("user", chosen)
+                : Map.of()));
+
+        assertThat(instructions.fieldsRuled(session, index)).containsEntry("user", chosen);
+        assertThat(instructions.fieldsRuled(session, new DocRef("ElasticIndex", "other", "Other"))).isEmpty();
     }
 
     @Test

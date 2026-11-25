@@ -175,6 +175,34 @@ class AgentsConflicts {
         return out;
     }
 
+    /// @param chosen The user's answers kept in the build.
+    /// @return The component template rules chosen where the feeds' docs conflict, as the chosen doc gives them
+    /// (`include a, b; exclude c`); empty otherwise.
+    static Optional<ComponentRules> componentsChosen(final Map<String, Map<String, Object>> chosen) {
+        final Map<String, Object> choice = NullSafe.map(chosen).get(COMPONENTS);
+        if (choice == null || choice.get("value") == null) {
+            return Optional.empty();
+        }
+        final String from = String.valueOf(choice.getOrDefault("folder", ""));
+        final List<ComponentRule> include = new ArrayList<>();
+        final List<ComponentRule> exclude = new ArrayList<>();
+        for (final String part : String.valueOf(choice.get("value")).split(";")) {
+            final String rule = part.strip();
+            final boolean including = rule.startsWith("include ");
+            if (!including && !rule.startsWith("exclude ")) {
+                continue;
+            }
+            for (final String name : rule.substring(rule.indexOf(' ') + 1).split(",")) {
+                if (!name.isBlank()) {
+                    (including
+                            ? include
+                            : exclude).add(new ComponentRule(name.strip(), from));
+                }
+            }
+        }
+        return Optional.of(new ComponentRules(List.copyOf(include), List.copyOf(exclude)));
+    }
+
     private static void put(final Map<String, Map<String, Ruled>> rules,
                             final String key,
                             final String feed,

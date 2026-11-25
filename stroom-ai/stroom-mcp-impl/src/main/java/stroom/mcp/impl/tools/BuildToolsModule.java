@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.tools.BuildProgress;
 import stroom.ai.impl.tools.StroomTool;
 import stroom.ai.impl.tools.documents.DocumentAnalyses;
+import stroom.ai.impl.tools.instructions.FieldRuleChoices;
 import stroom.util.guice.GuiceUtil;
 
 import com.google.inject.AbstractModule;
@@ -104,5 +105,8 @@ public class BuildToolsModule extends AbstractModule {
         // Whether propose_dashboard (stroom-ai-impl) waits for the session's build to verify its indexing.
         OptionalBinder.newOptionalBinder(binder(), BuildProgress.class)
                 .setBinding().to(BuildProgressImpl.class);
+        // The `## Fields` lines the user chose for a build's own data sources where its feeds' AGENTS docs conflict.
+        OptionalBinder.newOptionalBinder(binder(), FieldRuleChoices.class)
+                .setBinding().to(BuildFieldRuleChoices.class);
     }
 }

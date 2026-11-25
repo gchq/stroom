@@ -118,6 +118,47 @@ class TestAgentsConflicts {
         assertThat(AgentsConflicts.layoutChosen(Map.of())).isEmpty();
     }
 
+    @Test
+    void componentRulesThatDifferAreAConflictAndTheChoiceIsReadBack() {
+        final InstructionDoc siteA = doc("/Feeds/Acme/Site-A", """
+                ## Component templates
+                - include: org-base, logs-ilm-90d
+                - exclude: legacy-base
+                """);
+        final InstructionDoc siteB = doc("/Feeds/Acme/Site-B", """
+                ## Component templates
+                - include: org-base
+                """);
+        final Map<String, List<InstructionDoc>> byFeed = new LinkedHashMap<>();
+        byFeed.put("ACME-A", List.of(siteA));
+        byFeed.put("ACME-B", List.of(siteB));
+
+        final AgentsConflicts.Conflict conflict = AgentsConflicts.conflicts(byFeed).getFirst();
+
+        assertThat(conflict.key()).isEqualTo(AgentsConflicts.COMPONENTS);
+        final AgentsConflicts.Ruled a = conflict.byFeed().get("ACME-A");
+        assertThat(a.value()).isEqualTo("include logs-ilm-90d, org-base; exclude legacy-base");
+        final InstructionRules.ComponentRules chosen = AgentsConflicts.componentsChosen(Map.of(
+                AgentsConflicts.COMPONENTS, Map.of("value", a.value(), "folder", a.folder()))).orElseThrow();
+        assertThat(chosen.include()).extracting(InstructionRules.ComponentRule::name)
+                .containsExactly("logs-ilm-90d", "org-base");
+        assertThat(chosen.exclude()).extracting(InstructionRules.ComponentRule::name).containsExactly("legacy-base");
+        assertThat(chosen.include().getFirst().from()).isEqualTo("/Feeds/Acme/Site-A");
+        assertThat(AgentsConflicts.componentsChosen(Map.of())).isEmpty();
+    }
+
+    @Test
+    void theBuildsFieldChoicesAreThoseOfTheBuildTheDataSourceIsIn() {
+        final BuildWorld world = new BuildWorld();
+        final DocRef index = world.inBuild("acme", "Index", "ACME-A-Index", "ix");
+        world.records().rememberFeedComparison("acme", Map.of("agents", Map.of("fields: user", Map.of("value",
+                "account", "folder", "/Feeds/Acme/Site-B"))));
+        final BuildFieldRuleChoices choices = new BuildFieldRuleChoices(world::guard, world::records);
+
+        assertThat(choices.chosenFor(index).get("user").fields()).containsExactly("account");
+        assertThat(choices.chosenFor(new DocRef("Index", "elsewhere", "Prod-Index"))).isEmpty();
+    }
+
     private static InstructionDoc doc(final String folder, final String text) {
         return new InstructionDoc(new DocRef(DocumentationDoc.TYPE, folder, "AGENTS"), folder, text.strip(),
                 List.of());

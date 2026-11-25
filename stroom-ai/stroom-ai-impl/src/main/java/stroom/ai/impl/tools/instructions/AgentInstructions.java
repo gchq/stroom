@@ -91,6 +91,8 @@ public class AgentInstructions {
 
     private final Provider<DocFinder> docFinderProvider;
     private final DocumentAccess documentAccess;
+    // The `## Fields` lines a user chose where the docs conflict; none where nothing binds them.
+    private Optional<FieldRuleChoices> fieldChoices = Optional.empty();
 
     /// @param docFinderProvider Finds the instruction docs (AGENTS, SKILLS) by name.
     /// @param documentAccess    Reads them as the user.
@@ -98,6 +100,15 @@ public class AgentInstructions {
     public AgentInstructions(final Provider<DocFinder> docFinderProvider, final DocumentAccess documentAccess) {
         this.docFinderProvider = docFinderProvider;
         this.documentAccess = documentAccess;
+    }
+
+    /// Where the `## Fields` lines a user chose for a data source are found, where the AGENTS docs that would apply
+    /// conflict (set by injection; none in tests that make this themselves).
+    ///
+    /// @param fieldChoices The choices, where bound.
+    @Inject
+    public void setFieldChoices(final Optional<FieldRuleChoices> fieldChoices) {
+        this.fieldChoices = fieldChoices;
     }
 
     /// Reads every AGENTS doc the user can view, and records in the audit log that they were viewed.
@@ -245,7 +256,11 @@ public class AgentInstructions {
     /// [InstructionRules#fields]); none if none say, or they can't be read.
     public Map<String, FieldRule> fieldsRuled(final ToolSession session, final DocRef dataSource) {
         try {
-            return InstructionRules.fields(applyingWhere(session, dataSource, "the fields"));
+            final Map<String, FieldRule> ruled = new LinkedHashMap<>(InstructionRules.fields(applyingWhere(session,
+                    dataSource, "the fields")));
+            // The user's choice where the docs conflict (a build of several feeds) wins over the merged rules.
+            fieldChoices.ifPresent(choices -> ruled.putAll(choices.chosenFor(dataSource)));
+            return ruled;
         } catch (final RuntimeException e) {
             LOGGER.debug("Unable to read the field rules for {}", dataSource, e);
             return Map.of();

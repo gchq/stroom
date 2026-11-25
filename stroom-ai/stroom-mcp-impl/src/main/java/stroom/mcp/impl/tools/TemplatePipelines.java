@@ -27,6 +27,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -43,6 +44,9 @@ class TemplatePipelines {
     private final IndexTemplateAgreements agreements;
     private final PipelineStepping stepping;
     private final AgentInstructions instructions;
+    // Find a pipeline's build and its record; none in tests that make this themselves.
+    private Provider<WriteGuard> guardProvider;
+    private Provider<BuildRecords> recordsProvider;
 
     /// @param agreements   Says where an Elasticsearch indexing pipeline writes.
     /// @param stepping     Steps the pipeline over the sample.
@@ -54,6 +58,17 @@ class TemplatePipelines {
         this.agreements = agreements;
         this.stepping = stepping;
         this.instructions = instructions;
+    }
+
+    /// Where the component template rules the user chose for a build are kept (set by injection; none in tests
+    /// that make this themselves).
+    ///
+    /// @param guard   Finds the build a pipeline is in.
+    /// @param records Reads the build's record.
+    @Inject
+    void setBuildChoices(final Provider<WriteGuard> guard, final Provider<BuildRecords> records) {
+        this.guardProvider = guard;
+        this.recordsProvider = records;
     }
 
     /// @param pipelineUuid The candidate Elasticsearch indexing pipeline.
@@ -123,8 +138,10 @@ class TemplatePipelines {
     ComponentChoices componentChoices(final ToolCallContext context,
                                       final String pipelineUuid,
                                       final List<String> nominated) {
-        final ComponentRules rules = instructions.componentsRuled(context.session(),
-                new DocRef(PipelineDoc.TYPE, pipelineUuid));
+        // The rules the user chose for a build of several feeds whose folders' AGENTS docs conflict on them
+        // (compare_feeds, decided by the user 2026-11-25), else the docs where the pipeline is.
+        final ComponentRules rules = chosenComponents(pipelineUuid).orElseGet(() -> instructions.componentsRuled(
+                context.session(), new DocRef(PipelineDoc.TYPE, pipelineUuid)));
         final Set<String> include = new LinkedHashSet<>(nominated);
         rules.include().forEach(rule -> include.add(rule.name()));
         final List<String> exclude = rules.exclude().stream()
@@ -138,6 +155,19 @@ class TemplatePipelines {
                 .forEach(rule -> notes.add(note(rule, "exclude")));
         return new ComponentChoices(include.stream().filter(name -> !exclude.contains(name)).toList(), exclude,
                 notes);
+    }
+
+    // The component template rules chosen for the build the pipeline is in, where its feeds' AGENTS docs conflict.
+    private Optional<ComponentRules> chosenComponents(final String pipelineUuid) {
+        if (guardProvider == null || recordsProvider == null) {
+            return Optional.empty();
+        }
+        try {
+            return guardProvider.get().buildOf(new DocRef(PipelineDoc.TYPE, pipelineUuid))
+                    .flatMap(build -> AgentsConflicts.componentsChosen(recordsProvider.get().agentsChoices(build)));
+        } catch (final RuntimeException e) {
+            return Optional.empty();
+        }
     }
 
     private static String note(final ComponentRule rule, final String kind) {

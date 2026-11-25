@@ -388,6 +388,30 @@ class TestIndexTemplateTools {
     }
 
     @Test
+    void testTheComponentRulesTheUserChoseForABuildOfSeveralFeedsAreUsed() {
+        // Decided by the user (2026-11-25): where the build's feeds' folders' AGENTS docs differ, their answer is used.
+        final AgentInstructions instructions = Mockito.mock(AgentInstructions.class);
+        Mockito.when(instructions.componentsRuled(any(), any())).thenReturn(new ComponentRules(
+                List.of(new ComponentRule("from-the-merge", "System")), List.of()));
+        final BuildWorld world = new BuildWorld();
+        final DocRef pipeline = world.inBuild("acme", PipelineDoc.TYPE, "ACME-Indexing", "ix-p");
+        world.records().rememberFeedComparison("acme", Map.of("agents", Map.of(AgentsConflicts.COMPONENTS,
+                Map.of("value", "include org-base; exclude legacy", "folder", "/Feeds/Acme/Site-A"))));
+        final TemplatePipelines pipelines = new TemplatePipelines(null, null, instructions);
+        pipelines.setBuildChoices(world::guard, world::records);
+
+        final TemplatePipelines.ComponentChoices choices = pipelines.componentChoices(context(UserQuestions.NONE),
+                pipeline.getUuid(), List.of());
+
+        assertThat(choices.include()).containsExactly("org-base");
+        assertThat(choices.exclude()).containsExactly("legacy");
+        assertThat(choices.notes()).anySatisfy(note -> assertThat(note).contains("/Feeds/Acme/Site-A"));
+        // A pipeline outside any build: the docs where it is, as before.
+        assertThat(pipelines.componentChoices(context(UserQuestions.NONE), "prod", List.of()).include())
+                .containsExactly("from-the-merge");
+    }
+
+    @Test
     void testAUsersTemplateIsCheckedAgainstTheComponentRules() {
         final Map<String, Object> body = template(good());
         body.put("composed_of", List.of("legacy-base"));
