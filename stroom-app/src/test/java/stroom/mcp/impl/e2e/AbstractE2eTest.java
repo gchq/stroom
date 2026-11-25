@@ -993,11 +993,21 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
     /// @param parts Each part's receipt headers and text.
     /// @return The Raw Events stream's id.
     long storeParts(final String feed, final List<Map.Entry<Map<String, String>, String>> parts) {
+        return storeParts(feed, parts, System.currentTimeMillis());
+    }
+
+    /// As [#storeParts(String, List)], the stream created when given: a dormant feed's, say.
+    ///
+    /// @param feed     The feed.
+    /// @param parts    Each part's headers and text, in order.
+    /// @param createMs When the stream was created.
+    /// @return The stream's id.
+    long storeParts(final String feed, final List<Map.Entry<Map<String, String>, String>> parts, final long createMs) {
         return securityContext.asProcessingUserResult(() -> {
             final MetaProperties properties = MetaProperties.builder()
                     .feedName(feed)
                     .typeName(StreamTypeNames.RAW_EVENTS)
-                    .createMs(System.currentTimeMillis())
+                    .createMs(createMs)
                     .build();
             try (final Target target = store.openTarget(properties)) {
                 for (final Map.Entry<Map<String, String>, String> part : parts) {
