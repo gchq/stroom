@@ -64,7 +64,8 @@ class TestFeedShapeComparison {
         assertThat(comparison.kindsOnlyIn()).isEqualTo(Map.of("action=logout", List.of("ACME-B")));
         assertThat(comparison.zones()).isEqualTo(Map.of("ACME-A", Set.of("+10:00"), "ACME-B",
                 Set.of(FeedShapeComparison.NO_ZONE)));
-        assertThat(comparison.zonesToAsk()).containsExactly("ACME-A", "ACME-B");
+        // Only the feed whose times say no zone is asked its zone.
+        assertThat(comparison.zonesToAsk()).containsExactly("ACME-B");
         assertThat(comparison.said()).containsExactly(
                 "Fields in some feeds only: site (ACME-B).",
                 "Kinds of event in some feeds only: action=logout (ACME-B).",

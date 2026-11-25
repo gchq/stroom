@@ -188,13 +188,16 @@ final class FeedShapeComparison {
             return formatsDiffer() || zonesDiffer() || !fieldsOnlyIn.isEmpty() || !kindsOnlyIn.isEmpty();
         }
 
-        /// @return The feeds whose zone the user is asked, a feed at a time, where their times are written in
-        /// different zones (or some with none); none where every feed's times say the same.
+        /// @return The feeds whose zone the user is asked, a feed at a time: those whose times have no zone or offset
+        /// (their own zone, the user's to say, may differ from the others'); none for one feed, or where every
+        /// time says its zone.
         List<String> zonesToAsk() {
-            // Alike: the draft asks one zone for them all, as for one feed.
-            return zonesDiffer()
-                    ? List.copyOf(feeds)
-                    : List.of();
+            if (feeds.size() < 2) {
+                return List.of();
+            }
+            return feeds.stream()
+                    .filter(feed -> zones.getOrDefault(feed, Set.of()).contains(NO_ZONE))
+                    .toList();
         }
 
         /// @return The differences in a few lines, for the chat and the form's message: formats, fields, kinds and

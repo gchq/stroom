@@ -319,8 +319,8 @@ class CompareFeedsTool extends AbstractBuiltInTool {
                                                                                                + "name or offset)"));
             }
             final Optional<Map<String, String>> given = consent.chooseOrTypeEach(call, context, NAME,
-                    "Build '" + build + "': its feeds' times are written in different zones. Each feed's zone is "
-                    + "kept for its translation.", asked);
+                    "Build '" + build + "': some of its feeds' times have no zone or offset, and each feed may "
+                    + "write them in its own. Each feed's zone is kept for its translation.", asked);
             if (given.isEmpty()) {
                 return null;
             }
@@ -346,7 +346,7 @@ class CompareFeedsTool extends AbstractBuiltInTool {
                     .findFirst()
                     .orElse(null);
             if (zone == null || ToolText.isBlank(String.valueOf(zone))) {
-                throw new ToolRefusal("The feeds' times are written in different zones: give time_zones with each "
+                throw new ToolRefusal("Some feeds' times have no zone or offset: give time_zones with each "
                                       + "of " + String.join(", ", comparison.zonesToAsk()) + " and its zone, as "
                                       + "the user said (" + feed + " has none). Nothing was kept.");
             }

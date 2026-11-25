@@ -199,16 +199,25 @@ final class TimeSources {
         notes.add("The times read from " + where + " are read in " + chosen + asChosen + ".");
     }
 
-    // A build of several feeds whose times the user said are written in different zones (compare_feeds, decided by
-    // the user 2026-11-25): each record's time read in its own feed's zone, from the stream's Feed meta, the zone
-    // most feeds have where a feed isn't listed. True when that is how they are read; false for one zone (or none
-    // kept), which the build's own zone question settles.
+    // A build of several feeds whose zones the user gave a feed at a time (compare_feeds, decided by the user
+    // 2026-11-25): each record's time read in its own feed's zone, from the stream's Feed meta, the zone most feeds
+    // have where a feed isn't listed; every feed in one zone, that zone. True when the zones kept settle it; false
+    // when none were kept, which the build's own zone question settles.
     private static boolean byFeed(final Map<String, String> feedZones,
                                   final List<Map<String, Object>> zoneless,
                                   final String where,
                                   final List<Object> notes) {
-        if (new HashSet<>(feedZones.values()).size() < 2) {
+        if (feedZones.isEmpty()) {
             return false;
+        }
+        if (new HashSet<>(feedZones.values()).size() == 1) {
+            // Every feed in one zone, as the user said for each: that zone, asked no more.
+            final String zone = feedZones.values().iterator().next();
+            zoneless.forEach(entry -> entry.put("timezone", zone));
+            answeredZone(notes);
+            notes.add("The times read from " + where + " are read in " + zone + ", the zone the user gave each of "
+                      + "this build's feeds (compare_feeds).");
+            return true;
         }
         final Map<String, Long> counts = new LinkedHashMap<>();
         feedZones.values().forEach(zone -> counts.merge(zone, 1L, Long::sum));

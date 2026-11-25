@@ -78,7 +78,7 @@ class TestCompareFeedsTool {
 
     @Test
     void withoutFormsTheDifferencesAreGivenForTheAgentToAskAndNothingIsKept() {
-        surveys(state("ACME-A", "+10:00"), state("ACME-B", "Z"));
+        surveys(state("ACME-A", ""), state("ACME-B", "Z"));
         conflict();
 
         final Map<String, Object> result = call(Map.of("build", BUILD), BuildToolCalls.context());
@@ -94,7 +94,7 @@ class TestCompareFeedsTool {
 
     @Test
     void theAnswersGivenAreCheckedAndKept() {
-        surveys(state("ACME-A", "+10:00"), state("ACME-B", "Z"));
+        surveys(state("ACME-A", ""), state("ACME-B", ""));
         conflict();
 
         // A zone Stroom can't read, a conflict answered with a value neither doc gives: refused, nothing kept.
@@ -127,7 +127,7 @@ class TestCompareFeedsTool {
 
     @Test
     void theUserConfirmsTheUnionAndAnswersTheZonesInForms() {
-        surveys(state("ACME-A", "+10:00"), state("ACME-B", "Z"));
+        surveys(state("ACME-A", ""), state("ACME-B", ""));
         final Map<String, Object> answer = new LinkedHashMap<>();
         answer.put("q1", CompareFeedsTool.UNION);
         answer.put("a1", "+10:00");
@@ -139,7 +139,8 @@ class TestCompareFeedsTool {
 
         assertThat(kept).doesNotContainKey("status");
         assertThat(user.shown()).hasSize(2);
-        assertThat(user.shown().getFirst()).contains("Times written in different zones").doesNotContain("|", "**");
+        assertThat(user.shown().getFirst()).contains("Build 'acme'").doesNotContain("|", "**");
+        assertThat(user.shown().get(1)).contains("have no zone or offset");
         assertThat(world.records().feedTimeZones(BUILD)).isEqualTo(Map.of("ACME-A", "+10:00", "ACME-B",
                 "Europe/London"));
     }

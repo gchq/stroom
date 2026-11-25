@@ -230,6 +230,13 @@ class TestDraftTranslationMappingTool {
         // Given as the argument, one zone still wins.
         assertThat(String.valueOf(world.call(tool, Map.of("stream_ids", List.of(14), "build", "acme-many",
                 TimeSources.TIMEZONE_ARG, "UTC")).get("mapping"))).doesNotContain("Australia/Sydney");
+        // Every feed in one zone, as the user said for each: that zone, asked no more.
+        world.world.records().rememberFeedComparison("acme-many", Map.of("time_zones", Map.of("ACME-A",
+                "Europe/London", "ACME-B", "Europe/London")));
+        final Map<String, Object> one = world.call(tool, Map.of("stream_ids", List.of(14), "build", "acme-many"));
+        assertThat(String.valueOf(one.get("mapping"))).contains("timezone=Europe/London");
+        assertThat(String.valueOf(one.get("notes"))).contains("the zone the user gave each of this build's feeds");
+        assertThat(world.asked).doesNotContain(TimeSources.ZONE_QUESTION);
     }
 
     @Test
