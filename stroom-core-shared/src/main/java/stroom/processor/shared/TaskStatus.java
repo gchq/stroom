@@ -41,14 +41,23 @@ public enum TaskStatus implements HasDisplayValue, HasPrimitiveValue {
      * A node is processing.
      */
     PROCESSING("Processing", 3),
+    /// A run of the task has ended, but what it wrote is not yet durable. Whatever holds what it wrote will complete
+    /// the task, or put it back to be run again.
+    COMMITTING("Committing", 4),
+    /// A run of the task hit a fault. The task will be run again after a delay.
+    RETRY("Retry", 5),
     /**
      * A node has completed processing the task.
      */
     COMPLETE("Complete", 10),
     /**
      * The task failed to process for some reason.
+     * Replaced by {@link #RETRY} and {@link #ABORTED}. Kept as ids must not be used again.
      */
+    @Deprecated
     FAILED("Failed", 22),
+    /// The task has been stopped for good and will not be run again.
+    ABORTED("Aborted", 23),
     /**
      * The task has been deleted.
      */

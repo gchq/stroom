@@ -236,6 +236,30 @@ class AbstractProcessorTest {
         return fetchTaskField(taskId, PROCESSOR_TASK.VERSION);
     }
 
+    /// Gets a task's run count from its row.
+    ///
+    /// @param taskId The id of the task.
+    /// @return The run count.
+    protected int getTaskRunCount(final long taskId) {
+        return fetchTaskField(taskId, PROCESSOR_TASK.RUN_COUNT);
+    }
+
+    /// Gets a task's fault count from its row.
+    ///
+    /// @param taskId The id of the task.
+    /// @return The fault count.
+    protected int getTaskFaultCount(final long taskId) {
+        return fetchTaskField(taskId, PROCESSOR_TASK.FAULT_COUNT);
+    }
+
+    /// Gets a task's reason from its row.
+    ///
+    /// @param taskId The id of the task.
+    /// @return The reason, or null if it has none.
+    protected String getTaskReason(final long taskId) {
+        return fetchTaskField(taskId, PROCESSOR_TASK.REASON);
+    }
+
     protected long getTaskStatusTimeMs(final long taskId) {
         return fetchTaskField(taskId, PROCESSOR_TASK.STATUS_TIME_MS);
     }

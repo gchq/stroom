@@ -216,17 +216,40 @@ public interface ProcessorTaskDao {
      */
     int releaseTasks(Set<Long> idSet, TaskStatus currentStatus);
 
-    ResultPage<ProcessorTask> changeTaskStatus(ExpressionCriteria criteria,
-                                               String nodeName,
-                                               TaskStatus status,
-                                               Long startTime,
-                                               Long endTime);
+    /// Changes the status of a task with no reason to record. Any reason it had is cleared.
+    /// See [#changeTaskStatus(ProcessorTask, String, TaskStatus, Long, Long, String)].
+    ///
+    /// @param processorTask The task as the caller last knew it.
+    /// @param nodeName      The node that has the task, or null if none does.
+    /// @param status        The status to give it.
+    /// @param startTime     When processing started, or null.
+    /// @param endTime       When processing ended, or null.
+    /// @return The changed task, or null if it was not changed.
+    default ProcessorTask changeTaskStatus(final ProcessorTask processorTask,
+                                           final String nodeName,
+                                           final TaskStatus status,
+                                           final Long startTime,
+                                           final Long endTime) {
+        return changeTaskStatus(processorTask, nodeName, status, startTime, endTime, null);
+    }
 
+    /// Changes the status of a task, but only if it still has the version the caller last knew. Setting a task
+    /// to [TaskStatus#PROCESSING] starts a new run of it, so its run count goes up in the same update.
+    ///
+    /// @param processorTask The task as the caller last knew it.
+    /// @param nodeName      The node that has the task, or null if none does.
+    /// @param status        The status to give it.
+    /// @param startTime     When processing started, or null.
+    /// @param endTime       When processing ended, or null.
+    /// @param reason        Why the task is given the status, or null if there is nothing to say. This replaces
+    ///                      any reason it had.
+    /// @return The changed task, or null if it was not changed.
     ProcessorTask changeTaskStatus(ProcessorTask processorTask,
                                    String nodeName,
                                    TaskStatus status,
                                    Long startTime,
-                                   Long endTime);
+                                   Long endTime,
+                                   String reason);
 
     ResultPage<ProcessorTask> find(final ExpressionCriteria criteria);
 
@@ -234,13 +257,22 @@ public interface ProcessorTaskDao {
 
     void search(ExpressionCriteria criteria, FieldIndex fieldIndex, ValuesConsumer consumer);
 
+    /// Logically deletes the unfinished tasks of a processor. Tasks that are committing are left to finish.
+    ///
+    /// @param processorId The id of the processor.
+    /// @return The number of logically deleted tasks.
     int logicalDeleteByProcessorId(int processorId);
 
+    /// Logically deletes the unfinished tasks of a processor filter. Tasks that are committing are left to finish.
+    ///
+    /// @param processorFilterId The id of the processor filter.
+    /// @return The number of logically deleted tasks.
     int logicalDeleteByProcessorFilterId(int processorFilterId);
 
     /**
      * Logically delete tasks that are associated with filters that have been logically deleted for longer than the
-     * threshold.
+     * threshold. Unlike when a filter is first deleted, this deletes them whatever their status, including those that
+     * are committing or have been aborted, so that the filter can then be physically deleted.
      *
      * @param deleteThreshold Only logically delete tasks with an update time older than the threshold.
      * @return The number of logically deleted tasks.
@@ -254,6 +286,12 @@ public interface ProcessorTaskDao {
      * @return The number of physically deleted tasks.
      */
     int physicallyDeleteOldTasks(Instant deleteThreshold);
+
+    /// Physically delete tasks that have been aborted for longer than the threshold.
+    ///
+    /// @param deleteThreshold Only physically delete tasks that were aborted before this.
+    /// @return The number of physically deleted tasks.
+    int physicallyDeleteOldAbortedTasks(Instant deleteThreshold);
 
     /**
      * Only used by the master queue, i.e. when stroom.processor.claimTasksOnWorker is false.

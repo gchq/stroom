@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -42,8 +43,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests that the retention task reads {@code stroom.processor.deleteAge} afresh on each run rather than
- * holding on to the value that was current when the singleton was constructed.
+ * Tests that the retention task reads {@code stroom.processor.deleteAge} and
+ * {@code stroom.processor.abortedTaskDeleteAge} afresh on each run rather than holding on to the values that were
+ * current when the singleton was constructed.
  */
 @ExtendWith(MockitoExtension.class)
 class TestProcessorTaskDeleteExecutorConfig {
@@ -123,10 +125,72 @@ class TestProcessorTaskDeleteExecutorConfig {
                 .physicallyDeleteOldTasks(Mockito.any());
     }
 
+    @Test
+    void abortedTasksHaveTheirOwnAge() {
+        final Instant beforeRun = Instant.now();
+
+        createExecutor(config(StroomDuration.ofDays(1), StroomDuration.ofDays(30))).lockAndDelete();
+
+        Mockito.verify(mockProcessorTaskDao)
+                .physicallyDeleteOldAbortedTasks(thresholdCaptor.capture());
+        assertThat(thresholdCaptor.getValue())
+                .isBetween(beforeRun.minus(Duration.ofDays(30)), Instant.now().minus(Duration.ofDays(30)));
+
+        // A filter with no tasks left is then deleted in the same run.
+        final InOrder inOrder = Mockito.inOrder(mockProcessorTaskDao, mockProcessorFilterDao);
+        inOrder.verify(mockProcessorTaskDao).physicallyDeleteOldAbortedTasks(Mockito.any());
+        inOrder.verify(mockProcessorFilterDao).logicallyDeleteOldProcessorFilters(Mockito.any());
+    }
+
+    @Test
+    void zeroAbortedTaskDeleteAgeKeepsOnlyAbortedTasks() {
+        createExecutor(config(StroomDuration.ofDays(1), StroomDuration.ZERO)).lockAndDelete();
+
+        Mockito.verify(mockProcessorTaskDao).physicallyDeleteOldTasks(Mockito.any());
+        Mockito.verify(mockProcessorTaskDao, Mockito.never()).physicallyDeleteOldAbortedTasks(Mockito.any());
+    }
+
+    @Test
+    void zeroDeleteAgeKeepsAbortedTasksToo() {
+        createExecutor(config(StroomDuration.ZERO, StroomDuration.ofDays(30))).lockAndDelete();
+
+        Mockito.verifyNoInteractions(mockProcessorTaskDao);
+    }
+
+    @Test
+    void failureToDeleteAbortedTasksDoesNotStopTheRest() {
+        Mockito.when(mockProcessorTaskDao.physicallyDeleteOldAbortedTasks(Mockito.any()))
+                .thenThrow(new RuntimeException("Expected"));
+
+        createExecutor(config(StroomDuration.ofDays(1), StroomDuration.ofDays(30))).lockAndDelete();
+
+        Mockito.verify(mockProcessorTaskDao).logicalDeleteForDeletedProcessorFilters(Mockito.any());
+        Mockito.verify(mockProcessorTaskDao).physicallyDeleteOldTasks(Mockito.any());
+        Mockito.verify(mockProcessorDao).physicalDeleteOldProcessors(Mockito.any());
+    }
+
+    private ProcessorTaskDeleteExecutorImpl createExecutor(final ProcessorConfig processorConfig) {
+        return new ProcessorTaskDeleteExecutorImpl(
+                new MockClusterLockService(),
+                () -> processorConfig,
+                mockProcessorDao,
+                mockProcessorFilterDao,
+                mockProcessorTaskDao,
+                new SimpleTaskContextFactory(),
+                mockDocumentPermissionService,
+                mockProcessorFilterDependencies);
+    }
+
     private ProcessorConfig config(final StroomDuration deleteAge) {
+        return config(deleteAge, StroomDuration.ZERO);
+    }
+
+    private ProcessorConfig config(final StroomDuration deleteAge, final StroomDuration abortedTaskDeleteAge) {
         final ProcessorConfig processorConfig = Mockito.mock(ProcessorConfig.class);
         Mockito.when(processorConfig.getDeleteAge())
                 .thenReturn(deleteAge);
+        Mockito.when(processorConfig.getAbortedTaskDeleteAge())
+                .thenReturn(abortedTaskDeleteAge);
         return processorConfig;
     }
 }

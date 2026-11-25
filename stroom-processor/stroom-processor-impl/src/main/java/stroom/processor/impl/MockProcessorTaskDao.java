@@ -169,6 +169,8 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
                         .statusTimeMs(now)
                         .startTimeMs(now)
                         .nodeName(nodeName)
+                        .runCount(task.getRunCount() + 1)
+                        .reason(null)
                         .build()))
                 .toList();
     }
@@ -220,30 +222,22 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
-    public ResultPage<ProcessorTask> changeTaskStatus(final ExpressionCriteria criteria,
-                                                      final String nodeName,
-                                                      final TaskStatus status,
-                                                      final Long startTime,
-                                                      final Long endTime) {
-        final ResultPage<ProcessorTask> tasks = find(criteria);
-        List<ProcessorTask> values = tasks.getValues();
-        values = values.stream().map(task ->
-                changeTaskStatus(task, nodeName, status, startTime, endTime)).toList();
-        return new ResultPage<>(values, tasks.getPageResponse());
-    }
-
-    @Override
     public ProcessorTask changeTaskStatus(final ProcessorTask processorTask,
                                           final String nodeName,
                                           final TaskStatus status,
                                           final Long startTime,
-                                          final Long endTime) {
+                                          final Long endTime,
+                                          final String reason) {
         return processorTask.copy()
                 .nodeName(nodeName)
                 .status(status)
                 .statusTimeMs(System.currentTimeMillis())
                 .startTimeMs(startTime)
                 .endTimeMs(endTime)
+                .runCount(TaskStatus.PROCESSING.equals(status)
+                        ? processorTask.getRunCount() + 1
+                        : processorTask.getRunCount())
+                .reason(reason)
                 .build();
     }
 
@@ -307,6 +301,11 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
 
     @Override
     public int physicallyDeleteOldTasks(final Instant deleteThreshold) {
+        return 0;
+    }
+
+    @Override
+    public int physicallyDeleteOldAbortedTasks(final Instant deleteThreshold) {
         return 0;
     }
 

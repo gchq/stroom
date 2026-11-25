@@ -186,6 +186,48 @@ public class ProcessorTaskRecord extends UpdatableRecordImpl<ProcessorTaskRecord
         return (String) get(11);
     }
 
+    /**
+     * Setter for <code>stroom.processor_task.run_count</code>.
+     */
+    public void setRunCount(Integer value) {
+        set(12, value);
+    }
+
+    /**
+     * Getter for <code>stroom.processor_task.run_count</code>.
+     */
+    public Integer getRunCount() {
+        return (Integer) get(12);
+    }
+
+    /**
+     * Setter for <code>stroom.processor_task.fault_count</code>.
+     */
+    public void setFaultCount(Integer value) {
+        set(13, value);
+    }
+
+    /**
+     * Getter for <code>stroom.processor_task.fault_count</code>.
+     */
+    public Integer getFaultCount() {
+        return (Integer) get(13);
+    }
+
+    /**
+     * Setter for <code>stroom.processor_task.reason</code>.
+     */
+    public void setReason(String value) {
+        set(14, value);
+    }
+
+    /**
+     * Getter for <code>stroom.processor_task.reason</code>.
+     */
+    public String getReason() {
+        return (String) get(14);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -209,7 +251,7 @@ public class ProcessorTaskRecord extends UpdatableRecordImpl<ProcessorTaskRecord
     /**
      * Create a detached, initialised ProcessorTaskRecord
      */
-    public ProcessorTaskRecord(Long id, Integer version, Integer fkProcessorFilterId, Integer fkProcessorNodeId, Integer fkProcessorFeedId, Long createTimeMs, Long startTimeMs, Long endTimeMs, Byte status, Long statusTimeMs, Long metaId, String data) {
+    public ProcessorTaskRecord(Long id, Integer version, Integer fkProcessorFilterId, Integer fkProcessorNodeId, Integer fkProcessorFeedId, Long createTimeMs, Long startTimeMs, Long endTimeMs, Byte status, Long statusTimeMs, Long metaId, String data, Integer runCount, Integer faultCount, String reason) {
         super(ProcessorTask.PROCESSOR_TASK);
 
         setId(id);
@@ -224,6 +266,9 @@ public class ProcessorTaskRecord extends UpdatableRecordImpl<ProcessorTaskRecord
         setStatusTimeMs(statusTimeMs);
         setMetaId(metaId);
         setData(data);
+        setRunCount(runCount);
+        setFaultCount(faultCount);
+        setReason(reason);
         resetTouchedOnNotNull();
     }
 }

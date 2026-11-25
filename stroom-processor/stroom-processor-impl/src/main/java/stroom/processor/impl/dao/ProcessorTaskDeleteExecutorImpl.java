@@ -103,17 +103,27 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                 if (!Thread.currentThread().isInterrupted()) {
                     final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-                    // Get the config each time we run so that changes to deleteAge take effect without
+                    // Get the config each time we run so that changes to the ages take effect without
                     // requiring a node restart.
-                    final StroomDuration deleteAge = processorConfigProvider.get().getDeleteAge();
+                    final ProcessorConfig processorConfig = processorConfigProvider.get();
+                    final StroomDuration abortedTaskDeleteAge = processorConfig.getAbortedTaskDeleteAge();
+                    final StroomDuration deleteAge = processorConfig.getDeleteAge();
 
+                    // A zero deleteAge turns off all retention, so old aborted tasks are kept as well.
                     if (!deleteAge.isZero()) {
+                        final AtomicInteger totalCount = new AtomicInteger();
+
+                        // Before the rest, as that deletes old filters that have no tasks left.
+                        if (!abortedTaskDeleteAge.isZero()) {
+                            deleteAborted(abortedTaskDeleteAge, totalCount);
+                        }
+
                         final Instant deleteThreshold = TimeUtils.durationToThreshold(deleteAge);
                         LOGGER.info(TASK_NAME + " - Using deleteAge: {}, deleteThreshold: {}",
                                 deleteAge,
                                 deleteThreshold);
                         // Delete qualifying records prior to this date.
-                        delete(deleteThreshold);
+                        delete(deleteThreshold, totalCount);
                     }
                     LOGGER.info(TASK_NAME + " - Finished in {}", logExecutionTime);
                 }
@@ -123,14 +133,34 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
         });
     }
 
+    private void deleteAborted(final StroomDuration abortedTaskDeleteAge, final AtomicInteger totalCount) {
+        try {
+            final Instant deleteThreshold = TimeUtils.durationToThreshold(abortedTaskDeleteAge);
+            LOGGER.info(TASK_NAME + " - Using abortedTaskDeleteAge: {}, deleteThreshold: {}",
+                    abortedTaskDeleteAge,
+                    deleteThreshold);
+            taskContextFactory.current().info(() ->
+                    "Physically deleting old processor tasks with a state of ABORTED");
+            runWithCountAndTimeLogging(() -> processorTaskDao.physicallyDeleteOldAbortedTasks(deleteThreshold),
+                    totalCount,
+                    "Physically deleted {} old processor tasks with a state of ABORTED");
+        } catch (final RuntimeException e) {
+            // The rest of the retention doesn't depend on this, so must still be done.
+            LOGGER.error(e::getMessage, e);
+        }
+    }
+
     // Only public for testing by stroom-app it seems
     @Override
     public void delete(final Instant deleteThreshold) {
+        delete(deleteThreshold, new AtomicInteger());
+    }
+
+    private void delete(final Instant deleteThreshold, final AtomicInteger totalCount) {
         final TaskContext taskContext = taskContextFactory.current();
 
         // Logically delete tasks that are associated with filters that have been logically deleted for longer than the
         // threshold.
-        final AtomicInteger totalCount = new AtomicInteger();
         taskContext.info(() -> "Logically deleting processor tasks for deleted processor filters");
         runWithCountAndTimeLogging(() -> processorTaskDao.logicalDeleteForDeletedProcessorFilters(deleteThreshold),
                 totalCount,

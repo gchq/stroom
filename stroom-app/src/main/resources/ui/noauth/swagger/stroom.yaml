@@ -19412,6 +19412,9 @@ components:
         endTimeMs:
           type: integer
           format: int64
+        faultCount:
+          type: integer
+          format: int32
         feedName:
           type: string
         id:
@@ -19424,6 +19427,11 @@ components:
           type: string
         processorFilter:
           $ref: "#/components/schemas/ProcessorFilter"
+        reason:
+          type: string
+        runCount:
+          type: integer
+          format: int32
         startTimeMs:
           type: integer
           format: int64
@@ -19434,8 +19442,11 @@ components:
           - QUEUED
           - ASSIGNED
           - PROCESSING
+          - COMMITTING
+          - RETRY
           - COMPLETE
           - FAILED
+          - ABORTED
           - DELETED
         statusTimeMs:
           type: integer
@@ -19472,8 +19483,11 @@ components:
           - QUEUED
           - ASSIGNED
           - PROCESSING
+          - COMMITTING
+          - RETRY
           - COMPLETE
           - FAILED
+          - ABORTED
           - DELETED
     ProfilePeriod:
       type: object

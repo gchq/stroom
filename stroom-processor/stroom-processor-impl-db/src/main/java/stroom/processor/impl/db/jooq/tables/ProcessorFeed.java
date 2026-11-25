@@ -16,13 +16,14 @@ import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
 import org.jooq.SQL;
 import org.jooq.Schema;
-import org.jooq.Select;
 import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableLike;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -55,7 +56,7 @@ public class ProcessorFeed extends TableImpl<ProcessorFeedRecord> {
     /**
      * The column <code>stroom.processor_feed.id</code>.
      */
-    public final TableField<ProcessorFeedRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<ProcessorFeedRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).generatedByDefaultAsIdentity(), this, "");
 
     /**
      * The column <code>stroom.processor_feed.name</code>.
@@ -155,7 +156,7 @@ public class ProcessorFeed extends TableImpl<ProcessorFeedRecord> {
      */
     @Override
     public ProcessorFeed where(Condition condition) {
-        return new ProcessorFeed(getQualifiedName(), aliased() ? this : null, null, condition);
+        return new ProcessorFeed(getQualifiedName(), aliased() ? this : null, null, Internal.condition(this, condition));
     }
 
     /**
@@ -222,7 +223,7 @@ public class ProcessorFeed extends TableImpl<ProcessorFeedRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public ProcessorFeed whereExists(Select<?> select) {
+    public ProcessorFeed whereExists(TableLike<?> select) {
         return where(DSL.exists(select));
     }
 
@@ -230,7 +231,7 @@ public class ProcessorFeed extends TableImpl<ProcessorFeedRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public ProcessorFeed whereNotExists(Select<?> select) {
+    public ProcessorFeed whereNotExists(TableLike<?> select) {
         return where(DSL.notExists(select));
     }
 }

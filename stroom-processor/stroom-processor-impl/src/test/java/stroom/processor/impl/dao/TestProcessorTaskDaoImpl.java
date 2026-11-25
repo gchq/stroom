@@ -34,10 +34,14 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
@@ -47,6 +51,14 @@ import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestProcessorTaskDaoImpl.class);
+
+    @SuppressWarnings("deprecation") // ASSIGNED is deprecated but old rows may have it.
+    private static final Set<TaskStatus> UNFINISHED_STATUSES = Set.of(
+            TaskStatus.CREATED,
+            TaskStatus.QUEUED,
+            TaskStatus.ASSIGNED,
+            TaskStatus.PROCESSING,
+            TaskStatus.RETRY);
 
     Processor processor1;
     Processor processor2;
@@ -180,6 +192,278 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
                 current, NODE1, TaskStatus.PROCESSING, now.toEpochMilli(), null);
         assertThat(updated).isNotNull();
         assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.PROCESSING);
+    }
+
+    @Test
+    void testRunCountGoesUpOnlyWhenARunStarts() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final long taskId = createProcessorTask(processorFilter1a, TaskStatus.CREATED, null, FEED);
+        assertThat(getTaskRunCount(taskId)).isZero();
+
+        final ProcessorTask queued = processorTaskDao.queueTasks(Set.of(taskId), NODE1).getFirst();
+        assertThat(queued.getRunCount()).isZero();
+
+        // Started from the master's queue.
+        final ProcessorTask processing = processorTaskDao.changeTaskStatus(
+                queued, NODE1, TaskStatus.PROCESSING, 1L, null);
+        assertThat(processing.getRunCount()).isOne();
+        assertThat(getTaskRunCount(taskId)).isOne();
+
+        // Nothing but starting a run changes it, and what is returned stays in step with the row.
+        processorTaskDao.renewTaskHeartbeats(NODE1, Set.of(taskId), 2L);
+        assertThat(getTaskRunCount(taskId)).isOne();
+        final ProcessorTask retry = processorTaskDao.changeTaskStatus(
+                processing, NODE1, TaskStatus.RETRY, 1L, 2L, "Broken");
+        assertThat(retry.getRunCount()).isOne();
+        assertThat(getTaskRunCount(taskId)).isOne();
+        final ProcessorTask created = processorTaskDao.changeTaskStatus(
+                retry, null, TaskStatus.CREATED, null, null);
+        assertThat(created.getRunCount()).isOne();
+        assertThat(getTaskRunCount(taskId)).isOne();
+
+        // Started by a worker's claim.
+        final ProcessorTask claimed = processorTaskDao.claimTasks(processorFilter1a.getId(), NODE2, 1).getFirst();
+        assertThat(claimed.getRunCount()).isEqualTo(2);
+        assertThat(getTaskRunCount(taskId)).isEqualTo(2);
+
+        // Nothing here counts a fault.
+        assertThat(claimed.getFaultCount()).isZero();
+        assertThat(getTaskFaultCount(taskId)).isZero();
+    }
+
+    @Test
+    void testRunCountDoesNotGoUpIfTheTaskWasLost() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final long taskId = createProcessorTask(processorFilter1a, TaskStatus.CREATED, null, FEED);
+        final ProcessorTask queued = processorTaskDao.queueTasks(Set.of(taskId), NODE1).getFirst();
+        assertThat(processorTaskDao.releaseTasks(Set.of(taskId), TaskStatus.QUEUED)).isOne();
+
+        assertThat(processorTaskDao.changeTaskStatus(queued, NODE1, TaskStatus.PROCESSING, 1L, null)).isNull();
+
+        assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.CREATED);
+        assertThat(getTaskRunCount(taskId)).isZero();
+    }
+
+    @Test
+    void testReasonIsSetAndClearedWithTheStatus() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final long taskId = createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
+
+        final ProcessorTask retry = processorTaskDao.changeTaskStatus(
+                findTask(taskId), NODE1, TaskStatus.RETRY, 1L, 2L, "Broken");
+        assertThat(retry.getReason()).isEqualTo("Broken");
+        assertThat(getTaskReason(taskId)).isEqualTo("Broken");
+        assertThat(findTask(taskId).getReason()).isEqualTo("Broken");
+
+        final ProcessorTask created = processorTaskDao.changeTaskStatus(
+                retry, null, TaskStatus.CREATED, null, null);
+        assertThat(created.getReason()).isNull();
+        assertThat(getTaskReason(taskId)).isNull();
+    }
+
+    @Test
+    void testReasonIsTruncatedToFit() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final long taskId = createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
+
+        final ProcessorTask aborted = processorTaskDao.changeTaskStatus(
+                findTask(taskId), NODE1, TaskStatus.ABORTED, 1L, 2L, "x".repeat(1_001));
+
+        assertThat(aborted.getReason()).isEqualTo("x".repeat(1_000));
+        assertThat(getTaskReason(taskId)).isEqualTo("x".repeat(1_000));
+    }
+
+    @Test
+    void testTasksPutBackSayWhyUntilTheyAreRun() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final Instant now = Instant.now();
+        final Instant stale = now.minus(20, ChronoUnit.MINUTES);
+        final Instant threshold = now.minus(10, ChronoUnit.MINUTES);
+        final long reaped = createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED, stale);
+        final long swept = createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE1, FEED, stale);
+        final long owned = createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE2, FEED, now);
+
+        processorTaskDao.reapDeadTasks(threshold);
+        processorTaskDao.sweepQueuedTasks(threshold);
+        processorTaskDao.releaseOwnedTasks(NODE2);
+
+        assertThat(getTaskReason(reaped)).isEqualTo(ProcessorTaskDaoImpl.REASON_NO_HEARTBEAT);
+        assertThat(getTaskReason(swept)).isEqualTo(ProcessorTaskDaoImpl.REASON_LEFT_QUEUED);
+        assertThat(getTaskReason(owned)).isEqualTo(ProcessorTaskDaoImpl.REASON_NODE_STARTED);
+
+        // Being queued by the master, and taken off its queue again, isn't being run.
+        assertThat(processorTaskDao.queueTasks(Set.of(swept, owned), NODE1))
+                .extracting(ProcessorTask::getReason)
+                .containsExactlyInAnyOrder(
+                        ProcessorTaskDaoImpl.REASON_LEFT_QUEUED,
+                        ProcessorTaskDaoImpl.REASON_NODE_STARTED);
+        assertThat(processorTaskDao.releaseTasks(Set.of(swept, owned), TaskStatus.QUEUED)).isEqualTo(2);
+        assertThat(getTaskReason(swept)).isEqualTo(ProcessorTaskDaoImpl.REASON_LEFT_QUEUED);
+        assertThat(getTaskReason(owned)).isEqualTo(ProcessorTaskDaoImpl.REASON_NODE_STARTED);
+
+        assertThat(processorTaskDao.claimTasks(processorFilter1a.getId(), NODE1, 3))
+                .hasSize(3)
+                .allSatisfy(task -> assertThat(task.getReason()).isNull());
+        assertThat(getTaskReason(reaped)).isNull();
+    }
+
+    @Test
+    void testWaitingCommittingAndAbortedTasksAreNotPutBack() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final Instant now = Instant.now();
+        final Instant stale = now.minus(20, ChronoUnit.MINUTES);
+        final Set<TaskStatus> statuses = Set.of(TaskStatus.RETRY, TaskStatus.COMMITTING, TaskStatus.ABORTED);
+        statuses.forEach(status -> createProcessorTask(processorFilter1a, status, NODE1, FEED, stale));
+        final Set<Long> taskIds = processorTaskDao.find(new ExpressionCriteria())
+                .stream()
+                .map(ProcessorTask::getId)
+                .collect(Collectors.toSet());
+
+        assertThat(processorTaskDao.reapDeadTasks(now)).isZero();
+        assertThat(processorTaskDao.sweepQueuedTasks(now)).isZero();
+        assertThat(processorTaskDao.releaseOwnedTasks(NODE1)).isZero();
+        assertThat(processorTaskDao.renewTaskHeartbeats(NODE1, taskIds, now.toEpochMilli())).isZero();
+        assertThat(processorTaskDao.claimTasks(processorFilter1a.getId(), NODE1, 10)).isEmpty();
+        assertThat(processorTaskDao.queueTasks(taskIds, NODE1)).isEmpty();
+        assertThat(processorTaskDao.getTaskAvailability(Set.of(processorFilter1a.getId()))).isEmpty();
+
+        assertThat(processorTaskDao.find(new ExpressionCriteria()).getValues())
+                .extracting(ProcessorTask::getStatus)
+                .containsExactlyInAnyOrderElementsOf(statuses);
+    }
+
+    @Test
+    void testDeletingAProcessorDeletesOnlyUnfinishedTasks() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final Map<TaskStatus, Long> taskIds = createTaskOfEachStatus(processorFilter1a);
+
+        assertThat(processorTaskDao.logicalDeleteByProcessorId(processor1.getId()))
+                .isEqualTo(UNFINISHED_STATUSES.size());
+
+        assertOnlyUnfinishedDeleted(taskIds);
+    }
+
+    @Test
+    void testDeletingAFilterDeletesOnlyUnfinishedTasks() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final Map<TaskStatus, Long> taskIds = createTaskOfEachStatus(processorFilter1a);
+
+        assertThat(processorTaskDao.logicalDeleteByProcessorFilterId(processorFilter1a.getId()))
+                .isEqualTo(UNFINISHED_STATUSES.size());
+
+        assertOnlyUnfinishedDeleted(taskIds);
+    }
+
+    @Test
+    void testTasksOfALongDeletedFilterAreDeletedWhateverTheirStatus() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final Map<TaskStatus, Long> taskIds = createTaskOfEachStatus(processorFilter1a);
+        processorFilterDao.update(processorFilter1a.copy()
+                .deleted(true)
+                .updateTimeMs(Instant.now().toEpochMilli())
+                .build());
+
+        processorTaskDao.logicalDeleteForDeletedProcessorFilters(Instant.now().plus(1, ChronoUnit.DAYS));
+
+        assertThat(taskIds.values())
+                .allSatisfy(taskId -> assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.DELETED));
+    }
+
+    @Test
+    void testReasonIsClearedByLogicalDeletion() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+
+        final long deletedWithFilter = createTaskWithReason(processorFilter1a);
+        processorTaskDao.logicalDeleteByProcessorFilterId(processorFilter1a.getId());
+        assertDeletedWithoutReason(deletedWithFilter);
+
+        final long deletedWithProcessor = createTaskWithReason(processorFilter1a);
+        processorTaskDao.logicalDeleteByProcessorId(processor1.getId());
+        assertDeletedWithoutReason(deletedWithProcessor);
+
+        final long deletedLater = createTaskWithReason(processorFilter1a);
+        processorFilterDao.update(processorFilter1a.copy()
+                .deleted(true)
+                .updateTimeMs(Instant.now().toEpochMilli())
+                .build());
+        processorTaskDao.logicalDeleteForDeletedProcessorFilters(Instant.now().plus(1, ChronoUnit.DAYS));
+        assertDeletedWithoutReason(deletedLater);
+    }
+
+    @Test
+    void testOldTasksAreAgedOffByStatus() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final Map<TaskStatus, Long> taskIds = createTaskOfEachStatus(processorFilter1a);
+        final Instant afterAll = Instant.now().plus(1, ChronoUnit.DAYS);
+
+        assertThat(processorTaskDao.physicallyDeleteOldTasks(afterAll)).isEqualTo(2);
+        assertThat(remainingStatuses(taskIds))
+                .doesNotContain(TaskStatus.COMPLETE, TaskStatus.DELETED)
+                .contains(TaskStatus.ABORTED, TaskStatus.RETRY, TaskStatus.COMMITTING);
+
+        // Only ones that were aborted before the threshold.
+        assertThat(processorTaskDao.physicallyDeleteOldAbortedTasks(Instant.now().minus(1, ChronoUnit.DAYS)))
+                .isZero();
+        assertThat(processorTaskDao.physicallyDeleteOldAbortedTasks(afterAll)).isOne();
+        assertThat(remainingStatuses(taskIds))
+                .doesNotContain(TaskStatus.ABORTED)
+                .containsAll(UNFINISHED_STATUSES)
+                .contains(TaskStatus.COMMITTING);
+    }
+
+    private long createTaskWithReason(final ProcessorFilter filter) {
+        final long taskId = createProcessorTask(filter, TaskStatus.PROCESSING, NODE1, FEED);
+        processorTaskDao.changeTaskStatus(findTask(taskId), NODE1, TaskStatus.RETRY, 1L, 2L, "Broken");
+        assertThat(getTaskReason(taskId)).isEqualTo("Broken");
+        return taskId;
+    }
+
+    private void assertDeletedWithoutReason(final long taskId) {
+        assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.DELETED);
+        assertThat(getTaskReason(taskId)).isNull();
+    }
+
+    private Map<TaskStatus, Long> createTaskOfEachStatus(final ProcessorFilter filter) {
+        return Arrays.stream(TaskStatus.values())
+                .collect(Collectors.toMap(
+                        Function.identity(),
+                        status -> createProcessorTask(filter, status, NODE1, FEED)));
+    }
+
+    private void assertOnlyUnfinishedDeleted(final Map<TaskStatus, Long> taskIds) {
+        taskIds.forEach((status, taskId) ->
+                assertThat(getTaskStatus(taskId))
+                        .describedAs("task that was %s", status)
+                        .isEqualTo(UNFINISHED_STATUSES.contains(status)
+                                ? TaskStatus.DELETED
+                                : status));
+    }
+
+    private Set<TaskStatus> remainingStatuses(final Map<TaskStatus, Long> taskIds) {
+        return taskIds.entrySet()
+                .stream()
+                .filter(entry -> getProcessorTaskCount(PROCESSOR_TASK.ID.eq(entry.getValue())) > 0)
+                .map(Entry::getKey)
+                .collect(Collectors.toSet());
+    }
+
+    private ProcessorTask findTask(final long taskId) {
+        return processorTaskDao.find(new ExpressionCriteria())
+                .stream()
+                .filter(task -> task.getId() == taskId)
+                .findFirst()
+                .orElseThrow();
     }
 
     @Test

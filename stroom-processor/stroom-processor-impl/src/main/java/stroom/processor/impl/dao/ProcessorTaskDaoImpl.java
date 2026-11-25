@@ -139,6 +139,20 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             TaskStatus.ASSIGNED.getPrimitiveValue(),
             TaskStatus.PROCESSING.getPrimitiveValue());
 
+    // What deleting a filter or processor deletes. Finished tasks are left to be aged off, and a COMMITTING task has
+    // been run so is left to finish. FAILED is deprecated, but a row that has it is finished.
+    @SuppressWarnings("deprecation")
+    private static final Condition DELETED_WITH_FILTER_CONDITION = PROCESSOR_TASK.STATUS.notIn(
+            TaskStatus.COMMITTING.getPrimitiveValue(),
+            TaskStatus.COMPLETE.getPrimitiveValue(),
+            TaskStatus.FAILED.getPrimitiveValue(),
+            TaskStatus.ABORTED.getPrimitiveValue(),
+            TaskStatus.DELETED.getPrimitiveValue());
+
+    static final String REASON_NODE_STARTED = "Put back when the node that had it was started";
+    static final String REASON_NO_HEARTBEAT = "Put back as the node that had it sent no heartbeat";
+    static final String REASON_LEFT_QUEUED = "Put back as the master task queue left it queued";
+
     private static final Field<Integer> COUNT = DSL.count();
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.ofEntries(
@@ -275,11 +289,11 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         conditions.add(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId));
 
         // Only alter tasks that are marked as queued, assigned or processing,
-        // i.e. ignore complete and failed tasks.
+        // i.e. ignore tasks that are waiting, committing or finished.
         conditions.add(ACTIVE_TASKS_STATUS_CONDITION);
 
         // Release tasks.
-        final long count = releaseTasks(conditions);
+        final long count = releaseTasks(conditions, REASON_NODE_STARTED);
 
         LOGGER.info(() -> "Set " + count + " tasks back to CREATED that were " +
                           "QUEUED, ASSIGNED, PROCESSING");
@@ -307,6 +321,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                 .set(PROCESSOR_TASK.STATUS_TIME_MS, nowMs)
                                 .setNull(PROCESSOR_TASK.START_TIME_MS)
                                 .setNull(PROCESSOR_TASK.END_TIME_MS)
+                                .set(PROCESSOR_TASK.REASON, REASON_NO_HEARTBEAT)
                                 .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
                                 .where(PROCESSOR_TASK.STATUS.eq(TaskStatus.PROCESSING.getPrimitiveValue()))
                                 .and(PROCESSOR_TASK.STATUS_TIME_MS.lt(statusOlderThan.toEpochMilli()))
@@ -394,6 +409,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                     .set(PROCESSOR_TASK.STATUS_TIME_MS, now)
                                     .set(PROCESSOR_TASK.START_TIME_MS, now)
                                     .setNull(PROCESSOR_TASK.END_TIME_MS)
+                                    .set(PROCESSOR_TASK.RUN_COUNT, PROCESSOR_TASK.RUN_COUNT.plus(1))
+                                    .setNull(PROCESSOR_TASK.REASON)
                                     .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
                                     .where(PROCESSOR_TASK.ID.in(ids))
                                     .execute();
@@ -431,6 +448,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                 .set(PROCESSOR_TASK.STATUS_TIME_MS, nowMs)
                                 .setNull(PROCESSOR_TASK.START_TIME_MS)
                                 .setNull(PROCESSOR_TASK.END_TIME_MS)
+                                .set(PROCESSOR_TASK.REASON, REASON_LEFT_QUEUED)
                                 .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
                                 .where(PROCESSOR_TASK.STATUS.in(
                                         TaskStatus.QUEUED.getPrimitiveValue(),
@@ -473,7 +491,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         return availability;
     }
 
-    private long releaseTasks(final List<Condition> conditions) {
+    private long releaseTasks(final List<Condition> conditions, final String reason) {
         final AtomicLong minId = new AtomicLong(-1);
         boolean complete = false;
         long count = 0;
@@ -510,6 +528,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                     null,
                                     TaskStatus.CREATED,
                                     System.currentTimeMillis(),
+                                    DSL.val(reason),
                                     updateCondition));
                 }
             }
@@ -743,6 +762,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                             nodeId,
                             TaskStatus.QUEUED,
                             now,
+                            // Why the task was put back is kept until it is run.
+                            PROCESSOR_TASK.REASON,
                             updateCondition);
 
                     // Select back the updated records.
@@ -778,6 +799,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                             null,
                             TaskStatus.CREATED,
                             now,
+                            PROCESSOR_TASK.REASON,
                             condition);
                 });
     }
@@ -851,6 +873,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                              final Integer nodeId,
                              final TaskStatus newStatus,
                              final Long statusTime,
+                             final Field<String> reason,
                              final Condition condition) {
         Objects.requireNonNull(condition, "Null condition");
         final Supplier<String> msgSupplier = () -> LogUtil.message(
@@ -869,6 +892,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                 .set(PROCESSOR_TASK.STATUS_TIME_MS, statusTime)
                                 .setNull(PROCESSOR_TASK.START_TIME_MS)
                                 .setNull(PROCESSOR_TASK.END_TIME_MS)
+                                .set(PROCESSOR_TASK.REASON, reason)
                                 .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
                                 .where(condition)
                                 .execute(),
@@ -1138,68 +1162,12 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     @Override
-    public ResultPage<ProcessorTask> changeTaskStatus(final ExpressionCriteria criteria,
-                                                      final String nodeName,
-                                                      final TaskStatus status,
-                                                      final Long startTime,
-                                                      final Long endTime) {
-        LOGGER.debug(() -> LogUtil.message(
-                "changeTaskStatus() - Changing task status of {} to node={}, status={}",
-                criteria, nodeName, status));
-        final long now = System.currentTimeMillis();
-
-        final Integer nodeId;
-        if (nodeName != null) {
-            nodeId = processorNodeCache.getOrCreate(nodeName);
-        } else {
-            nodeId = null;
-        }
-
-        final Condition condition = expressionMapper.apply(criteria.getExpression());
-        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
-        final int offset = JooqUtil.getOffset(criteria.getPageRequest());
-        final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
-
-        // Do everything within a single transaction.
-        final Result<Record> result = JooqUtil.withDeadlockRetries(
-                () -> JooqUtil.transactionResult(processorDbConnProvider, context -> {
-                    final int count = context
-                            .update(PROCESSOR_TASK)
-                            .set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, nodeId)
-                            .set(PROCESSOR_TASK.STATUS, status.getPrimitiveValue())
-                            .set(PROCESSOR_TASK.STATUS_TIME_MS, now)
-                            .set(PROCESSOR_TASK.START_TIME_MS, startTime)
-                            .set(PROCESSOR_TASK.END_TIME_MS, endTime)
-                            .where(condition)
-                            .execute();
-
-                    LOGGER.debug("count: {}", count);
-
-                    return context
-                            .select()
-                            .from(PROCESSOR_TASK)
-                            .leftOuterJoin(PROCESSOR_NODE).on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID))
-                            .leftOuterJoin(PROCESSOR_FEED).on(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID.eq(PROCESSOR_FEED.ID))
-                            .join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))
-                            .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(
-                                    PROCESSOR_FILTER_TRACKER.ID))
-                            .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
-                            .where(condition)
-                            .orderBy(orderFields)
-                            .limit(offset, limit)
-                            .fetch();
-                }),
-                () -> LogUtil.message("Update processor task status to {}, nodeName: {}, criteria: {}",
-                        status, nodeName, criteria));
-        return convert(criteria, result);
-    }
-
-    @Override
     public ProcessorTask changeTaskStatus(final ProcessorTask processorTask,
                                           final String nodeName,
                                           final TaskStatus status,
                                           final Long startTime,
-                                          final Long endTime) {
+                                          final Long endTime,
+                                          final String reason) {
         LOGGER.debug(() -> LogUtil.message(
                 "changeTaskStatus({}) - Changing task status on node {}, {}",
                 status, nodeName, processorTask));
@@ -1218,6 +1186,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 .statusTimeMs(now)
                 .startTimeMs(startTime)
                 .endTimeMs(endTime)
+                .reason(truncateReason(reason))
                 .build();
 
         ProcessorTask result = null;
@@ -1301,6 +1270,10 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     private ProcessorTask updateProcessorTask(final Integer nodeId,
                                               final ProcessorTask processorTask) {
+        // Setting a task to PROCESSING starts a new run of it.
+        final int runCountIncrement = TaskStatus.PROCESSING.equals(processorTask.getStatus())
+                ? 1
+                : 0;
         return JooqUtil.contextResult(processorDbConnProvider, context -> {
             final int count = context
                     .update(PROCESSOR_TASK)
@@ -1309,17 +1282,29 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     .set(PROCESSOR_TASK.STATUS_TIME_MS, processorTask.getStatusTimeMs())
                     .set(PROCESSOR_TASK.START_TIME_MS, processorTask.getStartTimeMs())
                     .set(PROCESSOR_TASK.END_TIME_MS, processorTask.getEndTimeMs())
+                    .set(PROCESSOR_TASK.RUN_COUNT, PROCESSOR_TASK.RUN_COUNT.plus(runCountIncrement))
+                    .set(PROCESSOR_TASK.REASON, processorTask.getReason())
                     .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
                     .where(PROCESSOR_TASK.ID.eq(processorTask.getId()))
                     .and(PROCESSOR_TASK.VERSION.eq(processorTask.getVersion()))
                     .execute();
             if (count == 1) {
-                // Return the task with the incremented version number.
-                return processorTask.copy().version(processorTask.getVersion() + 1).build();
+                // Return the task with the incremented version number, and run count if this started a run.
+                return processorTask.copy()
+                        .version(processorTask.getVersion() + 1)
+                        .runCount(processorTask.getRunCount() + runCountIncrement)
+                        .build();
             }
 
             return null;
         });
+    }
+
+    private String truncateReason(final String reason) {
+        final int maxLength = PROCESSOR_TASK.REASON.getDataType().length();
+        return reason != null && reason.length() > maxLength
+                ? reason.substring(0, maxLength)
+                : reason;
     }
 
     private Optional<ProcessorTask> fetch(final ProcessorTask processorTask) {
@@ -1334,7 +1319,10 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         PROCESSOR_TASK.STATUS_TIME_MS,
                         PROCESSOR_TASK.START_TIME_MS,
                         PROCESSOR_TASK.END_TIME_MS,
-                        PROCESSOR_TASK.STATUS)
+                        PROCESSOR_TASK.STATUS,
+                        PROCESSOR_TASK.RUN_COUNT,
+                        PROCESSOR_TASK.FAULT_COUNT,
+                        PROCESSOR_TASK.REASON)
                 .from(PROCESSOR_TASK)
                 .where(PROCESSOR_TASK.ID.eq(processorTask.getId()))
                 .fetchOptional()
@@ -1350,6 +1338,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         .endTimeMs(record.get(PROCESSOR_TASK.END_TIME_MS))
                         .status(TaskStatus.PRIMITIVE_VALUE_CONVERTER
                                 .fromPrimitiveValue(record.get(PROCESSOR_TASK.STATUS)))
+                        .runCount(record.get(PROCESSOR_TASK.RUN_COUNT))
+                        .faultCount(record.get(PROCESSOR_TASK.FAULT_COUNT))
+                        .reason(record.get(PROCESSOR_TASK.REASON))
                         .build()));
     }
 
@@ -1402,11 +1393,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                 .set(PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
                                 .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
                                 .set(PROCESSOR_TASK.STATUS_TIME_MS, Instant.now().toEpochMilli())
+                                .setNull(PROCESSOR_TASK.REASON)
                                 .where(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(processorFilterId))
-                                .and(PROCESSOR_TASK.STATUS.notIn(
-                                        TaskStatus.DELETED.getPrimitiveValue(),
-                                        TaskStatus.COMPLETE.getPrimitiveValue(),
-                                        TaskStatus.FAILED.getPrimitiveValue()))
+                                .and(DELETED_WITH_FILTER_CONDITION)
                                 .execute()),
                 () -> "");
 
@@ -1423,6 +1412,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                             .set(PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
                             .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
                             .set(PROCESSOR_TASK.STATUS_TIME_MS, Instant.now().toEpochMilli())
+                            .setNull(PROCESSOR_TASK.REASON)
                             .where(DSL.exists(
                                     DSL.selectZero()
                                             .from(PROCESSOR_FILTER)
@@ -1430,10 +1420,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                             .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                                             .where(PROCESSOR.ID.eq(processorId))
                                             .and(PROCESSOR_FILTER.ID.eq(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID))))
-                            .and(PROCESSOR_TASK.STATUS.notIn(
-                                    TaskStatus.DELETED.getPrimitiveValue(),
-                                    TaskStatus.COMPLETE.getPrimitiveValue(),
-                                    TaskStatus.FAILED.getPrimitiveValue()));
+                            .and(DELETED_WITH_FILTER_CONDITION);
 
                     LOGGER.trace("logicalDeleteByProcessorId query:\n{}", query);
                     return query.execute();
@@ -1475,6 +1462,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                         .set(PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
                                         .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
                                         .set(PROCESSOR_TASK.STATUS_TIME_MS, Instant.now().toEpochMilli())
+                                        .setNull(PROCESSOR_TASK.REASON)
                                         .where(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(processorFilterId))
                                         .and(PROCESSOR_TASK.STATUS.notEqual(TaskStatus.DELETED.getPrimitiveValue()))
                                         .execute()),
@@ -1504,10 +1492,25 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     @Override
     public int physicallyDeleteOldTasks(final Instant deleteThreshold) {
         LOGGER.debug("Deleting old COMPLETE or DELETED processor tasks");
+        return physicallyDeleteOldTasks(
+                PROCESSOR_TASK.STATUS.in(
+                        TaskStatus.COMPLETE.getPrimitiveValue(),
+                        TaskStatus.DELETED.getPrimitiveValue()),
+                deleteThreshold);
+    }
+
+    @Override
+    public int physicallyDeleteOldAbortedTasks(final Instant deleteThreshold) {
+        LOGGER.debug("Deleting old ABORTED processor tasks");
+        return physicallyDeleteOldTasks(
+                PROCESSOR_TASK.STATUS.eq(TaskStatus.ABORTED.getPrimitiveValue()),
+                deleteThreshold);
+    }
+
+    private int physicallyDeleteOldTasks(final Condition statusCondition, final Instant deleteThreshold) {
         final AtomicInteger totalDeleteCount = new AtomicInteger();
         final Condition condition = DSL.and(
-                PROCESSOR_TASK.STATUS.eq(TaskStatus.COMPLETE.getPrimitiveValue())
-                        .or(PROCESSOR_TASK.STATUS.eq(TaskStatus.DELETED.getPrimitiveValue())),
+                statusCondition,
                 PROCESSOR_TASK.STATUS_TIME_MS.isNull()
                         .or(PROCESSOR_TASK.STATUS_TIME_MS.lessThan(deleteThreshold.toEpochMilli())));
         LOGGER.debug("Using condition: {}", condition);

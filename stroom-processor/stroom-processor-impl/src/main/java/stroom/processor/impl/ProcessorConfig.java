@@ -46,11 +46,13 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     private static final boolean DEFAULT_USE_MAX_META_ID_FROM_PREVIOUS_POLL = true;
     private static final StroomDuration DEFAULT_TASK_AVAILABILITY_INTERVAL = StroomDuration.ofSeconds(5);
     private static final StroomDuration DEFAULT_TASK_LEASE_TIMEOUT = StroomDuration.ofMinutes(10);
+    private static final StroomDuration DEFAULT_ABORTED_TASK_DELETE_AGE = StroomDuration.ofDays(30);
 
     private final ProcessorDbConfig dbConfig;
     private boolean claimTasksOnWorker;
     private final boolean assignTasks;
     private final StroomDuration deleteAge;
+    private final StroomDuration abortedTaskDeleteAge;
     private final boolean fillTaskQueue;
     private final int queueSize;
     private final StroomDuration waitToQueueTasksDuration;
@@ -80,6 +82,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         claimTasksOnWorker = DEFAULT_CLAIM_TASKS_ON_WORKER;
         assignTasks = DEFAULT_ASSIGN_TASKS;
         deleteAge = StroomDuration.ofDays(1);
+        abortedTaskDeleteAge = DEFAULT_ABORTED_TASK_DELETE_AGE;
         fillTaskQueue = DEFAULT_FILL_TASK_QUEUE;
         queueSize = DEFAULT_QUEUE_SIZE;
         waitToQueueTasksDuration = StroomDuration.ofSeconds(10);
@@ -124,6 +127,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                            @JsonProperty("claimTasksOnWorker") final Boolean claimTasksOnWorker,
                            @JsonProperty("assignTasks") final Boolean assignTasks,
                            @JsonProperty("deleteAge") final StroomDuration deleteAge,
+                           @JsonProperty("abortedTaskDeleteAge") final StroomDuration abortedTaskDeleteAge,
                            @JsonProperty("fillTaskQueue") final Boolean fillTaskQueue,
                            @JsonProperty("queueSize") final Integer queueSize,
                            @JsonProperty("waitToQueueTasksDuration") final StroomDuration waitToQueueTasksDuration,
@@ -153,6 +157,8 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         this.assignTasks =
                 Objects.requireNonNullElse(assignTasks, DEFAULT_ASSIGN_TASKS);
         this.deleteAge = deleteAge;
+        this.abortedTaskDeleteAge = Objects.requireNonNullElse(
+                abortedTaskDeleteAge, DEFAULT_ABORTED_TASK_DELETE_AGE);
         this.fillTaskQueue =
                 Objects.requireNonNullElse(fillTaskQueue, DEFAULT_FILL_TASK_QUEUE);
         this.queueSize =
@@ -230,6 +236,17 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                              "In ISO-8601 duration format, e.g. 'P1DT12H'")
     public StroomDuration getDeleteAge() {
         return deleteAge;
+    }
+
+    /// @return How long to keep aborted tasks for. Zero if they are kept for as long as their filter is. They are
+    /// also kept if [#getDeleteAge()] is zero, as that turns off all deletion of tasks.
+    @JsonPropertyDescription("How long to keep tasks that have been aborted before physically deleting them. They " +
+                             "are kept for longer than completed tasks so that there is time to find out why they " +
+                             "were aborted. Set to zero to keep them until their filter is deleted. " +
+                             "Not used if deleteAge is zero, as that turns off all deletion of tasks. " +
+                             "In ISO-8601 duration format, e.g. 'P1DT12H'")
+    public StroomDuration getAbortedTaskDeleteAge() {
+        return abortedTaskDeleteAge;
     }
 
 
@@ -400,6 +417,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         return "ProcessorConfig{" +
                "dbConfig=" + dbConfig +
                ", deleteAge=" + deleteAge +
+               ", abortedTaskDeleteAge=" + abortedTaskDeleteAge +
                ", tasksToCreate=" + tasksToCreate +
                ", taskCreationThreadCount=" + taskCreationThreadCount +
                ", databaseMultiInsertMaxBatchSize=" + databaseMultiInsertMaxBatchSize +
