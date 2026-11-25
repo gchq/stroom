@@ -62,6 +62,9 @@ import java.util.regex.Pattern;
 /// lookups were gone).
 class CurrentTranslations {
 
+    /// The key of the lookups the XSLT makes through the shared functions it calls ([SharedXslt#lookupThrough]).
+    static final String LOOKUPS_THROUGH_FUNCTIONS = "lookups_through_functions";
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CurrentTranslations.class);
 
     private static final Pattern LOOKUP_MAP = Pattern.compile("stroom:lookup\\(\\s*'([^']+)'");
@@ -271,6 +274,9 @@ class CurrentTranslations {
             parts.add("calls " + ToolText.str(function.get("function")) + "() from '"
                       + ToolText.str(function.get("href")) + "'" + (JsonValues.truthy(function.get("example"))
                     ? " (as " + ToolText.str(function.get("example")) + ")"
+                    : "") + (JsonValues.truthy(function.get(SharedXslt.STROOM_CALLS))
+                    ? ", which calls " + String.join(", ", JsonValues.strings(function.get(
+                            SharedXslt.STROOM_CALLS)))
                     : ""));
         }
         for (final Map<?, ?> template : first(maps(current.get("templates_called")))) {
@@ -338,9 +344,13 @@ class CurrentTranslations {
         final List<Map<String, Object>> called = new ArrayList<>();
         final List<Map<String, Object>> rules = new ArrayList<>();
         final Set<List<Object>> entries = new LinkedHashSet<>();
+        final List<String> through = new ArrayList<>();
         for (final Map<String, Object> use : uses) {
             if (JsonValues.truthy(use.get("function"))) {
-                functions.add(truthy(use, "href", "function", "example"));
+                functions.add(truthy(use, "href", "function", "example", SharedXslt.STROOM_CALLS));
+                // A shared function that looks up through Stroom is one of the XSLT's lookups.
+                SharedXslt.lookupThrough(ToolText.str(use.get("function")), ToolText.str(use.get("href")), use)
+                        .ifPresent(through::add);
                 if (JsonValues.truthy(use.get("prefix")) && JsonValues.truthy(use.get("namespace"))) {
                     entries.add(List.of(use.get("href"), use.get("prefix"), use.get("namespace")));
                 }
@@ -368,6 +378,9 @@ class CurrentTranslations {
         }
         if (!maps.isEmpty()) {
             result.put("lookup_maps", List.copyOf(new TreeSet<>(maps)));
+        }
+        if (!through.isEmpty()) {
+            result.put(LOOKUPS_THROUGH_FUNCTIONS, List.copyOf(new LinkedHashSet<>(through)));
         }
         if (!functions.isEmpty()) {
             result.put("functions_called", functions);

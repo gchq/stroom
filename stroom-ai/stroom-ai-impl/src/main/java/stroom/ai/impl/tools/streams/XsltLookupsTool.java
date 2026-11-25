@@ -31,6 +31,7 @@ import stroom.ai.impl.tools.ToolSchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.documents.DocumentLinksTool;
+import stroom.ai.impl.tools.streams.XsltLookupAnalyser.ImportedCall;
 import stroom.ai.impl.tools.streams.XsltLookupAnalyser.Lookup;
 import stroom.ai.impl.tools.streams.XsltLookupAnalyser.MapWrite;
 import stroom.ai.impl.tools.streams.XsltLookupAnalyser.Resolution;
@@ -300,6 +301,15 @@ public class XsltLookupsTool extends AbstractWorkspaceTool {
                 lines.addAll(loaderLines(lookup, pipelines, analysis));
             }
         }
+        if (mapFilter == null) {
+            // Through a function an import declares: its map isn't known here, so left out of a map's report.
+            for (final ImportedCall call : analysis.importedCalls(xslt)) {
+                shown++;
+                analysis.lookupCount++;
+                lines.add("- line " + call.line() + ", column " + call.column() + ", in " + call.where() + ": "
+                          + call.said());
+            }
+        }
         if (shown == 0) {
             lines.add("- no lookups" + (mapFilter == null
                     ? ""
@@ -504,6 +514,16 @@ public class XsltLookupsTool extends AbstractWorkspaceTool {
             final List<Lookup> result = stylesheet.map(analyser::lookups).orElse(null);
             lookups.put(xslt.getUuid(), Optional.ofNullable(result));
             return result;
+        }
+
+        /// @return The calls an XSLT makes to imported functions that look up through Stroom; none if it couldn't
+        /// be read.
+        private List<ImportedCall> importedCalls(final DocRef xslt) {
+            try {
+                return stylesheet(xslt).map(analyser::importedCalls).orElse(List.of());
+            } catch (final WorkspaceException e) {
+                return List.of();
+            }
         }
 
         private List<Lookup> lookupsQuietly(final DocRef xslt) {

@@ -100,6 +100,31 @@ class TestCurrentTranslations {
     }
 
     @Test
+    void aSharedFunctionLookingUpThroughStroomIsListedAndSaidInTheNote() {
+        // Asked for by the user (2026-11-25): ref:lookup in a common XSLT calls stroom:http-call.
+        Mockito.when(plan.worksFrom("b")).thenReturn(List.of("FG"));
+        facts.translating = List.of(entry("name", "FG-V1.2", "uuid", "v12"));
+        Mockito.when(pipelineDocs.read("v12")).thenReturn(PipelineDoc.builder().uuid("v12").name("FG-V1.2")
+                .build());
+        Mockito.when(pipelineShapes.merged("v12")).thenReturn(MergedPipeline.of(PipelineLayers.of(
+                PipelineLayers.layer("v12").chain("dsParser", "DSParser", "translationFilter", "XSLTFilter")
+                        .property("translationFilter", "xslt", new DocRef(XsltDoc.TYPE, "x12", "FG-Events-V1.2")))));
+        Mockito.when(documentAccess.read(eq(new DocRef(XsltDoc.TYPE, "x12")), eq(XsltDoc.class)))
+                .thenReturn(Optional.of(XsltDoc.builder().uuid("x12").name("FG-Events-V1.2").data("<x/>").build()));
+        Mockito.when(templates.sharedXsltUsage(any())).thenReturn(List.of(entry("href", "COMMON", "function",
+                "ref:lookup", "prefix", "ref", "namespace", "urn:ref", "example", "ref:lookup(@id)", "calls", 1,
+                SharedXslt.STROOM_CALLS, List.of("stroom:http-call"))));
+
+        final Map<String, Object> current = currentTranslations.current("b").orElseThrow();
+
+        assertThat(current.get(CurrentTranslations.LOOKUPS_THROUGH_FUNCTIONS))
+                .isEqualTo(List.of("ref:lookup (in 'COMMON'), which calls stroom:http-call"));
+        assertThat(CurrentTranslations.lookupsNote(current)).contains("calls ref:lookup() from 'COMMON' (as "
+                                                                      + "ref:lookup(@id)), which calls "
+                                                                      + "stroom:http-call");
+    }
+
+    @Test
     void aFeedNothingTranslatesOrNoBuildHasNoCurrentTranslation() {
         Mockito.when(plan.worksFrom("b")).thenReturn(List.of());
         assertThat(currentTranslations.current("b")).isEmpty();

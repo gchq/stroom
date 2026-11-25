@@ -43,6 +43,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -68,6 +69,8 @@ final class XsltLookupAnalyser {
     static final String REFERENCE_DATA_NAMESPACE_PREFIX = "reference-data";
     static final String LOOKUP = "lookup";
     static final String BITMAP_LOOKUP = "bitmap-lookup";
+    /// Stroom's functions that look up: reference data, or a service over HTTP.
+    static final Set<String> STROOM_LOOKUPS = Set.of(LOOKUP, BITMAP_LOOKUP, "http-call");
     /// Shown in a pattern for a part of a name worked out at run time.
     static final String DYNAMIC_PART = "…";
     /// How far variables are followed before giving up.
@@ -150,6 +153,124 @@ final class XsltLookupAnalyser {
             }
         }
         return lookups;
+    }
+
+    /// Finds the calls an XSLT makes to functions (`xsl:function`) that the XSLTs it includes or imports declare,
+    /// and whose bodies look up through Stroom: call `stroom:lookup`, `stroom:bitmap-lookup` or `stroom:http-call`,
+    /// themselves or through another such function. Each is one of the XSLT's lookups, though the XSLT names no
+    /// Stroom function itself (a common XSLT's `ref:lookup($id)`, say).
+    ///
+    /// @param stylesheet The XSLT.
+    /// @return Each such call, in document order, once per function and place.
+    List<ImportedCall> importedCalls(final Stylesheet stylesheet) {
+        final Map<String, Declared> declared = new LinkedHashMap<>();
+        declaredFunctions(stylesheet, declared, new HashSet<>());
+        // Through another declared function: followed until nothing more is found.
+        boolean grew = true;
+        while (grew) {
+            grew = false;
+            for (final Declared function : declared.values()) {
+                for (final String called : function.calls()) {
+                    final Declared other = declared.get(called);
+                    if (other != null && other != function && function.stroom().addAll(other.stroom())) {
+                        grew = true;
+                    }
+                }
+            }
+        }
+        final Map<String, ImportedCall> found = new LinkedHashMap<>();
+        for (final XdmNode element : elements(stylesheet.document())) {
+            ToolDeadline.check();
+            for (final Expression expression : expressions(element)) {
+                for (final FunctionName name : functionNames(expression.text(), element)) {
+                    final Declared function = declared.get(name.key());
+                    if (function != null && !function.stroom().isEmpty()) {
+                        final String where = where(element);
+                        found.putIfAbsent(name.written() + "\n" + where, new ImportedCall(stylesheet.name(),
+                                stylesheet.uuid(), element.getLineNumber(), element.getColumnNumber(), where,
+                                name.written(), function.xsltName(), List.copyOf(new TreeSet<>(function.stroom()))));
+                    }
+                }
+            }
+        }
+        return List.copyOf(found.values());
+    }
+
+    // The functions the XSLTs a stylesheet includes or imports declare (and those they include), by expanded
+    // name, with the Stroom look-ups their bodies make and the other functions they call.
+    private void declaredFunctions(final Stylesheet stylesheet,
+                                   final Map<String, Declared> declared,
+                                   final Set<String> seen) {
+        for (final Stylesheet included : includesOf(stylesheet)) {
+            if (!seen.add(included.uuid() + "\n" + included.name())) {
+                continue;
+            }
+            final XdmNode root = root(included);
+            if (root != null) {
+                for (final XdmNode child : root.children()) {
+                    if (isXsl(child, "function") && child.attribute("name") != null) {
+                        final String written = child.attribute("name");
+                        final int colon = written.indexOf(':');
+                        final String namespace = colon > 0
+                                ? NullSafe.string(namespaceUri(child, written.substring(0, colon)))
+                                : "";
+                        final Set<String> stroom = new TreeSet<>();
+                        final Set<String> calls = new LinkedHashSet<>();
+                        for (final XdmNode element : elements(child)) {
+                            for (final Expression expression : expressions(element)) {
+                                for (final FunctionName name : functionNames(expression.text(), element)) {
+                                    if (STROOM_NAMESPACE.equals(name.namespace())
+                                        && STROOM_LOOKUPS.contains(name.local())) {
+                                        stroom.add("stroom:" + name.local());
+                                    } else {
+                                        calls.add(name.key());
+                                    }
+                                }
+                            }
+                        }
+                        declared.putIfAbsent("{" + namespace + "}" + written.substring(colon + 1),
+                                new Declared(included.name(), stroom, calls));
+                    }
+                }
+            }
+            declaredFunctions(included, declared, seen);
+        }
+    }
+
+    // The prefixed functions an expression calls, each with its namespace as the element has the prefix bound.
+    private static List<FunctionName> functionNames(final String expression, final XdmNode element) {
+        final List<FunctionName> names = new ArrayList<>();
+        int i = 0;
+        while (i < expression.length()) {
+            final char c = expression.charAt(i);
+            if (c == '\'' || c == '"') {
+                i = endOfString(expression, i);
+            } else if (c == '(' && i + 1 < expression.length() && expression.charAt(i + 1) == ':') {
+                i = endOfComment(expression, i);
+            } else if (isNameStart(c) && (i == 0 || !isNameChar(expression.charAt(i - 1)))) {
+                int end = i;
+                while (end < expression.length() && (isNameChar(expression.charAt(end))
+                                                     || expression.charAt(end) == ':')) {
+                    end++;
+                }
+                final String name = expression.substring(i, end);
+                int open = end;
+                while (open < expression.length() && Character.isWhitespace(expression.charAt(open))) {
+                    open++;
+                }
+                final int colon = name.indexOf(':');
+                if (open < expression.length() && expression.charAt(open) == '(' && colon > 0) {
+                    final String namespace = namespaceUri(element, name.substring(0, colon));
+                    if (namespace != null) {
+                        names.add(new FunctionName(name, namespace, name.substring(colon + 1)));
+                    }
+                }
+                i = end;
+            } else {
+                i++;
+            }
+        }
+        return names;
     }
 
     /// Finds the reference data maps a reference loader's XSLT writes, in `<map>` elements of the reference-data
@@ -983,6 +1104,45 @@ final class XsltLookupAnalyser {
                   Resolution map,
                   List<String> chain) {
 
+    }
+
+    /// A call to a function an included or imported XSLT declares, which looks up through Stroom.
+    ///
+    /// @param xsltName     The XSLT it is in.
+    /// @param xsltUuid     Its UUID.
+    /// @param line         The line of the element it is in.
+    /// @param column       The column where that element's start tag ends.
+    /// @param where        The template or global it is in.
+    /// @param function     The function, as called, e.g. `ref:lookup`.
+    /// @param declaredIn   The XSLT that declares it.
+    /// @param stroomCalls  The Stroom look-ups its body makes, e.g. `stroom:http-call`.
+    record ImportedCall(String xsltName,
+                        String xsltUuid,
+                        int line,
+                        int column,
+                        String where,
+                        String function,
+                        String declaredIn,
+                        List<String> stroomCalls) {
+
+        /// @return It as a lookup is said: `ref:lookup (in 'COMMON'), which calls stroom:http-call`.
+        String said() {
+            return function + " (in '" + declaredIn + "'), which calls " + String.join(", ", stroomCalls);
+        }
+    }
+
+    // A function an included or imported XSLT declares: the Stroom look-ups its body makes, and the other
+    // functions it calls (by expanded name).
+    private record Declared(String xsltName, Set<String> stroom, Set<String> calls) {
+
+    }
+
+    // A function an expression calls: as written, and its expanded name.
+    private record FunctionName(String written, String namespace, String local) {
+
+        private String key() {
+            return "{" + namespace + "}" + local;
+        }
     }
 
     /// A `<map>` element a reference loader's XSLT writes.

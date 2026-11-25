@@ -56,10 +56,17 @@ final class SharedXslt {
     static final String EVT = "event-logging:3";
     static final String FN = "http://www.w3.org/2005/xpath-functions";
     static final String RECORDS = "records:2";
+    /// The key of a function's look-ups through Stroom ([#functionsOf]).
+    static final String STROOM_CALLS = "stroom_calls";
 
     private static final Set<String> FLOW = Set.of("if", "choose", "when", "otherwise", "for-each",
             "for-each-group", "variable", "sequence", "where-populated");
     private static final Pattern META = Pattern.compile("stroom:meta\\(\\s*'([^']+)'\\s*\\)");
+    // Stroom's XSLT function namespace.
+    private static final String STROOM_NAMESPACE = "stroom";
+    // A call of one of Stroom's look-up functions, by any prefix.
+    private static final Pattern STROOM_CALL = Pattern.compile(
+            "(?<![\\w.-])([A-Za-z_][\\w.-]*):(lookup|bitmap-lookup|http-call)\\s*\\(");
 
     private SharedXslt() {
     }
@@ -159,6 +166,7 @@ final class SharedXslt {
         if (root == null) {
             return functions;
         }
+        final Map<String, Element> bodies = new LinkedHashMap<>();
         for (final Element function : XmlTrees.named(root, XSL, "function")) {
             final String name = Objects.requireNonNullElse(XmlTrees.attribute(function, "name"), "");
             final String prefix = name.contains(":")
@@ -183,8 +191,76 @@ final class SharedXslt {
                 about.put("returns", function.getAttribute("as"));
             }
             functions.put(name, about);
+            bodies.put(name, function);
         }
+        // What each looks up through Stroom, itself or through another of these functions it calls.
+        final Map<String, Set<String>> stroom = new LinkedHashMap<>();
+        bodies.forEach((name, body) -> stroom.put(name, stroomCalls(body)));
+        boolean grew = true;
+        while (grew) {
+            grew = false;
+            for (final Map.Entry<String, Element> body : bodies.entrySet()) {
+                for (final String other : bodies.keySet()) {
+                    if (!other.equals(body.getKey()) && calls(body.getValue(), other)
+                        && stroom.get(body.getKey()).addAll(stroom.get(other))) {
+                        grew = true;
+                    }
+                }
+            }
+        }
+        stroom.forEach((name, called) -> {
+            if (!called.isEmpty()) {
+                functions.get(name).put(STROOM_CALLS, List.copyOf(called));
+            }
+        });
         return functions;
+    }
+
+    /// A function's look-ups through Stroom, as [#functionsOf] gives them, in words for a listing of what an XSLT
+    /// looks up: `ref:lookup (in 'COMMON'), which calls stroom:http-call`.
+    ///
+    /// @param function The function's name, as called.
+    /// @param href     The XSLT that defines it.
+    /// @param about    What [#functionsOf] (or [#functionCalls]) says of it.
+    /// @return It in words; empty where it looks nothing up through Stroom.
+    static Optional<String> lookupThrough(final String function, final String href, final Map<?, ?> about) {
+        final List<String> called = about == null || !(about.get(STROOM_CALLS) instanceof final List<?> list)
+                ? List.of()
+                : list.stream().map(String::valueOf).toList();
+        if (called.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(function + " (in '" + href + "'), which calls " + String.join(", ", called));
+    }
+
+    // The Stroom look-up functions an element's expressions call (stroom:lookup, stroom:bitmap-lookup,
+    // stroom:http-call), by any prefix bound to Stroom's namespace, each as stroom:<name>.
+    private static Set<String> stroomCalls(final Element body) {
+        final Set<String> called = new TreeSet<>();
+        for (final Element element : XmlTrees.descendantsAndSelf(body)) {
+            for (final Attr attribute : XmlTrees.attributes(element)) {
+                final Matcher matcher = STROOM_CALL.matcher(attribute.getValue());
+                while (matcher.find()) {
+                    if (STROOM_NAMESPACE.equals(element.lookupNamespaceURI(matcher.group(1)))) {
+                        called.add("stroom:" + matcher.group(2));
+                    }
+                }
+            }
+        }
+        return called;
+    }
+
+    // True where an element's expressions call a function of that name.
+    private static boolean calls(final Element body, final String function) {
+        final Pattern call = Pattern.compile("(?<![\\w:.-])" + Pattern.quote(function) + "\\s*\\(");
+        for (final Element element : XmlTrees.descendantsAndSelf(body)) {
+            for (final Attr attribute : XmlTrees.attributes(element)) {
+                if (call.matcher(attribute.getValue()).find()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /// @param xslt      A calling XSLT's text.

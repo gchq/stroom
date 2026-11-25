@@ -16,6 +16,8 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.validation.XmlTrees;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -154,6 +156,44 @@ class TestSharedXslt {
         assertThat(calls).hasSize(1);
         assertThat(calls.getFirst().get("within")).isEqualTo("EventDetail/Network/Connect/Source/Device");
         assertThat(calls.getFirst().get("at")).isEqualTo(List.of("EventDetail/Network/Connect/Source/Device/Location"));
+    }
+
+    @Test
+    void testASharedFunctionThatLooksUpThroughStroomIsOneOfTheCallersLookups() {
+        // Asked for by the user (2026-11-25): a translation's lookups include an imported function whose body calls
+        // stroom:lookup or stroom:http-call, itself or through another of the XSLT's functions.
+        final String common = "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                              + "xmlns:s=\"stroom\" xmlns:ref=\"urn:ref\" version=\"3.0\">"
+                              + "<xsl:function name=\"ref:fetch\"><xsl:param name=\"u\"/>"
+                              + "<xsl:sequence select=\"s:http-call('svc', $u, '', '', '')\"/></xsl:function>"
+                              + "<xsl:function name=\"ref:lookup\"><xsl:param name=\"id\"/>"
+                              + "<xsl:sequence select=\"ref:fetch($id)\"/></xsl:function>"
+                              + "<xsl:function name=\"ref:dept\"><xsl:param name=\"id\"/>"
+                              + "<xsl:sequence select=\"s:lookup('USER', $id)\"/></xsl:function>"
+                              + "<xsl:function name=\"ref:upper\"><xsl:param name=\"v\"/>"
+                              + "<xsl:sequence select=\"upper-case($v)\"/></xsl:function>"
+                              + "</xsl:stylesheet>";
+        final String caller = "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                              + "xmlns:ref=\"urn:ref\" version=\"3.0\"><xsl:import href=\"COMMON\"/>"
+                              + "<xsl:template match=\"/\"><x><xsl:value-of select=\"ref:lookup(@id)\"/>"
+                              + "<xsl:value-of select=\"ref:upper(@id)\"/></x></xsl:template></xsl:stylesheet>";
+
+        final Map<String, Map<String, Object>> functions = SharedXslt.functionsOf(XmlTrees.tryParse(common)
+                .orElseThrow());
+        assertThat(functions.get("ref:fetch").get(SharedXslt.STROOM_CALLS)).isEqualTo(List.of("stroom:http-call"));
+        assertThat(functions.get("ref:lookup").get(SharedXslt.STROOM_CALLS)).isEqualTo(List.of("stroom:http-call"));
+        assertThat(functions.get("ref:dept").get(SharedXslt.STROOM_CALLS)).isEqualTo(List.of("stroom:lookup"));
+        assertThat(functions.get("ref:upper")).doesNotContainKey(SharedXslt.STROOM_CALLS);
+
+        final List<Map<String, Object>> uses = SharedXslt.usage(caller, Map.of("COMMON", common));
+        final Map<String, Object> lookup = uses.stream().filter(use -> "ref:lookup".equals(use.get("function")))
+                .findFirst().orElseThrow();
+        assertThat(SharedXslt.lookupThrough("ref:lookup", "COMMON", lookup))
+                .contains("ref:lookup (in 'COMMON'), which calls stroom:http-call");
+        final Map<String, Object> upper = uses.stream().filter(use -> "ref:upper".equals(use.get("function")))
+                .findFirst().orElseThrow();
+        assertThat(SharedXslt.lookupThrough("ref:upper", "COMMON", upper)).isEmpty();
+        assertThat(SharedXslt.lookupThrough("ref:upper", "COMMON", null)).isEmpty();
     }
 
     @Test

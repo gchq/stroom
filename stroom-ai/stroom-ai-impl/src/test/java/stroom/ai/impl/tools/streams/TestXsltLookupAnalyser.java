@@ -117,6 +117,52 @@ class TestXsltLookupAnalyser {
     }
 
     @Test
+    void aCallToAnImportedFunctionThatLooksUpThroughStroomIsALookup() {
+        // Asked for by the user (2026-11-25): ref:lookup in a common XSLT calls stroom:http-call through another
+        // of its functions; the translation names no Stroom function itself.
+        final String functions = """
+                <?xml version="1.0" encoding="UTF-8" ?>
+                <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:s="stroom"
+                                xmlns:ref="urn:ref" version="3.0">
+                  <xsl:function name="ref:fetch"><xsl:param name="u"/>
+                    <xsl:sequence select="s:http-call('svc', $u, '', '', '')"/></xsl:function>
+                  <xsl:function name="ref:lookup"><xsl:param name="id"/>
+                    <xsl:sequence select="ref:fetch($id)"/></xsl:function>
+                  <xsl:function name="ref:dept"><xsl:param name="id"/>
+                    <xsl:sequence select="s:lookup('USER', $id)"/></xsl:function>
+                  <xsl:function name="ref:upper"><xsl:param name="v"/>
+                    <xsl:sequence select="upper-case($v)"/></xsl:function>
+                </xsl:stylesheet>
+                """;
+        final Stylesheet common = XsltLookupAnalyser.parse("COMMON", "common-uuid", functions);
+        final XsltLookupAnalyser analyser = new XsltLookupAnalyser(href -> "COMMON".equals(href)
+                ? Optional.of(common)
+                : Optional.empty());
+
+        final List<XsltLookupAnalyser.ImportedCall> calls = analyser.importedCalls(XsltLookupAnalyser.parse(
+                "main", "main-uuid", """
+                        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:r="urn:ref"
+                                        version="3.0">
+                          <xsl:import href="COMMON"/>
+                          <xsl:template match="Event">
+                            <x a="{r:lookup(@id)}"><xsl:value-of select="r:dept(@id), r:upper(@id)"/></x>
+                            <xsl:value-of select="r:lookup(@other)"/>
+                          </xsl:template>
+                        </xsl:stylesheet>
+                        """));
+
+        // By namespace, whatever its prefix; once per function and place; one calling no lookup left out.
+        assertThat(calls).extracting(XsltLookupAnalyser.ImportedCall::said).containsExactly(
+                "r:lookup (in 'COMMON'), which calls stroom:http-call",
+                "r:dept (in 'COMMON'), which calls stroom:lookup");
+        assertThat(calls.getFirst().where()).isEqualTo("template match=\"Event\"");
+        // An XSLT importing nothing makes no such call.
+        assertThat(new XsltLookupAnalyser(href -> Optional.empty()).importedCalls(XsltLookupAnalyser.parse("x",
+                "x-uuid", START + "<xsl:template match=\"/\"><xsl:value-of select=\"concat('a', 'b')\"/>"
+                          + "</xsl:template>" + END))).isEmpty();
+    }
+
+    @Test
     void aVariableFromAnIncludedXsltIsFollowed() {
         final Stylesheet common = XsltLookupAnalyser.parse("common", "common-uuid", START + """
                 <xsl:variable name="userMap" select="'USER_MAP'"/>
