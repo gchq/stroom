@@ -24,9 +24,13 @@ setup:
 request: >
   EVAL-109's VPN translation was written by hand. Have the tools learn its event types, including what each means on
   a user's activity timeline, without a new version.
+# user_knows says the switch's translation stays as the XSLT writes it (seen in the 2026-11-25 re-run on Haiku: the
+# simulated user, told only that a switch "is a focus", took the "Authenticate Other" the set showed as wrong and
+# amended the set for 30 turns asking for a translation an in-place description can't change).
 user_knows: >
-  A session switch is the user moving to another session, which on a timeline is a focus. Describe it in place when
-  asked.
+  A session switch is the user moving to another session, which on a timeline is a focus: that is its timeline
+  role. Its translation is right as the XSLT writes it (Authenticate, Action Other): keep it. Describe it in place
+  when asked.
 expected:
   records: 5
   records_in_sample: 6
