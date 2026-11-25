@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.documents.KeptMapping;
@@ -86,6 +87,9 @@ class GeneratedDrift {
     /// mapping that no longer generates), or empty if it is.
     public Optional<String> drift(final KeptMappings.KeptXslt kept) {
         final XsltDoc xslt = kept.xslt();
+        if (inducted(kept)) {
+            return Optional.empty();
+        }
         final String code = NullSafe.string(xslt.getData());
         final XsltGenerator.Generated regenerated;
         try {
@@ -142,6 +146,16 @@ class GeneratedDrift {
         return Optional.of("its XSLT differs from what its mapping generates: edited by hand, or written by an "
                            + "earlier version of the generator (it was saved before the server recorded which). "
                            + regenerate + "; carry any hand edit into the mapping first." + differs);
+    }
+
+    /// @param kept A translation mapping kept with its XSLT.
+    /// @return True if the mapping was read from this very XSLT, written by hand, when it was described in place
+    /// ([InPlaceInduction]): the XSLT is the authority and never what the mapping generates, so no drift is said. A
+    /// copy of it (a new version's) carries the block naming the original, and is checked as any other.
+    static boolean inducted(final KeptMappings.KeptXslt kept) {
+        return JsonValues.mapOrEmpty(kept.kept().payload().get(InPlaceInduction.INDUCTED))
+                .get(InPlaceInduction.XSLT) instanceof final String uuid
+               && uuid.equals(kept.xslt().getUuid());
     }
 
     /// The drift of an XSLT edited since its mapping was kept, by hand in Stroom or saved as written by hand

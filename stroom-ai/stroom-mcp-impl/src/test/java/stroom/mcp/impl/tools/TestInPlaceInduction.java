@@ -165,7 +165,7 @@ class TestInPlaceInduction {
         final KeptMapping.Kept kept = KeptMapping.readMapping(after.getDescription()).orElseThrow();
         assertThat(kept.kind()).isEqualTo(KeptMapping.TRANSLATION);
         assertThat(JsonValues.mapOrEmpty(kept.payload().get(InPlaceInduction.INDUCTED))).containsEntry("build",
-                BUILD);
+                BUILD).containsEntry(InPlaceInduction.XSLT, "hand-xslt");
         assertThat(TranslationMapping.parse(kept.payload().get("mapping")).input()).isEqualTo("json");
         // The source notes beside the pipeline, linked from the XSLT; the build's notes a working copy of them.
         final DocRef notes = KeptMapping.readSourceNotes(after.getDescription()).orElseThrow();

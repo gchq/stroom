@@ -73,6 +73,24 @@ class TestGeneratedDrift {
     }
 
     @Test
+    void aMappingReadFromItsOwnHandWrittenXsltInPlaceIsNoDriftButACopysIs() {
+        // Described in place (decided 2026-11-25): the mapping is read from the hand-written XSLT, which stays the
+        // authority and never is what the mapping generates; a new version's copy carries the block, and is checked.
+        final TranslationMapping mapping = TranslationWorld.parsed();
+        final String handWritten = generate(mapping).replaceFirst("<Generator>vpnd</Generator>", "");
+        final Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("schema_version", TranslationWorld.VERSION);
+        payload.put("mapping", TranslationWorld.kept(mapping));
+        payload.put(InPlaceInduction.INDUCTED, Map.of("build", "vpn", InPlaceInduction.XSLT, "x-1"));
+        final KeptMapping.Kept kept = new KeptMapping.Kept("translation", payload);
+
+        assertThat(drift.drift(new KeptMappings.KeptXslt(kept, "translationFilter", XsltDoc.builder().uuid("x-1")
+                .name("Acme").data(handWritten).description("").build()))).isEmpty();
+        assertThat(drift.drift(new KeptMappings.KeptXslt(kept, "translationFilter", XsltDoc.builder().uuid("x-2")
+                .name("Acme-V1.1").data(handWritten).description("").build()))).isPresent();
+    }
+
+    @Test
     void aHandEditIsShownSoItCanBeCarriedIntoTheMapping() {
         // Asked for by the user: an XSLT changed by hand to write a new field, or to stop writing one. build_status
         // says which lines differ from what the mapping generates, so the agent can carry them into the mapping.

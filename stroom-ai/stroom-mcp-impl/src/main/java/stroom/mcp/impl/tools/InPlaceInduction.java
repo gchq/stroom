@@ -86,10 +86,11 @@ class InPlaceInduction {
     static final String PRE_PROCESSED = "pre_processed";
     /// The feeds surveyed, as the user chose them.
     static final String FEEDS = "feeds";
-    /// The kept mapping's key saying it was read from a hand-written XSLT, not generated.
+    /// The kept mapping's key saying it was read from a hand-written XSLT, not generated: `at`, `build`, `xslt` (the
+    /// UUID of the XSLT it was read from) and `note`.
     static final String INDUCTED = "inducted";
     // The record's keys of what was written in place.
-    private static final String XSLT = "xslt";
+    static final String XSLT = "xslt";
     private static final String NOTES = "notes";
     private static final String MAPPING = "mapping";
     private static final String WRITTEN = "written";
@@ -249,6 +250,8 @@ class InPlaceInduction {
         final Map<String, Object> inducted = new LinkedHashMap<>();
         inducted.put("at", StreamProcessing.iso(clock.getAsLong()));
         inducted.put("build", build);
+        // The XSLT read: a copy of it (a new version's) carries the block, but is drift-checked as any other.
+        inducted.put(XSLT, xsltRef.getUuid());
         inducted.put("note", "read from the hand-written XSLT, which stays as it is: the XSLT is the authority");
         payload.put(INDUCTED, inducted);
 
