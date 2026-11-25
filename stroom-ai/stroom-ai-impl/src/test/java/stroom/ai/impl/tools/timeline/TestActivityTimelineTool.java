@@ -256,10 +256,13 @@ class TestActivityTimelineTool {
                 .contains("""
                         ```mermaid
                         gantt
-                            title jsmith spans by Computer / Device host\u2026 (times in UTC)
+                            title jsmith spans by host (times in UTC)
                         """)
                 .contains("    WINWORD.EXE :2026-11-10 09:00:00, 2026-11-10 09:20:00\n")
                 .endsWith(GanttChartTool.CHAT_DRAWS);
+        // Chat 197: the chart's title names what its lanes are in a word, not by the host field's description
+        // (cut short, with the zone given twice).
+        assertThat(text).doesNotContain("spans by Computer");
         final String block = text.substring(text.indexOf("```mermaid\n") + 11, text.indexOf("```\n\n"));
         assertThat(MermaidGanttParser.parse(block).taskCount()).isEqualTo(4);
         assertThat(files.content(FOLDER + TimelineSnapshot.FILE).orElseThrow())

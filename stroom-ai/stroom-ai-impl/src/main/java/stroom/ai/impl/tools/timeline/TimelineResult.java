@@ -530,13 +530,17 @@ final class TimelineResult {
     private static Map<String, Object> activitiesChart(final TimelineRun run, final Files files) {
         return chart(files.activities().toString(), "activity_label", "activity".equals(run.lanes())
                 ? "activity_label"
-                : "day", run.entity() + ": activities by " + run.activityLaneTitle());
+                : "day", run.entity() + ": activities by " + ("activity".equals(run.lanes())
+                ? "activity"
+                : "day"));
     }
 
     private static Map<String, Object> spansChart(final TimelineRun run, final Files files) {
         return chart(files.spans().toString(), "label", "source".equals(run.lanes())
                 ? "source"
-                : "lane", run.entity() + ": spans by " + run.spanLaneTitle());
+                : "lane", run.entity() + ": spans by " + ("source".equals(run.lanes())
+                ? "source"
+                : "host"));
     }
 
     private static boolean isDense(final TimelineRun run, final Files files, final boolean activities) {
@@ -557,7 +561,9 @@ final class TimelineResult {
                 : files.hostLanes();
     }
 
-    // A gantt_chart call: its title says what the lanes (the chart's sections) are, as a gantt has no lane axis.
+    // A gantt_chart call: its title says what the lanes (the chart's sections) are, as a gantt has no lane axis, in a
+    // word (by day, host, source or activity): the lanes' fuller titles (a host field's description, the days' zone)
+    // made titles cut short with the zone twice (chat 197), and the chart adds the zone itself.
     private static Map<String, Object> chart(final String path,
                                              final String label,
                                              final String lane,
