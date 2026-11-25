@@ -35,7 +35,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/// The CEF XSLT a plan generates: a Kafka record per Event whose value is the CEF line (or the lines as text),
+/// The CEF XSLT a plan generates: a Kafka record per Event whose value is the CEF line (or the lines as text, or
+/// each line handed on in the intermediate form a shared XSLT after it reads: [CefHandoff]),
 /// written as an Events translation is (asked for by the user): a template a part (the line, each kind of event's
 /// keys, the keys every event gets), in its own mode, or named, or inline (the style's layout), named in the style's
 /// naming, each with a comment; an input read often, a variable.
@@ -126,7 +127,9 @@ public final class CefXslt {
                 .collect(Collectors.joining());
         final String top = CefPlan.KAFKA.equals(plan.output())
                 ? kafkaTop(plan, imports, apply(named, lineMode))
-                : textTop(plan, imports, apply(named, lineMode));
+                : plan.chained()
+                        ? chainedTop(plan, imports, apply(named, lineMode))
+                        : textTop(plan, imports, apply(named, lineMode));
         final XmlElement sheet = StyledXslt.parse(top + line + String.join("", parts) + FUNCTIONS
                                                   + "</xsl:stylesheet>");
         // An input a template reads often, read once into a variable: a header field's source its map tests in turn.
@@ -184,6 +187,50 @@ public final class CefXslt {
                + "      <xsl:variable name=\"line\" as=\"xs:string\">" + applyLine + "</xsl:variable>\n"
                + "      <value><xsl:value-of select=\"$line\" /></value>\n"
                + "    </kafkaRecord>\n"
+               + "  </xsl:template>\n";
+    }
+
+    // Each Event's line in the intermediate form the shared XSLT after it reads: its root once, the rest an Event.
+    private static String chainedTop(final CefPlan plan, final String imports, final String applyLine) {
+        final CefHandoff form = plan.handoff();
+        if (form == null) {
+            throw new IllegalArgumentException("The CEF XSLT isn't written: a chained plan needs the intermediate "
+                                               + "form the shared XSLT after it reads");
+        }
+        final StringBuilder open = new StringBuilder();
+        final StringBuilder close = new StringBuilder();
+        final List<String> wrappers = form.perEvent().subList(0, form.perEvent().size() - 1);
+        for (final String wrapper : wrappers) {
+            open.append('<').append(wrapper).append('>');
+        }
+        for (int i = wrappers.size() - 1; i >= 0; i--) {
+            close.append("</").append(wrappers.get(i)).append('>');
+        }
+        final String name = form.nameAttribute() != null
+                ? " " + form.nameAttribute() + "=\"" + avt(form.nameValue()) + "\""
+                : "";
+        final String item = form.valueAttribute() != null
+                ? "<" + form.item() + name + " " + form.valueAttribute() + "=\"{$line}\" />"
+                : "<" + form.item() + name + "><xsl:value-of select=\"$line\" /></" + form.item() + ">";
+        return "<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n"
+               + "<xsl:stylesheet xpath-default-namespace=\"" + plan.eventsNamespaceOrStandard() + "\" "
+               + (form.namespace().isEmpty()
+                ? ""
+                : "xmlns=\"" + attr(form.namespace()) + "\" ")
+               + "xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"\n"
+               + "    xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:cef=\"urn:stroom-mcp:cef\" "
+               + "exclude-result-prefixes=\"xs cef\" version=\"3.0\">" + imports + "\n"
+               + "  <!-- CEF for ArcSight, handed on: each Event's flattened CEF line in the form the shared XSLT "
+               + "after this one reads;\n"
+               + "       that XSLT writes the Kafka records and sets their topic. -->\n"
+               + "  <xsl:template match=\"/Events\">\n"
+               + "    <" + form.path().getFirst() + ">\n"
+               + "      <xsl:apply-templates select=\"Event\" />\n"
+               + "    </" + form.path().getFirst() + ">\n"
+               + "  </xsl:template>\n"
+               + "  <xsl:template match=\"Event\">\n"
+               + "    <xsl:variable name=\"line\" as=\"xs:string\">" + applyLine + "</xsl:variable>\n"
+               + "    " + open + item + close + "\n"
                + "  </xsl:template>\n";
     }
 
@@ -265,6 +312,13 @@ public final class CefXslt {
         return said.isEmpty()
                 ? "none"
                 : said;
+    }
+
+    // Text inside a double-quoted attribute value template.
+    private static String avt(final String text) {
+        return attr(text == null
+                ? ""
+                : text).replace("{", "{{").replace("}", "}}");
     }
 
     // Text inside a double-quoted attribute.

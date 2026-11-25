@@ -46,12 +46,31 @@ public final class CefSample {
     /// @throws IllegalArgumentException if the plan's XSLT isn't written (an unsafe expression).
     /// @throws IllegalStateException    if it doesn't compile or run.
     public static List<String> lines(final CefPlan plan, final List<XmlElement> events, final int cap) {
-        // In the plan's Events namespace (an environment's fork's, or event-logging:3), as its XSLT reads them.
+        return linesOf(plan, output(plan, events, cap));
+    }
+
+    /// @param plan   A plan.
+    /// @param events Sample Events.
+    /// @param cap    The most Events to run it over.
+    /// @return What the plan's XSLT writes for them, the Events in the plan's namespace (an environment's fork's, or
+    /// event-logging:3) as its XSLT reads them: Kafka records, lines, or a chained plan's intermediate form.
+    /// @throws IllegalArgumentException if the plan's XSLT isn't written (an unsafe expression).
+    /// @throws IllegalStateException    if it doesn't compile or run.
+    public static String output(final CefPlan plan, final List<XmlElement> events, final int cap) {
         final StringBuilder xml = new StringBuilder("<Events xmlns=\"" + plan.eventsNamespaceOrStandard() + "\">");
         events.subList(0, Math.min(cap, events.size()))
                 .forEach(event -> xml.append(XmlSerialiser.toXmlWithoutTail(event)));
         xml.append("</Events>");
-        return CefLines.linesIn(transform(plan.xslt(), xml.toString()));
+        return transform(plan.xslt(), xml.toString());
+    }
+
+    /// @param plan   A plan.
+    /// @param output What its XSLT wrote.
+    /// @return The CEF lines in it: a chained plan's from its intermediate form, else [CefLines#linesIn(String)].
+    public static List<String> linesOf(final CefPlan plan, final String output) {
+        return plan.chained() && plan.handoff() != null
+                ? plan.handoff().linesIn(output)
+                : CefLines.linesIn(output);
     }
 
     /// @param xslt An XSLT.

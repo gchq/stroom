@@ -554,7 +554,7 @@ class TestCefPlan {
                 .isInstanceOfSatisfying(MappingValidationException.class, e -> assertThat(e.errors().stream()
                         .map(error -> error.dotted() + ": " + error.message())
                         .toList()).containsExactly(
-                        "output: Input should be 'kafka' or 'text'",
+                        "output: Input should be 'kafka', 'text' or 'chained'",
                         "vendor: Value error, " + CefValue.ONE_OF,
                         "signature: Field required",
                         "common.0.key: Field required",

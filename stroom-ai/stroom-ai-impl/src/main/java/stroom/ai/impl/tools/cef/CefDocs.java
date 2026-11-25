@@ -101,7 +101,12 @@ public final class CefDocs {
                   + (JsonValues.truthy(plan.kafkaKey())
                         ? ", keyed by `" + plan.kafkaKey() + "`"
                         : "") + "."
-                : "The lines are written as text, one an Event."));
+                : plan.chained()
+                        ? "Each line is handed on to the shared XSLT after this one, which writes the Kafka records "
+                          + "and sets their topic: " + (plan.handoff() == null
+                                ? "its form not yet read."
+                                : plan.handoff().said() + ".")
+                        : "The lines are written as text, one an Event."));
         out.add("Keys outside ArcSight's CEF dictionary are " + (plan.customKeys()
                 ? "allowed."
                 : "not used: ArcSight indexes only its dictionary's keys. Its custom slots (cs1-cs6 and the rest) "

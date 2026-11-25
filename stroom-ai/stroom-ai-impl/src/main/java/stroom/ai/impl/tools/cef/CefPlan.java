@@ -44,7 +44,9 @@ import java.util.regex.Pattern;
 /// [#toJson(DumpMode)].
 ///
 /// @param output     `kafka`: one kafka-records:1 record per Event, its value the CEF line (a StandardKafkaProducer
-///                   sends it); `text`: one CEF line per Event (a TextWriter writes them).
+///                   sends it); `text`: one CEF line per Event (a TextWriter writes them); `chained`: each Event's
+///                   line handed on in the intermediate form a shared XSLT after it reads ([#handoff]), which writes
+///                   the Kafka records and sets the topic (a forwarder of two stages).
 /// @param topic      kafka: the topic ArcSight reads.
 /// @param kafkaKey   `kafka_key`: an XPath on the Event for each record's key, if any.
 /// @param customKeys `custom_keys`: whether keys outside ArcSight's CEF dictionary may be sent.
@@ -63,6 +65,8 @@ import java.util.regex.Pattern;
 /// @param eventsNamespace `events_namespace`: the namespace the Events are written in, where it is not
 ///                   event-logging:3 (an environment's fork of the event-logging schema), else null. The XSLT's
 ///                   xpath-default-namespace.
+/// @param handoff    `handoff`: for `chained` only, the intermediate form the shared XSLT after it reads
+///                   ([CefHandoff]); else null.
 public record CefPlan(String output,
                       String topic,
                       String kafkaKey,
@@ -78,14 +82,20 @@ public record CefPlan(String output,
                       List<Map<String, String>> notSent,
                       List<String> imports,
                       XsltStyle style,
-                      String eventsNamespace) {
+                      String eventsNamespace,
+                      CefHandoff handoff) {
 
     /// One Kafka record per Event.
     public static final String KAFKA = "kafka";
     /// One line of text per Event.
     public static final String TEXT = "text";
-    /// The outputs.
+    /// The outputs a call may ask for.
     public static final List<String> OUTPUTS = List.of(KAFKA, TEXT);
+    /// Each Event's line handed on to a shared XSLT after it, which writes the Kafka records (decided by the
+    /// pipeline's template, never asked for as an output).
+    public static final String CHAINED = "chained";
+    /// The outputs a kept plan may have.
+    public static final List<String> KEPT_OUTPUTS = List.of(KAFKA, TEXT, CHAINED);
     /// The severity unless one is given.
     public static final CefValue DEFAULT_SEVERITY = CefValue.constant("3");
 
@@ -113,6 +123,47 @@ public record CefPlan(String output,
                           || EventsNamespaces.isStandard(eventsNamespace.strip())
                 ? null
                 : eventsNamespace.strip();
+        if (!CHAINED.equals(output)) {
+            handoff = null;
+        }
+    }
+
+    /// A plan with no intermediate form: written in one XSLT.
+    ///
+    /// @param output          `kafka` or `text`.
+    /// @param topic           The Kafka topic, or null.
+    /// @param kafkaKey        An XPath for each Kafka record's key, or null.
+    /// @param customKeys      Whether keys outside the dictionary may be sent.
+    /// @param vendor          Device Vendor.
+    /// @param product         Device Product.
+    /// @param version         Device Version.
+    /// @param signature       Device Event Class ID.
+    /// @param name            Name.
+    /// @param severity        Severity.
+    /// @param common          Fields every event gets.
+    /// @param events          Each kind of event's own fields.
+    /// @param notSent         Event values no key takes, with why.
+    /// @param imports         Shared XSLTs imported.
+    /// @param style           How the CEF XSLT is written.
+    /// @param eventsNamespace The namespace the Events are written in, or null for event-logging:3.
+    public CefPlan(final String output,
+                   final String topic,
+                   final String kafkaKey,
+                   final boolean customKeys,
+                   final CefValue vendor,
+                   final CefValue product,
+                   final CefValue version,
+                   final CefValue signature,
+                   final CefValue name,
+                   final CefValue severity,
+                   final List<CefField> common,
+                   final Map<String, List<CefField>> events,
+                   final List<Map<String, String>> notSent,
+                   final List<String> imports,
+                   final XsltStyle style,
+                   final String eventsNamespace) {
+        this(output, topic, kafkaKey, customKeys, vendor, product, version, signature, name, severity, common, events,
+                notSent, imports, style, eventsNamespace, null);
     }
 
     /// A plan for Events in the standard event-logging:3 namespace.
@@ -148,7 +199,7 @@ public record CefPlan(String output,
                    final List<String> imports,
                    final XsltStyle style) {
         this(output, topic, kafkaKey, customKeys, vendor, product, version, signature, name, severity, common, events,
-                notSent, imports, style, null);
+                notSent, imports, style, null, null);
     }
 
     /// @param output     `kafka` or `text`.
@@ -179,7 +230,7 @@ public record CefPlan(String output,
             return reader.orThrow("CefPlan", null);
         }
         final List<Object> top = List.of();
-        final String output = reader.literal(data, top, "output", KAFKA, OUTPUTS);
+        final String output = reader.literal(data, top, "output", KAFKA, KEPT_OUTPUTS);
         final String topic = reader.optionalString(data, top, "topic");
         final String kafkaKey = reader.optionalString(data, top, "kafka_key");
         final boolean customKeys = reader.bool(data, top, "custom_keys", false);
@@ -222,7 +273,10 @@ public record CefPlan(String output,
         return reader.orThrow("CefPlan", new CefPlan(output, topic, kafkaKey, customKeys, header.get("vendor"),
                 header.get("product"), header.get("version"), header.get("signature"), header.get("name"),
                 header.get("severity"), common, events, notSent, imports, style,
-                reader.optionalString(data, top, "events_namespace")));
+                reader.optionalString(data, top, "events_namespace"),
+                data.get("handoff") instanceof final Map<?, ?> handoff
+                        ? CefHandoff.fromJson(handoff)
+                        : null));
     }
 
     /// @param name A header field's name (`vendor`, `product`, `version`, `signature`, `name`, `severity`).
@@ -254,56 +308,69 @@ public record CefPlan(String output,
         header.put(name, value);
         return new CefPlan(output, topic, kafkaKey, customKeys, header.get("vendor"), header.get("product"),
                 header.get("version"), header.get("signature"), header.get("name"), header.get("severity"), common,
-                events, notSent, imports, style, eventsNamespace);
+                events, notSent, imports, style, eventsNamespace, handoff);
     }
 
     /// @param output `kafka` or `text`.
     /// @return The plan with that output.
     public CefPlan withOutput(final String output) {
         return new CefPlan(output, topic, kafkaKey, customKeys, vendor, product, version, signature, name, severity,
-                common, events, notSent, imports, style, eventsNamespace);
+                common, events, notSent, imports, style, eventsNamespace, handoff);
     }
 
     /// @param topic The Kafka topic, or null.
     /// @return The plan with that topic.
     public CefPlan withTopic(final String topic) {
         return new CefPlan(output, topic, kafkaKey, customKeys, vendor, product, version, signature, name, severity,
-                common, events, notSent, imports, style, eventsNamespace);
+                common, events, notSent, imports, style, eventsNamespace, handoff);
     }
 
     /// @param kafkaKey An XPath for each Kafka record's key, or null.
     /// @return The plan with that key.
     public CefPlan withKafkaKey(final String kafkaKey) {
         return new CefPlan(output, topic, kafkaKey, customKeys, vendor, product, version, signature, name, severity,
-                common, events, notSent, imports, style, eventsNamespace);
+                common, events, notSent, imports, style, eventsNamespace, handoff);
     }
 
     /// @param events Each kind of event's own fields.
     /// @return The plan with those.
     public CefPlan withEvents(final Map<String, List<CefField>> events) {
         return new CefPlan(output, topic, kafkaKey, customKeys, vendor, product, version, signature, name, severity,
-                common, events, notSent, imports, style, eventsNamespace);
+                common, events, notSent, imports, style, eventsNamespace, handoff);
     }
 
     /// @param notSent The values the sample holds that no key carries (`path`, `event_type`, `why`).
     /// @return The plan with those.
     public CefPlan withNotSent(final List<Map<String, String>> notSent) {
         return new CefPlan(output, topic, kafkaKey, customKeys, vendor, product, version, signature, name, severity,
-                common, events, notSent, imports, style, eventsNamespace);
+                common, events, notSent, imports, style, eventsNamespace, handoff);
     }
 
     /// @param imports The shared XSLTs imported.
     /// @return The plan with those.
     public CefPlan withImports(final List<String> imports) {
         return new CefPlan(output, topic, kafkaKey, customKeys, vendor, product, version, signature, name, severity,
-                common, events, notSent, imports, style, eventsNamespace);
+                common, events, notSent, imports, style, eventsNamespace, handoff);
     }
 
     /// @param namespace The namespace the Events are written in, or null (or event-logging:3) for the standard one.
     /// @return The plan reading Events in it.
     public CefPlan withEventsNamespace(final String namespace) {
         return new CefPlan(output, topic, kafkaKey, customKeys, vendor, product, version, signature, name, severity,
-                common, events, notSent, imports, style, namespace);
+                common, events, notSent, imports, style, namespace, handoff);
+    }
+
+    /// @param form The intermediate form the shared XSLT after it reads.
+    /// @return The plan as a forwarder's first stage: `chained`, handing each line on in that form, with no topic or
+    /// Kafka key (the shared XSLT sets those).
+    public CefPlan withHandoff(final CefHandoff form) {
+        return new CefPlan(CHAINED, null, null, customKeys, vendor, product, version, signature, name, severity,
+                common, events, notSent, imports, style, eventsNamespace, form);
+    }
+
+    /// @return True if it hands each line on to a shared XSLT after it ([#CHAINED]).
+    public boolean chained() {
+        return CHAINED.equals(output);
     }
 
     /// @return The namespace the Events are written in: [#eventsNamespace()], else event-logging:3.
@@ -315,7 +382,7 @@ public record CefPlan(String output,
     /// @return The plan with that style.
     public CefPlan withStyle(final XsltStyle style) {
         return new CefPlan(output, topic, kafkaKey, customKeys, vendor, product, version, signature, name, severity,
-                common, events, notSent, imports, style, eventsNamespace);
+                common, events, notSent, imports, style, eventsNamespace, handoff);
     }
 
     /// `expressions`: where and what each expression the XSLT evaluates is: header sources, fields and the Kafka
@@ -362,6 +429,9 @@ public record CefPlan(String output,
         if (KAFKA.equals(output) && !JsonValues.truthy(topic)) {
             out.add("output kafka needs topic: the Kafka topic ArcSight reads (ask the user, or the standing "
                     + "instructions may name it)");
+        }
+        if (chained() && handoff == null) {
+            out.add("output chained needs the intermediate form the shared XSLT after it reads");
         }
         out.addAll(kafkaKeyProblems(kafkaKey));
         for (final CefKeys.HeaderField field : CefKeys.HEADER) {
@@ -519,6 +589,9 @@ public record CefPlan(String output,
         // Only for Events in a namespace other than event-logging:3, so a plan kept before reads as it was.
         if (eventsNamespace != null) {
             out.put("events_namespace", eventsNamespace);
+        }
+        if (handoff != null) {
+            out.put("handoff", handoff.toJson());
         }
         return out;
     }
