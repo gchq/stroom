@@ -176,8 +176,10 @@ class TestActivityTimelineTool {
         final Map<String, Object> quality = (Map<String, Object>) result.get("data_quality");
         assertThat(quality).containsOnlyKeys("idle_start_without_end", "focus_without_open");
         assertThat((Map<String, Object>) quality.get("idle_start_without_end")).containsEntry("count", 1L);
-        // Each role of each source was a side read for jsmith alone; Windows's users compared without the domain.
-        assertThat(streams.scanned()).hasSize(8).allSatisfy(side -> assertThat(side.terms())
+        // Each source was read once (one scan, its roles told in memory: 8 roles of 3 sources were 8 scans), for
+        // jsmith alone, with no role's conditions in the scan; Windows's users compared without the domain.
+        assertThat(streams.scanned()).hasSize(3).allSatisfy(side -> assertThat(side.filter()).isNull());
+        assertThat(streams.scanned()).allSatisfy(side -> assertThat(side.terms())
                 .isEqualTo(List.of(List.of("jsmith"))));
         assertThat(streams.scanned().stream().filter(side -> side.index().equals(WINDOWS)))
                 .allSatisfy(side -> assertThat(side.keys().getFirst().transforms())

@@ -40,7 +40,7 @@ import java.util.Set;
 public final class StreamFilters {
 
     /// The term option that matches a keyword whatever its case (Stroom's Elasticsearch query option).
-    static final String CASE_INSENSITIVE = "caseInsensitive";
+    public static final String CASE_INSENSITIVE = "caseInsensitive";
     private static final Set<FieldType> TEXT_TYPES = Set.of(FieldType.TEXT, FieldType.KEYWORD);
 
     private StreamFilters() {

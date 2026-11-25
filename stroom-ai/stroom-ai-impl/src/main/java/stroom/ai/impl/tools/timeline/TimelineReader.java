@@ -51,12 +51,13 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 /// Reads one user's (or entity's) events of a timeline's sources, with the streaming join's machinery (part 1): each
-/// role of each source is a [Side] of its Elastic Index, its conditions as a Stroom expression ([StreamFilters]),
-/// restricted to the one entity by a terms condition on its user field (transformed as the call says, so
+/// source is read once, a [Side] of its Elastic Index restricted to the one entity by a terms condition on its user field (transformed as the call says, so
 /// `CORP\jsmith` and `jsmith` are one), read in time order by a point-in-time scan ([ElasticKeyStreams#openScan],
 /// through [KeyGroupSource]: one key, its events in time order), as the user, within a [JoinBudget] (the events
-/// cap, the time limit and the user's stop). Nothing is read in Stroom's own search: the events come straight from
-/// Elasticsearch.
+/// cap, the time limit and the user's stop); each event read takes every role whose conditions (a Stroom
+/// expression, [StreamFilters]) it holds, in memory ([RoleConditions]), so a source of several roles is one scan, not
+/// one per role (decided with the user 2026-11-25). Nothing is read in Stroom's own search: the events come straight
+/// from Elasticsearch.
 final class TimelineReader {
 
     /// The events a page reads.
@@ -84,22 +85,30 @@ final class TimelineReader {
         final List<Map<String, Long>> accounts = new ArrayList<>();
         final Map<String, Map<String, String>> extras = new LinkedHashMap<>();
         long cut = 0;
+        int scans = 0;
         for (int s = 0; s < sources.size(); s++) {
             final Source source = sources.get(s);
             final List<Object> terms = source.terms();
             final Map<String, Long> byAccount = new LinkedHashMap<>();
             long count = 0;
-            for (final RoleRead role : source.roles()) {
-                final Side side = new Side(source.doc(), List.of(new KeyField(source.userField(),
-                        source.transforms())), role.filter(), timeRange, KeyRange.ALL, List.of(terms));
-                try (final KeyGroupSource scan = KeyGroupSource.scan(streams, List.of(side), source.fetched(),
-                        PAGE_SIZE, JoinKeys.comparator(List.of(source.kind())), budget)) {
-                    // A group a value filtered on (several where several logon ids were given), in key order.
-                    KeyGroup group = refused(scan::next);
-                    while (group != null) {
-                        for (final Row row : group.rows()) {
+            // One scan per source, filtered by the user and the period only; each event read takes every role whose
+            // conditions it holds, in memory.
+            final Side side = new Side(source.doc(), List.of(new KeyField(source.userField(),
+                    source.transforms())), null, timeRange, KeyRange.ALL, List.of(terms));
+            try (final KeyGroupSource scan = KeyGroupSource.scan(streams, List.of(side), source.read(),
+                    PAGE_SIZE, JoinKeys.comparator(List.of(source.kind())), budget)) {
+                // A group a value filtered on (several where several logon ids were given), in key order.
+                KeyGroup group = refused(scan::next);
+                while (group != null) {
+                    long taken = 0;
+                    for (final Row row : group.rows()) {
+                        for (final RoleRead role : source.roles()) {
+                            if (!RoleConditions.holds(role.filter(), row.fields())) {
+                                continue;
+                            }
                             final Event event = event(s, source, role, row);
                             events.add(event);
+                            taken++;
                             if (!source.extraFields().isEmpty()) {
                                 final Map<String, String> values = new LinkedHashMap<>();
                                 for (final String field : source.extraFields()) {
@@ -108,18 +117,16 @@ final class TimelineReader {
                                 extras.put(event.id(), values);
                             }
                         }
-                        count += group.rows().size();
-                        byAccount.merge(account(group), (long) group.rows().size(), Long::sum);
-                        if (budget.check()) {
-                            break;
-                        }
-                        group = refused(scan::next);
                     }
-                    cut += scan.cutKeys();
+                    count += taken;
+                    byAccount.merge(account(group), taken, Long::sum);
+                    if (budget.check()) {
+                        break;
+                    }
+                    group = refused(scan::next);
                 }
-                if (budget.check()) {
-                    break;
-                }
+                cut += scan.cutKeys();
+                scans++;
             }
             counts.add(count);
             accounts.add(byAccount);
@@ -130,7 +137,7 @@ final class TimelineReader {
                 break;
             }
         }
-        return new Read(events, counts, budget.reached(), cut > 0, extras, accounts);
+        return new Read(events, counts, budget.reached(), cut > 0, extras, accounts, scans);
     }
 
     /// The first events of one source for the user, with the fields asked for: to tell which of an index's fields
@@ -278,7 +285,7 @@ final class TimelineReader {
                     windowField, objectField, textField, hasStreamIds, roles, automatic, extraFields, values, by);
         }
 
-        /// @return The fields a scan fetches.
+        /// @return The fields a scan fetches for its events (without those its roles' conditions read).
         List<String> fetched() {
             final Set<String> fields = new LinkedHashSet<>();
             for (final String field : new String[]{hostField, processField, titleField, windowField, objectField,
@@ -292,6 +299,14 @@ final class TimelineReader {
                 fields.add(EqlSequenceResults.EVENT_ID);
             }
             fields.addAll(extraFields);
+            return List.copyOf(fields);
+        }
+
+        /// @return The fields its one scan fetches: the events' own ([#fetched]) and those its roles' conditions
+        /// read, so each event's roles are told in memory.
+        List<String> read() {
+            final Set<String> fields = new LinkedHashSet<>(fetched());
+            roles.forEach(role -> fields.addAll(RoleConditions.fields(role.filter())));
             return List.copyOf(fields);
         }
 
@@ -354,15 +369,17 @@ final class TimelineReader {
     /// @param events  The events of every source.
     /// @param counts  How many events each source gave.
     /// @param reached Why reading ended early, or null if it didn't.
-    /// @param cut     True if a role of a source had more events than one scan keeps.
+    /// @param cut     True if a source had more events than one scan keeps.
     /// @param extras   The more fields' values of the automatic sources' events, by event id.
     /// @param accounts How many events each source gave of each value filtered on (e.g. each logon id).
+    /// @param scans    The scans opened: one per source read.
     record Read(List<Event> events,
                 List<Long> counts,
                 JoinBudget.Limit reached,
                 boolean cut,
                 Map<String, Map<String, String>> extras,
-                List<Map<String, Long>> accounts) {
+                List<Map<String, Long>> accounts,
+                int scans) {
 
     }
 }
