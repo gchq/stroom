@@ -640,6 +640,19 @@ final class TimelineResult {
     }
 
     /// @return The result as Markdown, for a chat.
+    // How a source's things were read where its feeding pipelines' plans put them in different fields.
+    private static String fieldsByPipelineText(final TimelineRun run, final int i) {
+        final Map<String, Map<String, Long>> byThing = reading(run).byStream().get(i);
+        if (byThing == null || byThing.isEmpty()) {
+            return "";
+        }
+        final List<String> things = new ArrayList<>();
+        byThing.forEach((thing, ways) -> things.add(thing + " by " + String.join(", ", ways.entrySet().stream()
+                .map(way -> way.getKey() + " " + way.getValue())
+                .toList())));
+        return "; its feeding pipelines' plans differ, so each event's own was read: " + String.join("; ", things);
+    }
+
     // A source's documents of events read more than once, left out, or why it wasn't deduplicated.
     private static String dedupeText(final TimelineRun run, final int i) {
         final Integer duplicates = reading(run).duplicates().get(i);
@@ -694,7 +707,7 @@ final class TimelineResult {
                             : "").append(routes.isEmpty()
                             ? ""
                             : "; events classified " + String.join(", ", routes))
-                    .append(dedupeText(run, i)).append('\n');
+                    .append(dedupeText(run, i)).append(fieldsByPipelineText(run, i)).append('\n');
         }
         if (byLogon(run)) {
             sb.append(PersonScope.OTHER_ACCOUNTS).append('\n');

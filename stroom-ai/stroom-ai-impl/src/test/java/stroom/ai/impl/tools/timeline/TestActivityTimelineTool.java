@@ -35,6 +35,7 @@ import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.query.DataSourceDocumentation;
 import stroom.ai.impl.tools.sequence.InMemoryKeyStreams;
 import stroom.ai.impl.tools.skills.SkillCatalogue;
+import stroom.ai.impl.tools.streams.IndexingTrace;
 import stroom.ai.impl.tools.streams.StreamProvenance;
 import stroom.ai.impl.tools.workspace.GanttChartTool;
 import stroom.ai.impl.workspace.SessionWorkspace;
@@ -145,7 +146,8 @@ class TestActivityTimelineTool {
                 auditLog, eventXml, new TimelineFields(agentInstructions, dataSourceAccess, Optional.empty(),
                     () -> Mockito.mock(DataSourceDocumentation.class)),
                 new TimelineSourceChoice(dataSourceAccess, () -> tabSnapshots), () -> skillCatalogue, documentAccess,
-                agentInstructions, () -> Mockito.mock(ElasticEsql.class), () -> documentation, () -> streamProvenance);
+                agentInstructions, () -> Mockito.mock(ElasticEsql.class), () -> documentation, () -> streamProvenance,
+                () -> Mockito.mock(IndexingTrace.class));
 
         windows("08:30", "4800");
         windows("08:58", "4801");

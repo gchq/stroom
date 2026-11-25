@@ -35,6 +35,7 @@ import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.query.DataSourceDocumentation;
 import stroom.ai.impl.tools.sequence.InMemoryKeyStreams;
 import stroom.ai.impl.tools.skills.SkillCatalogue;
+import stroom.ai.impl.tools.streams.IndexingTrace;
 import stroom.ai.impl.tools.streams.StreamProvenance;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.docref.DocRef;
@@ -126,7 +127,7 @@ class TestActivityTimelineTargets {
                 Mockito.mock(AiAuditLog.class), Mockito.mock(TimelineEventXml.class), timelineFields, sourceChoice,
                 () -> Mockito.mock(SkillCatalogue.class), Mockito.mock(DocumentAccess.class), agentInstructions,
                 () -> Mockito.mock(ElasticEsql.class), () -> Mockito.mock(DataSourceDocumentation.class),
-                () -> streamProvenance);
+                () -> streamProvenance, () -> Mockito.mock(IndexingTrace.class));
         // The person's own: a sign-in, a file read, and a password they changed themselves (their own act on their
         // own account: theirs, never done to them).
         cloud.add(doc("09:00", "P1", "pat", "Logon", "P1", "pat"));

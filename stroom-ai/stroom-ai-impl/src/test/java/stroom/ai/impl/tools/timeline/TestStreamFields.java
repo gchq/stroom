@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.sequence.JoinKeys;
 import stroom.ai.impl.tools.timeline.TimelineReader.RoleRead;
 import stroom.ai.impl.tools.timeline.TimelineReader.Source;
+import stroom.ai.impl.tools.timeline.StreamFields.Indexed;
 import stroom.ai.impl.tools.timeline.TimelineReader.Varied;
 import stroom.ai.impl.tools.timeline.TimelineSessions.Event;
 import stroom.ai.impl.tools.timeline.TimelineSessions.Role;
@@ -32,11 +33,13 @@ import org.junit.jupiter.api.Test;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/// Each event's value of a thing the pipelines feeding its index put in different fields: its own stream's
-/// pipeline's field, else the field it holds.
+/// Each event's value of a thing the pipelines feeding its index put in different fields: its own indexing
+/// pipeline's field (its stream's producing pipeline, or the one its stream was traced to), else its Events XML's at
+/// the thing's path, else not read.
 class TestStreamFields {
 
     private static final DocRef INDEX = new DocRef(ElasticIndexDoc.TYPE, "index-uuid", "Endpoint");
@@ -44,38 +47,66 @@ class TestStreamFields {
     private static final DocRef NEW = new DocRef("Pipeline", "new-uuid", "Endpoint indexing V2");
 
     @Test
-    void eachEventTakesItsOwnStreamsPipelinesFieldElseTheOneItHolds() {
+    void eachEventTakesItsOwnIndexingPipelinesFieldElseItsXmlsElseNone() {
         final Source source = source(Map.of(InstructionRules.HOST_FIELD, new Varied("HostName", Map.of(
-                OLD.getName(), "HostName", NEW.getName(), "host.name")), InstructionRules.EVENT_TYPE_FIELD,
-                new Varied("TypeId", Map.of(OLD.getName(), "TypeId", NEW.getName(), "event.code"))));
+                OLD.getName(), "HostName", NEW.getName(), "host.name"), List.of("EventSource/Device/HostName")),
+                InstructionRules.EVENT_TYPE_FIELD, new Varied("TypeId", Map.of(OLD.getName(), "TypeId",
+                        NEW.getName(), "event.code"), List.of("EventDetail/TypeId"))));
         final Map<String, Map<String, String>> extras = new LinkedHashMap<>();
         // The new pipeline's document also holds HostName, meaning something else there: its own field is read.
         extras.put("a", Map.of("HostName", "ws-old", "TypeId", "logon"));
         extras.put("b", Map.of("HostName", "relay-01", "host.name", "ws-new", "event.code", "4624"));
-        // A stream not seen (no provenance): the plans' field it holds.
-        extras.put("c", Map.of("host.name", "ws-other", "event.code", "4625"));
-        extras.put("d", Map.of());
+        // A stream not traced: its XML read at the things' paths, never the field it happens to hold.
+        extras.put("c", Map.of("HostName", "relay-02", "host.name", "ws-other", "event.code", "4625"));
+        // Another not traced, whose XML wasn't read (past the cap): not read.
+        extras.put("d", Map.of("HostName", "relay-03"));
         final List<Event> events = List.of(event("a", "1", "ws-old"), event("b", "2", "relay-01"),
-                event("c", "3", null), event("d", null, null));
+                event("c", "3", "relay-02"), event("d", "4", "relay-03"));
+        final BiFunction<Integer, Long, Indexed> indexedBy = (place, streamId) -> streamId == null
+                ? null
+                : streamId == 1L
+                        ? new Indexed(OLD, StreamFields.BY_TASKS)
+                        : streamId == 2L
+                                ? new Indexed(NEW, StreamFields.BY_FILTERS)
+                                : null;
+        final Map<String, String> xml = Map.of("3:1", "<Event><EventSource><Device><HostName>ws-xml</HostName>"
+                                                      + "</Device></EventSource><EventDetail><TypeId>4625-x"
+                                                      + "</TypeId><View/></EventDetail></Event>");
 
-        final StreamFields.Resolved resolved = StreamFields.resolve(events, List.of(source), extras,
-                streamId -> streamId == null
-                        ? null
-                        : streamId == 1L
-                                ? OLD
-                                : streamId == 2L
-                                        ? NEW
-                                        : null);
+        final StreamFields.Resolved resolved = StreamFields.resolve(events, List.of(source), extras, indexedBy,
+                xml);
 
-        assertThat(resolved.events()).extracting(Event::host).containsExactly("ws-old", "ws-new", "ws-other", null);
+        assertThat(resolved.events()).extracting(Event::host).containsExactly("ws-old", "ws-new", "ws-xml", null);
         // The classification reads the event type under the primary field's name, whichever field held it.
         assertThat(resolved.extras().get("b")).containsEntry("TypeId", "4624");
-        assertThat(resolved.extras().get("c")).containsEntry("TypeId", "4625");
+        assertThat(resolved.extras().get("c")).containsEntry("TypeId", "4625-x");
         assertThat(resolved.extras().get("d")).doesNotContainKey("TypeId");
         assertThat(resolved.read().get(0).get(InstructionRules.HOST_FIELD)).containsExactly(
-                Map.entry("HostName (" + StreamFields.BY_STREAM + ")", 1L),
-                Map.entry("host.name (" + StreamFields.BY_STREAM + ")", 1L),
-                Map.entry("host.name (" + StreamFields.BY_HELD + ")", 1L));
+                Map.entry("HostName (" + StreamFields.BY_TASKS + ")", 1L),
+                Map.entry("host.name (" + StreamFields.BY_FILTERS + ")", 1L),
+                Map.entry("EventSource/Device/HostName (" + StreamFields.BY_XML + ")", 1L),
+                Map.entry(StreamFields.NOT_READ, 1L));
+    }
+
+    @Test
+    void onlyTheEventsWhosePipelineIsntKnownAreReadFromTheirXmlUpToTheCap() {
+        final Source source = source(Map.of(InstructionRules.HOST_FIELD, new Varied("HostName", Map.of(
+                OLD.getName(), "HostName", NEW.getName(), "host.name"), List.of("EventSource/Device/HostName"))));
+        final List<Event> events = List.of(event("a", "1", null), event("b", "3", null), event("c", "3", null),
+                event("d", "4", null), event("e", null, null));
+        final BiFunction<Integer, Long, Indexed> indexedBy = (place, streamId) -> Long.valueOf(1L).equals(streamId)
+                ? new Indexed(OLD, StreamFields.BY_STREAM)
+                : null;
+
+        final StreamFields.ToRead toRead = StreamFields.toRead(events, List.of(source), indexedBy, 2);
+
+        // b, c (stream 3) read; d past the cap; a's pipeline known; e has no ids.
+        assertThat(toRead.ids()).containsExactly(Map.entry(3L, List.of(1L, 1L)));
+        assertThat(toRead.notRead()).isEqualTo(1);
+        // A thing with no path is never read from the XML.
+        assertThat(StreamFields.toRead(events, List.of(source(Map.of(InstructionRules.HOST_FIELD, new Varied(
+                "HostName", Map.of(OLD.getName(), "HostName", NEW.getName(), "host.name"))))), indexedBy, 10)
+                .ids()).isEmpty();
     }
 
     @Test
@@ -84,7 +115,7 @@ class TestStreamFields {
         final Map<String, Map<String, String>> extras = Map.of("a", Map.of("HostName", "ws-01"));
 
         final StreamFields.Resolved resolved = StreamFields.resolve(events, List.of(source(Map.of())), extras,
-                streamId -> OLD);
+                (place, streamId) -> new Indexed(OLD, StreamFields.BY_STREAM), Map.of());
 
         assertThat(resolved.events()).isEqualTo(events);
         assertThat(resolved.read()).isEmpty();

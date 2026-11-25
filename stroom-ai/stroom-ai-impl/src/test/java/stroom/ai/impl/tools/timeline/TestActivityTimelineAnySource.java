@@ -46,6 +46,7 @@ import stroom.ai.impl.tools.sequence.InMemoryKeyStreams;
 import stroom.ai.impl.tools.skills.SkillCatalogue;
 import stroom.ai.impl.tools.skills.SkillCatalogue.Listed;
 import stroom.ai.impl.tools.skills.SkillDoc;
+import stroom.ai.impl.tools.streams.IndexingTrace;
 import stroom.ai.impl.tools.streams.StreamProvenance;
 import stroom.ai.impl.tools.streams.StreamProvenance.PipelineFacts;
 import stroom.ai.impl.tools.streams.StreamProvenance.Provenance;
@@ -114,6 +115,7 @@ class TestActivityTimelineAnySource {
     private final DataSourceDocumentation plans = Mockito.mock(DataSourceDocumentation.class);
     private final Map<String, String> xml = new LinkedHashMap<>();
     private final StreamProvenance streamProvenance = Mockito.mock(StreamProvenance.class);
+    private final IndexingTrace indexingTrace = Mockito.mock(IndexingTrace.class);
     private FakeTabWorkspace files;
     private ActivityTimelineTool tool;
     private List<Map<String, Object>> events;
@@ -179,7 +181,7 @@ class TestActivityTimelineAnySource {
                 Optional.empty(), () -> plans),
                 new TimelineSourceChoice(dataSourceAccess, () -> Mockito.mock(TabSnapshots.class)),
                 () -> skillCatalogue, documentAccess, agentInstructions, () -> elasticEsql,
-                () -> Mockito.mock(DataSourceDocumentation.class), () -> streamProvenance);
+                () -> plans, () -> streamProvenance, () -> indexingTrace);
     }
 
     @Test
@@ -982,11 +984,15 @@ class TestActivityTimelineAnySource {
                 22L, new StreamSource(22L, "ENDPOINT-B", "Events", newIndexing, null, null)), 0, Map.of(
                 oldIndexing.getUuid(), new PipelineFacts(oldIndexing, true, List.of(), null, null, null),
                 newIndexing.getUuid(), new PipelineFacts(newIndexing, true, List.of(), null, null, null))));
+        Mockito.when(documentAccess.canView(Mockito.any())).thenReturn(true);
         hosted("09:00", 21, Map.of("HostName", "ws-a"));
         // The new version's document holds HostName too, meaning something else there.
         hosted("09:05", 22, Map.of("HostName", "relay-01", "host.name", "ws-b"));
-        // A stream not looked up: the plans' field it holds.
-        hosted("09:10", 23, Map.of("host.name", "ws-c"));
+        // A stream not looked up: traced to its indexing pipeline by its tasks, once.
+        hosted("09:10", 23, Map.of("HostName", "relay-02", "host.name", "ws-c"));
+        hosted("09:12", 23, Map.of("HostName", "relay-02", "host.name", "ws-c"));
+        Mockito.when(indexingTrace.trace(Mockito.any(), Mockito.any())).thenReturn(new IndexingTrace.Traced(
+                Map.of(23L, newIndexing), Map.of(), Set.of()));
         elementInIndex = true;
 
         final Map<String, Object> result = json(mcp(), arguments(Map.of("sources", List.of("Events"))));
@@ -995,7 +1001,46 @@ class TestActivityTimelineAnySource {
         final Map<String, Object> source = ((List<Map<String, Object>>) result.get("sources")).getFirst();
         assertThat((Map<String, Object>) source.get("fields_by_pipeline")).containsEntry("host", Map.of(
                 "HostName (the stream's pipeline)", 1L, "host.name (the stream's pipeline)", 1L,
-                "host.name (the field the event holds)", 1L));
+                "host.name (traced by its tasks)", 2L));
+        // Only the stream no producing pipeline settles is traced, once, among the index's feeding pipelines.
+        Mockito.verify(indexingTrace, Mockito.times(1)).trace(Set.of(23L), List.of(oldIndexing, newIndexing));
+        Mockito.verifyNoInteractions(eventXml);
+    }
+
+    @Test
+    void whereNoPipelineIsKnownAnEventsDifferingThingIsReadFromItsXmlAtItsPathElseNotRead() {
+        final DocRef oldIndexing = new DocRef("Pipeline", "old-uuid", "Endpoint indexing V1");
+        final DocRef newIndexing = new DocRef("Pipeline", "new-uuid", "Endpoint indexing V2");
+        Mockito.when(plans.feedingPlans(EVENTS)).thenReturn(new DataSourceDocumentation.FeedingPlans(
+                List.of(oldIndexing, newIndexing), Map.of(
+                oldIndexing, List.of(FieldPlan.of(FieldPlan.ELASTICSEARCH, "events", "EventTime", List.of(
+                        PlannedField.of("HostName", "keyword", "EventSource/Device/HostName")))),
+                newIndexing, List.of(FieldPlan.of(FieldPlan.ELASTICSEARCH, "events", "EventTime", List.of(
+                        PlannedField.of("host.name", "keyword", "EventSource/Device/HostName")))))));
+        Mockito.when(documentAccess.canView(Mockito.any())).thenReturn(true);
+        Mockito.when(indexingTrace.trace(Mockito.any(), Mockito.any())).thenReturn(IndexingTrace.Traced.NONE);
+        // Its XML says the host; the document's own HostName is a relay's, never matched as a value.
+        hosted("09:00", 31, Map.of("HostName", "relay-01", "host.name", "ws-a"));
+        xml.put("31:" + eventId, "<Event><EventSource><Device><HostName>ws-a</HostName></Device></EventSource>"
+                                 + "<EventDetail><View/></EventDetail></Event>");
+        // No XML for this one: not read.
+        hosted("09:05", 32, Map.of("HostName", "relay-02"));
+        elementInIndex = true;
+
+        final Map<String, Object> result = json(mcp(), arguments(Map.of("sources", List.of("Events"))));
+
+        assertThat((List<String>) result.get("span_hosts")).contains("ws-a").doesNotContain("relay-01",
+                "relay-02");
+        final Map<String, Object> source = ((List<Map<String, Object>>) result.get("sources")).getFirst();
+        assertThat((Map<String, Object>) source.get("fields_by_pipeline")).containsEntry("host", Map.of(
+                "EventSource/Device/HostName (the Events XML)", 1L, "not read", 1L));
+        // Both events' XML asked for, once, for their fields.
+        Mockito.verify(eventXml, Mockito.times(1)).read(Mockito.any(), Mockito.eq(Map.of(31L, List.of((long) eventId - 1),
+                32L, List.of((long) eventId))), Mockito.anyInt(), Mockito.any(), Mockito.any());
+        assertThat(tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(arguments(
+                Map.of("sources", List.of("Events"))), false)), chat(UserQuestions.NONE, null)).text())
+                .contains("its feeding pipelines' plans differ, so each event's own was read: host by "
+                          + "EventSource/Device/HostName (the Events XML) 1, not read 1");
     }
 
     @Test

@@ -58,7 +58,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /// `activity_timeline` reading many feeds (decided with the user 2026-11-25), over `/mcp` on a real Stroom and
 /// Elasticsearch: an index fed by two feeds through two versions of its indexing pipeline whose index plans put the
-/// host in different fields (one timeline, each event's host from its own version's field, the roles from the AGENTS
+/// host in different fields (one timeline, each event's host from its own version's field, each stream traced to its
+/// version by the processor filters, a feed neither selects read from its Events XML, the roles from the AGENTS
 /// doc's `## Event types`); a source whose types the catalogue of its streams' translation gives roles (no typeRoles,
 /// no model, no Events XML read); and a period with more events than a timeline reads, given a day at a time with
 /// none read.
@@ -114,11 +115,21 @@ class TestE2eTimelineManyFeeds extends AbstractE2eTest {
         final DocRef cluster = liveElasticCluster(node, "E2E timeline cluster " + indexName);
         final DocRef index = elasticIndex(folder, "TLTWO-INDEX", cluster, indexName);
         final String template = elasticEventsTemplate("TLTWO Elastic indexing", "");
-        indexing(folder, "TLTWO-V1.0 - Indexing", template, cluster, indexName, "HostName");
-        indexing(folder, "TLTWO-V1.1 - Indexing", template, cluster, indexName, "host.name");
+        final String v10 = indexing(folder, "TLTWO-V1.0 - Indexing", template, cluster, indexName, "HostName");
+        final String v11 = indexing(folder, "TLTWO-V1.1 - Indexing", template, cluster, indexName, "host.name");
+        // Each version indexes its own feed's Events streams, by its processor filter.
+        feedFilter("TLTWO-A", "Events", v10);
+        feedFilter("TLTWO-B", "Events", v11);
         documentationDoc(folder, "AGENTS", "# Standing instructions\n\n## Event types\n- web-get: action\n");
         final long older = storeEvents("TLTWO-A", List.of(EVENT));
         final long newer = storeEvents("TLTWO-B", List.of(EVENT));
+        // A feed neither filter selects: its events' host read from their Events XML.
+        final List<String> withHosts = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            withHosts.add(EVENT.replace("<EventDetail>", "<EventSource><Device><HostName>vm-c</HostName></Device>"
+                                                       + "</EventSource><EventDetail>"));
+        }
+        final long unfiltered = storeEvents("TLTWO-C", withHosts);
         final ArrayNode documents = JsonUtil.getMapper().createArrayNode();
         // The older version's feed, then the newer's: each document holds its own version's host field.
         for (int i = 0; i < 6; i++) {
@@ -130,6 +141,13 @@ class TestE2eTimelineManyFeeds extends AbstractE2eTest {
             final ObjectNode doc = document(documents, 10 + i, "11:0" + i, newer, "pat", "web-get",
                     "https://supplier.example.net/" + i);
             doc.putObject("host").put("name", "lt-b");
+            // The newer version's documents hold HostName too, meaning something else there.
+            doc.put("HostName", "relay-01");
+        }
+        // Records 1 to 3 of the unfiltered stream; their documents' HostName a relay's, never taken as the host.
+        for (int i = 0; i < 3; i++) {
+            document(documents, 20 + i, "13:0" + i, unfiltered, "pat", "web-get", null)
+                    .put("EventId", (long) i + 1).put("HostName", "relay-02");
         }
         node.bulkIndex(indexName, documents);
 
@@ -138,14 +156,17 @@ class TestE2eTimelineManyFeeds extends AbstractE2eTest {
                 "timeZone", "UTC"));
         dump("activity_timeline, two versions", result);
 
-        assertThat((List<String>) result.get("span_hosts")).containsExactlyInAnyOrder("ws-a", "lt-b");
+        assertThat((List<String>) result.get("span_hosts")).containsExactlyInAnyOrder("ws-a", "lt-b", "vm-c");
         final Map<String, Object> source = ((List<Map<String, Object>>) result.get("sources")).getFirst();
         assertThat(source).containsEntry("user_field", "UserId");
+        // Each stream traced once to its version by the filters; the unfiltered feed's events read from their XML.
         assertThat((Map<String, Object>) ((Map<String, Object>) source.get("fields_by_pipeline")).get("host"))
-                .containsOnlyKeys("HostName (the field the event holds)", "host.name (the field the event holds)");
+                .containsExactlyInAnyOrderEntriesOf(Map.of("HostName (traced by the processor filters)", 6L,
+                        "host.name (traced by the processor filters)", 6L,
+                        "EventSource/Device/HostName (the Events XML)", 3L));
         assertThat((Map<String, Object>) source.get("roles_from")).containsOnlyKeys("AGENTS doc");
-        // One scan of the source; its types settled by the AGENTS doc, so no Events XML read.
-        assertThat(result).containsEntry("scans", 1);
+        // One scan of the source; its types settled by the AGENTS doc, so no Events XML read for them.
+        assertThat(result).containsEntry("scans", 1).containsEntry("events_read", 15);
         assertThat((Map<String, Object>) result.get("events_xml")).containsEntry("read", 0);
     }
 
@@ -273,8 +294,9 @@ class TestE2eTimelineManyFeeds extends AbstractE2eTest {
         return created.getDocRef();
     }
 
-    // An indexing pipeline writing the index, its XSLT keeping a plan that puts the host in the field given.
-    private void indexing(final ExplorerNode folder,
+    // An indexing pipeline writing the index, its XSLT keeping a plan that puts the host in the field given: its
+    // UUID.
+    private String indexing(final ExplorerNode folder,
                           final String name,
                           final String template,
                           final DocRef cluster,
@@ -292,7 +314,7 @@ class TestE2eTimelineManyFeeds extends AbstractE2eTest {
                         Map.of("name", "url", "type", "keyword", "source", "EventDetail/View/Resource/URL")));
         editXslt(xslt, doc -> doc.copy().data(INDEXING).description(KeptMapping.withMapping("", "index", plan))
                 .build());
-        childPipeline(folder, name, template, List.of(
+        return childPipeline(folder, name, template, List.of(
                 property("xsltFilter", "xslt", new DocRef(XsltDoc.TYPE, xslt)),
                 property("elasticIndexingFilter", "cluster", cluster),
                 PipelineProperty.builder()
@@ -318,7 +340,8 @@ class TestE2eTimelineManyFeeds extends AbstractE2eTest {
             doc.put("url", url);
         }
         doc.put("StreamId", stream);
-        doc.put("EventId", 1L);
+        // A record each, as an event counted once by its stream and record.
+        doc.put("EventId", (long) id + 1);
         return doc;
     }
 

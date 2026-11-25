@@ -56,6 +56,7 @@ import stroom.ai.impl.tools.sequence.StreamFilters;
 import stroom.ai.impl.tools.skills.SkillCatalogue;
 import stroom.ai.impl.tools.skills.SkillCatalogue.Listed;
 import stroom.ai.impl.tools.skills.SkillDoc;
+import stroom.ai.impl.tools.streams.IndexingTrace;
 import stroom.ai.impl.tools.streams.StreamProvenance;
 import stroom.ai.impl.tools.streams.StreamProvenance.PipelineFacts;
 import stroom.ai.impl.tools.streams.StreamProvenance.Provenance;
@@ -82,6 +83,7 @@ import stroom.ai.impl.tools.timeline.TimelineReader.Read;
 import stroom.ai.impl.tools.timeline.TimelineReader.RoleRead;
 import stroom.ai.impl.tools.timeline.TimelineReader.Source;
 import stroom.ai.impl.tools.timeline.TimelineReader.Varied;
+import stroom.ai.impl.tools.timeline.StreamFields.Indexed;
 import stroom.ai.impl.tools.timeline.TimelineReading.XmlPaths;
 import stroom.ai.impl.tools.timeline.TimelineRun.EventRange;
 import stroom.ai.impl.tools.timeline.TimelineRun.Period;
@@ -140,6 +142,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /// `activity_timeline`: one user's (or entity's) activity over a period from any sources, worked out in code
@@ -300,6 +303,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     private final AgentInstructions agentInstructions;
     private final Provider<DataSourceDocumentation> dataSourceDocumentationProvider;
     private final Provider<StreamProvenance> streamProvenanceProvider;
+    private final Provider<IndexingTrace> indexingTraceProvider;
 
     /// @param workspace              The chats' workspaces.
     /// @param keyStreamsProvider     Reads each source's events for the entity, in time order.
@@ -316,6 +320,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     /// @param dataSourceDocumentationProvider Describes the field the lanes are by, for the charts' lane axis.
     /// @param streamProvenanceProvider Gives the pipeline that produced each stream read, and its translation's
     ///                               catalogue.
+    /// @param indexingTraceProvider  Traces each Events stream to the feeding pipeline that indexed it, where the
+    ///                               feeding pipelines' plans differ.
     @Inject
     ActivityTimelineTool(final ChatWorkspace workspace,
                          final Provider<ElasticKeyStreams> keyStreamsProvider,
@@ -330,8 +336,10 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                          final AgentInstructions agentInstructions,
                          final Provider<ElasticEsql> elasticEsqlProvider,
                          final Provider<DataSourceDocumentation> dataSourceDocumentationProvider,
-                         final Provider<StreamProvenance> streamProvenanceProvider) {
+                         final Provider<StreamProvenance> streamProvenanceProvider,
+                         final Provider<IndexingTrace> indexingTraceProvider) {
         super(workspace);
+        this.indexingTraceProvider = indexingTraceProvider;
         this.streamProvenanceProvider = streamProvenanceProvider;
         this.dataSourceDocumentationProvider = dataSourceDocumentationProvider;
         this.keyStreamsProvider = keyStreamsProvider;
@@ -354,7 +362,11 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 .note("Use on every source's Elastic Index is checked, as for any search, again by Stroom's "
                       + "Elasticsearch module as each is read. The events' Events XML is read as the data viewer "
                       + "reads it (View Data, and the stream store's check on each stream's feed); without View "
-                      + "Data the index's fields classify them. No permission of its own: the tool policies decide "
+                      + "Data the index's fields classify them. Where an index's feeding pipelines' plans differ, "
+                      + "each Events stream is traced to the one that indexed it by its processing tasks or the "
+                      + "processor filters, read as the processing user only to make that link: only feeding "
+                      + "pipelines whose plans the user can view are candidates, and no filter, feed or other "
+                      + "pipeline is named. No permission of its own: the tool policies decide "
                       + "who may build a timeline. Recording what was learned in a skill is offered only to a user "
                       + "with Edit on its skills doc (or Create in a folder, for a new one).")
                 .build();
@@ -484,7 +496,10 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                  + "host, type, object...) mapped once per index: "
                                  + "userField and the call's, the AGENTS doc's ## Fields, the feeding pipelines' "
                                  + "index plans (each event its own pipeline's where they differ), the index's "
-                                 + "documentation, a convention, else asked. Roles by event type: typeRoles or the "
+                                 + "documentation, a convention, else asked (where plans differ and nothing names "
+                                 + "the field: each event's stream traced to its indexing pipeline, else its Events "
+                                 + "XML at the thing's path, else not read; said per source). Roles by event type: "
+                                 + "typeRoles or the "
                                  + "skill's, the catalogue of the stream's translation, the AGENTS doc's ## Event "
                                  + "types, the schema's element and Action, else the codes classified (offered as "
                                  + "## Event types lines). Events XML only for what the index doesn't map (a few "
@@ -629,13 +644,23 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         // parent stream and record.
         final EventDedupe.Deduped deduped = EventDedupe.dedupe(scanned.events(), sources,
                 streamId -> parentOf(provenance, streamId));
+        // Where the feeding pipelines' plans differ: each event's own indexing pipeline, else its XML at the thing's
+        // path, else not read.
+        final BiFunction<Integer, Long, Indexed> indexedBy = indexedBy(context, sources, deduped.events(),
+                provenance);
+        final StreamFields.ToRead fieldReads = StreamFields.toRead(deduped.events(), sources, indexedBy,
+                Math.max(0, config.getTimelineMaxXmlEvents()));
+        final Map<String, String> fieldXml = fieldReads.ids().isEmpty()
+                ? Map.of()
+                : readFieldXml(context, config, fieldReads);
         final StreamFields.Resolved resolved = StreamFields.resolve(deduped.events(), sources, scanned.extras(),
-                streamId -> pipelineOf(provenance, streamId));
+                indexedBy, fieldXml);
         final Read read = scanned.with(resolved.events(), resolved.extras());
         final TypeRoleLookup roles = new TypeRoleLookup(plan.overrides(), catalogue(provenance),
                 agentsRoles(context, sources));
         final boolean characterising = booleanArg(request, CHARACTERISE_ARG, false) || view != View.DETAIL;
-        final XmlOutcome xml = readXml(context, config, sources, read, plan.fields(), roles, characterising);
+        final XmlOutcome xml = readXml(context, config, sources, read, plan.fields(), roles, characterising,
+                fieldXml);
         final Map<Integer, Map<String, CodeRole>> classifiedNow = new LinkedHashMap<>();
         final Map<Integer, Map<String, CodeRole>> codes = codes(request, context, sources, read, plan.fields(),
                 xml.xml(), roles, classifiedNow);
@@ -1601,7 +1626,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                final Read read,
                                final Map<Integer, Fields> fields,
                                final TypeRoleLookup roles,
-                               final boolean characterising) {
+                               final boolean characterising,
+                               final Map<String, String> alreadyRead) {
         final List<Event> forType = new ArrayList<>();
         final Map<Integer, List<Event>> forContent = new LinkedHashMap<>();
         for (final Event event : read.events()) {
@@ -1663,11 +1689,26 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 TYPE_PATHS, count)));
         contentRead.forEach((i, count) -> paths.add(new XmlPaths(sources.get(i).name(),
                 sources.get(i).doc().getName(), CONTENT_PATHS, count)));
+        // The events whose XML was read for their fields aren't read again.
+        final Map<String, String> reused = new LinkedHashMap<>();
+        final Map<Long, List<Long>> unread = new TreeMap<>();
+        ids.forEach((stream, events) -> events.forEach(id -> {
+            final String text = NullSafe.map(alreadyRead).get(stream + ":" + id);
+            if (text != null) {
+                reused.put(stream + ":" + id, text);
+            } else {
+                unread.computeIfAbsent(stream, k -> new ArrayList<>()).add(id);
+            }
+        }));
         context.progress().report("Reading the Events XML of " + seen.size() + " event(s)");
-        final TimelineEventXml.Read xml = eventXml.read(context.session(), ids, config.getMaxEventBytes(),
-                context.stopped(), count -> context.progress().report("Read the Events XML of " + count + " of "
-                                                                      + seen.size() + " event(s)"));
-        return new XmlOutcome(xml.xml(), new XmlRead(seen.size() + pastCap, xml.xml().size(), xml.missing(),
+        final TimelineEventXml.Read xml = unread.isEmpty()
+                ? new TimelineEventXml.Read(Map.of(), 0, 0, 0, true)
+                : eventXml.read(context.session(), unread, config.getMaxEventBytes(), context.stopped(),
+                        count -> context.progress().report("Read the Events XML of " + (reused.size() + count)
+                                                           + " of " + seen.size() + " event(s)"));
+        final Map<String, String> all = new LinkedHashMap<>(reused);
+        all.putAll(xml.xml());
+        return new XmlOutcome(all, new XmlRead(seen.size() + pastCap, all.size(), xml.missing(),
                 xml.unreadable(), pastCap, xml.notAllowed(), cap), paths);
     }
 
@@ -1756,12 +1797,94 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         }
     }
 
+    // For the sources whose feeding pipelines' plans differ: the pipeline that indexed each Events stream read into
+    // each one's index: its producing pipeline where that is one of the index's feeding pipelines, else the one its
+    // tasks or the processor filters trace it to (once per stream), among the feeding pipelines whose plans the user
+    // can view.
+    private BiFunction<Integer, Long, Indexed> indexedBy(final ToolCallContext context,
+                                                       final List<Source> sources,
+                                                       final List<Event> events,
+                                                       final Provenance provenance) {
+        final Map<Integer, Map<Long, Indexed>> bySource = new LinkedHashMap<>();
+        for (int i = 0; i < sources.size(); i++) {
+            final Source source = sources.get(i);
+            if (source.varied().isEmpty()) {
+                continue;
+            }
+            final List<DocRef> feeding = feedingPipelines(source.doc());
+            final Set<String> feedingUuids = new LinkedHashSet<>();
+            feeding.forEach(pipeline -> feedingUuids.add(pipeline.getUuid()));
+            final Map<Long, Indexed> indexed = new LinkedHashMap<>();
+            final Set<Long> untraced = new LinkedHashSet<>();
+            for (final Event event : events) {
+                final Long streamId = number(event.streamId());
+                if (event.source() != i || streamId == null || indexed.containsKey(streamId)) {
+                    continue;
+                }
+                final DocRef producing = pipelineOf(provenance, streamId);
+                if (producing != null && feedingUuids.contains(producing.getUuid())) {
+                    indexed.put(streamId, new Indexed(producing, StreamFields.BY_STREAM));
+                } else {
+                    untraced.add(streamId);
+                }
+            }
+            if (!untraced.isEmpty() && !feeding.isEmpty()) {
+                context.progress().report("Tracing " + untraced.size() + " stream(s) to the pipelines indexing "
+                                          + source.doc().getName());
+                final IndexingTrace.Traced traced = indexingTraceProvider.get().trace(untraced, feeding);
+                traced.byTasks().forEach((stream, pipeline) -> indexed.put(stream, new Indexed(pipeline,
+                        StreamFields.BY_TASKS)));
+                traced.byFilters().forEach((stream, pipeline) -> indexed.put(stream, new Indexed(pipeline,
+                        StreamFields.BY_FILTERS)));
+            }
+            bySource.put(i, indexed);
+        }
+        return (source, streamId) -> streamId == null
+                ? null
+                : bySource.getOrDefault(source, Map.of()).get(streamId);
+    }
+
+    // The pipelines feeding an index whose plans the user can view.
+    private List<DocRef> feedingPipelines(final DocRef index) {
+        try {
+            final DataSourceDocumentation.FeedingPlans plans = dataSourceDocumentationProvider.get()
+                    .feedingPlans(index);
+            return NullSafe.list(NullSafe.get(plans, DataSourceDocumentation.FeedingPlans::pipelines)).stream()
+                    .filter(pipeline -> plans.plans().containsKey(pipeline) && documentAccess.canView(pipeline))
+                    .toList();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("The pipelines feeding {} weren't read: {}", index, e.getMessage()),
+                    e);
+            return List.of();
+        }
+    }
+
+    // The Events XML of the events whose varied things no known pipeline gives, for their values at the things'
+    // paths.
+    private Map<String, String> readFieldXml(final ToolCallContext context,
+                                             final AiWorkspaceConfig config,
+                                             final StreamFields.ToRead toRead) {
+        context.progress().report("Reading the Events XML of " + toRead.size() + " event(s) for their fields");
+        return eventXml.read(context.session(), toRead.ids(), config.getMaxEventBytes(), context.stopped(),
+                count -> context.progress().report("Read the Events XML of " + count + " of " + toRead.size()
+                                                   + " event(s) for their fields")).xml();
+    }
+
     // The pipeline that produced a stream, named where the user can read it; null where it isn't known.
     private static DocRef pipelineOf(final Provenance provenance, final Long streamId) {
         if (provenance == null || streamId == null) {
             return null;
         }
         return provenance.pipelineOf(streamId).map(PipelineFacts::pipeline).orElse(null);
+    }
+
+    // A thing's event-logging paths, for reading it from an event's Events XML: its convention's, else those an
+    // index plan may map it from; none for a thing with no path.
+    private static List<String> schemaPaths(final String thing) {
+        final String convention = TimelineFields.CONVENTION_PATHS.get(thing);
+        return convention != null
+                ? List.of(convention)
+                : TimelineFields.PLAN_PATHS.getOrDefault(thing, List.of());
     }
 
     // The raw stream a stream was translated from; null where it isn't known.
@@ -2677,7 +2800,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                     final Map<String, String> byPipeline = new LinkedHashMap<>();
                     found.byPipeline().forEach((field, pipelines) -> pipelines.forEach(pipeline ->
                             byPipeline.putIfAbsent(pipeline, field)));
-                    out.put(thing, new Varied(found.field(), byPipeline));
+                    out.put(thing, new Varied(found.field(), byPipeline, schemaPaths(thing)));
                 }
             });
             return out;

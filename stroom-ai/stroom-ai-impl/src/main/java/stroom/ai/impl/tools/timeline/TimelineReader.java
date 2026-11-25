@@ -419,13 +419,24 @@ final class TimelineReader {
 
     /// A thing the pipelines feeding an index put in different fields.
     ///
-    /// @param primary    The field read where an event's pipeline isn't known: the first pipeline's.
+    /// @param primary    The field the classification reads the thing by: the first pipeline's.
     /// @param byPipeline Each pipeline's field, by the pipeline's name, in the plans' order.
-    record Varied(String primary, Map<String, String> byPipeline) {
+    /// @param paths      The thing's event-logging paths, the most telling first, for reading it from an event's
+    ///                   Events XML where the event's pipeline isn't known; empty where it has none.
+    record Varied(String primary, Map<String, String> byPipeline, List<String> paths) {
 
-        /// Copies the map, in order.
+        /// Copies the map and list, in order.
         Varied {
             byPipeline = Collections.unmodifiableMap(new LinkedHashMap<>(NullSafe.map(byPipeline)));
+            paths = List.copyOf(NullSafe.list(paths));
+        }
+
+        /// With no paths.
+        ///
+        /// @param primary    The field the classification reads the thing by.
+        /// @param byPipeline Each pipeline's field, by the pipeline's name, in the plans' order.
+        Varied(final String primary, final Map<String, String> byPipeline) {
+            this(primary, byPipeline, List.of());
         }
 
         /// @return Every field it may be in, the primary first.
