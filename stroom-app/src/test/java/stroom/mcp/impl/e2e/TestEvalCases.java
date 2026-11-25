@@ -29,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -399,6 +400,46 @@ class TestEvalCases {
     }
 
     @Test
+    void theScreenCaseIsTheGeneratorsKnownAnswer() {
+        final Map<String, Object> known = InsiderDataset.generate(new InsiderDataset.Options(InsiderDataset.SEED, 12,
+                0.15, List.of(new InsiderDataset.Period(LocalDate.of(2026, 2, 2), LocalDate.of(2026, 2, 2)))))
+                .knownAnswer();
+        final Map<String, Object> evalCase = EvalCases.load("111_compare_screen_population");
+        final Map<String, Object> screen = (Map<String, Object>) ((Map<String, Object>) evalCase.get("expected"))
+                .get("screen");
+        // The four plants of the person's own activity stand out; the role change and the decoys with a person
+        // don't rank above them.
+        final Map<String, String> kinds = new LinkedHashMap<>();
+        ((List<Map<String, Object>>) known.get("plants")).forEach(plant -> kinds.put(String.valueOf(plant.get(
+                "person_id")), String.valueOf(plant.get("kind"))));
+        assertThat((List<String>) screen.get("ranked_include")).allSatisfy(person -> assertThat(kinds.get(person))
+                .isIn("leaver", "disgruntled admin", "drift to later hours", "curious viewer"));
+        assertThat(kinds.get(InsiderDataset.ROLE_CHANGE)).isEqualTo("role change");
+        final List<String> decoys = ((List<Map<String, Object>>) known.get("decoys")).stream()
+                .filter(decoy -> decoy.get("person_id") != null)
+                .map(decoy -> String.valueOf(decoy.get("person_id")))
+                .toList();
+        assertThat((List<String>) screen.get("ranked_below")).containsExactlyInAnyOrderElementsOf(
+                Stream.concat(Stream.of(InsiderDataset.ROLE_CHANGE),
+                        decoys.stream()).toList());
+        // The decoys' approved days, as the user knows them, are the reference's exceptions.
+        ((List<Map<String, Object>>) known.get("decoys")).stream()
+                .filter(decoy -> decoy.get("person_id") != null)
+                .forEach(decoy -> assertThat(String.valueOf(((Map<String, Object>) ((Map<String, Object>) evalCase
+                        .get("reference")).get("compare_activity")).get("exceptions"))).contains(decoy.get(
+                        "person_id") + " " + decoy.get("from") + ".." + decoy.get("to")));
+        // The personal cloud domain, the leaver's; the CDN's parent, never rare.
+        assertThat((List<Map<String, Object>>) screen.get("rare_new")).singleElement().satisfies(rare -> assertThat(
+                rare).containsEntry("value", InsiderDataset.PERSONAL_CLOUD).containsEntry("person",
+                InsiderDataset.LEAVER));
+        assertThat((List<String>) screen.get("rare_excludes")).containsExactly(String.valueOf(((Map<String, Object>)
+                known.get("cdn")).get("parent")));
+        final Map<String, Object> generate = (Map<String, Object>) ((Map<String, Object>) evalCase.get(
+                "elastic_index")).get("generate");
+        assertThat(generate).containsEntry("cdn", true);
+    }
+
+    @Test
     void theDoneToThemCaseIsTheGeneratorsKnownAnswer() {
         final Map<String, Object> evalCase = EvalCases.load("87_compare_done_to_leaver_before_leaving");
         final Map<String, Object> grant = ((List<Map<String, Object>>) InsiderDataset.generate(
@@ -445,7 +486,8 @@ class TestEvalCases {
         for (final String id : List.of("79_insider_leaver_week_timeline", "80_insider_working_on_a_day",
                 "81_insider_vpn_session_at_night", "82_insider_archive_then_personal_cloud_upload",
                 "83_compare_leaver_before_leaving", "84_compare_viewer_against_team", "85_compare_compromised_in_april",
-                "86_compare_decoys_not_flagged", "87_compare_done_to_leaver_before_leaving")) {
+                "86_compare_decoys_not_flagged", "87_compare_done_to_leaver_before_leaving",
+                "111_compare_screen_population")) {
             final Map<String, Object> evalCase = EvalCases.load(id);
             assertThat(String.valueOf(evalCase.get("agents"))).as(id).contains("## Fields\n- person: PersonId\n"
                                                                                + "- user: UserName\n");

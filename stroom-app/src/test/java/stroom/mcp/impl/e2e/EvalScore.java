@@ -1254,7 +1254,11 @@ final class EvalScore {
     ///   was done to the person, its `done_to_them.findings`); `answer_must_not_say` (none of these words in the
     ///   reply) and `answer_must_say_one_of` (at least one), checked only when the reply is given; and
     ///   `answer_must_say_all_of` (each a word or a list of alternatives), in the reply, else (a reference run) the
-    ///   accepted calls' results. Wording is checked with or without `expected.answer` (an answer, whatever tool).
+    ///   accepted calls' results. Wording is checked with or without `expected.answer` (an answer, whatever tool);
+    /// * `expected.screen`: of compare_activity's population screen (its result's `ranked` people and `rare`
+    ///   values): `ranked_include`, people each among those ranked; `ranked_below`, people each not ranked or ranked
+    ///   below every one of `ranked_include`; `rare_new`, values (each `{value, person}`) listed rare and new for
+    ///   that person; `rare_excludes`, texts no rare value listed holds (e.g. a CDN's parent domain).
     ///
     /// @param evalCase The case.
     /// @param calls    The tool calls made, in order.
@@ -1363,6 +1367,7 @@ final class EvalScore {
                     "the answer's " + value.getKey() + " was " + given + ", expected " + value.getValue());
         }
         scoreFindings(maps(expected.get("findings")), answerCall);
+        scoreScreen(maps(expected.get("screen")), answerCall);
         scoreWording(maps(expected.get("findings")), calls, reply);
     }
 
@@ -1968,6 +1973,43 @@ final class EvalScore {
             final Map<String, Object> unwanted = maps(matcher);
             questionCheck("no finding " + unwanted, !anyFinding(unwanted, findings, sourceWide, doneToThem),
                     "a finding matched " + unwanted);
+        }
+    }
+
+    // The answer call's population screen against the case's expectations.
+    private void scoreScreen(final Map<String, Object> expected, final ToolUse call) {
+        if (expected.isEmpty()) {
+            return;
+        }
+        final List<String> ranked = new ArrayList<>();
+        listOf(call.result().get("ranked")).forEach(person -> ranked.add(String.valueOf(maps(person)
+                .get("person"))));
+        final List<String> include = strings(expected.get("ranked_include"));
+        for (final String person : include) {
+            questionCheck("ranked " + person, ranked.contains(person), person + " isn't among those ranked: "
+                                                                        + ranked);
+        }
+        final int lowest = include.stream().mapToInt(ranked::indexOf).max().orElse(-1);
+        for (final String person : strings(expected.get("ranked_below"))) {
+            final int place = ranked.indexOf(person);
+            questionCheck("not above " + person, place < 0 || place > lowest, person + " is ranked "
+                                                                             + (place + 1) + ", above one of "
+                                                                             + include + ": " + ranked);
+        }
+        final List<Map<String, Object>> values = new ArrayList<>();
+        listOf(call.result().get("rare")).forEach(rare -> listOf(maps(rare).get("values")).forEach(value ->
+                values.add(maps(value))));
+        for (final Object item : listOf(expected.get("rare_new"))) {
+            final Map<String, Object> wanted = maps(item);
+            questionCheck("rare and new " + wanted, values.stream().anyMatch(value ->
+                    String.valueOf(wanted.get("value")).equals(String.valueOf(value.get("value")))
+                    && strings(value.get("new_for")).contains(String.valueOf(wanted.get("person")))),
+                    "no rare value " + wanted.get("value") + " new for " + wanted.get("person") + " among "
+                    + values.stream().map(value -> value.get("value")).toList());
+        }
+        for (final String text : strings(expected.get("rare_excludes"))) {
+            questionCheck("no rare " + text, values.stream().noneMatch(value -> String.valueOf(value.get("value"))
+                    .contains(text)), "a rare value holds " + text);
         }
     }
 

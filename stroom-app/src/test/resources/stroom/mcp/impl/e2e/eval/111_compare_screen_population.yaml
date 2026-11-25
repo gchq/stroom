@@ -1,0 +1,69 @@
+name: Who stands out for insider risk across a year of endpoint, proxy and cloud events (a question, nothing built)
+kind: question
+capabilities: [compare, elasticsearch, insider]
+# The insider-risk dataset (InsiderDataset) from 2 February to 31 October 2026 (6 background people, a twentieth of
+# the routine actions, so the index stays small), its endpoint, proxy and cloud audit events with everyone's content delivery network fetches (cdn: true) in one Elasticsearch index "Insider
+# events". The known answer: the leaver (P10001: job sites from 2026-07-01, bulk downloads, uploads to a personal
+# cloud domain), the disgruntled admin (P10002: privileged sessions at night, a tool never used before), the drift to
+# later hours (P10006) and the curious viewer (P10003: record look-ups in June) stand out; the role change (P10005,
+# from 2026-03-02, a new normal by the window) and the decoys (P20001's approved migration and P20002's on-call week,
+# both named by the user) don't rank above any of them; on the proxy's destinations, the leaver's personal cloud
+# domain is rare and new for her while the content delivery network's subdomains (rare by name only) aren't listed.
+# The answer: compare_activity's population screen (scope: population) with rare on Destination; TestEvalCases ties
+# the expectations to the generator's known answer. The traps: esql_query alone (chat 196: the drift rated low, the
+# viewer missed), one person at a time, the proxy's pipeline change on 2026-06-15 (everyone's volume doubles), the
+# CDN's subdomains taken for rare sites, and stating intent. Skipped without an Elasticsearch node.
+elastic_index:
+  name: Insider events
+  generate: {kind: insider_events, seed: 5848, background: 6, scale: 0.05, from: '2026-02-02', to: '2026-10-31',
+             sources: [endpoint, proxy, cloud], cdn: true}
+  fields: {EventTime: date, Source: text, PersonId: text, UserName: text, Account: text, HostName: text,
+           EventDetail: text, Action: text, EventCode: text, Process: text, WindowTitle: text, WindowId: text,
+           Object: text, Destination: text, Category: text, BytesOut: long, SessionId: text, Country: text,
+           Site: text}
+agents: |
+  # Insider events
+
+  The indexes in this folder hold every source's events, one flat record each, decorated with the person's id.
+
+  ## Fields
+  - person: PersonId
+  - user: UserName
+  - host: HostName
+  - action: Action
+  - category: Category
+  - country: Country
+request: >
+  Investigate possible insider risk activity across the "Insider events" index (its endpoint, proxy and cloud
+  events) from February to October 2026: who stands out, and why? Also tell me which sites only a few people
+  visit.
+user_knows: >
+  The "Insider events" Elasticsearch index holds the endpoint agent's, the web proxy's and the cloud audit log's
+  events: a person's id is the same in every source (their account differs by source); Destination is the site a
+  web request reached, Category the proxy's category of it, Process the program, BytesOut the bytes sent, Site the
+  cloud site a file came from. Times are Sydney time (Australia/Sydney). Two things were approved: P20001's
+  data-centre migration from 11 to 15 May 2026, and P20002's on-call week from 20 to 24 July 2026 (the roster).
+expected:
+  tools_used: [compare_activity]
+  answer:
+    tool: compare_activity
+    result: {scope: population}
+  screen:
+    ranked_include: [P10001, P10002, P10006, P10003]
+    ranked_below: [P10005, P20001, P20002]
+    rare_new:
+      - {value: mydrive.personal-cloud.example, person: P10001}
+    rare_excludes: [cdn-edge.example]
+  findings:
+    answer_must_not_say: [guilty, intends to, malicious, stole]
+reference:
+  compare_activity:
+    scope: population
+    sources: [Insider events]
+    windowTo: '2026-10-31'
+    baselineFrom: '2026-02-02'
+    breadthFields: [Destination, Process]
+    rare: Destination
+    exceptions: ['P20001 2026-05-11..2026-05-15: approved data-centre migration',
+                 'P20002 2026-07-20..2026-07-24: on-call roster']
+    timeZone: Australia/Sydney

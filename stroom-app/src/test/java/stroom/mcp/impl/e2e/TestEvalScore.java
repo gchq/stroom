@@ -1924,6 +1924,39 @@ class TestEvalScore {
     }
 
     @Test
+    void aScreensRankedPeopleAndRareValuesAreScored() {
+        final Map<String, Object> question = Map.of("kind", "question", "expected", Map.of("answer", Map.of("tool",
+                "compare_activity"), "screen", Map.of(
+                "ranked_include", List.of("P10001", "P10002"),
+                "ranked_below", List.of("P10005", "P20001"),
+                "rare_new", List.of(Map.of("value", "mydrive.personal-cloud.example", "person", "P10001")),
+                "rare_excludes", List.of("cdn-edge.example"))));
+        final Map<String, Object> screened = Map.of(
+                "ranked", List.of(Map.of("person", "P10002"), Map.of("person", "P10001"),
+                        Map.of("person", "P20001")),
+                "rare", List.of(Map.of("values", List.of(Map.of("value", "mydrive.personal-cloud.example",
+                        "new_for", List.of("P10001")), Map.of("value", "jobs.example", "new_for", List.of())))));
+
+        final EvalScore passed = new EvalScore("q");
+        passed.scoreQuestion(question, List.of(new EvalScore.ToolUse("compare_activity", false, screened, "ok")));
+        assertThat(passed.passed()).as(passed.summary()).isTrue();
+
+        // A decoy above a plant, a plant missing, the personal cloud not new, a CDN host listed: each fails.
+        final Map<String, Object> wrong = Map.of(
+                "ranked", List.of(Map.of("person", "P10005"), Map.of("person", "P10001")),
+                "rare", List.of(Map.of("values", List.of(Map.of("value", "mydrive.personal-cloud.example",
+                        "new_for", List.of()), Map.of("value", "e00af1.cdn-edge.example", "new_for",
+                        List.of("P20003"))))));
+        final EvalScore failed = new EvalScore("q");
+        failed.scoreQuestion(question, List.of(new EvalScore.ToolUse("compare_activity", false, wrong, "ok")));
+        assertThat(failed.passed()).isFalse();
+        assertThat(failed.summary()).contains("P10002 isn't among those ranked")
+                .contains("P10005 is ranked 1, above one of [P10001, P10002]")
+                .contains("no rare value mydrive.personal-cloud.example new for P10001")
+                .contains("a rare value holds cdn-edge.example");
+    }
+
+    @Test
     void anAnswerIsScoredByWhatItSaysWhicheverToolFoundIt() {
         // No answer tool: the reply must name the group and one of the ways of naming who granted it.
         final Map<String, Object> question = Map.of("kind", "question", "expected", Map.of("findings", Map.of(
