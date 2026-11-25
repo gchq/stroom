@@ -142,6 +142,7 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
     static final String ENGINE_ARG = "engine";
     static final String PERSON_ARG = "person";
     static final String LOGON_IDS_ARG = "logonIds";
+    static final String LOGON_FORMS_ARG = PersonScope.LOGON_FORMS_ARG;
     static final String PERSON_FIELD_ARG = "personField";
     static final String USER_FIELD_ARG = "userField";
     static final String ENGINE_AUTO = "auto";
@@ -425,6 +426,14 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
                                                                       + "kept), for docs with no person field, or "
                                                                       + "alone; matched exactly, so give each written "
                                                                       + "form (jsmith, CORP\\jsmith)."))
+                        .addProperty(LOGON_FORMS_ARG, ArraySchema.builder()
+                                .items(new ToolSchema.EnumSchema(null, PersonScope.LOGON_FORMS))
+                                .description("Optional: only when the user (or a skill) says logons are written "
+                                             + "with a domain (CORP\\jsmith) or as an email: strip_domain (both "
+                                             + "forms), lowercase; applied to each step's user field read by "
+                                             + "logonIds. Slower: a pattern over every event in the period. Exact "
+                                             + "by default.")
+                                .build())
                         .addStringProperty(PERSON_FIELD_ARG, "Optional: the field holding the person id (a "
                                                              + "skill's).")
                         .addStringProperty(USER_FIELD_ARG, "Optional: the field holding the logon id (a skill's).")
@@ -479,6 +488,7 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
         final GivenStep givenUntil = SequenceSteps.givenUntil(request, fieldNotes);
         final String person = stringArg(request, PERSON_ARG);
         final List<String> logonIds = stringListArg(request, LOGON_IDS_ARG);
+        final List<Transform> logonForms = PersonScope.logonForms(argsMap(request).get(LOGON_FORMS_ARG));
         if (NullSafe.isBlankString(person) && logonIds.isEmpty()) {
             if (given.stream().anyMatch(GivenStep::target)) {
                 throw new WorkspaceException("A step with " + ROLE_KEY + "=" + TARGET_ROLE + " is of acts done to "
@@ -493,13 +503,13 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
         for (final GivenStep step : given) {
             scoped.add(step.target()
                     ? targeted(request, context, step, person, logonIds, scopes, targets)
-                    : scoped(request, context, step, person, logonIds, scopes));
+                    : scoped(request, context, step, person, logonIds, logonForms, scopes));
         }
         final GivenStep scopedUntil = givenUntil == null
                 ? null
-                : scoped(request, context, givenUntil, person, logonIds, scopes);
+                : scoped(request, context, givenUntil, person, logonIds, logonForms, scopes);
         final ToolResult result = runSteps(request, context, scoped, scopedUntil, fieldNotes);
-        return withScopes(result, scopes, targets);
+        return withScopes(result, scopes, targets, logonForms);
     }
 
     // A step of acts done to the person: an IN condition on its doc's target person field, else its target user
@@ -550,6 +560,7 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
                              final GivenStep step,
                              final String person,
                              final List<String> logonIds,
+                             final List<Transform> logonForms,
                              final Map<String, Scope> scopes) {
         if (step.keysOnly()) {
             return step;
@@ -570,9 +581,50 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
             return found;
         });
         final List<Filter> filters = new ArrayList<>(NullSafe.list(step.filters()));
-        filters.add(new Filter(scope.field().field(), Condition.IN, String.join(",", scope.values()), false));
+        filters.add(personFilter(scope.field().field(), scope.values(), scope.by() == PersonScope.By.LOGON
+                ? logonForms
+                : List.of()));
         return new GivenStep(step.index(), filters, step.anyOf(), step.by(), step.missing(), step.runs(),
                 step.fields(), step.keysOnly(), step.transforms());
+    }
+
+    /// The condition restricting a step to the person: their values, exactly by default; with logonForms (only as
+    /// the user asks), each logon id in its other written forms: lower case as any case, and a domain stripped as
+    /// a pattern of the id with or without a domain before it (`CORP\`) or after it (`@corp.example`).
+    ///
+    /// @param field  The field filtered on.
+    /// @param values The person id, or their logon ids.
+    /// @param forms  The logonForms; empty to match exactly.
+    /// @return The condition.
+    static Filter personFilter(final String field, final List<String> values, final List<Transform> forms) {
+        if (NullSafe.isEmptyCollection(forms)) {
+            return new Filter(field, Condition.IN, String.join(",", values), false);
+        }
+        final List<String> transformed = values.stream()
+                .map(value -> Transform.applyAll(forms, value))
+                .filter(NullSafe::isNonBlankString)
+                .distinct()
+                .toList();
+        final boolean anyCase = forms.contains(Transform.LOWERCASE);
+        if (!forms.contains(Transform.STRIP_DOMAIN)) {
+            return new Filter(field, Condition.IN, String.join(",", transformed), anyCase);
+        }
+        return new Filter(field, Condition.MATCHES_REGEX, "(.*\\\\)?(" + String.join("|", transformed.stream()
+                .map(SequenceQueryTool::regexLiteral)
+                .toList()) + ")(@.*)?", anyCase);
+    }
+
+    // The text as a literal in a Lucene regular expression (Elasticsearch's and EQL's): every character that
+    // isn't a letter or digit escaped.
+    private static String regexLiteral(final String text) {
+        final StringBuilder sb = new StringBuilder();
+        for (final char c : text.toCharArray()) {
+            if (!Character.isLetterOrDigit(c)) {
+                sb.append('\\');
+            }
+            sb.append(c);
+        }
+        return sb.toString();
     }
 
     private static void addOnce(final List<String> list, final String value) {
@@ -584,7 +636,8 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
     // The result, saying by what each doc was restricted to the person.
     private static ToolResult withScopes(final ToolResult result,
                                          final Map<String, Scope> scopes,
-                                         final Map<String, PersonScope.Target> targets) {
+                                         final Map<String, PersonScope.Target> targets,
+                                         final List<Transform> logonForms) {
         if (result.isError() || (scopes.isEmpty() && targets.isEmpty())) {
             return result;
         }
@@ -597,11 +650,19 @@ public class SequenceQueryTool extends AbstractWorkspaceTool {
             final Scope scope = entry.getValue();
             byLogon |= scope.by() == PersonScope.By.LOGON;
             NullSafe.consume(scope.field().suggestion(), line -> addOnce(suggested, line));
-            listed.add(Map.of("index", entry.getKey(), "by", scope.by().label(), "field", scope.field().field(),
-                    "field_from", scope.field().from(), "values", scope.values()));
+            final String matched = scope.by() == PersonScope.By.LOGON && !logonForms.isEmpty()
+                    ? "matched with " + PersonScope.describe(logonForms) + ": " + PersonScope.SCRIPTED
+                    : null;
+            final Map<String, Object> one = new LinkedHashMap<>(Map.of("index", entry.getKey(), "by",
+                    scope.by().label(), "field", scope.field().field(), "field_from", scope.field().from(),
+                    "values", scope.values()));
+            NullSafe.consume(matched, text -> one.put("matched", text));
+            listed.add(one);
             sb.append("\n- ").append(entry.getKey()).append(": ").append(scope.by().label()).append(", ")
                     .append(scope.field().field()).append(" in (").append(String.join(", ", scope.values()))
-                    .append(")");
+                    .append(")").append(matched == null
+                            ? ""
+                            : ", " + matched);
         }
         for (final Map.Entry<String, PersonScope.Target> entry : targets.entrySet()) {
             final PersonScope.Target target = entry.getValue();

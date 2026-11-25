@@ -3844,6 +3844,14 @@ Use for any 'X, then Y, within N' question ('did anyone X and then Y within an h
       "description" : "The most sequences (default 1000, at most 10000; the stream engine: default 10000, at most 100000, counting all).",
       "type" : "integer"
     },
+    "logonForms" : {
+      "description" : "Optional: only when the user (or a skill) says logons are written with a domain (CORP\\jsmith) or as an email: strip_domain (both forms), lowercase; applied to each step's user field read by logonIds. Slower: a pattern over every event in the period. Exact by default.",
+      "items" : {
+        "enum" : [ "strip_domain", "lowercase" ],
+        "type" : "string"
+      },
+      "type" : "array"
+    },
     "logonIds" : {
       "description" : "Optional: the person's logon ids (all kept), for docs with no person field, or alone; matched exactly, so give each written form (jsmith, CORP\\jsmith).",
       "items" : {

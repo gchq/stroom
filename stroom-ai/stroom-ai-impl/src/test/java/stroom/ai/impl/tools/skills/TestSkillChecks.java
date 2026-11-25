@@ -16,6 +16,8 @@
 
 package stroom.ai.impl.tools.skills;
 
+import stroom.ai.api.AiService;
+import stroom.ai.impl.BuiltInToolsTestWiring;
 import stroom.ai.impl.tools.AbstractBuiltInTool;
 import stroom.ai.impl.tools.ToolDefinition;
 import stroom.ai.impl.tools.ToolSchema;
@@ -30,6 +32,7 @@ import stroom.ai.impl.tools.timeline.EventChains;
 import stroom.ai.impl.tools.timeline.TimelineChainCheck;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -266,6 +269,51 @@ class TestSkillChecks {
                         "'limit' should be a whole number", "'allStreams' should be true or false",
                         "'where[0].condition' should be one of EQUALS, CONTAINS", "'where[0].field' is required",
                         "'index' is required"));
+    }
+
+    @Test
+    void aSkillsLogonFormsAndTransformsAreCheckedAgainstTheToolsTheyArePassedTo() {
+        final Map<String, ToolDefinition> real = new LinkedHashMap<>();
+        new BuiltInToolsTestWiring(Mockito.mock(AiService.class)).tools().forEach(tool -> real.put(
+                tool.definition().name(), tool.definition()));
+        final SkillChecks.Facts facts = new DelegatingFacts(facts()) {
+            @Override
+            public Optional<ToolDefinition> tool(final String name) {
+                return Optional.ofNullable(real.get(name));
+            }
+
+            @Override
+            public boolean allowed(final String name) {
+                return true;
+            }
+        };
+
+        final List<Finding> findings = SkillChecks.check(skill("""
+                ## Steps
+                1. Compare them:
+                   ```json
+                   {"tool": "compare_activity", "arguments": {"logonIds": ["{user}"], "logonForms": ["strip_domains"]}}
+                   ```
+                2. Their sequences:
+                   ```json
+                   {"tool": "sequence_query", "arguments": {"logonIds": ["{user}"], "logonForms": ["file_name"], \
+                "steps": []}}
+                   ```
+                3. Their timeline:
+                   ```json
+                   {"tool": "activity_timeline", "arguments": {"entity": "{user}", "logonForms": ["lowercase"], \
+                "sources": [{"index": "Endpoint", "transform": ["lower"]}]}}
+                   ```"""), null, facts);
+
+        assertThat(findings).filteredOn(finding -> finding.rule().equals("call_off_schema"))
+                .extracting(Finding::message)
+                .anySatisfy(message -> assertThat(message).contains("compare_activity",
+                        "'logonForms[0]' should be one of strip_domain, lowercase"))
+                .anySatisfy(message -> assertThat(message).contains("sequence_query",
+                        "'logonForms[0]' should be one of strip_domain, lowercase"))
+                .anySatisfy(message -> assertThat(message).contains("activity_timeline",
+                        "'sources[0].transform[0]' should be one of lowercase, strip_domain, file_name")
+                        .doesNotContain("'logonForms"));
     }
 
     @Test

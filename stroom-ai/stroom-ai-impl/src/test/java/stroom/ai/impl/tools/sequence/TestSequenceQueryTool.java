@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.sequence;
 
+import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.api.ElasticEql;
 import stroom.ai.api.ElasticEql.Event;
 import stroom.ai.api.ElasticEql.Reason;
@@ -286,6 +287,36 @@ class TestSequenceQueryTool {
         assertThat(run(chat(UserQuestions.NONE), args)).contains("Restricted to the person:\n- Devices: by person "
                                                                  + "id, user in (P1)\n- Sysmon: by logon id, "
                                                                  + "SubjectUserName in (alice, CORP\\alice)");
+    }
+
+    @Test
+    void logonIdsAreMatchedExactlyUnlessLogonFormsAskForTheirOtherWrittenForms() {
+        final Map<String, Object> args = args("2m");
+        args.put("userField", List.of("user", "SubjectUserName"));
+        args.put("logonIds", List.of("Alice.Chen"));
+        args.put("logonForms", List.of("strip_domain", "lowercase"));
+
+        final Map<String, Object> json = JsonUtil.readValue(run(mcp(), args), Map.class);
+
+        // A pattern of the id with or without a domain, in any case; the id's dot escaped.
+        assertThat(request().query()).contains("user regex~ \"(.*\\\\\\\\)?(alice\\\\.chen)(@.*)?\"");
+        assertThat((List<Map<String, Object>>) json.get("scope")).allSatisfy(scope -> assertThat(scope)
+                .containsEntry("matched", "matched with strip_domain, lowercase: " + PersonScope.SCRIPTED));
+        // Only the logon forms.
+        args.put("logonForms", List.of("file_name"));
+        assertThat(run(mcp(), args)).contains("logonForms takes strip_domain, lowercase: 'file_name' isn't one");
+    }
+
+    @Test
+    void aPersonFilterIsExactByDefaultAnyCaseForLowercaseAndAPatternForAStrippedDomain() {
+        assertThat(SequenceQueryTool.personFilter("user", List.of("CORP\\Alice", "bob"), List.of()))
+                .isEqualTo(new EqlQueryWriter.Filter("user", Condition.IN, "CORP\\Alice,bob", false));
+        assertThat(SequenceQueryTool.personFilter("user", List.of("Alice", "alice"), List.of(Transform.LOWERCASE)))
+                .isEqualTo(new EqlQueryWriter.Filter("user", Condition.IN, "alice", true));
+        // The given ids' own domains stripped first; matched case-sensitively without lowercase.
+        assertThat(SequenceQueryTool.personFilter("user", List.of("CORP\\alice", "bob@corp.example"),
+                List.of(Transform.STRIP_DOMAIN))).isEqualTo(new EqlQueryWriter.Filter("user",
+                Condition.MATCHES_REGEX, "(.*\\\\)?(alice|bob)(@.*)?", false));
     }
 
     @Test

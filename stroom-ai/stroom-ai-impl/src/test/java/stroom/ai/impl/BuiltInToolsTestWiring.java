@@ -89,12 +89,12 @@ import java.util.Set;
 
 /// Every built-in tool, as Guice binds them, with everything they need mocked, as `TestAgentModeTools` builds
 /// them. Tools are only asked for their specification and flags, so the mocks are never used.
-final class BuiltInToolsTestWiring {
+public final class BuiltInToolsTestWiring {
 
     private final Injector injector;
 
     /// @param aiService The AI service the tools are given.
-    BuiltInToolsTestWiring(final AiService aiService) {
+    public BuiltInToolsTestWiring(final AiService aiService) {
         injector = Guice.createInjector(new BuiltInToolsModule(), new AbstractModule() {
             @Override
             protected void configure() {
@@ -169,7 +169,7 @@ final class BuiltInToolsTestWiring {
     }
 
     /// @return The built-in tools themselves, as bound.
-    Set<StroomTool> tools() {
+    public Set<StroomTool> tools() {
         return injector.getInstance(Key.get(new TypeLiteral<Set<StroomTool>>() {
         }));
     }
