@@ -82,6 +82,7 @@ final class FakeBuildFacts implements BuildFacts {
     Map<String, Object> startFrom;
     // The copied XSLT rebuild_mapping couldn't read back (none by default).
     Map<String, Object> readBackFailed;
+    Set<String> keptAtPromotion = Set.of();
     List<String> columns = List.of();
     Function<String, Map<String, Object>> profiler = text -> profileOf("json lines");
     RuntimeException docsFail;
@@ -345,5 +346,10 @@ final class FakeBuildFacts implements BuildFacts {
     @Override
     public Optional<Map<String, Object>> readBackFailed(final String build) {
         return Optional.ofNullable(readBackFailed);
+    }
+
+    @Override
+    public Set<String> keptAtPromotion(final String build) {
+        return keptAtPromotion;
     }
 }

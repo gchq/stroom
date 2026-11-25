@@ -197,6 +197,23 @@ public class BuildRecords {
                 .orElseGet(BuildRecords::empty);
     }
 
+    /// @param documentAccess How documents are read.
+    /// @param doc            A document of a build.
+    /// @param entry          Its entry in the build's record ([#docs]), or null.
+    /// @return True for a document a promotion kept in the workspace and nothing has changed since: its version is
+    /// the one kept (a record from before versions were kept has none, and is taken as unchanged).
+    static boolean keptUnchanged(final DocumentAccess documentAccess,
+                                 final WriteGuard.BuildDoc doc,
+                                 final Object entry) {
+        if (!(entry instanceof final Map<?, ?> map) || !Boolean.TRUE.equals(map.get(KEPT_AT_PROMOTION))) {
+            return false;
+        }
+        final Object kept = map.get(KEPT_VERSION);
+        return kept == null || version(documentAccess, doc.docRef())
+                .map(version -> version.equals(String.valueOf(kept)))
+                .orElse(true);
+    }
+
     /// @param documentAccess Reads the document, as the user.
     /// @param ref            A document.
     /// @return Its version: empty when it can't be read, or has none.

@@ -207,6 +207,13 @@ interface BuildFacts {
     }
 
     /// @param build A build.
+    /// @return The UUIDs of the build's documents its promotion left in the workspace on purpose and nothing has
+    /// changed since (a feed's survey, say: [BuildRecords#keptUnchanged]); none where it wasn't promoted.
+    default Set<String> keptAtPromotion(final String build) {
+        return Set.of();
+    }
+
+    /// @param build A build.
     /// @return How the user chose to start it, a pipeline already translating what it is to
     /// ([BuildRecords#startFrom]): `choice` (`existing` or `draft`) and `pipeline`; empty when not asked yet.
     default Optional<Map<String, Object>> startFrom(final String build) {

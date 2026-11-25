@@ -178,8 +178,10 @@ class BuildStatusTool extends AbstractBuiltInTool {
                 // A name the workspace has no build of reads as a new build's empty plan (seen in chat 195).
                 plan.refuseUnlessABuild(build);
             }
-            if (!promoted.isEmpty() && empty) {
-                // Promoted in this session, nothing left in it: what matters now is how its feeds are selected.
+            if (!promoted.isEmpty() && (empty || plan.onlyKeptAtPromotion(build))) {
+                // Promoted in this session, nothing left in it but what promotion leaves there on purpose (the
+                // feed's survey, say: seen in e2e, a promoted build's kept survey reported as a plan still to do,
+                // its next a copy_pipeline): what matters now is how its feeds are selected.
                 return JsonResults.of(promotedStatus(build, selection));
             }
             if (!promoted.isEmpty()) {

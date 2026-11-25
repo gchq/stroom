@@ -96,7 +96,7 @@ class SourceTypeRegistries {
             final Map<String, Object> entries = BuildRecords.docs(record);
             // What the build's promotion kept in the workspace is no work in progress, until it is changed.
             final List<WriteGuard.BuildDoc> docs = guard.folderContents(other).stream()
-                    .filter(doc -> !keptUnchanged(doc, entries.get(doc.uuid())))
+                    .filter(doc -> !BuildRecords.keptUnchanged(documentAccess, doc, entries.get(doc.uuid())))
                     .toList();
             final boolean registry = docs.stream()
                     .anyMatch(doc -> DocumentationDoc.TYPE.equals(doc.type()) && name.equals(doc.name()));
@@ -118,18 +118,6 @@ class SourceTypeRegistries {
                                   + "change in one place. Finish build '" + open + "' (promote_build) or abandon it "
                                   + "(the user deletes its folder) first, or carry on in it.");
         }
-    }
-
-    // True for a document a promotion kept in the workspace and nothing has changed since: its version is the one
-    // kept (a record from before versions were kept has none, and is taken as unchanged).
-    private boolean keptUnchanged(final WriteGuard.BuildDoc doc, final Object entry) {
-        if (!(entry instanceof final Map<?, ?> map) || !Boolean.TRUE.equals(map.get(BuildRecords.KEPT_AT_PROMOTION))) {
-            return false;
-        }
-        final Object kept = map.get(BuildRecords.KEPT_VERSION);
-        return kept == null || BuildRecords.version(documentAccess, doc.docRef())
-                .map(version -> version.equals(String.valueOf(kept)))
-                .orElse(true);
     }
 
     // A build's record: the existing feeds it works from, and what its promotion kept; empty if it can't be read.

@@ -57,6 +57,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -201,6 +202,22 @@ class StroomBuildFacts implements BuildFacts {
     @Override
     public Map<String, String> unreadableSurveys(final String build) {
         return buildRecords.unreadableSurveys(build);
+    }
+
+    @Override
+    public Set<String> keptAtPromotion(final String build) {
+        final List<WriteGuard.BuildDoc> contents = guard.folderContents(build);
+        if (contents.isEmpty()) {
+            return Set.of();
+        }
+        final Map<String, Object> entries = BuildRecords.docs(buildRecords.load(build));
+        final Set<String> kept = new HashSet<>();
+        for (final WriteGuard.BuildDoc doc : contents) {
+            if (BuildRecords.keptUnchanged(documentAccess, doc, entries.get(doc.uuid()))) {
+                kept.add(doc.uuid());
+            }
+        }
+        return kept;
     }
 
     @Override

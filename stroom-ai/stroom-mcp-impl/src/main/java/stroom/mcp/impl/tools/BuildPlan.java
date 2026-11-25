@@ -717,6 +717,28 @@ public class BuildPlan {
         });
     }
 
+    /// Whether nothing is left in a build but what its promotion left in the workspace on purpose, unchanged since
+    /// (its survey, say): promoted, with no work of its own still to do. A build holding anything else (a pipeline,
+    /// an XSLT, a document changed since or made after) still has work.
+    ///
+    /// @param build A build.
+    /// @return True when every document left in it was kept at promotion and is unchanged; false for a build with
+    /// nothing in it, or nothing kept.
+    public boolean onlyKeptAtPromotion(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return false;
+        }
+        try {
+            final List<Map<String, Object>> docs = facts.buildDocs(build);
+            final Set<String> kept = facts.keptAtPromotion(build);
+            return !docs.isEmpty() && docs.stream().allMatch(doc -> kept.contains(uuid(doc)));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("What build {}'s promotion kept wasn't read: {}", build,
+                    e.getMessage()), e);
+            return false;
+        }
+    }
+
     /// @param build A build.
     /// @return How the user chose to start it ([BuildFacts#startFrom]), or empty when not asked yet.
     public Optional<Map<String, Object>> startFrom(final String build) {
