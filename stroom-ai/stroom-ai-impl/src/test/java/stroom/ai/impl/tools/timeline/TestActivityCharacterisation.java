@@ -228,6 +228,46 @@ class TestActivityCharacterisation {
     }
 
     @Test
+    void aCutOffAnswerKeepsItsWholeEntriesAndAsksAgainForOnlyTheRest() {
+        // Chat 197: a batch's answer couldn't be read (cut off at its tokens, as a long one is), so all 50 of its
+        // items were unclear, though most had been answered (decided by the user, 2026-11-26: salvage, then retry).
+        final List<List<String>> askedFor = new ArrayList<>();
+        final Characterised result = characterise(settings(50, 500, List.of()), model(question -> {
+            if (question.system().equals(ActivityCharacterisation.NAMING)) {
+                return answers(question);
+            }
+            final String items = question.user().substring(question.user().indexOf("Items:\n") + 7);
+            askedFor.add(((List<?>) JsonUtil.readValue(items, List.class)).stream()
+                    .map(item -> String.valueOf(((Map<?, ?>) item).get("item")))
+                    .toList());
+            final String whole = answers(question);
+            // The first answer stops part way through its last entry.
+            return askedFor.size() == 1
+                    ? whole.substring(0, whole.lastIndexOf('{') + 8)
+                    : whole;
+        }));
+
+        assertThat(askedFor).hasSize(2);
+        assertThat(askedFor.get(1)).hasSize(1).isSubsetOf(askedFor.getFirst());
+        assertThat(result.counts().failed()).isZero();
+        assertThat(result.items().get("prompt").activity()).isEqualTo("a1");
+    }
+
+    @Test
+    void theWholeEntriesOfACutOffListAreRead() {
+        final Map<String, Map<String, Object>> read = ActivityCharacterisation.read("""
+                [{"item": "x1", "activity": "a1", "confidence": "high", "reason": "a [bracket] and a } brace"},
+                {"item": "x2", "activity": "not_work", "confidence": "medium", "reason": "personal"},
+                {"item": "x3", "activity": "a1", "conf""", List.of(item("x1"), item("x2"), item("x3")), Set.of("a1"));
+
+        assertThat(read).containsOnlyKeys("x1", "x2", "x3");
+        assertThat(read.get("x1")).containsEntry("activity", "a1")
+                .containsEntry("reason", "a [bracket] and a } brace");
+        assertThat(read.get("x2")).containsEntry("activity", "not_work");
+        assertThat(read.get("x3")).containsEntry("reason", "the model's answer left it out");
+    }
+
+    @Test
     void aBatchNeverAnsweredLeavesItsItemsUnclearSayingWhy() {
         final Characterised result = characterise(settings(50, 500, List.of()), model(question -> {
             throw new ModelSideCalls.SideCallException("the model gave an empty answer");

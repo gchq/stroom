@@ -104,6 +104,8 @@ final class ActivityCharacterisation {
     static final int UNCLEAR_SHOWN = 5;
     /// The longest reason kept.
     static final int MAX_REASON_CHARS = 160;
+    // Why an item the model's answers didn't give was left unclear.
+    private static final String LEFT_OUT = "the model's answer left it out";
     // Why a failed batch's item wasn't classified, in its answer.
     private static final String FAILED_WHY = "failed_why";
 
@@ -821,28 +823,68 @@ final class ActivityCharacterisation {
                                                           final Settings settings,
                                                           final ModelSideCalls sideCalls,
                                                           final List<String> problems) {
-        final Question question = new Question(SYSTEM, userText(batch, profiles, settings.zone()), ANSWER_TOKENS);
-        String problem = null;
-        for (int attempt = 0; attempt < 2; attempt++) {
-            try {
-                final Answer answer = sideCalls.ask(question);
-                final Map<String, Map<String, Object>> read = read(answer.text(), batch, activityIds);
-                if (read != null) {
-                    return read;
-                }
-                problem = "the model's answer couldn't be read as the list asked for";
-            } catch (final SideCallException e) {
-                problem = NullSafe.nonBlankStringElse(e.getMessage(), "the model couldn't be asked");
+        // Every whole entry of an answer is kept, a cut-off one's too; the items still unread are asked again once,
+        // then in halves (decided by the user, 2026-11-26; seen in chat 197: one unreadable answer left all 50 of a
+        // batch's items unclear).
+        final Map<String, Map<String, Object>> answers = new LinkedHashMap<>();
+        String problem = ask(batch, activityIds, profiles, settings, sideCalls, answers);
+        List<Item> unread = unread(batch, answers);
+        if (!unread.isEmpty()) {
+            problem = latest(ask(unread, activityIds, profiles, settings, sideCalls, answers),
+                    problem);
+            unread = unread(batch, answers);
+        }
+        if (unread.size() > 1) {
+            final int half = unread.size() / 2;
+            for (final List<Item> part : List.of(unread.subList(0, half), unread.subList(half, unread.size()))) {
+                problem = latest(ask(part, activityIds, profiles, settings, sideCalls,
+                        answers), problem);
             }
+            unread = unread(batch, answers);
         }
-        problems.add(problem);
-        final Map<String, Map<String, Object>> failed = new LinkedHashMap<>();
-        for (final Item item : batch) {
-            failed.put(item.id(), Map.of("activity", UNCLEAR, "confidence", "low", "reason", "not classified: "
-                                                                                              + problem,
-                    "failed", true, FAILED_WHY, problem));
+        if (!unread.isEmpty() && problem != null) {
+            problems.add(problem);
         }
-        return failed;
+        for (final Item item : unread) {
+            answers.put(item.id(), problem == null
+                    ? Map.of("activity", UNCLEAR, "confidence", "low", "reason", LEFT_OUT)
+                    : Map.of("activity", UNCLEAR, "confidence", "low", "reason", "not classified: " + problem,
+                            "failed", true, FAILED_WHY, problem));
+        }
+        return answers;
+    }
+
+    // One call for the items, each whole entry of its answer kept in answers; why nothing could be read, or null.
+    private static String ask(final List<Item> items,
+                              final Set<String> activityIds,
+                              final String profiles,
+                              final Settings settings,
+                              final ModelSideCalls sideCalls,
+                              final Map<String, Map<String, Object>> answers) {
+        try {
+            final Answer answer = sideCalls.ask(new Question(SYSTEM, userText(items, profiles, settings.zone()),
+                    ANSWER_TOKENS));
+            final Map<String, Map<String, Object>> read = answered(answer.text(), items, activityIds);
+            if (read == null) {
+                return "the model's answer couldn't be read as the list asked for";
+            }
+            answers.putAll(read);
+            return null;
+        } catch (final SideCallException e) {
+            return NullSafe.nonBlankStringElse(e.getMessage(), "the model couldn't be asked");
+        }
+    }
+
+    // The latest call's problem, else the one before (null for none).
+    private static String latest(final String problem, final String before) {
+        return problem != null
+                ? problem
+                : before;
+    }
+
+    // The items no answer has been read for yet.
+    private static List<Item> unread(final List<Item> batch, final Map<String, Map<String, Object>> answers) {
+        return batch.stream().filter(item -> !answers.containsKey(item.id())).toList();
     }
 
     /// Reads a batch's answer: a JSON list of `{item, activity, name, confidence, reason}`, each checked. An item
@@ -856,15 +898,22 @@ final class ActivityCharacterisation {
     static Map<String, Map<String, Object>> read(final String text,
                                                  final List<Item> batch,
                                                  final Set<String> activityIds) {
-        final int start = NullSafe.string(text).indexOf('[');
-        final int end = NullSafe.string(text).lastIndexOf(']');
-        if (start < 0 || end <= start) {
+        final Map<String, Map<String, Object>> answers = answered(text, batch, activityIds);
+        if (answers == null) {
             return null;
         }
-        final List<?> list;
-        try {
-            list = JsonUtil.readValue(text.substring(start, end + 1), List.class);
-        } catch (final RuntimeException e) {
+        for (final Item item : batch) {
+            answers.putIfAbsent(item.id(), Map.of("activity", UNCLEAR, "confidence", "low", "reason", LEFT_OUT));
+        }
+        return answers;
+    }
+
+    // The answers an answer gives, each checked, by item id: only the items it answers; null if no entry can be read.
+    private static Map<String, Map<String, Object>> answered(final String text,
+                                                             final List<Item> batch,
+                                                             final Set<String> activityIds) {
+        final List<?> list = entries(text);
+        if (list == null) {
             return null;
         }
         final Set<String> asked = new LinkedHashSet<>();
@@ -910,11 +959,63 @@ final class ActivityCharacterisation {
             }
             answers.put(item, answer);
         }
-        for (final String item : asked) {
-            answers.putIfAbsent(item, Map.of("activity", UNCLEAR, "confidence", "low", "reason",
-                    "the model's answer left it out"));
-        }
         return answers;
+    }
+
+    // An answer's list: the whole list, else (cut off, say at its tokens) each whole object in it; null for none.
+    private static List<?> entries(final String text) {
+        final String given = NullSafe.string(text);
+        final int start = given.indexOf('[');
+        if (start < 0) {
+            return null;
+        }
+        final int end = given.lastIndexOf(']');
+        if (end > start) {
+            try {
+                return JsonUtil.readValue(given.substring(start, end + 1), List.class);
+            } catch (final RuntimeException e) {
+                // Read what can be, below.
+            }
+        }
+        final List<Object> whole = new ArrayList<>();
+        int depth = 0;
+        int from = -1;
+        boolean inString = false;
+        boolean escaped = false;
+        for (int i = start + 1; i < given.length(); i++) {
+            final char c = given.charAt(i);
+            if (inString) {
+                if (escaped) {
+                    escaped = false;
+                } else if (c == '\\') {
+                    escaped = true;
+                } else if (c == '"') {
+                    inString = false;
+                }
+            } else if (c == '"') {
+                inString = true;
+            } else if (c == '{' || c == '[') {
+                if (depth == 0 && c == '{') {
+                    from = i;
+                }
+                depth++;
+            } else if (c == '}' || c == ']') {
+                depth--;
+                if (depth == 0 && c == '}' && from >= 0) {
+                    try {
+                        whole.add(JsonUtil.readValue(given.substring(from, i + 1), Map.class));
+                    } catch (final RuntimeException e) {
+                        // Not an object after all: left out.
+                    }
+                    from = -1;
+                } else if (depth < 0) {
+                    break;
+                }
+            }
+        }
+        return whole.isEmpty()
+                ? null
+                : whole;
     }
 
     private static String shortReason(final Object reason) {
