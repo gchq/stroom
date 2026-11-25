@@ -62,10 +62,10 @@ public class FindSkillsTool extends AbstractBuiltInTool {
     static final int MAX_FOUND = 20;
     static final String FORM_KEY = "skill-parameters";
     /// The problems that don't stop a skill running, as its steps still work as written: a hand edit since its
-    /// doc's latest history entry (the history's, not the skill's), a parameter listed and not used, no description
-    /// (what it is chosen by, not run by), and its Event chains (a timeline leaves out an entry it can't use).
-    static final Set<String> NOT_STOPPING = Set.of("hand_edit", "unused_parameter", "no_description",
-            "event_chains");
+    /// doc's latest history entry (the history's, not the skill's), a parameter listed and not used, and no
+    /// description (what it is chosen by, not run by). A failed Event chains check stops it like any other problem:
+    /// the timeline would read the source wrongly, or without what was learned.
+    static final Set<String> NOT_STOPPING = Set.of("hand_edit", "unused_parameter", "no_description");
 
     private final SkillCatalogue catalogue;
     private final SkillFacts facts;

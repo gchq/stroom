@@ -189,6 +189,35 @@ class TestFindSkillsTool {
     }
 
     @Test
+    void aSkillWhoseEventChainsFailTheirCheckStopsLikeOtherProblems() {
+        final SkillDoc.Skill skill = SkillDoc.parse(TestSkillDoc.TIMELINE.replace("## Output", """
+                ## Event chains
+
+                - Retired logons: pair Logon -> Logoff by Session/Id
+
+                ## Output""")).skills().getFirst();
+        Mockito.when(catalogue.readable(Mockito.any())).thenReturn(List.of(new Listed(DOC, HUNTS, "/Hunts", skill,
+                0)));
+        Mockito.when(facts.forSkill(Mockito.any(), Mockito.any(), Mockito.anyBoolean()))
+                .thenReturn(SkillTestFacts.missingDataSource("Retired logons", List.of()));
+
+        final String result = run(Map.of("name", "user-activity-timeline", "arguments", Map.of("user", "jsmith",
+                "host", "ws01")));
+
+        assertThat(result).contains("Stop: don't run this skill", "Event chains name 'Retired logons'")
+                .doesNotContain("Run it with", "don't stop it running");
+    }
+
+    @Test
+    void anUnusedParameterStillDoesntStopASkill() {
+        final String result = run(Map.of("name", "user-activity-timeline", "arguments", Map.of("user", "jsmith",
+                "host", "ws01")));
+
+        assertThat(result).contains("problems that don't stop it running", "unused_parameter", "Run it with")
+                .doesNotContain("Stop: don't run this skill");
+    }
+
+    @Test
     void skillsAreSearchedByWords() {
         assertThat(run(Map.of("words", "firewall denied"))).contains("1 skill(s) matching 'firewall denied'",
                 "- Firewall denies (/): Counts denied connections.");
