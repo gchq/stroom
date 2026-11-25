@@ -582,7 +582,7 @@ class TestActivityTimelineAnySource {
         final Map<String, Object> view = (Map<String, Object>) result.get("view");
         assertThat((List<Map<String, Object>>) view.get("gantt_charts")).extracting(chart -> chart.get("path"),
                 chart -> chart.get("label"), chart -> chart.get("lane")).containsExactly(
-                org.assertj.core.groups.Tuple.tuple(FOLDER + "activities.csv", "activity_label", "day"),
+                org.assertj.core.groups.Tuple.tuple(FOLDER + "activities.csv", "bar_label", "day"),
                 org.assertj.core.groups.Tuple.tuple(FOLDER + "spans.csv", "label", "lane"));
         assertThat(result).containsKey("characterisation");
         assertThat(files.content(FOLDER + ActivityTimelineTool.ACTIVITIES_FILE).orElseThrow().lines().findFirst()

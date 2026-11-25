@@ -211,15 +211,17 @@ class TestE2eActivityTimeline extends AbstractE2eTest {
         assertThat(activities).allSatisfy(activity -> assertThat(activity).containsEntry("label_is", "inferred"));
         assertThat(read(plainClient, FOLDER + "activities.csv").lines().findFirst().orElseThrow())
                 .isEqualTo("activity,activity_label,day,start,end,active_minutes,spans,actions,lanes,evidence,"
-                           + "start_event,end_event");
+                           + "start_event,end_event,bar_label");
     }
 
     @Test
     void overAClientThatSamplesTheLooseItemsAreClassifiedByItsModelOutsideTheConversation() {
         final McpTestClient sampling = clients.sampling(admin, true, TestE2eActivityTimeline::standIn);
 
+        // Over MCP no form asks the user first (decided by the user, 2026-11-26: always asked before the model is
+        // called), so runAnyway says they agreed.
         final Map<String, Object> result = sampling.json("activity_timeline", timeline(Map.of(
-                "characterise", true)));
+                "characterise", true, "runAnyway", true)));
         dump("activity_timeline, characterised by sampling", result);
 
         final Map<String, Object> characterisation = (Map<String, Object>) result.get("characterisation");

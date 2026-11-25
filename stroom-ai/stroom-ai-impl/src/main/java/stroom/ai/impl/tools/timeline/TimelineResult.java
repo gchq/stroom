@@ -528,7 +528,7 @@ final class TimelineResult {
     }
 
     private static Map<String, Object> activitiesChart(final TimelineRun run, final Files files) {
-        return chart(files.activities().toString(), "activity_label", "activity".equals(run.lanes())
+        return chart(files.activities().toString(), "bar_label", "activity".equals(run.lanes())
                 ? "activity_label"
                 : "day", run.entity() + ": activities by " + ("activity".equals(run.lanes())
                 ? "activity"
@@ -649,7 +649,7 @@ final class TimelineResult {
         map.put("modularity", Math.round(characterised.modularity() * 100) / 100.0);
         map.put("notes", characterised.notes());
         map.put("gantt", Map.of("path", files.activities().toString(), "start", "start", "end", "end", "label",
-                "activity_label", "lane", "day"));
+                "bar_label", "lane", "day"));
         return map;
     }
 

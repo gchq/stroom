@@ -17,7 +17,9 @@
 package stroom.ai.impl.tools.timeline;
 
 import stroom.ai.impl.tools.ToolTables;
+import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Activity;
 import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Characterised;
+import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Part;
 import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Placement;
 import stroom.ai.impl.tools.timeline.EventXmlClassifier.Classified;
 import stroom.ai.impl.tools.timeline.TimelineSessions.Action;
@@ -37,9 +39,11 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -58,7 +62,7 @@ final class TimelineTables {
             "end_event");
     /// The columns of `activities.csv`.
     static final List<String> ACTIVITY_COLUMNS = List.of("activity", "activity_label", "day", "start", "end",
-            "active_minutes", "spans", "actions", "lanes", "evidence", "start_event", "end_event");
+            "active_minutes", "spans", "actions", "lanes", "evidence", "start_event", "end_event", "bar_label");
     // The columns of spans.csv counted for how dense a view is: its lane and its source.
     private static final int SPAN_LANE = SPAN_COLUMNS.indexOf("lane");
     private static final int SPAN_SOURCE = SPAN_COLUMNS.indexOf("source");
@@ -195,11 +199,15 @@ final class TimelineTables {
                 : rollUp(run.built().spans(), characterised, labels, run.capMs(), run.zone().zone());
         final List<List<String>> activityRows = new ArrayList<>();
         for (final ActivityRow row : rolledUp) {
+            // A minor part's marker has no end (gantt_chart draws a row without one as a marker), and its own bar
+            // label; the activity's label still names its lane and colour.
             activityRows.add(List.of(row.activity(), row.label(), row.day().toString(), iso(row.start()),
-                    iso(row.end()), minutes(row.activeMs()), String.join(" ", row.spans()),
+                    row.marker()
+                            ? ""
+                            : iso(row.end()), minutes(row.activeMs()), String.join(" ", row.spans()),
                     TimelineSpans.typesText(row.actions()), String.join("; ", row.lanes()),
                     String.join("; ", row.evidence()), NullSafe.string(row.startEvent()),
-                    NullSafe.string(row.endEvent())));
+                    NullSafe.string(row.endEvent()), row.barLabel()));
         }
         final WorkspacePath activitiesPath = path(folder, ActivityTimelineTool.ACTIVITIES_FILE);
         ToolTables.write(workspace, activitiesPath, ACTIVITY_COLUMNS, activityRows, sourceDoc);
@@ -281,8 +289,41 @@ final class TimelineTables {
                 rows.addAll(current.days(activity, labels, evidence, zone));
             }
         });
+        rows.addAll(minorMarkers(byActivity, characterised, labels, zone));
         rows.sort(Comparator.comparingLong(ActivityRow::start).thenComparing(ActivityRow::activity));
         return rows;
+    }
+
+    // A marker for each span of an activity's minor part ([Activity#minorParts()]), where it happened, named
+    // "<artifact>, in <activity>", so what doesn't shape the activity's name stays in view on its chart (asked for by
+    // the user, 2026-11-26; seen in chat 197: a 6-second archive inside seven hours of build work, its bar too short
+    // to be drawn). A span is a part's where its label names the part's artifact.
+    private static List<ActivityRow> minorMarkers(final Map<String, List<Span>> byActivity,
+                                                  final Characterised characterised,
+                                                  final Map<String, String> labels,
+                                                  final ZoneId zone) {
+        final List<ActivityRow> markers = new ArrayList<>();
+        for (final Activity activity : characterised.activities()) {
+            final List<Span> spans = byActivity.getOrDefault(activity.id(), List.of());
+            // One marker a span, for its largest minor part (the parts come the largest first).
+            final Set<String> marked = new HashSet<>();
+            for (final Part part : activity.minorParts()) {
+                final String artifact = part.artifact().toLowerCase(Locale.ROOT);
+                for (final Span span : spans) {
+                    if (!NullSafe.string(span.label()).toLowerCase(Locale.ROOT).contains(artifact)
+                        || !marked.add(span.id())) {
+                        continue;
+                    }
+                    final String label = labels.getOrDefault(activity.id(), activity.label());
+                    markers.add(new ActivityRow(activity.id(), label,
+                            Instant.ofEpochMilli(span.start()).atZone(zone).toLocalDate(), span.start(), span.end(),
+                            span.end() - span.start(), List.of(span.id()), span.types(),
+                            List.of(NullSafe.string(span.lane())), List.of(part.artifact()), span.startEvent(),
+                            span.endEvent(), part.artifact() + ", in " + label, true));
+                }
+            }
+        }
+        return markers;
     }
 
     // A span's activity: an item's placement for a span placed as an item (by its item id, never a session's), else
@@ -357,6 +398,8 @@ final class TimelineTables {
     /// @param startEvent The type of the event it starts at: of the span starting it, or null where it starts at
     ///                 midnight (a day's cut) or the span doesn't say.
     /// @param endEvent The type of the event it ends at, the same way.
+    /// @param barLabel What its bar or marker is labelled on the chart: the activity's label, or a minor part's.
+    /// @param marker   True for a minor part's marker, drawn where its span starts.
     record ActivityRow(String activity,
                        String label,
                        LocalDate day,
@@ -368,7 +411,9 @@ final class TimelineTables {
                        List<String> lanes,
                        List<String> evidence,
                        String startEvent,
-                       String endEvent) {
+                       String endEvent,
+                       String barLabel,
+                       boolean marker) {
 
     }
 
@@ -453,7 +498,8 @@ final class TimelineTables {
                 rows.add(new ActivityRow(activity, labels.getOrDefault(activity, activity), day, from, to,
                         covered(inDay, from, to), inDay.stream().map(Span::id).toList(), actions, inDay.stream()
                         .map(Span::lane).distinct().toList(), evidence.getOrDefault(activity, List.of()),
-                        eventAt(inDay, from, true), eventAt(inDay, to, false)));
+                        eventAt(inDay, from, true), eventAt(inDay, to, false),
+                        labels.getOrDefault(activity, activity), false));
                 from = to;
             } while (from < end);
             return rows;

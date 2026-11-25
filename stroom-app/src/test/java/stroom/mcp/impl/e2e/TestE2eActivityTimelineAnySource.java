@@ -205,7 +205,7 @@ class TestE2eActivityTimelineAnySource extends AbstractE2eTest {
                 .contains(",Tun-Ascend · network,Tun-Ascend to Tun-Recede,ws-mlee,pair,");
         assertThat(read(timelineFolder("mlee") + "activities.csv").lines().findFirst().orElseThrow())
                 .isEqualTo("activity,activity_label,day,start,end,active_minutes,spans,actions,lanes,evidence,"
-                           + "start_event,end_event");
+                           + "start_event,end_event,bar_label");
     }
 
     // ------------------------------------------------------------------------------------------------

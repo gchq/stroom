@@ -156,6 +156,22 @@ class TestActivityCharacterisation {
                 .anySatisfy(part -> assertThat(part.artifact()).startsWith("reports-2026-10-27.zip"));
         assertThat(TimelineResult.alsoInIt(build)).startsWith("; also in it: ")
                 .contains("reports-2026-10-27.zip").contains(" (1.0 min)");
+        // On the chart, a marker where the minor part happened, named for it in its activity; the activity's own
+        // rows keep its label for their bars.
+        final List<Span> spans = List.of(span(1, Kind.FOCUS, "09:00", "11:00", "build.log - Notepad", false),
+                span(2, Kind.FOCUS, "11:00", "11:01", "reports-2026-10-27.zip build archive - 7-Zip", false),
+                span(3, Kind.FOCUS, "11:01", "13:00", "build.log - Notepad", false));
+        final List<TimelineTables.ActivityRow> rows = TimelineTables.rollUp(spans, result, Map.of(build.id(),
+                "Monitoring builds"), 30 * 60_000L, ZoneOffset.UTC);
+        // One marker for the span, though two of its minor parts (the archive and 7-Zip) are named in it.
+        assertThat(rows).filteredOn(TimelineTables.ActivityRow::marker).singleElement().satisfies(marker -> {
+            assertThat(marker.start()).isEqualTo(at("11:00"));
+            assertThat(marker.spans()).containsExactly("s2");
+            assertThat(marker.label()).isEqualTo("Monitoring builds");
+            assertThat(marker.barLabel()).endsWith(", in Monitoring builds");
+        });
+        assertThat(rows).filteredOn(row -> !row.marker()).isNotEmpty()
+                .allSatisfy(row -> assertThat(row.barLabel()).isEqualTo("Monitoring builds"));
         // The naming call is given each main artifact's share of the time.
         assertThat(asked).filteredOn(question -> question.system().equals(ActivityCharacterisation.NAMING))
                 .singleElement().satisfies(question -> assertThat(question.user())
