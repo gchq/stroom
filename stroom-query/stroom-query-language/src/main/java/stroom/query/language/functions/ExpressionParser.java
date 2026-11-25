@@ -50,14 +50,14 @@ public class ExpressionParser {
             Set.of(TokenType.DIVISION, TokenType.MULTIPLICATION, TokenType.MODULUS),
             Set.of(TokenType.PLUS, TokenType.MINUS));
 
-    private static final TokenType[] EQUALITY = new TokenType[]{
-            TokenType.EQUALS,
-            TokenType.NOT_EQUALS,
-            TokenType.GREATER_THAN,
-            TokenType.GREATER_THAN_OR_EQUAL_TO,
-            TokenType.LESS_THAN,
-            TokenType.LESS_THAN_OR_EQUAL_TO
-    };
+    // The levels of the comparisons, lowest first. The comparisons of a level are equal, so are applied left to
+    // right, e.g. 2 = 2 = true() is (2 = 2) = true().
+    private static final List<Set<TokenType>> COMPARISON_LEVELS = List.of(
+            Set.of(TokenType.EQUALS, TokenType.NOT_EQUALS),
+            Set.of(TokenType.GREATER_THAN,
+                    TokenType.GREATER_THAN_OR_EQUAL_TO,
+                    TokenType.LESS_THAN,
+                    TokenType.LESS_THAN_OR_EQUAL_TO));
 
     private static final Set<TokenType> BODMAS_SET = Set.of(
             TokenType.ORDER,
@@ -342,17 +342,7 @@ public class ExpressionParser {
                                 final FieldIndex fieldIndex) {
         LOGGER.trace(() -> "applyEquality() - " + getObjectString(objects));
 
-        int index = -1;
-        for (final TokenType type : EQUALITY) {
-            for (int i = 0; i < objects.size() && index == -1; i++) {
-                final Object object = objects.get(i);
-                if (object instanceof final Token token) {
-                    if (type.equals(token.getTokenType())) {
-                        index = i;
-                    }
-                }
-            }
-        }
+        final int index = findLastComparison(objects);
 
         // If we don't find an operator then we are done.
         if (index == -1) {
@@ -385,6 +375,18 @@ public class ExpressionParser {
             }
             return function;
         }
+    }
+
+    // Finds the comparison to apply last, which is the rightmost of those in the lowest level there are any of.
+    private int findLastComparison(final List<Object> objects) {
+        for (final Set<TokenType> level : COMPARISON_LEVELS) {
+            for (int i = objects.size() - 1; i >= 0; i--) {
+                if (objects.get(i) instanceof final Token token && level.contains(token.getTokenType())) {
+                    return i;
+                }
+            }
+        }
+        return -1;
     }
 
     private List<Object> applySigns(final List<Object> objects,

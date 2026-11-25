@@ -28,7 +28,9 @@ import java.util.function.Supplier;
         commonReturnType = ValDouble.class,
         commonReturnDescription = "The sum of all values",
         commonDescription = "Adds the value of all arguments together. Minimum of two arguments. Can be expressed as " +
-                            "'${field1}+${field2}'.",
+                            "'${field1}+${field2}'. If any argument is a string then the arguments that are " +
+                            "not null are joined together. Otherwise returns null if any argument is null, or an " +
+                            "error if any argument is not a number.",
         signatures = @FunctionSignature(
                 args = @FunctionArg(
                         name = "arg",
@@ -117,7 +119,7 @@ class Add extends NumericFunction {
                 vals[i] = val;
             }
 
-            // If any of the input values are strings then concatenate them all.
+            // If any of the input values are strings then concatenate them all, leaving out nulls.
             if (concat) {
                 final StringBuilder sb = new StringBuilder();
                 for (final Val val : vals) {
@@ -128,13 +130,7 @@ class Add extends NumericFunction {
                 return ValString.create(sb.toString());
             }
 
-            Val value = ValNull.INSTANCE;
-            for (final Val val : vals) {
-                if (val.type().isValue()) {
-                    value = calculator.calc(value, val);
-                }
-            }
-            return value;
+            return calculate(vals, calculator);
         }
     }
 }

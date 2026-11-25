@@ -20,6 +20,8 @@ import stroom.query.api.token.Token;
 import stroom.query.api.token.TokenType;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -63,6 +65,31 @@ public class TestTokeniser extends AbstractQueryTest {
                 .stream()
                 .filter(token -> !TokenType.WHITESPACE.equals(token.getTokenType()))
                 .toList();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"1e5", "1E5", "1e+5", "1e-3", "1.5e3", "12e34"})
+    void numberWithExponentIsOneToken(final String input) {
+        final List<Token> tokens = withoutWhitespace("x = " + input);
+        assertThat(tokens).extracting(Token::getText).containsExactly("x", "=", input);
+        assertThat(tokens.getLast().getTokenType()).isEqualTo(TokenType.NUMBER);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"abc1e5", "host:1e5", "a.1e5", "_1e5", "#1e5"})
+    void exponentInAWordIsLeftAlone(final String input) {
+        final List<Token> tokens = withoutWhitespace("x = " + input);
+        assertThat(tokens).extracting(Token::getText).containsExactly("x", "=", input);
+        assertThat(tokens.getLast().getTokenType()).isEqualTo(TokenType.STRING);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"1e5x", "1e5s", "1e5.5", "1e5:2", "1e"})
+    void wordThatStartsLikeAnExponentIsNotANumber(final String input) {
+        assertThat(withoutWhitespace("x = " + input))
+                .filteredOn(token -> TokenType.NUMBER.equals(token.getTokenType()))
+                .extracting(Token::getText)
+                .noneMatch(text -> text.contains("e"));
     }
 
     @Test
