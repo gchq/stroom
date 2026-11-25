@@ -16,13 +16,16 @@
 
 package stroom.ai.impl.tools.streams;
 
+import stroom.ai.impl.tools.catalogue.TimelineRoles;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.processing.MergedPipeline;
 import stroom.ai.impl.tools.processing.XsltStages;
 import stroom.ai.impl.tools.processing.XsltStages.Stage;
 import stroom.ai.impl.tools.processing.XsltStages.StagedXslt;
 import stroom.docref.DocRef;
+import stroom.documentation.shared.DocumentationDoc;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaRow;
@@ -158,6 +161,42 @@ public class StreamProvenance {
         return new PipelineFacts(new DocRef(PipelineDoc.TYPE, pipeline.getUuid(), doc != null
                 ? doc.getName()
                 : pipeline.getName()), true, staged, mapping, notes, plan);
+    }
+
+    /// The timeline roles of the event types a producing pipeline's translation writes (decided with the user
+    /// 2026-11-25), read from the catalogue in the source notes doc its translation XSLT links to: each role given,
+    /// else filled in from the schema's table ([TimelineRoles#byTypeId]). The timeline reads a stream's roles so,
+    /// before an AGENTS doc's or its own classification.
+    ///
+    /// @param facts A producing pipeline's facts ([#facts]), or null.
+    /// @return Each event type's role by TypeId; empty where the pipeline has no linked notes, the user can't read
+    /// them, or they hold no catalogue.
+    public Map<String, TimelineRoles.Role> timelineRoles(final PipelineFacts facts) {
+        if (facts == null || !facts.readable() || facts.sourceNotes() == null) {
+            return Map.of();
+        }
+        try {
+            return documentAccess.read(facts.sourceNotes(), DocumentationDoc.class)
+                    .map(DocumentationDoc::getData)
+                    .map(SourceNotes::readNotes)
+                    .map(SourceNotes::catalogue)
+                    .map(TimelineRoles::byTypeId)
+                    .orElse(Map.of());
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("The timeline roles of pipeline {} weren't read: {}",
+                    facts.pipeline(), e.getMessage()), e);
+            return Map.of();
+        }
+    }
+
+    /// @param provenance Where streams came from ([#of]).
+    /// @param streamId   One of them.
+    /// @return The timeline roles of the event types its producing pipeline writes ([#timelineRoles]); empty where
+    /// it has none.
+    public Map<String, TimelineRoles.Role> timelineRoles(final Provenance provenance, final long streamId) {
+        return provenance == null
+                ? Map.of()
+                : provenance.pipelineOf(streamId).map(this::timelineRoles).orElse(Map.of());
     }
 
     // The streams of one batch the user may see, by id.

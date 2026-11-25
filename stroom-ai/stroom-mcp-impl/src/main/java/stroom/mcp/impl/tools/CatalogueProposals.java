@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.catalogue.CatalogueOrder;
 import stroom.ai.impl.tools.catalogue.EventType;
+import stroom.ai.impl.tools.catalogue.TimelineRoles;
 import stroom.ai.impl.tools.catalogue.TypeIds;
 import stroom.ai.impl.tools.generation.MappingError;
 import stroom.ai.impl.tools.generation.ModelReader;
@@ -93,7 +94,8 @@ final class CatalogueProposals {
                 ? new Catalogue.CatchAll(EventType.PROPOSED, catalogue.catchAll().allowUnknown(),
                 catalogue.catchAll().translation())
                 : catalogue.catchAll();
-        return new Applied(new Catalogue(CatalogueOrder.ordered(types), catchAll, catalogue.scope()), refused);
+        return new Applied(new Catalogue(CatalogueOrder.ordered(types), catchAll, catalogue.scope(),
+                catalogue.checkedFeeds()), refused);
     }
 
     // An event type added; why not, or null.
@@ -105,6 +107,7 @@ final class CatalogueProposals {
         }
         json.put(STATUS, EventType.PROPOSED);
         dropsAsTheUsers(json);
+        rolesAsGiven(json);
         final ModelReader reader = new ModelReader();
         final EventType read = EventType.read(reader, json, List.of());
         if (read == null || !reader.errors().isEmpty()) {
@@ -142,6 +145,9 @@ final class CatalogueProposals {
         final Map<String, Object> json = new LinkedHashMap<>(existing.toJson());
         json.putAll(given);
         dropsAsTheUsers(json);
+        if (given.containsKey(EventType.TIMELINE_ROLE)) {
+            rolesAsGiven(json);
+        }
         final ModelReader reader = new ModelReader();
         final EventType read = EventType.read(reader, json, List.of());
         if (read == null || !reader.errors().isEmpty()) {
@@ -172,6 +178,16 @@ final class CatalogueProposals {
         return typeId == null
                 ? "give type_id: the event type the proposal is of"
                 : "no event type '" + typeId + "' in the catalogue: op: add adds it";
+    }
+
+    // A timeline role a proposal gives is the user's answer (asked in the set's form): kept as given, never filled in
+    // again from the schema.
+    private static void rolesAsGiven(final Map<String, Object> json) {
+        if (json.get(EventType.TIMELINE_ROLE) != null) {
+            json.put(EventType.TIMELINE_ROLE_FROM, TimelineRoles.FROM_GIVEN);
+        } else {
+            json.remove(EventType.TIMELINE_ROLE_FROM);
+        }
     }
 
     // A drop is the user's word: its basis the user's.

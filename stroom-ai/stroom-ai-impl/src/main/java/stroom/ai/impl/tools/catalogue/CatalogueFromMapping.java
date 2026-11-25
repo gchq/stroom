@@ -99,7 +99,8 @@ public final class CatalogueFromMapping {
             }
         }
         final Catalogue.CatchAll catchAllNow = catchAllOf(mapping, catchAll, earlier.catchAll(), said);
-        return new FromMapping(new Catalogue(types, catchAllNow, earlier.scope()), said, notRead);
+        return new FromMapping(new Catalogue(types, catchAllNow, earlier.scope(), earlier.checkedFeeds()), said,
+                notRead);
     }
 
     // The rule for the records no other rule takes: the one marked catch_all, else a last rule with no conditions
@@ -182,7 +183,7 @@ public final class CatalogueFromMapping {
                 eventDetail, orElse(action, was.action()),
                 orElse(success, was.success()), orElse(actor, was.actor()),
                 was.affected(), was.affectedAs(), ways, false, was.basis(), was.confidence(), was.oneTypeBecause(),
-                was.status(), was.doubt(), was.placements());
+                was.status(), was.doubt(), was.placements(), was.timelineRole(), was.timelineRoleFrom());
     }
 
     // The way's conditions without a leading line format's condition (the translation prefixes it per variant), so
@@ -221,7 +222,8 @@ public final class CatalogueFromMapping {
                     EventType.USER_CONFIRMED, "high", null, EventType.CONFIRMED)
                     : new EventType(typeId, was.title(), was.description(), was.eventDetail(), was.action(),
                             was.success(), was.actor(), was.affected(), was.affectedAs(), ways, true, was.basis(),
-                            was.confidence(), was.oneTypeBecause(), was.status(), was.doubt(), was.placements()));
+                            was.confidence(), was.oneTypeBecause(), was.status(), was.doubt(), was.placements(),
+                            was.timelineRole(), was.timelineRoleFrom()));
         });
     }
 

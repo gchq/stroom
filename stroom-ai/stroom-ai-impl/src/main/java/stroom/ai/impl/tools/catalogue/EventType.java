@@ -48,6 +48,10 @@ import java.util.Objects;
 /// @param placements     `placements`: the fields (or constants) its records' events type below the action element
 ///                       ([Placement]); empty when none are given. `affected` and `affected_as` are one more,
 ///                       read as such ([#allPlacements()]).
+/// @param timelineRole   `timeline_role`: what it means to an activity timeline ([TimelineRole]'s names), or null
+///                       when not settled ([TimelineRoles]).
+/// @param timelineRoleFrom `timeline_role_from`: [TimelineRoles#FROM_SCHEMA] (filled in from its element and Action)
+///                       or [TimelineRoles#FROM_GIVEN] (the user's answer); null with no role.
 public record EventType(String typeId,
                         String title,
                         String description,
@@ -64,7 +68,9 @@ public record EventType(String typeId,
                         String oneTypeBecause,
                         String status,
                         String doubt,
-                        List<Placement> placements) {
+                        List<Placement> placements,
+                        String timelineRole,
+                        String timelineRoleFrom) {
 
     /// The seed's, from the draft's rules: never the user's until the user confirms it.
     public static final String DRAFT = "draft";
@@ -91,13 +97,64 @@ public record EventType(String typeId,
     /// The key of its placements.
     public static final String PLACEMENTS = "placements";
 
-    /// Fills in empty lists for null ones, and null for a blank doubt.
+    /// The key of its timeline role.
+    public static final String TIMELINE_ROLE = "timeline_role";
+    /// The key of where its timeline role came from.
+    public static final String TIMELINE_ROLE_FROM = "timeline_role_from";
+    /// Where a timeline role may come from.
+    public static final List<String> ROLE_FROMS = List.of(TimelineRoles.FROM_SCHEMA, TimelineRoles.FROM_GIVEN);
+
+    /// Fills in empty lists for null ones, null for a blank doubt, and no role's source for no role.
     public EventType {
         recognisedBy = List.copyOf(Objects.requireNonNullElse(recognisedBy, List.of()));
         placements = List.copyOf(Objects.requireNonNullElse(placements, List.of()));
         doubt = doubt == null || doubt.isBlank()
                 ? null
                 : doubt.strip();
+        timelineRole = TimelineRole.of(timelineRole).map(TimelineRole::label).orElse(null);
+        timelineRoleFrom = timelineRole == null
+                ? null
+                : Objects.requireNonNullElse(timelineRoleFrom, TimelineRoles.FROM_GIVEN);
+    }
+
+    /// An event type with no timeline role given.
+    ///
+    /// @param typeId         Its TypeId, or null.
+    /// @param title          Its title.
+    /// @param description    What happened.
+    /// @param eventDetail    Its action element.
+    /// @param action         Its Action, or null.
+    /// @param success        Its outcome, or null.
+    /// @param actor          Who acted, or null.
+    /// @param affected       What was acted on, or null.
+    /// @param affectedAs     What that is under the action element, or null.
+    /// @param recognisedBy   The ways a record of it is told.
+    /// @param drop           True when its records are dropped.
+    /// @param basis          Where it came from.
+    /// @param confidence     `high`, `medium` or `low`.
+    /// @param oneTypeBecause Why records that look like several event types are one, or null.
+    /// @param status         `proposed` or `confirmed`.
+    /// @param doubt          Why the agent is unsure of it, or null.
+    /// @param placements     Its placements.
+    public EventType(final String typeId,
+                     final String title,
+                     final String description,
+                     final String eventDetail,
+                     final String action,
+                     final String success,
+                     final String actor,
+                     final String affected,
+                     final String affectedAs,
+                     final List<Way> recognisedBy,
+                     final boolean drop,
+                     final String basis,
+                     final String confidence,
+                     final String oneTypeBecause,
+                     final String status,
+                     final String doubt,
+                     final List<Placement> placements) {
+        this(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs, recognisedBy,
+                drop, basis, confidence, oneTypeBecause, status, doubt, placements, null, null);
     }
 
     /// An event type with no placements given (its `affected` and `affected_as` aside).
@@ -135,7 +192,7 @@ public record EventType(String typeId,
                      final String status,
                      final String doubt) {
         this(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs, recognisedBy,
-                drop, basis, confidence, oneTypeBecause, status, doubt, List.of());
+                drop, basis, confidence, oneTypeBecause, status, doubt, List.of(), null, null);
     }
 
     /// An event type with no doubt given.
@@ -171,7 +228,7 @@ public record EventType(String typeId,
                      final String oneTypeBecause,
                      final String status) {
         this(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs, recognisedBy,
-                drop, basis, confidence, oneTypeBecause, status, null, List.of());
+                drop, basis, confidence, oneTypeBecause, status, null, List.of(), null, null);
     }
 
     /// Reads one from JSON-like values, laxly (strings, booleans as words, defaults for what isn't given), every
@@ -202,10 +259,22 @@ public record EventType(String typeId,
                 fields.optionalString("one_type_because"),
                 fields.literal("status", PROPOSED, STATUSES),
                 fields.optionalString("doubt"),
-                fields.models(PLACEMENTS, (value, at) -> Placement.read(reader, value, at)));
+                fields.models(PLACEMENTS, (value, at) -> Placement.read(reader, value, at)),
+                role(fields),
+                fields.optionalString(TIMELINE_ROLE) == null
+                        ? null
+                        : fields.literal(TIMELINE_ROLE_FROM, TimelineRoles.FROM_GIVEN, ROLE_FROMS));
         return fields.ok()
                 ? eventType
                 : null;
+    }
+
+    // Its timeline role, one of the roles' names, any case; null where not given.
+    private static String role(final ModelReader.Fields fields) {
+        final String given = fields.optionalString(TIMELINE_ROLE);
+        return given == null
+                ? null
+                : fields.literal(TIMELINE_ROLE, TimelineRole.ACTION.label(), TimelineRole.NAMES);
     }
 
     // An outcome may be given as a boolean (true, false) or a field's name: read as its text.
@@ -216,8 +285,8 @@ public record EventType(String typeId,
                 : fields.optionalString(key);
     }
 
-    /// @return It as JSON, in the catalogue's key order: every key, null ones too, but `doubt` and `placements`,
-    /// which are optional and given only when the agent gave them.
+    /// @return It as JSON, in the catalogue's key order: every key, null ones too, but `doubt`, `placements` and
+    /// `timeline_role` (with `timeline_role_from`), which are optional and given only when there are.
     public Map<String, Object> toJson() {
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("type_id", typeId);
@@ -241,6 +310,10 @@ public record EventType(String typeId,
         if (!placements.isEmpty()) {
             out.put(PLACEMENTS, placements.stream().map(Placement::entry).toList());
         }
+        if (timelineRole != null) {
+            out.put(TIMELINE_ROLE, timelineRole);
+            out.put(TIMELINE_ROLE_FROM, timelineRoleFrom);
+        }
         return out;
     }
 
@@ -250,13 +323,15 @@ public record EventType(String typeId,
         return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
                 recognisedBy, drop, DRAFT.equals(basis)
                 ? USER_CONFIRMED
-                : basis, confidence, oneTypeBecause, CONFIRMED, doubt, placements);
+                : basis, confidence, oneTypeBecause, CONFIRMED, doubt, placements,
+                timelineRole, timelineRoleFrom);
     }
 
     /// @return It dropped by the user, in the user's form: its records left untranslated, on the user's word.
     public EventType droppedByUser() {
         return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
-                recognisedBy, true, USER_CONFIRMED, confidence, oneTypeBecause, CONFIRMED, doubt, placements);
+                recognisedBy, true, USER_CONFIRMED, confidence, oneTypeBecause, CONFIRMED, doubt, placements,
+                timelineRole, timelineRoleFrom);
     }
 
     /// @return It confirmed.
@@ -268,28 +343,40 @@ public record EventType(String typeId,
     /// proposal is, its TypeId kept as the pipeline writes it (decided by the user, 2026-11-24).
     public EventType readBack() {
         return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
-                recognisedBy, drop, EXISTING_PIPELINE, confidence, oneTypeBecause, PROPOSED, doubt, placements);
+                recognisedBy, drop, EXISTING_PIPELINE, confidence, oneTypeBecause, PROPOSED, doubt, placements,
+                timelineRole, timelineRoleFrom);
     }
 
     /// @param typeId Its new TypeId.
     /// @return It with that TypeId.
     public EventType withTypeId(final String typeId) {
         return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
-                recognisedBy, drop, basis, confidence, oneTypeBecause, status, doubt, placements);
+                recognisedBy, drop, basis, confidence, oneTypeBecause, status, doubt, placements,
+                timelineRole, timelineRoleFrom);
     }
 
     /// @param affectedAs Its new `affected_as`.
     /// @return It with that `affected_as` (written out to its leaf, say).
     public EventType withAffectedAs(final String affectedAs) {
         return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
-                recognisedBy, drop, basis, confidence, oneTypeBecause, status, doubt, placements);
+                recognisedBy, drop, basis, confidence, oneTypeBecause, status, doubt, placements,
+                timelineRole, timelineRoleFrom);
     }
 
     /// @param ways Its new ways of being recognised.
     /// @return It recognised by those ways.
     public EventType withRecognisedBy(final List<Way> ways) {
         return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
-                ways, drop, basis, confidence, oneTypeBecause, status, doubt, placements);
+                ways, drop, basis, confidence, oneTypeBecause, status, doubt, placements,
+                timelineRole, timelineRoleFrom);
+    }
+
+    /// @param role The role's name, or null for none.
+    /// @param from Where it came from ([TimelineRoles#FROM_SCHEMA] or [TimelineRoles#FROM_GIVEN]), or null.
+    /// @return It with that timeline role.
+    public EventType withTimelineRole(final String role, final String from) {
+        return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
+                recognisedBy, drop, basis, confidence, oneTypeBecause, status, doubt, placements, role, from);
     }
 
     /// Its placements, with what `affected` and `affected_as` say (the catalogue's form before placements, kept for

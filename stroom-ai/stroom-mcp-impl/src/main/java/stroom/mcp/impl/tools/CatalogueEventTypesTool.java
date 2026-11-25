@@ -37,6 +37,7 @@ import stroom.ai.impl.tools.catalogue.CatalogueSeed;
 import stroom.ai.impl.tools.catalogue.CatalogueValidation;
 import stroom.ai.impl.tools.catalogue.EventMeaning;
 import stroom.ai.impl.tools.catalogue.EventType;
+import stroom.ai.impl.tools.catalogue.TimelineRoles;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.sample.KindFields;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
@@ -544,7 +545,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                 .orElse(Catalogue.Scope.NONE);
         return kept == null
                 ? new Catalogue(List.of(), Catalogue.CatchAll.PROPOSED, scope)
-                : new Catalogue(kept.eventTypes(), kept.catchAll(), scope);
+                : new Catalogue(kept.eventTypes(), kept.catchAll(), scope, kept.checkedFeeds());
     }
 
     private static Catalogue.Scope scopeOf(final SourceTypeScope scope) {
@@ -1284,7 +1285,10 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                             final Map<String, Object> confirming) {
         final String notesDoc = notesLink(calling);
         final String summary = CatalogueSummary.summary(set, check, notesDoc, CatalogueSummary.Amendments.fromJson(
-                JsonValues.map(confirming.get(CHANGES))));
+                JsonValues.map(confirming.get(CHANGES))))
+                               // Each event type's timeline role: the schema's filled in, the rest asked for here, in
+                               // the set's own form (decided 2026-11-25).
+                               + "\n\n" + TimelineRoles.said(set);
         return origin(calling)
                 .map(said -> said + "\n\n" + summary)
                 .orElse(summary);
@@ -1449,11 +1453,26 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             one.put("type_id", type.typeId());
             one.put("title", type.title());
             one.put(STATUS, type.status());
+            // Its timeline role, filled in from the schema or given (decided 2026-11-25): listed.
+            final EventType settled = TimelineRoles.settled(type);
+            if (settled.timelineRole() != null) {
+                one.put(EventType.TIMELINE_ROLE, settled.timelineRole());
+            }
             types.add(one);
         }
         final Map<String, Object> out = new LinkedHashMap<>();
         out.put("event_types", types);
         out.put(SourceNotes.CATCH_ALL, Map.of(STATUS, catalogue.catchAll().status()));
+        final List<String> asked = TimelineRoles.unsettled(catalogue.eventTypes()).stream()
+                .map(EventType::typeId)
+                .toList();
+        if (!asked.isEmpty()) {
+            // The user is asked for these in their set's form (the schema doesn't settle them).
+            out.put("timeline_roles_to_ask", asked);
+        }
+        if (!catalogue.checkedFeeds().isEmpty()) {
+            out.put(Catalogue.CHECKED_FEEDS, catalogue.checkedFeeds());
+        }
         return out;
     }
 

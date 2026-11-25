@@ -29,6 +29,7 @@ import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.catalogue.TimelineRoles;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.sample.ToolJson;
@@ -321,7 +322,9 @@ class RecordSourceNotesTool extends AbstractBuiltInTool {
         final Map<String, WriteGuard.BuildDoc> contents = contents(build);
         final String notesName = notesName(contents, source);
         final Map<String, Object> earlier = earlierNotes(contents, notesName);
-        final Map<String, Object> kept = new LinkedHashMap<>(catalogue.toJson());
+        // Each event type's timeline role settled as it is written: the schema's filled in (again, should its element
+        // or Action have changed), a given one kept (decided 2026-11-25).
+        final Map<String, Object> kept = new LinkedHashMap<>(TimelineRoles.filled(catalogue).toJson());
         kept.put(CONFIRMING, NullSafe.map(confirming));
         kept.put(MADE_BY, MADE_BY_TOOL);
         final DocumentationDoc doc = written(context.session(), contents, build, notesName,

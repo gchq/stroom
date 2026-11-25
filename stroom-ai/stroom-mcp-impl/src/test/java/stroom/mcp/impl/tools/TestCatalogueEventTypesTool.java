@@ -138,11 +138,17 @@ class TestCatalogueEventTypesTool {
         // 189: the agent showed the check's table, then the confirmation's was shown too).
         assertThat(checked).doesNotContainKey("table");
         assertThat(String.valueOf(checked)).doesNotContain("high-confidence event types");
+        // Each with its timeline role, filled in from the schema's table (decided 2026-11-25).
         assertThat(map(checked.get("catalogue")).get("event_types")).isEqualTo(List.of(
-                Map.of("type_id", "Authenticate-Logon", "title", "Authenticate Logon", "status", "proposed"),
-                Map.of("type_id", "Authenticate-Logoff", "title", "Authenticate Logoff", "status", "proposed"),
-                Map.of("type_id", "Export-Report", "title", "Export Report", "status", "proposed"),
-                Map.of("type_id", "Delete-Records", "title", "Delete Records", "status", "proposed")));
+                Map.of("type_id", "Authenticate-Logon", "title", "Authenticate Logon", "status", "proposed",
+                        "timeline_role", "active"),
+                Map.of("type_id", "Authenticate-Logoff", "title", "Authenticate Logoff", "status", "proposed",
+                        "timeline_role", "idle"),
+                Map.of("type_id", "Export-Report", "title", "Export Report", "status", "proposed",
+                        "timeline_role", "action"),
+                Map.of("type_id", "Delete-Records", "title", "Delete Records", "status", "proposed",
+                        "timeline_role", "action")));
+        assertThat(map(checked.get("catalogue"))).doesNotContainKey("timeline_roles_to_ask");
 
         // The source notes hold the catalogue (its JSON block) and its readable table, the catch-all's row last.
         final Catalogue kept = SourceNotes.catalogue(notes());
@@ -275,6 +281,53 @@ class TestCatalogueEventTypesTool {
         });
         // What the catch-all takes has changed: it is put to the user again.
         assertThat(kept.catchAll().confirmed()).isFalse();
+    }
+
+    @Test
+    void timelineRolesAreFilledFromTheSchemaAndTheRestAskedInTheSetsForm() {
+        // Logon and Export are settled by the schema's table; an Authenticate Action it doesn't name isn't.
+        propose(List.of(withKeys(type("Authenticate-Logon", "Authenticate", "high", "login"), "action", "Logon"),
+                withKeys(type("Authenticate-Other", "Authenticate", "high", "logout"), "action", "Other"),
+                type("Export-Report", "Export", "high", "export")));
+
+        final Catalogue kept = SourceNotes.catalogue(notes());
+        assertThat(kept.eventType("Authenticate-Logon").timelineRole()).isEqualTo("active");
+        assertThat(kept.eventType("Authenticate-Logon").timelineRoleFrom()).isEqualTo("schema");
+        assertThat(kept.eventType("Export-Report").timelineRole()).isEqualTo("action");
+        assertThat(kept.eventType("Authenticate-Other").timelineRole()).isNull();
+        final BuildToolCalls.FormUser user = user(McpAnswers.ACCEPT);
+        final Map<String, Object> shown = call(Map.of("build", BUILD, "confirm", true), user.context());
+        assertThat(map(shown.get("catalogue"))).containsEntry("timeline_roles_to_ask",
+                List.of("Authenticate-Other"));
+        // Asked in the set's own form: the schema's filled in, the rest named for the user to say.
+        assertThat(String.valueOf(shown.get("table")))
+                .contains("Timeline roles from the schema: Authenticate-Logon active, Export-Report action (export)")
+                .contains("Not settled by the schema: Authenticate-Other")
+                .contains("window gaining focus");
+
+        // The user's answer, proposed: kept as given, the schema's never put back over it.
+        propose(List.of(Map.of("op", "change", "type_id", "Authenticate-Other", "timeline_role", "focus"),
+                Map.of("op", "change", "type_id", "Export-Report", "event_detail", "Authenticate", "action",
+                        "ScreenLock")));
+
+        final Catalogue answered = SourceNotes.catalogue(notes());
+        assertThat(answered.eventType("Authenticate-Other").timelineRole()).isEqualTo("focus");
+        assertThat(answered.eventType("Authenticate-Other").timelineRoleFrom()).isEqualTo("given");
+        // An element and Action changed: its schema role follows them.
+        assertThat(answered.eventType("Export-Report").timelineRole()).isEqualTo("idle");
+        final Map<String, Object> again = call(Map.of("build", BUILD, "confirm", true), user.context());
+        assertThat(map(again.get("catalogue"))).doesNotContainKey("timeline_roles_to_ask");
+    }
+
+    @Test
+    void aTimelineRoleOutsideTheRolesIsRefused() {
+        propose(List.of(type("Export-Report", "Export", "high", "export")));
+
+        final Map<String, Object> refused = propose(List.of(Map.of("op", "change", "type_id", "Export-Report",
+                "timeline_role", "sometimes")));
+
+        assertThat(String.valueOf(refused)).contains("timeline_role");
+        assertThat(SourceNotes.catalogue(notes()).eventType("Export-Report").timelineRole()).isEqualTo("action");
     }
 
     @Test

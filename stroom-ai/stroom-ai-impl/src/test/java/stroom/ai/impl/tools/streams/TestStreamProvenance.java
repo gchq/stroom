@@ -17,7 +17,12 @@
 package stroom.ai.impl.tools.streams;
 
 import stroom.ai.impl.tools.ToolTestFixture;
+import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.catalogue.EventType;
+import stroom.ai.impl.tools.catalogue.TimelineRole;
+import stroom.ai.impl.tools.catalogue.TimelineRoles;
 import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.processing.XsltStages;
 import stroom.ai.impl.tools.processing.XsltStages.Stage;
 import stroom.ai.impl.tools.streams.StreamProvenance.PipelineFacts;
@@ -178,12 +183,51 @@ class TestStreamProvenance {
         assertThat(found.pipelines()).isEmpty();
     }
 
+    @Test
+    void aStreamsTimelineRolesAreReadFromTheCatalogueItsTranslationLinksTo() {
+        stream(11, "ACME-SITE-A-EVENTS", "p-1", null);
+        stream(21, "ACME-SITE-B-EVENTS", "p-2", null);
+        final Catalogue catalogue = new Catalogue(List.of(
+                type("Logon-User", "Authenticate", "Logon"),
+                type("Focus-Window", "Unknown", null).withTimelineRole("focus", TimelineRoles.FROM_GIVEN),
+                type("Odd-Thing", "Unknown", null)), null, null);
+        final Map<String, Object> notes = new LinkedHashMap<>(catalogue.toJson());
+        fixture.add(NOTES, DocumentationDoc.builder().uuid(NOTES.getUuid()).name(NOTES.getName())
+                .data("# Acme source notes\n\n" + SourceNotes.block(notes)).build(), true);
+
+        final Provenance found = provenance.of(List.of(11L, 21L));
+        final Map<String, TimelineRoles.Role> roles = provenance.timelineRoles(found, 11L);
+
+        // Given, else the schema's; one neither settles is left for the timeline to classify.
+        assertThat(roles.keySet()).containsExactly("Logon-User", "Focus-Window");
+        assertThat(roles.get("Logon-User").role()).isEqualTo(TimelineRole.ACTIVE);
+        assertThat(roles.get("Focus-Window").role()).isEqualTo(TimelineRole.FOCUS);
+        // The newer version links no notes; a stream not seen has no pipeline.
+        assertThat(provenance.timelineRoles(found, 21L)).isEmpty();
+        assertThat(provenance.timelineRoles(found, 99L)).isEmpty();
+        assertThat(provenance.timelineRoles((PipelineFacts) null)).isEmpty();
+    }
+
+    @Test
+    void notesTheUserCantReadGiveNoRoles() {
+        stream(11, "ACME-SITE-A-EVENTS", "p-1", null);
+        fixture.add(NOTES, DocumentationDoc.builder().uuid(NOTES.getUuid()).name(NOTES.getName()).data("x").build(),
+                false);
+
+        assertThat(provenance.timelineRoles(provenance.of(List.of(11L)), 11L)).isEmpty();
+    }
+
     // ------------------------------------------------------------------------------------------------
 
     private void stream(final long id, final String feed, final String pipeline, final Long parent) {
         metas.put(id, new MetaRow(Meta.builder().id(id).feedName(feed).typeName("Events").pipelineUuid(pipeline)
                 .processorUuid("proc-" + pipeline).parentDataId(parent).build(),
                 new DocRef(PipelineDoc.TYPE, pipeline, "named in meta"), Map.of()));
+    }
+
+    private static EventType type(final String typeId, final String element, final String action) {
+        return new EventType(typeId, typeId, null, element, action, null, null, null, null, List.of(), false,
+                EventType.AGENT_KNOWLEDGE, "high", null, EventType.CONFIRMED);
     }
 
     private void xslt(final String uuid, final String name, final DocRef notes) {

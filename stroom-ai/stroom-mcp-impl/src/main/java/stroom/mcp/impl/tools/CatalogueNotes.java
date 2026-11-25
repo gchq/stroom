@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.catalogue.CatalogueDiff;
+import stroom.ai.impl.tools.catalogue.TimelineRoles;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.docref.DocRef;
@@ -197,7 +198,7 @@ class CatalogueNotes {
         // Written as catalogue_event_types writes it: the JSON block and the "Event types" table together.
         // The records last counted are left out: the catalogue changed by hand, they are counted again by the next
         // check.
-        final Map<String, Object> given = new LinkedHashMap<>(catalogue.toJson());
+        final Map<String, Object> given = new LinkedHashMap<>(TimelineRoles.filled(catalogue).toJson());
         final Map<String, Object> confirming = new LinkedHashMap<>(NullSafe.map(JsonValues.map(
                 notes.get(RecordSourceNotesTool.CONFIRMING))));
         confirming.remove(RecordSourceNotesTool.RECORDS);

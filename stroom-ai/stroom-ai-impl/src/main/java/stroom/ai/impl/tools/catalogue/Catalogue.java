@@ -33,13 +33,29 @@ import java.util.Set;
 /// @param eventTypes `event_types`: the event types, in the catalogue's order (more specific first).
 /// @param catchAll   `catch_all`: the catch-all's agreement.
 /// @param scope      The source type group it is for.
-public record Catalogue(List<EventType> eventTypes, CatchAll catchAll, Scope scope) {
+/// @param checkedFeeds `checked_feeds`: the feeds whose records it was checked against (every feed of every
+///                     pipeline a translation inducted in place serves, decided 2026-11-25); empty when not
+///                     recorded.
+public record Catalogue(List<EventType> eventTypes, CatchAll catchAll, Scope scope, List<String> checkedFeeds) {
 
-    /// Fills in the defaults for null parts: no event types, a proposed catch-all, no scope.
+    /// The key of the feeds it was checked against.
+    public static final String CHECKED_FEEDS = "checked_feeds";
+
+    /// Fills in the defaults for null parts: no event types, a proposed catch-all, no scope, no feeds.
     public Catalogue {
         eventTypes = List.copyOf(Objects.requireNonNullElse(eventTypes, List.of()));
         catchAll = Objects.requireNonNullElse(catchAll, CatchAll.PROPOSED);
         scope = Objects.requireNonNullElse(scope, Scope.NONE);
+        checkedFeeds = List.copyOf(Objects.requireNonNullElse(checkedFeeds, List.of()));
+    }
+
+    /// A catalogue with no feeds recorded it was checked against.
+    ///
+    /// @param eventTypes The event types, in the catalogue's order.
+    /// @param catchAll   The catch-all's agreement.
+    /// @param scope      The source type group it is for.
+    public Catalogue(final List<EventType> eventTypes, final CatchAll catchAll, final Scope scope) {
+        this(eventTypes, catchAll, scope, List.of());
     }
 
     /// @param json A catalogue as JSON-like values.
@@ -74,7 +90,10 @@ public record Catalogue(List<EventType> eventTypes, CatchAll catchAll, Scope sco
         final Catalogue catalogue = new Catalogue(
                 fields.models("event_types", (value, at) -> EventType.read(reader, value, at)),
                 fields.optionalModel("catch_all", (value, at) -> CatchAll.read(reader, value, at)),
-                fields.optionalModel("scope", (value, at) -> Scope.read(reader, value, at)));
+                fields.optionalModel("scope", (value, at) -> Scope.read(reader, value, at)),
+                fields.input().get(CHECKED_FEEDS) instanceof final List<?> feeds
+                        ? feeds.stream().map(String::valueOf).toList()
+                        : List.of());
         return fields.ok()
                 ? catalogue
                 : null;
@@ -86,6 +105,9 @@ public record Catalogue(List<EventType> eventTypes, CatchAll catchAll, Scope sco
         out.put("event_types", eventTypes.stream().map(EventType::toJson).toList());
         out.put("catch_all", catchAll.toJson());
         out.put("scope", scope.toJson());
+        if (!checkedFeeds.isEmpty()) {
+            out.put(CHECKED_FEEDS, checkedFeeds);
+        }
         return out;
     }
 
@@ -104,13 +126,13 @@ public record Catalogue(List<EventType> eventTypes, CatchAll catchAll, Scope sco
                     ? type.confirmedByUser()
                     : type);
         }
-        return new Catalogue(confirmed, catchAll, scope);
+        return new Catalogue(confirmed, catchAll, scope, checkedFeeds);
     }
 
     /// @return It with its catch-all confirmed by the user (its reason and own translation kept).
     public Catalogue withCatchAllConfirmedByUser() {
         return new Catalogue(eventTypes, new CatchAll(EventType.CONFIRMED, catchAll.allowUnknown(),
-                catchAll.translation()), scope);
+                catchAll.translation()), scope, checkedFeeds);
     }
 
     /// @param allowUnknown The user's reason for keeping uncatalogued records as Unknown, or null to keep the one it
@@ -119,19 +141,25 @@ public record Catalogue(List<EventType> eventTypes, CatchAll catchAll, Scope sco
     public Catalogue withCatchAllConfirmedByUser(final String allowUnknown) {
         return new Catalogue(eventTypes, new CatchAll(EventType.CONFIRMED, allowUnknown == null
                 ? catchAll.allowUnknown()
-                : allowUnknown, catchAll.translation()), scope);
+                : allowUnknown, catchAll.translation()), scope, checkedFeeds);
     }
 
     /// @param given The catch-all.
     /// @return It with that catch-all.
     public Catalogue withCatchAll(final CatchAll given) {
-        return new Catalogue(eventTypes, given, scope);
+        return new Catalogue(eventTypes, given, scope, checkedFeeds);
+    }
+
+    /// @param feeds The feeds its records were checked against.
+    /// @return It recording those feeds, in that order.
+    public Catalogue withCheckedFeeds(final List<String> feeds) {
+        return new Catalogue(eventTypes, catchAll, scope, feeds);
     }
 
     /// @param types The event types.
     /// @return It with those event types, in that order.
     public Catalogue withEventTypes(final List<EventType> types) {
-        return new Catalogue(types, catchAll, scope);
+        return new Catalogue(types, catchAll, scope, checkedFeeds);
     }
 
 

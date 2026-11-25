@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.timeline;
 
+import stroom.ai.impl.tools.catalogue.TimelineRoles;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
 import stroom.ai.impl.tools.timeline.TimelineSessions.Role;
@@ -47,17 +48,15 @@ final class EventXmlClassifier {
     /// EventDetail's children that aren't the action element.
     static final Set<String> NOT_ACTIONS = Set.of("TypeId", "Description", "Classification", "Purpose");
     /// The EventDetail elements of the event-logging schema.
-    static final Set<String> ELEMENTS = Set.of("Authenticate", "Authorise", "Process", "Create", "View", "Update",
-            "Delete", "Copy", "Move", "Send", "Receive", "Print", "Export", "Import", "Search", "Network", "Install",
-            "Uninstall", "Approval", "Alert", "Unknown");
+    static final Set<String> ELEMENTS = TimelineRoles.ELEMENTS;
     /// The schema's Authenticate Actions after which the user is active.
-    static final Set<String> ACTIVE_FROM = Set.of("Logon", "ScreenUnlock", "Connect", "Reconnect");
+    static final Set<String> ACTIVE_FROM = TimelineRoles.ACTIVE_FROM;
     /// The schema's Authenticate Actions after which the user is idle.
-    static final Set<String> IDLE_FROM = Set.of("Logoff", "ScreenLock", "Disconnect");
+    static final Set<String> IDLE_FROM = TimelineRoles.IDLE_FROM;
     /// The schema's Process Actions that start a process.
-    static final Set<String> STARTS = Set.of("Execute", "Startup");
+    static final Set<String> STARTS = TimelineRoles.STARTS;
     /// The schema's Process Actions that end a process.
-    static final Set<String> ENDS = Set.of("Terminate", "Shutdown");
+    static final Set<String> ENDS = TimelineRoles.ENDS;
     /// The schema's leaves that name what an event touched, the most telling first.
     static final List<String> OBJECTS = List.of("Title", "Subject", "URL", "Path", "Name");
     /// The schema's elements whose events go from a source to a destination: their object is the destination's
