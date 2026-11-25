@@ -70,6 +70,20 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
+    public Map<Long, Integer> findProcessingVersions(final String nodeName,
+                                                     final Collection<Long> taskIds) {
+        final Map<Long, Integer> versions = new HashMap<>();
+        dao.getMap().values().forEach(task -> {
+            if (taskIds.contains(task.getId())
+                && TaskStatus.PROCESSING.equals(task.getStatus())
+                && nodeName.equals(task.getNodeName())) {
+                versions.put(task.getId(), task.getVersion());
+            }
+        });
+        return versions;
+    }
+
+    @Override
     public int renewTaskHeartbeats(final String nodeName,
                                    final Collection<Long> taskIds,
                                    final long nowMs) {

@@ -217,6 +217,14 @@ public interface ProcessorTaskDao {
      */
     int releaseTasks(Set<Long> idSet, TaskStatus currentStatus);
 
+    /// Finds which tasks are being processed by a node, and the versions they have. A run still has its task only if
+    /// the task is one of these and has the version that the run knows it by.
+    ///
+    /// @param nodeName The node.
+    /// @param taskIds  The ids of the tasks to look for.
+    /// @return The versions of those that the node is processing, by task id.
+    Map<Long, Integer> findProcessingVersions(String nodeName, Collection<Long> taskIds);
+
     /// Changes the status of a task with no reason to record and no fault to count. Any reason it had is cleared.
     /// See [#changeTaskStatus(ProcessorTask, String, TaskStatus, Long, Long, String, boolean)].
     ///

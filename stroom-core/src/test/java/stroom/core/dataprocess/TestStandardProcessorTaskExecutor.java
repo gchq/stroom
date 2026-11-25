@@ -24,7 +24,6 @@ import stroom.data.store.api.Target;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.meta.api.AttributeMap;
-import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.ErrorWriterProxy;
@@ -43,13 +42,12 @@ import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.SearchIdHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.processor.api.ProcessorResult;
-import stroom.processor.api.ProcessorTaskService;
+import stroom.processor.api.RunOutput;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.SimpleTaskContext;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -62,7 +60,6 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.io.IOException;
-import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -80,8 +77,6 @@ class TestStandardProcessorTaskExecutor {
     @Mock
     private PipelineStore pipelineStore;
     @Mock
-    private MetaService metaService;
-    @Mock
     private NodeInfo nodeInfo;
     @Mock
     private Source source;
@@ -94,14 +89,14 @@ class TestStandardProcessorTaskExecutor {
 
     private final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy();
     private final ErrorWriterProxy errorWriterProxy = new ErrorWriterProxy();
+    private final RunOutput runOutput = new RunOutput();
 
     @BeforeEach
     void beforeEach() {
         Mockito.when(source.getMeta()).thenReturn(Meta.builder().id(1).feedName("FEED").build());
         Mockito.when(nodeInfo.getThisNodeName()).thenReturn("node");
-        Mockito.when(metaService.find(Mockito.any()))
-                .thenReturn(ResultPage.createUnboundedList(Collections.emptyList()));
         Mockito.when(store.openTarget(Mockito.any(), Mockito.any())).thenReturn(target);
+        Mockito.when(target.getMeta()).thenReturn(Meta.builder().id(2).build());
         Mockito.when(target.getAttributes()).thenReturn(new AttributeMap());
         Mockito.when(target.next()).thenReturn(outputStreamProvider);
         Mockito.when(outputStreamProvider.get()).thenReturn(outputStream);
@@ -114,6 +109,14 @@ class TestStandardProcessorTaskExecutor {
         assertThat(result.getMarkerCount(Severity.FATAL_ERROR)).isOne();
         Mockito.verify(outputStream).write(Mockito.any(byte[].class));
         Mockito.verify(target).close();
+    }
+
+    @Test
+    void errorStreamIsRecordedAsOutputOfTheRun() {
+        exec();
+
+        assertThat(runOutput.getAllIds()).containsExactly(2L);
+        assertThat(runOutput.getOutputIds()).isEmpty();
     }
 
     @Test
@@ -168,8 +171,6 @@ class TestStandardProcessorTaskExecutor {
                 Mockito.mock(PipelineFactory.class),
                 store,
                 pipelineStore,
-                metaService,
-                Mockito.mock(ProcessorTaskService.class),
                 Mockito.mock(PipelineHolder.class),
                 Mockito.mock(FeedHolder.class),
                 Mockito.mock(FeedProperties.class),
@@ -193,6 +194,7 @@ class TestStandardProcessorTaskExecutor {
                 processor,
                 ProcessorFilter.builder().id(1).processor(processor).build(),
                 ProcessorTask.builder().id(1).build(),
-                source);
+                source,
+                runOutput);
     }
 }

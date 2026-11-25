@@ -242,13 +242,13 @@ public class ProcessorTaskClaimer {
      * a lapse in heartbeats has to mean this node has died - otherwise a task claimed just before a
      * pause would look dead to the reaper through no fault of its own. The stroom task id that
      * self-fencing needs is only known once processing begins, and
-     * {@link DataProcessorTaskHandler} re-registers with it then.
+     * {@link DataProcessorTaskHandler} supplies it then.
      */
     private void registerHeartbeats(final List<ProcessorTask> tasks, final int filterId) {
         // The filter id comes from the claim rather than from the task, which carries whatever the
         // filter cache had: a cache miss there would leave the task uncounted by the per node
         // concurrency limit that countForFilter feeds.
-        tasks.forEach(task -> processorTaskHeartbeat.register(task.getId(), filterId, null));
+        tasks.forEach(task -> processorTaskHeartbeat.registerClaim(task, filterId));
     }
 
     /**
@@ -331,7 +331,7 @@ public class ProcessorTaskClaimer {
         }
         final Set<Long> taskIds = tasks.stream().map(ProcessorTask::getId).collect(Collectors.toSet());
         final int released = processorTaskDao.releaseTasks(taskIds, TaskStatus.PROCESSING);
-        taskIds.forEach(processorTaskHeartbeat::deregister);
+        tasks.forEach(processorTaskHeartbeat::deregister);
         LOGGER.debug(() -> LogUtil.message("abandonTasks() - released {}/{} claimed tasks",
                 released, tasks.size()));
         return released;

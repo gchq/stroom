@@ -25,6 +25,7 @@ import stroom.node.api.NodeInfo;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.api.ProcessorResultImpl;
 import stroom.processor.api.ProcessorTaskExecutor;
+import stroom.processor.api.RunOutput;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
@@ -54,10 +55,12 @@ import org.mockito.quality.Strictness;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -73,6 +76,8 @@ class TestDataProcessorTaskHandler {
     private static final int FILTER_ID = 5;
     private static final long TASK_ID = 10;
     private static final long META_ID = 20;
+    private static final long OUTPUT_ID = 30;
+    private static final long ERROR_ID = 31;
     private static final ProcessorResult RESULT = new ProcessorResultImpl(1, 2, Collections.emptyMap());
 
     @Mock
@@ -95,6 +100,8 @@ class TestDataProcessorTaskHandler {
     private TaskContext taskContext;
     @Mock
     private ProcessorTaskHeartbeat processorTaskHeartbeat;
+    @Mock
+    private ProcessorTaskOutputCleaner processorTaskOutputCleaner;
     @Mock
     private Source source;
 
@@ -125,7 +132,8 @@ class TestDataProcessorTaskHandler {
         Mockito.when(source.getMeta()).thenAnswer(invocation -> meta.get());
         Mockito.when(metaService.getMeta(META_ID, true)).thenAnswer(invocation -> meta.get());
         Mockito.when(processorFilterCache.get(FILTER_ID)).thenReturn(Optional.of(filter));
-        Mockito.when(executor.exec(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(executor.exec(
+                        Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(RESULT);
 
         Mockito.doAnswer(invocation -> {
@@ -144,6 +152,25 @@ class TestDataProcessorTaskHandler {
                 asProcessingUser.set(false);
             }
         });
+        Mockito.doAnswer(invocation -> {
+            asProcessingUser.set(true);
+            try {
+                invocation.getArgument(0, Runnable.class).run();
+            } finally {
+                asProcessingUser.set(false);
+            }
+            return null;
+        }).when(securityContext).asProcessingUser(Mockito.any());
+        Mockito.when(processorTaskHeartbeat.registerStart(Mockito.any(), Mockito.anyInt(), Mockito.any()))
+                .thenReturn(Optional.empty());
+        Mockito.when(processorTaskHeartbeat.awaitEarlierRuns(Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn(true);
+        Mockito.when(processorTaskOutputCleaner.clearEarlierRuns(Mockito.any(), Mockito.any()))
+                .thenAnswer(invocation -> {
+                    assertThat(asProcessingUser.get()).isTrue();
+                    return invocation.getArgument(1, BooleanSupplier.class).getAsBoolean();
+                });
+        givenTaskIsHeld(Map.of(TASK_ID, 1));
         Mockito.when(taskContextFactory.context(
                         Mockito.any(), Mockito.any(TerminateHandlerFactory.class), Mockito.any()))
                 .thenAnswer(invocation -> {
@@ -162,6 +189,9 @@ class TestDataProcessorTaskHandler {
                     final TaskStatus status = invocation.getArgument(2);
                     return TaskStatusChange.done(task.copy()
                             .version(task.getVersion() + 1)
+                            .runCount(TaskStatus.PROCESSING.equals(status)
+                                    ? task.getRunCount() + 1
+                                    : task.getRunCount())
                             .status(status)
                             .build());
                 });
@@ -176,24 +206,31 @@ class TestDataProcessorTaskHandler {
                 securityContext,
                 taskContextFactory,
                 processorTaskHeartbeat,
+                processorTaskOutputCleaner,
                 ProcessorConfig::new);
     }
 
     @Test
     void queuedTaskIsCompleted() {
+        final TaskId stroomTaskId = taskContext.getTaskId();
+
         assertThat(handler.exec(task(0), false)).isSameAs(RESULT);
 
         final InOrder inOrder = Mockito.inOrder(processorTaskDao, executor, processorTaskHeartbeat);
         inOrder.verify(processorTaskDao).changeTaskStatus(
                 Mockito.argThat(task -> task.getVersion() == 1), Mockito.eq(NODE), Mockito.eq(TaskStatus.PROCESSING),
                 Mockito.anyLong(), Mockito.isNull(), Mockito.isNull(), Mockito.eq(false));
-        inOrder.verify(processorTaskHeartbeat).register(TASK_ID, FILTER_ID, taskContext.getTaskId());
+        inOrder.verify(processorTaskHeartbeat).registerStart(
+                Mockito.argThat(task -> task.getVersion() == 2),
+                Mockito.eq(FILTER_ID),
+                Mockito.eq(stroomTaskId));
         inOrder.verify(executor).exec(
-                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        inOrder.verify(processorTaskHeartbeat).registerEnding(Mockito.argThat(task -> task.getVersion() == 2));
         inOrder.verify(processorTaskDao).changeTaskStatus(
                 Mockito.argThat(task -> task.getVersion() == 2), Mockito.eq(NODE), Mockito.eq(TaskStatus.COMPLETE),
                 Mockito.anyLong(), Mockito.anyLong(), Mockito.isNull(), Mockito.eq(false));
-        inOrder.verify(processorTaskHeartbeat).deregister(TASK_ID);
+        inOrder.verify(processorTaskHeartbeat).deregister(Mockito.argThat(task -> task.getVersion() == 2));
     }
 
     @Test
@@ -323,7 +360,7 @@ class TestDataProcessorTaskHandler {
         assertThatThrownBy(() -> handler.exec(task(0), true)).isSameAs(error);
 
         verifyOnlyStatus(TaskStatus.RETRY, NODE, true, "Unexpected error - OutOfMemoryError 'Expected'");
-        Mockito.verify(processorTaskHeartbeat).deregister(TASK_ID);
+        verifyDeregistered();
     }
 
     @Test
@@ -335,7 +372,7 @@ class TestDataProcessorTaskHandler {
 
         verifyNotExecuted();
         verifyOnlyStatus(TaskStatus.RETRY, NODE, true, "Unexpected error - NoClassDefFoundError 'Expected'");
-        Mockito.verify(processorTaskHeartbeat).deregister(TASK_ID);
+        verifyDeregistered();
     }
 
     @Test
@@ -437,7 +474,11 @@ class TestDataProcessorTaskHandler {
         verifyNotExecuted();
         verifyOnlyStatus(TaskStatus.RETRY, NODE, false,
                 "Unable to run as the user of the processor filter - RuntimeException 'User is not enabled'");
-        Mockito.verify(processorTaskHeartbeat).deregister(TASK_ID);
+        if (alreadyClaimed) {
+            verifyDeregistered();
+        } else {
+            Mockito.verifyNoInteractions(processorTaskHeartbeat);
+        }
     }
 
     @Test
@@ -469,8 +510,310 @@ class TestDataProcessorTaskHandler {
 
         assertThat(handler.exec(task(0), true)).isSameAs(RESULT);
 
-        Mockito.verify(processorTaskHeartbeat).deregister(TASK_ID);
+        verifyDeregistered();
         Mockito.verifyNoInteractions(processorTaskDao);
+    }
+
+    @Test
+    void runThatIsToldToStopBeforeItStartsIsPutBack() {
+        givenStoppedBeforeStart(TerminationCause.HEARTBEAT_OVERDUE);
+
+        handler.exec(task(0), true);
+
+        verifyNotExecuted();
+        verifyPutBack(DataProcessorTaskHandler.REASON_HEARTBEAT_OVERDUE);
+        verifyDeregistered();
+    }
+
+    @Test
+    void runThatLosesItsTaskBeforeItStartsLeavesTheTaskAlone() {
+        givenStoppedBeforeStart(TerminationCause.WORK_LOST);
+
+        handler.exec(task(0), true);
+
+        verifyNotExecuted();
+        verifyTaskLeftAlone();
+        verifyDeregistered();
+    }
+
+    @Test
+    void runThatLosesItsTaskDeletesAllItWroteAndLeavesTheTaskAlone() {
+        givenTerminatedDuringRun(TerminationCause.WORK_LOST, true);
+
+        handler.exec(task(0), true);
+
+        verifyTaskLeftAlone();
+        verifyOnlyDeleted(OUTPUT_ID, ERROR_ID);
+        verifyDeregistered();
+    }
+
+    @Test
+    void runThatFindsItsTaskHasGoneDeletesAllItWrote() {
+        givenWritesOutput();
+        givenStatusCannotBeChanged(TaskStatusChange.lost());
+
+        handler.exec(task(0), true);
+
+        verifyOnlyDeleted(OUTPUT_ID, ERROR_ID);
+    }
+
+    @Test
+    void nothingIsDeletedIfTheStatusMayHaveBeenSet() {
+        givenWritesOutput();
+        givenStatusCannotBeChanged(TaskStatusChange.unknown());
+
+        handler.exec(task(0), true);
+
+        verifyNothingDeleted();
+    }
+
+    @Test
+    void nothingIsDeletedIfTheStatusCannotBeSet() {
+        givenWritesOutput();
+        Mockito.doThrow(new RuntimeException("Expected"))
+                .when(securityContext).asProcessingUserResult(Mockito.any());
+
+        handler.exec(task(0), true);
+
+        verifyNothingDeleted();
+    }
+
+    @Test
+    void completeRunClearsOutputThatItMakesOutOfDate() {
+        givenWritesOutput();
+
+        handler.exec(task(0), true);
+
+        final InOrder inOrder = Mockito.inOrder(processorTaskDao, processorTaskOutputCleaner, processorTaskHeartbeat);
+        inOrder.verify(processorTaskDao).changeTaskStatus(
+                Mockito.any(), Mockito.any(), Mockito.eq(TaskStatus.COMPLETE), Mockito.any(), Mockito.any(),
+                Mockito.any(), Mockito.anyBoolean());
+        inOrder.verify(processorTaskOutputCleaner).clearSuperseded(
+                Mockito.argThat(task -> task.getId() == TASK_ID), Mockito.eq(meta.get()), Mockito.eq(processor));
+        // The run hasn't gone until it has cleared up.
+        inOrder.verify(processorTaskHeartbeat).deregister(Mockito.any());
+        verifyNoOutputDeleted();
+    }
+
+    @Test
+    void onlyARunThatRanClearsOutputThatIsOutOfDate() {
+        meta.set(meta.get().copy().processorUuid(processor.getUuid()).build());
+
+        handler.exec(task(0), true);
+
+        verifyOnlyStatus(TaskStatus.COMPLETE, NODE, false, null);
+        verifyNothingDeleted();
+    }
+
+    @Test
+    void runThatIsPutBackDeletesAllItWrote() {
+        givenTerminatedDuringRun(TerminationCause.NODE_STOPPING, true);
+
+        handler.exec(task(0), true);
+
+        verifyPutBack(DataProcessorTaskHandler.REASON_NODE_STOPPED);
+        verifyOnlyDeleted(OUTPUT_ID, ERROR_ID);
+    }
+
+    @Test
+    void runThatIsEndedByAUserKeepsItsErrorStream() {
+        givenTerminatedDuringRun(TerminationCause.user("Someone"), false);
+
+        handler.exec(task(0), true);
+
+        verifyOnlyDeleted(OUTPUT_ID);
+    }
+
+    @Test
+    void runThatHitsAFaultKeepsItsErrorStream() {
+        givenExecutorThrows(new RuntimeException("Expected"));
+
+        handler.exec(task(0), true);
+
+        verifyOnlyDeleted(OUTPUT_ID);
+    }
+
+    @Test
+    void runThatHitsTheLastFaultKeepsAllItWrote() {
+        givenExecutorThrows(new RuntimeException("Expected"));
+
+        handler.exec(task(2), true);
+
+        verifyNothingDeleted();
+    }
+
+    @Test
+    void runThatIsEndedByAUserOnItsLastTryDeletesItsOutput() {
+        givenTerminatedDuringRun(TerminationCause.user("Someone"), true);
+
+        handler.exec(task(2), true);
+
+        verifyOnlyDeleted(OUTPUT_ID);
+    }
+
+    @Test
+    void failureToClearUpDoesNotChangeHowARunEnded() {
+        givenWritesOutput();
+        Mockito.doThrow(new RuntimeException("Expected"))
+                .when(processorTaskOutputCleaner).clearSuperseded(Mockito.any(), Mockito.any(), Mockito.any());
+
+        assertThat(handler.exec(task(0), true)).isSameAs(RESULT);
+
+        verifyOnlyStatus(TaskStatus.COMPLETE, NODE, false, null);
+        verifyDeregistered();
+    }
+
+    @Test
+    void interruptIsPutOffUntilTheRunHasClearedUp() {
+        givenWritesOutput();
+        final AtomicBoolean interrupted = new AtomicBoolean();
+        Mockito.doAnswer(invocation -> {
+            interrupted.set(Thread.currentThread().isInterrupted());
+            return null;
+        }).when(processorTaskOutputCleaner).clearSuperseded(Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.doAnswer(invocation -> {
+            Thread.currentThread().interrupt();
+            return TaskStatusChange.done(invocation.getArgument(0));
+        }).when(processorTaskDao).changeTaskStatus(
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
+                Mockito.anyBoolean());
+
+        handler.exec(task(0), true);
+
+        assertThat(interrupted.get()).isFalse();
+        assertThat(Thread.interrupted()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    void firstRunHasNothingToClear(final int runCount) {
+        handler.exec(task(0).copy().runCount(runCount).build(), true);
+
+        Mockito.verify(processorTaskOutputCleaner, Mockito.never()).clearEarlierRuns(Mockito.any(), Mockito.any());
+        Mockito.verify(processorTaskHeartbeat, Mockito.never())
+                .awaitEarlierRuns(Mockito.any(), Mockito.any(), Mockito.any());
+        verifyOnlyStatus(TaskStatus.COMPLETE, NODE, false, null);
+    }
+
+    @Test
+    void laterRunWaitsForEarlierRunsAndClearsTheirOutputBeforeItStarts() {
+        handler.exec(laterRun(), true);
+
+        final InOrder inOrder = Mockito.inOrder(processorTaskHeartbeat, processorTaskOutputCleaner, executor);
+        inOrder.verify(processorTaskHeartbeat).registerStart(Mockito.any(), Mockito.anyInt(), Mockito.any());
+        inOrder.verify(processorTaskHeartbeat).awaitEarlierRuns(Mockito.any(), Mockito.any(), Mockito.any());
+        inOrder.verify(processorTaskOutputCleaner).clearEarlierRuns(
+                Mockito.argThat(task -> task.getId() == TASK_ID), Mockito.any());
+        inOrder.verify(executor).exec(
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+        verifyOnlyStatus(TaskStatus.COMPLETE, NODE, false, null);
+    }
+
+    @Test
+    void queuedTaskThatIsNotStartedLeavesTheEarlierRunRegistered() {
+        Mockito.when(store.openSource(META_ID)).thenThrow(new RuntimeException("Expected"));
+
+        handler.exec(task(0).copy().runCount(3).build(), false);
+
+        verifyOnlyStatus(TaskStatus.RETRY, NODE, true,
+                "Unable to open source stream 20 - RuntimeException 'Expected'");
+        // The run has the run count of the run before, which this node may still have.
+        Mockito.verify(processorTaskHeartbeat, Mockito.never()).registerEnding(Mockito.any());
+        Mockito.verify(processorTaskHeartbeat, Mockito.never()).deregister(Mockito.any());
+    }
+
+    @Test
+    void queuedTaskThatCannotBeStartedLeavesTheEarlierRunRegistered() {
+        givenStatusCannotBeChanged(TaskStatusChange.lost());
+
+        handler.exec(task(0).copy().runCount(3).build(), false);
+
+        Mockito.verify(processorTaskHeartbeat, Mockito.never()).registerStart(
+                Mockito.any(), Mockito.anyInt(), Mockito.any());
+        Mockito.verify(processorTaskHeartbeat, Mockito.never()).deregister(Mockito.any());
+    }
+
+    @Test
+    void claimedTaskThatIsNotStartedIsDeregistered() {
+        Mockito.when(store.openSource(META_ID)).thenThrow(new RuntimeException("Expected"));
+        final ProcessorTask task = task(0).copy().runCount(3).build();
+
+        handler.exec(task, true);
+
+        Mockito.verify(processorTaskHeartbeat).registerEnding(task);
+        Mockito.verify(processorTaskHeartbeat).deregister(task);
+    }
+
+    @Test
+    void queuedTaskIsDeregisteredAsTheRunThatStartedIt() {
+        handler.exec(task(0).copy().runCount(3).build(), false);
+
+        Mockito.verify(processorTaskHeartbeat).registerEnding(Mockito.argThat(task -> task.getRunCount() == 4));
+        Mockito.verify(processorTaskHeartbeat).deregister(Mockito.argThat(task -> task.getRunCount() == 4));
+        Mockito.verify(processorTaskHeartbeat, Mockito.never())
+                .deregister(Mockito.argThat(task -> task.getRunCount() == 3));
+    }
+
+    @Test
+    void earlierRunThatDoesNotStopPutsTheTaskBack() {
+        Mockito.when(processorTaskHeartbeat.awaitEarlierRuns(Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn(false);
+
+        handler.exec(laterRun(), true);
+
+        verifyNotExecuted();
+        // It can't yet clear what the earlier run wrote, and wrote nothing itself.
+        Mockito.verify(processorTaskOutputCleaner, Mockito.never()).clearEarlierRuns(Mockito.any(), Mockito.any());
+        verifyOnlyDeleted();
+        verifyOnlyStatus(TaskStatus.RETRY, NODE, false, DataProcessorTaskHandler.REASON_EARLIER_RUN);
+    }
+
+    @Test
+    void runThatIsTerminatedWhileWaitingEndsForThatReason() {
+        Mockito.when(processorTaskHeartbeat.awaitEarlierRuns(Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenAnswer(invocation -> {
+                    givenTerminated(TerminationCause.NODE_STOPPING);
+                    assertThat(invocation.getArgument(2, BooleanSupplier.class).getAsBoolean()).isTrue();
+                    return false;
+                });
+
+        handler.exec(laterRun(), true);
+
+        verifyNotExecuted();
+        verifyPutBack(DataProcessorTaskHandler.REASON_NODE_STOPPED);
+    }
+
+    @Test
+    void earlierOutputThatCannotBeClearedIsNotCounted() {
+        Mockito.doThrow(new RuntimeException("Expected"))
+                .when(processorTaskOutputCleaner).clearEarlierRuns(Mockito.any(), Mockito.any());
+
+        handler.exec(laterRun().copy().faultCount(2).build(), true);
+
+        verifyNotExecuted();
+        verifyOnlyStatus(TaskStatus.RETRY, NODE, false,
+                "Unable to clear the output of earlier runs - RuntimeException 'Expected'");
+    }
+
+    @Test
+    void runThatHasLostItsTaskWhenItClearsUpDoesNotStart() {
+        // It has been run again since.
+        givenTaskIsHeld(Map.of(TASK_ID, 3));
+
+        handler.exec(laterRun(), true);
+
+        verifyNotExecuted();
+        verifyTaskLeftAlone();
+    }
+
+    @Test
+    void runWhoseTaskIsNoLongerProcessingWhenItClearsUpDoesNotStart() {
+        givenTaskIsHeld(Map.of());
+
+        handler.exec(laterRun(), true);
+
+        verifyNotExecuted();
+        verifyTaskLeftAlone();
     }
 
     private ProcessorTask task(final int faultCount) {
@@ -483,14 +826,43 @@ class TestDataProcessorTaskHandler {
                 .build();
     }
 
+    private ProcessorTask laterRun() {
+        return task(0).copy().runCount(2).build();
+    }
+
+    private void givenTaskIsHeld(final Map<Long, Integer> versions) {
+        Mockito.doReturn(versions).when(processorTaskDao).findProcessingVersions(NODE, List.of(TASK_ID));
+    }
+
+    private void givenStoppedBeforeStart(final TerminationCause cause) {
+        Mockito.when(processorTaskHeartbeat.registerStart(Mockito.any(), Mockito.anyInt(), Mockito.any()))
+                .thenReturn(Optional.of(cause));
+    }
+
+    private void givenWritesOutput() {
+        Mockito.when(executor.exec(
+                        Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenAnswer(invocation -> {
+                    writeOutput(invocation.getArgument(5));
+                    return RESULT;
+                });
+    }
+
+    private void writeOutput(final RunOutput runOutput) {
+        runOutput.addOutput(OUTPUT_ID);
+        runOutput.addError(ERROR_ID);
+    }
+
     private void givenTerminated(final TerminationCause cause) {
         Mockito.when(taskContext.isTerminated()).thenReturn(true);
         Mockito.when(taskContext.getTerminationCause()).thenReturn(Optional.of(cause));
     }
 
     private void givenTerminatedDuringRun(final TerminationCause cause, final boolean hitsFault) {
-        Mockito.when(executor.exec(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(executor.exec(
+                        Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenAnswer(invocation -> {
+                    writeOutput(invocation.getArgument(5));
                     givenTerminated(cause);
                     if (hitsFault) {
                         throw new TaskTerminatedException();
@@ -500,8 +872,12 @@ class TestDataProcessorTaskHandler {
     }
 
     private void givenExecutorThrows(final Throwable t) {
-        Mockito.when(executor.exec(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
-                .thenThrow(t);
+        Mockito.when(executor.exec(
+                        Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenAnswer(invocation -> {
+                    writeOutput(invocation.getArgument(5));
+                    throw t;
+                });
     }
 
     private void givenStatusCannotBeChanged(final TaskStatusChange change) {
@@ -513,7 +889,32 @@ class TestDataProcessorTaskHandler {
     private void verifyOnlyStartTried() {
         verifyNotExecuted();
         verifyOnlyStatus(TaskStatus.PROCESSING, NODE, false, null);
-        Mockito.verify(processorTaskHeartbeat).deregister(TASK_ID);
+        // It never registered, and another run of the task may have.
+        Mockito.verifyNoInteractions(processorTaskHeartbeat);
+    }
+
+    private void verifyTaskLeftAlone() {
+        Mockito.verify(processorTaskDao, Mockito.never()).changeTaskStatus(
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
+                Mockito.anyBoolean());
+    }
+
+    private void verifyDeregistered() {
+        Mockito.verify(processorTaskHeartbeat).deregister(Mockito.argThat(task -> task.getId() == TASK_ID));
+    }
+
+    private void verifyOnlyDeleted(final Long... metaIds) {
+        Mockito.verify(processorTaskOutputCleaner, Mockito.times(1)).delete(List.of(metaIds));
+        Mockito.verify(processorTaskOutputCleaner, Mockito.never())
+                .clearSuperseded(Mockito.any(), Mockito.any(), Mockito.any());
+    }
+
+    private void verifyNoOutputDeleted() {
+        Mockito.verify(processorTaskOutputCleaner, Mockito.never()).delete(Mockito.any());
+    }
+
+    private void verifyNothingDeleted() {
+        Mockito.verifyNoInteractions(processorTaskOutputCleaner);
     }
 
     private void verifyNotExecuted() {

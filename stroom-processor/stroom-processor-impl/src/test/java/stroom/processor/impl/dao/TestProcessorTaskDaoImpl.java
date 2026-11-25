@@ -39,8 +39,10 @@ import org.mockito.Mockito;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -386,6 +388,41 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
                 .describedAs("the interrupt is passed on once the status has been changed")
                 .isTrue();
         assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.CREATED);
+    }
+
+    @Test
+    void testFindProcessingVersions() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final Map<TaskStatus, Long> tasks = EnumSet.allOf(TaskStatus.class)
+                .stream()
+                .collect(Collectors.toMap(Function.identity(), status ->
+                        createProcessorTask(processorFilter1a, status, NODE1, FEED)));
+        final long processing = tasks.get(TaskStatus.PROCESSING);
+        final long otherNode = createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE2, FEED);
+        final long notAskedFor = createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
+        final Set<Long> taskIds = new HashSet<>(tasks.values());
+        taskIds.add(otherNode);
+        taskIds.add(Long.MAX_VALUE);
+
+        assertThat(processorTaskDao.findProcessingVersions(NODE1, taskIds))
+                .doesNotContainKey(notAskedFor)
+                .isEqualTo(Map.of(processing, getTaskVersion(processing)));
+        assertThat(processorTaskDao.findProcessingVersions(NODE1, Set.of())).isEmpty();
+    }
+
+    @Test
+    void testFindProcessingVersionsOfMoreTasksThanFitInABatch() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final long taskId = createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
+        final List<Long> taskIds = new ArrayList<>();
+        for (long i = 1; i <= 5_000; i++) {
+            taskIds.add(taskId + i);
+        }
+        taskIds.add(taskId);
+
+        assertThat(processorTaskDao.findProcessingVersions(NODE1, taskIds)).containsOnlyKeys(taskId);
     }
 
     @Test

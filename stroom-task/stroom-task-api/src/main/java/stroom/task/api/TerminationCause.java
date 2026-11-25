@@ -28,6 +28,8 @@ public record TerminationCause(Type type, String terminatedBy) {
     public static final TerminationCause NODE_STOPPING = new TerminationCause(Type.NODE_STOPPING, null);
     /// The node has not been able to renew the heartbeats of what it is processing.
     public static final TerminationCause HEARTBEAT_OVERDUE = new TerminationCause(Type.HEARTBEAT_OVERDUE, null);
+    /// What the task was working on is no longer its to work on, e.g. as it has been given to something else.
+    public static final TerminationCause WORK_LOST = new TerminationCause(Type.WORK_LOST, null);
     /// Whatever terminated the task did not say why.
     public static final TerminationCause NOT_GIVEN = new TerminationCause(Type.NOT_GIVEN, null);
 
@@ -51,6 +53,7 @@ public record TerminationCause(Type type, String terminatedBy) {
         NODE_STOPPING,
         USER,
         HEARTBEAT_OVERDUE,
+        WORK_LOST,
         NOT_GIVEN
     }
 }

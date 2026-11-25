@@ -371,6 +371,26 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     @Override
+    public Map<Long, Integer> findProcessingVersions(final String nodeName,
+                                                     final Collection<Long> taskIds) {
+        final Integer nodeId = processorNodeCache.getOrCreate(nodeName);
+        final Map<Long, Integer> versions = new HashMap<>();
+        final List<Long> remaining = new ArrayList<>(taskIds);
+        for (int from = 0; from < remaining.size(); from += BATCH_SIZE) {
+            final List<Long> chunk = remaining.subList(from, Math.min(from + BATCH_SIZE, remaining.size()));
+            versions.putAll(JooqUtil.contextResult(processorDbConnProvider, context -> context
+                            .select(PROCESSOR_TASK.ID, PROCESSOR_TASK.VERSION)
+                            .from(PROCESSOR_TASK)
+                            .where(PROCESSOR_TASK.ID.in(chunk))
+                            .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.PROCESSING.getPrimitiveValue()))
+                            .and(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId))
+                            .fetch())
+                    .intoMap(PROCESSOR_TASK.ID, PROCESSOR_TASK.VERSION));
+        }
+        return versions;
+    }
+
+    @Override
     public List<ProcessorTask> claimTasks(final int filterId, final String nodeName, final int limit) {
         if (limit <= 0) {
             return List.of();
@@ -1329,8 +1349,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     /**
-     * Diagnose and report a failed version check on a status change. Deletion is routine and
-     * reported quietly; anything else means the task was taken from us while we thought we
+     * Diagnose and report a failed version check on a status change. Deletion and aborting are
+     * routine and reported quietly; anything else means the task was taken from us while we thought we
      * held it, which is the loud case - it implies this node processed (or is processing)
      * work whose output may be duplicated elsewhere.
      */
@@ -1341,10 +1361,15 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     "changeTaskStatus({}) - Abandoning status change, task does not exist, " +
                     "task may have been physically deleted {}",
                     newStatus, processorTask));
-        } else if (TaskStatus.DELETED.equals(reloaded.getStatus())) {
+        } else if (TaskStatus.DELETED.equals(reloaded.getStatus())
+                   || TaskStatus.ABORTED.equals(reloaded.getStatus())) {
             LOGGER.warn(() -> LogUtil.message(
-                    "changeTaskStatus({}) - Abandoning status change, task has been logically deleted {}",
-                    newStatus, processorTask));
+                    "changeTaskStatus({}) - Abandoning status change, task has been {} {}",
+                    newStatus,
+                    TaskStatus.DELETED.equals(reloaded.getStatus())
+                            ? "logically deleted"
+                            : "aborted",
+                    processorTask));
         } else {
             LOGGER.error(() -> LogUtil.message(
                     "changeTaskStatus({}) - LEASE LOST - task was changed by another node while this " +

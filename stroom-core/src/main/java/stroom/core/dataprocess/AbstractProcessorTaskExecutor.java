@@ -23,16 +23,11 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
-import stroom.meta.api.MetaService;
-import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.DefaultErrorWriter;
 import stroom.pipeline.ErrorWriterProxy;
@@ -68,15 +63,10 @@ import stroom.processor.api.InclusiveRanges.InclusiveRange;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.api.ProcessorResultImpl;
 import stroom.processor.api.ProcessorTaskExecutor;
-import stroom.processor.api.ProcessorTaskService;
+import stroom.processor.api.RunOutput;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
-import stroom.processor.shared.ProcessorTaskFields;
-import stroom.processor.shared.TaskStatus;
-import stroom.query.api.ExpressionOperator;
-import stroom.query.api.ExpressionOperator.Op;
-import stroom.query.api.ExpressionTerm.Condition;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
@@ -90,7 +80,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.ElementId;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 
 import com.google.common.collect.ImmutableSortedMap;
@@ -103,12 +92,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExecutor {
 
@@ -125,8 +111,6 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
     private final PipelineFactory pipelineFactory;
     private final Store streamStore;
     private final PipelineStore pipelineStore;
-    private final MetaService metaService;
-    private final ProcessorTaskService processorTaskService;
     private final PipelineHolder pipelineHolder;
     private final FeedHolder feedHolder;
     private final FeedProperties feedProperties;
@@ -149,6 +133,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
     private ProcessorFilter processorFilter;
     private ProcessorTask processorTask;
     private Source streamSource;
+    private RunOutput runOutput;
 
     private long startTime;
 
@@ -158,8 +143,6 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
     protected AbstractProcessorTaskExecutor(final PipelineFactory pipelineFactory,
                                             final Store store,
                                             final PipelineStore pipelineStore,
-                                            final MetaService metaService,
-                                            final ProcessorTaskService processorTaskService,
                                             final PipelineHolder pipelineHolder,
                                             final FeedHolder feedHolder,
                                             final FeedProperties feedProperties,
@@ -180,8 +163,6 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
         this.pipelineFactory = pipelineFactory;
         this.streamStore = store;
         this.pipelineStore = pipelineStore;
-        this.metaService = metaService;
-        this.processorTaskService = processorTaskService;
         this.pipelineHolder = pipelineHolder;
         this.feedHolder = feedHolder;
         this.feedProperties = feedProperties;
@@ -206,11 +187,13 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                                 final Processor processor,
                                 final ProcessorFilter processorFilter,
                                 final ProcessorTask processorTask,
-                                final Source streamSource) {
+                                final Source streamSource,
+                                final RunOutput runOutput) {
         this.processor = processor;
         this.processorFilter = processorFilter;
         this.processorTask = processorTask;
         this.streamSource = streamSource;
+        this.runOutput = runOutput;
 
         // Record when processing began so we know how long it took afterwards.
         startTime = System.currentTimeMillis();
@@ -234,6 +217,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                         recordCount,
                         errorReceiverProxy,
                         volumeGroupNameProvider,
+                        runOutput,
                         this::onErrorStreamFailure)) {
             ProcessorTaskDecorator processDecorator = null;
             try {
@@ -266,9 +250,6 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
             onErrorStreamFailure(e);
-        } finally {
-            // Delete duplicate output.
-            deleteDuplicateOutput(meta, processor);
         }
 
         // If the errors have not been recorded then the task can't be allowed to complete, as nothing would say that
@@ -357,7 +338,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             LOGGER.info(() -> processingInfo);
 
             // Hold the source and feed so the pipeline filters can get them.
-            streamProcessorHolder.setStreamProcessor(processor, processorTask);
+            streamProcessorHolder.setStreamProcessor(processor, processorTask, runOutput);
 
             // Process the streams.
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
@@ -569,69 +550,6 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
         return String.valueOf(streamSource.getMeta());
     }
 
-    private void deleteDuplicateOutput(final Meta meta,
-                                       final Processor processor) {
-        final AtomicInteger count = new AtomicInteger();
-        try {
-            final ExpressionOperator findMetaExpression = ExpressionOperator.builder()
-                    .addIdTerm(MetaFields.PARENT_ID, Condition.EQUALS, meta.getId())
-                    .addDocRefTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, processor.getPipeline())
-                    .addOperator(
-                            ExpressionOperator
-                                    .builder()
-                                    .op(Op.OR)
-                                    .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.LOCKED.toString())
-                                    .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.toString())
-                                    .build())
-                    .build();
-            final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(findMetaExpression);
-            final List<Meta> streamList = metaService.find(findMetaCriteria).getValues();
-
-            Map<Long, ProcessorTask> taskMap = null;
-            if (streamList != null && streamList.size() > 0) {
-                for (final Meta oldMeta : streamList) {
-                    try {
-                        if (oldMeta.getProcessorTaskId() == null) {
-                            metaService.updateStatus(oldMeta, oldMeta.getStatus(), Status.DELETED);
-                            count.incrementAndGet();
-                        } else if (oldMeta.getProcessorTaskId() != processorTask.getId()) {
-                            if (taskMap == null) {
-                                final ExpressionOperator findTaskExpression = ExpressionOperator.builder()
-                                        .addIdTerm(ProcessorTaskFields.META_ID, Condition.EQUALS, meta.getId())
-                                        .addIdTerm(
-                                                ProcessorTaskFields.PROCESSOR_ID, Condition.EQUALS, processor.getId())
-                                        .build();
-                                final ResultPage<ProcessorTask> tasks = processorTaskService.find(
-                                        new ExpressionCriteria(findTaskExpression));
-                                taskMap = tasks
-                                        .stream()
-                                        .collect(Collectors.toMap(ProcessorTask::getId, Function.identity()));
-                            }
-
-                            final ProcessorTask task = taskMap.get(oldMeta.getProcessorTaskId());
-                            if (task == null ||
-                                TaskStatus.COMPLETE.equals(task.getStatus()) ||
-                                TaskStatus.DELETED.equals(task.getStatus())) {
-                                // If the task associated with the other output is complete in some way then delete the
-                                // output.
-                                metaService.updateStatus(oldMeta, oldMeta.getStatus(), Status.DELETED);
-                                count.incrementAndGet();
-                            }
-                        }
-                    } catch (final RuntimeException e) {
-                        LOGGER.error(e::getMessage, e);
-                    }
-                }
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
-        }
-
-        if (count.get() > 0) {
-            LOGGER.info(() -> "Deleted " + count.get() + " duplicates");
-        }
-    }
-
     private static class ProcessInfoOutputStreamProvider extends AbstractElement
             implements DestinationProvider, Destination, AutoCloseable {
 
@@ -645,6 +563,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
         private final RecordCount recordCount;
         private final ErrorReceiverProxy errorReceiverProxy;
         private final VolumeGroupNameProvider volumeGroupNameProvider;
+        private final RunOutput runOutput;
         private final Consumer<Exception> failureConsumer;
 
         private OutputStream processInfoOutputStream;
@@ -660,6 +579,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                                         final RecordCount recordCount,
                                         final ErrorReceiverProxy errorReceiverProxy,
                                         final VolumeGroupNameProvider volumeGroupNameProvider,
+                                        final RunOutput runOutput,
                                         final Consumer<Exception> failureConsumer) {
             this.streamStore = streamStore;
             this.metaData = metaData;
@@ -671,6 +591,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             this.recordCount = recordCount;
             this.errorReceiverProxy = errorReceiverProxy;
             this.volumeGroupNameProvider = volumeGroupNameProvider;
+            this.runOutput = runOutput;
             this.failureConsumer = failureConsumer;
         }
 
@@ -722,6 +643,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                 final String volumeGroupName = volumeGroupNameProvider
                         .getVolumeGroupName(meta.getFeedName(), StreamTypeNames.ERROR, null);
                 processInfoStreamTarget = streamStore.openTarget(dataProperties, volumeGroupName);
+                runOutput.addError(processInfoStreamTarget.getMeta().getId());
                 processInfoOutputStream = new WrappedOutputStream(processInfoStreamTarget.next().get()) {
                     @Override
                     public void close() throws IOException {

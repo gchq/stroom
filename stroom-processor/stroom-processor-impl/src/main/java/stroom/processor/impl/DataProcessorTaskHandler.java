@@ -25,6 +25,7 @@ import stroom.node.api.NodeInfo;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.api.ProcessorResultImpl;
 import stroom.processor.api.ProcessorTaskExecutor;
+import stroom.processor.api.RunOutput;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
@@ -45,7 +46,9 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -56,6 +59,11 @@ public class DataProcessorTaskHandler {
 
     static final String REASON_NODE_STOPPED = "Put back as the node running it was stopped";
     static final String REASON_HEARTBEAT_OVERDUE = "Put back as the node running it could not renew its heartbeat";
+    static final String REASON_EARLIER_RUN = "An earlier run of it was still going on the same node";
+
+    // How long a run waits for an earlier run of the same task to stop. An earlier run is told to stop first, so this
+    // only has to be long enough for it to notice.
+    private static final Duration EARLIER_RUN_TIMEOUT = Duration.ofMinutes(1);
 
     private final Map<ProcessorType, Provider<ProcessorTaskExecutor>> executorProviders;
     private final ProcessorFilterCache processorFilterCache;
@@ -66,6 +74,7 @@ public class DataProcessorTaskHandler {
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
     private final ProcessorTaskHeartbeat processorTaskHeartbeat;
+    private final ProcessorTaskOutputCleaner processorTaskOutputCleaner;
     private final Provider<ProcessorConfig> processorConfigProvider;
 
     @Inject
@@ -78,6 +87,7 @@ public class DataProcessorTaskHandler {
                              final SecurityContext securityContext,
                              final TaskContextFactory taskContextFactory,
                              final ProcessorTaskHeartbeat processorTaskHeartbeat,
+                             final ProcessorTaskOutputCleaner processorTaskOutputCleaner,
                              final Provider<ProcessorConfig> processorConfigProvider) {
         this.executorProviders = executorProviders;
         this.processorFilterCache = processorFilterCache;
@@ -88,6 +98,7 @@ public class DataProcessorTaskHandler {
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
         this.processorTaskHeartbeat = processorTaskHeartbeat;
+        this.processorTaskOutputCleaner = processorTaskOutputCleaner;
         this.processorConfigProvider = processorConfigProvider;
     }
 
@@ -122,19 +133,21 @@ public class DataProcessorTaskHandler {
                 throw e;
             }
             run.fault = new Fault("Unable to run as the user of the processor filter", e, false);
-            setFinalStatus(run, Optional.empty());
+            end(run, Optional.empty());
 
         } catch (final Error e) {
             if (!run.started) {
                 run.fault = new Fault("Unexpected error", e, true);
-                setFinalStatus(run, Optional.empty());
+                end(run, Optional.empty());
             }
             throw e;
 
         } finally {
-            // Unconditional so the registry cannot leak a task and heartbeat it forever, even if the status could not
-            // be set. A no-op if we never registered (the task was never moved to PROCESSING by us).
-            processorTaskHeartbeat.deregister(task.getId());
+            // Unconditional so the registry cannot leak a run and heartbeat its task forever, even if the status could
+            // not be set. A no-op if we never registered (the task was never moved to PROCESSING by us).
+            if (run.registered != null) {
+                processorTaskHeartbeat.deregister(run.registered);
+            }
         }
         return run.result;
     }
@@ -163,7 +176,7 @@ public class DataProcessorTaskHandler {
             run.fault = new Fault("Unexpected error", e, true);
             throw e;
         } finally {
-            setFinalStatus(run, taskContext.getTerminationCause());
+            end(run, taskContext.getTerminationCause().or(() -> run.stopCause));
         }
     }
 
@@ -171,6 +184,7 @@ public class DataProcessorTaskHandler {
         // Open the stream source.
         try (final Source source = openSource(run.task)) {
             final Meta meta = source.getMeta();
+            run.meta = meta;
             final ProcessorFilter processorFilter = loadFilter(run.task);
             final Processor processor = processorFilter.getProcessor();
 
@@ -185,22 +199,19 @@ public class DataProcessorTaskHandler {
                 LOGGER.debug(() -> "Terminated before starting to process task: " + run.task.getId());
 
             } else if (startProcessing(run)) {
-                // gh-5699 Heartbeat while we hold this task in PROCESSING; the stroom task
-                // id lets self-fencing terminate this work if the heartbeat cannot renew. A
-                // claimed task is already registered, without an id because it had not
-                // started; registering again is what supplies the id.
-                processorTaskHeartbeat.register(
-                        run.task.getId(), processorFilter.getId(), taskContext.getTaskId());
                 // Avoid having to do another fetch
                 run.task = run.task.copy().processorFilter(processorFilter).build();
 
-                final ProcessorTaskExecutor processorTaskExecutor =
-                        executorProviders.get(processor.getProcessorType()).get();
-                try {
-                    run.result = processorTaskExecutor
-                            .exec(taskContext, processor, processorFilter, run.task, source);
-                } catch (final RuntimeException e) {
-                    throw new Fault("Processing failed", e, true);
+                if (isReadyToRun(taskContext, run)) {
+                    run.processor = processor;
+                    final ProcessorTaskExecutor processorTaskExecutor =
+                            executorProviders.get(processor.getProcessorType()).get();
+                    try {
+                        run.result = processorTaskExecutor
+                                .exec(taskContext, processor, processorFilter, run.task, source, run.output);
+                    } catch (final RuntimeException e) {
+                        throw new Fault("Processing failed", e, true);
+                    }
                 }
             }
         }
@@ -252,60 +263,172 @@ public class DataProcessorTaskHandler {
         return true;
     }
 
-    // Sets how a run ended. The first of these that applies decides it, so the order matters, e.g. a run that was
-    // terminated because its node is stopping is likely to have hit a fault too, which must not be counted.
-    private void setFinalStatus(final Run run, final Optional<TerminationCause> terminationCause) {
+    // Returns false if the run has to end without doing anything. What it has been given says why.
+    private boolean isReadyToRun(final TaskContext taskContext, final Run run) {
+        // gh-5699 Heartbeat while we hold this task in PROCESSING; the stroom task id lets the run be ended if the
+        // heartbeat cannot renew or finds that the task has been lost. A claimed task is already registered, without
+        // an id because it had not started.
+        run.stopCause = processorTaskHeartbeat.registerStart(
+                run.task, run.task.getProcessorFilter().getId(), taskContext.getTaskId());
+        run.registered = run.task;
+        if (run.stopCause.isPresent()) {
+            return false;
+        }
+
+        if (run.task.getRunCount() > 1) {
+            // Ending another task needs permission that the user the filter runs as needn't have.
+            final boolean alone = securityContext.asProcessingUserResult(() -> processorTaskHeartbeat.awaitEarlierRuns(
+                    run.task, EARLIER_RUN_TIMEOUT, taskContext::isTerminated));
+            if (!alone) {
+                run.earlierRunGoing = true;
+                return false;
+            }
+            if (!clearEarlierRuns(run)) {
+                run.lost = true;
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // Returns false if the run has lost its task.
+    private boolean clearEarlierRuns(final Run run) {
         try {
-            if (run.notStarted) {
-                // The task isn't ours.
-                return;
-            }
-
-            final String nodeName = nodeInfo.getThisNodeName();
-            final long endTime = System.currentTimeMillis();
-
-            if (terminationCause.isPresent()) {
-                final TerminationCause cause = terminationCause.get();
-                switch (cause.type()) {
-                    case NODE_STOPPING -> putBack(run, REASON_NODE_STOPPED);
-                    case HEARTBEAT_OVERDUE -> putBack(run, REASON_HEARTBEAT_OVERDUE);
-                    // A run that is terminated without being told why is treated as if a user had done it, so that
-                    // nothing can terminate a task by accident and have it run forever.
-                    case USER, NOT_GIVEN -> changeTaskStatus(
-                            run.task, nodeName, TaskStatus.ABORTED, run.startTime, endTime,
-                            "Terminated by " + Objects.requireNonNullElse(cause.terminatedBy(), "a user"), false);
-                }
-
-            } else if (run.fault != null && !isSourceDeleted(run)) {
-                final Fault fault = run.fault;
-                LOGGER.error(() -> LogUtil.message("Processor task {} hit a fault - {}",
-                        run.task.getId(), fault.getReason()), fault);
-                final boolean abort = fault.counted && run.task.getFaultCount() + 1
-                                                       >= processorConfigProvider.get().getMaxTaskFaults();
-                changeTaskStatus(
-                        run.task,
-                        nodeName,
-                        abort
-                                ? TaskStatus.ABORTED
-                                : TaskStatus.RETRY,
-                        run.startTime,
-                        endTime,
-                        fault.getReason(),
-                        fault.counted);
-
-            } else {
-                changeTaskStatus(
-                        run.task, nodeName, TaskStatus.COMPLETE, run.startTime, endTime, null, false);
-            }
+            return securityContext.asProcessingUserResult(() ->
+                    processorTaskOutputCleaner.clearEarlierRuns(run.task, () -> isHeld(run.task)));
         } catch (final RuntimeException e) {
-            LOGGER.error(() -> LogUtil.message("Unable to set the final status of processor task {} - {}",
+            // To carry on would leave duplicates.
+            throw new Fault("Unable to clear the output of earlier runs", e, false);
+        }
+    }
+
+    private boolean isHeld(final ProcessorTask task) {
+        return Objects.equals(
+                task.getVersion(),
+                processorTaskDao.findProcessingVersions(nodeInfo.getThisNodeName(), List.of(task.getId()))
+                        .get(task.getId()));
+    }
+
+    private void end(final Run run, final Optional<TerminationCause> terminationCause) {
+        if (run.notStarted) {
+            // The task isn't ours.
+            return;
+        }
+        // So that this isn't taken for a run that has lost its task once it has changed the status.
+        if (run.registered != null) {
+            processorTaskHeartbeat.registerEnding(run.registered);
+        }
+
+        try {
+            final Ending ending = decideEnding(run, terminationCause);
+            final TaskStatusChange change = setFinalStatus(run, ending);
+            clearUp(run, ending, change);
+        } catch (final RuntimeException e) {
+            LOGGER.error(() -> LogUtil.message("Unable to end the run of processor task {} - {}",
                     run.task.getId(), LogUtil.exceptionMessage(e)), e);
         }
     }
 
-    private void putBack(final Run run, final String reason) {
-        LOGGER.info(() -> LogUtil.message("Putting back processor task {} - {}", run.task.getId(), reason));
-        changeTaskStatus(run.task, null, TaskStatus.CREATED, null, null, reason, false);
+    // Decides how a run ended. The first of these that applies decides it, so the order matters, e.g. a run that was
+    // terminated because its node is stopping is likely to have hit a fault too, which must not be counted.
+    private Ending decideEnding(final Run run, final Optional<TerminationCause> terminationCause) {
+        if (run.lost) {
+            return Ending.LOST;
+
+        } else if (terminationCause.isPresent()) {
+            final TerminationCause cause = terminationCause.get();
+            return switch (cause.type()) {
+                case NODE_STOPPING -> Ending.putBack(REASON_NODE_STOPPED);
+                case HEARTBEAT_OVERDUE -> Ending.putBack(REASON_HEARTBEAT_OVERDUE);
+                case WORK_LOST -> Ending.LOST;
+                // A run that is terminated without being told why is treated as if a user had done it, so that
+                // nothing can terminate a task by accident and have it run forever.
+                case USER, NOT_GIVEN -> new Ending(
+                        TaskStatus.ABORTED,
+                        "Terminated by " + Objects.requireNonNullElse(cause.terminatedBy(), "a user"),
+                        false);
+            };
+
+        } else if (run.earlierRunGoing) {
+            // As this node would otherwise claim it again straight away. It isn't a fault of the task's.
+            return new Ending(TaskStatus.RETRY, REASON_EARLIER_RUN, false);
+
+        } else if (run.fault != null && !isSourceDeleted(run)) {
+            final Fault fault = run.fault;
+            LOGGER.error(() -> LogUtil.message("Processor task {} hit a fault - {}",
+                    run.task.getId(), fault.getReason()), fault);
+            final boolean abort = fault.counted && run.task.getFaultCount() + 1
+                                                   >= processorConfigProvider.get().getMaxTaskFaults();
+            return new Ending(
+                    abort
+                            ? TaskStatus.ABORTED
+                            : TaskStatus.RETRY,
+                    fault.getReason(),
+                    fault.counted);
+        }
+        return new Ending(TaskStatus.COMPLETE, null, false);
+    }
+
+    private TaskStatusChange setFinalStatus(final Run run, final Ending ending) {
+        if (ending.isLost()) {
+            LOGGER.warn(() -> LogUtil.message("Run {} of processor task {} has lost its task",
+                    run.task.getRunCount(), run.task.getId()));
+            return TaskStatusChange.lost();
+
+        } else if (TaskStatus.CREATED.equals(ending.status())) {
+            LOGGER.info(() -> LogUtil.message("Putting back processor task {} - {}",
+                    run.task.getId(), ending.reason()));
+            return changeTaskStatus(run.task, null, TaskStatus.CREATED, null, null, ending.reason(), false);
+        }
+        return changeTaskStatus(
+                run.task,
+                nodeInfo.getThisNodeName(),
+                ending.status(),
+                run.startTime,
+                System.currentTimeMillis(),
+                ending.reason(),
+                ending.countFault());
+    }
+
+    // Deletes output that must not be kept, now that the status has been set. If it isn't known whether it has been
+    // then nothing is deleted, as the task may be complete. If it isn't then it will be run again, which clears up.
+    private void clearUp(final Run run, final Ending ending, final TaskStatusChange change) {
+        // An interrupt must not stop this, so is put off until it has finished.
+        final boolean interrupted = Thread.interrupted();
+        try {
+            securityContext.asProcessingUser(() -> {
+                switch (change.result()) {
+                    case DONE -> {
+                        switch (ending.status()) {
+                            case CREATED -> processorTaskOutputCleaner.delete(run.output.getAllIds());
+                            case RETRY -> processorTaskOutputCleaner.delete(run.output.getOutputIds());
+                            case ABORTED -> {
+                                // What was written is kept if this is because of the last fault.
+                                if (!ending.countFault()) {
+                                    processorTaskOutputCleaner.delete(run.output.getOutputIds());
+                                }
+                            }
+                            default -> {
+                                if (run.processor != null) {
+                                    processorTaskOutputCleaner.clearSuperseded(run.task, run.meta, run.processor);
+                                }
+                            }
+                        }
+                    }
+                    case LOST -> processorTaskOutputCleaner.delete(run.output.getAllIds());
+                    case UNKNOWN -> LOGGER.debug(() ->
+                            "Not clearing up as the status may not have been set: " + run.task.getId());
+                }
+            });
+        } catch (final RuntimeException e) {
+            LOGGER.error(() -> LogUtil.message("Unable to clear up after processor task {} - {}",
+                    run.task.getId(), LogUtil.exceptionMessage(e)), e);
+        } finally {
+            if (interrupted) {
+                // Continue to interrupt this thread.
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     private TaskStatusChange changeTaskStatus(final ProcessorTask task,
@@ -366,16 +489,51 @@ public class DataProcessorTaskHandler {
 
         // The task as this run last knew it.
         private ProcessorTask task;
+        // The task as it was when the run was registered with the heartbeat, if it has been. Until it has been, the
+        // run has the run count of the run before, which may still be registered.
+        private ProcessorTask registered;
         // True once this is running as the filter's user and has a task context.
         private boolean started;
         // True if the task could not be changed to PROCESSING, so must be left alone.
         private boolean notStarted;
+        // Why the run must not go on, if its heartbeat found that out before it started.
+        private Optional<TerminationCause> stopCause = Optional.empty();
+        // True if an earlier run of the task was still going on this node.
+        private boolean earlierRunGoing;
+        // True if the run found out for itself that it no longer has its task.
+        private boolean lost;
+        private Meta meta;
+        // Only set if the processor has been run.
+        private Processor processor;
+        private final RunOutput output = new RunOutput();
         private Fault fault;
         private ProcessorResult result = new ProcessorResultImpl(0, 0, Collections.emptyMap());
 
         private Run(final ProcessorTask task, final boolean alreadyClaimed) {
             this.task = task;
             this.alreadyClaimed = alreadyClaimed;
+            // The claim registered the run.
+            this.registered = alreadyClaimed
+                    ? task
+                    : null;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // How a run ended, with no status if the run has lost its task.
+    private record Ending(TaskStatus status, String reason, boolean countFault) {
+
+        private static final Ending LOST = new Ending(null, null, false);
+
+        private static Ending putBack(final String reason) {
+            return new Ending(TaskStatus.CREATED, reason, false);
+        }
+
+        private boolean isLost() {
+            return status == null;
         }
     }
 

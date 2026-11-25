@@ -17,6 +17,7 @@
 package stroom.processor.impl;
 
 import stroom.node.api.NodeInfo;
+import stroom.processor.shared.ProcessorTask;
 import stroom.task.api.TaskManager;
 import stroom.task.api.TerminationCause;
 import stroom.task.shared.TaskId;
@@ -27,10 +28,17 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
+import java.util.stream.Collectors;
 
 /**
  * gh-5699. An in-memory registry of the processor tasks this node currently holds in
@@ -40,17 +48,24 @@ import java.util.concurrent.ConcurrentHashMap;
  * gone un-renewed past {@code stroom.processor.taskLeaseTimeout} to CREATED. See
  * PROCESSOR_WORKER_TASK_QUEUEING_DESIGN.md §3.4.
  * <p>
- * Tasks are registered when this node moves them to PROCESSING
- * ({@link DataProcessorTaskHandler}) and deregistered - unconditionally - when processing ends,
- * whatever the outcome. The heartbeat job runs on the scheduled-job pool, not the data-processing
- * pool, so a node whose processing threads are saturated keeps renewing; a heartbeat starved by
- * busy workers would cause exactly the false reap it exists to prevent.
+ * What is registered is a <em>run</em> of a task. A run is registered when this node moves its task
+ * to PROCESSING ({@link DataProcessorTaskHandler}) and deregistered - unconditionally - when it has
+ * ended and cleared up, whatever the outcome. A task that is put back, reaped or aborted may be
+ * claimed again by the same node before the old run has noticed, so the runs of a task are kept
+ * apart by their run count and one can't be mistaken for another. The heartbeat job runs on the
+ * scheduled-job pool, not the data-processing pool, so a node whose processing threads are saturated
+ * keeps renewing; a heartbeat starved by busy workers would cause exactly the false reap it exists
+ * to prevent.
  * <p>
  * A row is only stamped while it is still PROCESSING <em>and</em> still owned by this node, so a
  * task that has been reaped or completed elsewhere is never touched, and the row's
  * {@code version} is deliberately left alone so optimistic locking on status changes is
  * unaffected. Note that for PROCESSING rows the "Status Time" shown in the UI becomes
  * "time of last heartbeat".
+ * <p>
+ * <b>Lost runs.</b> Each time, runs whose task is no longer PROCESSING on this node with the version
+ * they know it by are ended, as something else has it now, or it has been aborted or deleted. A run
+ * that is already ending is left alone, as it is the run that is changing its task.
  * <p>
  * <b>Self-fencing.</b> Once a task's heartbeat has gone un-renewed past the lease timeout, the
  * reaper may hand it to another node - so a node that has failed to renew for that long must
@@ -68,10 +83,11 @@ public class ProcessorTaskHeartbeat {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorTaskHeartbeat.class);
 
-    /**
-     * Processor task id -> what we know about the task we are holding.
-     */
-    private final Map<Long, HeldTask> processingTasks = new ConcurrentHashMap<>();
+    private static final Duration EARLIER_RUN_POLL = Duration.ofSeconds(1);
+
+    private final Map<RunKey, HeldRun> runs = new ConcurrentHashMap<>();
+    // Notified when a run has gone.
+    private final Object goneLock = new Object();
 
     private final ProcessorTaskDao processorTaskDao;
     private final NodeInfo nodeInfo;
@@ -81,7 +97,7 @@ public class ProcessorTaskHeartbeat {
     /**
      * When we last knew our heartbeats to be current: the last successful renewal, or the moment
      * the registry last went from empty to non-empty (a fresh claim is itself evidence the
-     * database was reachable). Volatile: written by the job thread and register(), read by both.
+     * database was reachable). Volatile: written by the job thread and when a run is registered, read by both.
      */
     private volatile long lastRenewalSuccessMs;
 
@@ -97,33 +113,106 @@ public class ProcessorTaskHeartbeat {
         this.lastRenewalSuccessMs = System.currentTimeMillis();
     }
 
-    /**
-     * Record that this node has moved the task to PROCESSING and holds it.
-     *
-     * @param taskId       The processor task id.
-     * @param filterId     The filter the task belongs to, so this node can answer how many of a
-     *                     filter's tasks it is running without asking the database.
-     * @param stroomTaskId The id of the stroom task processing it, so self-fencing can
-     *                     terminate it; null before processing starts, and where the context has
-     *                     no id.
-     */
-    public void register(final long taskId, final Integer filterId, final TaskId stroomTaskId) {
-        if (processingTasks.isEmpty()) {
+    /// Records that this node has claimed a task, so holds a run of it that has not started.
+    ///
+    /// @param task     The task as it was claimed.
+    /// @param filterId The filter the task belongs to, so this node can answer how many of a filter's tasks it is
+    ///                 running without asking the database.
+    public void registerClaim(final ProcessorTask task, final int filterId) {
+        startClock();
+        runs.put(RunKey.of(task), new HeldRun(filterId, task.getVersion()));
+        LOGGER.trace(() -> "Registered claim of " + task);
+    }
+
+    /// Records that a run of a task is starting, whether the task was claimed or has just been moved to PROCESSING.
+    ///
+    /// @param task         The task as the run knows it.
+    /// @param filterId     The filter the task belongs to.
+    /// @param stroomTaskId The id of the stroom task that the run is, so that it can be terminated. Null where the
+    ///                     context has no id.
+    /// @return Why the run must not start after all, or empty if it may.
+    public Optional<TerminationCause> registerStart(final ProcessorTask task,
+                                                    final int filterId,
+                                                    final TaskId stroomTaskId) {
+        startClock();
+        LOGGER.trace(() -> "Registering start of " + task);
+        return runs
+                .computeIfAbsent(RunKey.of(task), key -> new HeldRun(filterId, task.getVersion()))
+                .start(stroomTaskId);
+    }
+
+    /// Records that a run is about to set the status of its task, so must not be ended by this from now on. Does
+    /// nothing if the run was never registered.
+    ///
+    /// @param task The task as the run knows it.
+    public void registerEnding(final ProcessorTask task) {
+        final HeldRun run = runs.get(RunKey.of(task));
+        if (run != null) {
+            run.end();
+        }
+    }
+
+    /// Records that a run has ended, has cleared up and has nothing open. Does nothing if the run was never
+    /// registered, and nothing to any other run of the same task.
+    ///
+    /// @param task The task as the run knows it.
+    public void deregister(final ProcessorTask task) {
+        runs.remove(RunKey.of(task));
+        synchronized (goneLock) {
+            goneLock.notifyAll();
+        }
+        LOGGER.trace(() -> "Deregistered " + task);
+    }
+
+    private void startClock() {
+        if (runs.isEmpty()) {
             // The renewal clock only matters while we hold tasks; start it now rather than
             // letting a long idle period count against the first task claimed after it.
             lastRenewalSuccessMs = System.currentTimeMillis();
         }
-        processingTasks.put(taskId, new HeldTask(filterId, stroomTaskId));
-        LOGGER.trace("Registered task {} for heartbeat", taskId);
     }
 
-    /**
-     * Record that this node is no longer processing the task. Safe to call for a task that was
-     * never registered.
-     */
-    public void deregister(final long taskId) {
-        processingTasks.remove(taskId);
-        LOGGER.trace("Deregistered task {} from heartbeat", taskId);
+    /// Ends any earlier runs of a task that are still going on this node, and waits for them to go, so that two runs
+    /// of one task never overlap on a node. They have lost the task, or there would not be a later run. An earlier run
+    /// that has not started doesn't have to be waited for, as it won't.
+    ///
+    /// @param task    The task as the later run knows it.
+    /// @param timeout How long to wait.
+    /// @param giveUp  Whether to stop waiting.
+    /// @return True if there are none, or false if there still are.
+    public boolean awaitEarlierRuns(final ProcessorTask task,
+                                    final Duration timeout,
+                                    final BooleanSupplier giveUp) {
+        final Map<RunKey, HeldRun> earlierRuns = runs
+                .entrySet()
+                .stream()
+                .filter(entry -> entry.getKey().isEarlierRunOf(task))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        earlierRuns.forEach((key, run) -> {
+            if (stop(key, run, TerminationCause.WORK_LOST)) {
+                LOGGER.warn(() -> "Ending run " + key.runCount() + " of processor task " + key.taskId()
+                                  + " as this node now has run " + task.getRunCount());
+            }
+        });
+
+        final long deadline = System.nanoTime() + timeout.toNanos();
+        synchronized (goneLock) {
+            while (earlierRuns.entrySet().stream().anyMatch(entry ->
+                    runs.get(entry.getKey()) == entry.getValue() && entry.getValue().isGoing())) {
+                final long remainingMs = TimeUnit.NANOSECONDS.toMillis(deadline - System.nanoTime());
+                if (remainingMs <= 0 || giveUp.getAsBoolean()) {
+                    return false;
+                }
+                try {
+                    goneLock.wait(Math.min(remainingMs, EARLIER_RUN_POLL.toMillis()));
+                } catch (final InterruptedException e) {
+                    LOGGER.debug(e::getMessage, e);
+                    Thread.currentThread().interrupt();
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -132,10 +221,11 @@ public class ProcessorTaskHeartbeat {
     public void exec() {
         try {
             renew(System.currentTimeMillis());
+            endLostRuns();
         } catch (final RuntimeException e) {
-            // Failure here is what starts the self-fencing clock, so shout about it.
-            LOGGER.error(() -> "Failed to renew processing task heartbeats ("
-                               + processingTasks.size() + " tasks held): " + e.getMessage(), e);
+            // Failure to renew is what starts the self-fencing clock, so shout about it.
+            LOGGER.error(() -> "Failed to renew processing task heartbeats or to find lost runs ("
+                               + runs.size() + " runs held): " + e.getMessage(), e);
         }
         fenceIfRenewalOverdue(System.currentTimeMillis());
     }
@@ -150,7 +240,7 @@ public class ProcessorTaskHeartbeat {
     public int renew(final long nowMs) {
         // Snapshot so the DAO sees a stable collection; tasks completing mid-renewal are the
         // normal case, not an error, so a stamped count below the snapshot size is expected.
-        final List<Long> taskIds = List.copyOf(processingTasks.keySet());
+        final Set<Long> taskIds = runs.keySet().stream().map(RunKey::taskId).collect(Collectors.toSet());
         final int count;
         if (taskIds.isEmpty()) {
             LOGGER.trace("No processing tasks to heartbeat");
@@ -165,6 +255,56 @@ public class ProcessorTaskHeartbeat {
         return count;
     }
 
+    /// Ends the runs that have lost their task, i.e. it is no longer being processed by this node with the version
+    /// they know it by. Those that have not started won't.
+    ///
+    /// @return The number of runs that were found to have lost their task and had not been ended already.
+    public int endLostRuns() {
+        // Found before the database is asked, so each was registered, and so had its task, before that.
+        final Map<RunKey, HeldRun> activeRuns = new HashMap<>();
+        runs.forEach((key, run) -> {
+            if (run.isActive()) {
+                activeRuns.put(key, run);
+            }
+        });
+        if (activeRuns.isEmpty()) {
+            return 0;
+        }
+
+        final Map<Long, Integer> versions = processorTaskDao.findProcessingVersions(
+                nodeInfo.getThisNodeName(),
+                activeRuns.keySet().stream().map(RunKey::taskId).collect(Collectors.toSet()));
+        int count = 0;
+        for (final Map.Entry<RunKey, HeldRun> entry : activeRuns.entrySet()) {
+            final RunKey key = entry.getKey();
+            final HeldRun run = entry.getValue();
+            // A run that has changed the status of its task itself, since it was found to be active, is now ending so
+            // isn't stopped.
+            if (!Objects.equals(run.version, versions.get(key.taskId()))
+                && stop(key, run, TerminationCause.WORK_LOST)) {
+                LOGGER.warn(() -> "Ending run " + key.runCount() + " of processor task " + key.taskId()
+                                  + " as this node no longer has the task");
+                count++;
+            }
+        }
+        return count;
+    }
+
+    // Returns true if the run has only just been told to stop.
+    private boolean stop(final RunKey key, final HeldRun run, final TerminationCause terminationCause) {
+        final boolean first = run.stop(terminationCause);
+        // Done every time, in case it failed before.
+        final Optional<TaskId> stroomTaskId = run.getStroomTaskIdToTerminate();
+        if (stroomTaskId.isPresent()) {
+            taskManager.terminate(stroomTaskId.get(), run.getStopCause());
+        } else if (run.isRunning()) {
+            // The processing context had no id, which is only the case in tests.
+            LOGGER.error("Unable to end run {} of processor task {} as no stroom task id was registered for it",
+                    key.runCount(), key.taskId());
+        }
+        return first;
+    }
+
     /**
      * Self-fence: if we hold tasks but have not managed to renew their heartbeats within the
      * lease timeout, the reaper is entitled to have handed them to other nodes, so terminate
@@ -172,7 +312,7 @@ public class ProcessorTaskHeartbeat {
      * parameter for testing.
      */
     public void fenceIfRenewalOverdue(final long nowMs) {
-        if (processingTasks.isEmpty()) {
+        if (runs.isEmpty()) {
             return;
         }
         final long leaseTimeoutMs = processorConfigProvider.get().getTaskLeaseTimeout().toMillis();
@@ -182,17 +322,10 @@ public class ProcessorTaskHeartbeat {
                                + "ms, longer than the lease timeout (" + leaseTimeoutMs + "ms, "
                                + "stroom.processor.taskLeaseTimeout). The tasks this node is processing "
                                + "may have been reaped and given to other nodes, so terminating all "
-                               + processingTasks.size() + " in-flight tasks to prevent duplicate output.");
-            processingTasks.forEach((taskId, held) -> {
-                if (held.stroomTaskId() != null) {
-                    LOGGER.warn("Self-fencing - terminating processing of task {}", taskId);
-                    taskManager.terminate(held.stroomTaskId(), TerminationCause.HEARTBEAT_OVERDUE);
-                } else {
-                    // Either the task was claimed but has not started running yet, or the
-                    // processing context had no id (only the case in tests). Nothing to
-                    // terminate; the version bump on reap is what stops it writing a status.
-                    LOGGER.error("Self-fencing - cannot terminate processing of task {}, "
-                                 + "no stroom task id was registered for it", taskId);
+                               + runs.size() + " in-flight tasks to prevent duplicate output.");
+            runs.forEach((key, run) -> {
+                if (stop(key, run, TerminationCause.HEARTBEAT_OVERDUE)) {
+                    LOGGER.warn("Self-fencing - ending run {} of processor task {}", key.runCount(), key.taskId());
                 }
             });
         }
@@ -210,7 +343,7 @@ public class ProcessorTaskHeartbeat {
      * The number of tasks this node currently believes it is processing.
      */
     public int size() {
-        return processingTasks.size();
+        return runs.size();
     }
 
     /**
@@ -219,10 +352,10 @@ public class ProcessorTaskHeartbeat {
      * cluster wide one.
      */
     public int countForFilter(final int filterId) {
-        return (int) processingTasks
+        return (int) runs
                 .values()
                 .stream()
-                .filter(held -> Objects.equals(filterId, held.filterId()))
+                .filter(run -> run.filterId == filterId)
                 .count();
     }
 
@@ -230,12 +363,88 @@ public class ProcessorTaskHeartbeat {
     // --------------------------------------------------------------------------------
 
 
-    /**
-     * @param filterId     The filter the task belongs to, for per filter counting.
-     * @param stroomTaskId The stroom task processing it, used to terminate it when self-fencing.
-     *                     Null while the task is claimed but not yet running.
-     */
-    private record HeldTask(Integer filterId, TaskId stroomTaskId) {
+    private record RunKey(long taskId, int runCount) {
 
+        private static RunKey of(final ProcessorTask task) {
+            return new RunKey(task.getId(), task.getRunCount());
+        }
+
+        private boolean isEarlierRunOf(final ProcessorTask task) {
+            return taskId == task.getId() && runCount < task.getRunCount();
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // A run is claimed, running or ending, and has gone when it is no longer in the registry.
+    private static class HeldRun {
+
+        private final int filterId;
+        private final Integer version;
+
+        private State state = State.CLAIMED;
+        private TaskId stroomTaskId;
+        // The first reason the run was given to stop, if it has been.
+        private TerminationCause stopCause;
+
+        private HeldRun(final int filterId, final Integer version) {
+            this.filterId = filterId;
+            this.version = version;
+        }
+
+        private synchronized Optional<TerminationCause> start(final TaskId stroomTaskId) {
+            if (stopCause == null) {
+                this.stroomTaskId = stroomTaskId;
+                state = State.RUNNING;
+            }
+            return Optional.ofNullable(stopCause);
+        }
+
+        private synchronized void end() {
+            state = State.ENDING;
+        }
+
+        private synchronized boolean stop(final TerminationCause terminationCause) {
+            if (!isActive() || stopCause != null) {
+                return false;
+            }
+            stopCause = terminationCause;
+            return true;
+        }
+
+        // Terminating a run that starts to end in the meantime does no harm, as what it was told to stop for is true.
+        private synchronized Optional<TaskId> getStroomTaskIdToTerminate() {
+            return State.RUNNING.equals(state) && stopCause != null
+                    ? Optional.ofNullable(stroomTaskId)
+                    : Optional.empty();
+        }
+
+        private synchronized TerminationCause getStopCause() {
+            return stopCause;
+        }
+
+        private synchronized boolean isActive() {
+            return !State.ENDING.equals(state);
+        }
+
+        private synchronized boolean isRunning() {
+            return State.RUNNING.equals(state);
+        }
+
+        private synchronized boolean isGoing() {
+            return !State.CLAIMED.equals(state);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private enum State {
+        CLAIMED,
+        RUNNING,
+        ENDING
     }
 }

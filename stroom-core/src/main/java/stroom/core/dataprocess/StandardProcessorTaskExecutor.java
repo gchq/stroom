@@ -19,7 +19,6 @@ package stroom.core.dataprocess;
 import stroom.data.store.api.Store;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.VolumeGroupNameProvider;
-import stroom.meta.api.MetaService;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.LocationFactoryProxy;
@@ -36,7 +35,6 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.SearchIdHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
-import stroom.processor.api.ProcessorTaskService;
 import stroom.statistics.api.InternalStatisticsReceiver;
 
 import jakarta.inject.Inject;
@@ -49,8 +47,6 @@ public class StandardProcessorTaskExecutor extends AbstractProcessorTaskExecutor
     public StandardProcessorTaskExecutor(final PipelineFactory pipelineFactory,
                                          final Store store,
                                          final PipelineStore pipelineStore,
-                                         final MetaService metaService,
-                                         final ProcessorTaskService processorTaskService,
                                          final PipelineHolder pipelineHolder,
                                          final FeedHolder feedHolder,
                                          final FeedProperties feedProperties,
@@ -71,8 +67,6 @@ public class StandardProcessorTaskExecutor extends AbstractProcessorTaskExecutor
         super(pipelineFactory,
                 store,
                 pipelineStore,
-                metaService,
-                processorTaskService,
                 pipelineHolder,
                 feedHolder,
                 feedProperties,

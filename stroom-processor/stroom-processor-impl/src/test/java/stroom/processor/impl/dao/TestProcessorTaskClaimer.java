@@ -143,7 +143,7 @@ class TestProcessorTaskClaimer extends AbstractProcessorTest {
                 createProcessorTask(filter, TaskStatus.PROCESSING, NODE1, FEED));
         createTasks(filter, 2);
         final ProcessorTaskHeartbeat heartbeat = heartbeat();
-        running.forEach(taskId -> heartbeat.register(taskId, filter.getId(), null));
+        running.forEach(taskId -> heartbeat.registerClaim(task(taskId), filter.getId()));
         final ProcessorTaskClaimer claimer = claimer(List.of(filter), null, heartbeat);
 
         assertThat(claimer.claimTasks(2))
@@ -152,7 +152,7 @@ class TestProcessorTaskClaimer extends AbstractProcessorTest {
 
         // Those two are done with, which the registry knows about the moment it happens.
         processorTaskDao.releaseTasks(Set.copyOf(running), TaskStatus.PROCESSING);
-        running.forEach(heartbeat::deregister);
+        running.forEach(taskId -> heartbeat.deregister(task(taskId)));
 
         assertThat(claimer.claimTasks(2))
                 .describedAs("the cached count is corrected by what this node has since finished, "
@@ -168,7 +168,7 @@ class TestProcessorTaskClaimer extends AbstractProcessorTest {
         final long running = createProcessorTask(filter, TaskStatus.PROCESSING, NODE1, FEED);
         createTasks(filter, 3);
         final ProcessorTaskHeartbeat heartbeat = heartbeat();
-        heartbeat.register(running, filter.getId(), null);
+        heartbeat.registerClaim(task(running), filter.getId());
 
         // The task this node was running finishes while the cluster count query is in flight, so
         // the count comes back without it. The registry baseline the count is carried forward from
@@ -176,7 +176,7 @@ class TestProcessorTaskClaimer extends AbstractProcessorTest {
         final ProcessorTaskDao dao = Mockito.spy(processorTaskDao);
         Mockito.doAnswer(invocation -> {
             processorTaskDao.releaseTasks(Set.of(running), TaskStatus.PROCESSING);
-            heartbeat.deregister(running);
+            heartbeat.deregister(task(running));
             return invocation.callRealMethod();
         }).when(dao).countTasksForFilter(filter.getId(), TaskStatus.PROCESSING);
         final ProcessorTaskClaimer claimer = claimer(List.of(filter), null, heartbeat, dao);
@@ -204,6 +204,23 @@ class TestProcessorTaskClaimer extends AbstractProcessorTest {
             assertThat(getTaskStatus(task.getId())).isEqualTo(TaskStatus.CREATED);
             assertThat(getTaskNodeId(task.getId())).isNull();
         });
+    }
+
+    @Test
+    void claimedTasksAreHeldWithTheVersionAndRunTheyWereClaimedWith() {
+        final Processor processor = createProcessor();
+        final ProcessorFilter filter = createProcessorFilter(processor);
+        createTasks(filter, 2);
+        final ProcessorTaskHeartbeat heartbeat = heartbeat();
+        final ProcessorTaskClaimer claimer = claimer(List.of(filter), null, heartbeat);
+
+        final List<ProcessorTask> claimed = claimer.claimTasks(2);
+
+        assertThat(heartbeat.endLostRuns())
+                .describedAs("none are taken for lost")
+                .isZero();
+        claimer.abandonTasks(claimed);
+        assertThat(heartbeat.size()).isZero();
     }
 
     @Test
@@ -275,6 +292,10 @@ class TestProcessorTaskClaimer extends AbstractProcessorTest {
         Mockito.when(nodeInfo.getThisNodeName()).thenReturn(NODE1);
         return new ProcessorTaskHeartbeat(
                 processorTaskDao, nodeInfo, Mockito.mock(TaskManager.class), ProcessorConfig::new);
+    }
+
+    private ProcessorTask task(final long taskId) {
+        return ProcessorTask.builder().id(taskId).version(getTaskVersion(taskId)).runCount(1).build();
     }
 
     private List<Long> createTasks(final ProcessorFilter filter, final int count) {
