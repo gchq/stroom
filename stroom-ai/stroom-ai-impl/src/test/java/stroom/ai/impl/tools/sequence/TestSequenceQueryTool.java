@@ -16,7 +16,6 @@
 
 package stroom.ai.impl.tools.sequence;
 
-import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.api.ElasticEql;
 import stroom.ai.api.ElasticEql.Event;
 import stroom.ai.api.ElasticEql.Reason;
@@ -27,6 +26,7 @@ import stroom.ai.api.ElasticEql.Sequence;
 import stroom.ai.api.ElasticEql.Target;
 import stroom.ai.api.ElasticEsql;
 import stroom.ai.api.ElasticKeyStreams;
+import stroom.ai.api.ElasticKeyStreams.Transform;
 import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.tools.LangChain4jTools;

@@ -1035,8 +1035,9 @@ class TestActivityTimelineAnySource {
         assertThat((Map<String, Object>) source.get("fields_by_pipeline")).containsEntry("host", Map.of(
                 "EventSource/Device/HostName (the Events XML)", 1L, "not read", 1L));
         // Both events' XML asked for, once, for their fields.
-        Mockito.verify(eventXml, Mockito.times(1)).read(Mockito.any(), Mockito.eq(Map.of(31L, List.of((long) eventId - 1),
-                32L, List.of((long) eventId))), Mockito.anyInt(), Mockito.any(), Mockito.any());
+        Mockito.verify(eventXml, Mockito.times(1)).read(Mockito.any(), Mockito.eq(Map.of(
+                        31L, List.of((long) eventId - 1), 32L, List.of((long) eventId))), Mockito.anyInt(),
+                Mockito.any(), Mockito.any());
         final String text = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
                 arguments(Map.of("sources", List.of("Events"))), false)), chat(UserQuestions.NONE, null)).text();
         assertThat(text).contains("its feeding pipelines' plans differ, so each event's own was read: host by "

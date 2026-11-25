@@ -25,10 +25,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/// How an activity timeline read its sources (decided with the user 2026-11-25), for its result: the scans made
-/// (one per source), the documents of an event read more than once left out, the fields each event's own pipeline gave where the pipelines feeding an index differ, the
-/// Events XML paths read because the index doesn't map them, and the `## Event types` lines to offer for the codes
-/// classified this run.
+/// How an activity timeline read its sources (decided with the user 2026-11-25), for its result: the scans made (one
+/// per source), the documents of an event read more than once left out, the fields each event's own pipeline gave where
+/// the pipelines feeding an index differ, the Events XML paths read because the index doesn't map them, and the
+/// `## Event types` lines to offer for the codes classified this run.
 ///
 /// @param scans        The scans opened: one per source (and per user field where the pipelines differ on it).
 /// @param byStream     For each source whose pipelines differ, by its place: each thing's fields read and how many
