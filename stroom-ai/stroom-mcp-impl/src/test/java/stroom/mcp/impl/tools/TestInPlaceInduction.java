@@ -27,9 +27,11 @@ import stroom.ai.impl.tools.processing.XsltStages;
 import stroom.ai.impl.tools.processing.XsltStages.Stage;
 import stroom.ai.impl.tools.streams.SteppingWalks;
 import stroom.ai.impl.tools.validation.HeldSchemas;
+import stroom.contentstore.shared.ContentStoreMetadata;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.documentation.shared.DocumentationDoc;
+import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
 
@@ -144,6 +146,57 @@ class TestInPlaceInduction {
                 Map.of("name", "VPN-Events", "uuid", "hand-pipeline")));
         Mockito.when(world.documentAccess.canEdit(any())).thenReturn(true);
         Mockito.when(world.documentAccess.canCreate(any(), anyString())).thenReturn(true);
+    }
+
+    @Test
+    void aTranslationFromAContentStorePackIsDescribedInTheBuildOnlyNothingWrittenInThePack() {
+        // Decided by the user (2026-11-25): an upgrade pulls the pack again, overwriting the hidden blocks, so the
+        // change belongs in the pack's source; the induction is kept in the build.
+        inRepository(GitRepoDoc.builder().uuid("repo").name("VPN pack")
+                .contentStoreMetadata(new ContentStoreMetadata("owner", "Owner", null, null, null))
+                .contentStoreContentPackId("vpn-pack").build());
+        final InPlaceInduction.Scope scope = induction.scope("hand-pipeline").orElseThrow();
+
+        final Map<String, Object> described = induction.describe(BuildToolCalls.context(), BUILD, "VPN", scope,
+                List.of("VPN-A"));
+
+        assertThat(described).containsEntry("status", "described_in_place").doesNotContainKey("not_written");
+        assertThat(String.valueOf(described.get("content_pack"))).contains("XSLT 'VPN-Events' is in 'VPN pack' "
+                                                                           + "(content pack vpn-pack)",
+                "the pipeline '", "Content Store", "belong in the pack's own source",
+                "kept in this build only");
+        final XsltDoc after = (XsltDoc) world.docs.get("hand-xslt");
+        assertThat(after.getDescription()).isEqualTo(USERS_TEXT);
+        // The notes stay in the build: none made beside the pipeline.
+        final DocRef notes = catalogueNotes.notesDocRef(BUILD).orElseThrow();
+        assertThat(world.guard().buildOf(notes)).contains(BUILD);
+        assertThat(JsonValues.mapOrEmpty(world.records().startFrom(BUILD).orElseThrow()
+                .get(InPlaceInduction.IN_PLACE))).containsEntry("written", false).containsKey("mapping");
+        // Confirmed: still nothing written in the pack, said again.
+        final Map<String, Object> confirmed = induction.confirmed(BuildToolCalls.context(), BUILD).orElseThrow();
+        assertThat(String.valueOf(confirmed.get("content_pack"))).contains("is in 'VPN pack'");
+        assertThat(((XsltDoc) world.docs.get("hand-xslt")).getDescription()).isEqualTo(USERS_TEXT);
+    }
+
+    @Test
+    void aTranslationInARepositoryTheUserSyncsIsWrittenAsAnyOther() {
+        // A Git repository with no Content Store metadata: Stroom pushes what changes in it.
+        inRepository(GitRepoDoc.builder().uuid("repo").name("Our content").build());
+        final InPlaceInduction.Scope scope = induction.scope("hand-pipeline").orElseThrow();
+
+        final Map<String, Object> described = induction.describe(BuildToolCalls.context(), BUILD, "VPN", scope,
+                List.of("VPN-A"));
+
+        assertThat(described).doesNotContainKey("content_pack").doesNotContainKey("not_written");
+        assertThat(KeptMapping.readMapping(((XsltDoc) world.docs.get("hand-xslt")).getDescription())).isPresent();
+    }
+
+    // The XSLT and pipeline moved under a Git repository node in the feed's folder.
+    private void inRepository(final GitRepoDoc repo) {
+        final String repoNode = world.add(GitRepoDoc.TYPE, repo.getName(), world.folder(FOLDER).uuid, "repo").uuid;
+        world.docs.put("repo", repo);
+        world.nodes.get("hand-xslt").parent = repoNode;
+        world.nodes.get("hand-pipeline").parent = repoNode;
     }
 
     @Test

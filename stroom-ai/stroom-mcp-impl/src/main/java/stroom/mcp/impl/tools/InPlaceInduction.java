@@ -95,6 +95,7 @@ class InPlaceInduction {
     private static final String MAPPING = "mapping";
     private static final String WRITTEN = "written";
     private static final String NOT_WRITTEN = "not_written";
+    private static final String CONTENT_PACK = "content_pack";
 
     private final PipelineShapes pipelineShapes;
     private final XsltStages xsltStages;
@@ -107,6 +108,7 @@ class InPlaceInduction {
     private final Provider<DocFinder> docFinder;
     private final Provider<BuildRecords> buildRecords;
     private final LongSupplier clock;
+    private final ContentStorePacks packs;
 
     @Inject
     InPlaceInduction(final PipelineShapes pipelineShapes,
@@ -158,6 +160,7 @@ class InPlaceInduction {
         this.docFinder = docFinder;
         this.buildRecords = buildRecords;
         this.clock = clock;
+        this.packs = new ContentStorePacks(documentAccess);
     }
 
     /// @param startFrom A build's start ([BuildRecords#startFrom]), or null.
@@ -257,7 +260,13 @@ class InPlaceInduction {
 
         // The catalogue: beside the pipeline, the build's notes a working copy of it.
         final DocRef pipeline = scope.pipeline();
-        Optional<DocRef> original = besidePipeline(pipeline);
+        // From a content pack the Content Store installed (an upgrade pulls it again, overwriting it): nothing is
+        // written in it, and the induction is kept in the build (decided by the user, 2026-11-25).
+        final Optional<String> xsltPack = packs.packOf(xsltRef);
+        final Optional<String> pipelinePack = packs.packOf(pipeline);
+        Optional<DocRef> original = pipelinePack.isPresent()
+                ? Optional.empty()
+                : besidePipeline(pipeline);
         original.ifPresent(found -> catalogueNotes.carryInto(build, pipeline));
         final Catalogue before = catalogueNotes.catalogue(build).orElse(null);
         final Catalogue catalogue = readBack(CatalogueFromMapping.read(rebuilt.mapping(), before), before)
@@ -265,8 +274,16 @@ class InPlaceInduction {
         catalogueNotes.write(context.session(), build, source, catalogue, reading(rebuilt.mapping(),
                 scope.preProcessed()));
         final List<String> notWritten = new ArrayList<>();
+        final List<String> packed = new ArrayList<>();
+        xsltPack.ifPresent(pack -> packed.add("XSLT '" + xslt.getName() + "' is in " + pack));
+        pipelinePack.ifPresent(pack -> packed.add("the pipeline '" + NullSafe.nonBlankStringElse(
+                pipeline.getName(), documentAccess.path(pipeline)) + "', beside which its source notes go, is in "
+                                                  + pack));
         final Optional<DocRef> folder = documentAccess.parent(pipeline);
-        if (original.isEmpty()) {
+        if (pipelinePack.isPresent()) {
+            // Neither made nor written beside it: the build keeps them.
+            LOGGER.debug("Source notes kept in build {}: {}", build, pipelinePack.get());
+        } else if (original.isEmpty()) {
             final boolean canCreate = folder.map(found -> documentAccess.canCreate(found,
                     DocumentationDoc.TYPE)).orElse(false);
             if (canCreate) {
@@ -280,9 +297,9 @@ class InPlaceInduction {
         } else {
             notWritten.add("Edit on the source notes '" + original.get().getName() + "'");
         }
-        final boolean xsltWritten = documentAccess.canEdit(xsltRef) && writeXslt(xslt, payload,
-                original.orElse(null));
-        if (!xsltWritten) {
+        final boolean xsltWritten = xsltPack.isEmpty() && documentAccess.canEdit(xsltRef) && writeXslt(xslt,
+                payload, original.orElse(null));
+        if (!xsltWritten && xsltPack.isEmpty()) {
             notWritten.addFirst("Edit on XSLT '" + documentAccess.path(xsltRef) + "', for its mapping");
         }
         final Map<String, Object> written = new LinkedHashMap<>();
@@ -300,6 +317,9 @@ class InPlaceInduction {
         out.put(WRITTEN, written);
         if (!notWritten.isEmpty()) {
             out.put(NOT_WRITTEN, whoCan(notWritten));
+        }
+        if (!packed.isEmpty()) {
+            out.put(CONTENT_PACK, inPack(packed));
         }
         return out;
     }
@@ -329,9 +349,14 @@ class InPlaceInduction {
         final Optional<DocRef> original = notesUuid.isEmpty()
                 ? Optional.empty()
                 : documentAccess.findDocRef(notesUuid);
+        final List<String> packed = new ArrayList<>();
+        final Optional<String> pipelinePack = packs.packOf(new DocRef(PipelineDoc.TYPE, JsonValues.text(
+                JsonValues.mapOrEmpty(startFrom.get("pipeline")).get("uuid"))));
         if (original.isPresent() && documentAccess.canEdit(original.get())) {
             writtenBack(build, original.get());
             out.put(NOTES, "the confirmed catalogue written back to '" + original.get().getName() + "'");
+        } else if (pipelinePack.isPresent()) {
+            packed.add("the pipeline, beside which its source notes go, is in " + pipelinePack.get());
         } else {
             notWritten.add(original.map(notes -> "Edit on the source notes '" + notes.getName() + "'")
                     .orElse("Create (Documentation) beside the pipeline, for its source notes"));
@@ -341,7 +366,10 @@ class InPlaceInduction {
         if (!keptMapping.isEmpty() && !xsltUuid.isEmpty()) {
             final DocRef xsltRef = new DocRef(XsltDoc.TYPE, xsltUuid);
             final Optional<XsltDoc> xslt = documentAccess.read(xsltRef, XsltDoc.class);
-            if (xslt.isPresent() && documentAccess.canEdit(xsltRef)
+            final Optional<String> xsltPack = packs.packOf(xsltRef);
+            if (xsltPack.isPresent()) {
+                packed.add("XSLT '" + xslt.map(XsltDoc::getName).orElse(xsltUuid) + "' is in " + xsltPack.get());
+            } else if (xslt.isPresent() && documentAccess.canEdit(xsltRef)
                 && writeXslt(xslt.get(), keptMapping, original.orElse(null))) {
                 described.remove(MAPPING);
                 described.put(WRITTEN, true);
@@ -356,6 +384,9 @@ class InPlaceInduction {
         if (!notWritten.isEmpty()) {
             out.put(NOT_WRITTEN, whoCan(notWritten));
         }
+        if (!packed.isEmpty()) {
+            out.put(CONTENT_PACK, inPack(packed));
+        }
         return Optional.of(out);
     }
 
@@ -365,6 +396,15 @@ class InPlaceInduction {
                + "anyone with those permissions, can describe it in place (start a build from it as you did); until "
                + "then the description is kept in this build only (its source notes, and the mapping in its "
                + "record), and written in place when it is confirmed by someone who may.";
+    }
+
+    // Where it came from a content pack the Content Store installed: why nothing was written there, and where it
+    // goes instead.
+    private static String inPack(final List<String> packed) {
+        return "Not written in place: " + String.join(", and ", packed) + ", a content pack installed from the "
+               + "Content Store, which Stroom pulls again on an upgrade, overwriting what was written in it. The "
+               + "mapping and catalogue belong in the pack's own source (its repository); until then they are kept "
+               + "in this build only (its source notes, and the mapping in its record).";
     }
 
     // The notes beside the pipeline, outside any build.
