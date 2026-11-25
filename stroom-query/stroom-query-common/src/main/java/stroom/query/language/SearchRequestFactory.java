@@ -75,6 +75,7 @@ import stroom.util.shared.ResultPage;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -99,6 +100,8 @@ public class SearchRequestFactory {
     public static final String TABLE_COMPONENT_ID = "table";
     /// The name of the hidden column that the rows of a query with a window clause are grouped by.
     public static final String WINDOW_COLUMN_NAME = "__window__";
+    // The largest exponent, either way, of a number in a condition, which is that of a double.
+    private static final int MAX_NUMBER_EXPONENT = 308;
     private static final String WINDOW_KEY_FUNCTION = "windowKey()";
     private static final String WINDOW_START_FUNCTION = "windowStart()";
     private static final String WINDOW_EXAMPLE = "as in 'window EventTime by 1d advance 1h offset 6h'";
@@ -666,7 +669,7 @@ public class SearchRequestFactory {
                             }
                             sb.append(", ");
                         }
-                        sb.append(token.getUnescapedText());
+                        sb.append(getValueText(token));
                     } else {
                         throw new TokenException(token, "Unexpected token");
                     }
@@ -712,6 +715,31 @@ public class SearchRequestFactory {
             return tokens.size();
         }
 
+        // The text of a value. A number with an exponent is written out in full, as not all fields can read one.
+        private String getValueText(final AbstractToken token) {
+            final String text = token.getUnescapedText();
+            if (!TokenType.NUMBER.equals(token.getTokenType())
+                || !text.toLowerCase(Locale.ROOT).contains("e")) {
+                return text;
+            }
+
+            final BigDecimal number;
+            try {
+                number = new BigDecimal(text);
+            } catch (final NumberFormatException e) {
+                throw new TokenException(token, "Number is out of range. Put it in quotes if it is text");
+            }
+            if (number.signum() == 0) {
+                return "0";
+            }
+            // Check the size before writing the number out, as its digits could be many.
+            final long exponent = (long) number.precision() - number.scale() - 1;
+            if (Math.abs(exponent) > MAX_NUMBER_EXPONENT || Double.isInfinite(number.doubleValue())) {
+                throw new TokenException(token, "Number is out of range. Put it in quotes if it is text");
+            }
+            return number.toPlainString();
+        }
+
         private String parseValueTokens(final List<AbstractToken> tokens) {
             if (tokens.isEmpty()) {
                 return "";
@@ -737,7 +765,7 @@ public class SearchRequestFactory {
                     numericExpression = true;
                 }
 
-                sb.append(token.getUnescapedText());
+                sb.append(getValueText(token));
             }
 
             final String expression = sb.toString();

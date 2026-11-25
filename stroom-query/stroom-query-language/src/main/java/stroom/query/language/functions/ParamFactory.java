@@ -47,7 +47,11 @@ public class ParamFactory {
                     return ValDuration.create(ValDurationUtil.parseToMilliseconds(token.getText()));
 
                 case NUMBER:
-                    return ValDouble.create(Double.parseDouble(token.getText()));
+                    final double number = Double.parseDouble(token.getText());
+                    if (Double.isInfinite(number)) {
+                        throw new TokenException(token, "Number is out of range");
+                    }
+                    return ValDouble.create(number);
 
                 default:
                     throw new TokenException(token, "Unexpected token type '" + token.getTokenType() + "'");

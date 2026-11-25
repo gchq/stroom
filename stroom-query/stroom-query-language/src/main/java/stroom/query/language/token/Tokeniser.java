@@ -53,6 +53,10 @@ public class Tokeniser {
     // 'as' at the end of plain text, which makes the next word an alias.
     private static final Pattern ENDS_WITH_AS = Pattern.compile("(?:^|\\s)as\\s+$", Pattern.CASE_INSENSITIVE);
 
+    // A number with an exponent, e.g. '1.5e-3', that is not part of a longer word such as 'host:1e5'.
+    private static final String EXPONENT_NUMBER_PATTERN =
+            "(?<![^,^/*%+\\-<>=])\\d+(?:\\.\\d+)?[eE][+-]?\\d+(?=[,^/*%+\\-<>=]|!=|$)";
+
     private List<Token> tokens;
 
     private Tokeniser(final String string) {
@@ -111,6 +115,9 @@ public class Tokeniser {
         // Tag dates.
         tokens = split("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z?", 0, TokenType.DATE_TIME, tokens);
 
+        // Tag numbers with exponents before their signs can be taken for operators.
+        tokens = split(EXPONENT_NUMBER_PATTERN, 0, TokenType.NUMBER, tokens);
+
         tokens = split(",", 0, TokenType.COMMA, tokens);
         tokens = split("\\^", 0, TokenType.ORDER, tokens);
         tokens = split("/", 0, TokenType.DIVISION, tokens);
@@ -128,7 +135,7 @@ public class Tokeniser {
         // Tag durations.
         tokens = split("(^|\\s|\\))(\\d+(ns|ms|s|m|h|d|w|M|y))", 2, TokenType.DURATION, tokens);
         // Tag numbers.
-        tokens = split("(^|\\s|\\))(\\d+(\\.\\d+)?([Ee]-\\d+)?)", 2, TokenType.NUMBER, tokens);
+        tokens = split("(^|\\s|\\))(\\d+(\\.\\d+)?)", 2, TokenType.NUMBER, tokens);
 
         // Tag everything else as a string.
         tokens = categorise(TokenType.STRING, tokens);
