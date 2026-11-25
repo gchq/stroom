@@ -49,6 +49,7 @@ public final class InMemoryKeyStreams implements ElasticKeyStreams {
 
     private final Map<DocRef, Data> data = new LinkedHashMap<>();
     private final Set<DocRef> denied = ConcurrentHashMap.newKeySet();
+    private final Map<DocRef, String> refused = new ConcurrentHashMap<>();
     private final List<Side> scanned = new CopyOnWriteArrayList<>();
     private final List<Side> keyed = new CopyOnWriteArrayList<>();
     private final AtomicInteger opened = new AtomicInteger();
@@ -67,6 +68,12 @@ public final class InMemoryKeyStreams implements ElasticKeyStreams {
     /// @param doc A doc the user may not use.
     void deny(final DocRef doc) {
         denied.add(doc);
+    }
+
+    /// @param doc    A doc whose cluster refuses to be read, as one without its credentials does.
+    /// @param reason What the cluster says.
+    public void refuse(final DocRef doc, final String reason) {
+        refused.put(doc, reason);
     }
 
     /// @return The sides scanned (a chunk each).
@@ -176,6 +183,9 @@ public final class InMemoryKeyStreams implements ElasticKeyStreams {
     // ------------------------------------------------------------------------------------------------
 
     private Data use(final DocRef doc) {
+        if (refused.containsKey(doc)) {
+            throw new Refusal(Reason.CLUSTER_ERROR, "The cluster refused to give its version: " + refused.get(doc));
+        }
         if (denied.contains(doc)) {
             throw new PermissionException(null, "You are not authorised to search " + doc);
         }

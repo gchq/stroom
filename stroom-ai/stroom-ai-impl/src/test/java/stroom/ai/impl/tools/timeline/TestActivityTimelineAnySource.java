@@ -636,6 +636,51 @@ class TestActivityTimelineAnySource {
     }
 
     @Test
+    void aSourceThatCantBeReadIsLeftOutWithItsReasonAndTheOthersAreRead() {
+        // Chat 195: one cluster without its credentials failed the whole timeline.
+        week();
+        streams.refuse(CODES, "missing authentication credentials for REST request [/]");
+        final Map<String, Object> arguments = arguments(Map.of());
+        arguments.put("sources", List.of(Map.of("index", "Events", "host", "HostName"), Map.of("index", "Codes",
+                "user", "user")));
+
+        final Map<String, Object> result = json(mcp(), arguments);
+
+        assertThat((List<Map<String, Object>>) result.get("sources")).extracting(source -> source.get("index"))
+                .containsExactly("Events");
+        assertThat((List<Map<String, Object>>) result.get("left_out")).singleElement().satisfies(left ->
+                assertThat(left).containsEntry("index", "Codes").containsEntry("why", "it can't be read: The "
+                                                                                      + "cluster refused to give its "
+                                                                                      + "version: missing "
+                                                                                      + "authentication credentials "
+                                                                                      + "for REST request [/]"));
+        assertThat((Long) result.get("events_read")).isPositive();
+    }
+
+    @Test
+    void whenNoSourceCanBeReadTheCallFailsSayingWhyForEach() {
+        week();
+        streams.refuse(EVENTS, "missing authentication credentials");
+        streams.refuse(CODES, "connection refused");
+        final Map<String, Object> arguments = arguments(Map.of());
+        arguments.put("sources", List.of(Map.of("index", "Events", "host", "HostName"), Map.of("index", "Codes",
+                "user", "user")));
+
+        final String text = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
+                arguments, false)), mcp()).text();
+
+        assertThat(text).startsWith("Error: No source could be read:")
+                .contains("- Events: it can't be read: The cluster refused to give its version: missing "
+                          + "authentication credentials")
+                .contains("- Codes: it can't be read: The cluster refused to give its version: connection refused");
+        // One source alone fails as it did.
+        arguments.put("sources", List.of(Map.of("index", "Codes", "user", "user")));
+        assertThat(tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(arguments,
+                false)), mcp()).text()).isEqualTo("Error: Source 1: The cluster refused to give its version: "
+                                                  + "connection refused.");
+    }
+
+    @Test
     void overMcpWithNoSourcesAnAgentsDocsDefaultSourcesAreRead() {
         week();
         Mockito.when(agentInstructions.sourcesRuled(Mockito.any(), Mockito.eq(InstructionRules.TIMELINE_SOURCES)))

@@ -1051,11 +1051,22 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         for (int i = 0; i < specs.size(); i++) {
             final Map<?, ?> spec = specs.get(i);
             final String what = "Source " + (i + 1);
-            if (spec.get(ROLES_KEY) != null) {
-                prepared.add(new Prepared(spec, source(spec, what, who), null));
-            } else {
-                automaticSpecs.add(spec);
-                prepared.add(prepare(context, spec, what, userFields, personFields, who, logonForms));
+            try {
+                if (spec.get(ROLES_KEY) != null) {
+                    prepared.add(new Prepared(spec, source(spec, what, who), null));
+                } else {
+                    final Prepared one = prepare(context, spec, what, userFields, personFields, who, logonForms);
+                    automaticSpecs.add(spec);
+                    prepared.add(one);
+                }
+            } catch (final UnreadableSource e) {
+                // One source that can't be read (its cluster refusing, say) is left out, the others read; alone,
+                // it fails the call as it did.
+                if (specs.size() == 1) {
+                    throw e;
+                }
+                notes.add(new SourceNote(NullSafe.nonBlankStringElse(text(spec.get(NAME_KEY)), e.index()),
+                        e.index(), null, null, null, e.leftOut(), null, null, List.of()));
             }
         }
         askUserFields(request, context, prepared);
@@ -1141,8 +1152,12 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             throw new WorkspaceException(sb.toString());
         }
         if (sources.isEmpty()) {
-            final StringBuilder sb = new StringBuilder("No source holds ").append(entity)
-                    .append("'s events in the period with a field holding the user:");
+            final boolean noneRead = !notes.isEmpty() && notes.stream()
+                    .allMatch(note -> NullSafe.string(note.leftOut()).startsWith(UnreadableSource.LEFT_OUT));
+            final StringBuilder sb = noneRead
+                    ? new StringBuilder("No source could be read:")
+                    : new StringBuilder("No source holds ").append(entity)
+                            .append("'s events in the period with a field holding the user:");
             notes.forEach(note -> sb.append("\n- ").append(note.index()).append(": ").append(note.leftOut()));
             final List<EventRange> ranges = prepared.stream()
                     .map(Prepared::automatic)
@@ -2561,14 +2576,17 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         try {
             final ElasticKeyStreams.Target target = keyStreamsProvider.get().target(List.of(doc));
             if (target == null || target.docs().isEmpty()) {
-                throw new WorkspaceException(what + ": Elastic Index '" + doc.getName() + "' can't be read: its "
-                                             + "cluster gave nothing for it.");
+                throw new UnreadableSource(what, doc.getName(), "Elastic Index '" + doc.getName() + "' can't be "
+                                                                + "read: its cluster gave nothing for it");
             }
             return target.docs().getFirst();
         } catch (final Refusal refusal) {
-            throw new WorkspaceException(what + ": " + refusal.getMessage() + ".");
+            if (refusal.reason() == ElasticKeyStreams.Reason.STOPPED) {
+                throw new TaskTerminatedException();
+            }
+            throw new UnreadableSource(what, doc.getName(), refusal.getMessage());
         } catch (final PermissionException e) {
-            throw new WorkspaceException(what + ": you can't use Elastic Index '" + doc.getName() + "'.");
+            throw new UnreadableSource(what, doc.getName(), "you can't use Elastic Index '" + doc.getName() + "'");
         }
     }
 
@@ -2959,5 +2977,35 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     // The Events XML read, and its summary.
     private record XmlOutcome(Map<String, String> xml, XmlRead summary, List<XmlPaths> paths) {
 
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // A source that can't be read: its cluster refusing (no credentials, say), or the user not allowed to use it.
+    private static final class UnreadableSource extends WorkspaceException {
+
+        // What a source left out for this is said to be, before its reason.
+        private static final String LEFT_OUT = "it can't be read: ";
+
+        private final String index;
+        private final String reason;
+
+        private UnreadableSource(final String what, final String index, final String reason) {
+            super(what + ": " + reason + ".");
+            this.index = index;
+            this.reason = reason;
+        }
+
+        // The index's name.
+        private String index() {
+            return index;
+        }
+
+        // Why it was left out, as its note says.
+        private String leftOut() {
+            return LEFT_OUT + reason;
+        }
     }
 }
