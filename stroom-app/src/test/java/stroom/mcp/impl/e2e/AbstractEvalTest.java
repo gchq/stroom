@@ -958,6 +958,7 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         final List<String> made = new ArrayList<>();
         Map<String, Object> listing = null;
         Map<String, Object> compared = null;
+        Map<String, Object> indexed = null;
         for (final Map<String, Object> call : EvalCases.maps(EvalCases.map(evalCase.get("reference"))
                 .get("calls"))) {
             final String tool = (String) call.get("tool");
@@ -985,9 +986,12 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             if ("compare_feeds".equals(tool) && result.get("differences") != null) {
                 compared = result;
             }
+            if ("create_index_doc".equals(tool) && result.get("feeds") != null) {
+                indexed = result;
+            }
         }
         scoreHandWritten(evalCase, score, build, original, (String) values.get("<copy>"), made, listing);
-        scoreSeveralFeeds(evalCase, score, build, (String) values.get("<copy>"), compared);
+        scoreSeveralFeeds(evalCase, score, build, (String) values.get("<copy>"), compared, indexed);
     }
 
     /// Scores a hand-written case's build from Stroom and the calls made, whoever made them
@@ -1089,16 +1093,22 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     /// @param build       The build.
     /// @param copy        The copy's pipeline UUID, or null if none was made.
     /// @param compared compare_feeds' last answer, or null.
+    /// @param indexed  create_index_doc's last answer for a build of several feeds, or null.
     void scoreSeveralFeeds(final Map<String, Object> evalCase,
                            final EvalScore score,
                            final String build,
                            final String copy,
-                           final Map<String, Object> compared) {
+                           final Map<String, Object> compared,
+                           final Map<String, Object> indexed) {
         Map<String, Object> kept;
         try {
             kept = asUser(admin, () -> injector.getInstance(BuildRecords.class).feedComparison(build));
         } catch (final RuntimeException e) {
             kept = Map.of();
+        }
+        if (kept.isEmpty()) {
+            // Promoted whole, the build's folder (and its record) is gone: what the tools' replies said they kept.
+            kept = keptFromReplies(compared, indexed);
         }
         final List<String> feeds = copy == null
                 ? null
@@ -1109,6 +1119,20 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                         .distinct()
                         .toList());
         score.scoreSeveralFeeds(evalCase, kept, compared, feeds);
+    }
+
+    // What compare_feeds and create_index_doc said they kept in the build's record.
+    private static Map<String, Object> keptFromReplies(final Map<String, Object> compared,
+                                                       final Map<String, Object> indexed) {
+        final Map<String, Object> out = new LinkedHashMap<>();
+        if (compared != null && compared.get("kept") instanceof final Map<?, ?> kept) {
+            kept.forEach((key, value) -> out.put(String.valueOf(key), value));
+        }
+        if (indexed != null && indexed.get("feeds") instanceof final Map<?, ?> feeds
+            && feeds.get("index_split") != null) {
+            out.put("index", feeds.get("index_split"));
+        }
+        return out;
     }
 
     // The feeds a filter's Feed terms name, at any depth.
