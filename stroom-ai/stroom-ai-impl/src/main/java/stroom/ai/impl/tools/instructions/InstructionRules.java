@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.instructions;
 
+import stroom.ai.impl.tools.catalogue.TimelineRole;
 import stroom.ai.impl.tools.instructions.AgentInstructions.InstructionDoc;
 import stroom.util.shared.NullSafe;
 
@@ -63,8 +64,24 @@ import java.util.regex.Pattern;
 ///   - host: HostName
 ///   ```
 ///   The keys: `user`, `person` (`person id`), `target person` (`target person id`), `target user`, `host`,
-///   `application` (`process`), `object`, `element` (`event detail`), `action`, `event type` (`event code`), and,
-///   for `compare_activity`'s categories and location, `category` and `country`.
+///   `application` (`process`), `object`, `title` (a window title), `text` (`message`: free text), `session`
+///   (`session id`: a key bounding spans), `element` (`event detail`), `action`, `event type` (`event code`),
+///   `feed` (the field naming each event's feed), and, for `compare_activity`'s categories and location,
+///   `category` and `country`.
+/// - `## Event types`: an event type's timeline role (`activity_timeline`), a type a line, the type its TypeId or
+///   its element and Action (e.g. `Process/Execute`), the role one of `focus`, `active`, `idle`, `open`, `close`,
+///   `action` or `ignore`; read after the call's, a skill's and the catalogue's, before the schema's table:
+///   ```markdown
+///   ## Event types
+///   - win-focus: focus
+///   - Tun-Ascend: active
+///   ```
+/// - `## Sources`: the sources a tool reads by default where the call names none, e.g. an activity timeline's
+///   (`timeline`), indexes by name or uuid:
+///   ```markdown
+///   ## Sources
+///   - timeline: Endpoint events, Proxy events
+///   ```
 ///
 /// The docs are given most general first, as [AgentInstructions.Standing#applyingTo] gives them.
 public final class InstructionRules {
@@ -99,6 +116,14 @@ public final class InstructionRules {
     public static final String APPLICATION_FIELD = "application";
     /// The field holding what an event touched (a file, a URL, a subject).
     public static final String OBJECT_FIELD = "object";
+    /// The field holding a window's title.
+    public static final String TITLE_FIELD = "title";
+    /// The field holding free text: a message, an AI chat prompt.
+    public static final String TEXT_FIELD = "text";
+    /// The field holding a session's key, which bounds spans from the first to the last event sharing it.
+    public static final String SESSION_FIELD = "session";
+    /// The field naming the feed each event came from.
+    public static final String FEED_FIELD = "feed";
     /// The field holding the event-logging EventDetail element an event was written as (e.g. `Authenticate`).
     public static final String ELEMENT_FIELD = "element";
     /// The field holding the event's Action (e.g. `Logon`).
@@ -145,6 +170,12 @@ public final class InstructionRules {
     public static final String COMPONENT_TEMPLATES_SECTION = "Component templates";
     /// The heading of the section of documentation rules.
     public static final String DOCUMENTATION_SECTION = "Documentation";
+    /// The heading of the section of event types' timeline roles.
+    public static final String EVENT_TYPES_SECTION = "Event types";
+    /// The heading of the section of the sources tools read by default.
+    public static final String SOURCES_SECTION = "Sources";
+    /// The `## Sources` key of an activity timeline's default sources.
+    public static final String TIMELINE_SOURCES = "timeline";
 
     private static final String INCLUDE = "include";
     private static final String EXCLUDE = "exclude";
@@ -177,6 +208,13 @@ public final class InstructionRules {
             Map.entry("application", APPLICATION_FIELD),
             Map.entry("process", APPLICATION_FIELD),
             Map.entry("object", OBJECT_FIELD),
+            Map.entry("title", TITLE_FIELD),
+            Map.entry("window title", TITLE_FIELD),
+            Map.entry("text", TEXT_FIELD),
+            Map.entry("message", TEXT_FIELD),
+            Map.entry("session", SESSION_FIELD),
+            Map.entry("session id", SESSION_FIELD),
+            Map.entry("feed", FEED_FIELD),
             Map.entry("element", ELEMENT_FIELD),
             Map.entry("event detail", ELEMENT_FIELD),
             Map.entry("action", ACTION_FIELD),
@@ -192,6 +230,12 @@ public final class InstructionRules {
             Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
     private static final Pattern DOCUMENTATION_HEADING = Pattern.compile("^#{1,6}\\s*documentation\\s*$",
             Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+    private static final Pattern EVENT_TYPES_HEADING = Pattern.compile("^#{1,6}\\s*event types\\s*$",
+            Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+    private static final Pattern SOURCES_HEADING = Pattern.compile("^#{1,6}\\s*sources\\s*$",
+            Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+    /// The keys a `## Sources` line may have.
+    static final Set<String> SOURCES_KEYS = Set.of(TIMELINE_SOURCES);
     private static final Pattern NEXT_HEADING = Pattern.compile("^#{1,6}\\s", Pattern.MULTILINE);
     static final Pattern BULLET = Pattern.compile("^\\s*[-*]\\s*([^:]+):\\s*(.+)$");
     static final Pattern LAYOUT_BULLET = Pattern.compile("^\\s*[-*]\\s*field mapping( layout)?\\s*:\\s*(.+)$",
@@ -298,6 +342,77 @@ public final class InstructionRules {
         return out;
     }
 
+    /// The event types' timeline roles the applicable AGENTS docs' `## Event types` sections give: the most
+    /// specific doc's line for each type (types compared whatever their case).
+    ///
+    /// @param applying The docs that apply, most general first.
+    /// @return Each type's role, by the type as written, with the folder of the doc that gives it; a line whose role
+    /// isn't one of [TimelineRole#NAMES] is left out.
+    public static Map<String, TypeRoleRule> eventTypes(final List<InstructionDoc> applying) {
+        final Map<String, TypeRoleRule> out = new LinkedHashMap<>();
+        for (final InstructionDoc doc : NullSafe.list(applying)) {
+            eventTypeLines(doc.text()).forEach((type, role) -> {
+                out.keySet().removeIf(known -> known.equalsIgnoreCase(type));
+                out.put(type, new TypeRoleRule(role, doc.folder()));
+            });
+        }
+        return out;
+    }
+
+    /// @param text A doc's text.
+    /// @return Its `## Event types` lines whose role the tools know, by type, each role lower case.
+    static Map<String, TimelineRole> eventTypeLines(final String text) {
+        final Map<String, TimelineRole> out = new LinkedHashMap<>();
+        for (final String line : section(text, EVENT_TYPES_HEADING).orElse("").split("\\R")) {
+            final Matcher bullet = BULLET.matcher(line);
+            if (!bullet.matches()) {
+                continue;
+            }
+            final String type = stripChars(bullet.group(1).strip(), "`*").strip();
+            TimelineRole.of(stripChars(bullet.group(2).strip(), "`*.").strip())
+                    .filter(role -> !type.isEmpty())
+                    .ifPresent(role -> out.put(type, role));
+        }
+        return out;
+    }
+
+    /// The sources a tool reads by default, by the applicable AGENTS docs' `## Sources` section: the most specific
+    /// doc's line for the key.
+    ///
+    /// @param applying The docs that apply, most general first.
+    /// @param key      The tool's key, e.g. [#TIMELINE_SOURCES].
+    /// @return The sources named (indexes by name or uuid), in order, with the folder of the doc naming them; empty
+    /// if none does.
+    public static Optional<SourcesRule> sources(final List<InstructionDoc> applying, final String key) {
+        SourcesRule found = null;
+        for (final InstructionDoc doc : NullSafe.list(applying)) {
+            for (final String line : section(doc.text(), SOURCES_HEADING).orElse("").split("\\R")) {
+                final Matcher bullet = BULLET.matcher(line);
+                if (bullet.matches() && key.equals(normaliseKey(bullet.group(1)))) {
+                    final List<String> names = fieldNames(bullet.group(2));
+                    if (!names.isEmpty()) {
+                        found = new SourcesRule(names, doc.folder());
+                    }
+                }
+            }
+        }
+        return Optional.ofNullable(found);
+    }
+
+    /// The `## Event types` lines the agent would offer for an activity timeline's classification, so a later run
+    /// takes the roles from the AGENTS doc rather than classifying again.
+    ///
+    /// @param roles Each event type's role, in order.
+    /// @return The section, its heading and a line each; empty for none.
+    public static String eventTypesSection(final Map<String, TimelineRole> roles) {
+        if (NullSafe.isEmptyMap(roles)) {
+            return "";
+        }
+        final StringBuilder sb = new StringBuilder("## ").append(EVENT_TYPES_SECTION).append("\n\n");
+        roles.forEach((type, role) -> sb.append("- ").append(type).append(": ").append(role.label()).append('\n'));
+        return sb.toString();
+    }
+
     /// @param text A doc's text.
     /// @return Its `## Fields` lines the tools know, by field, each with the fields it names in order.
     static Map<String, List<String>> fieldLines(final String text) {
@@ -350,6 +465,14 @@ public final class InstructionRules {
         keyProblems(out, text, REQUIRED_HEADING, "Required imports", STAGES.keySet(), BULLET);
         keyProblems(out, text, COMPONENTS_HEADING, "Component templates", COMPONENT_RULES.keySet(), BULLET);
         keyProblems(out, text, FIELDS_HEADING, "Fields", FIELDS.keySet(), BULLET);
+        keyProblems(out, text, SOURCES_HEADING, SOURCES_SECTION, SOURCES_KEYS, BULLET);
+        for (final String line : section(text, EVENT_TYPES_HEADING).orElse("").split("\\R")) {
+            final Matcher bullet = BULLET.matcher(line);
+            if (bullet.matches() && TimelineRole.of(stripChars(bullet.group(2).strip(), "`*.").strip()).isEmpty()) {
+                out.add("'## " + EVENT_TYPES_SECTION + "' line '" + line.strip() + "' names no role the tools know ("
+                        + String.join(", ", TimelineRole.NAMES) + "), so it would be left out");
+            }
+        }
         for (final String line : section(text, DOCUMENTATION_HEADING).orElse("").split("\\R")) {
             final Matcher bullet = LAYOUT_BULLET.matcher(line);
             if (bullet.matches()
@@ -405,6 +528,10 @@ public final class InstructionRules {
             return COMPONENT_TEMPLATES_SECTION;
         } else if (DOCUMENTATION_HEADING.matcher(text).matches()) {
             return DOCUMENTATION_SECTION;
+        } else if (EVENT_TYPES_HEADING.matcher(text).matches()) {
+            return EVENT_TYPES_SECTION;
+        } else if (SOURCES_HEADING.matcher(text).matches()) {
+            return SOURCES_SECTION;
         }
         return null;
     }
@@ -416,13 +543,15 @@ public final class InstructionRules {
     }
 
     /// @param section A section the tools read, e.g. [#FIELDS_SECTION].
-    /// @return The keys its `- key: value` lines may have (for [#DOCUMENTATION_SECTION], its layouts).
+    /// @return The keys its `- key: value` lines may have (for [#DOCUMENTATION_SECTION], its layouts; none for
+    /// [#EVENT_TYPES_SECTION], whose keys are the source's own types).
     static Set<String> keysOf(final String section) {
         return switch (section) {
             case FIELDS_SECTION -> FIELDS.keySet();
             case REQUIRED_IMPORTS_SECTION -> STAGES.keySet();
             case COMPONENT_TEMPLATES_SECTION -> COMPONENT_RULES.keySet();
             case DOCUMENTATION_SECTION -> LAYOUTS.keySet();
+            case SOURCES_SECTION -> SOURCES_KEYS;
             default -> Set.of();
         };
     }
@@ -508,6 +637,34 @@ public final class InstructionRules {
         /// Copies the list.
         public FieldRule {
             fields = List.copyOf(fields);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// An event type's timeline role an AGENTS doc's `## Event types` line gives.
+    ///
+    /// @param role The role.
+    /// @param from The folder of the AGENTS doc that gives it.
+    public record TypeRoleRule(TimelineRole role, String from) {
+
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The sources an AGENTS doc's `## Sources` line names for a tool.
+    ///
+    /// @param sources The indexes, by name or uuid, in order.
+    /// @param from    The folder of the AGENTS doc that names them.
+    public record SourcesRule(List<String> sources, String from) {
+
+        /// Copies the list.
+        public SourcesRule {
+            sources = List.copyOf(sources);
         }
     }
 

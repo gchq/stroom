@@ -62,6 +62,12 @@ class TestInstructionChecks {
                 ## Documentation
                 - field mapping: compact
 
+                ## Event types
+                - win-focus: focus
+
+                ## Sources
+                - timeline: Endpoint events
+
                 ## Notes
                 - Always: ask before deleting anything.
                 - user: whoever asks
@@ -84,6 +90,21 @@ class TestInstructionChecks {
         });
         assertThat(InstructionChecks.corrected(text, findings))
                 .isEqualTo("## Required imports\n- indexing: Common-Index-V1\n- translations: Stream-Meta-V1\n");
+    }
+
+    @Test
+    void anEventTypesLinesKeyIsTheSourcesOwnTypeAndOnlyItsRoleIsChecked() {
+        final String text = "## Event types\n- win-focus: focus\n- Tun-Ascend: activ\n- odd-one: sideways\n";
+
+        final List<Finding> findings = InstructionChecks.check(null, text, Facts.NONE, false);
+
+        assertThat(findings).hasSize(2).allSatisfy(finding -> {
+            assertThat(finding.kind()).isEqualTo(Kind.PROBLEM);
+            assertThat(finding.rule()).isEqualTo("unknown_role");
+        });
+        assertThat(findings.getFirst().fix()).isEqualTo("replace it with '- Tun-Ascend: active'.");
+        assertThat(findings.get(1).message()).contains("names no role the tools know (focus, active, idle, open, "
+                                                       + "close, action, ignore)");
     }
 
     @Test

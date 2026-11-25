@@ -63,20 +63,28 @@ says wins, and the result notes it. A layout the user asks for goes in `field_ma
 Lines of a `## Fields` section of the form `- user: Initiator.Id, user.name` name the fields that hold a thing in
 the data sources where the doc applies: `user`, `person` (`person id`), `target user`, `target person` (`target
 person id`), `host`, `application` (`process`), `object`, `element` (`event detail`: the EventDetail element),
-`action` (its Action), `event type` (`event code`: the source's own code), `category` and `country`.
+`action` (its Action), `event type` (`event code`: the source's own code), `title` (a window title), `text`
+(`message`), `session` (`session id`), `feed`, `category` and `country`.
 `activity_timeline`, `sequence_query` and `compare_activity` read them themselves, the first field an index has
 used, the most specific doc winning, after the call's own and before the index plan and the field conventions.
 Prose bullets in the section (no `key:`) are left to the agent.
 
+Lines of an `## Event types` section of the form `- Tun-Ascend: active` give an event type's timeline role (the
+type its TypeId or element and Action, e.g. `Process/Execute`; the role `focus`, `active`, `idle`, `open`, `close`,
+`action` or `ignore`). `activity_timeline` reads them after the call's, a skill's and the translation's catalogue,
+before the schema's table, and offers the lines for the types it had to classify itself. A `## Sources` section's
+`- timeline: <index>, <index>` line, in an AGENTS doc at the top of the tree, names the indexes an
+`activity_timeline` call with no sources reads where no form can ask.
+
 ## What the tools read exactly
 
-The tools apply these sections themselves: `## Fields`, `## Required imports`, `## Component templates` and
-`## Documentation`, each a heading of its own (any level) and its `- key: value` bullets, up to the next heading;
+The tools apply these sections themselves: `## Fields`, `## Required imports`, `## Component templates`,
+`## Documentation`, `## Event types` and `## Sources`, each a heading of its own (any level) and its `- key: value` bullets, up to the next heading;
 and `## Ignore`, the folders searches leave out. Only the first section of each name is read. A bullet whose key the tools don't know, a field no index
 there has, or a field line under another heading (e.g. `## Notes`) is left out without a word. Everything else in a
 doc, including prose in those sections, guides the agent only, and no format is asked of it.
 
-`check_instructions` checks the docs that apply in a folder, or a draft, against the first four and the indexes there:
+`check_instructions` checks the docs that apply in a folder, or a draft, against the first six and the indexes there:
 problems (what the tools can't apply as written: an unknown key, a misspelt field, field lines under another
 heading, a heading such as `## Field names`, a section given twice, the same key twice with different fields) and
 suggestions (a line a more general doc gives already, a field the index plan of a feeding pipeline maps otherwise,

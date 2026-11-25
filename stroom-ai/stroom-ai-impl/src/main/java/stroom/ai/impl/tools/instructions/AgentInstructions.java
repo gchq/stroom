@@ -23,6 +23,8 @@ import stroom.ai.impl.tools.instructions.InstructionRules.ComponentRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldMappingLayout;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.ai.impl.tools.instructions.InstructionRules.RequiredImport;
+import stroom.ai.impl.tools.instructions.InstructionRules.SourcesRule;
+import stroom.ai.impl.tools.instructions.InstructionRules.TypeRoleRule;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.documentation.shared.DocumentationDoc;
@@ -264,6 +266,33 @@ public class AgentInstructions {
         } catch (final RuntimeException e) {
             LOGGER.debug("Unable to read the field rules for {}", dataSource, e);
             return Map.of();
+        }
+    }
+
+    /// @param session    The session, e.g. the chat.
+    /// @param dataSource A data source, e.g. an Elastic Index.
+    /// @return The `## Event types` lines of the AGENTS docs that apply where it is, each type's timeline role (see
+    /// [InstructionRules#eventTypes]); none if none say, or they can't be read.
+    public Map<String, TypeRoleRule> eventTypesRuled(final ToolSession session, final DocRef dataSource) {
+        try {
+            return InstructionRules.eventTypes(applyingWhere(session, dataSource, "the event types' roles"));
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Unable to read the event types' roles for {}", dataSource, e);
+            return Map.of();
+        }
+    }
+
+    /// @param session The session, e.g. the chat.
+    /// @param key     The tool's `## Sources` key, e.g. [InstructionRules#TIMELINE_SOURCES].
+    /// @return The default sources the AGENTS docs at the top of the tree name for it (see
+    /// [InstructionRules#sources]); empty if none do, or they can't be read.
+    public Optional<SourcesRule> sourcesRuled(final ToolSession session, final String key) {
+        try {
+            return InstructionRules.sources(load(session, "Standing instructions read for the default sources")
+                    .applyingTo(List.of("/")), key);
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Unable to read the default sources for {}", key, e);
+            return Optional.empty();
         }
     }
 

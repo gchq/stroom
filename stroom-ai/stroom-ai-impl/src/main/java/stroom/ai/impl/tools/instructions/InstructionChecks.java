@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.instructions;
 
+import stroom.ai.impl.tools.catalogue.TimelineRole;
 import stroom.ai.impl.tools.instructions.AgentInstructions.InstructionDoc;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.util.shared.NullSafe;
@@ -250,6 +251,10 @@ public final class InstructionChecks {
                 documentationLine(i, line, findings);
                 continue;
             }
+            if (InstructionRules.EVENT_TYPES_SECTION.equals(name)) {
+                eventTypeLine(i, line, findings);
+                continue;
+            }
             final Matcher bullet = InstructionRules.BULLET.matcher(line);
             if (!bullet.matches()) {
                 continue;
@@ -280,6 +285,32 @@ public final class InstructionChecks {
                                                                  : "; as close: " + String.join(", ", close))
                                                          + ", so it only guides the agent: fine for a note."));
             }
+        }
+    }
+
+    // An '## Event types' line: its key is the source's own type, so only its role is checked.
+    private static void eventTypeLine(final int index, final String line, final List<Finding> findings) {
+        final Matcher bullet = InstructionRules.BULLET.matcher(line);
+        if (!bullet.matches()) {
+            return;
+        }
+        final String given = InstructionRules.stripChars(bullet.group(2).strip(), "`*.").strip();
+        if (TimelineRole.of(given).isPresent()) {
+            return;
+        }
+        final List<String> close = closest(given.toLowerCase(Locale.ROOT), TimelineRole.NAMES);
+        if (close.size() == 1) {
+            final String fixed = replaceOnce(line, bullet.group(2).strip(), close.getFirst());
+            findings.add(Finding.problem("unknown_role", "'## " + InstructionRules.EVENT_TYPES_SECTION + "' line '"
+                                                         + line.strip() + "' names no role the tools know.",
+                    "replace it with '" + fixed.strip() + "'.", List.of(LineEdit.replace(index, fixed)),
+                    List.of()));
+        } else {
+            findings.add(Finding.problem("unknown_role", "'## " + InstructionRules.EVENT_TYPES_SECTION + "' line '"
+                                                         + line.strip() + "' names no role the tools know ("
+                                                         + String.join(", ", TimelineRole.NAMES) + "), so they "
+                                                         + "leave it out.", "write one of those.", List.of(),
+                    List.of()));
         }
     }
 
@@ -704,6 +735,9 @@ public final class InstructionChecks {
     private static boolean isKeyLineOf(final String line, final String section) {
         if (InstructionRules.DOCUMENTATION_SECTION.equals(section)) {
             return InstructionRules.LAYOUT_BULLET.matcher(line).matches();
+        }
+        if (InstructionRules.EVENT_TYPES_SECTION.equals(section)) {
+            return InstructionRules.BULLET.matcher(line).matches();
         }
         final Matcher bullet = InstructionRules.BULLET.matcher(line);
         return bullet.matches() && InstructionRules.keysOf(section)

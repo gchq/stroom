@@ -16,17 +16,22 @@
 
 package stroom.ai.impl.tools.instructions;
 
+import stroom.ai.impl.tools.catalogue.TimelineRole;
 import stroom.ai.impl.tools.instructions.AgentInstructions.InstructionDoc;
 import stroom.ai.impl.tools.instructions.InstructionRules.ComponentRule;
 import stroom.ai.impl.tools.instructions.InstructionRules.ComponentRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldMappingLayout;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.ai.impl.tools.instructions.InstructionRules.RequiredImport;
+import stroom.ai.impl.tools.instructions.InstructionRules.SourcesRule;
+import stroom.ai.impl.tools.instructions.InstructionRules.TypeRoleRule;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -154,13 +159,62 @@ class TestInstructionRules {
 
         assertThat(InstructionRules.problems(text)).singleElement().asString()
                 .startsWith("'## Fields' line '- colour: Red' names none the tools know (action, application, "
-                            + "category, country, element, event code, event detail, event type, host, object, "
-                            + "person, person id, process, target person, target person id, target user, user)");
+                            + "category, country, element, event code, event detail, event type, feed, host, "
+                            + "message, object, person, person id, process, session, session id, target person, "
+                            + "target person id, target user, text, title, user, window title)");
         assertThat(InstructionRules.fieldProblems(text, Set.of("Initiator.Id", "HostName")))
                 .containsExactly("'## Fields' line for user names no field the data sources where the doc applies "
                                  + "have (Initiator.ID)");
         // No fields known: nothing is said.
         assertThat(InstructionRules.fieldProblems(text, Set.of())).isEmpty();
+    }
+
+    @Test
+    void theEventTypesSectionGivesEachTypesRoleTheMostSpecificDocWinning() {
+        final Map<String, TypeRoleRule> found = InstructionRules.eventTypes(List.of(
+                doc("/", """
+                        ## Event types
+                        - win-focus: focus
+                        - Tun-Ascend: Active
+                        - `Process/Execute`: open
+                        - odd-one: sideways
+                        Prose is left to the agent.
+                        """),
+                doc("/Indexes", "## Event types\n- tun-ascend: idle\n")));
+
+        assertThat(found).containsOnlyKeys("win-focus", "Process/Execute", "tun-ascend");
+        assertThat(found.get("win-focus")).isEqualTo(new TypeRoleRule(TimelineRole.FOCUS, "/"));
+        assertThat(found.get("tun-ascend")).isEqualTo(new TypeRoleRule(TimelineRole.IDLE, "/Indexes"));
+        assertThat(InstructionRules.eventTypes(List.of())).isEmpty();
+        assertThat(InstructionRules.problems("## Event types\n- odd-one: sideways\n")).singleElement().asString()
+                .startsWith("'## Event types' line '- odd-one: sideways' names no role the tools know");
+    }
+
+    @Test
+    void theEventTypesLinesOfferedAreASectionTheToolsReadBack() {
+        final Map<String, TimelineRole> roles = new LinkedHashMap<>();
+        roles.put("Tun-Ascend", TimelineRole.ACTIVE);
+        roles.put("Tun-Recede", TimelineRole.IDLE);
+
+        final String section = InstructionRules.eventTypesSection(roles);
+
+        assertThat(section).isEqualTo("## Event types\n\n- Tun-Ascend: active\n- Tun-Recede: idle\n");
+        assertThat(InstructionRules.eventTypes(List.of(doc("/", section)))).containsOnlyKeys("Tun-Ascend",
+                "Tun-Recede");
+        assertThat(InstructionRules.eventTypesSection(Map.of())).isEmpty();
+    }
+
+    @Test
+    void theSourcesSectionNamesADefaultPerToolAndAnUnknownKeyIsAProblem() {
+        final Optional<SourcesRule> found = InstructionRules.sources(List.of(
+                doc("/", "## Sources\n- timeline: Endpoint events, `Proxy events`\n"),
+                doc("/Other", "## Notes\n- timeline: not a source\n")), InstructionRules.TIMELINE_SOURCES);
+
+        assertThat(found).contains(new SourcesRule(List.of("Endpoint events", "Proxy events"), "/"));
+        assertThat(InstructionRules.sources(List.of(doc("/", AGENTS)), InstructionRules.TIMELINE_SOURCES))
+                .isEmpty();
+        assertThat(InstructionRules.problems("## Sources\n- timelines: A\n")).singleElement().asString()
+                .startsWith("'## Sources' line '- timelines: A' names none the tools know (timeline)");
     }
 
     private static InstructionDoc doc(final String folder, final String text) {
