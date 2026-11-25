@@ -46,6 +46,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -96,6 +97,8 @@ public class BuildPlan {
     public static final String STAGE_OUTPUT = "3 output";
     /// The last step.
     public static final String STAGE_FINISH = "finish";
+    /// The status's key for the survey of each feed of a build of several.
+    static final String FEED_SURVEYS = "feed_surveys";
     /// The reference data stage: a table to look values up in, loaded by a reference-data pipeline.
     public static final String STAGE_REFERENCE = "1 reference";
 
@@ -549,10 +552,36 @@ public class BuildPlan {
                     format.put("stream_id", JsonValues.strings(survey.get("streams")).stream()
                             .findFirst()
                             .orElse("surveyed"));
-                    format.put("feed", sources.getFirst());
+                    // The feed surveyed, not the first the build names (the many-feeds audit, 2026-11-25); with
+                    // several, each feed's format, where they differ.
+                    final Map<String, String> formats = surveyedFormats(surveys);
+                    format.put("feed", formats.isEmpty()
+                            ? sources.getFirst()
+                            : formats.keySet().iterator().next());
+                    if (formats.size() > 1) {
+                        format.put("feeds", List.copyOf(formats.keySet()));
+                        if (new HashSet<>(formats.values()).size() > 1) {
+                            format.put("formats_by_feed", formats);
+                        }
+                    }
                     format.putAll(formatFromSurvey(survey));
                     return format;
                 });
+    }
+
+    // Each surveyed feed's format, as its own survey doc found it, in the docs' order; a feed whose survey found
+    // none left out.
+    private Map<String, String> surveyedFormats(final List<Map<String, Object>> surveys) {
+        final Map<String, String> out = new LinkedHashMap<>();
+        for (final Map<String, Object> doc : surveys) {
+            final String name = String.valueOf(doc.get("name"));
+            facts.surveyState(List.of(doc))
+                    .map(state -> JsonValues.text(state.get("format")))
+                    .filter(found -> !found.isEmpty())
+                    .ifPresent(found -> out.put(name.substring(0, name.length() - StroomBuildFacts.SURVEY.length()),
+                            found));
+        }
+        return out;
     }
 
     /// @param build A build.
@@ -793,6 +822,9 @@ public class BuildPlan {
                 .filter(doc -> String.valueOf(doc.get("name")).endsWith(StroomBuildFacts.SURVEY))
                 .toList();
         final boolean surveyed = !surveys.isEmpty();
+        // Each feed the build is for surveyed, not any one (the many-feeds audit, 2026-11-25: a build of three
+        // feeds went on once the first was surveyed, and the others were never read).
+        final FeedSurveys perFeed = feedSurveys(build, docs, sources, surveys);
         final boolean assessment = ASSESSMENT.equals(kind);
         // A survey of the build's own feed (a new source's sample) leaves it a new source: only the feeds outside the
         // build make it one on existing data (sourceFeeds leaves the build's own out). Seen: onboarding surveyed its
@@ -893,7 +925,7 @@ public class BuildPlan {
         // Done once surveyed, or once a survey for the build was refused for nothing readable (catalogue_event_types
         // then goes on, saying so); not needed once the build has a translation (saved from a mapping, or a copied
         // pipeline's), as the catalogue step isn't.
-        done.put(SURVEYED, surveyed || !facts.unreadableSurveys(build).isEmpty()
+        done.put(SURVEYED, (surveyed || !facts.unreadableSurveys(build).isEmpty()) && perFeed.unsurveyed().isEmpty()
                 ? Boolean.TRUE
                 : hasMapping(xslts, "translation") || !translation.isEmpty()
                         ? null
@@ -928,7 +960,8 @@ public class BuildPlan {
                 ? surveyRequired
                         ? Boolean.FALSE
                         : null
-                : (Boolean) JsonValues.truthy(survey.get("saturated")));
+                : (Boolean) (JsonValues.truthy(survey.get("saturated")) && perFeed.unsurveyed().isEmpty()
+                             && perFeed.uncovered().isEmpty()));
         done.put("processed", !events.isEmpty());
         done.put("unmapped", !events.isEmpty() && unmapped.isEmpty());
         done.put("validated", !translation.isEmpty() && translation.stream().allMatch(facts::validated));
@@ -1156,13 +1189,19 @@ public class BuildPlan {
             eventsIds = orElse(eventsIds, "<recent Events streams from " + named
                                           + " (" + streamMetaCall(sources, "Events") + ")>");
         }
+        // The feed the survey step is for: the first not surveyed yet, or not covered yet; the others as they come.
+        final List<String> dueFirst = SURVEYED.equals(nextStep)
+                ? perFeed.first(perFeed.unsurveyed(), sources)
+                : COVERED.equals(nextStep)
+                        ? perFeed.first(perFeed.uncovered(), perFeed.first(perFeed.unsurveyed(), sources))
+                        : sources;
         final CallArgs args = new CallArgs(build, names(of(byType, FeedDoc.TYPE)), rawIds, eventsIds,
                 translation.isEmpty()
                         ? null
                         : uuid(translation.getFirst()),
                 indexing.isEmpty()
                         ? null
-                        : uuid(indexing.getFirst()), processing, index, sources, discovery,
+                        : uuid(indexing.getFirst()), processing, index, dueFirst, discovery,
                 survey != null && JsonValues.truthy(survey.get("locations"))
                         ? survey.get("locations")
                         : "<every location survey_feed gave>",
@@ -1206,6 +1245,7 @@ public class BuildPlan {
         if (existing) {
             result.put("works_from", sources);
         }
+        perFeed.said().ifPresent(said -> result.put(FEED_SURVEYS, said));
         if (next != null && !onlyExistingData) {
             final Map<String, Object> shown = new LinkedHashMap<>();
             shown.put("step", nextStep);
@@ -1225,6 +1265,52 @@ public class BuildPlan {
             result.put("next", shown);
         }
         return result;
+    }
+
+    // Which of the feeds the build is for are surveyed, and covered: each feed's survey doc read on its own. Only for
+    // a build of two or more feeds on data already in Stroom; one feed's (or a new source's) is the build's survey.
+    private FeedSurveys feedSurveys(final String build,
+                                    final List<Map<String, Object>> docs,
+                                    final List<String> sources,
+                                    final List<Map<String, Object>> surveys) {
+        if (sources.size() < 2) {
+            return FeedSurveys.NONE;
+        }
+        final List<String> feeds = facts.buildSourceFeeds(build, docs);
+        if (feeds.size() < 2) {
+            return FeedSurveys.NONE;
+        }
+        final Map<String, Map<String, Object>> byFeed = new LinkedHashMap<>();
+        for (final Map<String, Object> doc : surveys) {
+            final String name = String.valueOf(doc.get("name"));
+            byFeed.put(name.substring(0, name.length() - StroomBuildFacts.SURVEY.length()).toLowerCase(Locale.ROOT),
+                    doc);
+        }
+        final Set<String> unreadable = new HashSet<>();
+        facts.unreadableSurveys(build).keySet().forEach(feed -> unreadable.add(feed.toLowerCase(Locale.ROOT)));
+        final List<String> surveyedFeeds = new ArrayList<>();
+        final List<String> unsurveyed = new ArrayList<>();
+        final List<String> uncovered = new ArrayList<>();
+        for (final String feed : feeds) {
+            final String key = feed.toLowerCase(Locale.ROOT);
+            final Map<String, Object> doc = byFeed.get(key);
+            if (doc == null) {
+                if (unreadable.contains(key)) {
+                    surveyedFeeds.add(feed);
+                } else {
+                    unsurveyed.add(feed);
+                }
+                continue;
+            }
+            surveyedFeeds.add(feed);
+            final boolean saturated = facts.surveyState(List.of(doc))
+                    .map(state -> JsonValues.truthy(state.get("saturated")))
+                    .orElse(false);
+            if (!saturated) {
+                uncovered.add(feed);
+            }
+        }
+        return new FeedSurveys(feeds, surveyedFeeds, unsurveyed, uncovered);
     }
 
     // An events pipeline documented before its XSLT was saved again: stepping is to do again, and its documentation
@@ -1686,7 +1772,10 @@ public class BuildPlan {
                 : sources.getFirst();
         final Map<String, Object> call = new LinkedHashMap<>();
         call.put("tool", "stream_meta");
-        call.put("arguments", args("feeds", List.of(feed)));
+        // Every feed the build works from, not only the first (the many-feeds audit, 2026-11-25).
+        call.put("arguments", args("feeds", sources.isEmpty()
+                ? List.of(feed)
+                : sources));
         final List<Map<String, Object>> current = facts.translating(sources);
         // A translation's new version is offered after the survey, never copied from here.
         final String otherVersion = current.isEmpty()
@@ -1722,6 +1811,11 @@ public class BuildPlan {
         start.put("then", then);
         if (!current.isEmpty()) {
             start.put("translated_by", current);
+        }
+        if (sources.size() > 1) {
+            start.put("several_feeds", "The build is for " + sources.size() + " feeds (" + named + "): each is "
+                                       + "surveyed (survey_feed build=" + build + " feed=<each>, next names them in "
+                                       + "turn), and the translation serves them all.");
         }
         return start;
     }
@@ -2182,6 +2276,48 @@ public class BuildPlan {
                                   final String indexing) {
             return new CallArgs(build, feeds, raw, events, translation, indexing, null, null, List.of(), false,
                     null, null, null, null, null, null);
+        }
+    }
+
+    /// The survey of each feed a build of several feeds is for ([#status]).
+    ///
+    /// @param feeds      The feeds the build is for.
+    /// @param surveyed   Those with a survey (or one refused for nothing readable).
+    /// @param unsurveyed Those with none yet.
+    /// @param uncovered  Those surveyed but not covered yet.
+    record FeedSurveys(List<String> feeds, List<String> surveyed, List<String> unsurveyed, List<String> uncovered) {
+
+        /// A build of one feed, or none: its survey is the build's.
+        static final FeedSurveys NONE = new FeedSurveys(List.of(), List.of(), List.of(), List.of());
+
+        /// @param due   The feeds due first.
+        /// @param feeds All the feeds.
+        /// @return The feeds with the first of those due first, the rest in their order.
+        List<String> first(final List<String> due, final List<String> feeds) {
+            if (due.isEmpty()) {
+                return feeds;
+            }
+            final List<String> out = new ArrayList<>();
+            out.add(due.getFirst());
+            feeds.stream()
+                    .filter(feed -> !feed.equalsIgnoreCase(due.getFirst()))
+                    .forEach(out::add);
+            return out;
+        }
+
+        /// @return What the build status says of them, for a build of several feeds: `surveyed`, `to_survey` and
+        /// `not_covered`; empty for one feed.
+        Optional<Map<String, Object>> said() {
+            if (feeds.isEmpty()) {
+                return Optional.empty();
+            }
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("surveyed", surveyed);
+            out.put("to_survey", unsurveyed);
+            out.put("not_covered", uncovered);
+            out.put("note", "Each feed the build is for is surveyed and covered on its own (survey_feed build=... "
+                            + "feed=<each>): next names them in turn.");
+            return Optional.of(out);
         }
     }
 

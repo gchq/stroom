@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -57,6 +58,10 @@ final class FakeBuildFacts implements BuildFacts {
     // Whether the source is catalogued (catalogued unless a test says not).
     boolean catalogued = true;
     Map<String, Object> survey;
+    // Each feed's own survey state, by the feed's name, for a build of several feeds (none: `survey` for every doc).
+    Map<String, Map<String, Object>> surveysByFeed = new LinkedHashMap<>();
+    // The feeds the build is for, when they differ from `sources` (null: `sources`).
+    List<String> buildSources;
     // The build whose own registry holds the scope it chose, or null.
     String scopeRecordedBy;
     List<String> checks = List.of();
@@ -245,7 +250,28 @@ final class FakeBuildFacts implements BuildFacts {
 
     @Override
     public Optional<Map<String, Object>> surveyState(final List<Map<String, Object>> surveys) {
-        return Optional.ofNullable(survey);
+        if (surveysByFeed.isEmpty()) {
+            return Optional.ofNullable(survey);
+        }
+        final List<Map<String, Object>> states = surveys.stream()
+                .map(doc -> String.valueOf(doc.get("name")))
+                .map(name -> surveysByFeed.get(name.substring(0, name.length() - StroomBuildFacts.SURVEY.length())))
+                .filter(Objects::nonNull)
+                .toList();
+        if (states.isEmpty()) {
+            return Optional.empty();
+        }
+        // As the docs' states combine: covered only when each is.
+        final Map<String, Object> combined = new LinkedHashMap<>(states.getFirst());
+        combined.put("saturated", states.stream().allMatch(state -> Boolean.TRUE.equals(state.get("saturated"))));
+        return Optional.of(combined);
+    }
+
+    @Override
+    public List<String> buildSourceFeeds(final String build, final List<Map<String, Object>> buildDocs) {
+        return buildSources == null
+                ? sources
+                : buildSources;
     }
 
     @Override
