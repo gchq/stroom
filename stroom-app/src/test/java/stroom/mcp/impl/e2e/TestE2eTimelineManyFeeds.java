@@ -164,9 +164,9 @@ class TestE2eTimelineManyFeeds extends AbstractE2eTest {
                 type("vpn-logout", "Authenticate", "Logoff"),
                 type("vpn-config-change", "Unknown", null).withTimelineRole("action", TimelineRoles.FROM_GIVEN)),
                 null, null));
-        final String notes = documentationDoc(folderPath, "TLVPN source notes", "# TLVPN source notes\n\n"
-                                                                                 + SourceNotes.block(
-                new LinkedHashMap<>(catalogue.toJson())) + "\n");
+        final String block = SourceNotes.block(new LinkedHashMap<>(catalogue.toJson()));
+        final String notes = documentationDoc(folderPath, "TLVPN source notes", "# TLVPN source notes\n\n" + block
+                                                                                 + "\n");
         editXslt(vpn.xslt(), doc -> doc.copy().description(KeptMapping.withSourceNotes("Hand-written.",
                 new DocRef(DocumentationDoc.TYPE, notes, "TLVPN source notes"))).build());
         processAll();
