@@ -363,6 +363,7 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         if (docs.isEmpty()) {
             throw new ToolRefusal("Build '" + build + "' has no documents");
         }
+        refuseUncatalogued(build, docs);
         // An aggregated feed's build's source type group: its documents in a folder of its own beside the feed.
         final Map<String, ModuleChecks.Marker> markers = markers(docs);
         refuseCodeWorkingCopies(docs, sharedModules(markers));
@@ -847,6 +848,44 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                               + "its translation XSLT's description, and its catalogue in the source notes beside "
                               + "the pipeline, as catalogue_event_types confirmed them (its in_place said what was "
                               + "written, and who may write what wasn't). The build is done: say so to the user.");
+    }
+
+    // A build starting from an existing pipeline (the user's choice, or a copy of a hand-written translation
+    // pipeline made without it asked) whose catalogue of event types isn't confirmed, each event type and the
+    // catch-all: refused before any review. Seen in eval cases 97 and 104 on Haiku: a copy of a hand-written
+    // pipeline promoted with catalogue_event_types never called, or its read-back never put to the user. A new
+    // version of an indexing pipeline alone has no catalogue to confirm.
+    private void refuseUncatalogued(final String build, final List<Map<String, Object>> docs) {
+        final boolean chosen = facts.startFrom(build)
+                .map(startFrom -> ExistingTranslations.EXISTING.equals(startFrom.get("choice")))
+                .orElse(false);
+        if (!chosen && docs.stream().noneMatch(this::translationCopy)) {
+            return;
+        }
+        if (facts.catalogued(docs)) {
+            return;
+        }
+        throw new ToolRefusal("Not promoted: build '" + build + "' starts from an existing pipeline, and its "
+                              + "catalogue of event types isn't confirmed by the user yet (each event type, then "
+                              + "the catch-all). Its copy's XSLT read back first (rebuild_mapping, where not yet "
+                              + "done), then catalogue_event_types build=" + build + " shows the event types read "
+                              + "back and their check against the sample, and confirm=true puts them to the user "
+                              + "in its forms; then promote_build again.");
+    }
+
+    // A new version of a translation pipeline whose XSLT the tools never built: a pipeline copied into the build
+    // (copy_pipeline) whose stage is translation, its original keeping no mapping. A copy of one the tools built
+    // carries its promoted catalogue, as before.
+    private boolean translationCopy(final Map<String, Object> doc) {
+        if (!PipelineDoc.TYPE.equals(doc.get("type")) || doc.get("version_of") == null) {
+            return false;
+        }
+        try {
+            return "translation".equals(facts.pipelineShape(String.valueOf(doc.get("uuid"))).stage())
+                   && facts.keptXsltUuid(String.valueOf(doc.get("version_of"))).isEmpty();
+        } catch (final PipelineUnreadableException e) {
+            return false;
+        }
     }
 
     // A working copy of a promoted pipeline, or of the code it runs (its XSLTs, text converters, an aggregated

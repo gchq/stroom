@@ -161,6 +161,41 @@ class TestPromoteBuildTool {
     }
 
     @Test
+    void aCopyOfAnExistingPipelineIsNotPromotedBeforeItsCatalogueIsConfirmed() {
+        // Seen in eval cases 97 and 104 on Haiku: a copy of a hand-written pipeline promoted with no catalogue of
+        // event types confirmed (catalogue_event_types never called, or its read-back never put to the user).
+        exists("System/Feeds/Acme");
+        listed(doc(FeedDoc.TYPE, "f", "ACME", null), FakeBuildFacts.doc(PipelineDoc.TYPE, "ev", "ACME-V1.1-Events",
+                "role", "Events", "version_of", "p"));
+        docs.facts.stages.put("ev", "translation");
+        docs.facts.catalogued = false;
+
+        // Copied without the start offer answered: the copy says the build starts from the existing pipeline.
+        final String unasked = docs.refusal(tool, BuildToolCalls.context(), DocumentationWorld.args(Map.of(
+                "build", BUILD, "destinations", Map.of("Feed", "System/Feeds/Acme"))));
+
+        assertThat(unasked).contains("Not promoted", "catalogue of event types", "catalogue_event_types build=bb",
+                "confirm=true").doesNotContain("review_id");
+        // The start chosen, the copy still to make: refused all the same.
+        docs.facts.docs.removeIf(doc -> "ev".equals(doc.get("uuid")));
+        docs.facts.startFrom = Map.of("choice", ExistingTranslations.EXISTING, "pipeline", Map.of("name",
+                "ACME-V1.0-Events", "uuid", "p"));
+        assertThat(docs.refusal(tool, BuildToolCalls.context(), DocumentationWorld.args(Map.of("build", BUILD,
+                "destinations", Map.of("Feed", "System/Feeds/Acme"))))).contains("Not promoted");
+    }
+
+    @Test
+    void aNewVersionOfAnIndexingPipelineAloneNeedsNoCatalogue() {
+        exists("System/Feeds/Acme");
+        listed(doc(FeedDoc.TYPE, "f", "ACME", null), FakeBuildFacts.doc(PipelineDoc.TYPE, "ix", "ACME-V1.1-Indexing",
+                "role", "Indexing", "version_of", "p"));
+        docs.facts.stages.put("ix", "indexing");
+        docs.facts.catalogued = false;
+
+        assertThat(review(Map.of("Feed", "System/Feeds/Acme"))).containsKey("layout");
+    }
+
+    @Test
     void theReviewSaysWhichTemplateEachPromotedPipelineInheritsWithItsFlags() {
         // Decided with the user (2026-11-25): promotion re-parents nothing; it says what each pipeline inherits,
         // and flags a template unlike its predecessor's as a fact.
