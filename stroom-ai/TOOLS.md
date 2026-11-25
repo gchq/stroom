@@ -235,6 +235,7 @@ document in a build folder also needs Create there.
 | `check_events` | Validates Events against the event-logging schema, with quality checks | content | yes | build | | View Data | View | slot |
 | `check_index_template` | Checks an Elasticsearch index template against what the indexing pipeline writes | indexing | no | indexing | Stepping | | View, Edit | slot, confirms |
 | `check_xslt` | Static checks of an XSLT, then compiles it as Stroom does | content | yes | build | | | View | |
+| `compare_feeds` | For a build of several feeds: their differences (formats, fields and kinds of event only some have, time zones), each feed's volume, dates and whether it is dormant, and conflicting AGENTS rules across their folders, confirmed by the user (per-feed zones asked where times carry none) | content | no | build | | | View, Edit | build |
 | `compare_outputs` | Steps records through a pipeline and a changed version of it, and compares the outputs field by field | processing | yes | processing | Stepping | | View | slot |
 | `copy_pipeline` | Copies a pipeline and the documents it owns into the build, as a new version or working copy | content | no | build | | | View, Edit | confirms |
 | `create_feed` | Creates a feed in the build folder | content | no | build | | | View, Edit | confirms |
@@ -680,6 +681,27 @@ data sources in the folder (and below) the user can Use (`InstructionRules.field
   as `propose_skill` does, not the folder holding it), the diff, and any lines the tools will leave out; with the
   button.
 * **Refuses**: a folder the user can't see; `edits` for a folder with no doc; text identical to the doc's.
+
+**Checks and drafting (2026-11-25).** Every proposal is checked as `check_instructions` checks a draft (replacing
+the old problems list). `action=draft` takes `fields` (what the user said, one `key: field` each) and `keys`: drafts
+the `## Fields` lines from the stated fields, the docs in force, every feeding pipeline's index plan and the
+conventions, merged into the folder's doc; a form asks only about an index whose candidates differ or a requested
+key with nothing found (without forms, the questions are returned for the agent to ask).
+
+### `check_instructions`
+
+Reads the AGENTS docs that apply in a folder (most general first) or a draft (`markdown`, with `folder` for where it
+would live) and reports problems (a rule the tools won't apply as written) and suggestions, each with its fix; where
+the problems' fixes apply, the corrected text (problems only, never suggestions). From facts, never a guess
+(`InstructionChecks`, `InstructionFacts`): an unknown key, stage or layout with a clear closest one; a field no index
+there has, fixed to the closest real one; field lines under another heading, moved under `## Fields`; a heading
+that nearly names a section the tools read; a section given twice; the same key twice with different fields. A line
+a more general doc already gives, a line an index plan maps differently (never applied on its own; where feeding
+pipelines' plans differ, a `plans_differ` note naming each), and an index whose user field only a convention finds,
+are suggestions. A line in a read section whose key matches nothing closely is a note, fine for prose.
+
+* **Arguments**: `folder`, or `markdown` with an optional `folder`.
+* **Returns**: problems, suggestions and notes, each with its fix; the corrected text.
 
 ### Skills: `find_skills`, `check_skill`, `propose_skill`
 
@@ -1324,6 +1346,9 @@ silent guess. None gives the closest few by name.
   one field, the several that could be meant, or the closest by name.
 * **Refuses**: no such usable data source (`NOT_FOUND`); an ambiguous name.
 * **Notes**: audit-logged as a view of the data source.
+
+**Several feeding pipelines (2026-11-25).** Plans are read from every feeding pipeline's effective
+(inherited) indexing-stage XSLT; a field whose source differs by pipeline says "source: varies by pipeline: ...".
 
 ### `validate_stroomql`
 
@@ -3658,6 +3683,11 @@ those calls fell back to.
   is open on it (see `start_onboarding`: one open build per aggregated feed).
 * **Notes**: asks nothing; over `/mcp` it isn't approved as a whole, as it changes only its build.
 
+**Many feeds (2026-11-25).** Every feed given is checked for an existing translation (not the first 3); each
+offered pipeline carries `feeds` (the build's feeds it reads) and `reads_feeds` (every feed its filters read); the
+newest version is offered where several read a feed (`VersionNames.compareVersions`), with `also_reads` (other feeds
+it serves) and `others` (other pipelines translating the build's feeds).
+
 ### `build_status`
 
 Content · read-only · checks View (the build's documents are those the user can view); unlocked by Manage Processors
@@ -3701,6 +3731,14 @@ saved again" (`BuildPlan.documentationAfterStep`); `documented` reopens as befor
 `before_promotion` names a production pipeline a new version replaces whose own XSLTs import a module that no longer
 exists (`BuildChecks.brokenPredecessor`, `PipelineShapes.brokenImports`: hrefs by `ModuleChecks.hrefs`, resolved as
 Stroom's URI resolver does by `XsltImports.resolve`): "it fails until it is restored"; informational, never blocking.
+
+**Many feeds (2026-11-25).** `feed_surveys` (`surveyed`, `to_survey`, `not_covered`): a build of several feeds
+needs a survey of each (`buildSourceFeeds`), and `next` names the next unsurveyed one; `source_feeds` (each feed's
+streams, size, first and last stream, `dormant`: no stream for 30 days by its own dates); `index_per_feed` where the
+user chose one index per feed; `feed_selection` for a build promoted in this session (any feed selected by two
+versions' filters, or by no enabled one, and old filters with tasks still open: report only); `status: promoted`
+once the build is empty; for a build describing a translation in place, the steps surveyed, source_types and
+catalogue, then `in_place` in place of `next`.
 
 ### `promote_build`
 
@@ -4018,6 +4056,20 @@ Since 2026-11-24 (chat 192):
   result's `new_version_reads` saying it. Without a form: from now on, said so. A first version's filter is unchanged
   (`PromoteBuildTool.backfill`, `PromotionProcessing.createPromotionFilters(..., since)`).
 
+**Many feeds and shared versions (2026-11-25).** One filter per pipeline (and stream type) whose feeds are
+`Feed is <feed>` terms under an OR, covering the build's source feeds (`buildSourceFeeds`) and those sampled; feeds
+an enabled filter of the same pipeline already selects are left out (`already_selected`); a source feed with no
+feed doc is warned about (`leftOut`). Filters are created disabled, as always. Where old filters already select any
+of the build's feeds (`PromotionSwitchOver`, read live through `PipelineFeeds`), each new filter gets ordered
+`switch_over` steps with links: change the old selection (`switch-<id>` / `switch-dict-<uuid8>` open_document
+buttons; a dictionary's other users named), let the old filter's tasks finish (`StreamProcessing.openTasks`), then
+enable the new filter. The tools edit no old filter or dictionary. `next_steps` never advises disabling a filter,
+pipeline or XSLT that still serves feeds outside the build ("stays for the feeds this build doesn't move"); old
+follow-on indexing filters likewise. The review states each feed's streams, size and first and last dates
+(`feed_streams`, from `FeedVolumes`; not part of the review digest). Feeds whose folders differ: a `folder` form
+(the first feed's or another; the `Feed` destination answers it); one folder: used as for one feed. With one index
+per feed, each indexing pipeline's filter gains its own feed's `Feed is` term. The result has `feed_selection`.
+
 ## Samples, surveys and feeds
 
 ### `profile_sample`
@@ -4297,6 +4349,12 @@ arrived yet. `record_source_types` offers it for rows the survey hasn't met (`un
 nothing asks where it goes), so a later build or survey of the feed starts its survey afresh; a later build still
 finds the source type registry beside the feed. A survey doc an earlier version promoted beside a feed is ignored.
 
+**Many feeds and pre-processors (2026-11-25).** A single line holding one JSON object is JSON lines
+(`SampleProfiler.profileJson`; it was read as delimited). For a translation fed by a pre-processor (described in
+place or copied), records are read at the translation's input (`TranslationInputs`, stepping to that element), the
+survey state saying `read_at: translation_input`; a raw survey made before that choice is stale and surveyed again
+without `stream_ids`.
+
 ### `record_source_types`
 
 Processing · write · checks View and Edit · confirms itself · chat group build · Classes: `RecordSourceTypesTool`,
@@ -4533,6 +4591,24 @@ file's 985 records).
 * **Notes**: no command for Stroom's datafeed is ever given, as the agent has no token for it (seen: an agent ran
   such a command three times from its own terminal). Each file post is logged on the node that takes it (who, file,
   feed, stream).
+
+### `compare_feeds`
+
+For a build of several feeds (decided with the user 2026-11-25): after every feed is surveyed, compares their
+surveys (`FeedShapeComparison`: formats, fields only some feeds have, kinds of event only some show, time zones
+seen; from the survey signatures and timestamp formats alone), gives each feed's volume and dates
+(`FeedOverviews`, `FeedVolumes`; dormant when its own last stream is over 30 days old), and finds AGENTS rules the
+tools apply (`## Fields`, `## Required imports`, `## Component templates`, `## Documentation`) that differ between
+the feeds' folders (`AgentsConflicts`). One plain-text form confirms one translation for the union and answers each
+conflict; a second asks each feed's zone where its times carry none (one zone for all where the user gives the
+same). The answers are kept in the build record (`feed_comparison`, with a digest of the differences); the plan's
+`feeds_compared` step is done while the digest matches the surveys. Per-feed zones are written as a timezone of
+`{meta: Feed, map: {feed: zone}, default}`. The AGENTS choices are applied to the build's imports, layout, `## Fields`
+lookups and component templates; after promotion the result's `after_promotion` says to offer the chosen lines for
+the shared folder's AGENTS doc (propose_instructions).
+
+* **Arguments**: `build` (required), `confirm`, `time_zones`, `agents` (without forms).
+* **Returns**: `feeds`, `differences`, `differences_said`, `conflicts`, `kept`; `needs_user` without forms.
 
 ### `catalogue_event_types`
 
@@ -4854,6 +4930,25 @@ Since 2026-11-24 (chat 192): a proposal's `description` is described as written 
 problem for a description holding a number that is the event type's record count in the sample or the scope's record
 count (counts of 10 or more; `1,444` read as 1444): proposals bringing it are refused, as other problems are.
 
+**Many feeds, induction and timeline roles (2026-11-25).**
+* A build of several feeds is catalogued only once every feed is surveyed (`BuildPlan.feedsToSurvey`), and a
+  pre-processed translation's raw survey made before the start choice is refused ("Survey again first").
+* The start choice for an existing translation has a third option, **describe it in place (no new version)**
+  (`start_from=in_place`), beside copy and draft: it states the pipelines using the XSLT, each feed's streams and
+  size, and an estimate first (`XsltUsers`), asks which feeds to survey where it serves several (`survey_feeds=`,
+  `needs_feeds` without forms), reads the translation stage's XSLT back (`InPlaceInduction`), and, without asking,
+  writes the mapping and a hidden `source notes` link into the XSLT's description (the user's text kept; the
+  payload's `inducted` names the XSLT read) and the catalogue beside the pipeline. Without Edit or Create,
+  `not_written` says what is lacking and who can; the catalogue stays in the build. The result: `described_in_place`
+  (`written`, `not_written`), `in_place` when confirmed; the catalogue's `checked_feeds`.
+* A build that copied a pipeline without answering the start offer still reads its XSLT back and confirms the
+  catalogue (never "not needed").
+* Each event type has a `timeline_role` (`timeline_role_from` `schema` or `given`): filled from the schema's
+  element and Action (`TimelineRoles`: Authenticate Logon/ScreenUnlock/Connect/Reconnect active, Logoff/ScreenLock/
+  Disconnect idle, Process Execute/Startup open and Terminate/Shutdown close, any other element an action of its
+  kind); asked only for those the schema doesn't settle (Unknown, no element, a fork's element, an unnamed
+  Authenticate or Process Action) and any focus; `timeline_roles_to_ask` in the compact catalogue.
+
 ### `record_source_notes`
 
 Content · write (Documentation docs in the build) · checks View and Edit; docs created and changed as the user; a
@@ -5003,6 +5098,9 @@ an existing empty index, or one that can't be looked up, is indexed into with a 
   (`start_build feeds=`); streams older than their feed; a feed scope without `created_after`; streams already
   processed; the source checks; no agreed template; a duplicate or empty feed filter; the form declined; Stroom
   refusing to list or create the filter.
+
+**One index per feed (2026-11-25).** Refuses Events whose raw parent is another feed than the one the
+indexing pipeline's index is named for (`FeedIndexes`).
 
 ### `set_processor_filter_enabled`
 
@@ -5698,6 +5796,9 @@ the JSON, and refused: "Stroom has no XML schema").
     (`BuildRecords.VALIDATED`), only for pipelines in a build, and the plan moves on (its checklist had stayed on
     processing). It stays read-only for the same reasons as the stepping tools' record.
 
+**Many feeds (2026-11-25).** `feeds_checked`: streams and records per source feed (read from the Events'
+raw parents), `missing` for feeds with none.
+
 ## Pipelines
 
 The pipeline write tools work on the build layer (`WriteGuard`, `BuildRecords`, `Consent`, `BuildPlan`) and
@@ -5948,6 +6049,8 @@ nothing it matches is offered for deletion.
     the user before writing it back over an original changed since.
   * Unlike `create_pipeline`, the copy is created and then written in two steps (`WriteGuard.create`, then the
     pipeline store), and `set_properties` is not checked against validation elements.
+
+**2026-11-25.** A pipeline naming its documents by UUID alone is copied with their names read from Stroom.
 
 ### `update_pipeline`
 
@@ -6826,6 +6929,9 @@ and puts them to the user.
   * Stepping is within the session's time limit for a long call, and audited.
   * It saves only an XSLT in a build (`checkManaged`); a promoted one is rebuilt through a working copy.
 
+**XSLT stages (2026-11-25).** Refuses a pre-processor, decorator or indexing XSLT, naming the pipeline's
+translation (`XsltStages`); `KeptMappings.keptXslt` orders by stage.
+
 ### `save_xslt`
 
 content · write · checks View and Edit; the XSLT is created in the build folder (Create) or changed (Edit); the
@@ -7298,6 +7404,10 @@ latest saved XSLT) hasn't is refused: `Not written: the pipeline's XSLT was save
 step_sample ... first` (`BuildDocumentation.notSteppedClean`). One never stepped clean is not: documenting it is how
 the user accepts errors its steps leave (`accept_errors`), and a copy compared rather than stepped is documented
 before its first step; promotion still waits for a clean step.
+
+**Many feeds (2026-11-25).** The Field mapping section says which feeds' streams were stepped and which of
+the build's feeds weren't ("Feeds: ... Stepped over the streams of ..."); for an index fed by several pipelines with
+different plans, a field's From reads "varies by pipeline: `A` (P1); `B` (P2)".
 
 ### `draft_cef_mapping`
 
@@ -7818,6 +7928,13 @@ second index).
   the index, which a new one won't have yet. Lucene fields are listed and added through Stroom's index service
   (`IndexResource.findFields`, `addField`), only on the build's own index (`WriteGuard.checkInBuild`).
 
+**Many feeds (2026-11-25).** For a build of several feeds, who may read each feed is compared first
+(`FeedReadAccess`: explicit View-or-higher users and groups; unknown counts as differing): where they differ one
+index per feed is proposed and sharing needs an explicit choice with the consequence stated (a shared Elastic index
+gives everyone who can use it every feed's events); where they match it is asked (`index_split`, used only where no
+form can be shown; a different value asks again). With one index per feed, each index is named for one feed
+(`FeedIndexes`) and the result lists the feeds still without one.
+
 ### `create_indexing_pipeline`
 
 Indexing · write · checks View and Edit: the user needs Create in the build folder, Edit on the pipeline, View (or
@@ -7878,6 +7995,9 @@ nothing, so a change to the environment's templates never reaches it.
   `create_pipeline`'s form and every change stays in the build (`changesOnlyItsBuild`; `IndexFields` refuses any
   index but the build's own). The build is remembered for the session. A Lucene index's fields are read through
   Stroom's index service.
+
+**One index per feed (2026-11-25).** One indexing pipeline per feed, each writing its feed's own index:
+an index naming no feed (or several) is refused; the result says `for_feed`.
 
 ### `rename_index`
 
@@ -7973,6 +8093,11 @@ for its current index and code.
     characters and the client declined it.
   * Cut short by the time limit, the check and any agreement go ahead on the documents stepped, and `stepped` says
     so.
+
+**Several feeding pipelines (2026-11-25).** The template merges every feeding pipeline's kept plan
+(`FeedingPlanMerges`, a union of fields; `merged_plans` in the result); a type conflict between plans is refused
+naming the field and both pipelines. `check_index_template` warns of another pipeline's agreement under the same
+template name.
 
 ### `check_index_template`
 
@@ -8102,6 +8227,9 @@ with no searches; nothing is marked verified.
   session (an hour, keyed by index, streams, expected count and the indexing XSLT's digest), so only the rest run.
   Without the Stepping permission each traced check fails with its reason. An exact value showing several values
   (`retry, timeout`) that finds nothing is explained, as the index holds each on its own.
+
+**Many feeds (2026-11-25).** `feeds_verified`: streams and records per source feed, `missing` for feeds
+with none; the -VERIFY dashboard's query has a StreamId OR term for the verified streams (up to 50).
 
 ## The build layer
 
