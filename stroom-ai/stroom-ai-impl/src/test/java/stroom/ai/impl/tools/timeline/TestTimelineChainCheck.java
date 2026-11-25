@@ -21,6 +21,7 @@ import stroom.ai.api.ElasticKeyStreams;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.query.DataSourceAccess;
+import stroom.ai.impl.tools.query.DataSourceDocumentation;
 import stroom.docref.DocRef;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 
@@ -58,7 +59,8 @@ class TestTimelineChainCheck {
                         "EventTime", new ElasticEql.Field("EventTime", "date", null, null, false),
                         "UserName", new ElasticEql.Field("UserName", "keyword", null, null, false))))));
         check = new TimelineChainCheck(() -> keyStreams, dataSourceAccess, Mockito.mock(TimelineEventXml.class),
-                new TimelineFields(agentInstructions, dataSourceAccess, Optional.empty()));
+                new TimelineFields(agentInstructions, dataSourceAccess, Optional.empty(),
+                        () -> Mockito.mock(DataSourceDocumentation.class)));
     }
 
     @Test
