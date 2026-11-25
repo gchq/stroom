@@ -390,6 +390,7 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                 chained.put("kind", CHAINED);
                 chained.put("flattener", stepped.element());
                 chained.put("lines_read_at", stepped.linesElement());
+                chained.put("shared_xslt", MergedPipeline.docRef(stepped.sharedXslt()));
                 result.put("shape", chained);
             }
             if (inheritanceProvider != null) {
@@ -452,7 +453,10 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                 } else {
                     String choice = request.output();
                     if (choice == null) {
-                        final Map<String, Object> templates = sources.templates(said, request.folders());
+                        // The forwarding templates' kind: those the shape was told from, where it looked.
+                        final Map<String, Object> templates = result.get("templates") instanceof final Map<?, ?> found
+                                ? JsonValues.mapOrEmpty(found)
+                                : sources.templates(said, request.folders());
                         final Set<Object> kinds = new LinkedHashSet<>();
                         NullSafe.list((List<?>) templates.get("forwarding_templates")).forEach(t ->
                                 kinds.add(((Map<?, ?>) t).get("backend")));
@@ -1012,8 +1016,17 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         final String xslt = xsltUuid != null
                 ? "'" + xsltUuid + "'"
                 : "the saved XSLT";
-        if (drafted.chained() && result.get("shape") instanceof final Map<?, ?> shape) {
+        if (drafted.chained()) {
+            final Map<?, ?> shape = JsonValues.mapOrEmpty(result.get("shape"));
             final Map<?, ?> template = JsonValues.mapOrEmpty(shape.get("template"));
+            if (template.isEmpty()) {
+                // A review, or a plan saved again in place: the pipeline is there already.
+                return "Pipeline: its flattener runs " + xslt + "; the template's shared stage after it writes the "
+                       + "Kafka records and sets the topic, so set no topic or Kafka setting and never change that "
+                       + "XSLT. Then step_sample over the Events streams (stepping sends nothing), draft_cef_mapping "
+                       + "pipeline_uuid=<it> stream_ids=... to review what it writes, and write_documentation with "
+                       + "the Events stream_ids.";
+            }
             final Map<?, ?> shared = JsonValues.mapOrEmpty(shape.get("shared_stage"));
             return "Pipeline: create_pipeline template_uuid='" + template.get("uuid") + "' (" + template.get("name")
                    + "), setting only " + shape.get("flattener") + ".xslt to " + xslt + ": no topic or Kafka "

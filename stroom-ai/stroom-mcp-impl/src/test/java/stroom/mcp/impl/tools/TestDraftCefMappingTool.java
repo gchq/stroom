@@ -542,6 +542,10 @@ class TestDraftCefMappingTool {
                 .containsEntry("lines_read_at", "kafkaOutputFilter");
         assertThat(((Map<?, ?>) result.get("plan")).get("output")).as("a plan saved from it hands its lines on")
                 .isEqualTo("chained");
+        assertThat(((Map<?, ?>) ((Map<?, ?>) result.get("shape")).get("shared_xslt")).get("uuid")).isEqualTo("sx");
+        assertThat((String) result.get("hint")).contains("Pipeline: its flattener runs the saved XSLT; the "
+                                                         + "template's shared stage after it writes the Kafka "
+                                                         + "records");
     }
 
     // Two forwarding templates: `fwd`, an open flattener slot then a shared XSLT writing Kafka records; and `one`, an
