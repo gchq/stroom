@@ -188,6 +188,40 @@ class TestE2eCompareActivity extends AbstractE2eTest {
                 .contains("not scored, as feed " + feedOf(laptops) + " joined the source on " + STEP);
     }
 
+    @Test
+    void aFieldHeldOnlyFromMidPeriodIsNoWeekFindingRisingFromNothing() {
+        // Decided by the user (2026-11-25): no one's events hold a destination before the step (a reprocessed
+        // range's start, say), the person's activity the same throughout; distinct destinations rising from 0 there
+        // is no finding, its weeks scored only over the days it is held, and the note says from when.
+        final List<Event> events = new ArrayList<>();
+        for (LocalDate date = FROM; date.isBefore(WINDOW_TO); date = date.plusDays(1)) {
+            if (date.getDayOfWeek() == DayOfWeek.SATURDAY || date.getDayOfWeek() == DayOfWeek.SUNDAY) {
+                continue;
+            }
+            final boolean held = !date.isBefore(STEP);
+            for (final String person : List.of("p1", "other0", "other1", "other2", "other3", "other4")) {
+                for (int hour = 9; hour < 17; hour++) {
+                    for (int i = 0; i < 2; i++) {
+                        events.add(new Event(at(date, hour, 5 + 25 * i), person, held
+                                ? USUAL.get((hour + i) % 3)
+                                : null));
+                    }
+                }
+            }
+        }
+        final DocRef elastic = elasticIndex(events, stream());
+
+        final Map<String, Object> result = compare(elastic, "user.id", "destination.domain");
+        LOGGER.info(() -> "compare_activity, a field held from mid-period: " + JsonUtil.writeValueAsString(result,
+                true));
+
+        final List<Map<String, Object>> findings = (List<Map<String, Object>>) result.get("findings");
+        assertThat(findings).noneSatisfy(finding -> assertThat(String.valueOf(finding.get("feature")))
+                .endsWith("destination.domain"));
+        assertThat(String.valueOf(result.get("notes"))).contains("destination.domain is held only from " + STEP,
+                "findings are scored only over the days it is held");
+    }
+
     private Map<String, Object> compare(final DocRef index, final String personField, final String breadthField) {
         return json("compare_activity", args("person", "p1", "personField", personField, "sources",
                 List.of(index.getUuid()), "breadthFields", List.of(breadthField), "windowFrom",
@@ -287,7 +321,9 @@ class TestE2eCompareActivity extends AbstractE2eTest {
                 doc.put("_id", String.valueOf(i));
                 doc.put("@timestamp", event.time().toString());
                 doc.putObject("user").put("id", event.person());
-                doc.putObject("destination").put("domain", event.destination());
+                if (event.destination() != null) {
+                    doc.putObject("destination").put("domain", event.destination());
+                }
                 doc.put("StreamId", streamOf.apply(i));
                 doc.put("EventId", i + 1);
                 batch.add(doc);
@@ -374,7 +410,7 @@ class TestE2eCompareActivity extends AbstractE2eTest {
     ///
     /// @param time        Its time.
     /// @param person      Its person id.
-    /// @param destination Its destination.
+    /// @param destination Its destination, or null where the event holds none.
     private record Event(Instant time, String person, String destination) {
 
     }

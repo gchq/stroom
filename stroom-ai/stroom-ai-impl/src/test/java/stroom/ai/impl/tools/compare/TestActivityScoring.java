@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.function.ToIntFunction;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -162,6 +163,51 @@ class TestActivityScoring {
         });
         assertThat(scored.notes()).anySatisfy(note -> assertThat(note).contains(
                 "destination.domain is held only from 2026-05-11"));
+    }
+
+    @Test
+    void aFieldHeldFromMidPeriodIsNoWeekFindingRisingFromNothing() {
+        // Decided by the user (2026-11-25): destinations held only from the step, the person's the same 8 sites a
+        // day throughout; before the step no one's events hold the field, so "distinct destinations rising from 0"
+        // is no finding: its weeks are scored only over the days it is held.
+        final Fields fields = new Fields(List.of(), List.of(CompareFixtures.DESTINATION_FIELD));
+        final CompareFixtures fixtures = siteWorkdays(date -> 8);
+        fixtures.dropFieldBefore(CompareFixtures.DESTINATION_FIELD, STEP);
+
+        final Scored scored = ActivityScoring.score(spec(Unit.WEEK), fixtures.data("p1", fields, BASE_FROM,
+                WINDOW_TO, List.of()));
+
+        assertThat(scored.findings()).noneSatisfy(finding ->
+                assertThat(finding.feature()).endsWith(CompareFixtures.DESTINATION_FIELD));
+        assertThat(scored.notes()).anySatisfy(note -> assertThat(note).contains(
+                "destination.domain is held only from 2026-05-11",
+                "its week findings are scored only over the days it is held"));
+    }
+
+    @Test
+    void aFieldHeldFromWithinTheBaselineIsScoredOverItsOwnDays() {
+        // Held from 2 March: the baseline's 9 weeks from then hold 8 sites a day, the window's from the step 16.
+        final Fields fields = new Fields(List.of(), List.of(CompareFixtures.DESTINATION_FIELD));
+        final LocalDate held = LocalDate.of(2026, 3, 2);
+        final CompareFixtures fixtures = siteWorkdays(date -> date.isBefore(STEP)
+                ? 8
+                : 16);
+        fixtures.dropFieldBefore(CompareFixtures.DESTINATION_FIELD, held);
+
+        final Scored scored = ActivityScoring.score(spec(Unit.WEEK), fixtures.data("p1", fields, BASE_FROM,
+                WINDOW_TO, List.of()));
+
+        // Against the held weeks' 8, not the weeks of nothing before them.
+        final Finding rise = only(scored, Kind.WEEK, ActivityScoring.DISTINCT + CompareFixtures.DESTINATION_FIELD);
+        assertThat(rise.window()).isEqualTo("2026-05-11 to 2026-05-31");
+        assertThat(rise.baseline()).isCloseTo(8 * 5 / 7.0, within(1e-9));
+        assertThat(rise.evidence()).contains("over 9 baseline weeks");
+        // Held from within the baseline, unlike the person's own field (held throughout): a note says from when.
+        assertThat(scored.notes()).anySatisfy(note -> assertThat(note).contains(
+                "destination.domain is held only from 2026-03-02"));
+        // A feature reading no partly held field is scored over every day, as before.
+        assertThat(ActivityScoring.heldDays(spec(Unit.WEEK), fixtures.data("p1", fields, BASE_FROM, WINDOW_TO,
+                List.of()), ActivityScoring.EVENTS)).isEmpty();
     }
 
     @Test
@@ -575,6 +621,23 @@ class TestActivityScoring {
         }
         for (LocalDate date = from; date.isBefore(to); date = date.plusDays(1)) {
             fixtures.hours("svc", date, 0, 24, 1, Map.of());
+        }
+        return fixtures;
+    }
+
+    // The person's workdays from 9 to 17 in the background, 5 events an hour, the day's number of sites (one an
+    // hour, cycling) as destinations.
+    private static CompareFixtures siteWorkdays(final ToIntFunction<LocalDate> sites) {
+        final CompareFixtures fixtures = background(ZONE, BASE_FROM, WINDOW_TO, 1.0);
+        for (LocalDate date = BASE_FROM; date.isBefore(WINDOW_TO); date = date.plusDays(1)) {
+            if (date.getDayOfWeek().getValue() <= 5) {
+                final int count = sites.applyAsInt(date);
+                for (int site = 0; site < count; site++) {
+                    final int hour = 9 + site % 8;
+                    fixtures.hours("p1", date, hour, hour + 1, 1, Map.of(CompareFixtures.DESTINATION_FIELD,
+                            "site" + site));
+                }
+            }
         }
         return fixtures;
     }

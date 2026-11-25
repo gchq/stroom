@@ -403,7 +403,13 @@ final class ActivityScoring {
         final List<Finding> findings = new ArrayList<>();
         boolean tooFew = false;
         for (final Map.Entry<String, Map<LocalDate, Double>> feature : features.entrySet()) {
-            final Function<Block, Double> value = block -> aggregate(feature.getKey(), feature.getValue(), block);
+            // A field the feature reads held over only part of the source's days: scored over those days alone
+            // (decided by the user, 2026-11-25: distinct destinations rising from nothing where the field starts
+            // being held is no finding).
+            final Map<LocalDate, Double> series = heldDays(spec, data, feature.getKey())
+                    .map(held -> held.only(feature.getValue()))
+                    .orElse(feature.getValue());
+            final Function<Block, Double> value = block -> aggregate(feature.getKey(), series, block);
             final double[] baseValues = baseline.stream()
                     .map(value)
                     .filter(v -> v != null)
@@ -612,6 +618,44 @@ final class ActivityScoring {
         return Optional.empty();
     }
 
+    /// The days a feature's week or month findings are scored over, where a field it reads (the person's field, for
+    /// every feature; a sum or breadth field, for its own) is held over only part of the source's days: from the
+    /// latest such field's first day, until the earliest one's last.
+    ///
+    /// @param spec    The periods.
+    /// @param data    The source's data.
+    /// @param feature The feature.
+    /// @return The days it is held on; empty where every field it reads is held throughout (all its days count).
+    static Optional<HeldDays> heldDays(final Spec spec, final SourceData data, final String feature) {
+        final Optional<LocalDate[]> covered = covered(data);
+        if (covered.isEmpty()) {
+            return Optional.empty();
+        }
+        final List<String> fields = new ArrayList<>();
+        LocalDate from = null;
+        LocalDate until = null;
+        for (final FieldSpan span : data.fieldSpans()) {
+            if (!span.person() && !readsField(feature, span.field())) {
+                continue;
+            }
+            final boolean starts = starts(spec, span, covered.get());
+            final boolean stops = stops(spec, span, covered.get());
+            if (!starts && !stops) {
+                continue;
+            }
+            fields.add(span.field());
+            if (starts && (from == null || span.first().isAfter(from))) {
+                from = span.first();
+            }
+            if (stops && (until == null || span.last().isBefore(until))) {
+                until = span.last();
+            }
+        }
+        return fields.isEmpty()
+                ? Optional.empty()
+                : Optional.of(new HeldDays(fields, from, until));
+    }
+
     // The fields held over only part of the source's days, said.
     private static List<String> heldNotes(final Spec spec, final SourceData data) {
         final Optional<LocalDate[]> covered = covered(data);
@@ -633,7 +677,13 @@ final class ActivityScoring {
                         ? "until " + span.last()
                         : "")
                           + " of the source's days (" + covered.get()[0] + " to " + covered.get()[1] + "), e.g. "
-                          + "where a reprocessed range starts: change points within " + SOURCE_SHIFT_DAYS + " days "
+                          + "where a reprocessed range starts: " + (spec.unit() == Unit.DAY
+                        ? ""
+                        : "its " + spec.unit().word() + " findings are scored only over the days it is held "
+                          + (span.person()
+                                ? "(every feature's, as the person is matched by it)"
+                                : "(its own features')") + ", and ")
+                          + "change points within " + SOURCE_SHIFT_DAYS + " days "
                           + "of where it starts or stops aren't scored" + (span.person()
                         ? ", and the person's events outside it can't be matched by it."
                         : "."));
@@ -1574,6 +1624,41 @@ final class ActivityScoring {
     /// @param person True for the person's own field (every feature reads it), false for a sum or breadth field.
     record FieldSpan(String field, LocalDate first, LocalDate last, boolean person) {
 
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The days a feature is scored over where a field it reads is held over only part of the source's days.
+    ///
+    /// @param fields The fields held over only part of the source's days that the feature reads.
+    /// @param from   The first day held, or null where it is held from the source's start.
+    /// @param until  The last day held, or null where it is held to the source's end.
+    record HeldDays(List<String> fields, LocalDate from, LocalDate until) {
+
+        /// Copies the fields.
+        HeldDays {
+            fields = List.copyOf(fields);
+        }
+
+        /// @param date A day.
+        /// @return True if the fields are held on it.
+        boolean holds(final LocalDate date) {
+            return (from == null || !date.isBefore(from)) && (until == null || !date.isAfter(until));
+        }
+
+        /// @param series A feature's values by day.
+        /// @return Its values on the days held only.
+        Map<LocalDate, Double> only(final Map<LocalDate, Double> series) {
+            final Map<LocalDate, Double> out = new TreeMap<>();
+            series.forEach((date, value) -> {
+                if (holds(date)) {
+                    out.put(date, value);
+                }
+            });
+            return out;
+        }
     }
 
 
