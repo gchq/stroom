@@ -159,9 +159,9 @@ import java.util.function.Function;
 ///   source of window focus); one without has its events classified: from their Events XML, read by StreamId and
 ///   EventId ([TimelineEventXml], [EventXmlClassifier]; for an event code nothing settles, a few of its events'
 ///   XML read first, so the cap reaches every code, the code classified once from them and applied to all its
-///   events, the rest of its events' XML read within the cap only for the keys it holds), else the index's element field, else the
-///   source's own event codes classified once ([EventCodes]) ([TimelineClassification]). The user and the time come
-///   from the index.
+///   events, the rest of its events' XML read within the cap only for the keys it holds), else the index's element
+///   field, else the source's own event codes classified once ([EventCodes]) ([TimelineClassification]). The user
+///   and the time come from the index.
 /// - **The user field** of each index ([TimelineFields]): the call's (or skill's), the AGENTS doc's `## Fields`, a
 ///   field convention's, the index's documentation, else asked.
 /// - **Pairs** ([PairRule]): the skill's Event chains, the call's, the schema's, and those inferred from the user's
@@ -507,7 +507,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                  + "types, the schema's element and Action, else the codes classified (offered as "
                                  + "## Event types lines). Events XML only for what the index doesn't map (an "
                                  + "unsettled code classified once from a few of its events, read first, the rest "
-                                 + "read for their keys within the cap), named to add to its plan; the user and time always the index's. Past the events cap "
+                                 + "read for their keys within the cap), named to add to its plan; the user and "
+                                 + "time always the index's. Past the events cap "
                                  + "a day-by-day overview comes instead, to pick days. Omit sources to ask the user "
                                  + "which (over MCP: the AGENTS doc's ## Sources, else the indexes holding the "
                                  + "user's events, at most 10). Data-quality flags for missing events. "
