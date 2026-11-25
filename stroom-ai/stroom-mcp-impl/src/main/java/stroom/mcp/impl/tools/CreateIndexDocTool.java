@@ -83,6 +83,8 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
     private final BuildPlan plan;
     private final Provider<ElasticClusterTests> elasticClusterTestsProvider;
     private Provider<FeedIndexDecisions> feedIndexes;
+    // One index for a build's several feeds, or one per feed; none in tests that make the tool themselves.
+    private Provider<FeedIndexSplit> splitProvider;
 
     @Inject
     CreateIndexDocTool(final IndexPlans plans,
@@ -153,6 +155,10 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
                         .addStringProperty(INDEX_NAME_ARG, "Elasticsearch: the index or data stream name.")
                         .addStringProperty(CLUSTER_UUID_ARG, "Elasticsearch: an existing Elastic Cluster doc.")
                         .addStringProperty(VOLUME_GROUP_ARG, "Lucene: the index volume group.")
+                        .addEnumProperty(FeedIndexSplit.INDEX_SPLIT_ARG, List.of(BuildRecords.INDEX_PER_FEED,
+                                BuildRecords.INDEX_SHARED), "A build of several feeds: one index per feed or one "
+                                                            + "shared, only as the user chose when asked (it asks "
+                                                            + "in a form where it can).")
                         .addProperty(PLAN_ARG, ObjectSchema.builder()
                                 .description("Lucene: the field plan from draft_index_mapping; its fields are added "
                                              + "to the index doc (keywords as TEXT with the KEYWORD analyzer). "
@@ -172,6 +178,15 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
     @Inject
     void setFeedIndexes(final Provider<FeedIndexDecisions> feedIndexes) {
         this.feedIndexes = feedIndexes;
+    }
+
+    /// Whether a build of several feeds shares one index or has one per feed (set by injection; none in tests that
+    /// make the tool themselves).
+    ///
+    /// @param split Settles it with the user.
+    @Inject
+    void setSplit(final Provider<FeedIndexSplit> split) {
+        this.splitProvider = split;
     }
 
     @Override
@@ -261,9 +276,15 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
         } else {
             target.put("volume group", volumeGroup);
         }
+        // A build of several feeds: one index for them all, or one per feed (decided by the user, 2026-11-25:
+        // their readers compared first).
+        final Optional<Map<String, Object>> split = splitProvider == null
+                ? Optional.empty()
+                : splitProvider.get().settle(call, context, build, proposedName, indexName);
         final Map<String, Object> details = new LinkedHashMap<>();
         details.put("build", build);
         details.put("backend", backend);
+        split.ifPresent(found -> details.put("feeds", found.get("said")));
         details.put("index doc", proposedName);
         details.put("time field", timeField);
         details.putAll(target);
@@ -300,6 +321,7 @@ class CreateIndexDocTool extends AbstractBuiltInTool {
         final String docType = IndexingHelpers.INDEX_TYPE.get(backend);
         final DocRef ref = guard.create(docType, name, build, null, false, IndexExamples.ROLE);
         final Map<String, Object> result = new LinkedHashMap<>();
+        split.ifPresent(found -> result.put("feeds", found));
         result.put("type", docType);
         result.put("uuid", ref.getUuid());
         result.put("name", ref.getName());
