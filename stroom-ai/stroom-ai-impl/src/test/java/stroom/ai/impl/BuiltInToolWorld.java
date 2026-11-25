@@ -759,6 +759,9 @@ public final class BuiltInToolWorld implements AutoCloseable {
         Mockito.when(securityContext.hasDocumentPermission(Mockito.any(DocRef.class),
                 Mockito.any(DocumentPermission.class))).thenAnswer(invocation ->
                 hasDocumentPermission(invocation.getArgument(0), invocation.getArgument(1)));
+        // Creating a document in a folder, as an owner of the folder may.
+        Mockito.when(securityContext.hasDocumentCreatePermission(Mockito.any(DocRef.class), Mockito.anyString()))
+                .thenAnswer(invocation -> hasDocumentPermission(invocation.getArgument(0), DocumentPermission.OWNER));
         Mockito.when(securityContext.useAsReadResult(Mockito.any(Supplier.class)))
                 .thenAnswer(invocation -> ((Supplier<?>) invocation.getArgument(0)).get());
         Mockito.when(securityContext.asUserResult(Mockito.<UserIdentity>any(), Mockito.any(Supplier.class)))
