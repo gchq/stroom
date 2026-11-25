@@ -98,7 +98,10 @@ class FeedIndexSplit {
         }
         final Map<String, Object> out = new LinkedHashMap<>();
         String choice = NullSafe.string(String.valueOf(records.feedComparison(build).getOrDefault(CHOICE, "")));
-        if (choice.isEmpty()) {
+        final Object given = ToolArgs.raw(call, INDEX_SPLIT_ARG);
+        // Asked again where index_split names another choice than the one kept: the user changed their mind (seen
+        // in eval case 105, 2026-11-25: every later call kept the first choice).
+        if (choice.isEmpty() || (given != null && !String.valueOf(given).strip().equals(choice))) {
             final FeedReadAccess.Access access = readAccess.access(feeds);
             choice = chosen(call, context, build, feeds, access);
             records.rememberFeedComparison(build, Map.of(CHOICE, choice, "index_readers", access.said()));
@@ -155,7 +158,9 @@ class FeedIndexSplit {
                           final List<String> feeds,
                           final FeedReadAccess.Access access) {
         final Object given = ToolArgs.raw(call, INDEX_SPLIT_ARG);
-        if (given != null) {
+        // Only where no form can be shown: the form is the user's, never the agent's to answer (seen in eval case
+        // 105, 2026-11-25: index_split=shared passed with forms available, and the user was never asked).
+        if (given != null && !context.userQuestions().canAsk()) {
             final String answer = String.valueOf(given).strip();
             if (!BuildRecords.INDEX_PER_FEED.equals(answer) && !BuildRecords.INDEX_SHARED.equals(answer)) {
                 throw new ToolRefusal(INDEX_SPLIT_ARG + " is '" + BuildRecords.INDEX_PER_FEED + "' or '"

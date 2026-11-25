@@ -122,6 +122,48 @@ class TestFeedIndexSplit {
     }
 
     @Test
+    void theAgentsIndexSplitDoesNotStandInForTheFormWhereOneCanBeShown() {
+        // Seen in eval case 105 on Haiku (2026-11-25): with forms available, the agent passed index_split=shared
+        // itself, the user was never asked, and one shared index was made for feeds with different readers.
+        differentReaders();
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("choice", FeedIndexSplit.PER_FEED
+                                                                                  + " (recommended)"));
+
+        final Map<String, Object> settled = split.settle(call(Map.of("index_split", "shared")), user.context(),
+                BUILD, "ACME-A-Index", null).orElseThrow();
+
+        assertThat(user.schemas()).hasSize(1);
+        assertThat(settled).containsEntry("index_split", BuildRecords.INDEX_PER_FEED);
+    }
+
+    @Test
+    void aChoiceKeptIsChangedWhenTheUserChoosesAgain() {
+        // Seen in eval case 105 on Haiku (2026-11-25): shared kept, the user then asked for one index per feed, and
+        // every later call kept shared whatever index_split said.
+        differentReaders();
+        world.records().rememberFeedComparison(BUILD, Map.of("index", BuildRecords.INDEX_SHARED));
+
+        // Without forms: the new choice, given on the user's word, is kept.
+        assertThat(split.settle(call(Map.of("index_split", "per_feed")), BuildToolCalls.context(), BUILD,
+                "ACME-A-Index", null).orElseThrow()).containsEntry("index_split", BuildRecords.INDEX_PER_FEED);
+        assertThat(world.records().feedComparison(BUILD)).containsEntry("index", BuildRecords.INDEX_PER_FEED);
+        // With forms: asked again, the form's answer kept.
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("choice", FeedIndexSplit.SHARED));
+        assertThat(split.settle(call(Map.of("index_split", "shared")), user.context(), BUILD, "ACME-Index",
+                null).orElseThrow()).containsEntry("index_split", BuildRecords.INDEX_SHARED);
+        assertThat(user.schemas()).hasSize(1);
+        // The same choice again: not asked.
+        final BuildToolCalls.FormUser again = BuildToolCalls.user(Map.of("choice", FeedIndexSplit.SHARED));
+        split.settle(call(Map.of("index_split", "shared")), again.context(), BUILD, "ACME-Index", null);
+        assertThat(again.schemas()).isEmpty();
+    }
+
+    private void differentReaders() {
+        Mockito.when(readAccess.access(List.of("ACME-A", "ACME-B"))).thenReturn(new FeedReadAccess.Access(
+                Map.of("ACME-A", Set.of("Site A analysts"), "ACME-B", Set.of("Site B analysts")), List.of()));
+    }
+
+    @Test
     void aFeedNamedInsideAnothersIsThatOthers() {
         facts.sources = List.of("ACME", "ACME-B");
         world.records().rememberFeedComparison(BUILD, Map.of("index", BuildRecords.INDEX_PER_FEED));
