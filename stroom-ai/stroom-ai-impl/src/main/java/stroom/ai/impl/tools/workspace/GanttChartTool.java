@@ -44,6 +44,7 @@ import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /// `gantt_chart`: draws a workspace table of times as a timeline in the chat, as a ```` ```mermaid ```` `gantt`
 /// block ([GanttCharts]) for the agent to place in its reply, which the chat draws with its own renderer. The
@@ -55,6 +56,8 @@ public class GanttChartTool extends AbstractWorkspaceTool {
     static final String END_ARG = "end";
     static final String LABEL_ARG = "label";
     static final String LANE_ARG = "lane";
+    static final String START_EVENT_ARG = "startEvent";
+    static final String END_EVENT_ARG = "endEvent";
     static final String TITLE_ARG = "title";
     static final String TOP_ARG = "top";
     static final String MIN_SECONDS_ARG = "minSeconds";
@@ -63,6 +66,8 @@ public class GanttChartTool extends AbstractWorkspaceTool {
     static final int DEFAULT_MIN_SECONDS = 60;
     /// Bars of a label this close are merged unless the call says otherwise.
     static final int DEFAULT_MERGE_SECONDS = 300;
+    // A date as a lane holds it, e.g. a table's day column.
+    private static final Pattern DATE = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
     /// What the result says the chat draws, and what it doesn't.
     static final String CHAT_DRAWS = "The chat draws only timelines (Mermaid gantt). For any other kind of chart "
                                      + "(a heat map, network, pie, bars or lines, a map) offer only a dashboard "
@@ -115,6 +120,9 @@ public class GanttChartTool extends AbstractWorkspaceTool {
                                                       + "application).")
                         .addStringProperty(LANE_ARG, "The column of each row's lane (e.g. the host); default a "
                                                      + "lane per day.")
+                        .addStringProperty(START_EVENT_ARG, "The column naming the event each row starts at "
+                                                            + "(e.g. Logon-User), shown on its start marker.")
+                        .addStringProperty(END_EVENT_ARG, "The column naming the event each row ends at.")
                         .addStringProperty(TITLE_ARG, "What the chart shows.")
                         .addIntegerProperty(TOP_ARG, "The most labels kept, 1 to " + GanttCharts.MAX_TOP
                                                      + " (default); the rest are Other.")
@@ -144,15 +152,27 @@ public class GanttChartTool extends AbstractWorkspaceTool {
         final int end = endName == null
                 ? -1
                 : TableEngine.index(endName, columns);
-        final int lane = laneName == null
+        final int givenLane = laneName == null
                 ? -1
                 : TableEngine.index(laneName, columns);
+        final int startEvent = column(request, START_EVENT_ARG, columns);
+        final int endEvent = column(request, END_EVENT_ARG, columns);
 
         if (table.rows().isEmpty()) {
             throw new WorkspaceException(path + " has no rows, so there is nothing to draw.");
         }
         final List<String> folded = new ArrayList<>();
-        final List<Row> rows = rows(table.rows(), start, end, label, lane, columns, folded);
+        // A lane of dates (a table's days, cut in whatever zone it was written in) is drawn as the days of the
+        // chart's zone, so a section holds the bars its times say are of that day.
+        final int lane;
+        if (givenLane >= 0 && isDates(table.rows(), givenLane)) {
+            lane = -1;
+            folded.add("The lane " + columns.get(givenLane) + " holds dates, so its sections are the days in "
+                       + zone.id() + ", as the bars' times are.");
+        } else {
+            lane = givenLane;
+        }
+        final List<Row> rows = rows(table.rows(), start, end, label, lane, startEvent, endEvent, columns, folded);
         if (rows.isEmpty()) {
             throw new WorkspaceException("No row of " + path + " has a start time that could be read in "
                                          + columns.get(start) + ", so there is nothing to draw.");
@@ -172,6 +192,8 @@ public class GanttChartTool extends AbstractWorkspaceTool {
                                   final int end,
                                   final int label,
                                   final int lane,
+                                  final int startEvent,
+                                  final int endEvent,
                                   final List<String> columns,
                                   final List<String> folded) {
         final List<Row> rows = new ArrayList<>();
@@ -192,7 +214,11 @@ public class GanttChartTool extends AbstractWorkspaceTool {
             }
             rows.add(new Row(from, to, cell(row, label), lane < 0
                     ? null
-                    : cell(row, lane)));
+                    : cell(row, lane), startEvent < 0
+                    ? null
+                    : cell(row, startEvent), endEvent < 0
+                    ? null
+                    : cell(row, endEvent)));
         }
         if (noStart > 0) {
             folded.add("Left out " + noStart + " row(s) with no time in " + columns.get(start)
@@ -223,6 +249,30 @@ public class GanttChartTool extends AbstractWorkspaceTool {
         }
         sb.append("\n\n").append(zone.stated()).append("\n\n").append(CHAT_DRAWS);
         return sb.toString();
+    }
+
+    // The index of the column an argument names, or -1 if it isn't given.
+    private int column(final ToolCall request, final String name, final List<String> columns) {
+        final String value = stringArg(request, name);
+        return value == null
+                ? -1
+                : TableEngine.index(value, columns);
+    }
+
+    // True if every row's value in a column is a date (yyyy-MM-dd), and some row has one.
+    private static boolean isDates(final List<List<String>> cells, final int column) {
+        boolean any = false;
+        for (final List<String> row : cells) {
+            final String value = cell(row, column);
+            if (value == null || value.isBlank()) {
+                continue;
+            }
+            if (!DATE.matcher(value.strip()).matches()) {
+                return false;
+            }
+            any = true;
+        }
+        return any;
     }
 
     private String required(final ToolCall request, final String name) {

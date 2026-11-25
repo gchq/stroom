@@ -36,7 +36,8 @@ import java.util.stream.Collectors;
 
 /// Writes rows of times as a Mermaid `gantt` block of the subset [MermaidGanttParser] reads (what the chat draws),
 /// the same layout every time: a bar from each row's start to its end, a marker where it has none, a section per
-/// lane (or per day), and every value from the data stripped of what Mermaid reads as syntax. Never `click`,
+/// lane (or per day), each bar's start and end events named after it where the rows name them (a `%% events`
+/// comment), and every value from the data stripped of what Mermaid reads as syntax. Never `click`,
 /// callbacks or `%%{init}%%`. Large inputs are folded to stay readable, saying how: consecutive bars of one label
 /// in a lane merged, bars under a minimum length left out, the top labels kept and the rest shown as "Other", and
 /// at most [#MAX_BARS] bars and markers. Every block written is read back by the parser (a round trip).
@@ -134,6 +135,15 @@ final class GanttCharts {
                 : cleaned;
     }
 
+    /// @param text An event's name from the data, or null.
+    /// @return It as a `%% events` comment may hold it: [#clean(String)] with the `|` between the two names taken
+    /// out too.
+    static String eventName(final String text) {
+        return text == null
+                ? ""
+                : clean(text.replace('|', ' '));
+    }
+
     /// @param text A value from the data, or null.
     /// @return It as a task's name: [#clean(String)], [#NONE] if nothing is left, and prefixed if Mermaid would
     /// read it as a statement or a date (e.g. one starting "click" or "2026-11-23"), so it is read as a name.
@@ -196,7 +206,9 @@ final class GanttCharts {
                     ? label
                     : OTHER, lane(row, options), row.start(), row.end() == null
                     ? row.start()
-                    : row.end()));
+                    : row.end(), eventName(row.startEvent()), row.end() == null
+                    ? ""
+                    : eventName(row.endEvent())));
         }
         return items;
     }
@@ -255,7 +267,9 @@ final class GanttCharts {
             } else if (lastBar >= 0 && kept.get(lastBar).label().equals(item.label())
                        && item.start() - kept.get(lastBar).end() <= gap) {
                 final Item before = kept.get(lastBar);
-                kept.set(lastBar, before.endingAt(Math.max(before.end(), item.end())));
+                kept.set(lastBar, item.end() > before.end()
+                        ? before.endingAt(item.end(), item.endEvent())
+                        : before);
                 merges[0]++;
             } else {
                 kept.add(item);
@@ -326,6 +340,14 @@ final class GanttCharts {
                     // A bar shorter than a second is drawn a second long, not as a marker.
                     final long end = Math.max(start + 1, item.end() / 1_000);
                     sb.append(time(start, options)).append(", ").append(time(end, options)).append('\n');
+                }
+                if (!item.startEvent().isEmpty() || !item.endEvent().isEmpty()) {
+                    // No space at the end of a line.
+                    sb.append(INDENT).append("%% events ").append(item.startEvent()).append(item.startEvent().isEmpty()
+                            ? "|"
+                            : " |").append(item.endEvent().isEmpty()
+                            ? ""
+                            : " " + item.endEvent()).append('\n');
                 }
             }
         });
@@ -401,10 +423,21 @@ final class GanttCharts {
     ///
     /// @param start When it starts, in epoch milliseconds.
     /// @param end   When it ends, in epoch milliseconds, not before its start; null (or its start) for a marker.
-    /// @param label What it is (e.g. an application), its bar's name and colour.
-    /// @param lane  The lane it is in (e.g. a host), or null.
-    record Row(long start, Long end, String label, String lane) {
+    /// @param label      What it is (e.g. an application), its bar's name and colour.
+    /// @param lane       The lane it is in (e.g. a host), or null.
+    /// @param startEvent The name of the event it starts at (e.g. `Logon-User`), or null.
+    /// @param endEvent   The name of the event it ends at, or null; none for a marker.
+    record Row(long start, Long end, String label, String lane, String startEvent, String endEvent) {
 
+        /// A row with no events named.
+        ///
+        /// @param start When it starts, in epoch milliseconds.
+        /// @param end   When it ends, or null for a marker.
+        /// @param label What it is.
+        /// @param lane  The lane it is in, or null.
+        Row(final long start, final Long end, final String label, final String lane) {
+            this(start, end, label, lane, null, null);
+        }
     }
 
 
@@ -443,19 +476,19 @@ final class GanttCharts {
     // --------------------------------------------------------------------------------
 
 
-    // A bar or marker as it is drawn: its label (or Other) and section.
-    private record Item(String label, String section, long start, long end) {
+    // A bar or marker as it is drawn: its label (or Other) and section, and its events' names (empty for none).
+    private record Item(String label, String section, long start, long end, String startEvent, String endEvent) {
 
         private boolean isMarker() {
             return end == start;
         }
 
         private Item in(final String otherSection) {
-            return new Item(label, otherSection, start, end);
+            return new Item(label, otherSection, start, end, startEvent, endEvent);
         }
 
-        private Item endingAt(final long otherEnd) {
-            return new Item(label, section, start, otherEnd);
+        private Item endingAt(final long otherEnd, final String otherEndEvent) {
+            return new Item(label, section, start, otherEnd, startEvent, otherEndEvent);
         }
     }
 }

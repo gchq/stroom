@@ -122,6 +122,60 @@ class TestGanttChartTool {
     }
 
     @Test
+    void theColumnsOfEachRowsStartAndEndEventsAreNamedAfterItsBar() {
+        files.workspace().writeTabFile(CHAT, WorkspacePath.parse("/outputs/spans.csv"), """
+                start,end,label,lane,start_event,end_event
+                2026-11-23T09:00:00Z,2026-11-23T17:00:00Z,logged on,host-1,Logon-User,Logoff-User
+                2026-11-23T10:00:00Z,2026-11-23T10:30:00Z,Word,host-1,,
+                """, null);
+
+        final String result = run("{\"path\":\"/outputs/spans.csv\",\"start\":\"start\",\"end\":\"end\","
+                                  + "\"label\":\"label\",\"lane\":\"lane\",\"startEvent\":\"start_event\","
+                                  + "\"endEvent\":\"end_event\",\"timeZone\":\"UTC\"}");
+
+        assertThat(result).contains("""
+                    logged on :2026-11-23 09:00:00, 2026-11-23 17:00:00
+                    %% events Logon-User | Logoff-User
+                    Word :2026-11-23 10:00:00, 2026-11-23 10:30:00
+                ```
+                """);
+        assertThat(run("{\"path\":\"/outputs/spans.csv\",\"start\":\"start\",\"label\":\"label\","
+                       + "\"startEvent\":\"first\"}"))
+                .startsWith("Error: There is no column 'first'.");
+    }
+
+    @Test
+    void aLaneOfDatesIsDrawnAsTheDaysOfTheChartsZoneAsItsTimesAre() {
+        // Days cut at UTC midnight, drawn in Sydney (11 hours ahead): the 11:00 cut is merged away.
+        files.workspace().writeTabFile(CHAT, WorkspacePath.parse("/outputs/activities.csv"), """
+                activity_label,day,start,end
+                Forecast,2026-10-26,2026-10-26T21:40:00Z,2026-10-27T00:00:00Z
+                Forecast,2026-10-27,2026-10-27T00:00:00Z,2026-10-27T05:20:00Z
+                Mail,2026-10-27,2026-10-27T21:50:00Z,2026-10-27T23:00:00Z
+                """, null);
+
+        final String result = run("{\"path\":\"/outputs/activities.csv\",\"start\":\"start\",\"end\":\"end\","
+                                  + "\"label\":\"activity_label\",\"lane\":\"day\","
+                                  + "\"timeZone\":\"Australia/Sydney\"}");
+
+        assertThat(result)
+                .contains("""
+                            section 2026-10-27 Tue
+                            Forecast :2026-10-27 08:40:00, 2026-10-27 16:20:00
+                            section 2026-10-28 Wed
+                            Mail :2026-10-28 08:50:00, 2026-10-28 10:00:00
+                        """)
+                .doesNotContain("section 2026-10-26")
+                .contains("- The lane day holds dates, so its sections are the days in Australia/Sydney, as the "
+                          + "bars' times are.");
+        // A lane of anything else is kept as it is.
+        assertThat(run("{\"path\":\"/outputs/activities.csv\",\"start\":\"start\",\"end\":\"end\","
+                       + "\"label\":\"day\",\"lane\":\"activity_label\",\"timeZone\":\"Australia/Sydney\"}"))
+                .contains("section Forecast")
+                .doesNotContain("holds dates");
+    }
+
+    @Test
     void itIsOnlyOfferedInTheChatAndOnlyReads() {
         assertThat(tool.isChatOnly()).isTrue();
         assertThat(tool.isReadOnly()).isTrue();

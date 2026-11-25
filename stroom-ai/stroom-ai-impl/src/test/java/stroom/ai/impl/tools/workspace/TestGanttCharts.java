@@ -285,6 +285,53 @@ class TestGanttCharts {
         assertThat(GanttCharts.human(7_200)).isEqualTo("2 h");
     }
 
+    @Test
+    void aRowsStartAndEndEventsAreWrittenAfterItsTaskAndReadBack() {
+        final Chart chart = GanttCharts.write(List.of(
+                new Row(Instant.parse("2026-11-23T09:00:00Z").toEpochMilli(),
+                        Instant.parse("2026-11-23T17:00:00Z").toEpochMilli(), "logged on", "host-1",
+                        "Logon-User", "Logoff-User"),
+                new Row(Instant.parse("2026-11-23T09:40:00Z").toEpochMilli(), null, "File copy", "host-1",
+                        "Copy-File", "ignored for a marker"),
+                row("2026-11-23T10:00:00Z", "2026-11-23T10:30:00Z", "Word", "host-1")),
+                options("a", UTC, true));
+
+        assertThat(chart.mermaid()).contains("""
+                    logged on :2026-11-23 09:00:00, 2026-11-23 17:00:00
+                    %% events Logon-User | Logoff-User
+                    File copy :milestone, 2026-11-23 09:40:00, 0d
+                    %% events Copy-File |
+                    Word :2026-11-23 10:00:00, 2026-11-23 10:30:00
+                """);
+        final List<Task> tasks = MermaidGanttParser.parse(chart.mermaid()).getSections().getFirst().tasks();
+        assertThat(tasks).extracting(Task::startEvent).containsExactly("Logon-User", "Copy-File", null);
+        assertThat(tasks).extracting(Task::endEvent).containsExactly("Logoff-User", null, null);
+    }
+
+    @Test
+    void eventNamesAreStrippedOfMermaidSyntaxAndTheSeparator() {
+        final Chart chart = GanttCharts.write(List.of(
+                new Row(hour(1), hour(2), "a", null, "%%{init}%% | x # ; <b>", "end\nsection evil")),
+                options(null, UTC, false));
+
+        final Task task = MermaidGanttParser.parse(chart.mermaid()).getSections().getFirst().tasks().getFirst();
+        assertThat(task.startEvent()).isEqualTo("init x b");
+        assertThat(task.endEvent()).isEqualTo("end section evil");
+    }
+
+    @Test
+    void aMergedBarKeepsTheFirstBarsStartEventAndTheLastBarsEndEvent() {
+        final Chart chart = GanttCharts.write(List.of(
+                new Row(hour(1), hour(2), "Excel", "h", "Open-1", "Close-1"),
+                new Row(hour(2), hour(3), "Excel", "h", "Open-2", "Close-2")),
+                new Options(null, UTC, true, GanttCharts.MAX_TOP, 0, 60));
+
+        final Task task = MermaidGanttParser.parse(chart.mermaid()).getSections().getFirst().tasks().getFirst();
+        assertThat(chart.bars()).isOne();
+        assertThat(task.startEvent()).isEqualTo("Open-1");
+        assertThat(task.endEvent()).isEqualTo("Close-2");
+    }
+
     private static Options options(final String title, final ToolTimeZone zone, final boolean byLane) {
         return new Options(title, zone, byLane, GanttCharts.MAX_TOP, 0, 0);
     }
