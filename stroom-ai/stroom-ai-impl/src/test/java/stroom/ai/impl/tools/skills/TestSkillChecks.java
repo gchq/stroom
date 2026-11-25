@@ -318,6 +318,44 @@ class TestSkillChecks {
     }
 
     @Test
+    void aSkillsTimelineCallMayReadEachEventsXmlButNotAnUnknownMode() {
+        final Map<String, ToolDefinition> real = new LinkedHashMap<>();
+        new BuiltInToolsTestWiring(Mockito.mock(AiService.class)).tools().forEach(tool -> real.put(
+                tool.definition().name(), tool.definition()));
+        final SkillChecks.Facts facts = new DelegatingFacts(facts()) {
+            @Override
+            public Optional<ToolDefinition> tool(final String name) {
+                return Optional.ofNullable(real.get(name));
+            }
+
+            @Override
+            public boolean allowed(final String name) {
+                return true;
+            }
+        };
+
+        final List<Finding> fits = SkillChecks.check(skill("""
+                ## Steps
+                1. Their timeline, each event classified from its own XML:
+                   ```json
+                   {"tool": "activity_timeline", "arguments": {"entity": "{user}", "sources": ["Endpoint"], \
+                "eventsXml": "each"}}
+                   ```"""), null, facts);
+        final List<Finding> misfits = SkillChecks.check(skill("""
+                ## Steps
+                1. Their timeline:
+                   ```json
+                   {"tool": "activity_timeline", "arguments": {"entity": "{user}", "sources": ["Endpoint"], \
+                "eventsXml": "all"}}
+                   ```"""), null, facts);
+
+        assertThat(fits).extracting(Finding::rule).doesNotContain("call_off_schema");
+        assertThat(misfits).filteredOn(finding -> finding.rule().equals("call_off_schema")).singleElement()
+                .satisfies(finding -> assertThat(finding.message()).contains(
+                        "'eventsXml' should be one of as_needed, each"));
+    }
+
+    @Test
     void aTimelineSkillThatReadsTheEventsXmlOrTracesStreamsIsGivenSuggestionsNotProblems() {
         final List<List<Map<String, Object>>> asked = new ArrayList<>();
         final SkillChecks.Facts facts = new DelegatingFacts(facts()) {

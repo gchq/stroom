@@ -962,6 +962,104 @@ class TestActivityTimelineAnySource {
     }
 
     @Test
+    void byDefaultASettledCodesEventsXmlIsNotReadAndTheResultSaysTheMode() {
+        settledCodeOfMixedTypes(10);
+
+        final Map<String, Object> result = json(mcp(), arguments(Map.of()));
+
+        // The AGENTS doc settles the code: no Events XML read, every event classified by its code.
+        Mockito.verify(eventXml, Mockito.never()).read(Mockito.any(), Mockito.any(), Mockito.anyInt(),
+                Mockito.any(), Mockito.any());
+        final Map<String, Object> source = ((List<Map<String, Object>>) result.get("sources")).getFirst();
+        assertThat(source).containsEntry("classified_by", Map.of("event type field", 10L));
+        assertThat((Map<String, Object>) result.get("events_xml")).containsEntry("mode",
+                        ActivityTimelineTool.EVENTS_XML_AS_NEEDED).containsEntry("read", 0L)
+                .containsEntry("past_the_cap", 0L);
+    }
+
+    @Test
+    void eventsXmlEachReadsEveryEventsXmlAndClassifiesEachFromItsOwn() {
+        settledCodeOfMixedTypes(10);
+
+        final Map<String, Object> result = json(mcp(), arguments(Map.of(ActivityTimelineTool.EVENTS_XML_ARG,
+                ActivityTimelineTool.EVENTS_XML_EACH)));
+
+        final ArgumentCaptor<Map<Long, List<Long>>> ids = ArgumentCaptor.forClass(Map.class);
+        Mockito.verify(eventXml, Mockito.times(1)).read(Mockito.any(), ids.capture(), Mockito.anyInt(),
+                Mockito.any(), Mockito.any());
+        assertThat(ids.getValue().values().stream().mapToInt(List::size).sum()).isEqualTo(10);
+        final Map<String, Object> source = ((List<Map<String, Object>>) result.get("sources")).getFirst();
+        assertThat(source).containsEntry("classified_by", Map.of("Events XML", 10L));
+        // The AGENTS doc's role still applies to the code.
+        assertThat((Map<String, Object>) source.get("roles_from")).containsOnlyKeys(TypeRoleLookup.FROM_AGENTS);
+        assertThat((Map<String, Object>) result.get("events_xml")).containsEntry("mode",
+                        ActivityTimelineTool.EVENTS_XML_EACH).containsEntry("read", 10L)
+                .containsEntry("past_the_cap", 0L).doesNotContainKey("narrow_the_period");
+        // Each event its own type, from its own XML: the code's two event types both seen.
+        assertThat(files.content(FOLDER + ActivityTimelineTool.EVENTS_FILE).orElseThrow())
+                .contains(",action,process execute,ws-09,notepad.exe,,,9,1,audit,Events XML")
+                .contains(",action,view,ws-09,,,doc1.txt,9,2,audit,Events XML");
+    }
+
+    @Test
+    void eventsXmlEachReadsWithinTheCapAndSaysWhereTheCapCutIt() {
+        settledCodeOfMixedTypes(10);
+
+        final Map<String, Object> result = json(mcpWithXmlCap(4), arguments(Map.of(
+                ActivityTimelineTool.EVENTS_XML_ARG, ActivityTimelineTool.EVENTS_XML_EACH)));
+
+        final ArgumentCaptor<Map<Long, List<Long>>> ids = ArgumentCaptor.forClass(Map.class);
+        Mockito.verify(eventXml, Mockito.times(1)).read(Mockito.any(), ids.capture(), Mockito.anyInt(),
+                Mockito.any(), Mockito.any());
+        assertThat(ids.getValue().values().stream().mapToInt(List::size).sum()).isEqualTo(4);
+        final Map<String, Object> source = ((List<Map<String, Object>>) result.get("sources")).getFirst();
+        // The rest classified by their code, from its events read.
+        assertThat(source).containsEntry("classified_by", Map.of("Events XML", 4L, "Events XML of its code", 6L));
+        final Map<String, Object> xmlRead = (Map<String, Object>) result.get("events_xml");
+        assertThat(xmlRead).containsEntry("mode", ActivityTimelineTool.EVENTS_XML_EACH).containsEntry("read", 4L)
+                .containsEntry("with_ids", 10L).containsEntry("past_the_cap", 6L);
+        assertThat((String) xmlRead.get("narrow_the_period")).contains("More than 4 events",
+                ActivityTimelineTool.EVENTS_XML_ARG);
+    }
+
+    @Test
+    void anInvalidEventsXmlIsRefused() {
+        settledCodeOfMixedTypes(2);
+
+        final String text = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
+                arguments(Map.of(ActivityTimelineTool.EVENTS_XML_ARG, "all")), false)), mcp()).text();
+
+        assertThat(text).startsWith("Error: ").contains(ActivityTimelineTool.EVENTS_XML_ARG, "as_needed", "each");
+        Mockito.verify(eventXml, Mockito.never()).read(Mockito.any(), Mockito.any(), Mockito.anyInt(),
+                Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    void theSchemaOffersEventsXmlsModes() {
+        assertThat(tool.definition().parameters().properties().get(ActivityTimelineTool.EVENTS_XML_ARG))
+                .isInstanceOfSatisfying(ToolSchema.EnumSchema.class, values -> assertThat(values.values())
+                        .containsExactly(ActivityTimelineTool.EVENTS_XML_AS_NEEDED,
+                                ActivityTimelineTool.EVENTS_XML_EACH));
+    }
+
+    // Events of one code an AGENTS doc settles, whose XML holds two event types (alternately a process started and
+    // a document viewed): the code doesn't settle an event's type.
+    private void settledCodeOfMixedTypes(final int count) {
+        for (int i = 0; i < count; i++) {
+            typed("09:" + (10 + 2 * i), 9, "audit", null);
+            xml.put("9:" + eventId, i % 2 == 0
+                    ? "<Event><EventDetail><TypeId>audit</TypeId><Process><Action>Execute</Action><Command>"
+                      + "C:\\Windows\\notepad.exe</Command></Process></EventDetail></Event>"
+                    : "<Event><EventDetail><TypeId>audit</TypeId><View><Document><Title>doc" + i
+                      + ".txt</Title></Document></View></EventDetail></Event>");
+        }
+        Mockito.when(agentInstructions.fieldsRuled(Mockito.any(), Mockito.eq(EVENTS))).thenReturn(Map.of(
+                InstructionRules.EVENT_TYPE_FIELD, new FieldRule(List.of("TypeId"), "/")));
+        Mockito.when(agentInstructions.eventTypesRuled(Mockito.any(), Mockito.eq(EVENTS))).thenReturn(Map.of(
+                "audit", new TypeRoleRule(TimelineRole.ACTION, "/Indexes")));
+    }
+
+    @Test
     void anAgentsDocsEventTypesGiveRolesAndTheModelsClassificationIsOfferedAsLines() {
         typed("09:00", 9, "Tun-Ascend", null);
         typed("09:10", 9, "file-open", null);

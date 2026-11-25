@@ -86,6 +86,7 @@ import stroom.ai.impl.tools.timeline.TimelineReader.Source;
 import stroom.ai.impl.tools.timeline.TimelineReader.Varied;
 import stroom.ai.impl.tools.timeline.TimelineReading.XmlPaths;
 import stroom.ai.impl.tools.timeline.TimelineRun.EventRange;
+import stroom.ai.impl.tools.timeline.TimelineRun.EventsXml;
 import stroom.ai.impl.tools.timeline.TimelineRun.Period;
 import stroom.ai.impl.tools.timeline.TimelineRun.SourceNote;
 import stroom.ai.impl.tools.timeline.TimelineRun.View;
@@ -197,6 +198,12 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     static final String PERSON_FIELD_ARG = "personField";
     static final String VIEW_ARG = "view";
     static final String LANES_ARG = "lanes";
+    /// Which events' Events XML is read: as needed (the default) or every event's.
+    static final String EVENTS_XML_ARG = "eventsXml";
+    /// Only what the index doesn't map (the default).
+    static final String EVENTS_XML_AS_NEEDED = EventsXml.AS_NEEDED.argName();
+    /// Every event's, within the cap, each classified from its own.
+    static final String EVENTS_XML_EACH = EventsXml.EACH.argName();
     static final String SKILL_ARG = "skill";
     static final String INCLUDE_TARGETS_ARG = "includeTargets";
     static final String TARGET_PERSON_FIELD_ARG = "targetPersonField";
@@ -596,6 +603,10 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                 .build())
                         .addBooleanProperty(RUN_ANYWAY_ARG, "True to classify loose items past the budget, as "
                                                             + "the user agrees.")
+                        .addEnumProperty(EVENTS_XML_ARG, List.of(EVENTS_XML_AS_NEEDED, EVENTS_XML_EACH),
+                                "Optional: each to read every event's Events XML (within the cap) and classify "
+                                + "each from its own: slower; for sources whose codes don't settle an event's "
+                                + "type (default as_needed).")
                         .addStringProperty(UserTimeZones.ARG, UserTimeZones.DESCRIPTION)
                         .build())
                 .build();
@@ -618,6 +629,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final long capMs = idleCap(request, config);
         final View view = view(request);
         final String lanes = lanes(request);
+        final EventsXml eventsXml = eventsXml(request);
         final Instant deadline = Instant.now().plus(timeLimit(context));
         final SkillInUse skill = skillInUse(request, context);
         final Plan plan = plan(request, context, who, period, deadline, skill);
@@ -664,7 +676,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 agentsRoles(context, sources));
         final boolean characterising = booleanArg(request, CHARACTERISE_ARG, false) || view != View.DETAIL;
         final XmlOutcome xml = readXml(context, config, sources, read, plan.fields(), roles, characterising,
-                fieldXml);
+                fieldXml, eventsXml);
         final Map<Integer, Map<String, CodeRole>> classifiedNow = new LinkedHashMap<>();
         final Map<Integer, Map<String, CodeRole>> codes = codes(request, context, sources, read, plan.fields(),
                 xml.xml(), roles, classifiedNow);
@@ -1624,6 +1636,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     // the cap, so the schema's table reads its element and Action from the XML before its code is classified; and,
     // characterising, an event of a typed source with no content mapped (its object, title or text), spread over the
     // period up to characterisation's budget. Each path read is named with its index, to add to the index plan.
+    // Reading each event's (the call's eventsXml each), every other event's XML is read too, in time order after
+    // those, within the cap, each event classified from its own.
     private XmlOutcome readXml(final ToolCallContext context,
                                final AiWorkspaceConfig config,
                                final List<Source> sources,
@@ -1631,9 +1645,11 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                final Map<Integer, Fields> fields,
                                final TypeRoleLookup roles,
                                final boolean characterising,
-                               final Map<String, String> alreadyRead) {
+                               final Map<String, String> alreadyRead,
+                               final EventsXml mode) {
         final List<Event> forType = new ArrayList<>();
         final Map<Integer, List<Event>> forContent = new LinkedHashMap<>();
+        final List<Event> typedToo = new ArrayList<>();
         for (final Event event : read.events()) {
             final Source source = sources.get(event.source());
             if (!source.automatic() || number(event.streamId()) == null || number(event.eventId()) == null) {
@@ -1643,12 +1659,17 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             final Map<String, String> extra = read.extras().getOrDefault(event.id(), Map.of());
             if (!typedByIndex(found, extra, roles, event)) {
                 forType.add(event);
-            } else if (characterising && event.object() == null && event.title() == null && event.text() == null) {
+                continue;
+            }
+            if (mode == EventsXml.EACH) {
+                typedToo.add(event);
+            }
+            if (characterising && event.object() == null && event.title() == null && event.text() == null) {
                 forContent.computeIfAbsent(event.source(), k -> new ArrayList<>()).add(event);
             }
         }
-        if (forType.isEmpty() && forContent.isEmpty()) {
-            return new XmlOutcome(Map.of(), XmlRead.NONE, List.of());
+        if (forType.isEmpty() && forContent.isEmpty() && typedToo.isEmpty()) {
+            return new XmlOutcome(Map.of(), XmlRead.none(mode), List.of());
         }
         forType.sort(Comparator.comparingLong(Event::time));
         final List<Event> toRead = sampledByCode(forType, read, fields);
@@ -1658,18 +1679,25 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final Map<Integer, Integer> typeRead = new LinkedHashMap<>();
         final List<Event> inOrder = new ArrayList<>(toRead);
         inOrder.addAll(restOfCodes(forType, toRead, read, fields));
-        for (final Event event : inOrder) {
-            if (seen.size() >= cap) {
-                break;
-            }
+        // Those the index types are read last, not for their type's paths (it holds them).
+        final int forTypeCount = inOrder.size();
+        typedToo.sort(Comparator.comparingLong(Event::time));
+        inOrder.addAll(typedToo);
+        for (int i = 0; i < inOrder.size() && seen.size() < cap; i++) {
+            final Event event = inOrder.get(i);
             if (seen.add(event.streamId() + ":" + event.eventId())) {
                 ids.computeIfAbsent(number(event.streamId()), k -> new ArrayList<>()).add(number(event.eventId()));
-                typeRead.merge(event.source(), 1, Integer::sum);
+                if (i < forTypeCount) {
+                    typeRead.merge(event.source(), 1, Integer::sum);
+                }
             }
         }
         // Past the cap: only those needed to classify (a code's sample, or an event with no code); the rest of a
-        // code's events are classified by it whatever.
-        final int pastCap = (int) toRead.stream()
+        // code's events are classified by it whatever. Reading each event's: every event not read.
+        final List<Event> wanted = mode == EventsXml.EACH
+                ? inOrder
+                : toRead;
+        final int pastCap = (int) wanted.stream()
                 .map(event -> event.streamId() + ":" + event.eventId())
                 .distinct()
                 .filter(key -> !seen.contains(key))
@@ -1718,7 +1746,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final Map<String, String> all = new LinkedHashMap<>(reused);
         all.putAll(xml.xml());
         return new XmlOutcome(all, new XmlRead(seen.size() + pastCap, all.size(), xml.missing(),
-                xml.unreadable(), pastCap, xml.notAllowed(), cap), paths);
+                xml.unreadable(), pastCap, xml.notAllowed(), cap, mode), paths);
     }
 
     // The events whose XML is needed for their type, in the order read: of each unsettled event code, a few events
@@ -2227,6 +2255,20 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             }
         }
         throw new WorkspaceException(VIEW_ARG + " is one of activities, detail or both.");
+    }
+
+    private static EventsXml eventsXml(final ToolCall request) {
+        final Object given = argsMap(request).get(EVENTS_XML_ARG);
+        if (given == null || String.valueOf(given).isBlank()) {
+            return EventsXml.AS_NEEDED;
+        }
+        for (final EventsXml mode : EventsXml.values()) {
+            if (mode.argName().equalsIgnoreCase(String.valueOf(given).strip())) {
+                return mode;
+            }
+        }
+        throw new WorkspaceException(EVENTS_XML_ARG + " is one of " + EVENTS_XML_AS_NEEDED + " (the default) or "
+                                     + EVENTS_XML_EACH + " (every event's Events XML, within the cap).");
     }
 
     private static String lanes(final ToolCall request) {

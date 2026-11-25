@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.timeline.PairInference.Candidate;
 import stroom.ai.impl.tools.timeline.TimelineReader.Read;
 import stroom.ai.impl.tools.timeline.TimelineReader.Source;
 import stroom.ai.impl.tools.timeline.TimelineRun.EventRange;
+import stroom.ai.impl.tools.timeline.TimelineRun.EventsXml;
 import stroom.ai.impl.tools.timeline.TimelineRun.SourceNote;
 import stroom.ai.impl.tools.timeline.TimelineRun.View;
 import stroom.ai.impl.tools.timeline.TimelineRun.XmlRead;
@@ -407,8 +408,21 @@ final class TimelineResult {
         return out;
     }
 
+    // What the cap left unread, and what to do about it.
+    private static String pastCapText(final XmlRead xml, final String capSetting) {
+        if (xml.mode() == EventsXml.EACH) {
+            return "More than " + xml.cap() + " events" + capSetting + " had Events XML to read ("
+                   + ActivityTimelineTool.EVENTS_XML_ARG + " " + EventsXml.EACH.argName() + "): " + xml.pastCap()
+                   + " weren't read: they were classified by their code (from its events read, else its role) or "
+                   + "the index's fields. Narrow the period to classify them all by their own XML.";
+        }
+        return "More than " + xml.cap() + " events" + capSetting + " had Events XML to read: the rest were "
+               + "classified by the index's fields. Narrow the period to classify them all by their XML.";
+    }
+
     private static Map<String, Object> xml(final XmlRead xml) {
         final Map<String, Object> map = new LinkedHashMap<>();
+        map.put("mode", xml.mode().argName());
         map.put("with_ids", xml.wanted());
         map.put("read", xml.read());
         map.put("gone_or_not_events", xml.missing());
@@ -418,10 +432,7 @@ final class TimelineResult {
             map.put("not_read_no_view_data_permission", xml.notAllowed());
         }
         if (xml.pastCap() > 0) {
-            map.put("narrow_the_period", "More than " + xml.cap() + " events (stroom.ai.workspace."
-                                         + "timelineMaxXmlEvents) had Events XML to read: the rest were classified "
-                                         + "by the index's fields. Narrow the period to classify them all by their "
-                                         + "XML.");
+            map.put("narrow_the_period", pastCapText(xml, " (stroom.ai.workspace.timelineMaxXmlEvents)"));
         }
         return map;
     }
@@ -722,10 +733,12 @@ final class TimelineResult {
         }
         run.notes().stream().filter(note -> note.leftOut() != null).forEach(note -> sb.append("- left out: ")
                 .append(note.index()).append(" (").append(note.leftOut()).append(")\n"));
+        if (run.xml().mode() == EventsXml.EACH) {
+            sb.append("Events XML: every event's read (").append(ActivityTimelineTool.EVENTS_XML_ARG).append(' ')
+                    .append(EventsXml.EACH.argName()).append("), each classified from its own.\n");
+        }
         if (run.xml().pastCap() > 0) {
-            sb.append("More than ").append(run.xml().cap()).append(" events had Events XML to read: the rest were "
-                                                                   + "classified by the index's fields. Narrow the "
-                                                                   + "period to classify them all by their XML.\n");
+            sb.append(pastCapText(run.xml(), "")).append('\n');
         }
         reading(run).xmlPaths().forEach(paths -> sb.append(TimelineReadNotes.xmlLine(paths)).append('\n'));
         sb.append("\nSpans: ").append(kindsText(run.built()));

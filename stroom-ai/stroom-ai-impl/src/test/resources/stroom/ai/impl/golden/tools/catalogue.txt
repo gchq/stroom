@@ -191,6 +191,11 @@ Builds one user's (or entity's) activity timeline for a period from any Elastic 
       "description" : "The user (or entity), as the sources hold it, e.g. jsmith. Matched exactly: other written forms (CORP\\jsmith, jsmith@corp) only by logonIds or logonForms.",
       "type" : "string"
     },
+    "eventsXml" : {
+      "description" : "Optional: each to read every event's Events XML (within the cap) and classify each from its own: slower; for sources whose codes don't settle an event's type (default as_needed).",
+      "enum" : [ "as_needed", "each" ],
+      "type" : "string"
+    },
     "idleCap" : {
       "description" : "How long with no event on a host ends an interval, e.g. 30m (default the setting, 30 minutes).",
       "type" : "string"

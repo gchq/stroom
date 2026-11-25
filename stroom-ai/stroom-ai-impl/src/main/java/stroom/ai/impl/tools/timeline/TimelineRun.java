@@ -152,10 +152,40 @@ record TimelineRun(String entity,
     /// @param pastCap    Those past the cap, not read.
     /// @param notAllowed Those not read as the user may not view data.
     /// @param cap        The cap.
-    record XmlRead(int wanted, int read, int missing, int unreadable, int pastCap, int notAllowed, int cap) {
+    /// @param mode       Which events' XML was wanted: as needed, or every event's.
+    record XmlRead(int wanted,
+                   int read,
+                   int missing,
+                   int unreadable,
+                   int pastCap,
+                   int notAllowed,
+                   int cap,
+                   EventsXml mode) {
 
-        /// Nothing to read.
-        static final XmlRead NONE = new XmlRead(0, 0, 0, 0, 0, 0, 0);
+        /// @param mode Which events' XML was wanted.
+        /// @return Nothing to read, in the mode.
+        static XmlRead none(final EventsXml mode) {
+            return new XmlRead(0, 0, 0, 0, 0, 0, 0, mode);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Which events' Events XML a timeline reads (decided with the user 2026-11-25).
+    enum EventsXml {
+        /// Only what the index doesn't map: an unsettled code classified once from a few of its events, the rest
+        /// of its events read for their keys within the cap (the default).
+        AS_NEEDED,
+        /// Every event's, within the cap, each classified from its own: for sources whose codes don't settle an
+        /// event's type.
+        EACH;
+
+        /// @return Its name in a call.
+        String argName() {
+            return name().toLowerCase(Locale.ROOT);
+        }
     }
 
 
