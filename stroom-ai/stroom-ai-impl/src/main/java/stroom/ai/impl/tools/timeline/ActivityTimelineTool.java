@@ -33,6 +33,7 @@ import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSchema;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
+import stroom.ai.impl.tools.ToolTables;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.catalogue.TimelineRole;
 import stroom.ai.impl.tools.catalogue.TimelineRoles;
@@ -235,6 +236,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     static final String QUALITY_FILE = "quality.csv";
     static final String ACTIVITIES_FILE = "activities.csv";
     static final String ITEMS_FILE = "items.csv";
+    static final String OVERVIEW_FILE = "overview.csv";
     static final String CORRECTIONS_FILE = "corrections.json";
     static final String CACHE_FILE = "characterisation-cache.json";
     /// The form's key for classifying past the budget.
@@ -584,6 +586,11 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final SkillInUse skill = skillInUse(request, context);
         final Plan plan = plan(request, context, who, period, deadline, skill);
         final List<Source> sources = plan.sources();
+        // A long period first counted: past the events cap, a day at a time by aggregation, for days to be picked.
+        final ToolResult overview = overview(context, workspace, config, plan, period, zone, deadline, entity);
+        if (overview != null) {
+            return overview;
+        }
         final JoinBudget budget = new JoinBudget(config.getTimelineMaxEvents(), Long.MAX_VALUE, deadline,
                 context.stopped());
         context.progress().report("Reading " + entity + "'s events from " + sources.size() + " source(s)");
@@ -677,6 +684,85 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         return context.session().isChat()
                 ? ToolResult.text(TimelineResult.markdown(run, files)).withStructuredContent(structured)
                 : ToolResult.text(JsonUtil.writeValueAsString(structured, false)).withStructuredContent(structured);
+    }
+
+    // ------------------------------------------------------------------------------------------------
+    // A long period
+
+    // Each source's events of the user in the period, counted by one aggregate each before any is read; where they
+    // are more than a timeline reads, the period a day at a time (by source, and by type where the index holds it)
+    // as the result, with the days to pick; null to read the events.
+    private ToolResult overview(final ToolCallContext context,
+                                final SessionWorkspace workspace,
+                                final AiWorkspaceConfig config,
+                                final Plan plan,
+                                final Period period,
+                                final ToolTimeZone zone,
+                                final Instant deadline,
+                                final String entity) {
+        final List<Source> sources = plan.sources();
+        final ElasticEsql esql = elasticEsqlProvider.get();
+        if (esql == null) {
+            return null;
+        }
+        context.progress().report("Counting " + entity + "'s events in " + sources.size() + " source(s)");
+        final List<TimelineOverview.Counted> counts = new ArrayList<>();
+        final List<String> timeFields = new ArrayList<>();
+        long known = 0;
+        for (final Source source : sources) {
+            final String timeField = timeField(source.doc());
+            timeFields.add(timeField);
+            final TimelineOverview.Counted counted = TimelineOverview.count(esql, source, timeField,
+                    period.timeRange(), TimelineOverview.atLeastASecond(deadline), context.stopped());
+            counts.add(counted);
+            known += Math.max(0, counted.events());
+        }
+        final int cap = config.getTimelineMaxEvents();
+        if (known <= cap) {
+            return null;
+        }
+        context.progress().report("Aggregating " + entity + "'s " + known + " events a day at a time");
+        final List<TimelineOverview.SourceDays> days = new ArrayList<>();
+        for (int i = 0; i < sources.size(); i++) {
+            final Fields fields = plan.fields().get(i);
+            final String typeField = fields == null
+                    ? null
+                    : fields.eventType() != null
+                            ? fields.eventType()
+                            : fields.element();
+            days.add(TimelineOverview.days(esql, sources.get(i), timeFields.get(i), typeField, period.timeRange(),
+                    zone.zone().getId(), TimelineOverview.atLeastASecond(deadline), context.stopped()));
+        }
+        final String folder = FOLDER + safe(entity) + "/";
+        final List<List<String>> rows = new ArrayList<>();
+        for (final TimelineOverview.SourceDays source : days) {
+            source.byDay().forEach((day, events) -> {
+                final Map<String, Long> types = source.byType().getOrDefault(day, Map.of());
+                if (types.isEmpty()) {
+                    rows.add(List.of(day, source.source(), "", String.valueOf(events)));
+                } else {
+                    types.forEach((type, count) -> rows.add(List.of(day, source.source(), type,
+                            String.valueOf(count))));
+                }
+            });
+        }
+        rows.sort(Comparator.comparing((List<String> row) -> row.getFirst()).thenComparing(row -> row.get(1)));
+        final WorkspacePath file = WorkspacePath.parse(folder + OVERVIEW_FILE);
+        ToolTables.write(workspace, file, List.of("day", "source", "type", "events"), rows, null);
+        final Map<String, Object> structured = TimelineResult.overview(entity, period, cap, known, counts, days,
+                file.toString(), context.session().isChat());
+        return context.session().isChat()
+                ? ToolResult.text(TimelineResult.overviewMarkdown(structured)).withStructuredContent(structured)
+                : ToolResult.text(JsonUtil.writeValueAsString(structured, false)).withStructuredContent(structured);
+    }
+
+    // An index's time field, or null where it can't be told.
+    private String timeField(final DocRef doc) {
+        try {
+            return keyStreamsProvider.get().target(List.of(doc)).docs().getFirst().timeField();
+        } catch (final RuntimeException e) {
+            return null;
+        }
     }
 
     // A field's description, as describe_data_source gives it: from the index's documentation (a field table's

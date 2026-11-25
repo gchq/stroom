@@ -40,6 +40,7 @@ import stroom.util.shared.NullSafe;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +63,8 @@ final class TimelineResult {
 
     // The most types listed for each origin of a source's roles.
     private static final int MAX_TYPES_LISTED = 20;
+    // The most days an overview's result lists (the busiest); every day is in its file.
+    private static final int OVERVIEW_DAYS_SHOWN = 62;
 
     private TimelineResult() {
         // Static only.
@@ -223,6 +226,102 @@ final class TimelineResult {
         map.put("derived", ActivityTimelineTool.DERIVED);
         map.put("caveat", ActivityTimelineTool.CAVEAT);
         return map;
+    }
+
+    /// A long period's overview, in place of a timeline: its events counted per source, more than a timeline reads,
+    /// and a day at a time (by source, and by type where the index holds it), for days to be picked.
+    ///
+    /// @param entity Whose events.
+    /// @param period The period.
+    /// @param cap    The events a timeline reads.
+    /// @param known  The events counted in the period.
+    /// @param counts Each source's count, first and last.
+    /// @param days   Each source's days.
+    /// @param file   The workspace file of every day, source and type.
+    /// @param chat   True in a chat (the user picks the days), false over MCP (the calling model does).
+    /// @return The result as JSON.
+    static Map<String, Object> overview(final String entity,
+                                        final TimelineRun.Period period,
+                                        final int cap,
+                                        final long known,
+                                        final List<TimelineOverview.Counted> counts,
+                                        final List<TimelineOverview.SourceDays> days,
+                                        final String file,
+                                        final boolean chat) {
+        final Map<String, Object> map = new LinkedHashMap<>();
+        map.put("entity", entity);
+        map.put("time", Map.of("from", TimelineTables.iso(period.fromMs()), "to", TimelineTables.iso(period.toMs())));
+        map.put("overview", true);
+        map.put("why", known + " events in the period, more than the " + cap + " a timeline reads (stroom.ai."
+                       + "workspace.timelineMaxEvents): none was read; here they are a day at a time.");
+        map.put("events_in_period", counts.stream().map(counted -> {
+            final Map<String, Object> one = new LinkedHashMap<>();
+            one.put("source", counted.source());
+            if (counted.events() < 0) {
+                one.put("events", "not counted (its user is matched by a script or by several fields)");
+            } else {
+                one.put("events", counted.events());
+            }
+            NullSafe.consume(counted.first(), first -> one.put("first", first));
+            NullSafe.consume(counted.last(), last -> one.put("last", last));
+            return one;
+        }).toList());
+        final Map<String, Map<String, Long>> byDay = new TreeMap<>();
+        boolean cut = false;
+        for (final TimelineOverview.SourceDays source : days) {
+            source.byDay().forEach((day, events) -> byDay.computeIfAbsent(day, k -> new LinkedHashMap<>())
+                    .put(source.source(), events));
+            cut |= source.cut();
+        }
+        final List<Map<String, Object>> rows = new ArrayList<>();
+        byDay.forEach((day, bySource) -> {
+            final Map<String, Object> row = new LinkedHashMap<>();
+            row.put("day", day);
+            row.put("events", bySource.values().stream().mapToLong(Long::longValue).sum());
+            row.put("by_source", bySource);
+            rows.add(row);
+        });
+        map.put("active_days", byDay.size());
+        map.put("days", rows.size() > OVERVIEW_DAYS_SHOWN
+                ? rows.stream().sorted(Comparator.comparingLong((Map<String, Object> row) ->
+                        (Long) row.get("events")).reversed()).limit(OVERVIEW_DAYS_SHOWN).sorted(
+                        Comparator.comparing(row -> (String) row.get("day"))).toList()
+                : rows);
+        if (rows.size() > OVERVIEW_DAYS_SHOWN) {
+            map.put("days_shown", "the " + OVERVIEW_DAYS_SHOWN + " busiest of " + rows.size() + " active days; "
+                                  + "every day is in the file");
+        }
+        if (cut) {
+            map.put("cut", "Some days or types were past the rows an overview gives: the file has those given.");
+        }
+        map.put("file", file);
+        map.put("columns", List.of("day", "source", "type", "events"));
+        map.put("next", (chat
+                ? "Ask the user which days to read in detail"
+                : "Pick the days to read in detail") + " (each day's events are above, by type in the file), then "
+                        + "call again with timeFrom and timeTo around them, fewer than " + cap + " events in all.");
+        return map;
+    }
+
+    /// @param overview A long period's overview ([#overview]).
+    /// @return It for the chat.
+    @SuppressWarnings("unchecked")
+    static String overviewMarkdown(final Map<String, Object> overview) {
+        final StringBuilder sb = new StringBuilder("**Too many events for one timeline.** ")
+                .append(overview.get("why"));
+        sb.append("\n\n| day | events | by source |\n| --- | --- | --- |");
+        for (final Map<String, Object> row : (List<Map<String, Object>>) overview.get("days")) {
+            sb.append("\n| ").append(row.get("day")).append(" | ").append(row.get("events")).append(" | ")
+                    .append(((Map<String, Long>) row.get("by_source")).entrySet().stream()
+                            .map(entry -> entry.getKey() + " " + entry.getValue())
+                            .reduce((a, b) -> a + ", " + b)
+                            .orElse(""))
+                    .append(" |");
+        }
+        NullSafe.consume(overview.get("days_shown"), shown -> sb.append("\n\n(").append(shown).append(")"));
+        sb.append("\n\nEvery day by source and type: `").append(overview.get("file")).append("`.\n\n")
+                .append(overview.get("next"));
+        return sb.toString();
     }
 
     /// @param ranges Each source's first and last events at any time, for a period with none.

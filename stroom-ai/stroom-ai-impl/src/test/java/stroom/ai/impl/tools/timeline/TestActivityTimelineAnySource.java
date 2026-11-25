@@ -706,6 +706,46 @@ class TestActivityTimelineAnySource {
     }
 
     @Test
+    void aPeriodWithMoreEventsThanATimelineReadsIsGivenADayAtATimeAndNoneIsRead() {
+        final List<ElasticEsql.Request> asked = new ArrayList<>();
+        Mockito.when(agentInstructions.fieldsRuled(Mockito.any(), Mockito.eq(EVENTS))).thenReturn(Map.of(
+                InstructionRules.EVENT_TYPE_FIELD, new FieldRule(List.of("TypeId"), "/")));
+        typed("09:00", 9, "vpn-up", null);
+        typed("09:10", 9, "vpn-up", null);
+        typed("09:20", 9, "vpn-up", null);
+        Mockito.when(elasticEsql.query(Mockito.any())).thenAnswer(invocation -> {
+            final ElasticEsql.Request request = invocation.getArgument(0);
+            asked.add(request);
+            final List<List<Object>> rows = request.pipeline().contains("first_seen")
+                    ? List.of(List.of("2026-09-01T08:00:00.000Z", "2026-11-09T17:00:00.000Z", 2_000_000L))
+                    : request.pipeline().contains("BY day, ")
+                            ? List.of(List.of(1_200_000L, "2026-10-02", "doc-read"), List.of(800_000L, "2026-10-03",
+                            "vpn-up"))
+                            : List.of(List.of(1_200_000L, "2026-10-02"), List.of(800_000L, "2026-10-03"));
+            return new ElasticEsql.Result("FROM x", "x", List.of(), rows, 1, 1, null, false, true, null, null,
+                    "9.5.3", List.of());
+        });
+
+        final Map<String, Object> result = json(mcp(), arguments(Map.of("timeFrom", "2026-09-01T00:00:00Z")));
+
+        assertThat(result).containsEntry("overview", true).containsEntry("active_days", 2L);
+        assertThat((String) result.get("why")).startsWith("2000000 events in the period, more than the");
+        assertThat((List<Map<String, Object>>) result.get("days")).extracting(day -> day.get("day"))
+                .containsExactly("2026-10-02", "2026-10-03");
+        assertThat((String) result.get("next")).startsWith("Pick the days to read in detail");
+        // No raw read: only the probe of the first events (which finds the element field), nor their XML.
+        assertThat(streams.scanned()).hasSize(1);
+        assertThat(result).doesNotContainKey("events_read");
+        Mockito.verifyNoInteractions(eventXml);
+        // The count, the days, and the days by the index's type field, in the user's zone.
+        assertThat(asked).hasSize(3);
+        assertThat(asked.get(2).pipeline()).contains("BY day, `TypeId`");
+        assertThat(asked.get(2).timeZone()).isEqualTo("Z");
+        assertThat(files.content(FOLDER + ActivityTimelineTool.OVERVIEW_FILE).orElseThrow())
+                .contains("2026-10-02,Events,doc-read,1200000");
+    }
+
+    @Test
     void aPeriodWithNoneOfTheUsersEventsGivesEachSourcesFirstAndLastAtAnyTime() {
         week();
         final List<ElasticEsql.Request> asked = new ArrayList<>();
@@ -727,8 +767,10 @@ class TestActivityTimelineAnySource {
                 assertThat(range).containsEntry("source", "Events").containsEntry("events", 11L)
                         .containsEntry("first", "2026-11-10T08:55:00.000Z")
                         .containsEntry("last", "2026-11-10T10:30:00.000Z"));
-        // One aggregate on the user's events, at any time.
-        assertThat(asked).singleElement().satisfies(request -> {
+        // The period's events counted first (decided 2026-11-25), then one aggregate on the user's events at any time.
+        assertThat(asked).hasSize(2);
+        assertThat(asked.getFirst().timeRange()).isNotNull();
+        assertThat(asked.getLast()).satisfies(request -> {
             // Not "first" or "last", which ES|QL keeps for itself.
             assertThat(request.pipeline()).isEqualTo("| STATS first_seen = MIN(`EventTime`), last_seen = "
                                                      + "MAX(`EventTime`), events = COUNT(*)");
