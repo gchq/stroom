@@ -93,6 +93,8 @@ class CopyPipelineTool extends AbstractBuiltInTool {
     private Provider<BuildTestIndexes> testIndexesProvider;
     // The build's catalogue of event types; none in tests that make the tool themselves.
     private Provider<CatalogueNotes> catalogueNotesProvider;
+    // The pipelines' inheritance; none in tests that make the tool themselves.
+    private Provider<PipelineInheritance> inheritanceProvider;
 
     @Inject
     CopyPipelineTool(final PipelineWrites writes,
@@ -144,6 +146,16 @@ class CopyPipelineTool extends AbstractBuiltInTool {
     @Inject
     void setCatalogueNotes(final Provider<CatalogueNotes> catalogueNotes) {
         this.catalogueNotesProvider = catalogueNotes;
+    }
+
+    /// Says which template a pipeline inherits from and flags where that differs from its predecessor's or its
+    /// siblings', or where it sets an XSLT its template supplies (set by injection; none in tests that make the tool
+    /// themselves).
+    ///
+    /// @param inheritance The pipelines' inheritance.
+    @Inject
+    void setInheritance(final Provider<PipelineInheritance> inheritance) {
+        this.inheritanceProvider = inheritance;
     }
 
     @Override
@@ -361,6 +373,12 @@ class CopyPipelineTool extends AbstractBuiltInTool {
         result.put("uuid", doc.getUuid());
         result.put("name", doc.getName());
         result.put("copy_of", source.getName());
+        // The copy keeps its source's template (never an inherited property made its own): which, and any flag
+        // beside its source's siblings, where it will live (decided with the user, 2026-11-25).
+        if (inheritanceProvider != null) {
+            inheritanceProvider.get().facts(doc.getUuid(), sourceUuid, null)
+                    .ifPresent(facts -> result.put("inheritance", facts.toMap()));
+        }
         result.put("copied_documents", copies.values().stream().map(MergedPipeline::docRef).toList());
         if (settled != null && settled.indexName() != null) {
             result.put("index_name", settled.indexName());

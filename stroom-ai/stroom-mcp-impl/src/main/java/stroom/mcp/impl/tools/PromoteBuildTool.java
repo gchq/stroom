@@ -134,6 +134,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     // tests that make the tool themselves.
     private Provider<PromotionSwitchOver> switchOverProvider;
     private Provider<FeedVolumes> feedVolumesProvider;
+    // The promoted pipelines' inheritance; none in tests that make the tool themselves.
+    private Provider<PipelineInheritance> inheritanceProvider;
 
     @Inject
     PromoteBuildTool(final BuildFacts facts,
@@ -207,6 +209,15 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     void setSwitchOver(final Provider<PromotionSwitchOver> switchOver, final Provider<FeedVolumes> feedVolumes) {
         this.switchOverProvider = switchOver;
         this.feedVolumesProvider = feedVolumes;
+    }
+
+    /// Says which template each promoted pipeline inherits from (kept as it is), flagged where it isn't its
+    /// predecessor's or its siblings' (set by injection; none in tests that make the tool themselves).
+    ///
+    /// @param inheritance The pipelines' inheritance.
+    @Inject
+    void setInheritance(final Provider<PipelineInheritance> inheritance) {
+        this.inheritanceProvider = inheritance;
     }
 
     @Override
@@ -553,6 +564,14 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             review.put("hint", review.get("hint") + " Say the follow_on_filters_passed_over too: no filter is "
                                + "made where it would index the new Events into an index a promoted pipeline "
                                + "indexes them into already.");
+        }
+        final List<String> inheritance = inheritanceSaid(plan, predecessors);
+        if (!inheritance.isEmpty()) {
+            review.put("inheritance", inheritance);
+            review.put("hint", review.get("hint") + " Say the inheritance too: the template each promoted pipeline "
+                               + "inherits from, kept as it is (promotion re-parents nothing), and each flag as a "
+                               + "fact: a template unlike its predecessor's or its siblings', or an XSLT of its own "
+                               + "where its template supplies one (it won't follow the template).");
         }
         if (!pipelineChanges.isEmpty()) {
             review.put("pipeline_changes", pipelineChanges);
@@ -1543,6 +1562,34 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         return found;
     }
 
+
+    // Each promoted pipeline's template, and what differs from its predecessor's or its siblings' (those beside its
+    // predecessor, else in the folder it moves to).
+    private List<String> inheritanceSaid(final List<PromotionLayout.Step> plan,
+                                         final Map<String, String> predecessors) {
+        final List<String> out = new ArrayList<>();
+        if (inheritanceProvider == null) {
+            return out;
+        }
+        for (final PromotionLayout.Step step : plan) {
+            if (!PromotionLayout.MOVE.equals(step.action()) || !PipelineDoc.TYPE.equals(step.doc().get("type"))) {
+                continue;
+            }
+            final String uuid = String.valueOf(step.doc().get("uuid"));
+            final String predecessor = predecessors.get(uuid);
+            try {
+                final DocRef target = predecessor != null || step.target() == null
+                        ? null
+                        : documentAccess.findFolder(step.target()).orElse(null);
+                inheritanceProvider.get().facts(uuid, predecessor, target)
+                        .filter(facts -> facts.template() != null || !facts.flags().isEmpty())
+                        .ifPresent(facts -> out.add(facts.said()));
+            } catch (final RuntimeException e) {
+                LOGGER.debug(() -> LogUtil.message("No inheritance read for {}: {}", uuid, e.getMessage()));
+            }
+        }
+        return out;
+    }
 
     private Map<String, String> predecessors(final String build, final List<DocRef> moving) {
         final Map<String, String> predecessors = new LinkedHashMap<>();

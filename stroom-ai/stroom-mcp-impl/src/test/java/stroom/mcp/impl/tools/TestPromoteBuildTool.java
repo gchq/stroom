@@ -161,6 +161,26 @@ class TestPromoteBuildTool {
     }
 
     @Test
+    void theReviewSaysWhichTemplateEachPromotedPipelineInheritsWithItsFlags() {
+        // Decided with the user (2026-11-25): promotion re-parents nothing; it says what each pipeline inherits,
+        // and flags a template unlike its predecessor's as a fact.
+        exists("System/Feeds/Acme");
+        listed(doc(FeedDoc.TYPE, "f", "ACME", null), doc(PipelineDoc.TYPE, "cef", "ACME-V1.1-CEF", "CEF"));
+        final PipelineInheritance inheritance = Mockito.mock(PipelineInheritance.class);
+        Mockito.when(inheritance.facts(Mockito.eq("cef"), Mockito.any(), Mockito.any())).thenReturn(Optional.of(
+                new PipelineInheritance.Facts("ACME-V1.1-CEF", new DocRef(PipelineDoc.TYPE, "pre", "Kafka (pre)"),
+                        List.of("'ACME-V1.1-CEF' inherits 'Kafka (pre)'; its predecessor 'ACME-V1.0-CEF' inherits "
+                                + "'Kafka'"))));
+        tool.setInheritance(() -> inheritance);
+
+        final Map<String, Object> shown = review(Map.of("Feed", "System/Feeds/Acme"));
+
+        assertThat(shown.get("inheritance")).isEqualTo(List.of("'ACME-V1.1-CEF' inherits 'Kafka (pre)'; its "
+                                                               + "predecessor 'ACME-V1.0-CEF' inherits 'Kafka'"));
+        assertThat(String.valueOf(shown.get("hint"))).contains("Say the inheritance too");
+    }
+
+    @Test
     void eachRolesDocumentsGoInTheirRoleThenVersionFolderUnderTheFeed() {
         // Decided by the user (2026-11-17): <root>/<feed>/<Role>/<version>, role folders always, the version from
         // the pipeline's name.
