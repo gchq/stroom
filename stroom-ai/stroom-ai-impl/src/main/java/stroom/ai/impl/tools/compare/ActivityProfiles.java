@@ -32,8 +32,11 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -55,6 +58,8 @@ final class ActivityProfiles {
     static final String PEOPLE = "people";
     static final String SUM_PREFIX = "s";
     static final String DISTINCT_PREFIX = "d";
+    /// The prefix of the population's columns of each sum and breadth field's distinct values a day.
+    static final String HELD_PREFIX = "h";
     static final String ONE_EVENT = "one_event";
 
     private ActivityProfiles() {
@@ -107,9 +112,81 @@ final class ActivityProfiles {
 
     /// @return Everyone's events and the distinct people (by the person's field) by day: the source's own volume.
     static AggregateQuery population(final Source source, final String field, final Instant from, final Instant to) {
-        return new AggregateQuery(source, Map.of(), from, to, Bucket.DAY, List.of(), List.of(
-                new Metric(Kind.COUNT, null, EVENTS),
-                new Metric(Kind.DISTINCT, field, PEOPLE)), MAX_ROWS);
+        return population(source, field, new Fields(List.of(), List.of()), from, to);
+    }
+
+    /// Everyone's events and the distinct people (by the person's field) by day, the source's own volume, with the
+    /// distinct values of each sum and breadth field a day, which tell the days each field is held on.
+    ///
+    /// @param source The index.
+    /// @param field  The person's field.
+    /// @param fields The sum and breadth fields.
+    /// @param from   The start.
+    /// @param to     The end.
+    /// @return The aggregate.
+    static AggregateQuery population(final Source source,
+                                     final String field,
+                                     final Fields fields,
+                                     final Instant from,
+                                     final Instant to) {
+        final List<Metric> metrics = new ArrayList<>();
+        metrics.add(new Metric(Kind.COUNT, null, EVENTS));
+        metrics.add(new Metric(Kind.DISTINCT, field, PEOPLE));
+        final List<String> held = heldFields(field, fields);
+        for (int i = 0; i < held.size(); i++) {
+            metrics.add(new Metric(Kind.DISTINCT, held.get(i), HELD_PREFIX + i));
+        }
+        return new AggregateQuery(source, Map.of(), from, to, Bucket.DAY, List.of(), metrics, MAX_ROWS);
+    }
+
+    /// The days each field is held on, from the first to the last day it holds any value in everyone's events: the
+    /// person's field (from the people a day) and each sum and breadth field.
+    ///
+    /// @param field      The person's field.
+    /// @param fields     The sum and breadth fields.
+    /// @param population The population aggregate's table ([#population(Source, String, Fields, Instant, Instant)]).
+    /// @return Each field held on any day, with its first and last day; none for a field never held.
+    static List<ActivityScoring.FieldSpan> fieldSpans(final String field,
+                                                      final Fields fields,
+                                                      final Table population) {
+        final List<String> held = heldFields(field, fields);
+        final List<ActivityScoring.FieldSpan> spans = new ArrayList<>();
+        span(field, PEOPLE, true, population).ifPresent(spans::add);
+        for (int i = 0; i < held.size(); i++) {
+            span(held.get(i), HELD_PREFIX + i, false, population).ifPresent(spans::add);
+        }
+        return spans;
+    }
+
+    // The sum and breadth fields other than the person's, once each.
+    private static List<String> heldFields(final String field, final Fields fields) {
+        final Set<String> held = new LinkedHashSet<>(fields.sums());
+        held.addAll(fields.breadth());
+        held.remove(field);
+        return List.copyOf(held);
+    }
+
+    private static Optional<ActivityScoring.FieldSpan> span(final String field,
+                                                            final String column,
+                                                            final boolean person,
+                                                            final Table population) {
+        LocalDate first = null;
+        LocalDate last = null;
+        for (final Map<String, String> row : population.rows()) {
+            final LocalDate date = date(row.get(AggregateQuery.BUCKET_COLUMN));
+            if (date == null || !row.containsKey(column) || number(row.get(column)) <= 0) {
+                continue;
+            }
+            if (first == null || date.isBefore(first)) {
+                first = date;
+            }
+            if (last == null || date.isAfter(last)) {
+                last = date;
+            }
+        }
+        return first == null
+                ? Optional.empty()
+                : Optional.of(new ActivityScoring.FieldSpan(field, first, last, person));
     }
 
     /// Everyone's events by the field telling feeds apart (a feed field, or the StreamId to be resolved to its

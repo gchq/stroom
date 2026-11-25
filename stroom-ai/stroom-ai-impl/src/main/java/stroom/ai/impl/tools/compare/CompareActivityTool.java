@@ -275,8 +275,10 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                  + "values) and novelty (values first seen). Scored in code: robust z-scores, "
                                  + "change points with their date, drifts, values started and stopped; coverage "
                                  + "gaps (by day across every feed of the source: a day with none from any is a "
-                                 + "gap, not quiet), leave, source-wide shifts and feeds joining or leaving (each "
-                                 + "feed's first and last day listed) are checked first. Gives at most "
+                                 + "gap, not quiet), leave, source-wide shifts, feeds joining or leaving (each "
+                                 + "feed's first and last day listed) and fields starting or stopping being held "
+                                 + "(e.g. a person id only from a reprocessed range) are checked first. Gives at "
+                                 + "most "
                                  + MAX_FINDINGS + " ranked findings, each an indicator with its evidence and an "
                                  + "alternative explanation (never a conclusion about the person: say so), a line "
                                  + "a month, and CSV files of the daily profile and monthly rollup. Give person "
@@ -439,7 +441,8 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
             final int start = queries.size();
             queries.add(ActivityProfiles.daily(source.source(), source.scope(), source.fields(), from, to));
             queries.add(ActivityProfiles.hourly(source.source(), source.scope(), from, to));
-            queries.add(ActivityProfiles.population(source.source(), source.scope().field(), from, to));
+            queries.add(ActivityProfiles.population(source.source(), source.scope().field(), source.fields(), from,
+                    to));
             for (final String field : source.fields().breadth()) {
                 queries.add(ActivityProfiles.seen(source.source(), source.scope(), field, from, to));
             }
@@ -566,7 +569,9 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
             data.add(new SourceData(source.source().name(), source.label(), source.fields(),
                     ActivityProfiles.days(own.get(0), own.get(1), source.fields(), zone.zone()),
                     ActivityProfiles.hourOfWeek(own.get(1), zone.zone()), seen, seenCutShort,
-                    ActivityProfiles.population(own.get(2)), null, extra).withFeeds(feeds));
+                    ActivityProfiles.population(own.get(2)), null, extra).withFeeds(feeds)
+                    .withFieldSpans(ActivityProfiles.fieldSpans(source.scope().field(), source.fields(),
+                            own.get(2))));
             index++;
         }
         // The peers' days, in a second round.

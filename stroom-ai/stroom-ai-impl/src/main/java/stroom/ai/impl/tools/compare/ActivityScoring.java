@@ -132,10 +132,14 @@ final class ActivityScoring {
                 case WEEK, MONTH -> findings.addAll(merged(windowFindings(spec, data, features, status, population,
                         notes), spec.unit()));
             }
+            notes.addAll(heldNotes(spec, data));
             for (final Finding change : changePoints(spec, data, features, population)) {
-                final Optional<String> edge = feedEdge(spec, data, LocalDate.parse(change.window()));
+                final Optional<String> edge = coverageEdge(spec, data, change.feature(),
+                        LocalDate.parse(change.window()));
                 if (edge.isPresent()) {
-                    // A feed joining or leaving the source moves the person's volume with it: no change of theirs.
+                    // A feed joining or leaving the source, or a field starting or stopping being held (e.g. a
+                    // person id only from a reprocessed range's start), moves the person's volume with it: no change
+                    // of theirs.
                     notes.add(change.evidence() + ": not scored, as " + edge.get() + ".");
                 } else {
                     findings.add(change);
@@ -567,6 +571,99 @@ final class ActivityScoring {
             }
         }
         return Optional.empty();
+    }
+
+    /// The boundary within a week of a change point's day that explains it, said; empty for none: a feed joining
+    /// or leaving the source ([#feedEdge]), or a field the feature reads starting or stopping being held within the
+    /// source's days (the person's field for every feature; a sum or breadth field for its own features).
+    ///
+    /// @param spec    The periods.
+    /// @param data    The source's data.
+    /// @param feature The change point's feature.
+    /// @param date    The change point's day.
+    /// @return The boundary, said, or empty.
+    static Optional<String> coverageEdge(final Spec spec,
+                                         final SourceData data,
+                                         final String feature,
+                                         final LocalDate date) {
+        final Optional<String> feed = feedEdge(spec, data, date);
+        if (feed.isPresent()) {
+            return feed;
+        }
+        final Optional<LocalDate[]> covered = covered(data);
+        if (covered.isEmpty()) {
+            return Optional.empty();
+        }
+        for (final FieldSpan span : data.fieldSpans()) {
+            if (!span.person() && !readsField(feature, span.field())) {
+                continue;
+            }
+            if (starts(spec, span, covered.get())
+                && Math.abs(ChronoUnit.DAYS.between(span.first(), date)) <= SOURCE_SHIFT_DAYS) {
+                return Optional.of("field " + span.field() + " is held from " + span.first() + " (no event before "
+                                   + "holds it)");
+            }
+            if (stops(spec, span, covered.get())
+                && Math.abs(ChronoUnit.DAYS.between(span.last().plusDays(1), date)) <= SOURCE_SHIFT_DAYS) {
+                return Optional.of("field " + span.field() + " is held until " + span.last() + " (no event after "
+                                   + "holds it)");
+            }
+        }
+        return Optional.empty();
+    }
+
+    // The fields held over only part of the source's days, said.
+    private static List<String> heldNotes(final Spec spec, final SourceData data) {
+        final Optional<LocalDate[]> covered = covered(data);
+        if (covered.isEmpty()) {
+            return List.of();
+        }
+        final List<String> notes = new ArrayList<>();
+        for (final FieldSpan span : data.fieldSpans()) {
+            final boolean starts = starts(spec, span, covered.get());
+            final boolean stops = stops(spec, span, covered.get());
+            if (starts || stops) {
+                notes.add(data.source() + ": " + span.field() + " is held only " + (starts
+                        ? "from " + span.first()
+                        : "")
+                          + (starts && stops
+                        ? " "
+                        : "")
+                          + (stops
+                        ? "until " + span.last()
+                        : "")
+                          + " of the source's days (" + covered.get()[0] + " to " + covered.get()[1] + "), e.g. "
+                          + "where a reprocessed range starts: change points within " + SOURCE_SHIFT_DAYS + " days "
+                          + "of where it starts or stops aren't scored" + (span.person()
+                        ? ", and the person's events outside it can't be matched by it."
+                        : "."));
+            }
+        }
+        return notes;
+    }
+
+    // The first and last day the source holds any events.
+    private static Optional<LocalDate[]> covered(final SourceData data) {
+        final List<LocalDate> days = data.population().entrySet().stream()
+                .filter(day -> day.getValue().events() > 0)
+                .map(Map.Entry::getKey)
+                .toList();
+        return days.isEmpty()
+                ? Optional.empty()
+                : Optional.of(new LocalDate[]{days.getFirst(), days.getLast()});
+    }
+
+    private static boolean starts(final Spec spec, final FieldSpan span, final LocalDate[] covered) {
+        return span.first().isAfter(covered[0]) && span.first().isAfter(spec.baselineFrom());
+    }
+
+    private static boolean stops(final Spec spec, final FieldSpan span, final LocalDate[] covered) {
+        return span.last().isBefore(covered[1]) && span.last().isBefore(spec.windowTo().minusDays(1));
+    }
+
+    // Whether a feature is read from the field: its sum, distinct values or new values.
+    private static boolean readsField(final String feature, final String field) {
+        return feature.equals(SUM + field) || feature.equals(DISTINCT + field) || feature.equals(NOVEL + field);
     }
 
     private static List<Finding> changePoints(final Spec spec,
@@ -1337,11 +1434,41 @@ final class ActivityScoring {
                       SortedMap<LocalDate, Population> population,
                       PeerData peers,
                       Map<String, SortedMap<LocalDate, Double>> extra,
-                      List<FeedSpan> feeds) {
+                      List<FeedSpan> feeds,
+                      List<FieldSpan> fieldSpans) {
 
-        /// Copies the feeds.
+        /// Copies the feeds and the fields' spans.
         SourceData {
             feeds = List.copyOf(NullSafe.list(feeds));
+            fieldSpans = List.copyOf(NullSafe.list(fieldSpans));
+        }
+
+        /// Without the fields' spans.
+        ///
+        /// @param source       The source's name.
+        /// @param label        Whose events they are.
+        /// @param fields       The sum and breadth fields.
+        /// @param days         The person's days with activity.
+        /// @param hourOfWeek   The person's hour-of-week profile a month.
+        /// @param seen         Each breadth field's values with their first and last times.
+        /// @param seenCutShort The breadth fields whose values were cut short.
+        /// @param population   The whole source's volume by day.
+        /// @param peers        The peers' daily events, or null without peers.
+        /// @param extra        More daily features by name.
+        /// @param feeds        The feeds whose events the source holds.
+        SourceData(final String source,
+                   final String label,
+                   final ActivityProfiles.Fields fields,
+                   final SortedMap<LocalDate, Day> days,
+                   final SortedMap<YearMonth, double[]> hourOfWeek,
+                   final Map<String, List<Seen>> seen,
+                   final Set<String> seenCutShort,
+                   final SortedMap<LocalDate, Population> population,
+                   final PeerData peers,
+                   final Map<String, SortedMap<LocalDate, Double>> extra,
+                   final List<FeedSpan> feeds) {
+            this(source, label, fields, days, hourOfWeek, seen, seenCutShort, population, peers, extra, feeds,
+                    List.of());
         }
 
         /// Without feeds.
@@ -1396,21 +1523,28 @@ final class ActivityScoring {
         /// @return It with them.
         SourceData withExtra(final Map<String, SortedMap<LocalDate, Double>> more) {
             return new SourceData(source, label, fields, days, hourOfWeek, seen, seenCutShort, population, peers,
-                    more, feeds);
+                    more, feeds, fieldSpans);
         }
 
         /// @param peerData The peers' daily events.
         /// @return It with them.
         SourceData withPeers(final PeerData peerData) {
             return new SourceData(source, label, fields, days, hourOfWeek, seen, seenCutShort, population, peerData,
-                    extra, feeds);
+                    extra, feeds, fieldSpans);
         }
 
         /// @param spans The feeds whose events the source holds, each with its first and last day.
         /// @return It with them.
         SourceData withFeeds(final List<FeedSpan> spans) {
             return new SourceData(source, label, fields, days, hourOfWeek, seen, seenCutShort, population, peers,
-                    extra, spans);
+                    extra, spans, fieldSpans);
+        }
+
+        /// @param spans The fields' spans: each field's first and last day held in everyone's events.
+        /// @return It with them.
+        SourceData withFieldSpans(final List<FieldSpan> spans) {
+            return new SourceData(source, label, fields, days, hourOfWeek, seen, seenCutShort, population, peers,
+                    extra, feeds, spans);
         }
     }
 
@@ -1424,6 +1558,21 @@ final class ActivityScoring {
     /// @param first Its first day in the period (the person's zone), or null.
     /// @param last  Its last day in the period, or null.
     record FeedSpan(String feed, LocalDate first, LocalDate last) {
+
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A field held in a source's events over some of its days: where it starts or stops being held (e.g. a person
+    /// id from where a reprocessed range starts) is a boundary like a feed joining or leaving.
+    ///
+    /// @param field  The field.
+    /// @param first  The first day any event holds it (the person's zone).
+    /// @param last   The last day any event holds it.
+    /// @param person True for the person's own field (every feature reads it), false for a sum or breadth field.
+    record FieldSpan(String field, LocalDate first, LocalDate last, boolean person) {
 
     }
 

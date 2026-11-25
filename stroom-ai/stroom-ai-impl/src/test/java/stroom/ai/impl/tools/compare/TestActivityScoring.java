@@ -115,6 +115,80 @@ class TestActivityScoring {
     }
 
     @Test
+    void aStepWhereThePersonsFieldStartsBeingHeldIsNoChangePointOfThePersons() {
+        // The person id is held only from a reprocessed range's start: before it, no one's events match by it.
+        final CompareFixtures fixtures = background(ZONE, BASE_FROM, WINDOW_TO, 1.0);
+        fixtures.workdays("p1", BASE_FROM, WINDOW_TO, 9, 17, date -> 20, date -> Map.of());
+        fixtures.dropFieldBefore(CompareFixtures.PERSON_FIELD, STEP);
+
+        final ActivityScoring.SourceData data = fixtures.data("p1", NO_FIELDS, BASE_FROM, WINDOW_TO, List.of());
+        final Scored scored = ActivityScoring.score(spec(Unit.WEEK), data);
+
+        assertThat(scored.findings()).noneSatisfy(finding -> assertThat(finding.kind()).isEqualTo(Kind.CHANGE));
+        assertThat(scored.notes()).anySatisfy(note -> assertThat(note).contains(
+                "user.id is held only from 2026-05-11 of the source's days (2026-01-05 to 2026-05-31)",
+                "the person's events outside it can't be matched by it"));
+        // The person's field is read by every feature.
+        assertThat(ActivityScoring.coverageEdge(spec(Unit.WEEK), data, ActivityScoring.SUM + "bytes",
+                STEP.plusDays(2))).hasValueSatisfying(edge -> assertThat(edge).isEqualTo(
+                "field user.id is held from 2026-05-11 (no event before holds it)"));
+        assertThat(ActivityScoring.coverageEdge(spec(Unit.WEEK), data, ActivityScoring.EVENTS, STEP.plusDays(30)))
+                .isEmpty();
+    }
+
+    @Test
+    void aBreadthFieldStartingBeingHeldStopsOnlyItsOwnChangePoints() {
+        // Destinations are held only from the step, when the person's events also quadruple.
+        final Fields fields = new Fields(List.of(), List.of(CompareFixtures.DESTINATION_FIELD));
+        final CompareFixtures fixtures = background(ZONE, BASE_FROM, WINDOW_TO, 1.0);
+        for (LocalDate date = BASE_FROM; date.isBefore(WINDOW_TO); date = date.plusDays(1)) {
+            if (date.getDayOfWeek().getValue() <= 5) {
+                for (int hour = 9; hour < 17; hour++) {
+                    fixtures.hours("p1", date, hour, hour + 1, date.isBefore(STEP)
+                            ? 5
+                            : 20, Map.of(CompareFixtures.DESTINATION_FIELD, "site" + hour));
+                }
+            }
+        }
+        fixtures.dropFieldBefore(CompareFixtures.DESTINATION_FIELD, STEP);
+
+        final Scored scored = ActivityScoring.score(spec(Unit.WEEK), fixtures.data("p1", fields, BASE_FROM,
+                WINDOW_TO, List.of()));
+
+        assertThat(only(scored, Kind.CHANGE, ActivityScoring.EVENTS).window()).isEqualTo(STEP.toString());
+        assertThat(scored.findings()).noneSatisfy(finding -> {
+            assertThat(finding.kind()).isEqualTo(Kind.CHANGE);
+            assertThat(finding.feature()).endsWith(CompareFixtures.DESTINATION_FIELD);
+        });
+        assertThat(scored.notes()).anySatisfy(note -> assertThat(note).contains(
+                "destination.domain is held only from 2026-05-11"));
+    }
+
+    @Test
+    void aFieldThatStopsBeingHeldIsABoundaryToo() {
+        final CompareFixtures fixtures = background(ZONE, BASE_FROM, WINDOW_TO, 1.0);
+        final ActivityScoring.SourceData data = fixtures.data("p1", NO_FIELDS, BASE_FROM, WINDOW_TO, List.of())
+                .withFieldSpans(List.of(new ActivityScoring.FieldSpan(CompareFixtures.PERSON_FIELD, BASE_FROM,
+                        STEP.minusDays(1), true)));
+
+        assertThat(ActivityScoring.coverageEdge(spec(Unit.WEEK), data, ActivityScoring.EVENTS, STEP.plusDays(2)))
+                .hasValueSatisfying(edge -> assertThat(edge).startsWith("field user.id is held until 2026-05-10"));
+        // A sum or breadth field's own stop is no boundary for the other features.
+        assertThat(ActivityScoring.coverageEdge(spec(Unit.WEEK), data.withFieldSpans(List.of(
+                new ActivityScoring.FieldSpan("bytes", BASE_FROM, STEP.minusDays(1), false))),
+                ActivityScoring.EVENTS, STEP.plusDays(2))).isEmpty();
+        assertThat(ActivityScoring.coverageEdge(spec(Unit.WEEK), data.withFieldSpans(List.of(
+                new ActivityScoring.FieldSpan("bytes", BASE_FROM, STEP.minusDays(1), false))),
+                ActivityScoring.SUM + "bytes", STEP.plusDays(2))).isPresent();
+        assertThat(ActivityScoring.coverageEdge(spec(Unit.WEEK), data, ActivityScoring.EVENTS, STEP.plusDays(20)))
+                .isEmpty();
+        // A field held throughout the source's days is no boundary.
+        assertThat(ActivityScoring.coverageEdge(spec(Unit.WEEK), data.withFieldSpans(List.of(
+                new ActivityScoring.FieldSpan(CompareFixtures.PERSON_FIELD, BASE_FROM, WINDOW_TO.minusDays(1),
+                        true))), ActivityScoring.EVENTS, BASE_FROM.plusDays(2))).isEmpty();
+    }
+
+    @Test
     void aStepEveryoneSharesIsTheSources() {
         final CompareFixtures fixtures = new CompareFixtures(ZONE);
         // A pipeline change: everyone's events quadruple from the same day.

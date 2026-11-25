@@ -107,6 +107,17 @@ final class CompareFixtures {
         aggregates.source(PROXY.getUuid()).add(event);
     }
 
+    /// Takes a field out of every event before a day (local), as an index holds a field only from where a
+    /// reprocessed range starts.
+    void dropFieldBefore(final String field, final LocalDate date) {
+        final Instant until = date.atStartOfDay(zone).toInstant();
+        for (final Map<String, Object> event : aggregates.source(PROXY.getUuid())) {
+            if (((Instant) event.get(TIME_FIELD)).isBefore(until)) {
+                event.remove(field);
+            }
+        }
+    }
+
     /// Adds `count` events spread evenly from `startMinute` to `endMinute` (minutes since local midnight).
     void minutes(final String person,
                  final LocalDate date,
@@ -131,7 +142,7 @@ final class CompareFixtures {
         final List<AggregateQuery> queries = new ArrayList<>();
         queries.add(ActivityProfiles.daily(SOURCE, scope, fields, start, end));
         queries.add(ActivityProfiles.hourly(SOURCE, scope, start, end));
-        queries.add(ActivityProfiles.population(SOURCE, PERSON_FIELD, start, end));
+        queries.add(ActivityProfiles.population(SOURCE, PERSON_FIELD, fields, start, end));
         fields.breadth().forEach(field -> queries.add(ActivityProfiles.seen(SOURCE, scope, field, start, end)));
         if (!peers.isEmpty()) {
             queries.add(ActivityProfiles.peersDaily(SOURCE, PERSON_FIELD, peers, start, end));
@@ -150,7 +161,8 @@ final class CompareFixtures {
                 ActivityProfiles.hourOfWeek(tables.get(1), zone), seen, cutShort,
                 ActivityProfiles.population(tables.get(2)), peers.isEmpty()
                 ? null
-                : new PeerData("Organisation 'Finance'", ActivityProfiles.peersDaily(tables.getLast())));
+                : new PeerData("Organisation 'Finance'", ActivityProfiles.peersDaily(tables.getLast())))
+                .withFieldSpans(ActivityProfiles.fieldSpans(PERSON_FIELD, fields, tables.get(2)));
     }
 
     Context context() {
