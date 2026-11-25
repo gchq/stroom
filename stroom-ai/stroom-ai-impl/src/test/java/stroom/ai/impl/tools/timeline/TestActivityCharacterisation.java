@@ -373,7 +373,7 @@ class TestActivityCharacterisation {
                              final String label,
                              final boolean sessionLevel) {
         return new Span(number, kind, at(from), at(to), label, "ws-01", "ws-01", "Endpoint", List.of(), "test", "",
-                sessionLevel, Map.of(), "", null);
+                sessionLevel, Map.of(), "", null, null, null);
     }
 
     private static Item item(final String id) {

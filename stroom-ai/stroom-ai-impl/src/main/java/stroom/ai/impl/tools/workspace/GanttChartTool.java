@@ -69,7 +69,7 @@ public class GanttChartTool extends AbstractWorkspaceTool {
     // A date as a lane holds it, e.g. a table's day column.
     private static final Pattern DATE = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
     /// What the result says the chat draws, and what it doesn't.
-    static final String CHAT_DRAWS = "The chat draws only timelines (Mermaid gantt). For any other kind of chart "
+    public static final String CHAT_DRAWS = "The chat draws only timelines (Mermaid gantt). For any other kind of chart "
                                      + "(a heat map, network, pie, bars or lines, a map) offer only a dashboard "
                                      + "(propose_dashboard, or propose_visualisation for the attached one), never "
                                      + "a chat chart that approximates it.";
@@ -139,24 +139,37 @@ public class GanttChartTool extends AbstractWorkspaceTool {
     @Override
     protected ToolResult run(final ToolCall request, final ToolCallContext context) {
         final WorkspacePath path = pathArg(request, PATH_ARG);
-        TableTool.refuseUnlessATable(path);
         final ToolTimeZone zone = timeZone(request, context);
-        final SessionWorkspace workspace = sessionWorkspace(context);
+        final Spec spec = new Spec(required(request, START_ARG), stringArg(request, END_ARG),
+                required(request, LABEL_ARG), stringArg(request, LANE_ARG), stringArg(request, START_EVENT_ARG),
+                stringArg(request, END_EVENT_ARG), stringArg(request, TITLE_ARG), intArg(request, TOP_ARG),
+                intArg(request, MIN_SECONDS_ARG), intArg(request, MERGE_SECONDS_ARG));
+        return ToolResult.text(draw(sessionWorkspace(context), path, spec, zone));
+    }
+
+    /// Draws a workspace table as gantt_chart does: its result, the block to put in the reply, and what was
+    /// folded.
+    ///
+    /// @param workspace The chat's workspace.
+    /// @param path      The table.
+    /// @param spec      Its columns and how to draw them.
+    /// @param zone      The time zone to draw its times in.
+    /// @return The result, as gantt_chart gives it.
+    /// @throws WorkspaceException if the table, or a column, isn't there, or it has no row to draw.
+    public static String draw(final SessionWorkspace workspace,
+                              final WorkspacePath path,
+                              final Spec spec,
+                              final ToolTimeZone zone) {
+        TableTool.refuseUnlessATable(path);
         final Result table = TableEngine.run(workspace.localFile(path), Format.forPath(path),
                 new Query(List.of(), List.of(), List.of(), List.of(), false, false, List.of(), null));
         final List<String> columns = table.columns();
-        final int start = TableEngine.index(required(request, START_ARG), columns);
-        final int label = TableEngine.index(required(request, LABEL_ARG), columns);
-        final String endName = stringArg(request, END_ARG);
-        final String laneName = stringArg(request, LANE_ARG);
-        final int end = endName == null
-                ? -1
-                : TableEngine.index(endName, columns);
-        final int givenLane = laneName == null
-                ? -1
-                : TableEngine.index(laneName, columns);
-        final int startEvent = column(request, START_EVENT_ARG, columns);
-        final int endEvent = column(request, END_EVENT_ARG, columns);
+        final int start = TableEngine.index(spec.start(), columns);
+        final int label = TableEngine.index(spec.label(), columns);
+        final int end = column(spec.end(), columns);
+        final int givenLane = column(spec.lane(), columns);
+        final int startEvent = column(spec.startEvent(), columns);
+        final int endEvent = column(spec.endEvent(), columns);
 
         if (table.rows().isEmpty()) {
             throw new WorkspaceException(path + " has no rows, so there is nothing to draw.");
@@ -177,13 +190,13 @@ public class GanttChartTool extends AbstractWorkspaceTool {
             throw new WorkspaceException("No row of " + path + " has a start time that could be read in "
                                          + columns.get(start) + ", so there is nothing to draw.");
         }
-        final Options options = new Options(stringArg(request, TITLE_ARG), zone, lane >= 0,
-                orDefault(intArg(request, TOP_ARG), GanttCharts.MAX_TOP),
-                Math.max(0, orDefault(intArg(request, MIN_SECONDS_ARG), DEFAULT_MIN_SECONDS)),
-                Math.max(0, orDefault(intArg(request, MERGE_SECONDS_ARG), DEFAULT_MERGE_SECONDS)));
+        final Options options = new Options(spec.title(), zone, lane >= 0,
+                orDefault(spec.top(), GanttCharts.MAX_TOP),
+                Math.max(0, orDefault(spec.minSeconds(), DEFAULT_MIN_SECONDS)),
+                Math.max(0, orDefault(spec.mergeSeconds(), DEFAULT_MERGE_SECONDS)));
         final Chart chart = GanttCharts.write(rows, options);
         folded.addAll(chart.folded());
-        return ToolResult.text(result(chart, folded, path, table.rows().size(), zone));
+        return result(chart, folded, path, table.rows().size(), zone);
     }
 
     // The rows with a start time, each row without one, or ending before it starts, counted as left out.
@@ -251,12 +264,11 @@ public class GanttChartTool extends AbstractWorkspaceTool {
         return sb.toString();
     }
 
-    // The index of the column an argument names, or -1 if it isn't given.
-    private int column(final ToolCall request, final String name, final List<String> columns) {
-        final String value = stringArg(request, name);
-        return value == null
+    // The index of a column, or -1 if none is named.
+    private static int column(final String name, final List<String> columns) {
+        return name == null
                 ? -1
-                : TableEngine.index(value, columns);
+                : TableEngine.index(name, columns);
     }
 
     // True if every row's value in a column is a date (yyyy-MM-dd), and some row has one.
@@ -293,5 +305,34 @@ public class GanttChartTool extends AbstractWorkspaceTool {
         return value == null
                 ? other
                 : value;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The columns of a table to draw, and how to draw them.
+    ///
+    /// @param start        The column of each row's start time.
+    /// @param end          The column of each row's end time, or null for markers.
+    /// @param label        The column naming what each row is.
+    /// @param lane         The column of each row's lane, or null for a lane per day.
+    /// @param startEvent   The column naming the event each row starts at, or null.
+    /// @param endEvent     The column naming the event each row ends at, or null.
+    /// @param title        What the chart shows, or null.
+    /// @param top          The most labels kept, or null for the default.
+    /// @param minSeconds   Bars shorter than this are left out, or null for the default.
+    /// @param mergeSeconds Bars of a label in a lane this close are merged, or null for the default.
+    public record Spec(String start,
+                       String end,
+                       String label,
+                       String lane,
+                       String startEvent,
+                       String endEvent,
+                       String title,
+                       Integer top,
+                       Integer minSeconds,
+                       Integer mergeSeconds) {
+
     }
 }

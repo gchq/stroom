@@ -97,6 +97,7 @@ import stroom.ai.impl.tools.timeline.TimelineSessions.Role;
 import stroom.ai.impl.tools.timeline.TimelineSessions.Timeline;
 import stroom.ai.impl.tools.timeline.TimelineSpans.Built;
 import stroom.ai.impl.tools.timeline.TimelineTables.Files;
+import stroom.ai.impl.tools.workspace.GanttChartTool;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspaceException;
@@ -743,9 +744,31 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         // So its tables can be written elsewhere later, as they are (propose_timeline_dashboard).
         TimelineSnapshot.of(run, now).write(workspace, folder);
         final Map<String, Object> structured = TimelineResult.structured(run, files);
-        return context.session().isChat()
-                ? ToolResult.text(TimelineResult.markdown(run, files)).withStructuredContent(structured)
-                : ToolResult.text(JsonUtil.writeValueAsString(structured, false)).withStructuredContent(structured);
+        if (!context.session().isChat()) {
+            return ToolResult.text(JsonUtil.writeValueAsString(structured, false)).withStructuredContent(structured);
+        }
+        // In the chat, the view's chart drawn ready for the reply (as gantt_chart gives it), so it comes with the
+        // answer; gantt_chart draws the others.
+        final Map<String, Object> ready = TimelineResult.readyChart(run, files);
+        final String chart = ready == null
+                ? null
+                : readyChart(workspace, ready, zone);
+        return ToolResult.text(TimelineResult.markdown(run, files, ready, chart)).withStructuredContent(structured);
+    }
+
+    // A chart drawn as gantt_chart draws it, or null if it can't be (gantt_chart then says why).
+    private static String readyChart(final SessionWorkspace workspace,
+                                     final Map<String, Object> args,
+                                     final ToolTimeZone zone) {
+        try {
+            return GanttChartTool.draw(workspace, WorkspacePath.parse((String) args.get("path")),
+                    new GanttChartTool.Spec((String) args.get("start"), (String) args.get("end"),
+                            (String) args.get("label"), (String) args.get("lane"), (String) args.get("startEvent"),
+                            (String) args.get("endEvent"), (String) args.get("title"), null, null, null), zone);
+        } catch (final WorkspaceException e) {
+            LOGGER.debug("No ready chart of {}: {}", args.get("path"), e.getMessage());
+            return null;
+        }
     }
 
     // ------------------------------------------------------------------------------------------------

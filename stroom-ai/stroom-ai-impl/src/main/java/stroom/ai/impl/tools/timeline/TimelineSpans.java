@@ -152,13 +152,16 @@ final class TimelineSpans {
 
         // Numbered after the focus sessions: the activity periods, then the pairs.
         final List<Span> spans = new ArrayList<>();
+        final Map<String, Event> eventsById = new HashMap<>();
+        events.forEach(event -> eventsById.putIfAbsent(event.id(), event));
         for (final Session session : timeline.sessions()) {
             spans.add(new Span(session.number(), Kind.FOCUS, session.start(), session.end(), NullSafe.string(
                     session.process()), session.host(), session.host(), sourcesOf(session, events, options),
                     session.eventIds(), "focus", session.startMark() != null
                             ? session.startMark()
                             : NullSafe.string(session.endMark()), false, NullSafe.map(session.actionsByKind()),
-                    focusAction(session), null));
+                    focusAction(session), null, eventAt(session, session.start(), eventsById, classified),
+                    eventAt(session, session.end(), eventsById, classified)));
         }
         int number = focusCount;
         final List<Session> activitySessions = new ArrayList<>();
@@ -315,6 +318,8 @@ final class TimelineSpans {
         } else {
             endType = null;
         }
+        draft.startEvent = startType;
+        draft.endEvent = endType;
         draft.action = pairAction(startType, endType, c, endEvent == null
                 ? null
                 : classified.get(endEvent.id()));
@@ -382,6 +387,8 @@ final class TimelineSpans {
                         draft.eventIds.add(event.id());
                         draft.count(typeName(event, classified.get(event.id())));
                     });
+                    draft.startEvent = typeName(first, classified.get(first.id()));
+                    draft.endEvent = typeName(runEvents.getLast(), classified.get(runEvents.getLast().id()));
                     draft.action = typesText(draft.types) + " (sharing " + key.path() + ")";
                     draft.lead = lead(draft.types);
                     drafts.add(draft);
@@ -450,6 +457,7 @@ final class TimelineSpans {
                 if (event.role() == Role.IDLE_START) {
                     if (current != null) {
                         current.end = event.time();
+                        current.endEvent = typeName(event, classified.get(event.id()));
                         drafts.add(current);
                         current = null;
                     }
@@ -467,12 +475,14 @@ final class TimelineSpans {
                 if (current != null && !current.label.equalsIgnoreCase(label)) {
                     // Active until this, in another application or place.
                     current.end = event.time();
+                    current.endEvent = typeName(event, classified.get(event.id()));
                     drafts.add(current);
                     current = null;
                 }
                 if (current == null) {
                     current = new Draft(lane.getKey(), event.host(), label, event.time(), event.time(),
                             "by: activity", null);
+                    current.startEvent = typeName(event, classified.get(event.id()));
                 }
                 current.sources.add(options.sourceName(event.source()));
                 current.eventIds.add(event.id());
@@ -481,6 +491,8 @@ final class TimelineSpans {
                 if (event.object() != null) {
                     current.titles.add(event.object());
                 }
+                // Its end, until a later one is added (or an idle start, or another place, ends it).
+                current.endEvent = typeName(event, classified.get(event.id()));
                 last = event.time();
             }
             if (current != null) {
@@ -585,6 +597,20 @@ final class TimelineSpans {
     }
 
     // A focus session's action: its focus, and its actions by kind.
+    // The type of a session's event at a time, its first at it; null if none is at it (an end the idle cap set).
+    private static String eventAt(final Session session,
+                                  final long time,
+                                  final Map<String, Event> eventsById,
+                                  final Map<String, Classified> classified) {
+        for (final String id : session.eventIds()) {
+            final Event event = eventsById.get(id);
+            if (event != null && event.time() == time) {
+                return typeName(event, classified.get(id));
+            }
+        }
+        return null;
+    }
+
     private static String focusAction(final Session session) {
         final String kinds = typesText(NullSafe.map(session.actionsByKind()));
         return kinds.isEmpty()
@@ -750,6 +776,8 @@ final class TimelineSpans {
     /// @param action   What happened in it: a pair's two types as one action, an activity period's (or a key
     ///                 span's) types with their counts, a focus session's focus and actions.
     /// @param lead     What its label leads with ([#shownLabel]), or null for nothing.
+    /// @param startEvent The type of the event it starts at ([#typeName]), or null if not known.
+    /// @param endEvent The type of the event it ends at, or null if none is (no end seen, or the idle cap).
     record Span(int number,
                 Kind kind,
                 long start,
@@ -764,7 +792,9 @@ final class TimelineSpans {
                 boolean sessionLevel,
                 Map<String, Integer> types,
                 String action,
-                String lead) {
+                String lead,
+                String startEvent,
+                String endEvent) {
 
         /// Copies the list and the map.
         Span {
@@ -872,6 +902,9 @@ final class TimelineSpans {
         // A pair's or a key span's action and lead; an activity period's are its types'.
         private String action;
         private String lead;
+        // The types of the events it starts and ends at, or null.
+        private String startEvent;
+        private String endEvent;
 
         Draft(final String lane,
               final String host,
@@ -905,7 +938,7 @@ final class TimelineSpans {
                     ? action
                     : typesText(types), action != null
                     ? lead
-                    : lead(types));
+                    : lead(types), startEvent, endEvent);
         }
 
         Session session() {

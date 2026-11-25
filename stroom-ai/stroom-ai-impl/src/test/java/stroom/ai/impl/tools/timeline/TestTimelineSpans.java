@@ -107,6 +107,47 @@ class TestTimelineSpans {
     }
 
     @Test
+    void eachSpanNamesTheEventsItStartsAndEndsAt() {
+        // Chat 195: a bar's start and end markers name their events.
+        final PairRule focus = new PairRule(0, "Focus-Window", "Unfocus-Window", "Window", null,
+                PairRule.Origin.INFERRED, 1);
+        typed("09:00", "Focus-Window", Map.of("Window", "w1"), "Forecast FY27.xlsx");
+        typed("09:20", "Unfocus-Window", Map.of("Window", "w1"), "Forecast FY27.xlsx");
+        process("10:00", "Execute", "11", "notepad.exe");
+        process("10:30", "Terminate", "11", "notepad.exe");
+        process("11:00", "Execute", "12", "calc.exe");
+        typed("12:00", "Read-File", Map.of(), "Budget.xlsx");
+        typed("12:02", "Write-File", Map.of(), "Budget.xlsx");
+        lock("12:10");
+
+        final List<PairRule> pairs = new ArrayList<>(List.of(focus));
+        pairs.addAll(PairRule.SCHEMA);
+        final Built built = build(pairs);
+
+        assertThat(built.spans()).extracting(Span::kind, Span::startEvent, Span::endEvent)
+                .containsExactly(
+                        tuple(Kind.PAIR, "Focus-Window", "Unfocus-Window"),
+                        tuple(Kind.PAIR, "Process Execute", "Process Terminate"),
+                        // No end seen: no end event.
+                        tuple(Kind.PAIR, "Process Execute", null),
+                        // An activity period from its first event's type to the lock that ended it (no type).
+                        tuple(Kind.ACTIVITY, "Read-File", null));
+    }
+
+    @Test
+    void anActivityPeriodEndsAtItsLastEventOrTheEventThatMovedOn() {
+        typed("12:00", "Read-File", Map.of(), "Budget.xlsx");
+        typed("12:02", "Write-File", Map.of(), "Budget.xlsx");
+        typed("12:05", "Read-File", Map.of(), "Plan.docx");
+
+        final Built built = build(List.of());
+
+        assertThat(built.spans()).extracting(Span::label, Span::startEvent, Span::endEvent)
+                .containsExactly(tuple("Budget.xlsx", "Read-File", "Read-File"),
+                        tuple("Plan.docx", "Read-File", "Read-File"));
+    }
+
+    @Test
     void aLeadNamesTwoTypesAtMostAndTypesOfNoNameAreLeftOut() {
         final Map<String, Integer> types = new LinkedHashMap<>();
         types.put("Read-File", 1);

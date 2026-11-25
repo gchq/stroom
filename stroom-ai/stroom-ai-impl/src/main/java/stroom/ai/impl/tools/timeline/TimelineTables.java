@@ -54,10 +54,11 @@ final class TimelineTables {
 
     /// The columns of `spans.csv`.
     static final List<String> SPAN_COLUMNS = List.of("span", "start", "end", "label", "action", "lane", "kind",
-            "activity", "activity_label", "host", "source", "events", "how", "uncertain", "role");
+            "activity", "activity_label", "host", "source", "events", "how", "uncertain", "role", "start_event",
+            "end_event");
     /// The columns of `activities.csv`.
     static final List<String> ACTIVITY_COLUMNS = List.of("activity", "activity_label", "day", "start", "end",
-            "active_minutes", "spans", "actions", "lanes", "evidence");
+            "active_minutes", "spans", "actions", "lanes", "evidence", "start_event", "end_event");
     // The columns of spans.csv counted for how dense a view is: its lane and its source.
     private static final int SPAN_LANE = SPAN_COLUMNS.indexOf("lane");
     private static final int SPAN_SOURCE = SPAN_COLUMNS.indexOf("source");
@@ -177,13 +178,14 @@ final class TimelineTables {
                     span.lane(), span.kind().key(), activity, activity.isEmpty()
                             ? ""
                             : labels.getOrDefault(activity, activity), NullSafe.string(span.host()), span.sources(),
-                    String.valueOf(span.eventIds().size()), span.how(), span.mark(), TimelineTargets.ACTOR));
+                    String.valueOf(span.eventIds().size()), span.how(), span.mark(), TimelineTargets.ACTOR,
+                    NullSafe.string(span.startEvent()), NullSafe.string(span.endEvent())));
         }
         for (int i = 0; i < done.size(); i++) {
             final TimelineTargets.Done event = done.get(i);
             spanRows.add(List.of("t" + (i + 1), iso(event.time()), iso(event.time()), event.label(), event.label(),
                     event.lane(), TimelineTargets.TARGET, "", "", NullSafe.string(event.host()), event.lane(), "1",
-                    TimelineTargets.LANE, "", TimelineTargets.TARGET));
+                    TimelineTargets.LANE, "", TimelineTargets.TARGET, "", ""));
         }
         final WorkspacePath spansPath = path(folder, ActivityTimelineTool.SPANS_FILE);
         ToolTables.write(workspace, spansPath, SPAN_COLUMNS, spanRows, sourceDoc);
@@ -196,7 +198,8 @@ final class TimelineTables {
             activityRows.add(List.of(row.activity(), row.label(), row.day().toString(), iso(row.start()),
                     iso(row.end()), minutes(row.activeMs()), String.join(" ", row.spans()),
                     TimelineSpans.typesText(row.actions()), String.join("; ", row.lanes()),
-                    String.join("; ", row.evidence())));
+                    String.join("; ", row.evidence()), NullSafe.string(row.startEvent()),
+                    NullSafe.string(row.endEvent())));
         }
         final WorkspacePath activitiesPath = path(folder, ActivityTimelineTool.ACTIVITIES_FILE);
         ToolTables.write(workspace, activitiesPath, ACTIVITY_COLUMNS, activityRows, sourceDoc);
@@ -351,6 +354,9 @@ final class TimelineTables {
     /// @param actions  Its spans' event types (a focus session's actions by kind), and how many of each.
     /// @param lanes    Its spans' lanes.
     /// @param evidence The activity's evidence: its top artifacts and applications.
+    /// @param startEvent The type of the event it starts at: of the span starting it, or null where it starts at
+    ///                 midnight (a day's cut) or the span doesn't say.
+    /// @param endEvent The type of the event it ends at, the same way.
     record ActivityRow(String activity,
                        String label,
                        LocalDate day,
@@ -360,7 +366,9 @@ final class TimelineTables {
                        List<String> spans,
                        Map<String, Integer> actions,
                        List<String> lanes,
-                       List<String> evidence) {
+                       List<String> evidence,
+                       String startEvent,
+                       String endEvent) {
 
     }
 
@@ -444,10 +452,28 @@ final class TimelineTables {
                         Integer::sum)));
                 rows.add(new ActivityRow(activity, labels.getOrDefault(activity, activity), day, from, to,
                         covered(inDay, from, to), inDay.stream().map(Span::id).toList(), actions, inDay.stream()
-                        .map(Span::lane).distinct().toList(), evidence.getOrDefault(activity, List.of())));
+                        .map(Span::lane).distinct().toList(), evidence.getOrDefault(activity, List.of()),
+                        eventAt(inDay, from, true), eventAt(inDay, to, false)));
                 from = to;
             } while (from < end);
             return rows;
+        }
+
+        // The type of the event a span starts (or ends) at at a time, or null if none does.
+        private static String eventAt(final List<Span> spans, final long time, final boolean start) {
+            for (final Span span : spans) {
+                if ((start
+                        ? span.start()
+                        : span.end()) == time) {
+                    final String event = start
+                            ? span.startEvent()
+                            : span.endEvent();
+                    if (event != null) {
+                        return event;
+                    }
+                }
+            }
+            return null;
         }
 
         // The time the spans cover within the interval, overlaps counted once.

@@ -481,31 +481,19 @@ final class TimelineResult {
         final List<Map<String, Object>> charts = new ArrayList<>();
         final List<String> dense = new ArrayList<>();
         if (run.view() != View.DETAIL) {
-            final boolean perActivity = "activity".equals(run.lanes());
-            charts.add(chart(files.activities().toString(), "activity_label", perActivity
-                    ? "activity_label"
-                    : "day", run.entity() + ": activities by " + run.activityLaneTitle()));
-            final int lanes = perActivity
-                    ? files.activityNames()
-                    : files.activityLanes();
-            if (files.activityRows() > MAX_BARS || lanes > MAX_LANES) {
-                dense.add("the activities view has " + files.activityRows() + " bars in " + lanes + " lanes: draw "
-                          + "one day (timeFrom and timeTo) or one activity (table, filtering "
+            charts.add(activitiesChart(run, files));
+            if (isDense(run, files, true)) {
+                dense.add("the activities view has " + files.activityRows() + " bars in " + activityLanes(run, files)
+                          + " lanes: draw one day (timeFrom and timeTo) or one activity (table, filtering "
                           + files.activities() + " by activity, into a new file)");
             }
         }
         if (run.view() != View.ACTIVITIES) {
-            final boolean bySource = "source".equals(run.lanes());
-            charts.add(chart(files.spans().toString(), "label", bySource
-                    ? "source"
-                    : "lane", run.entity() + ": spans by " + run.spanLaneTitle()));
-            final int lanes = bySource
-                    ? files.sourceLanes()
-                    : files.hostLanes();
-            if (files.spanRows() > MAX_BARS || lanes > MAX_LANES) {
-                dense.add("the detail view has " + files.spanRows() + " bars in " + lanes + " lanes, too many for "
-                          + "one chart: draw one day (timeFrom and timeTo) or one activity (table, filtering "
-                          + files.spans() + " by activity, into a new file)");
+            charts.add(spansChart(run, files));
+            if (isDense(run, files, false)) {
+                dense.add("the detail view has " + files.spanRows() + " bars in " + spanLanes(run, files)
+                          + " lanes, too many for one chart: draw one day (timeFrom and timeTo) or one activity "
+                          + "(table, filtering " + files.spans() + " by activity, into a new file)");
             }
         }
         map.put("gantt_charts", charts);
@@ -522,6 +510,53 @@ final class TimelineResult {
         return map;
     }
 
+    /// The chart a chat's result draws ready for the reply: the view's (the activities first, for both) that has
+    /// rows and isn't too dense for one chart.
+    ///
+    /// @param run   The run.
+    /// @param files Its tables.
+    /// @return The gantt_chart arguments that draw it (as the result's `gantt_charts` give them), or null if no
+    /// view's chart can be drawn as it is.
+    static Map<String, Object> readyChart(final TimelineRun run, final Files files) {
+        if (run.view() != View.DETAIL && files.activityRows() > 0 && !isDense(run, files, true)) {
+            return activitiesChart(run, files);
+        }
+        if (run.view() != View.ACTIVITIES && files.spanRows() > 0 && !isDense(run, files, false)) {
+            return spansChart(run, files);
+        }
+        return null;
+    }
+
+    private static Map<String, Object> activitiesChart(final TimelineRun run, final Files files) {
+        return chart(files.activities().toString(), "activity_label", "activity".equals(run.lanes())
+                ? "activity_label"
+                : "day", run.entity() + ": activities by " + run.activityLaneTitle());
+    }
+
+    private static Map<String, Object> spansChart(final TimelineRun run, final Files files) {
+        return chart(files.spans().toString(), "label", "source".equals(run.lanes())
+                ? "source"
+                : "lane", run.entity() + ": spans by " + run.spanLaneTitle());
+    }
+
+    private static boolean isDense(final TimelineRun run, final Files files, final boolean activities) {
+        return activities
+                ? files.activityRows() > MAX_BARS || activityLanes(run, files) > MAX_LANES
+                : files.spanRows() > MAX_BARS || spanLanes(run, files) > MAX_LANES;
+    }
+
+    private static int activityLanes(final TimelineRun run, final Files files) {
+        return "activity".equals(run.lanes())
+                ? files.activityNames()
+                : files.activityLanes();
+    }
+
+    private static int spanLanes(final TimelineRun run, final Files files) {
+        return "source".equals(run.lanes())
+                ? files.sourceLanes()
+                : files.hostLanes();
+    }
+
     // A gantt_chart call: its title says what the lanes (the chart's sections) are, as a gantt has no lane axis.
     private static Map<String, Object> chart(final String path,
                                              final String label,
@@ -533,6 +568,8 @@ final class TimelineResult {
         map.put("end", "end");
         map.put("label", label);
         map.put("lane", lane);
+        map.put("startEvent", "start_event");
+        map.put("endEvent", "end_event");
         map.put("title", title);
         return map;
     }
@@ -676,7 +713,22 @@ final class TimelineResult {
                   + "and record)";
     }
 
+    /// @param run   The run.
+    /// @param files Its tables.
+    /// @return The chat's result, as [#markdown(TimelineRun, Files, Map, String)] gives it with no chart drawn.
     static String markdown(final TimelineRun run, final Files files) {
+        return markdown(run, files, null, null);
+    }
+
+    /// @param run        The run.
+    /// @param files      Its tables.
+    /// @param ready      The gantt_chart arguments of the chart drawn ready for the reply ([#readyChart]), or null.
+    /// @param readyChart That chart, as gantt_chart's result gives it, or null if none was drawn.
+    /// @return The chat's result: what was found, how to draw each view, and the chart drawn ready for the reply.
+    static String markdown(final TimelineRun run,
+                           final Files files,
+                           final Map<String, Object> ready,
+                           final String readyChart) {
         final ZoneId zoneId = run.zone().zone();
         final Timeline timeline = run.timeline();
         final StringBuilder sb = new StringBuilder("Activity timeline of ").append(run.entity()).append(", ")
@@ -802,14 +854,29 @@ final class TimelineResult {
                 .append(" (the events, with their StreamId and EventId and how each was classified), ")
                 .append(files.quality()).append(" (data quality).\n");
         final Map<String, Object> views = views(run, files);
-        sb.append("View '").append(run.view().argName()).append("': draw it in the chat with gantt_chart:");
-        for (final Object chart : (List<?>) views.get("gantt_charts")) {
+        final List<?> charts = ((List<?>) views.get("gantt_charts")).stream()
+                .filter(chart -> readyChart == null || !chart.equals(ready))
+                .toList();
+        sb.append("View '").append(run.view().argName()).append("': ");
+        if (readyChart != null) {
+            sb.append("the chart of ").append(ready.get("path")).append(" is drawn at the end of this result, ready "
+                                                                        + "for your reply");
+            sb.append(charts.isEmpty()
+                    ? ""
+                    : "; draw the other in the chat with gantt_chart:");
+        } else {
+            sb.append("draw it in the chat with gantt_chart:");
+        }
+        for (final Object chart : charts) {
             final Map<?, ?> args = (Map<?, ?>) chart;
             sb.append(" path ").append(args.get("path")).append(", start start, end end, label ")
-                    .append(args.get("label")).append(", lane ").append(args.get("lane")).append(", title '")
+                    .append(args.get("label")).append(", lane ").append(args.get("lane"))
+                    .append(", startEvent start_event, endEvent end_event, title '")
                     .append(args.get("title")).append("';");
         }
-        sb.setLength(sb.length() - 1);
+        if (!charts.isEmpty()) {
+            sb.setLength(sb.length() - 1);
+        }
         sb.append(". On a dashboard instead: ").append(ProposeTimelineDashboardTool.NAME)
                 .append(" (entity, table spans or activities).\n");
         if (views.get("too_dense") instanceof final List<?> dense) {
@@ -822,6 +889,9 @@ final class TimelineResult {
         }
         sb.append("\n").append(run.zone().stated()).append(" The tables' times are UTC.\n\n")
                 .append(ActivityTimelineTool.DERIVED).append(' ').append(ActivityTimelineTool.CAVEAT);
+        if (readyChart != null) {
+            sb.append("\n\nThe chart of ").append(ready.get("path")).append(":\n").append(readyChart);
+        }
         return sb.toString();
     }
 

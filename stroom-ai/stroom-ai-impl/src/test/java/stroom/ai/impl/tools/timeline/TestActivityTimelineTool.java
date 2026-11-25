@@ -247,12 +247,40 @@ class TestActivityTimelineTool {
                                     + "Windows 4, Proxy 2.")
                 .contains("| ws-01 | WINWORD.EXE | 2 | 45.0 |")
                 .contains("- idle_start_without_end: 1 idle starts")
-                .contains("draw it in the chat with gantt_chart: path " + FOLDER + "spans.csv, start start, end "
-                          + "end, label label, lane lane, title 'jsmith: spans by Computer / Device host name "
-                          + "(client_host)'.")
-                .contains(ActivityTimelineTool.CAVEAT);
+                // Chat 195: the view's chart comes ready for the reply, as gantt_chart gives it.
+                .contains("View 'detail': the chart of " + FOLDER + "spans.csv is drawn at the end of this result, "
+                          + "ready for your reply. On a dashboard instead")
+                .doesNotContain("draw it in the chat with gantt_chart")
+                .contains(ActivityTimelineTool.CAVEAT)
+                .contains("The chart of " + FOLDER + "spans.csv:\nPut this block in your reply exactly as it is")
+                .contains("""
+                        ```mermaid
+                        gantt
+                            title jsmith spans by Computer / Device host\u2026 (times in UTC)
+                        """)
+                .contains("    WINWORD.EXE :2026-11-10 09:00:00, 2026-11-10 09:20:00\n")
+                .endsWith(GanttChartTool.CHAT_DRAWS);
+        final String block = text.substring(text.indexOf("```mermaid\n") + 11, text.indexOf("```\n\n"));
+        assertThat(MermaidGanttParser.parse(block).taskCount()).isEqualTo(4);
         assertThat(files.content(FOLDER + TimelineSnapshot.FILE).orElseThrow())
                 .contains("Computer / Device host name (client_host)", "Day (UTC)");
+    }
+
+    @Test
+    void overMcpNoChartIsDrawnAndBothViewsDrawTheActivitiesReadyAndSayHowToDrawTheSpans() {
+        final Map<String, Object> result = json(mcp(), arguments(Map.of()));
+        assertThat(JsonUtil.writeValueAsString(result, false)).doesNotContain("```mermaid");
+
+        final String text = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
+                arguments(Map.of("timeZone", "UTC", "view", "both")), false)), ToolCalls.inChat(CHAT,
+                files.workspace())).text();
+
+        assertThat(text).contains("the chart of " + FOLDER + "activities.csv is drawn at the end of this result, "
+                                  + "ready for your reply; draw the other in the chat with gantt_chart: path "
+                                  + FOLDER + "spans.csv, start start, end end, label label, lane lane, startEvent "
+                                  + "start_event, endEvent end_event, title")
+                .contains("The chart of " + FOLDER + "activities.csv:\n");
+        assertThat(text).containsOnlyOnce("```mermaid");
     }
 
     @Test
