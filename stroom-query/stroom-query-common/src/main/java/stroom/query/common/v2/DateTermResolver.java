@@ -20,6 +20,8 @@ import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
+import stroom.query.api.UserTimeZone;
+import stroom.query.api.UserTimeZone.Use;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.util.date.DateUtil;
@@ -51,11 +53,13 @@ public final class DateTermResolver {
     /// @param fields           The fields of the data source.
     /// @param dateTimeSettings The date time settings of the search, or `null`.
     /// @return A copy of the expression with its date terms resolved. A value that can't be read is left as
-    /// it is, for whatever reads it next to report.
+    /// it is, for whatever reads it next to report, and so are disabled terms, as nothing reads them.
+    /// @throws DateTimeException If a date depends on the time zone of the search and it is unknown. What reads it
+    ///                           next would take it to be UTC.
     public static ExpressionOperator resolve(final ExpressionOperator expression,
                                              final Collection<QueryField> fields,
                                              final DateTimeSettings dateTimeSettings) {
-        if (expression == null || dateTimeSettings == null) {
+        if (expression == null || !expression.enabled() || dateTimeSettings == null) {
             return expression;
         }
         final Set<String> dateFields = fields.stream()
@@ -70,7 +74,9 @@ public final class DateTermResolver {
                                                       final DateTimeSettings dateTimeSettings) {
         final List<ExpressionItem> children = new ArrayList<>();
         for (final ExpressionItem child : NullSafe.list(operator.getChildren())) {
-            if (child instanceof final ExpressionOperator childOperator) {
+            if (child == null || !child.enabled()) {
+                children.add(child);
+            } else if (child instanceof final ExpressionOperator childOperator) {
                 children.add(resolveOperator(childOperator, dateFields, dateTimeSettings));
             } else if (child instanceof final ExpressionTerm term
                        && dateFields.contains(term.getField())
@@ -89,14 +95,30 @@ public final class DateTermResolver {
     private static String resolveValue(final String value, final DateTimeSettings dateTimeSettings) {
         final List<String> dates = new ArrayList<>();
         for (final String part : value.split(DELIMITER)) {
+            final String trimmed = part.trim();
             try {
-                dates.add(DateExpressionParser.parse(part.trim(), dateTimeSettings)
+                dates.add(DateExpressionParser.parse(trimmed, dateTimeSettings)
                         .map(date -> DateUtil.createNormalDateTimeString(date.toInstant()))
                         .orElse(part));
             } catch (final DateTimeException | ArithmeticException e) {
+                if (isDateInUtc(trimmed, dateTimeSettings)) {
+                    // So it is the time zone that can't be read.
+                    throw e;
+                }
                 return value;
             }
         }
         return String.join(DELIMITER, dates);
+    }
+
+    private static boolean isDateInUtc(final String value, final DateTimeSettings dateTimeSettings) {
+        try {
+            return DateExpressionParser.parse(value, dateTimeSettings.copy()
+                            .timeZone(UserTimeZone.builder().use(Use.UTC).build())
+                            .build())
+                    .isPresent();
+        } catch (final DateTimeException | ArithmeticException e) {
+            return false;
+        }
     }
 }

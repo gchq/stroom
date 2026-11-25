@@ -29,10 +29,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.time.DateTimeException;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestDateTermResolver {
 
@@ -50,6 +53,7 @@ class TestDateTermResolver {
             "now()-1d|2024-06-30T09:00:00.000Z",
             "2024-07-01T00:00:00|2024-06-30T23:00:00.000Z",
             "2024-07-01T00:00:00Z|2024-07-01T00:00:00.000Z",
+            "'day()-1d,\tday()\n'|2024-06-29T23:00:00.000Z,2024-06-30T23:00:00.000Z",
             "day()-1d, day()|2024-06-29T23:00:00.000Z,2024-06-30T23:00:00.000Z",
             // Left for whatever reads the term to report.
             "yesterday|yesterday",
@@ -79,6 +83,10 @@ class TestDateTermResolver {
                         .enabled(false)
                         .addTerm("Time", Condition.LESS_THAN, "day()")
                         .build())
+                .addOperator(ExpressionOperator.builder()
+                        .op(Op.NOT)
+                        .addTerm("Time", Condition.LESS_THAN, "day()")
+                        .build())
                 .build();
 
         assertThat(DateTermResolver.resolve(expression, FIELDS, LONDON)).isEqualTo(ExpressionOperator.builder()
@@ -88,9 +96,71 @@ class TestDateTermResolver {
                 .addOperator(ExpressionOperator.builder()
                         .op(Op.NOT)
                         .enabled(false)
+                        // Nothing reads it.
+                        .addTerm("Time", Condition.LESS_THAN, "day()")
+                        .build())
+                .addOperator(ExpressionOperator.builder()
+                        .op(Op.NOT)
                         .addTerm("Time", Condition.LESS_THAN, "2024-06-30T23:00:00.000Z")
                         .build())
                 .build());
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "Mars/Base|Unknown time zone 'Mars/Base'",
+            "''|There is no time zone"})
+    void unknownTimeZone(final String zone, final String message) {
+        final DateTimeSettings unknown = LONDON.copy()
+                .timeZone(UserTimeZone.builder().use(Use.ID).id(zone).build())
+                .build();
+
+        for (final String value : List.of("day()", "now()-1d", "2024-07-01T00:00:00", "2024-07-01T00:00:00Z, day() ",
+                "2024-07-01T00:00:00Z,\nday()", "\tday()\n")) {
+            assertThatThrownBy(() -> resolve("Time", value, unknown))
+                    .as(value)
+                    .isInstanceOf(DateTimeException.class)
+                    .hasMessageContaining(message);
+        }
+        // The time zone doesn't matter to these.
+        assertThat(resolve("Time", "2024-07-01T00:00:00+01:00", unknown)).isEqualTo("2024-06-30T23:00:00.000Z");
+        assertThat(resolve("Time", "My Dictionary", unknown)).isEqualTo("My Dictionary");
+        assertThat(resolve("Name", "day()", unknown)).isEqualTo("day()");
+        final ExpressionOperator disabled = ExpressionOperator.builder()
+                .addOperator(ExpressionOperator.builder()
+                        .enabled(false)
+                        .addTerm("Time", Condition.LESS_THAN, "day()")
+                        .build())
+                .addTerm(ExpressionTerm.builder()
+                        .field("Time")
+                        .condition(Condition.LESS_THAN)
+                        .value("day()")
+                        .enabled(false)
+                        .build())
+                .build();
+        assertThat(DateTermResolver.resolve(disabled, FIELDS, unknown)).isEqualTo(disabled);
+        final ExpressionOperator allDisabled = ExpressionOperator.builder()
+                .enabled(false)
+                .addTerm("Time", Condition.LESS_THAN, "day()")
+                .build();
+        assertThat(DateTermResolver.resolve(allDisabled, FIELDS, unknown)).isEqualTo(allDisabled);
+    }
+
+    @Test
+    void nullTermIsKept() {
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .children(Collections.singletonList(null))
+                .build();
+        assertThat(DateTermResolver.resolve(expression, FIELDS, LONDON)).isEqualTo(expression);
+    }
+
+    private static String resolve(final String field, final String value, final DateTimeSettings dateTimeSettings) {
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addTerm(field, Condition.GREATER_THAN, value)
+                .build();
+        return ((ExpressionTerm) DateTermResolver.resolve(expression, FIELDS, dateTimeSettings)
+                .getChildren()
+                .getFirst()).getValue();
     }
 
     @Test
