@@ -26,6 +26,7 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -491,6 +492,28 @@ class PromotionProcessing {
                                                      final List<Entry> plan,
                                                      final Set<String> promoted,
                                                      final Map<String, Long> since) {
+        return createPromotionFilters(links, plan, promoted, since, null);
+    }
+
+    /// As [#createPromotionFilters(StroomLinks, List, Set, Map)], the time the user chose bounding only the feeds an
+    /// earlier filter selects already (whose old streams an earlier version processed): a feed none selects is read
+    /// whole, its history too (seen in eval case 104 on Sonnet: a dormant feed added to the new version, its one
+    /// stream never read by the filter bounded to streams from promotion on, so the agent made a second version for
+    /// it alone).
+    ///
+    /// @param links      How the caller links to Stroom.
+    /// @param plan       What [#promotionProcessing] planned.
+    /// @param promoted   The UUIDs of the documents the promotion moved out of the build.
+    /// @param since      The earliest stream create time each pipeline's new filter reads, by pipeline UUID.
+    /// @param readBefore The feeds earlier filters select already, by pipeline UUID (in any case), each a feed that
+    ///                   moves to the new filter ([PromotionSwitchOver#overlaps]); null where they aren't known, so
+    ///                   the time bounds every feed.
+    /// @return What was made for each entry, in order.
+    List<Map<String, Object>> createPromotionFilters(final StroomLinks links,
+                                                     final List<Entry> plan,
+                                                     final Set<String> promoted,
+                                                     final Map<String, Long> since,
+                                                     final Map<String, Set<String>> readBefore) {
         final List<Map<String, Object>> made = new ArrayList<>();
         for (final Entry entry : plan) {
             final String link = links.documentTarget(entry.pipeline());
@@ -512,20 +535,34 @@ class PromotionProcessing {
                 made.add(existing);
                 continue;
             }
+            final Long chosen = NullSafe.map(since).get(entry.pipeline().getUuid());
+            final Bounded bounded = bounded(feeds, chosen, readBefore == null
+                    ? null
+                    : readBefore.getOrDefault(entry.pipeline().getUuid(), Set.of()));
             final List<ExpressionItem> children = new ArrayList<>();
-            if (!feeds.isEmpty()) {
+            if (!bounded.readWhole().isEmpty() && !bounded.fromTime().isEmpty()) {
+                // Each feed an earlier version read from the time chosen, the others whole: under one OR.
+                children.add(ExpressionOperator.builder().op(ExpressionOperator.Op.OR)
+                        .addOperator(ExpressionOperator.builder()
+                                .addItem(feedsTerm(bounded.fromTime()))
+                                .addDateTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO,
+                                        Instant.ofEpochMilli(chosen).toString())
+                                .build())
+                        .addItem(feedsTerm(bounded.readWhole()))
+                        .build());
+            } else if (!feeds.isEmpty()) {
                 children.add(feedsTerm(feeds));
             }
             children.add(ProcessorFilterWrites.term(MetaFields.FIELD_TYPE, entry.streamType()));
             children.addAll(entry.extraTerms());
-            final Long from = NullSafe.map(since).get(entry.pipeline().getUuid());
+            final Long from = bounded.readWhole().isEmpty()
+                    ? chosen
+                    : null;
             final ProcessorFilter created = filterWrites.createFilter(entry.pipeline(),
                     ProcessorFilterWrites.allOf(children), ProcessorFilterWrites.DEFAULT_PRIORITY,
                     ProcessorFilterWrites.MAX_FEED_FILTER_TASKS, from, false);
             final BeforeEnabling before = beforePromotedIndexing(links, entry, promoted);
-            final String data = from == null
-                    ? "existing data included"
-                    : "streams created from " + Instant.ofEpochMilli(from) + " on";
+            final String data = bounded.said();
             final String selects = !feeds.isEmpty()
                     ? "processes " + feedsSaid(feeds) + " (" + entry.streamType() + "), " + data
                     : "processes " + entry.streamType() + " from its source pipeline, " + data;
@@ -536,8 +573,19 @@ class PromotionProcessing {
                 result.put("already_selected", "no second filter for " + String.join(", ", already) + ": it "
                                                + "already selects what arrives");
             }
-            if (from != null) {
-                result.put("reads_from", Instant.ofEpochMilli(from).toString());
+            if (chosen != null && (from != null || !bounded.fromTime().isEmpty())) {
+                result.put("reads_from", Instant.ofEpochMilli(chosen).toString());
+                if (!bounded.readWhole().isEmpty()) {
+                    result.put("reads_from_feeds", bounded.fromTime());
+                }
+            }
+            if (chosen != null && !bounded.readWhole().isEmpty()) {
+                result.put("reads_whole", bounded.readWhole());
+                result.put("reads_whole_why", "no earlier filter selects " + String.join(", ",
+                        bounded.readWhole()) + ", so no earlier version's Events exist for "
+                                               + (bounded.readWhole().size() == 1
+                        ? "its"
+                        : "their") + " streams: read whole, existing ones too");
             }
             if (before.what() != null) {
                 result.put("before_enabling", before.what());
@@ -556,6 +604,29 @@ class PromotionProcessing {
         }
         enableEventsPipelinesFirst(plan, made);
         return made;
+    }
+
+    // A filter's feeds split by the time the user chose: those an earlier filter selects already read from it, the
+    // others whole. With no time chosen, or the earlier filters not known, every feed is as the time says.
+    private static Bounded bounded(final List<String> feeds, final Long from, final Set<String> readBefore) {
+        if (from == null) {
+            return new Bounded(List.of(), feeds, null);
+        }
+        if (readBefore == null) {
+            return new Bounded(feeds, List.of(), from);
+        }
+        final Set<String> lowered = new HashSet<>();
+        readBefore.forEach(feed -> lowered.add(feed.toLowerCase(Locale.ROOT)));
+        final List<String> fromTime = feeds.stream()
+                .filter(feed -> lowered.contains(feed.toLowerCase(Locale.ROOT)))
+                .toList();
+        final List<String> whole = feeds.stream()
+                .filter(feed -> !lowered.contains(feed.toLowerCase(Locale.ROOT)))
+                .toList();
+        // A filter reading no feed (another pipeline's Events) is bounded as before.
+        return feeds.isEmpty()
+                ? new Bounded(List.of(), List.of(), from)
+                : new Bounded(fromTime, whole, from);
     }
 
     // An index reading the Events of a pipeline promoted with it: the events pipeline's new filter goes first. Seen
@@ -807,5 +878,29 @@ class PromotionProcessing {
     // What comes before enabling a promoted filter, and its button.
     private record BeforeEnabling(String what, Map<String, Object> action) {
 
+    }
+
+    // A filter's feeds as the time the user chose reads them: those read from it, those read whole.
+    private record Bounded(List<String> fromTime, List<String> readWhole, Long from) {
+
+        // What the filter reads, in words.
+        String said() {
+            if (from == null || (fromTime.isEmpty() && readWhole.isEmpty())) {
+                return from == null
+                        ? "existing data included"
+                        : "streams created from " + Instant.ofEpochMilli(from) + " on";
+            }
+            if (readWhole.isEmpty()) {
+                return "streams created from " + Instant.ofEpochMilli(from) + " on";
+            }
+            if (fromTime.isEmpty()) {
+                return "existing data included (no earlier filter selects " + String.join(", ", readWhole) + ")";
+            }
+            return "streams created from " + Instant.ofEpochMilli(from) + " on for " + String.join(", ", fromTime)
+                   + "; existing data included for " + String.join(", ", readWhole) + " (no earlier filter "
+                   + "selects " + (readWhole.size() == 1
+                    ? "it"
+                    : "them") + ")";
+        }
     }
 }

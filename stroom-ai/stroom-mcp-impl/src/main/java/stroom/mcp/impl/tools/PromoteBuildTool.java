@@ -797,7 +797,9 @@ class PromoteBuildTool extends AbstractBuiltInTool {
             replacing.forEach(uuid -> since.put(uuid, from));
         }
         final List<Map<String, Object>> filters = promotionProcessing.createPromotionFilters(context.links(),
-                processing, moved, since);
+                processing, moved, since, switchOverProvider == null
+                        ? null
+                        : readBefore(processing, overlaps));
         if (switchOverProvider != null) {
             switchOverProvider.get().handOver(context.links(), overlaps, filters);
         }
@@ -1871,6 +1873,19 @@ class PromoteBuildTool extends AbstractBuiltInTool {
                     : ""));
         }
         return result;
+    }
+
+    // The feeds earlier filters select already, by the pipeline whose new filter takes them over: the only ones the
+    // time the user chose for a new version's filter bounds.
+    private static Map<String, Set<String>> readBefore(final List<PromotionProcessing.Entry> processing,
+                                                       final List<List<PromotionSwitchOver.OldSelection>> overlaps) {
+        final Map<String, Set<String>> out = new LinkedHashMap<>();
+        for (int i = 0; i < processing.size() && i < overlaps.size(); i++) {
+            final Set<String> feeds = out.computeIfAbsent(processing.get(i).pipeline().getUuid(),
+                    uuid -> new LinkedHashSet<>());
+            overlaps.get(i).forEach(selection -> feeds.addAll(selection.moving()));
+        }
+        return out;
     }
 
     private static Map<String, String> destinations(final ToolCall call) {

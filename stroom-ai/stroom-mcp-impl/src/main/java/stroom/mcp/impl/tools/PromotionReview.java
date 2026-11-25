@@ -62,7 +62,9 @@ class PromotionReview {
     Backfill backfill(final ToolCall call, final ToolCallContext context, final String build) {
         final String question = "Build '" + build + "' promotes a new version of a promoted pipeline. Enabled, a "
                                 + "filter reading everything reprocesses the whole feed, so both versions' Events "
-                                + "exist for its old data. Which streams does the new version's filter read?";
+                                + "exist for its old data (a feed no earlier filter selects is read whole, its "
+                                + "history too, whatever is chosen). Which streams does the new version's filter "
+                                + "read?";
         final Optional<String> chosen = consent.choose(call, context, PromoteBuildTool.NAME, question,
                 BACKFILL_OPTIONS, "Which streams the new version's filter reads");
         if (chosen.isEmpty() || BACKFILL_OPTIONS.getFirst().equals(chosen.get())) {

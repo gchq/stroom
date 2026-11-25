@@ -20,6 +20,9 @@ import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
+import stroom.meta.api.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineProperty;
@@ -56,9 +59,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestE2ePromotionSwitchOver extends AbstractE2eTest {
 
     private static final String XSLT = textResource("hand_written_vpn.xsl");
-    private static final String SAMPLE = "[{\"ts\": \"2026-11-03T08:00:01.000Z\", \"action\": \"login\", "
-                                         + "\"user\": \"jbloggs\", \"src_ip\": \"198.51.100.7\", "
-                                         + "\"host\": \"vpn-gw-1\", \"result\": \"success\"}]";
+    // Every kind of record the translation writes, so the catalogue read back from it is checked whole.
+    private static final String SAMPLE = "["
+            + "{\"ts\": \"2026-11-03T08:00:01.000Z\", \"action\": \"login\", \"user\": \"jbloggs\", "
+            + "\"src_ip\": \"198.51.100.7\", \"host\": \"vpn-gw-1\", \"result\": \"success\"}, "
+            + "{\"ts\": \"2026-11-03T08:02:45.000Z\", \"action\": \"login\", \"user\": \"asmith\", "
+            + "\"src_ip\": \"198.51.100.9\", \"host\": \"vpn-gw-1\", \"result\": \"failure\"}, "
+            + "{\"ts\": \"2026-11-03T12:10:00.000Z\", \"action\": \"logout\", \"user\": \"jbloggs\", "
+            + "\"src_ip\": \"198.51.100.7\", \"host\": \"vpn-gw-1\"}, "
+            + "{\"ts\": \"2026-11-03T09:30:00.000Z\", \"action\": \"config_change\", \"user\": \"admin\", "
+            + "\"host\": \"vpn-gw-1\", \"setting\": \"idle_timeout\", \"new_value\": \"900\"}]";
     private static final String RAW = "Raw Events";
 
     @Inject
@@ -67,6 +77,8 @@ class TestE2ePromotionSwitchOver extends AbstractE2eTest {
     private ProcessorService processorService;
     @Inject
     private DictionaryStore dictionaryStore;
+    @Inject
+    private MetaService metaService;
 
     @Test
     void aSharedTranslationSelectingTwoFeedsByFeedTermsHandsOnlyTheBuildsFeedOver() {
@@ -115,6 +127,36 @@ class TestE2ePromotionSwitchOver extends AbstractE2eTest {
         // The user removes the feed from the dictionary.
         writeDictionary(dictionary, shared.feedB().getName() + "\n");
         assertNoEnabledFilterThenOnce(promoted);
+    }
+
+    @Test
+    void aFeedNoOldFilterSelectsIsReadWholeWhateverTimeTheNewVersionsFilterReadsFrom() {
+        // Seen in eval case 104 on Sonnet: a dormant feed added to the new version beside the live one, the user
+        // choosing streams from promotion on; the filter-wide bound left the dormant feed's history unread, so the
+        // agent made a second version for it alone.
+        final Shared shared = shared("DORMVPN");
+
+        final Promoted promoted = promote(shared, "dormvpn-v1-1", List.of(shared.feedA().getName(),
+                shared.feedB().getName()));
+
+        final List<Map<String, Object>> made = list(promoted.result(), "processing_filters");
+        assertThat(made).singleElement().satisfies(filter -> assertThat(filter)
+                .containsEntry("reads_from_feeds", List.of(shared.feedA().getName()))
+                .containsEntry("reads_whole", List.of(shared.feedB().getName())));
+        final ProcessorFilter created = filter((int) number(made.getFirst().get("filter_id")));
+        assertThat(created.getMinMetaCreateTimeMs()).as("no bound on the whole filter").isNull();
+        final List<String> terms = termsOf(created);
+        assertThat(terms).hasSize(2);
+        assertThat(terms.getFirst()).startsWith("OR(AND(Feed IS_DOC_REF " + shared.feedA().getName()
+                                                + ", Create Time GREATER_THAN_OR_EQUAL_TO ")
+                .endsWith("), Feed IS_DOC_REF " + shared.feedB().getName() + ")");
+        assertThat(terms.get(1)).isEqualTo("Type EQUALS " + RAW);
+        // Stroom selects B's stream, made before promotion; not A's, which V1.0 processes.
+        final List<String> selected = asUser(admin, () -> metaService.find(new FindMetaCriteria(
+                created.getQueryData().getExpression())).getValues().stream()
+                .map(Meta::getFeedName)
+                .toList());
+        assertThat(selected).containsExactly(shared.feedB().getName());
     }
 
     // What both forms of the old selection share: the new filter for A only, by reference, disabled, its switch-over
@@ -192,10 +234,33 @@ class TestE2ePromotionSwitchOver extends AbstractE2eTest {
 
     // A build of V1.1 for feed A only, promoted: the review and the result.
     private Promoted promoteForA(final Shared shared, final String build) {
-        json("start_build", args("build", build, "feeds", List.of(shared.feedA().getName())));
+        return promote(shared, build, List.of(shared.feedA().getName()));
+    }
+
+    // A build of V1.1 for the feeds given, promoted: the review and the result. Copied straight after the survey
+    // (the start never asked: the copy starts the build from V1.0), its XSLT read back and the catalogue read back
+    // confirmed, as promotion asks of a copy of a hand-written translation.
+    private Promoted promote(final Shared shared, final String build, final List<String> feeds) {
+        json("start_build", args("build", build, "feeds", feeds));
+        feeds.forEach(feed -> json("survey_feed", args("feed", feed, "build", build)));
         final Map<String, Object> copy = agreed("copy_pipeline", args("build", build, "source_uuid",
                 shared.pipeline(), "new_name", shared.original() + "-V1.1"));
         assertThat(uuidOf(copy)).isNotNull();
+        final String copyXslt = list(copy, "copied_documents").stream()
+                .filter(doc -> "XSLT".equals(doc.get("type")))
+                .map(doc -> (String) doc.get("uuid"))
+                .findFirst()
+                .orElseThrow();
+        final List<Long> raws = new ArrayList<>();
+        feeds.forEach(feed -> raws.addAll(streamIdsOf(feed)));
+        final Map<String, Object> rebuilt = agreed("rebuild_mapping", args("uuid", copyXslt, "pipeline_uuid",
+                uuidOf(copy), "stream_ids", raws, "change", "Read back from the hand-written translation"));
+        assertThat(rebuilt.get("saved")).as("read back: %s", rebuilt).isNotNull();
+        final Map<String, Object> listed = json(CATALOGUE, args("build", build, "stream_ids", raws));
+        // The copy started the build from V1.0: the catalogue is the one read back from it, its TypeIds kept.
+        assertThat(String.valueOf(listed.get("origin"))).startsWith("4 event types from '" + shared.original()
+                                                                    + "'");
+        confirmedCatalogue(build);
         final String folder = folderOf(shared.pipeline()).substring("System/".length());
         final Map<String, Object> destinations = Map.of("XSLT", folder, "Pipeline", folder);
         final Map<String, Object> review = json("promote_build", args("build", build, "destinations",

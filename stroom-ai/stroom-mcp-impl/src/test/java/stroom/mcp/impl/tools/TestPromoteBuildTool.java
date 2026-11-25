@@ -1791,7 +1791,7 @@ class TestPromoteBuildTool {
         Mockito.when(processing.followOns(any(), any())).thenReturn(List.of(followOn));
         Mockito.when(processing.promotionProcessing(any(), any(), any(), any())).thenReturn(List.of(
                 new PromotionProcessing.Entry(version, List.of("ACME"), "Raw Events", List.of())));
-        Mockito.when(processing.createPromotionFilters(any(), any(), any(), any())).thenAnswer(inv -> {
+        Mockito.when(processing.createPromotionFilters(any(), any(), any(), any(), any())).thenAnswer(inv -> {
             final Map<String, Object> made = new LinkedHashMap<>(Map.of("filter_id", 40, "pipeline",
                     "ACME-V1.1-Events", "feed", "ACME", "enabled", false, "pipeline_link",
                     StroomLinks.CHAT.documentTarget(version)));
@@ -1853,7 +1853,7 @@ class TestPromoteBuildTool {
                                                                               + "version's filter read?"));
         @SuppressWarnings("unchecked")
         final ArgumentCaptor<Map<String, Long>> since = ArgumentCaptor.forClass(Map.class);
-        Mockito.verify(processing).createPromotionFilters(any(), any(), any(), since.capture());
+        Mockito.verify(processing).createPromotionFilters(any(), any(), any(), since.capture(), any());
         assertThat(since.getValue()).containsOnlyKeys("ev2");
         assertThat(since.getValue().get("ev2")).isBetween(before, System.currentTimeMillis());
         assertThat(String.valueOf(promoted.get("new_version_reads"))).contains("streams arriving from promotion "
@@ -1880,7 +1880,7 @@ class TestPromoteBuildTool {
                             + "of 'ACME-V1.1-Events' into the same index";
         Mockito.when(processing.withoutDoubleIndexing(any(), any(), any())).thenReturn(
                 new PromotionProcessing.Followed(List.of(), List.of(said)));
-        Mockito.when(processing.createPromotionFilters(any(), any(), any(), any())).thenReturn(List.of());
+        Mockito.when(processing.createPromotionFilters(any(), any(), any(), any(), any())).thenReturn(List.of());
         final Map<String, Object> destinations = Map.of();
 
         final Map<String, Object> shown = call(destinations, null);

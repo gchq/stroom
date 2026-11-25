@@ -342,6 +342,77 @@ class TestPromotionProcessing {
     }
 
     @Test
+    void theTimeChosenBoundsOnlyTheFeedsAnEarlierFilterSelects() {
+        // Seen in eval case 104 on Sonnet: a dormant feed no filter selected, added to the new version with the
+        // live one, its history never read by a filter bounded to streams from promotion on.
+        w.pipeline(TP, true, null);
+        w.layers(TP.getUuid(), w.layer(TP.getUuid(), "xsltFilter", "XSLTFilter"));
+        w.feedAt("System/Feeds/Vpn", "VPN", "vpn", "Raw Events");
+        w.feedAt("System/Feeds/Vpn", "VPN-OLD", "vpn-old", "Raw Events");
+        final PromotionProcessing.Entry entry = new PromotionProcessing.Entry(TP, List.of("VPN", "VPN-OLD"),
+                "Raw Events", List.of());
+        final long from = Instant.parse("2026-11-24T00:00:00Z").toEpochMilli();
+
+        final List<Map<String, Object>> made = w.promotion.createPromotionFilters(StroomLinks.CHAT, List.of(entry),
+                Set.of(), Map.of(TP.getUuid(), from), Map.of(TP.getUuid(), Set.of("vpn")));
+
+        // No filter-wide bound: VPN from the time chosen, VPN-OLD whole, under one OR.
+        assertThat(w.created.getLast().getMinMetaCreateTimeMs()).isNull();
+        final ExpressionOperator feeds = (ExpressionOperator) w.lastExpression().getChildren().getFirst();
+        assertThat(feeds.op()).isEqualTo(ExpressionOperator.Op.OR);
+        final ExpressionOperator bounded = (ExpressionOperator) feeds.getChildren().getFirst();
+        assertThat(bounded.getChildren()).extracting(item -> ((ExpressionTerm) item).getField())
+                .containsExactly("Feed", "Create Time");
+        assertThat(((ExpressionTerm) bounded.getChildren().get(1)).getCondition())
+                .isEqualTo(ExpressionTerm.Condition.GREATER_THAN_OR_EQUAL_TO);
+        assertThat(((ExpressionTerm) bounded.getChildren().get(1)).getValue()).isEqualTo("2026-11-24T00:00:00Z");
+        assertThat(((ExpressionTerm) bounded.getChildren().getFirst()).getDocRef().getName()).isEqualTo("VPN");
+        assertThat(((ExpressionTerm) feeds.getChildren().get(1)).getDocRef().getName()).isEqualTo("VPN-OLD");
+        assertThat(made.getFirst()).containsEntry("reads_from", "2026-11-24T00:00:00Z")
+                .containsEntry("reads_from_feeds", List.of("VPN"))
+                .containsEntry("reads_whole", List.of("VPN-OLD"));
+        assertThat(String.valueOf(made.getFirst().get("user_actions"))).contains(
+                "streams created from 2026-11-24T00:00:00Z on for VPN; existing data included for VPN-OLD");
+    }
+
+    @Test
+    void aTimeChosenBoundsNothingWhereNoEarlierFilterSelectsTheFeeds() {
+        w.pipeline(TP, true, null);
+        w.layers(TP.getUuid(), w.layer(TP.getUuid(), "xsltFilter", "XSLTFilter"));
+        w.feedAt("System/Feeds/Vpn", "VPN-OLD", "vpn-old", "Raw Events");
+        final PromotionProcessing.Entry entry = new PromotionProcessing.Entry(TP, List.of("VPN-OLD"),
+                "Raw Events", List.of());
+        final long from = Instant.parse("2026-11-24T00:00:00Z").toEpochMilli();
+
+        final List<Map<String, Object>> made = w.promotion.createPromotionFilters(StroomLinks.CHAT, List.of(entry),
+                Set.of(), Map.of(TP.getUuid(), from), Map.of());
+
+        assertThat(w.created.getLast().getMinMetaCreateTimeMs()).isNull();
+        assertThat(w.lastExpression().getChildren()).extracting(item -> ((ExpressionTerm) item).getField())
+                .containsExactly("Feed", "Type");
+        assertThat(made.getFirst()).doesNotContainKey("reads_from").containsEntry("reads_whole", List.of("VPN-OLD"));
+        assertThat(String.valueOf(made.getFirst().get("user_actions"))).contains("existing data included (no "
+                                                                                 + "earlier filter selects VPN-OLD)");
+    }
+
+    @Test
+    void aTimeChosenBoundsEveryFeedWhereTheEarlierFiltersSelectThemAllOrArentKnown() {
+        w.pipeline(TP, true, null);
+        w.layers(TP.getUuid(), w.layer(TP.getUuid(), "xsltFilter", "XSLTFilter"));
+        w.feedAt("System/Feeds/Vpn", "VPN", "vpn", "Raw Events");
+        final PromotionProcessing.Entry entry = new PromotionProcessing.Entry(TP, List.of("VPN"), "Raw Events",
+                List.of());
+        final long from = Instant.parse("2026-11-24T00:00:00Z").toEpochMilli();
+
+        w.promotion.createPromotionFilters(StroomLinks.CHAT, List.of(entry), Set.of(), Map.of(TP.getUuid(), from),
+                Map.of(TP.getUuid(), Set.of("VPN")));
+        assertThat(w.created.getLast().getMinMetaCreateTimeMs()).isEqualTo(from);
+        w.promotion.createPromotionFilters(StroomLinks.CHAT, List.of(entry), Set.of(), Map.of(TP.getUuid(), from),
+                null);
+        assertThat(w.created.getLast().getMinMetaCreateTimeMs()).isEqualTo(from);
+    }
+
+    @Test
     void anIndexReadingAWorkingCopysEventsReadsItsOriginalsOncePromoted() {
         // An aggregated feed's group pipeline changed through a working copy: the copy is deleted at promotion and
         // the original goes on writing the group's Events, which its index alone reads.
