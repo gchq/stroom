@@ -968,7 +968,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         }
         final Automatic automatic = new Automatic(name, doc, mapping, types, user == null
                 ? null
-                : new Found(userKey(user.field(), mapping), user.origin(), user.detail(), user.suggestion()),
+                : new Found(userKey(user.field(), mapping), user.origin(), user.detail(), user.suggestion(),
+                        user.byPipeline()),
                 found(context, doc, InstructionRules.HOST_FIELD, spec.get(HOST_KEY), mapping, types, suggestions),
                 found(context, doc, InstructionRules.ELEMENT_FIELD, spec.get(ELEMENT_FIELD_KEY), mapping, types,
                         suggestions),

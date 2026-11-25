@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.query.DataSourceDocumentation;
+import stroom.ai.impl.tools.query.DataSourceDocumentation.FeedingPlans;
 import stroom.ai.impl.tools.query.DataSourceDocumentation.Planned;
 import stroom.docref.DocRef;
 import stroom.util.logging.LambdaLogger;
@@ -33,10 +34,14 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,8 +50,11 @@ import java.util.regex.Pattern;
 /// timeline, found in order, each index on its own (a site standard most but not all indexes follow falls back per
 /// index): the call's (or the skill's) field; else the `## Fields` section of the AGENTS docs that apply where the
 /// index is ([InstructionRules#fields]); else the field whose source is the thing's event-logging path in the index
-/// plan kept with the indexing XSLT of a pipeline feeding the index, as the build tools keep it
-/// ([DataSourceDocumentation#plannedFrom], only plans of pipelines the user can view); else the field conventions'
+/// plan kept with the indexing XSLT of the pipelines feeding the index, as the build tools keep it
+/// ([DataSourceDocumentation#feedingPlans], only plans of pipelines the user can view, read from their effective
+/// properties: every feeding pipeline's, where they agree one field, where they differ each pipeline's field
+/// ([Found#byPipeline])); else the field the index's documentation gives the path in its From column (its Field
+/// mapping table, [DataSourceDocumentation#fieldRows]); else the field conventions'
 /// (the ECS profile's `user.name`, the flat profile's `UserId`: their `EventSource/User/Id`); else, for the user, a
 /// field the index's documentation names on a line about the user. The first the index has is used, and where it
 /// came from is said; one found by a convention or the documentation, a guess, comes with the `## Fields` line to
@@ -68,11 +76,15 @@ public class TimelineFields {
             "^\\s+([A-Za-z*/]+):\\s*\\{\\s*name:\\s*([^,}\\s]+)", Pattern.MULTILINE);
     private static final Pattern TOKEN = Pattern.compile("[A-Za-z0-9_@.\\-]+");
     private static final Pattern USER_WORD = Pattern.compile("\\buser", Pattern.CASE_INSENSITIVE);
+    // How long an index's plans and documentation are kept for one call's lookups, and for how many indexes.
+    private static final long MEMO_MS = 30_000;
+    private static final int MEMO_SIZE = 200;
 
     private final AgentInstructions agentInstructions;
     private final DataSourceAccess dataSourceAccess;
     private final Optional<AgentKnowledge> knowledge;
     private final Provider<DataSourceDocumentation> documentationProvider;
+    private final Map<String, IndexReads> memo = new ConcurrentHashMap<>();
 
     /// @param agentInstructions     The AGENTS docs.
     /// @param dataSourceAccess      Gives an index's documentation.
@@ -117,10 +129,14 @@ public class TimelineFields {
         }
         final String path = CONVENTION_PATHS.get(what);
         if (path != null) {
-            final Optional<Planned> planned = planned(index, path, has);
+            final IndexReads reads = reads(session, index);
+            final Optional<Found> planned = planned(reads, path, has);
             if (planned.isPresent()) {
-                return Optional.of(new Found(planned.get().field().name(), Origin.PLAN,
-                        planned.get().pipeline().getName()));
+                return planned;
+            }
+            final Optional<Found> documentedFrom = documentedFrom(reads, path, has);
+            if (documentedFrom.isPresent()) {
+                return documentedFrom;
             }
             for (final Map.Entry<String, String> convention : conventions(path).entrySet()) {
                 if (has.test(convention.getValue())) {
@@ -135,18 +151,61 @@ public class TimelineFields {
         return Optional.empty();
     }
 
-    // The first field the index has whose source in a feeding pipeline's index plan is the path; empty where none
-    // is, or the plans can't be read.
-    private Optional<Planned> planned(final DocRef index, final String path, final Predicate<String> has) {
-        try {
-            final DataSourceDocumentation documentation = documentationProvider.get();
-            return documentation.plannedFrom(documentation.feedingPipelines(index), path).stream()
-                    .filter(planned -> has.test(planned.field().name()))
-                    .findFirst();
-        } catch (final RuntimeException e) {
-            LOGGER.debug(() -> "Unable to read the index plans feeding " + index, e);
+    // The field whose source in the feeding pipelines' index plans is the path, of those the index has: every
+    // pipeline's plan is read; where they agree, one field; where they differ, each pipeline's field, the first
+    // pipeline's first. Empty where none is, or the plans can't be read.
+    private static Optional<Found> planned(final IndexReads reads, final String path, final Predicate<String> has) {
+        final List<Planned> usable = reads.plans().plannedFrom(path).stream()
+                .filter(planned -> has.test(planned.field().name()))
+                .toList();
+        if (usable.isEmpty()) {
             return Optional.empty();
         }
+        final Map<String, List<String>> byField = new LinkedHashMap<>();
+        FeedingPlans.byField(usable).forEach((field, pipelines) -> byField.put(field, pipelines.stream()
+                .map(DocRef::getName)
+                .toList()));
+        final Planned first = usable.getFirst();
+        return Optional.of(new Found(first.field().name(), Origin.PLAN, first.pipeline().getName(), null,
+                byField.size() > 1
+                        ? byField
+                        : Map.of()));
+    }
+
+    // The field the index's documentation (its Field mapping table) says comes from the path, in its From column,
+    // of those the index has.
+    private static Optional<Found> documentedFrom(final IndexReads reads,
+                                                  final String path,
+                                                  final Predicate<String> has) {
+        for (final Map.Entry<String, Map<String, String>> row : reads.rows().entrySet()) {
+            final String from = row.getValue().entrySet().stream()
+                    .filter(cell -> cell.getKey().strip().toLowerCase(Locale.ROOT).startsWith("from"))
+                    .map(Map.Entry::getValue)
+                    .findFirst()
+                    .map(cell -> cell.replace("`", "").strip())
+                    .orElse("");
+            if (DataSourceDocumentation.sourceIs(from, path) && has.test(row.getKey())) {
+                return Optional.of(new Found(row.getKey(), Origin.INDEX_DOCUMENTATION, null));
+            }
+        }
+        return Optional.empty();
+    }
+
+    // The index's plans and documentation rows, read once for the lookups of one call (the user, the host, the
+    // Action...), kept a short while for the session; read afresh after that.
+    private IndexReads reads(final ToolSession session, final DocRef index) {
+        final String key = session + "\n" + index.getUuid();
+        final long now = System.currentTimeMillis();
+        final IndexReads known = memo.get(key);
+        if (known != null && now - known.readAt() < MEMO_MS) {
+            return known;
+        }
+        if (memo.size() > MEMO_SIZE) {
+            memo.clear();
+        }
+        final IndexReads read = new IndexReads(session, index, documentationProvider, now);
+        memo.put(key, read);
+        return read;
     }
 
     // A field found by a convention or the documentation, with the ## Fields line that would make it the site's.
@@ -243,6 +302,8 @@ public class TimelineFields {
         AGENTS("the AGENTS doc's ## Fields"),
         /// The index plan kept with the indexing XSLT of a pipeline feeding the index.
         PLAN("the index plan"),
+        /// The From column of the index's documentation (its Field mapping table).
+        INDEX_DOCUMENTATION("the From column of the index's documentation"),
         /// A field convention.
         CONVENTION("the field convention"),
         /// The index's documentation.
@@ -268,14 +329,24 @@ public class TimelineFields {
 
     /// A field found.
     ///
-    /// @param field      The field.
+    /// @param field      The field: the first the index has.
     /// @param origin     Where it came from.
     /// @param detail     The AGENTS doc's folder, the pipeline whose index plan it is in, or the convention's name;
     ///                   or null.
     /// @param suggestion For a field found by a guess (a convention or the documentation), the `## Fields` line to
     ///                   add to an AGENTS doc to make it the site's ([TimelineFields#suggestion]), for the
     ///                   agent to offer; else null.
-    public record Found(String field, Origin origin, String detail, String suggestion) {
+    /// @param byPipeline Where the index plans of the pipelines feeding the index differ: each field, with the
+    ///                   pipelines (by name) whose plan maps the thing to it, the first [#field]; else empty.
+    public record Found(String field, Origin origin, String detail, String suggestion,
+                        Map<String, List<String>> byPipeline) {
+
+        /// Copies the pipelines' fields, in order.
+        public Found {
+            byPipeline = byPipeline == null
+                    ? Map.of()
+                    : Collections.unmodifiableMap(new LinkedHashMap<>(byPipeline));
+        }
 
         /// A field found with no suggestion.
         ///
@@ -283,11 +354,43 @@ public class TimelineFields {
         /// @param origin Where it came from.
         /// @param detail The AGENTS doc's folder, the pipeline or the convention's name; or null.
         public Found(final String field, final Origin origin, final String detail) {
-            this(field, origin, detail, null);
+            this(field, origin, detail, null, Map.of());
         }
 
-        /// @return Where it came from, as the result says it, e.g. "the index plan of 'Mail indexing'".
+        /// A field found, the same in every plan.
+        ///
+        /// @param field      The field.
+        /// @param origin     Where it came from.
+        /// @param detail     The AGENTS doc's folder, the pipeline or the convention's name; or null.
+        /// @param suggestion The `## Fields` line to suggest, or null.
+        public Found(final String field, final Origin origin, final String detail, final String suggestion) {
+            this(field, origin, detail, suggestion, Map.of());
+        }
+
+        /// @return Every field it may be in: where the feeding pipelines' plans differ, each pipeline's (for now a
+        /// reader may take any of them; which pipeline wrote an event is its stream's); else the one field.
+        public List<String> fields() {
+            return byPipeline.isEmpty()
+                    ? List.of(field)
+                    : List.copyOf(byPipeline.keySet());
+        }
+
+        /// @return True if the feeding pipelines' plans map it to different fields.
+        public boolean varies() {
+            return byPipeline.size() > 1;
+        }
+
+        /// @return Where it came from, as the result says it, e.g. "the index plan of 'Mail indexing'", or where
+        /// the plans differ "the index plans, which differ by pipeline: user.name ('A indexing'), UserId ('B
+        /// indexing')".
         public String from() {
+            if (varies()) {
+                final List<String> each = new ArrayList<>();
+                byPipeline.forEach((name, pipelines) -> each.add(name + " (" + String.join(", ", pipelines.stream()
+                        .map(pipeline -> "'" + pipeline + "'")
+                        .toList()) + ")"));
+                return "the index plans, which differ by pipeline: " + String.join(", ", each);
+            }
             if (detail == null) {
                 return origin.description();
             }
@@ -299,7 +402,64 @@ public class TimelineFields {
         /// @param suggestion The `## Fields` line to suggest, or null.
         /// @return It with that suggestion.
         public Found withSuggestion(final String suggestion) {
-            return new Found(field, origin, detail, suggestion);
+            return new Found(field, origin, detail, suggestion, byPipeline);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // An index's plans and documentation rows, each read when first asked for.
+    private static final class IndexReads {
+
+        private final ToolSession session;
+        private final DocRef index;
+        private final Provider<DataSourceDocumentation> documentationProvider;
+        private final long readAt;
+        private FeedingPlans plans;
+        private Map<String, Map<String, String>> rows;
+
+        private IndexReads(final ToolSession session,
+                           final DocRef index,
+                           final Provider<DataSourceDocumentation> documentationProvider,
+                           final long readAt) {
+            this.session = session;
+            this.index = index;
+            this.documentationProvider = documentationProvider;
+            this.readAt = readAt;
+        }
+
+        private long readAt() {
+            return readAt;
+        }
+
+        // The index plans of the pipelines feeding the index; none where they can't be read.
+        private synchronized FeedingPlans plans() {
+            if (plans == null) {
+                try {
+                    plans = Objects.requireNonNullElse(documentationProvider.get().feedingPlans(index),
+                            FeedingPlans.none());
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(() -> "Unable to read the index plans feeding " + index, e);
+                    plans = FeedingPlans.none();
+                }
+            }
+            return plans;
+        }
+
+        // The field rows of the index's documentation; none where it can't be read.
+        private synchronized Map<String, Map<String, String>> rows() {
+            if (rows == null) {
+                try {
+                    rows = DataSourceDocumentation.fieldRows(NullSafe.list(documentationProvider.get().find(session,
+                            index, "Documentation read to find the fields of an index")));
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(() -> "Unable to read the documentation of " + index, e);
+                    rows = Map.of();
+                }
+            }
+            return rows;
         }
     }
 }

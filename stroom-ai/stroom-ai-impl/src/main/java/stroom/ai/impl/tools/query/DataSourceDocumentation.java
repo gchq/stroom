@@ -217,7 +217,7 @@ public class DataSourceDocumentation {
     /// @param source A planned field's source, an XPath from the Event element.
     /// @param path   An event-logging path, a step `*` matching any one element.
     /// @return True if the source is that path, step for step (a leading `./` or `/` and spaces aside).
-    static boolean sourceIs(final String source, final String path) {
+    public static boolean sourceIs(final String source, final String path) {
         if (NullSafe.isBlankString(source) || NullSafe.isBlankString(path)) {
             return false;
         }

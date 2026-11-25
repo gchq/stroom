@@ -521,7 +521,7 @@ public final class InstructionChecks {
         final Map<List<String>, List<String>> disagreeing = new LinkedHashMap<>();
         final Map<List<String>, String> pipelines = new HashMap<>();
         for (final IndexFacts index : scope.indexes()) {
-            for (final Map.Entry<String, PlanField> planned : index.planned().entrySet()) {
+            for (final Map.Entry<String, List<PlanField>> planned : index.plans().entrySet()) {
                 final FieldLine line = mine.get(planned.getKey());
                 if (line == null) {
                     continue;
@@ -531,11 +531,34 @@ public final class InstructionChecks {
                     continue;
                 }
                 final String used = rule.fields().stream().filter(index.fields()::contains).findFirst().orElse(null);
-                final String plan = planned.getValue().field();
-                if (used != null && !used.equals(plan) && index.fields().contains(plan)) {
-                    final List<String> group = List.of(planned.getKey(), plan, used);
-                    disagreeing.computeIfAbsent(group, k -> new ArrayList<>()).add(index.name());
-                    pipelines.putIfAbsent(group, planned.getValue().pipeline());
+                final List<String> planFields = index.plannedFields(planned.getKey());
+                if (planFields.size() > 1) {
+                    // The pipelines feeding it map the path to different fields: no one field is the plans', so
+                    // replacing the line with one would be wrong for the other pipelines' events.
+                    findings.add(Finding.note("plans_differ", "Index " + index.name() + " is fed by pipelines "
+                                                              + "whose index plans map "
+                                                              + conventionPath(planned.getKey())
+                                                              + " to different fields: " + String.join(", ",
+                            planned.getValue().stream()
+                                    .filter(field -> index.fields().contains(field.field()))
+                                    .map(field -> field.field() + " ('" + field.pipeline() + "')")
+                                    .distinct()
+                                    .toList()) + "; '" + line.text().strip() + "' gives " + used + " for "
+                                                              + "all of them, so events of the other pipelines' "
+                                                              + "streams are read by " + used + " only where they "
+                                                              + "hold it too."));
+                    continue;
+                }
+                for (final PlanField planField : planned.getValue()) {
+                    final String plan = planField.field();
+                    if (used != null && !used.equals(plan) && index.fields().contains(plan)) {
+                        final List<String> group = List.of(planned.getKey(), plan, used);
+                        final List<String> named = disagreeing.computeIfAbsent(group, k -> new ArrayList<>());
+                        if (!named.contains(index.name())) {
+                            named.add(index.name());
+                        }
+                        pipelines.putIfAbsent(group, planField.pipeline());
+                    }
                 }
             }
         }
@@ -568,7 +591,7 @@ public final class InstructionChecks {
         final Map<String, List<String>> byField = new LinkedHashMap<>();
         for (final IndexFacts index : scope.indexes()) {
             final String convention = index.conventions().get(key);
-            if (convention == null || !index.fields().contains(convention) || index.planned().containsKey(key)) {
+            if (convention == null || !index.fields().contains(convention) || index.plans().containsKey(key)) {
                 continue;
             }
             final FieldRule rule = scope.inForce(folder, text, index).get(key);
@@ -915,16 +938,57 @@ public final class InstructionChecks {
     /// @param folder      Its folder, e.g. `/Indexes`.
     /// @param fields      Its fields.
     /// @param planned     For each `## Fields` key ([InstructionRules#CONVENTION_PATHS]), the field (one the index
-    ///                    has) the index plan kept with a pipeline feeding it maps the key's event-logging path to.
+    ///                    has) the index plan kept with the first pipeline feeding it maps the key's event-logging
+    ///                    path to.
     /// @param conventions For each `## Fields` key, the field (one the index has) a field convention gives.
+    /// @param plans       For each `## Fields` key, the field each pipeline feeding the index maps the path to, in
+    ///                    the pipelines' order (one entry a pipeline): several pipelines may feed one index, each
+    ///                    with its own plan.
     public record IndexFacts(String name, String folder, Set<String> fields, Map<String, PlanField> planned,
-                             Map<String, String> conventions) {
+                             Map<String, String> conventions, Map<String, List<PlanField>> plans) {
 
-        /// Copies the collections.
+        /// Copies the collections; each one's plans give its first plan's field, and its first plan's field its
+        /// plans where no plans are given.
         public IndexFacts {
             fields = Set.copyOf(NullSafe.set(fields));
-            planned = Map.copyOf(NullSafe.map(planned));
             conventions = Map.copyOf(NullSafe.map(conventions));
+            final Map<String, List<PlanField>> all = new LinkedHashMap<>();
+            NullSafe.map(plans).forEach((key, list) -> {
+                if (!NullSafe.isEmptyCollection(list)) {
+                    all.put(key, List.copyOf(list));
+                }
+            });
+            final Map<String, PlanField> first = new LinkedHashMap<>(NullSafe.map(planned));
+            all.forEach((key, list) -> first.putIfAbsent(key, list.getFirst()));
+            first.forEach((key, field) -> all.putIfAbsent(key, List.of(field)));
+            planned = Map.copyOf(first);
+            plans = Map.copyOf(all);
+        }
+
+        /// One pipeline's plan for each key, or several agreeing.
+        ///
+        /// @param name        Its name.
+        /// @param folder      Its folder.
+        /// @param fields      Its fields.
+        /// @param planned     For each key, the field the plan maps its path to.
+        /// @param conventions For each key, the field a field convention gives.
+        public IndexFacts(final String name,
+                          final String folder,
+                          final Set<String> fields,
+                          final Map<String, PlanField> planned,
+                          final Map<String, String> conventions) {
+            this(name, folder, fields, planned, conventions, Map.of());
+        }
+
+        /// @param key A `## Fields` key.
+        /// @return The fields the feeding pipelines' plans map its path to (those the index has), each once, in the
+        /// pipelines' order: more than one where their plans differ.
+        public List<String> plannedFields(final String key) {
+            return plans.getOrDefault(key, List.of()).stream()
+                    .map(PlanField::field)
+                    .filter(fields::contains)
+                    .distinct()
+                    .toList();
         }
     }
 

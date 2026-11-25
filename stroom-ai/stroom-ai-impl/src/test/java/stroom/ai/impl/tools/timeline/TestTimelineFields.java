@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.timeline;
 
 import stroom.ai.impl.tools.ToolSession;
+import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.instructions.AgentKnowledge;
@@ -24,6 +25,7 @@ import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.query.DataSourceDocumentation;
+import stroom.ai.impl.tools.query.DataSourceDocumentation.FeedingPlans;
 import stroom.ai.impl.tools.timeline.TimelineFields.Found;
 import stroom.ai.impl.tools.timeline.TimelineFields.Origin;
 import stroom.docref.DocRef;
@@ -32,7 +34,7 @@ import stroom.search.elastic.shared.ElasticIndexDoc;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -143,7 +145,7 @@ class TestTimelineFields {
 
     @Test
     void noPlanOrOneThatCantBeReadFallsBackToTheConvention() {
-        Mockito.when(documentation.feedingPipelines(PROXY)).thenThrow(new IllegalStateException("no"));
+        Mockito.when(documentation.feedingPlans(PROXY)).thenThrow(new IllegalStateException("no"));
 
         assertThat(find(List.of(), Set.of("user.name"))).hasValueSatisfying(found -> {
             assertThat(found.origin()).isEqualTo(Origin.CONVENTION);
@@ -169,6 +171,79 @@ class TestTimelineFields {
     }
 
     @Test
+    void everyFeedingPipelinesPlanIsReadAndWhereTheyDifferEachPipelinesFieldIsGiven() {
+        final DocRef first = new DocRef("Pipeline", "a-uuid", "A indexing");
+        final DocRef second = new DocRef("Pipeline", "b-uuid", "B indexing");
+        final Map<DocRef, List<PlannedField>> byPipeline = new LinkedHashMap<>();
+        byPipeline.put(first, List.of(PlannedField.of("user.name", "keyword", "EventSource/User/Id")));
+        byPipeline.put(second, List.of(PlannedField.of("UserId", "keyword", "EventSource/User/Id")));
+        plans(byPipeline);
+
+        assertThat(find(List.of(), Set.of("user.name", "UserId"))).hasValueSatisfying(found -> {
+            assertThat(found.field()).isEqualTo("user.name");
+            assertThat(found.varies()).isTrue();
+            assertThat(found.fields()).containsExactly("user.name", "UserId");
+            assertThat(found.byPipeline()).containsEntry("UserId", List.of("B indexing"));
+            assertThat(found.from()).isEqualTo("the index plans, which differ by pipeline: user.name ('A "
+                                               + "indexing'), UserId ('B indexing')");
+        });
+        // Only the fields the index has: B's alone.
+        assertThat(find(List.of(), Set.of("UserId"))).hasValueSatisfying(found -> {
+            assertThat(found.varies()).isFalse();
+            assertThat(found.from()).isEqualTo("the index plan of 'B indexing'");
+        });
+    }
+
+    @Test
+    void pipelinesWhosePlansAgreeGiveOneField() {
+        final Map<DocRef, List<PlannedField>> byPipeline = new LinkedHashMap<>();
+        byPipeline.put(new DocRef("Pipeline", "a-uuid", "A indexing"),
+                List.of(PlannedField.of("user.name", "keyword", "EventSource/User/Id")));
+        byPipeline.put(new DocRef("Pipeline", "b-uuid", "B indexing"),
+                List.of(PlannedField.of("user.name", "keyword", "EventSource/User/Id")));
+        plans(byPipeline);
+
+        assertThat(find(List.of(), Set.of("user.name"))).hasValueSatisfying(found -> {
+            assertThat(found.varies()).isFalse();
+            assertThat(found.fields()).containsExactly("user.name");
+            assertThat(found.from()).isEqualTo("the index plan of 'A indexing'");
+        });
+    }
+
+    @Test
+    void theIndexDocumentationsFromColumnComesAfterThePlansAndBeforeTheConventions() {
+        Mockito.when(documentation.find(Mockito.eq(SESSION), Mockito.eq(PROXY), Mockito.anyString()))
+                .thenReturn(List.of(new DataSourceDocumentation.Documented(PROXY, PROXY, "its Documentation tab", """
+                        | Index field | Description | From (event-logging path) |
+                        | --- | --- | --- |
+                        | `actor.login` | Who did it. | `EventSource/User/Id` |
+                        """)));
+
+        assertThat(find(List.of(), Set.of("actor.login", "user.name"))).hasValueSatisfying(found -> {
+            assertThat(found).isEqualTo(new Found("actor.login", Origin.INDEX_DOCUMENTATION, null));
+            assertThat(found.from()).isEqualTo("the From column of the index's documentation");
+            assertThat(found.suggestion()).isNull();
+        });
+        // A plan still comes first.
+        plan("EventSource/User/Id", PlannedField.of("user.name", "keyword", "EventSource/User/Id"));
+        assertThat(new TimelineFields(agentInstructions, dataSourceAccess, Optional.of(knowledge),
+                () -> documentation).find(SESSION, PROXY, InstructionRules.USER_FIELD, List.of(),
+                Set.of("actor.login", "user.name")::contains)).map(Found::origin).hasValue(Origin.PLAN);
+    }
+
+    @Test
+    void anIndexsPlansAreReadOnceForTheLookupsOfACall() {
+        plan("EventSource/User/Id", PlannedField.of("user.name", "keyword", "EventSource/User/Id"),
+                PlannedField.of("host.name", "keyword", "EventSource/Device/HostName"));
+
+        assertThat(find(List.of(), Set.of("user.name", "host.name"))).isPresent();
+        assertThat(fields.find(SESSION, PROXY, InstructionRules.HOST_FIELD, List.of(),
+                Set.of("host.name")::contains)).map(Found::origin).hasValue(Origin.PLAN);
+
+        Mockito.verify(documentation, Mockito.times(1)).feedingPlans(PROXY);
+    }
+
+    @Test
     void aConventionFileIsReadByItsPaths() {
         assertThat(TimelineFields.conventionField("field_map:\n  EventSource/User/Id: {name: UserId, type: k}\n",
                 "EventSource/User/Id")).hasValue("UserId");
@@ -179,13 +254,18 @@ class TestTimelineFields {
         return fields.find(SESSION, PROXY, InstructionRules.USER_FIELD, given, indexFields::contains);
     }
 
-    // The plan of a pipeline feeding the index gives these fields for the path.
+    // The plan of a pipeline feeding the index has these fields.
     private void plan(final String path, final PlannedField... planned) {
-        final DocRef pipeline = new DocRef("Pipeline", "pipe-uuid", "Proxy indexing");
-        Mockito.when(documentation.feedingPipelines(PROXY)).thenReturn(List.of(pipeline));
-        Mockito.when(documentation.plannedFrom(List.of(pipeline), path)).thenReturn(Arrays.stream(planned)
-                .map(field -> new DataSourceDocumentation.Planned(field, pipeline))
-                .toList());
+        plans(Map.of(new DocRef("Pipeline", "pipe-uuid", "Proxy indexing"), List.of(planned)));
+    }
+
+    // The plans of the pipelines feeding the index have these fields, in order.
+    private void plans(final Map<DocRef, List<PlannedField>> byPipeline) {
+        final Map<DocRef, List<FieldPlan>> plans = new LinkedHashMap<>();
+        byPipeline.forEach((pipeline, planned) -> plans.put(pipeline, List.of(FieldPlan.of(FieldPlan.ELASTICSEARCH,
+                "proxy", "@timestamp", planned))));
+        Mockito.when(documentation.feedingPlans(PROXY)).thenReturn(new FeedingPlans(List.copyOf(plans.keySet()),
+                plans));
     }
 
     private void rule(final String... names) {

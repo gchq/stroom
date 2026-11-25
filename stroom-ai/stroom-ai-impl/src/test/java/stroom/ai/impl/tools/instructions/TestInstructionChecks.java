@@ -254,6 +254,46 @@ class TestInstructionChecks {
     }
 
     @Test
+    void anIndexFedByPipelinesWhosePlansDifferIsANoteNamingEachPipelinesFieldNotASuggestionOfOne() {
+        final IndexFacts planned = new IndexFacts("Endpoint", "/Endpoint", ENDPOINT.fields(), Map.of(), Map.of(),
+                Map.of(InstructionRules.USER_FIELD, List.of(new PlanField("user.name", "A indexing"),
+                        new PlanField("actor.login", "B indexing"))));
+        final String text = "## Fields\n- user: actor.login\n";
+
+        final List<Finding> findings = InstructionChecks.check("/Endpoint", text, new Facts(List.of(),
+                List.of(planned)), false);
+
+        assertThat(findings).singleElement().satisfies(finding -> {
+            assertThat(finding.kind()).isEqualTo(Kind.NOTE);
+            assertThat(finding.rule()).isEqualTo("plans_differ");
+            assertThat(finding.message()).isEqualTo("Index Endpoint is fed by pipelines whose index plans map "
+                                                    + "EventSource/User/Id to different fields: user.name ('A "
+                                                    + "indexing'), actor.login ('B indexing'); '- user: "
+                                                    + "actor.login' gives actor.login for all of them, so events of "
+                                                    + "the other pipelines' streams are read by actor.login only "
+                                                    + "where they hold it too.");
+        });
+        assertThat(planned.planned()).containsEntry(InstructionRules.USER_FIELD,
+                new PlanField("user.name", "A indexing"));
+        assertThat(planned.plannedFields(InstructionRules.USER_FIELD)).containsExactly("user.name", "actor.login");
+    }
+
+    @Test
+    void eachPipelineThatAgreesIsComparedAndTheIndexNamedOnce() {
+        final IndexFacts planned = new IndexFacts("Endpoint", "/Endpoint", ENDPOINT.fields(), Map.of(), Map.of(),
+                Map.of(InstructionRules.USER_FIELD, List.of(new PlanField("user.name", "A indexing"),
+                        new PlanField("user.name", "B indexing"))));
+
+        assertThat(InstructionChecks.check("/Endpoint", "## Fields\n- user: actor.login\n", new Facts(List.of(),
+                List.of(planned)), false)).singleElement().satisfies(finding -> {
+                    assertThat(finding.rule()).isEqualTo("plan_disagrees");
+                    assertThat(finding.message()).isEqualTo("'- user: actor.login' gives actor.login for index "
+                                                            + "Endpoint, but the index plan of 'A indexing' maps "
+                                                            + "EventSource/User/Id to user.name.");
+                });
+    }
+
+    @Test
     void aPlanIsComparedOnlyWithTheLineInForceForTheIndex() {
         final IndexFacts planned = new IndexFacts("Endpoint", "/Logs/Endpoint", ENDPOINT.fields(), Map.of(
                 InstructionRules.USER_FIELD, new PlanField("user.name", "Endpoint indexing")), Map.of());

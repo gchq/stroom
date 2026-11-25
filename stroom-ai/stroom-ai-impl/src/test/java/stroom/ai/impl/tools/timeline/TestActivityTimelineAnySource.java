@@ -31,6 +31,7 @@ import stroom.ai.impl.tools.ToolSchema;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.instructions.InstructionRules;
@@ -225,10 +226,9 @@ class TestActivityTimelineAnySource {
     void aUserFieldFromTheIndexPlanOfAFeedingPipelineIsSaidSoWithNothingToOffer() {
         week();
         final DocRef pipeline = new DocRef("Pipeline", "pipe-uuid", "Events indexing");
-        Mockito.when(plans.feedingPipelines(EVENTS)).thenReturn(List.of(pipeline));
-        Mockito.when(plans.plannedFrom(List.of(pipeline), "EventSource/User/Id")).thenReturn(List.of(
-                new DataSourceDocumentation.Planned(PlannedField.of("UserId", "keyword", "EventSource/User/Id"),
-                        pipeline)));
+        Mockito.when(plans.feedingPlans(EVENTS)).thenReturn(new DataSourceDocumentation.FeedingPlans(
+                List.of(pipeline), Map.of(pipeline, List.of(FieldPlan.of(FieldPlan.ELASTICSEARCH, "events",
+                        "@timestamp", List.of(PlannedField.of("UserId", "keyword", "EventSource/User/Id")))))));
         final Map<String, Object> arguments = arguments(Map.of());
         arguments.remove("userField");
 

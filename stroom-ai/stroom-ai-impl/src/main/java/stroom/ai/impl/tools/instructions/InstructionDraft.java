@@ -119,10 +119,13 @@ public final class InstructionDraft {
             rule.fields().stream().filter(index.fields()::contains).findFirst().ifPresent(field ->
                     out.put(field, new Candidate(field, "the AGENTS doc in " + rule.from(), true)));
         }
-        final PlanField planned = index.planned().get(key);
-        if (planned != null && index.fields().contains(planned.field())) {
-            out.merge(planned.field(), new Candidate(planned.field(), "the index plan of '" + planned.pipeline()
-                                                                      + "'", false), Candidate::and);
+        // Every feeding pipeline's plan: where they differ, each pipeline's field is a candidate.
+        for (final PlanField planned : index.plans().getOrDefault(key, List.of())) {
+            if (index.fields().contains(planned.field())) {
+                out.merge(planned.field(), new Candidate(planned.field(), "the index plan of '"
+                                                                          + planned.pipeline() + "'", false),
+                        Candidate::and);
+            }
         }
         final String convention = index.conventions().get(key);
         if (convention != null && index.fields().contains(convention)) {

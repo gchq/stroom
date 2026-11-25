@@ -100,6 +100,18 @@ class TestInstructionDraft {
     }
 
     @Test
+    void anIndexFedByPipelinesWhosePlansDifferOffersEachPipelinesField() {
+        final Facts facts = new Facts(List.of(), List.of(new IndexFacts("Proxy", "/Proxy", Set.of("UserId",
+                "user.name"), Map.of(), Map.of(), Map.of(InstructionRules.USER_FIELD, List.of(
+                new PlanField("UserId", "A indexing"), new PlanField("user.name", "B indexing"))))));
+
+        assertThat(InstructionDraft.plan("/Proxy", Map.of(), List.of(), facts).questions()).singleElement()
+                .satisfies(question -> assertThat(question.found()).isEqualTo("UserId (the index plan of 'A "
+                                                                              + "indexing'); user.name (the index "
+                                                                              + "plan of 'B indexing')"));
+    }
+
+    @Test
     void theAuthorsLinesAreReadAsTheToolsReadThem() {
         assertThat(InstructionDraft.stated(List.of("- Person ID: `pid`", "host: a, b"))).containsExactly(
                 Map.entry(InstructionRules.PERSON_FIELD, List.of("pid")),

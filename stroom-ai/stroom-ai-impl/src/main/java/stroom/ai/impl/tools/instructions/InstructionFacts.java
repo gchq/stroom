@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.instructions.InstructionChecks.Finding;
 import stroom.ai.impl.tools.instructions.InstructionChecks.IndexFacts;
 import stroom.ai.impl.tools.instructions.InstructionChecks.PlanField;
 import stroom.ai.impl.tools.query.DataSourceDocumentation;
+import stroom.ai.impl.tools.query.DataSourceDocumentation.FeedingPlans;
 import stroom.ai.impl.tools.query.DataSourceDocumentation.Planned;
 import stroom.ai.impl.tools.timeline.TimelineFields;
 import stroom.docref.DocRef;
@@ -34,14 +35,16 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /// Gathers what [InstructionChecks] needs of Stroom for the AGENTS docs of a folder: the AGENTS docs the user can
 /// view, and the indexes the user can use where they apply, each with its fields, the fields the index plans kept
-/// with the pipelines feeding it map the `## Fields` keys' event-logging paths to, and the user field a field
-/// convention gives.
+/// with the pipelines feeding it map the `## Fields` keys' event-logging paths to (every feeding pipeline's plan:
+/// they may differ), and the user field a field convention gives.
 public class InstructionFacts {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(InstructionFacts.class);
@@ -96,11 +99,11 @@ public class InstructionFacts {
             return new Facts(docs, List.of());
         }
         for (final IndexFields index : found) {
-            final Map<String, PlanField> planned = indexes.size() < MAX_PLANNED
+            final Map<String, List<PlanField>> planned = indexes.size() < MAX_PLANNED
                     ? planned(index)
                     : Map.of();
-            indexes.add(new IndexFacts(index.dataSource().getName(), index.folder(), index.fields(), planned,
-                    conventions(index)));
+            indexes.add(new IndexFacts(index.dataSource().getName(), index.folder(), index.fields(), Map.of(),
+                    conventions(index), planned));
         }
         return new Facts(docs, indexes);
     }
@@ -124,21 +127,27 @@ public class InstructionFacts {
         return InstructionChecks.check(at, text, gather(others, at), true);
     }
 
-    // For each ## Fields key with an event-logging path, the field a feeding pipeline's plan maps it to.
-    private Map<String, PlanField> planned(final IndexFields index) {
-        final Map<String, PlanField> out = new LinkedHashMap<>();
+    // For each ## Fields key with an event-logging path, the field each feeding pipeline's plan maps it to (one the
+    // index has), in the pipelines' order: every pipeline's plan, each read once.
+    private Map<String, List<PlanField>> planned(final IndexFields index) {
+        final Map<String, List<PlanField>> out = new LinkedHashMap<>();
         try {
-            final DataSourceDocumentation documentation = documentationProvider.get();
-            final List<DocRef> pipelines = documentation.feedingPipelines(index.dataSource());
-            if (pipelines.isEmpty()) {
+            final FeedingPlans plans = documentationProvider.get().feedingPlans(index.dataSource());
+            if (plans == null || plans.isEmpty()) {
                 return out;
             }
-            InstructionRules.CONVENTION_PATHS.forEach((key, path) -> documentation.plannedFrom(pipelines, path)
-                    .stream()
-                    .filter(planned -> index.fields().contains(planned.field().name()))
-                    .findFirst()
-                    .map(InstructionFacts::planField)
-                    .ifPresent(field -> out.put(key, field)));
+            InstructionRules.CONVENTION_PATHS.forEach((key, path) -> {
+                final List<PlanField> fields = new ArrayList<>();
+                final Set<DocRef> seen = new HashSet<>();
+                for (final Planned planned : plans.plannedFrom(path)) {
+                    if (index.fields().contains(planned.field().name()) && seen.add(planned.pipeline())) {
+                        fields.add(planField(planned));
+                    }
+                }
+                if (!fields.isEmpty()) {
+                    out.put(key, fields);
+                }
+            });
         } catch (final RuntimeException e) {
             LOGGER.debug("Unable to read the index plans feeding {}", index.dataSource(), e);
         }

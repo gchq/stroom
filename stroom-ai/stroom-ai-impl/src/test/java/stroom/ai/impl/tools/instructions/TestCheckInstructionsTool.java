@@ -19,12 +19,13 @@ package stroom.ai.impl.tools.instructions;
 import stroom.ai.impl.tools.ToolCalls;
 import stroom.ai.impl.tools.ToolTestFixture;
 import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.instructions.AgentInstructions.InstructionDoc;
 import stroom.ai.impl.tools.instructions.AgentInstructions.Standing;
 import stroom.ai.impl.tools.instructions.IndexFieldNames.IndexFields;
 import stroom.ai.impl.tools.query.DataSourceDocumentation;
-import stroom.ai.impl.tools.query.DataSourceDocumentation.Planned;
+import stroom.ai.impl.tools.query.DataSourceDocumentation.FeedingPlans;
 import stroom.ai.impl.tools.timeline.TimelineFields;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
@@ -68,11 +69,10 @@ class TestCheckInstructionsTool {
         Mockito.when(documentAccess.findFolder("/Endpoint")).thenReturn(Optional.of(FOLDER));
         Mockito.when(indexFieldNames.indexes(Mockito.anyString())).thenReturn(List.of(new IndexFields(INDEX,
                 "/Endpoint", Set.of("actor.login", "user.name", "host.name"))));
-        Mockito.when(documentation.feedingPipelines(INDEX)).thenReturn(List.of(PIPELINE));
-        Mockito.when(documentation.plannedFrom(Mockito.anyList(), Mockito.anyString())).thenReturn(List.of());
-        Mockito.when(documentation.plannedFrom(List.of(PIPELINE), "EventSource/User/Id")).thenReturn(List.of(
-                new Planned(new PlannedField("user.name", "keyword", "EventSource/User/Id", "", null, false,
-                        List.of(), null), PIPELINE)));
+        Mockito.when(documentation.feedingPlans(INDEX)).thenReturn(new FeedingPlans(List.of(PIPELINE),
+                Map.of(PIPELINE, List.of(FieldPlan.of(FieldPlan.ELASTICSEARCH, "endpoint", "@timestamp", List.of(
+                        new PlannedField("user.name", "keyword", "EventSource/User/Id", "", null, false,
+                                List.of(), null)))))));
         Mockito.when(timelineFields.conventions(Mockito.anyString())).thenReturn(Map.of());
         tool = new CheckInstructionsTool(new InstructionFacts(agentInstructions, indexFieldNames, () -> documentation,
                 () -> timelineFields), documentAccess);
@@ -116,7 +116,8 @@ class TestCheckInstructionsTool {
 
     @Test
     void aFolderWithNoDocOfItsOwnIsOfferedWhatOneCouldSay() {
-        Mockito.when(documentation.plannedFrom(List.of(PIPELINE), "EventSource/User/Id")).thenReturn(List.of());
+        Mockito.when(documentation.feedingPlans(INDEX)).thenReturn(new FeedingPlans(List.of(PIPELINE),
+                Map.of(PIPELINE, List.of())));
         Mockito.when(timelineFields.conventions("EventSource/User/Id")).thenReturn(Map.of("ecs", "user.name"));
 
         assertThat(run(Map.of("folder", "/Endpoint"))).isEqualTo("""

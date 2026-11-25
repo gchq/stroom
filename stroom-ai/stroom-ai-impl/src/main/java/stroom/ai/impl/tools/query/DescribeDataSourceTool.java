@@ -266,16 +266,28 @@ public class DescribeDataSourceTool extends AbstractWorkspaceTool {
         if (NullSafe.isNonBlankString(field.getDocRefType())) {
             sb.append("- refers to ").append(field.getDocRefType()).append(" documents\n");
         }
-        final Optional<DataSourceDocumentation.Planned> planned = dataSourceDocumentation.planned(
-                dataSourceDocumentation.feedingPipelines(dataSource), field.getFldName());
+        // Every feeding pipeline's plan: each may write the field from another source.
+        final List<DataSourceDocumentation.Planned> plans = dataSourceDocumentation.feedingPlans(dataSource)
+                .planned(field.getFldName());
+        final Optional<DataSourceDocumentation.Planned> planned = plans.stream().findFirst();
         final String from = column(row, "from");
-        if (planned.isPresent()) {
-            final PlannedField plannedField = planned.get().field();
-            sb.append("- source: ").append(plannedField.isConstant()
-                    ? "the constant '" + plannedField.constant() + "', in every document"
-                    : plannedField.source())
+        final Map<String, List<DocRef>> bySource = new LinkedHashMap<>();
+        plans.forEach(plan -> bySource.computeIfAbsent(plannedSource(plan.field()), k -> new ArrayList<>())
+                .add(plan.pipeline()));
+        if (bySource.size() > 1) {
+            sb.append("- source: varies by pipeline:");
+            bySource.forEach((source, pipelines) -> sb.append(" ").append(source).append(" (the index plan kept "
+                                                                                          + "with pipeline ")
+                    .append(String.join(", ", pipelines.stream().map(context.links()::document).toList()))
+                    .append(");"));
+            sb.setLength(sb.length() - 1);
+            sb.append('\n');
+        } else if (planned.isPresent()) {
+            sb.append("- source: ").append(plannedSource(planned.get().field()))
                     .append(" (the index plan kept with pipeline ")
-                    .append(context.links().document(planned.get().pipeline())).append(")\n");
+                    .append(String.join(", ", plans.stream()
+                            .map(plan -> context.links().document(plan.pipeline()))
+                            .toList())).append(")\n");
         } else if (NullSafe.isNonBlankString(from)) {
             sb.append("- source: ").append(from).append(" (its documentation)\n");
         }
@@ -294,6 +306,13 @@ public class DescribeDataSourceTool extends AbstractWorkspaceTool {
             agents.forEach(line -> sb.append("  - ").append(line).append('\n'));
         }
         return sb.toString();
+    }
+
+    // Where a planned field's values come from: its source path, or the constant it holds.
+    private static String plannedSource(final PlannedField field) {
+        return field.isConstant()
+                ? "the constant '" + field.constant() + "', in every document"
+                : field.source();
     }
 
     // The cell of the column whose name starts with the word given (Description, From (event-logging path),
