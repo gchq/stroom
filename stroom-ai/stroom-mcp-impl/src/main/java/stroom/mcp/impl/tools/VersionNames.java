@@ -81,6 +81,22 @@ final class VersionNames {
         return last(name, held).map(Matcher::group);
     }
 
+    /// Two names' versions compared, number by number (`V1.10` after `V1.9`); a name with no version token before
+    /// one with a token.
+    ///
+    /// @param left  A name, e.g. `ACME-V1.0-Events`.
+    /// @param right Another.
+    /// @param held  The names they may hold whose tokens are theirs, not their version: their feeds', say.
+    /// @return Below zero when left's version is older, zero when the same (or neither has one), above when newer.
+    static int compareVersions(final String left, final String right, final Collection<String> held) {
+        final Optional<String> a = last(left, held).map(matcher -> matcher.group(2));
+        final Optional<String> b = last(right, held).map(matcher -> matcher.group(2));
+        if (a.isEmpty() || b.isEmpty()) {
+            return Boolean.compare(a.isPresent(), b.isPresent());
+        }
+        return compare(parts(a.get()), parts(b.get()));
+    }
+
     /// The next version's name, its version token's last part one higher: `V1.0` to `V1.1`, `V1` to `V2`,
     /// `-v1.2` to `-v1.3`.
     ///

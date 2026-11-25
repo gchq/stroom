@@ -82,6 +82,9 @@ class StroomBuildFacts implements BuildFacts {
 
     /// What a survey doc's name ends with: `<feed> - Survey`.
     static final String SURVEY = " - Survey";
+    /// A translating pipeline's key ([#translating]) for every feed its processor filters read, beyond those asked
+    /// about.
+    static final String ALL_FEEDS = "reads_feeds";
     /// The survey state's key for the streams it read whole (or the user stopped at): see [#combine].
     static final String READ_WHOLE = "read_whole";
     /// The combined survey's `source_types` key for its scope's share of the records read ([SourceTypeScope#share]).
@@ -785,16 +788,27 @@ class StroomBuildFacts implements BuildFacts {
     @Override
     public List<Map<String, Object>> translating(final List<String> feeds) {
         final List<Map<String, Object>> found = new ArrayList<>();
-        for (final String feed : feeds.subList(0, Math.min(3, feeds.size()))) {
+        // Every feed, not the first 3 (seen in the many-feeds audit: a build of five feeds checked only three for a
+        // translation already reading them).
+        for (final String feed : feeds) {
             try {
                 for (final Map<String, Object> pipeline : processorFilters.pipelinesReading(feed)) {
-                    if (!Boolean.TRUE.equals(pipeline.get("reads_events"))
-                        && found.stream().noneMatch(other -> other.get("uuid").equals(pipeline.get("uuid")))) {
-                        final Map<String, Object> entry = new LinkedHashMap<>();
-                        entry.put("name", pipeline.get("name"));
-                        entry.put("uuid", pipeline.get("uuid"));
-                        found.add(entry);
+                    if (Boolean.TRUE.equals(pipeline.get("reads_events"))) {
+                        continue;
                     }
+                    final Map<String, Object> entry = found.stream()
+                            .filter(other -> other.get("uuid").equals(pipeline.get("uuid")))
+                            .findFirst()
+                            .orElseGet(() -> {
+                                final Map<String, Object> made = new LinkedHashMap<>();
+                                made.put("name", pipeline.get("name"));
+                                made.put("uuid", pipeline.get("uuid"));
+                                made.put("feeds", new ArrayList<String>());
+                                found.add(made);
+                                return made;
+                            });
+                    @SuppressWarnings("unchecked") final List<String> reads = (List<String>) entry.get("feeds");
+                    reads.add(feed);
                 }
             } catch (final RuntimeException e) {
                 // Advice: a Stroom that can't list its filters leaves the rest of the plan to go on.
@@ -808,9 +822,34 @@ class StroomBuildFacts implements BuildFacts {
         final List<Map<String, Object>> translations = found.stream()
                 .filter(pipeline -> TRANSLATION.equals(stage(String.valueOf(pipeline.get("uuid")))))
                 .toList();
-        return translations.isEmpty()
+        final List<Map<String, Object>> out = translations.isEmpty()
                 ? found
                 : translations;
+        out.forEach(pipeline -> readsAll(pipeline).ifPresent(all -> pipeline.put(ALL_FEEDS, all)));
+        return out;
+    }
+
+    // Every feed the pipeline's processor filters read, beyond those asked about: empty when they can't be listed.
+    private Optional<List<String>> readsAll(final Map<String, Object> pipeline) {
+        if (processorFilterAccess == null || pipelineFeeds == null) {
+            return Optional.empty();
+        }
+        try {
+            final ProcessorFilterAccess.Filters filters = processorFilterAccess.filtersOf(
+                    new DocRef(PipelineDoc.TYPE, String.valueOf(pipeline.get("uuid"))));
+            if (filters.refused() != null) {
+                return Optional.empty();
+            }
+            final Map<Object, Object> known = new LinkedHashMap<>();
+            final Set<String> all = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+            for (final ProcessorFilter filter : filters.filters()) {
+                all.addAll(pipelineFeeds.filterFeeds(ProcessorFilters.terms(filter), known, false));
+            }
+            return Optional.of(List.copyOf(all));
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Unable to list the feeds pipeline {} reads", pipeline.get("uuid"), e);
+            return Optional.empty();
+        }
     }
 
     // A pipeline's stage, or null when Stroom can't load it.

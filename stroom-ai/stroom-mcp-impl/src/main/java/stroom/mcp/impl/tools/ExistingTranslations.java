@@ -44,9 +44,11 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -65,6 +67,10 @@ class ExistingTranslations {
     static final String EXISTING = "existing";
     /// The build record's value: the build drafts a new translation.
     static final String DRAFT = "draft";
+    /// The offered pipeline's key for the other feeds it serves, beyond the build's.
+    static final String ALSO_READS = "also_reads";
+    /// The offered pipeline's key for the other pipelines translating the build's feeds.
+    static final String OTHERS = "others";
     /// The most example TypeIds said.
     private static final int EXAMPLES = 3;
     private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneOffset.UTC);
@@ -130,15 +136,62 @@ class ExistingTranslations {
                 // group's pipeline, which reads every stream of the feed).
                 return Optional.empty();
             }
-            return translating.apply(sources).stream()
+            return newest(translating.apply(sources).stream()
                     .filter(pipeline -> !inBuild(String.valueOf(pipeline.get("uuid"))))
-                    .findFirst();
+                    .toList(), sources);
         } catch (final RuntimeException e) {
             // Advice: never a reason for the plan or a call to fail.
             LOGGER.debug(() -> LogUtil.message("No existing translation found for build {}: {}", build,
                     e.getMessage()), e);
             return Optional.empty();
         }
+    }
+
+    /// Of the pipelines translating the build's feeds, the newest version (by the version in its name; the first
+    /// found where none is newer), with the other feeds it serves (`also_reads`: those its filters read beyond the
+    /// build's) and the other pipelines translating them (`others`: each `name`, `uuid` and the build's feeds it
+    /// reads). Before, the first filter match was offered, and nothing said it served other feeds (the many-feeds
+    /// audit, 2026-11-25): a feed moving to V1.1 while others stay on V1.0 is read by both.
+    ///
+    /// @param found   The pipelines translating the feeds, each `name`, `uuid`, `feeds` (the build's feeds it reads)
+    ///                and `reads_feeds` (every feed its filters read), as [BuildFacts#translating] gives them.
+    /// @param sources The build's feeds.
+    /// @return The pipeline offered, or empty when there is none.
+    static Optional<Map<String, Object>> newest(final List<Map<String, Object>> found, final List<String> sources) {
+        if (found.isEmpty()) {
+            return Optional.empty();
+        }
+        Map<String, Object> chosen = found.getFirst();
+        for (final Map<String, Object> pipeline : found) {
+            if (VersionNames.compareVersions(ToolText.str(pipeline.get("name")), ToolText.str(chosen.get("name")),
+                    sources) > 0) {
+                chosen = pipeline;
+            }
+        }
+        final Map<String, Object> out = new LinkedHashMap<>(chosen);
+        final Set<String> own = new HashSet<>();
+        sources.forEach(feed -> own.add(feed.toLowerCase(Locale.ROOT)));
+        final List<String> also = JsonValues.strings(chosen.get(StroomBuildFacts.ALL_FEEDS)).stream()
+                .filter(feed -> !own.contains(feed.toLowerCase(Locale.ROOT)))
+                .toList();
+        out.remove(StroomBuildFacts.ALL_FEEDS);
+        if (!also.isEmpty()) {
+            out.put(ALSO_READS, also);
+        }
+        final List<Map<String, Object>> others = new ArrayList<>();
+        for (final Map<String, Object> pipeline : found) {
+            if (pipeline != chosen) {
+                final Map<String, Object> other = new LinkedHashMap<>();
+                other.put("name", pipeline.get("name"));
+                other.put("uuid", pipeline.get("uuid"));
+                other.put("feeds", JsonValues.strings(pipeline.get("feeds")));
+                others.add(other);
+            }
+        }
+        if (!others.isEmpty()) {
+            out.put(OTHERS, others);
+        }
+        return Optional.of(out);
     }
 
     /// What the user is told of the pipeline before choosing: its translation XSLT (the translation stage's,
@@ -219,8 +272,21 @@ class ExistingTranslations {
                     ? ""
                     : ", e.g. " + String.join(", ", examples)));
         }
+        final List<String> also = JsonValues.strings(described.get(ALSO_READS));
+        if (!also.isEmpty()) {
+            parts.add("it translates " + String.join(", ", also) + " too, which a new version built here leaves "
+                      + "with it");
+        }
         if (!parts.isEmpty()) {
             out.append(" (").append(String.join("; ", parts)).append(")");
+        }
+        final List<String> others = JsonValues.maps(described.get(OTHERS)).stream()
+                .map(other -> "'" + ToolText.str(other.get("name")) + "' (reading " + String.join(", ",
+                        JsonValues.strings(other.get("feeds"))) + ")")
+                .toList();
+        if (!others.isEmpty()) {
+            out.append(". Other pipelines translating the build's feeds now (an older version, or another "
+                       + "translation): ").append(String.join(", ", others));
         }
         return out.toString();
     }

@@ -301,7 +301,7 @@ class TestStroomBuildFacts {
                 null, null, null, processorFilters, null, null, null);
 
         assertThat(facts.translating(List.of("TWITTER")))
-                .containsExactly(Map.of("name", "Twitter-Events", "uuid", "events"));
+                .containsExactly(Map.of("name", "Twitter-Events", "uuid", "events", "feeds", List.of("TWITTER")));
 
         // None of them seen to translate (one Stroom can't load, here): every reader is given.
         Mockito.when(processorFilters.pipelinesReading("OTHER")).thenReturn(List.of(
@@ -309,6 +309,25 @@ class TestStroomBuildFacts {
         assertThat(facts.translating(List.of("OTHER")))
                 .extracting(pipeline -> pipeline.get("uuid"))
                 .containsExactly("archive", "missing");
+    }
+
+    @Test
+    void everyFeedIsCheckedForATranslationEachPipelineWithTheFeedsItReads() {
+        // The many-feeds audit (2026-11-25): only the first 3 feeds were checked.
+        final BuildWorld world = new BuildWorld();
+        PipelineLayers.given(world.pipelineService, "events", PipelineLayers.of(PipelineLayers.layer("events")
+                .chain("Source", "Source", "xmlParser", "XMLParser", "translationFilter", "XSLTFilter",
+                        "streamAppender", "StreamAppender")
+                .property("streamAppender", "streamType", "Events")));
+        final ProcessorFilters processorFilters = Mockito.mock(ProcessorFilters.class);
+        Mockito.when(processorFilters.pipelinesReading(Mockito.anyString())).thenReturn(List.of());
+        Mockito.when(processorFilters.pipelinesReading("F2")).thenReturn(List.of(reader("events", "Events")));
+        Mockito.when(processorFilters.pipelinesReading("F4")).thenReturn(List.of(reader("events", "Events")));
+        final StroomBuildFacts facts = new StroomBuildFacts(null, null, null, null, world.pipelineShapes, null,
+                null, null, null, processorFilters, null, null, null);
+
+        assertThat(facts.translating(List.of("F1", "F2", "F3", "F4")))
+                .containsExactly(Map.of("name", "Events", "uuid", "events", "feeds", List.of("F2", "F4")));
     }
 
     @Test

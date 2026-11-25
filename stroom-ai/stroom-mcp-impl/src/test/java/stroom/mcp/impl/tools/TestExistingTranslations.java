@@ -167,6 +167,62 @@ class TestExistingTranslations {
                                                                + "Stroom AI; 1 event type)");
     }
 
+    @Test
+    void theNewestVersionTranslatingTheFeedsIsOfferedSayingWhichOtherFeedsItServes() {
+        // The many-feeds audit (2026-11-25): the first filter match was offered, and nothing said it served other
+        // feeds. Here ACME-A and ACME-B are on V1.0 and ACME-B and ACME-C moved to V1.10 (after V1.9).
+        Mockito.when(registries.registry(Mockito.eq(BUILD), Mockito.anyString())).thenReturn(Optional.empty());
+        Mockito.when(guard.buildOf(Mockito.any())).thenReturn(Optional.empty());
+        final List<Map<String, Object>> translating = List.of(
+                pipeline("v10", "ACME-V1.0-Events", List.of("ACME-A", "ACME-B"), List.of("ACME-A", "ACME-B")),
+                pipeline("v19", "ACME-V1.9-Events", List.of("ACME-B"), List.of("ACME-B")),
+                pipeline("v110", "ACME-V1.10-Events", List.of("ACME-B"), List.of("ACME-B", "ACME-C", "OTHER")));
+
+        final Map<String, Object> offered = existing.find(BUILD, List.of("ACME-A", "ACME-B"),
+                feeds -> translating).orElseThrow();
+
+        assertThat(offered).containsEntry("uuid", "v110")
+                .containsEntry(ExistingTranslations.ALSO_READS, List.of("ACME-C", "OTHER"))
+                .doesNotContainKey(StroomBuildFacts.ALL_FEEDS);
+        assertThat(offered.get(ExistingTranslations.OTHERS)).isEqualTo(List.of(
+                Map.of("name", "ACME-V1.0-Events", "uuid", "v10", "feeds", List.of("ACME-A", "ACME-B")),
+                Map.of("name", "ACME-V1.9-Events", "uuid", "v19", "feeds", List.of("ACME-B"))));
+        assertThat(ExistingTranslations.said(offered))
+                .contains("it translates ACME-C, OTHER too, which a new version built here leaves with it",
+                        "Other pipelines translating the build's feeds now (an older version, or another "
+                        + "translation): 'ACME-V1.0-Events' (reading ACME-A, ACME-B), 'ACME-V1.9-Events' (reading "
+                        + "ACME-B)");
+    }
+
+    @Test
+    void withNoVersionInTheirNamesTheFirstFoundIsOffered() {
+        assertThat(ExistingTranslations.newest(List.of(pipeline("a", "Acme events", List.of("A"), List.of("A")),
+                pipeline("b", "Acme events B", List.of("B"), List.of("B"))), List.of("A", "B")).orElseThrow())
+                .containsEntry("uuid", "a");
+        // A versioned name is newer than one with none.
+        assertThat(ExistingTranslations.newest(List.of(pipeline("a", "Acme events", List.of("A"), List.of("A")),
+                pipeline("b", "Acme events V1.0", List.of("B"), List.of("B"))), List.of("A", "B")).orElseThrow())
+                .containsEntry("uuid", "b");
+        assertThat(ExistingTranslations.newest(List.of(), List.of("A"))).isEmpty();
+        // A version token inside a feed's name is the feed's, not the pipeline's.
+        assertThat(ExistingTranslations.newest(List.of(
+                pipeline("a", "CISCO-V9 events V1.1", List.of("CISCO-V9"), List.of("CISCO-V9")),
+                pipeline("b", "CISCO-V9 events V1.0", List.of("CISCO-V9"), List.of("CISCO-V9"))),
+                List.of("CISCO-V9")).orElseThrow()).containsEntry("uuid", "a");
+    }
+
+    private static Map<String, Object> pipeline(final String uuid,
+                                                final String name,
+                                                final List<String> feeds,
+                                                final List<String> all) {
+        final Map<String, Object> pipeline = new LinkedHashMap<>();
+        pipeline.put("name", name);
+        pipeline.put("uuid", uuid);
+        pipeline.put("feeds", feeds);
+        pipeline.put(StroomBuildFacts.ALL_FEEDS, all);
+        return pipeline;
+    }
+
     private void registry(final List<Map<String, Object>> rows, final List<String> scoped) {
         final Map<String, Object> state = new LinkedHashMap<>();
         state.put("scope", Map.of("build", BUILD, "source_types", scoped));

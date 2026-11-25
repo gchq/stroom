@@ -1068,7 +1068,8 @@ public class BuildPlan {
             final List<Map<String, Object>> current = facts.translating(sources);
             if (!current.isEmpty()) {
                 processing = "version";
-                version = current.getFirst();
+                // The newest version where several translate the build's feeds (V1.0 and V1.1 at once, say).
+                version = ExistingTranslations.newest(current, sources).orElse(current.getFirst());
             }
         } else if ("stepped".equals(nextStep) && startFrom == null && !copies.isEmpty() && !translation.isEmpty()
                    && xslts.stream().anyMatch(x -> x.get("mapping") == null)) {
