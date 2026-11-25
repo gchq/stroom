@@ -91,6 +91,9 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     private static final String REVIEW_ID = "review_id";
     // And the digest of everything that review showed but its hint.
     private static final String SHOWN = "shown";
+    // What the chat remembers of where a build of feeds in different folders puts its shared documents.
+    private static final String SHARED_FOLDER = "shared folder";
+    private static final String FOLDER = "folder";
     // What becomes of a build's test feed.
     private static final String TEST_FEED_KEPT = "left in the workspace: the build's test feed, never promoted";
     private static final String TEST_INDEX_KEPT = "left in the workspace: the build's test index, never promoted";
@@ -354,7 +357,8 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         // The folder of the source's own its documents go in: the feed's, or one named for it where the feed's
         // folder is a parent of sources (the siblings' convention).
         final SourceFolders sourceFolders = new SourceFolders(guard, documentAccess);
-        final Source source = source(build, docs, destinations, buildFeeds, testFeeds, sourceFolders);
+        final Source source = source(call, context, build, docs, destinations, buildFeeds, testFeeds,
+                sourceFolders);
         // A feed's source type registry goes beside the feed; its survey doc stays in the build.
         final Map<String, String> besideFeeds = besideFeeds(docs, destinations, sourceFolders);
         // An aggregated feed's modules and a group's output feed of its own: beside the feed (the group's own in its
@@ -1353,13 +1357,22 @@ class PromoteBuildTool extends AbstractBuiltInTool {
     }
 
     // The source the build's documents are of (the feed it works from, its registry's, or its only new feed) and
-    // the folder of its own they go in; null when there is none, or its folder isn't known yet.
-    private Source source(final String build,
+    // the folder of its own they go in; null when there is none, or its folder isn't known yet. A build of several
+    // source feeds in different folders asks where its shared documents go (decided by the user, 2026-11-25).
+    private Source source(final ToolCall call,
+                          final ToolCallContext context,
+                          final String build,
                           final List<Map<String, Object>> docs,
                           final Map<String, String> destinations,
                           final List<String> sources,
                           final Set<String> testFeeds,
                           final SourceFolders folders) {
+        if (sources.size() > 1) {
+            final Optional<Source> shared = sharedFolder(call, context, build, docs, destinations, sources, folders);
+            if (shared.isPresent()) {
+                return shared.get();
+            }
+        }
         String name = sources.isEmpty()
                 ? null
                 : sources.getFirst();
@@ -1389,6 +1402,55 @@ class PromoteBuildTool extends AbstractBuiltInTool {
         return feedFolder(feed, docs, destinations)
                 .map(folder -> new Source(feed, folders.ownFolder(folder, feed)))
                 .orElse(null);
+    }
+
+    /// Where a build of several source feeds puts its shared documents (decided by the user, 2026-11-25): the folder
+    /// they all share, as for one feed; where their folders differ, the one the user chose: a `Feed` destination
+    /// (for one feed, where a new feed goes, as before), else asked in a form (the first feed's folder suggested, or
+    /// one they type) and kept for the calls that follow; without forms, the question for the agent to ask. Before,
+    /// the first feed's folder was taken without a word.
+    ///
+    /// @return The source and its folder; empty when the feeds' folders aren't known, to place as for one feed.
+    private Optional<Source> sharedFolder(final ToolCall call,
+                                          final ToolCallContext context,
+                                          final String build,
+                                          final List<Map<String, Object>> docs,
+                                          final Map<String, String> destinations,
+                                          final List<String> sources,
+                                          final SourceFolders folders) {
+        final Map<String, String> byFeed = new LinkedHashMap<>();
+        for (final String feed : sources) {
+            feedFolder(feed, docs, destinations).ifPresent(folder -> byFeed.put(feed, folders.ownFolder(folder,
+                    feed)));
+        }
+        if (byFeed.isEmpty()) {
+            return Optional.empty();
+        }
+        final String first = byFeed.values().iterator().next();
+        final String name = byFeed.keySet().iterator().next();
+        if (byFeed.values().stream().allMatch(folder -> PromotionLayout.sameFolder(folder, first))) {
+            return Optional.of(new Source(name, first));
+        }
+        final String given = firstGiven(destinations.get(FeedDoc.TYPE), UnsavedChoices.recalled(context,
+                PromotionReview.shownTarget(build), SHARED_FOLDER).get(FOLDER));
+        if (given != null) {
+            return Optional.of(new Source(name, SourceFolders.normalised(given)));
+        }
+        final List<String> where = new ArrayList<>();
+        byFeed.forEach((feed, folder) -> where.add(feed + " in " + folder));
+        final String intro = "Build '" + build + "' is for feeds in different folders (" + String.join("; ", where)
+                             + "). Where do the documents they share go (the pipelines, XSLTs, index and "
+                             + "documentation): the first feed's folder, or another folder you name?";
+        final Optional<String> answer = consent.answer(call, context, NAME, intro, "Folder for the shared "
+                                                                                   + "documents", first);
+        if (answer.isEmpty()) {
+            throw new ToolRefusal("Not promoted yet: " + intro + " Ask the user, then call again with destinations "
+                                  + "{'Feed': '<the folder>'} (" + first + " for the first feed's). Nothing was "
+                                  + "changed.");
+        }
+        final String chosen = SourceFolders.normalised(answer.get());
+        UnsavedChoices.remember(context, PromotionReview.shownTarget(build), SHARED_FOLDER, Map.of(FOLDER, chosen));
+        return Optional.of(new Source(name, chosen));
     }
 
     // A verification dashboard: wherever the index it searches goes (seen in VS Code: promotion stopped for want

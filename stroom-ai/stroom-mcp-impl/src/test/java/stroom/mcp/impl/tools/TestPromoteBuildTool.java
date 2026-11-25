@@ -1517,6 +1517,63 @@ class TestPromoteBuildTool {
     }
 
     @Test
+    void aBuildOfFeedsInOneFolderPutsItsSharedDocumentsThereAsForOneFeed() {
+        // Decided by the user (2026-11-25): where all the source feeds are in one folder, it is used as for one.
+        twoFeeds("System/Feeds/Acme", "System/Feeds/Acme");
+
+        final Map<String, Object> shown = review(Map.of());
+
+        assertThat(asMap(asList(shown.get("role_locations")).getFirst()).get("folder"))
+                .isEqualTo("System/Feeds/Acme/Events/V1.0");
+    }
+
+    @Test
+    void aBuildOfFeedsInDifferentFoldersAsksWhereItsSharedDocumentsGo() {
+        // Decided by the user (2026-11-25): before, the first feed's folder was taken without a word.
+        twoFeeds("System/Feeds/Acme-A", "System/Feeds/Acme-B");
+
+        // Without forms: the question, for the agent to ask.
+        assertThat(docs.refusal(tool, BuildToolCalls.context(), DocumentationWorld.args(args(Map.of(), null))))
+                .contains("feeds in different folders (ACME-A in System/Feeds/Acme-A; ACME-B in "
+                          + "System/Feeds/Acme-B)", "the first feed's folder, or another folder you name",
+                        "destinations {'Feed': '<the folder>'} (System/Feeds/Acme-A for the first feed's)",
+                        "Nothing was changed");
+        // The user's answer, given as the Feed destination.
+        assertThat(asMap(asList(review(Map.of("Feed", "/Feeds/Shared")).get("role_locations")).getFirst())
+                .get("folder")).isEqualTo("System/Feeds/Shared/Events/V1.0");
+        // Asked in a form: the first feed's folder suggested; the answer kept for the calls that follow.
+        final SessionWorkspace workspace = memoryWorkspace();
+        final List<Map<String, Object>> asked = new ArrayList<>();
+        final UserQuestions questions = new SequencedUser(List.of((schema, intro) -> {
+            asked.add(schema);
+            return answerAll(schema, null, "System/Feeds/Acme-B");
+        }));
+        final Map<String, Object> shown = docs.call(tool, inChat(questions, workspace),
+                DocumentationWorld.args(args(Map.of(), null)));
+        assertThat(String.valueOf(asked.getFirst())).contains("Folder for the shared documents",
+                "System/Feeds/Acme-A");
+        assertThat(asMap(asList(shown.get("role_locations")).getFirst()).get("folder"))
+                .isEqualTo("System/Feeds/Acme-B/Events/V1.0");
+        // Called again in the chat (no forms now): the folder isn't asked again, and the layout shown is taken.
+        assertThat(docs.refusal(tool, inChat(BuildToolCalls.context().userQuestions(), workspace),
+                DocumentationWorld.args(args(Map.of(), null))))
+                .contains("Promote build 'bb' as shown in the chat").doesNotContain("different folders");
+    }
+
+    // A build of two existing source feeds in the folders given, and a new events pipeline.
+    private void twoFeeds(final String folderA, final String folderB) {
+        world.add(FeedDoc.TYPE, "ACME-A", world.folder(folderA).uuid, "fa");
+        world.add(FeedDoc.TYPE, "ACME-B", world.folder(folderB).uuid, "fb");
+        Mockito.when(docs.pipelineIndex.named(FeedDoc.TYPE, "ACME-A", 20))
+                .thenReturn(List.of(new DocRef(FeedDoc.TYPE, "fa", "ACME-A")));
+        Mockito.when(docs.pipelineIndex.named(FeedDoc.TYPE, "ACME-B", 20))
+                .thenReturn(List.of(new DocRef(FeedDoc.TYPE, "fb", "ACME-B")));
+        docs.facts.sources = List.of("ACME-A", "ACME-B");
+        world.inBuild(BUILD, PipelineDoc.TYPE, "ACME-V1.0-Events", "ev");
+        listed(doc(PipelineDoc.TYPE, "ev", "ACME-V1.0-Events", "Events"));
+    }
+
+    @Test
     void anEarlierVersionStillTranslatingOtherFeedsAndWhatReadsItsEventsAreNeverAdvisedToBeRetired() {
         // Seen in the audit (2026-11-25, PromoteBuildTool 780-811): the next steps advised disabling the earlier
         // version's filters while they still translated feeds outside the build, and the follow-on filters reading
