@@ -51,7 +51,7 @@ public class SearchResultStoreConfig extends AbstractResultStoreConfig implement
                 DEFAULT_MAX_STRING_FIELD_LENGTH,
                 DEFAULT_VALUE_QUEUE_SIZE,
                 DEFAULT_MAX_SORTED_ITEMS,
-                DEFAULT_MAX_COUNT_UNIQUE_VALUES,
+                DEFAULT_MAX_COUNT_DISTINCT_VALUES,
                 DEFAULT_LMDB_CONFIG);
         this.mapConfig = DEFAULT_MAP_CONFIG;
         this.joinMaxRows = DEFAULT_JOIN_MAX_ROWS;
@@ -60,7 +60,7 @@ public class SearchResultStoreConfig extends AbstractResultStoreConfig implement
     }
 
     /// Creates the config with the default limits on the copies of each event that a StroomQL window
-    /// makes and on the unique values that `countUnique()` counts.
+    /// makes and on the unique values that `countDistinct()` counts exactly.
     ///
     /// @param maxPutsBeforeCommit  The most puts into the store before it is committed.
     /// @param offHeapResults       Whether results are stored off heap.
@@ -113,7 +113,7 @@ public class SearchResultStoreConfig extends AbstractResultStoreConfig implement
                                    @JsonProperty("joinMaxSize") final ByteSize joinMaxSize,
                                    @JsonProperty("maxWindowCopiesPerEvent")
                                    final Integer maxWindowCopiesPerEvent,
-                                   @JsonProperty("maxCountUniqueValues") final Integer maxCountUniqueValues) {
+                                   @JsonProperty("maxCountDistinctValues") final Integer maxCountDistinctValues) {
         super(Objects.requireNonNullElse(maxPutsBeforeCommit, DEFAULT_MAX_PUTS_BEFORE_COMMIT),
                 Objects.requireNonNullElse(offHeapResults, DEFAULT_OFF_HEAP_RESULTS),
                 Objects.requireNonNullElse(minPayloadSize, DEFAULT_MIN_PAYLOAD_SIZE),
@@ -121,7 +121,7 @@ public class SearchResultStoreConfig extends AbstractResultStoreConfig implement
                 Objects.requireNonNullElse(maxStringFieldLength, DEFAULT_MAX_STRING_FIELD_LENGTH),
                 Objects.requireNonNullElse(valueQueueSize, DEFAULT_VALUE_QUEUE_SIZE),
                 Objects.requireNonNullElse(maxSortedItems, DEFAULT_MAX_SORTED_ITEMS),
-                Objects.requireNonNullElse(maxCountUniqueValues, DEFAULT_MAX_COUNT_UNIQUE_VALUES),
+                Objects.requireNonNullElse(maxCountDistinctValues, DEFAULT_MAX_COUNT_DISTINCT_VALUES),
                 Objects.requireNonNullElse(lmdbConfig, DEFAULT_LMDB_CONFIG));
         this.mapConfig = Objects.requireNonNullElse(mapConfig, DEFAULT_MAP_CONFIG);
         this.joinMaxRows = Objects.requireNonNullElse(joinMaxRows, DEFAULT_JOIN_MAX_ROWS);

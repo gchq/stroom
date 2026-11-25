@@ -18,7 +18,6 @@ package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
-import stroom.docref.DocRef;
 import stroom.lmdb.LmdbLibrary;
 import stroom.lmdb.LmdbLibraryConfig;
 import stroom.lmdb2.LmdbEnv;
@@ -55,10 +54,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SimpleMetrics;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.read.ListAppender;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.junit.jupiter.api.AfterEach;
@@ -68,8 +63,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.EnumSource;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -1042,32 +1035,32 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     }
 
     @Test
-    void countUniqueApproxTest() {
-        super.countUniqueApproxTest();
+    void countDistinctTest() {
+        super.countDistinctTest();
     }
 
     @Test
-    void countUniqueApproxOfRowsMergedFromTwoNodes() throws InterruptedException {
-        final TableSettings tableSettings = countUniqueTable();
+    void countDistinctOfRowsMergedFromTwoNodes() throws InterruptedException {
+        final TableSettings tableSettings = countDistinctTable();
         final DataStoreSettings payloadSettings = DataStoreSettings.createPayloadProducerSearchResultStoreSettings();
         final DataStore node1 = create(tableSettings, payloadSettings);
         final DataStore node2 = create(tableSettings, payloadSettings);
         final DataStore merged = createUnlimitedDataStore(tableSettings);
 
         // Half of the values of each node are also on the other.
-        addCountUniqueRows(node1, 0, 400);
-        addCountUniqueRows(node2, 200, 600);
+        addCountDistinctRows(node1, 0, 400);
+        addCountDistinctRows(node2, 200, 600);
         transferPayloads(node1, merged);
         transferPayloads(node2, merged);
 
-        assertThat(countUniqueRows(merged, tableSettings)).containsExactlyInAnyOrder(
+        assertThat(countDistinctRows(merged, tableSettings)).containsExactlyInAnyOrder(
                 List.of("a", "600", "600", "1600"),
                 List.of("b", "1", "1", "800"));
     }
 
     // Enough values that the sketch becomes dense in the store.
     @Test
-    void countUniqueApproxOfManyValues() {
+    void dcountOfManyValues() {
         final TableSettings tableSettings = TableSettings.builder()
                 .addColumns(Column.builder()
                         .id("Group")
@@ -1079,7 +1072,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .addColumns(Column.builder()
                         .id("Approx")
                         .name("Approx")
-                        .expression("countUniqueApprox(${Value})")
+                        .expression("dcount(${Value})")
                         .format(Format.NUMBER)
                         .build())
                 .build();
@@ -1087,15 +1080,15 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         for (int i = 0; i < 20_000; i++) {
             dataStore.accept(Val.of(ValString.create("a"), ValString.create("value" + i)));
         }
-        final List<List<String>> rows = countUniqueRows(dataStore, tableSettings);
+        final List<List<String>> rows = countDistinctRows(dataStore, tableSettings);
         assertThat(rows).hasSize(1);
         // Within 3 standard errors.
         assertThat(Long.parseLong(rows.getFirst().get(1))).isBetween(19_514L, 20_486L);
     }
 
     @Test
-    void countUniqueApproxOfARuleAfterReopening() throws InterruptedException {
-        final TableSettings tableSettings = ruleTable(countUniqueTable());
+    void countDistinctOfARuleAfterReopening() throws InterruptedException {
+        final TableSettings tableSettings = ruleTable(countDistinctTable());
         final QueryKey queryKey = new QueryKey("rule");
         final LmdbDataStore first = createRuleStore(queryKey, tableSettings);
         addRuleRows(first, 0, 100);
@@ -1153,7 +1146,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 SearchRequestSource.createBasic(),
                 new QueryKey("full"),
                 "0",
-                countUniqueTable(),
+                uniqueValuesTable("countUnique(${Value})"),
                 config,
                 DataStoreSettings.createBasicSearchResultStoreSettings(),
                 "full"));
@@ -1168,10 +1161,12 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     }
 
     @Test
-    void countUniqueApproxTakesLessSpace() throws InterruptedException {
-        final long exact = addUniqueValues("countUnique(${Value})", 10, 2_000);
-        final long approx = addUniqueValues("countUniqueApprox(${Value})", 10, 2_000);
-        assertThat(approx).isLessThan(exact / 2);
+    void newCountsTakeLessSpace() throws InterruptedException {
+        final long values = addUniqueValues("countUnique(${Value})", 10, 2_000);
+        final long hashes = addUniqueValues("countDistinct(${Value})", 10, 2_000);
+        final long estimate = addUniqueValues("dcount(${Value})", 10, 2_000);
+        assertThat(hashes).isLessThan(values);
+        assertThat(estimate).isLessThan(values / 2);
     }
 
     // For measuring by hand, as the exact counts take a long time.
@@ -1179,14 +1174,16 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     @ParameterizedTest
     @CsvSource({
             "countUnique(${Value}), 100, 1000",
-            "countUniqueApprox(${Value}), 100, 1000",
+            "countDistinct(${Value}), 100, 1000",
+            "dcount(${Value}), 100, 1000",
             "countUnique(${Value}), 10, 10000",
-            "countUniqueApprox(${Value}), 10, 10000",
-            "'countUniqueApprox(${Value}, 10)', 10, 10000",
-            "'countUniqueApprox(${Value}, 16)', 10, 10000",
-            "countUniqueApprox(${Value}), 1000, 10000",
-            "countUnique(${Value}), 1000, 10000"})
-    void compareCountUnique(final String expression,
+            "countDistinct(${Value}), 10, 10000",
+            "dcount(${Value}), 10, 10000",
+            "'dcount(${Value}, 0)', 10, 10000",
+            "'dcount(${Value}, 2)', 10, 10000",
+            "countDistinct(${Value}), 1000, 10000",
+            "dcount(${Value}), 1000, 10000"})
+    void compareCountDistinct(final String expression,
                             final int groups,
                             final int valuesPerGroup) throws InterruptedException {
         final long start = System.nanoTime();
@@ -1200,11 +1197,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 String.format("%.1f", micros / groups / valuesPerGroup));
     }
 
-    // Adds each unique value to each group once and gives the size of the store.
-    private long addUniqueValues(final String expression,
-                                 final int groups,
-                                 final int valuesPerGroup) throws InterruptedException {
-        final TableSettings tableSettings = TableSettings.builder()
+    private static TableSettings uniqueValuesTable(final String expression) {
+        return TableSettings.builder()
                 .addColumns(Column.builder()
                         .id("Group")
                         .name("Group")
@@ -1219,6 +1213,13 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                         .format(Format.NUMBER)
                         .build())
                 .build();
+    }
+
+    // Adds each unique value to each group once and gives the size of the store.
+    private long addUniqueValues(final String expression,
+                                 final int groups,
+                                 final int valuesPerGroup) throws InterruptedException {
+        final TableSettings tableSettings = uniqueValuesTable(expression);
         final DataStore dataStore = createUnlimitedDataStore(tableSettings);
         for (int value = 0; value < valuesPerGroup; value++) {
             for (int group = 0; group < groups; group++) {
@@ -1247,7 +1248,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         return tableSettings.copy().columns(columns).build();
     }
 
-    // As addCountUniqueRows() but with the time of each row.
+    // As addCountDistinctRows() but with the time of each row.
     private void addRuleRows(final DataStore dataStore, final int from, final int to) {
         final Val time = ValDate.create(Instant.parse("2026-03-10T09:14:00Z").toEpochMilli());
         for (int i = from; i < to; i++) {
@@ -1271,101 +1272,50 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     }
 
     @Test
-    void countUniqueLimitTest() {
-        super.countUniqueLimitTest();
+    void countDistinctLimitTest() {
+        super.countDistinctLimitTest();
     }
 
-    // The rows of each node are under the limit, but not once they are merged.
+    // The rows of each node are under the limit, but not once they are merged. The estimate is right for so few.
     @Test
-    void countUniqueLimitOfMergedPayloads() throws InterruptedException {
-        expressionContext = ExpressionContext.builder().maxCountUniqueValues(500).build();
-        final TableSettings tableSettings = countUniqueTable();
+    void countDistinctLimitOfMergedPayloads() throws InterruptedException {
+        expressionContext = ExpressionContext.builder().maxCountDistinctValues(500).build();
+        final TableSettings tableSettings = countDistinctTable();
         final DataStoreSettings payloadSettings = DataStoreSettings.createPayloadProducerSearchResultStoreSettings();
         final DataStore node1 = create(tableSettings, payloadSettings);
         final DataStore node2 = create(tableSettings, payloadSettings);
         final DataStore merged = createUnlimitedDataStore(tableSettings);
-        addCountUniqueRows(node1, 0, 400);
-        addCountUniqueRows(node2, 200, 600);
+        addCountDistinctRows(node1, 0, 400);
+        addCountDistinctRows(node2, 200, 600);
         transferPayloads(node1, merged);
         transferPayloads(node2, merged);
 
-        assertThat(countUniqueRows(merged, tableSettings)).containsExactlyInAnyOrder(
-                List.of("a", "600", "500", "1600"),
+        assertThat(countDistinctRows(merged, tableSettings)).containsExactlyInAnyOrder(
+                List.of("a", "600", "600", "1600"),
                 List.of("b", "1", "1", "800"));
-        assertThat(lastErrorConsumer.getErrorMessages()).hasSize(1);
+        assertThat(lastErrorConsumer.getErrorMessages()).isEmpty();
     }
 
-    // A rule's row that already has more values than the limit keeps them, and adds no more. Each opening of the store
-    // logs one warning, as its messages are not shown to anyone.
+    // A rule's store keeps working if the limit is changed.
     @Test
-    void countUniqueLimitOfARuleAfterReopening() throws InterruptedException {
-        final TableSettings tableSettings = ruleTable(countUniqueTable());
+    void countDistinctLimitOfARuleAfterReopening() throws InterruptedException {
+        final TableSettings tableSettings = ruleTable(countDistinctTable());
         final QueryKey queryKey = new QueryKey("rule");
         final LmdbDataStore first = createRuleStore(queryKey, tableSettings);
-        assertThat(captureWarnings(() -> {
-            addRuleRows(first, 0, 100);
-            first.sync();
-        })).isEmpty();
+        addRuleRows(first, 0, 100);
+        first.sync();
         first.getCompletionState().signalComplete();
         first.getCompletionState().awaitCompletion();
         first.close();
 
-        expressionContext = ExpressionContext.builder().maxCountUniqueValues(50).build();
+        expressionContext = ExpressionContext.builder().maxCountDistinctValues(50).build();
         final LmdbDataStore second = createRuleStore(queryKey, tableSettings);
-        assertThat(captureWarnings(() -> {
-            addRuleRows(second, 90, 150);
-            second.sync();
-        })).singleElement().satisfies(message -> assertThat(message)
-                .contains("limit of 50 unique values", "owner=" + queryKey));
+        addRuleRows(second, 90, 150);
+        second.sync();
         assertThat(getRowValues(second, tableSettings).stream().map(row -> row.subList(1, row.size())))
                 .containsExactlyInAnyOrder(
-                        List.of("a", "150", "100", "320"),
+                        List.of("a", "150", "150", "320"),
                         List.of("b", "1", "1", "160"));
-    }
-
-    @ParameterizedTest
-    @EnumSource(SourceType.class)
-    void countUniqueLimitIsLoggedForRules(final SourceType sourceType) {
-        final DocRef owner = new DocRef("AnalyticRule", "rule-uuid", "My rule");
-        expressionContext = ExpressionContext.builder().maxCountUniqueValues(50).build();
-        final TableSettings tableSettings = ruleTable(countUniqueTable());
-        final LmdbDataStore dataStore = record((LmdbDataStore) create(
-                SearchRequestSource.builder().sourceType(sourceType).ownerDocRef(owner).build(),
-                new QueryKey("test"),
-                "0",
-                tableSettings,
-                createResultStoreConfig(),
-                // Rows here have no stream or event id.
-                DataStoreSettings.createAnalyticStoreSettings().copy().storeLatestEventReference(false).build(),
-                "test"));
-        final List<String> logged = captureWarnings(() -> {
-            addRuleRows(dataStore, 0, 100);
-            dataStore.sync();
-        });
-        final boolean rule = sourceType == SourceType.TABLE_BUILDER_ANALYTIC ||
-                             sourceType == SourceType.SCHEDULED_QUERY_ANALYTIC;
-        assertThat(logged).hasSize(rule
-                ? 1
-                : 0);
-        assertThat(logged).allSatisfy(message -> assertThat(message).contains("rule-uuid", "My rule"));
-        assertThat(lastErrorConsumer.getErrorMessages()).hasSize(1);
-    }
-
-    private static List<String> captureWarnings(final Runnable runnable) {
-        final Logger logger = (Logger) LoggerFactory.getLogger(LmdbDataStore.class);
-        final ListAppender<ILoggingEvent> appender = new ListAppender<>();
-        appender.start();
-        logger.addAppender(appender);
-        try {
-            runnable.run();
-        } finally {
-            logger.detachAppender(appender);
-            appender.stop();
-        }
-        return appender.list.stream()
-                .filter(event -> event.getLevel().isGreaterOrEqual(Level.WARN))
-                .map(ILoggingEvent::getFormattedMessage)
-                .toList();
     }
 
     @Test

@@ -19,14 +19,16 @@ package stroom.query.common.v2;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.query.language.functions.ExpressionContext;
+import stroom.test.common.AbstractValidatorTest;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestExpressionContextFactory {
+class TestExpressionContextFactory extends AbstractValidatorTest {
 
     private static final int SEARCH_LIMIT = 11;
     private static final int ANALYTIC_LIMIT = 22;
@@ -46,7 +48,7 @@ class TestExpressionContextFactory {
                                  sourceType == SourceType.SCHEDULED_QUERY_ANALYTIC;
         final SearchRequestSource source = SearchRequestSource.builder().sourceType(sourceType).build();
         final ExpressionContext context = expressionContextFactory.createContext(source, null);
-        assertThat(context.getMaxCountUniqueValues()).isEqualTo(analytic
+        assertThat(context.getMaxCountDistinctValues()).isEqualTo(analytic
                 ? ANALYTIC_LIMIT
                 : SEARCH_LIMIT);
         assertThat(context.getMaxStringLength()).isEqualTo(analytic
@@ -57,15 +59,25 @@ class TestExpressionContextFactory {
 
     @Test
     void testLimitsWithNoSource() {
-        assertThat(expressionContextFactory.createContext(null, null).getMaxCountUniqueValues())
+        assertThat(expressionContextFactory.createContext(null, null).getMaxCountDistinctValues())
                 .isEqualTo(SEARCH_LIMIT);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"-1, false", "0, false", "1, true", "1000000, true", "1000001, false"})
+    void testLimitRange(final int limit, final boolean valid) {
+        assertThat(validate(new AnalyticResultStoreConfig(
+                null, null, null, null, null, null, null, limit, null)).isEmpty()).isEqualTo(valid);
+        assertThat(validate(new SearchResultStoreConfig(
+                null, null, null, null, null, null, null, null, null, null, null, null, limit)).isEmpty())
+                .isEqualTo(valid);
     }
 
     @Test
     void testDefaultLimits() {
-        assertThat(new SearchResultStoreConfig().getMaxCountUniqueValues()).isEqualTo(10_000);
-        assertThat(new AnalyticResultStoreConfig().getMaxCountUniqueValues()).isEqualTo(10_000);
+        assertThat(new SearchResultStoreConfig().getMaxCountDistinctValues()).isEqualTo(10_000);
+        assertThat(new AnalyticResultStoreConfig().getMaxCountDistinctValues()).isEqualTo(10_000);
         assertThat(new AnalyticResultStoreConfig(
-                null, null, null, null, null, null, null, null, null).getMaxCountUniqueValues()).isEqualTo(10_000);
+                null, null, null, null, null, null, null, null, null).getMaxCountDistinctValues()).isEqualTo(10_000);
     }
 }

@@ -33,7 +33,6 @@ public class ValueReferenceIndex {
     private final SortedSet<Integer> windowShifts = new TreeSet<>();
     private boolean usesWindows;
     private final WindowRange windowRange = new WindowRange();
-    private final FunctionWarnings functionWarnings = new FunctionWarnings();
 
     /// Gets the range of time windows that hold real rows, which the functions that read other
     /// windows are given and a result store sets.
@@ -41,13 +40,6 @@ public class ValueReferenceIndex {
     /// @return The range, which is shared by everything compiled with this index.
     public WindowRange getWindowRange() {
         return windowRange;
-    }
-
-    /// Gets the warnings that functions give as they work, which a result store says what to do with.
-    ///
-    /// @return The warnings, which are shared by everything compiled with this index.
-    public FunctionWarnings getFunctionWarnings() {
-        return functionWarnings;
     }
 
     /// Records that a function reads the values of another time window, so that rows are copied
@@ -101,6 +93,15 @@ public class ValueReferenceIndex {
     /// @return A reference to the sketch.
     public HllReference addHll(final String name, final int precision) {
         return add(new HllReference(list.size(), name, precision));
+    }
+
+    /// Adds a counter of unique values.
+    ///
+    /// @param name  The name of the function that uses it.
+    /// @param limit The most unique values that are counted exactly.
+    /// @return A reference to the counter.
+    public DistinctCounterReference addDistinctCounter(final String name, final int limit) {
+        return add(new DistinctCounterReference(list.size(), name, limit));
     }
 
     public FieldValReference addFieldValue(final String name, final int fieldIndex) {

@@ -71,7 +71,7 @@ public class ExpressionContextFactory {
 
         return ExpressionContext.builder()
                 .maxStringLength(resultStoreConfig.getMaxStringFieldLength())
-                .maxCountUniqueValues(resultStoreConfig.getMaxCountUniqueValues())
+                .maxCountDistinctValues(resultStoreConfig.getMaxCountDistinctValues())
                 .dateTimeSettings(dateTimeSettings)
                 .stateProvider(stateProviderProvider.get())
                 .aiProvider(aiProviderProvider.get())

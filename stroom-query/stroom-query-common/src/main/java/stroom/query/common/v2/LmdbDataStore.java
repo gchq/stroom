@@ -18,7 +18,6 @@ package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.dictionary.api.WordListProvider;
-import stroom.docref.DocRef;
 import stroom.lmdb.stream.LmdbEntry;
 import stroom.lmdb.stream.LmdbKeyRange;
 import stroom.lmdb2.LmdbDb;
@@ -215,18 +214,6 @@ public class LmdbDataStore implements DataStore {
         this.compiledColumnArray = compiledColumns.getCompiledColumns();
         valueReferenceIndex = compiledColumns.getValueReferenceIndex();
         windowShifts = valueReferenceIndex.getWindowShifts();
-        // The messages of a rule's store or search are not shown to anyone, so log these as well.
-        final boolean logWarnings = SourceType.TABLE_BUILDER_ANALYTIC.equals(sourceType) ||
-                                    SourceType.SCHEDULED_QUERY_ANALYTIC.equals(sourceType);
-        // The key of a table builder rule's store names the rule.
-        final DocRef ownerDocRef = NullSafe.get(searchRequestSource, SearchRequestSource::getOwnerDocRef);
-        final Object owner = Objects.requireNonNullElse(ownerDocRef, queryKey);
-        valueReferenceIndex.getFunctionWarnings().setConsumer(message -> {
-            errorConsumer.add(Severity.WARNING, () -> message);
-            if (logWarnings) {
-                LOGGER.warn("{} (owner={}, componentId={})", message, owner, componentId);
-            }
-        });
         checkWindowUse(resultStoreConfig);
         // The generator is only needed to find the range of windows, for functions that read others.
         final WindowRowGenerator windowRowGenerator = timeWindows == null

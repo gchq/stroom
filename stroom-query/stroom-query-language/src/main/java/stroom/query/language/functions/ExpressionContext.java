@@ -25,15 +25,15 @@ import java.util.Objects;
 
 public class ExpressionContext {
 
-    /// The most unique values that `countUnique()` counts for a row unless another limit is set.
-    public static final int DEFAULT_MAX_COUNT_UNIQUE_VALUES = 10_000;
+    /// The most unique values that `countDistinct()` counts exactly for a row unless another limit is set.
+    public static final int DEFAULT_MAX_COUNT_DISTINCT_VALUES = 10_000;
 
     private final int maxStringLength;
     private final DateTimeSettings dateTimeSettings;
     private final StateProvider stateProvider;
     private final AiProvider aiProvider;
     private final HoppingWindow window;
-    private final int maxCountUniqueValues;
+    private final int maxCountDistinctValues;
 
     public ExpressionContext() {
         this.maxStringLength = 100;
@@ -41,7 +41,7 @@ public class ExpressionContext {
         this.stateProvider = (map, key, effectiveTimeMs) -> ValNull.INSTANCE;
         this.aiProvider = (modelNameOrUuid, systemPrompt, message) -> ValNull.INSTANCE;
         this.window = null;
-        this.maxCountUniqueValues = DEFAULT_MAX_COUNT_UNIQUE_VALUES;
+        this.maxCountDistinctValues = DEFAULT_MAX_COUNT_DISTINCT_VALUES;
     }
 
     @JsonCreator
@@ -54,7 +54,7 @@ public class ExpressionContext {
                 stateProvider,
                 aiProvider,
                 null,
-                DEFAULT_MAX_COUNT_UNIQUE_VALUES);
+                DEFAULT_MAX_COUNT_DISTINCT_VALUES);
     }
 
     private ExpressionContext(final Integer maxStringLength,
@@ -62,13 +62,13 @@ public class ExpressionContext {
                               final StateProvider stateProvider,
                               final AiProvider aiProvider,
                               final HoppingWindow window,
-                              final int maxCountUniqueValues) {
+                              final int maxCountDistinctValues) {
         this.maxStringLength = Objects.requireNonNullElse(maxStringLength, 0);
         this.dateTimeSettings = dateTimeSettings;
         this.stateProvider = stateProvider;
         this.aiProvider = aiProvider;
         this.window = window;
-        this.maxCountUniqueValues = maxCountUniqueValues;
+        this.maxCountDistinctValues = maxCountDistinctValues;
     }
 
     public int getMaxStringLength() {
@@ -96,11 +96,11 @@ public class ExpressionContext {
         return window;
     }
 
-    /// Gets the most unique values that `countUnique()` counts for a row.
+    /// Gets the most unique values that `countDistinct()` counts exactly for a row.
     ///
     /// @return The most unique values.
-    public int getMaxCountUniqueValues() {
-        return maxCountUniqueValues;
+    public int getMaxCountDistinctValues() {
+        return maxCountDistinctValues;
     }
 
     @Override
@@ -113,14 +113,14 @@ public class ExpressionContext {
         }
         final ExpressionContext that = (ExpressionContext) o;
         return maxStringLength == that.maxStringLength &&
-                maxCountUniqueValues == that.maxCountUniqueValues &&
+                maxCountDistinctValues == that.maxCountDistinctValues &&
                 Objects.equals(dateTimeSettings, that.dateTimeSettings) &&
                 Objects.equals(window, that.window);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(maxStringLength, dateTimeSettings, window, maxCountUniqueValues);
+        return Objects.hash(maxStringLength, dateTimeSettings, window, maxCountDistinctValues);
     }
 
     @Override
@@ -129,7 +129,7 @@ public class ExpressionContext {
                 "maxStringLength=" + maxStringLength +
                 ", dateTimeSettings=" + dateTimeSettings +
                 ", window=" + window +
-                ", maxCountUniqueValues=" + maxCountUniqueValues +
+                ", maxCountDistinctValues=" + maxCountDistinctValues +
                 '}';
     }
 
@@ -152,7 +152,7 @@ public class ExpressionContext {
         private StateProvider stateProvider;
         private AiProvider aiProvider;
         private HoppingWindow window;
-        private int maxCountUniqueValues = DEFAULT_MAX_COUNT_UNIQUE_VALUES;
+        private int maxCountDistinctValues = DEFAULT_MAX_COUNT_DISTINCT_VALUES;
 
         private Builder() {
         }
@@ -163,7 +163,7 @@ public class ExpressionContext {
             this.stateProvider = expressionContext.stateProvider;
             this.aiProvider = expressionContext.aiProvider;
             this.window = expressionContext.window;
-            this.maxCountUniqueValues = expressionContext.maxCountUniqueValues;
+            this.maxCountDistinctValues = expressionContext.maxCountDistinctValues;
         }
 
         public Builder maxStringLength(final int maxStringLength) {
@@ -195,12 +195,12 @@ public class ExpressionContext {
             return this;
         }
 
-        /// Sets the most unique values that `countUnique()` counts for a row.
+        /// Sets the most unique values that `countDistinct()` counts exactly for a row.
         ///
-        /// @param maxCountUniqueValues The most unique values.
+        /// @param maxCountDistinctValues The most unique values.
         /// @return This builder.
-        public Builder maxCountUniqueValues(final int maxCountUniqueValues) {
-            this.maxCountUniqueValues = maxCountUniqueValues;
+        public Builder maxCountDistinctValues(final int maxCountDistinctValues) {
+            this.maxCountDistinctValues = maxCountDistinctValues;
             return this;
         }
 
@@ -211,7 +211,7 @@ public class ExpressionContext {
                     stateProvider,
                     aiProvider,
                     window,
-                    maxCountUniqueValues);
+                    maxCountDistinctValues);
         }
     }
 }

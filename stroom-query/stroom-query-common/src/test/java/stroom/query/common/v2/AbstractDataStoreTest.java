@@ -37,7 +37,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SimpleMetrics;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.Severity;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -278,34 +277,44 @@ abstract class AbstractDataStoreTest {
     }
 
     /// Check that the estimated and exact counts of unique values are the same for few values.
-    void countUniqueApproxTest() {
-        final TableSettings tableSettings = countUniqueTable();
+    void countDistinctTest() {
+        final TableSettings tableSettings = countDistinctTable();
         final DataStore dataStore = createUnlimitedDataStore(tableSettings);
-        addCountUniqueRows(dataStore, 0, 500);
-        assertThat(countUniqueRows(dataStore, tableSettings)).containsExactlyInAnyOrder(
+        addCountDistinctRows(dataStore, 0, 500);
+        assertThat(countDistinctRows(dataStore, tableSettings)).containsExactlyInAnyOrder(
                 List.of("a", "500", "500", "1000"),
                 List.of("b", "1", "1", "500"));
     }
 
-    /// Check that exact counts of unique values stop at their limit, with one warning.
-    void countUniqueLimitTest() {
-        expressionContext = ExpressionContext.builder().maxCountUniqueValues(100).build();
-        final TableSettings tableSettings = countUniqueTable();
+    /// Check that only a group with more unique values than the limit has an estimate for its exact count.
+    void countDistinctLimitTest() {
+        expressionContext = ExpressionContext.builder().maxCountDistinctValues(10_000).build();
+        final TableSettings tableSettings = countDistinctTable();
         final DataStore dataStore = createUnlimitedDataStore(tableSettings);
-        addCountUniqueRows(dataStore, 0, 500);
-        assertThat(countUniqueRows(dataStore, tableSettings)).containsExactlyInAnyOrder(
-                List.of("a", "500", "100", "1000"),
-                List.of("b", "1", "1", "500"));
-        assertThat(lastErrorConsumer.getErrorMessages()).singleElement().satisfies(message -> {
-            assertThat(message.getSeverity()).isEqualTo(Severity.WARNING);
-            assertThat(message.getMessage()).contains("limit of 100 unique values", "countUniqueApprox()");
-        });
+        for (int i = 0; i < 20_000; i++) {
+            dataStore.accept(Val.of(ValString.create("over"), ValLong.create(i)));
+        }
+        for (int i = 0; i < 10_000; i++) {
+            dataStore.accept(Val.of(ValString.create("under"), ValLong.create(i)));
+        }
+        final List<List<String>> rows = countDistinctRows(dataStore, tableSettings);
+        assertThat(rows).hasSize(2);
+        for (final List<String> row : rows) {
+            if (row.getFirst().equals("over")) {
+                assertThat(row.get(2)).isEqualTo(row.get(1));
+                // Within 3 standard errors.
+                assertThat(Long.parseLong(row.get(2))).isBetween(19_514L, 20_486L);
+            } else {
+                assertThat(row.get(2)).isEqualTo("10000");
+            }
+        }
+        assertThat(lastErrorConsumer.getErrorMessages()).isEmpty();
     }
 
     /// Create a table of the unique values in each group, estimated and exact, and how many rows there are.
     ///
     /// @return The settings of the table.
-    TableSettings countUniqueTable() {
+    TableSettings countDistinctTable() {
         return TableSettings.builder()
                 .addColumns(Column.builder()
                         .id("Group")
@@ -317,13 +326,13 @@ abstract class AbstractDataStoreTest {
                 .addColumns(Column.builder()
                         .id("Approx")
                         .name("Approx")
-                        .expression("countUniqueApprox(${Value})")
+                        .expression("dcount(${Value})")
                         .format(Format.NUMBER)
                         .build())
                 .addColumns(Column.builder()
                         .id("Exact")
                         .name("Exact")
-                        .expression("countUnique(${Value})")
+                        .expression("countDistinct(${Value})")
                         .format(Format.NUMBER)
                         .build())
                 .addColumns(Column.builder()
@@ -340,7 +349,7 @@ abstract class AbstractDataStoreTest {
     /// @param dataStore The store to add the rows to.
     /// @param from      The first value to add to group a.
     /// @param to        One more than the last value to add to group a.
-    void addCountUniqueRows(final DataStore dataStore, final int from, final int to) {
+    void addCountDistinctRows(final DataStore dataStore, final int from, final int to) {
         for (int i = from; i < to; i++) {
             dataStore.accept(Val.of(ValString.create("a"), ValString.create("value" + i)));
             dataStore.accept(Val.of(ValString.create("a"), ValString.create("value" + i)));
@@ -353,7 +362,7 @@ abstract class AbstractDataStoreTest {
     /// @param dataStore     The store to complete.
     /// @param tableSettings The settings of the table.
     /// @return The values of each row.
-    List<List<String>> countUniqueRows(final DataStore dataStore, final TableSettings tableSettings) {
+    List<List<String>> countDistinctRows(final DataStore dataStore, final TableSettings tableSettings) {
         try {
             dataStore.getCompletionState().signalComplete();
             dataStore.getCompletionState().awaitCompletion();

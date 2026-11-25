@@ -62,13 +62,13 @@ class TestMapDataStore extends AbstractDataStoreTest {
     }
 
     @Test
-    void countUniqueApproxTest() {
-        super.countUniqueApproxTest();
+    void countDistinctTest() {
+        super.countDistinctTest();
     }
 
     @Test
-    void countUniqueLimitTest() {
-        super.countUniqueLimitTest();
+    void countDistinctLimitTest() {
+        super.countDistinctLimitTest();
     }
 
     @Test

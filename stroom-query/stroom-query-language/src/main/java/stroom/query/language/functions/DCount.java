@@ -27,25 +27,27 @@ import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
-        name = CountUniqueApprox.NAME,
+        name = DCount.NAME,
         commonCategory = FunctionCategory.AGGREGATE,
-        commonDescription = "Estimates the number of unique values across all grouped records. This uses far less " +
-                "space and time than " + CountUnique.NAME + " if there are many unique values.",
+        commonDescription = "Estimates the number of unique values across all grouped records. This takes less space " +
+                "than " + CountDistinct.NAME + " if there are many unique values.",
         commonReturnType = ValLong.class,
         commonReturnDescription = "An estimate of the number of unique values.",
         signatures = {
                 @FunctionSignature(
                         description = "Estimates the number of unique values across all grouped records. The " +
                                 "estimate is exact or within a few of it up to about five thousand values, and has " +
-                                "a standard error of 0.8% above that. Use " + CountUnique.NAME + " for an exact " +
-                                "count, which has a limit.",
+                                "a standard error of 0.8% above that. Use " + CountDistinct.NAME + " for a count " +
+                                "that is exact up to a limit, which is " +
+                                ExpressionContext.DEFAULT_MAX_COUNT_DISTINCT_VALUES + " unless it has been " +
+                                "configured.",
                         args = @FunctionArg(
                                 name = "values",
                                 description = "Grouped field or the result of another function.",
                                 argType = Val.class)),
                 @FunctionSignature(
                         description = "Estimates the number of unique values across all grouped records, with the " +
-                                "supplied precision. A lower precision takes less space, but has a greater error " +
+                                "supplied accuracy. A lower accuracy takes less space, but has a greater error " +
                                 "that applies from fewer values.",
                         args = {
                                 @FunctionArg(
@@ -53,20 +55,23 @@ import java.util.function.Supplier;
                                         description = "Grouped field or the result of another function.",
                                         argType = Val.class),
                                 @FunctionArg(
-                                        name = "precision",
-                                        description = "The precision of the estimate, from " +
-                                                HyperLogLogPlusPlus.MIN_PRECISION + " (3.3% standard error, up to " +
-                                                "768 bytes per row) to " + HyperLogLogPlusPlus.MAX_PRECISION +
-                                                " (0.4% standard error, up to 48 kilobytes per row).",
+                                        name = "accuracy",
+                                        description = "The accuracy of the estimate: 0 (1.6% standard error, up to " +
+                                                "3 kilobytes per row), 1 (0.8%, up to 12 kilobytes) or 2 (0.4%, up " +
+                                                "to 48 kilobytes).",
                                         argType = ValInteger.class,
-                                        defaultValue = "" + HyperLogLogPlusPlus.DEFAULT_PRECISION)
+                                        defaultValue = "1")
                         })
         })
-class CountUniqueApprox extends AbstractFunction implements AggregateFunction {
+class DCount extends AbstractFunction implements AggregateFunction {
 
-    static final String NAME = "countUniqueApprox";
+    static final String NAME = "dcount";
 
-    private int precision = HyperLogLogPlusPlus.DEFAULT_PRECISION;
+    // The precision of each accuracy, which are the same as Kusto's.
+    private static final int[] PRECISIONS = {12, 14, 16};
+    private static final int DEFAULT_ACCURACY = 1;
+
+    private int precision = PRECISIONS[DEFAULT_ACCURACY];
     private Generator gen;
     private Function function;
     private HllReference hllReference;
@@ -74,14 +79,14 @@ class CountUniqueApprox extends AbstractFunction implements AggregateFunction {
     /// Create the function.
     ///
     /// @param name The name the function was called by.
-    public CountUniqueApprox(final String name) {
+    public DCount(final String name) {
         super(name, 1, 2);
     }
 
-    /// Set the values to count and, optionally, the precision.
+    /// Set the values to count and, optionally, the accuracy.
     ///
     /// @param params The parameters of the function.
-    /// @throws ParseException If the values are already aggregated or the precision is not a whole number in range.
+    /// @throws ParseException If the values are already aggregated or the accuracy is not an allowed one.
     @Override
     public void setParams(final Param[] params) throws ParseException {
         super.setParams(params);
@@ -105,15 +110,14 @@ class CountUniqueApprox extends AbstractFunction implements AggregateFunction {
     }
 
     private int parsePrecision(final Param[] params) throws ParseException {
-        final int value = ParamParseUtil.parseIntParam(params, 1, name, true);
+        final int accuracy = ParamParseUtil.parseIntParam(params, 1, name, false);
         // Numbers are parsed as doubles, which are cut to an int.
-        final boolean whole = ((Val) params[1]).toDouble() == value;
-        if (!whole || value < HyperLogLogPlusPlus.MIN_PRECISION || value > HyperLogLogPlusPlus.MAX_PRECISION) {
-            throw new ParseException("Whole number from " + HyperLogLogPlusPlus.MIN_PRECISION +
-                                     " to " + HyperLogLogPlusPlus.MAX_PRECISION +
+        final boolean whole = ((Val) params[1]).toDouble() == accuracy;
+        if (!whole || accuracy < 0 || accuracy >= PRECISIONS.length) {
+            throw new ParseException("Accuracy from 0 to " + (PRECISIONS.length - 1) +
                                      " expected as second argument of '" + name + "' function", 0);
         }
-        return value;
+        return PRECISIONS[accuracy];
     }
 
     /// Add a reference to the stored sketch, unless the parameter is static.

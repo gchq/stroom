@@ -36,14 +36,14 @@ import java.util.function.IntFunction;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class TestCountUniqueApprox {
+class TestDCount {
 
-    private static final String COUNT = "countUniqueApprox(${val})";
+    private static final String COUNT = "dcount(${val})";
     // A stored field value, which is the same size for all longs.
     private static final int FIELD_SIZE = 1 + Long.BYTES;
 
     @ParameterizedTest
-    @ValueSource(strings = {COUNT, "countUniqueApprox(${val}, 10)", "countUniqueApprox(${val}, 16)"})
+    @ValueSource(strings = {COUNT, "dcount(${val}, 0)", "dcount(${val}, 1)", "dcount(${val}, 2)", "dCount(${val})"})
     void testSmallCounts(final String expression) throws ParseException {
         final Compiled compiled = new Compiled(expression);
         assertThat(compiled.eval()).isEqualTo(ValLong.create(0));
@@ -56,7 +56,7 @@ class TestCountUniqueApprox {
         assertThat(compiled.eval()).isEqualTo(ValLong.create(2));
         compiled.set(ValString.create(""));
         assertThat(compiled.eval()).isEqualTo(ValLong.create(3));
-        // Values of different types are different, as they are to countUnique().
+        // Values of different types are different, as they are to countDistinct().
         compiled.set(ValInteger.create(1));
         compiled.set(ValLong.create(1));
         compiled.set(ValString.create("1"));
@@ -79,10 +79,10 @@ class TestCountUniqueApprox {
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
-            "countUniqueApprox(${val}) | 0.0081",
-            "countUniqueApprox(${val}, 10) | 0.0325",
-            "countUniqueApprox(${val}, 12) | 0.0163",
-            "countUniqueApprox(${val}, 16) | 0.0041"})
+            "dcount(${val}) | 0.0081",
+            "dcount(${val}, 0) | 0.0163",
+            "dcount(${val}, 1) | 0.0081",
+            "dcount(${val}, 2) | 0.0041"})
     void testLargeCountsMergedOneRowAtATime(final String expression, final double standardError)
             throws ParseException {
         // As the LMDB store does, reading, merging and writing the stored values for each event.
@@ -101,6 +101,19 @@ class TestCountUniqueApprox {
         }
         assertThat(compiled.read(stored).eval().toLong() / 30_000D)
                 .isBetween(1 - 3 * standardError, 1 + 3 * standardError);
+    }
+
+    // The default is the same as Kusto's.
+    @Test
+    void testDefaultAccuracy() throws ParseException {
+        final Compiled compiled = new Compiled(COUNT);
+        final Compiled same = new Compiled("dcount(${val}, 1)");
+        for (int i = 0; i < 100_000; i++) {
+            compiled.set(ValLong.create(i));
+            same.set(ValLong.create(i));
+        }
+        assertThat(compiled.eval()).isEqualTo(same.eval());
+        assertThat(compiled.write()).isEqualTo(same.write());
     }
 
     // There can be very many rows, so they must be as small as possible.
@@ -124,9 +137,9 @@ class TestCountUniqueApprox {
     }
 
     @ParameterizedTest
-    @CsvSource({"10,770", "11,1538", "12,3074", "13,6146", "14,12290", "15,24579", "16,49155"})
-    void testLargeRowSize(final int precision, final int size) throws ParseException {
-        final Compiled compiled = new Compiled("countUniqueApprox(${val}, " + precision + ")");
+    @CsvSource({"0,3074", "1,12290", "2,49155"})
+    void testLargeRowSize(final int accuracy, final int size) throws ParseException {
+        final Compiled compiled = new Compiled("dcount(${val}, " + accuracy + ")");
         for (int i = 0; i < 100_000; i++) {
             compiled.set(ValLong.create(i));
         }
@@ -174,7 +187,7 @@ class TestCountUniqueApprox {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"countUniqueApprox('a')", "countUniqueApprox(5)", "countUniqueApprox('a', 12)"})
+    @ValueSource(strings = {"dcount('a')", "dcount(5)", "dcount('a', 2)"})
     void testStaticValue(final String expression) throws ParseException {
         final Compiled compiled = new Compiled(expression);
         compiled.set(ValLong.create(1));
@@ -185,18 +198,19 @@ class TestCountUniqueApprox {
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
-            "countUniqueApprox() | Invalid number of parameters",
-            "countUniqueApprox(${val}, 12, 1) | Invalid number of parameters",
-            "countUniqueApprox(${val}, 9) | Whole number from 10 to 16 expected as second argument",
-            "countUniqueApprox(${val}, 17) | Whole number from 10 to 16 expected as second argument",
-            "countUniqueApprox(${val}, 10.5) | Whole number from 10 to 16 expected as second argument",
-            "countUniqueApprox(${val}, 16.9) | Whole number from 10 to 16 expected as second argument",
-            "countUniqueApprox('a', 9) | Whole number from 10 to 16 expected as second argument",
-            "countUniqueApprox(${val}, 0) | Positive number expected as second argument",
-            "countUniqueApprox(${val}, -12) | Positive number expected as second argument",
-            "countUniqueApprox(${val}, 'x') | Number expected as second argument",
-            "countUniqueApprox(${val}, ${val}) | Number expected as second argument",
-            "countUniqueApprox(count()) | countUniqueApprox cannot be applied to aggregating function"})
+            "dcount() | Invalid number of parameters",
+            "dcount(${val}, 1, 1) | Invalid number of parameters",
+            "dcount(${val}, -1) | Accuracy from 0 to 2 expected as second argument of 'dcount' function",
+            "dcount(${val}, 3) | Accuracy from 0 to 2 expected as second argument",
+            "dcount(${val}, 4) | Accuracy from 0 to 2 expected as second argument",
+            "dcount(${val}, 14) | Accuracy from 0 to 2 expected as second argument",
+            "dcount(${val}, 0.5) | Accuracy from 0 to 2 expected as second argument",
+            "dcount(${val}, 2.9) | Accuracy from 0 to 2 expected as second argument",
+            "dcount(${val}, -0.5) | Accuracy from 0 to 2 expected as second argument",
+            "dcount('a', 3) | Accuracy from 0 to 2 expected as second argument",
+            "dcount(${val}, 'x') | Number expected as second argument",
+            "dcount(${val}, ${val}) | Number expected as second argument",
+            "dcount(count()) | dcount cannot be applied to aggregating function"})
     void testBadParams(final String expression, final String message) {
         assertThatThrownBy(() -> new Compiled(expression))
                 .isInstanceOf(TokenException.class)

@@ -169,7 +169,6 @@ public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> 
         final SearchRequestSource searchRequestSource = SearchRequestSource
                 .builder()
                 .sourceType(SourceType.SCHEDULED_QUERY_ANALYTIC)
-                .ownerDocRef(doc.asDocRef())
                 .componentId(SearchRequestFactory.TABLE_COMPONENT_ID)
                 .build();
 

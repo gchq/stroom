@@ -485,7 +485,6 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
         final SearchRequestSource searchRequestSource = SearchRequestSource
                 .builder()
                 .sourceType(SourceType.SCHEDULED_QUERY_ANALYTIC)
-                .ownerDocRef(analytic.asDocRef())
                 .componentId(SearchRequestFactory.TABLE_COMPONENT_ID)
                 .build();
 

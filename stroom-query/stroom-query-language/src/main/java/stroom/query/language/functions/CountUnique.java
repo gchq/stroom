@@ -16,7 +16,6 @@
 
 package stroom.query.language.functions;
 
-import stroom.query.language.functions.ref.FunctionWarnings;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValListReference;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
@@ -25,6 +24,7 @@ import java.text.ParseException;
 import java.util.List;
 import java.util.function.Supplier;
 
+@Deprecated // Use countDistinct() or dcount()
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = CountUnique.NAME,
@@ -33,10 +33,10 @@ import java.util.function.Supplier;
         commonReturnDescription = "The number of unique values",
         signatures = @FunctionSignature(
                 category = FunctionCategory.AGGREGATE,
-                description = "Determines the number of unique values across all grouped records, up to a limit " +
-                        "that is 10,000 unless an administrator has changed it. The count of a group that has more " +
-                        "unique values stays at the limit, with a warning. Use " + CountUniqueApprox.NAME +
-                        " to estimate higher counts.",
+                description = "Deprecated, use " + CountDistinct.NAME + " or " + DCount.NAME + " instead as they " +
+                        "take far less space and time if there are many unique values. Rename a table builder " +
+                        "rule when changing it to use either, as they can't read the values that it has stored. " +
+                        "Determines the number of unique values across all grouped records.",
                 args = @FunctionArg(
                         name = "values",
                         description = "Grouped field or the result of another function",
@@ -45,22 +45,12 @@ class CountUnique extends AbstractFunction implements AggregateFunction {
 
     static final String NAME = "countUnique";
 
-    private final int maxValues;
     private Generator gen;
     private Function function;
     private ValListReference valListReference;
-    private FunctionWarnings functionWarnings;
 
-    /// Create the function.
-    ///
-    /// @param context Gives the most unique values to count, or null for the default.
-    /// @param name    The name the function was called by.
-    public CountUnique(final ExpressionContext context,
-                       final String name) {
+    public CountUnique(final String name) {
         super(name, 1, 1);
-        maxValues = context == null
-                ? ExpressionContext.DEFAULT_MAX_COUNT_UNIQUE_VALUES
-                : context.getMaxCountUniqueValues();
     }
 
     @Override
@@ -87,7 +77,6 @@ class CountUnique extends AbstractFunction implements AggregateFunction {
     @Override
     public void addValueReferences(final ValueReferenceIndex valueReferenceIndex) {
         valListReference = valueReferenceIndex.addValList(name);
-        functionWarnings = valueReferenceIndex.getFunctionWarnings();
         super.addValueReferences(valueReferenceIndex);
     }
 
@@ -98,7 +87,7 @@ class CountUnique extends AbstractFunction implements AggregateFunction {
         }
 
         final Generator childGenerator = function.createGenerator();
-        return new Gen(childGenerator, valListReference, maxValues, functionWarnings);
+        return new Gen(childGenerator, valListReference);
     }
 
     @Override
@@ -122,21 +111,11 @@ class CountUnique extends AbstractFunction implements AggregateFunction {
     private static final class Gen extends AbstractSingleChildGenerator {
 
         private final ValListReference valListReference;
-        private final int maxValues;
-        private final FunctionWarnings functionWarnings;
-        private final String limitMessage;
 
         Gen(final Generator childGenerator,
-            final ValListReference valListReference,
-            final int maxValues,
-            final FunctionWarnings functionWarnings) {
+            final ValListReference valListReference) {
             super(childGenerator);
             this.valListReference = valListReference;
-            this.maxValues = maxValues;
-            this.functionWarnings = functionWarnings;
-            this.limitMessage = NAME + "() stopped counting at its limit of " + maxValues +
-                                " unique values for one or more groups. Use " + CountUniqueApprox.NAME +
-                                "() to estimate higher counts.";
         }
 
         @Override
@@ -145,21 +124,11 @@ class CountUnique extends AbstractFunction implements AggregateFunction {
             final Val val = childGenerator.eval(storedValues, null);
             if (val.type().isValue()) {
                 final List<Val> list = valListReference.get(storedValues);
-                if (!list.contains(val) && checkLimit(list)) {
+                if (!list.contains(val)) {
                     list.add(val);
                     valListReference.set(storedValues, list);
                 }
             }
-        }
-
-        // Find out if there is room for another value, and warn if not. A row that was stored with a higher limit can
-        // already have more values than this one, which it keeps.
-        private boolean checkLimit(final List<Val> list) {
-            if (list.size() < maxValues) {
-                return true;
-            }
-            functionWarnings.warn(limitMessage);
-            return false;
         }
 
         @Override
@@ -175,10 +144,6 @@ class CountUnique extends AbstractFunction implements AggregateFunction {
             boolean changed = false;
             for (final Val value : newList) {
                 if (!existingList.contains(value)) {
-                    if (!checkLimit(existingList)) {
-                        // None of the other values can be added either.
-                        break;
-                    }
                     existingList.add(value);
                     changed = true;
                 }
