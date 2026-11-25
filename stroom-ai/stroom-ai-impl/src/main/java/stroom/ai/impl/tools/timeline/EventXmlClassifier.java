@@ -377,6 +377,9 @@ final class EventXmlClassifier {
         INDEX_FIELDS("index fields"),
         /// From the source's own event code, classified once and confirmed.
         EVENT_CODE("event code"),
+        /// By the source's own event code the index holds, its role given by the call, a skill, the catalogue or an
+        /// AGENTS doc (else an action of its code).
+        TYPE_FIELD("event type field"),
         /// By the call's (or skill's) roles.
         ROLES("roles given"),
         /// Not classified: an action of the source.
@@ -471,6 +474,15 @@ final class EventXmlClassifier {
         /// @return It with that role (an override).
         Classified withRole(final Role role) {
             return new Classified(element, action, typeId, role, kind, application, object, host, keys, route);
+        }
+
+        /// @param newRole A role in its place.
+        /// @param newKind An action's kind in its place, or null to keep its own.
+        /// @return It with that role and kind (from the catalogue of its stream's translation).
+        Classified withRole(final Role newRole, final String newKind) {
+            return new Classified(element, action, typeId, newRole, newKind == null
+                    ? kind
+                    : newKind, application, object, host, keys, route);
         }
     }
 }

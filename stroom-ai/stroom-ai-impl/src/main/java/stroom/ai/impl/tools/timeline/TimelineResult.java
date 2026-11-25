@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.timeline;
 
+import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.sequence.KeyGroupSource;
 import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Activity;
 import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Characterised;
@@ -43,6 +44,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
 
 /// What `activity_timeline` returns: over MCP JSON (also its structured content), in a chat Markdown, each with the
@@ -57,6 +59,9 @@ final class TimelineResult {
     static final int MAX_BARS = 200;
     /// The most lanes gantt_chart draws in one chart (as `GanttCharts` keeps).
     static final int MAX_LANES = 20;
+
+    // The most types listed for each origin of a source's roles.
+    private static final int MAX_TYPES_LISTED = 20;
 
     private TimelineResult() {
         // Static only.
@@ -97,6 +102,18 @@ final class TimelineResult {
             run.classification().routes().getOrDefault(i, Map.of()).forEach((route, count) ->
                     routes.put(route.description(), count));
             source.put("classified_by", routes);
+            source.put("fields", fields(run.sources().get(i)));
+            final Map<String, Map<String, Long>> byStream = reading(run).byStream().get(i);
+            if (byStream != null && !byStream.isEmpty()) {
+                source.put("fields_by_pipeline", byStream);
+            }
+            final Map<String, Set<String>> origins = NullSafe.map(run.classification().roleFrom()).get(i);
+            if (origins != null && !origins.isEmpty()) {
+                final Map<String, Object> from = new LinkedHashMap<>();
+                origins.forEach((origin, types) -> from.put(origin, types.stream().limit(MAX_TYPES_LISTED)
+                        .toList()));
+                source.put("roles_from", from);
+            }
             sources.add(source);
         }
         map.put("sources", sources);
@@ -115,13 +132,25 @@ final class TimelineResult {
             map.put("left_out", leftOut);
         }
         map.put("events_read", run.read().events().size());
+        map.put("scans", run.read().scans());
         if (!NullSafe.list(run.ranges()).isEmpty()) {
             map.put("none_in_period", run.ranges().stream().map(TimelineResult::range).toList());
         }
         if (run.classification().ignored() > 0) {
             map.put("events_ignored", run.classification().ignored());
         }
-        map.put("events_xml", xml(run.xml()));
+        final Map<String, Object> xml = xml(run.xml());
+        if (!reading(run).xmlPaths().isEmpty()) {
+            xml.put("paths_read", reading(run).xmlPaths().stream().map(paths -> Map.<String, Object>of(
+                    "source", paths.source(), "index", paths.index(), "paths", paths.paths(), "events",
+                    paths.events(), "suggestion", paths.suggestion())).toList());
+        }
+        map.put("events_xml", xml);
+        if (!reading(run).offers().isEmpty()) {
+            map.put("event_types_lines_to_offer", Map.of("by_index", reading(run).offers(), "how",
+                    "The event codes classified this run, as an AGENTS doc's ## Event types lines: offer them "
+                    + "(propose_instructions, in the index's folder) so later runs take them from the doc."));
+        }
         map.put("ended_early", endedEarly(run.read()));
         map.put("span_count", run.built().spans().size());
         map.put("span_hosts", spanHosts(run.built()));
@@ -248,6 +277,25 @@ final class TimelineResult {
                 .filter(note -> note.leftOut() == null && note.name().equals(name))
                 .findFirst()
                 .orElse(null);
+    }
+
+    // How the run read its sources; none known for a run without it.
+    private static TimelineReading reading(final TimelineRun run) {
+        return run.reading() == null
+                ? TimelineReading.NONE
+                : run.reading();
+    }
+
+    // The fields a source's events were read by, each thing's: the call's or those mapped for its index.
+    private static Map<String, String> fields(final Source source) {
+        final Map<String, String> out = new LinkedHashMap<>();
+        out.put(InstructionRules.USER_FIELD, source.userField());
+        NullSafe.consume(source.hostField(), field -> out.put(InstructionRules.HOST_FIELD, field));
+        NullSafe.consume(source.processField(), field -> out.put(InstructionRules.APPLICATION_FIELD, field));
+        NullSafe.consume(source.titleField(), field -> out.put(InstructionRules.TITLE_FIELD, field));
+        NullSafe.consume(source.objectField(), field -> out.put(InstructionRules.OBJECT_FIELD, field));
+        NullSafe.consume(source.textField(), field -> out.put(InstructionRules.TEXT_FIELD, field));
+        return out;
     }
 
     private static Map<String, Object> xml(final XmlRead xml) {

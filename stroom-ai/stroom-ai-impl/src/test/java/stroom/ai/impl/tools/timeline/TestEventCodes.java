@@ -76,7 +76,9 @@ class TestEventCodes {
                 .contains("call again with the source's typeRoles, {\"<code>\": \"<role>\"}",
                         "\"idle\" (the user went idle", "\"focus\" (a window",
                         "A code left out is an action of its own name.")
-                .endsWith("the commonest first: clipboard 127, focus 55, lock 11, unlock 11.");
+                .contains("the commonest first: clipboard 127, focus 55, lock 11, unlock 11.")
+                .endsWith("offer them as an AGENTS doc's '## Event types' lines (- <code>: <role>) where the index is, "
+                          + "with propose_instructions.");
         // A model that answered, but not readably.
         assertThat(EventCodes.unclassified("Windows", "event.code", Map.of("4800", 1), stub("?", new ArrayList<>())))
                 .contains("(the model's answer couldn't be read)");
@@ -86,7 +88,7 @@ class TestEventCodes {
             many.put("c" + i, 1_000 - i);
         }
         assertThat(EventCodes.unclassified("Windows", "event.code", many, ModelSideCalls.NONE))
-                .contains("c99 901").doesNotContain("c100 ").endsWith(" and 2 more.");
+                .contains("c99 901").doesNotContain("c100 ").contains(" and 2 more. ");
     }
 
     @Test

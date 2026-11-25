@@ -35,6 +35,7 @@ import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.query.DataSourceDocumentation;
 import stroom.ai.impl.tools.sequence.InMemoryKeyStreams;
 import stroom.ai.impl.tools.skills.SkillCatalogue;
+import stroom.ai.impl.tools.streams.StreamProvenance;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.docref.DocRef;
 import stroom.query.api.datasource.FindFieldCriteria;
@@ -77,6 +78,7 @@ class TestActivityTimelineTargets {
     private final DataSourceAccess dataSourceAccess = Mockito.mock(DataSourceAccess.class);
     private final QueryService queryService = Mockito.mock(QueryService.class);
     private final AgentInstructions agentInstructions = Mockito.mock(AgentInstructions.class);
+    private final StreamProvenance streamProvenance = Mockito.mock(StreamProvenance.class);
     private FakeTabWorkspace files;
     private ActivityTimelineTool tool;
     private List<Map<String, Object>> cloud;
@@ -123,7 +125,8 @@ class TestActivityTimelineTargets {
         tool = new ActivityTimelineTool(files.workspace(), () -> streams, dataSourceAccess, () -> queryService,
                 Mockito.mock(AiAuditLog.class), Mockito.mock(TimelineEventXml.class), timelineFields, sourceChoice,
                 () -> Mockito.mock(SkillCatalogue.class), Mockito.mock(DocumentAccess.class), agentInstructions,
-                () -> Mockito.mock(ElasticEsql.class), () -> Mockito.mock(DataSourceDocumentation.class));
+                () -> Mockito.mock(ElasticEsql.class), () -> Mockito.mock(DataSourceDocumentation.class),
+                () -> streamProvenance);
         // The person's own: a sign-in, a file read, and a password they changed themselves (their own act on their
         // own account: theirs, never done to them).
         cloud.add(doc("09:00", "P1", "pat", "Logon", "P1", "pat"));

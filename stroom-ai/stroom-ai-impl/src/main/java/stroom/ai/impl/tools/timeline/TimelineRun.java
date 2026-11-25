@@ -56,6 +56,8 @@ import java.util.Map;
 ///                       not asked.
 /// @param hostLanes      What the lanes by host are: the field holding the host, described
 ///                       ([TimelineLaneTitles#hosts]); null for lanes by source.
+/// @param reading        How the sources were read: the scans, each event's own pipeline's fields, the Events XML
+///                       paths read, the `## Event types` lines to offer.
 record TimelineRun(String entity,
                    Period period,
                    long capMs,
@@ -76,7 +78,8 @@ record TimelineRun(String entity,
                    ToolTimeZone zone,
                    List<EventRange> ranges,
                    TimelineTargets.Asked targets,
-                   String hostLanes) {
+                   String hostLanes,
+                   TimelineReading reading) {
 
     /// @param source A source, by its place.
     /// @return Its name.

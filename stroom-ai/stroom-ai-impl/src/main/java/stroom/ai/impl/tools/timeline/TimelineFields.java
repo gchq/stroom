@@ -65,13 +65,27 @@ import java.util.regex.Pattern;
 /// person (or account) an event was done to ([InstructionRules#TARGET_PERSON_FIELD], `TARGET_USER_FIELD`): a User
 /// object of the action, by the convention's `EventDetail/Authorise/User/UserDetails/Id` and
 /// `EventDetail/Authorise/User/Id` (ECS `user.target.id`, `user.target.name`, as it maps the User objects of Create,
-/// Delete and Update too).
+/// Delete and Update too). What has no convention (the application, the object, the window title, a session's key, a
+/// process's id) is found by the paths of [#PLAN_PATHS] in the plans and the From column alike.
 public class TimelineFields {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TimelineFields.class);
 
+    /// A process's id, as the schema's Process element holds it: read from the index where a plan maps it, so the
+    /// schema's pair (a process from its start to its end) is matched by it without the Events XML. Not a `## Fields`
+    /// key.
+    static final String PROCESS_ID = "process id";
     /// The event-logging paths of what is found, as the conventions map them.
     static final Map<String, String> CONVENTION_PATHS = InstructionRules.CONVENTION_PATHS;
+    /// What else a timeline reads of an event, with no field convention: the event-logging paths an index plan (or
+    /// the From column of an index's documentation) may map, the most telling first. Only the schema's own names.
+    static final Map<String, List<String>> PLAN_PATHS = Map.of(
+            InstructionRules.APPLICATION_FIELD, List.of("EventDetail/Process/Command"),
+            InstructionRules.OBJECT_FIELD, List.of("EventDetail/*/*/Subject", "EventDetail/*/*/URL",
+                    "EventDetail/*/*/Path", "EventDetail/*/URL", "EventDetail/*/Path"),
+            InstructionRules.TITLE_FIELD, List.of("EventDetail/*/*/Title"),
+            InstructionRules.SESSION_FIELD, List.of("EventSource/SessionId"),
+            PROCESS_ID, List.of("EventDetail/Process/ProcessId"));
     private static final Pattern CONVENTION_LINE = Pattern.compile(
             "^\\s+([A-Za-z*/]+):\\s*\\{\\s*name:\\s*([^,}\\s]+)", Pattern.MULTILINE);
     private static final Pattern TOKEN = Pattern.compile("[A-Za-z0-9_@.\\-]+");
@@ -128,16 +142,25 @@ public class TimelineFields {
             }
         }
         final String path = CONVENTION_PATHS.get(what);
-        if (path != null) {
+        final List<String> paths = path != null
+                ? List.of(path)
+                : PLAN_PATHS.getOrDefault(what, List.of());
+        if (!paths.isEmpty()) {
             final IndexReads reads = reads(session, index);
-            final Optional<Found> planned = planned(reads, path, has);
-            if (planned.isPresent()) {
-                return planned;
+            for (final String one : paths) {
+                final Optional<Found> planned = planned(reads, one, has);
+                if (planned.isPresent()) {
+                    return planned;
+                }
             }
-            final Optional<Found> documentedFrom = documentedFrom(reads, path, has);
-            if (documentedFrom.isPresent()) {
-                return documentedFrom;
+            for (final String one : paths) {
+                final Optional<Found> documentedFrom = documentedFrom(reads, one, has);
+                if (documentedFrom.isPresent()) {
+                    return documentedFrom;
+                }
             }
+        }
+        if (path != null) {
             for (final Map.Entry<String, String> convention : conventions(path).entrySet()) {
                 if (has.test(convention.getValue())) {
                     return Optional.of(guessed(index, what, new Found(convention.getValue(), Origin.CONVENTION,

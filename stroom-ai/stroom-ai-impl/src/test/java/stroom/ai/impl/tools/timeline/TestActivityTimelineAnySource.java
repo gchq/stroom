@@ -30,18 +30,25 @@ import stroom.ai.impl.tools.ToolCalls;
 import stroom.ai.impl.tools.ToolSchema;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
+import stroom.ai.impl.tools.catalogue.TimelineRole;
+import stroom.ai.impl.tools.catalogue.TimelineRoles;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.indexing.FieldPlan;
 import stroom.ai.impl.tools.indexing.PlannedField;
 import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
+import stroom.ai.impl.tools.instructions.InstructionRules.TypeRoleRule;
 import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.query.DataSourceDocumentation;
 import stroom.ai.impl.tools.sequence.InMemoryKeyStreams;
 import stroom.ai.impl.tools.skills.SkillCatalogue;
 import stroom.ai.impl.tools.skills.SkillCatalogue.Listed;
 import stroom.ai.impl.tools.skills.SkillDoc;
+import stroom.ai.impl.tools.streams.StreamProvenance;
+import stroom.ai.impl.tools.streams.StreamProvenance.PipelineFacts;
+import stroom.ai.impl.tools.streams.StreamProvenance.Provenance;
+import stroom.ai.impl.tools.streams.StreamProvenance.StreamSource;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.docref.DocRef;
@@ -52,12 +59,14 @@ import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.nio.file.Path;
@@ -67,6 +76,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -102,11 +112,15 @@ class TestActivityTimelineAnySource {
     private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
     private final DataSourceDocumentation plans = Mockito.mock(DataSourceDocumentation.class);
     private final Map<String, String> xml = new LinkedHashMap<>();
+    private final StreamProvenance streamProvenance = Mockito.mock(StreamProvenance.class);
     private FakeTabWorkspace files;
     private ActivityTimelineTool tool;
     private List<Map<String, Object>> events;
     private List<Map<String, Object>> codes;
     private int eventId;
+    // True to index each event's element and Action besides its XML (the index then holds its type, so its XML isn't
+    // read to classify it).
+    private boolean elementInIndex;
 
     @BeforeEach
     void setUp() {
@@ -125,7 +139,7 @@ class TestActivityTimelineAnySource {
         // Action besides the XML; no StreamId in the codes index, which wasn't built from Events.
         final Map<String, String> eventsMapping = Map.of("EventTime", "date", "UserId", "keyword", "HostName",
                 "keyword", "SchemaAction", "keyword", "event.action", "keyword", "StreamId", "long", "EventId",
-                "long");
+                "long", "TypeId", "keyword", "host.name", "keyword", "url", "keyword");
         final Map<String, String> codesMapping = Map.of("@timestamp", "date", "user", "keyword", "code", "keyword",
                 "client", "keyword", "staff", "keyword");
         Mockito.when(queryService.findFields(Mockito.any())).thenAnswer(invocation -> {
@@ -164,7 +178,7 @@ class TestActivityTimelineAnySource {
                 Optional.empty(), () -> plans),
                 new TimelineSourceChoice(dataSourceAccess, () -> Mockito.mock(TabSnapshots.class)),
                 () -> skillCatalogue, documentAccess, agentInstructions, () -> elasticEsql,
-                () -> Mockito.mock(DataSourceDocumentation.class));
+                () -> Mockito.mock(DataSourceDocumentation.class), () -> streamProvenance);
     }
 
     @Test
@@ -260,6 +274,7 @@ class TestActivityTimelineAnySource {
 
     @Test
     void whereTheXmlIsGoneTheIndexsElementFieldClassifiesWithTheActionTheAgentsDocNames() {
+        elementInIndex = true;
         week();
         xml.clear();
         Mockito.when(agentInstructions.fieldsRuled(Mockito.any(), Mockito.eq(EVENTS))).thenReturn(Map.of(
@@ -275,7 +290,10 @@ class TestActivityTimelineAnySource {
         assertThat(source).containsEntry("user_field", "UserId")
                 .containsEntry("user_field_from", "the AGENTS doc's ## Fields (/Indexes)")
                 .containsEntry("classified_by", Map.of("index fields", 11L));
-        assertThat((Map<String, Object>) result.get("events_xml")).containsEntry("gone_or_not_events", 11L);
+        // The index holds each event's type, so no XML is read for it (decided 2026-11-25: XML only where unmapped).
+        assertThat((Map<String, Object>) result.get("events_xml")).containsEntry("with_ids", 0L)
+                .containsEntry("read", 0L).doesNotContainKey("paths_read");
+        Mockito.verifyNoInteractions(eventXml);
         assertThat(files.content(FOLDER + ActivityTimelineTool.SPANS_FILE).orElseThrow())
                 .contains("2026-11-10T09:40:00Z,2026-11-10T10:00:00Z,locked,Authenticate ScreenLock to ScreenUnlock,"
                           + "ws-09,pair")
@@ -732,6 +750,131 @@ class TestActivityTimelineAnySource {
 
     // A morning: a logon, web views, a mail sent, a lock and an unlock, a process run; the XML holds the user as
     // the source wrote it and its own (wrong) times.
+    // ------------------------------------------------------------------------------------------------
+    // Reading (decided 2026-11-25): roles by type, each event's own pipeline's fields, XML only where unmapped
+
+    @Test
+    void aTypeTheCatalogueOfItsStreamsTranslationGivesARoleNeedsNoClassifyingAndNoXml() {
+        typed("09:00", 9, "vpn-up", null);
+        typed("09:10", 9, "doc-read", "https://intranet.example.org/a");
+        typed("09:20", 9, "doc-read", "https://intranet.example.org/b");
+        typed("09:30", 9, "noise", null);
+        typed("09:40", 9, "vpn-down", null);
+        Mockito.when(agentInstructions.fieldsRuled(Mockito.any(), Mockito.eq(EVENTS))).thenReturn(Map.of(
+                InstructionRules.EVENT_TYPE_FIELD, new FieldRule(List.of("TypeId"), "/"),
+                InstructionRules.OBJECT_FIELD, new FieldRule(List.of("url"), "/")));
+        final DocRef translation = new DocRef("Pipeline", "vpn-uuid", "VPN translation");
+        final PipelineFacts facts = new PipelineFacts(translation, true, List.of(), null,
+                new DocRef(DocumentationDoc.TYPE, "notes-uuid", "VPN source notes"), null);
+        Mockito.when(streamProvenance.of(Mockito.any())).thenReturn(new Provenance(Map.of(9L, new StreamSource(9L,
+                "VPN-EU", "Events", translation, null, 8L)), 0, Map.of(translation.getUuid(), facts)));
+        Mockito.when(streamProvenance.timelineRoles(facts)).thenReturn(Map.of(
+                "vpn-up", new TimelineRoles.Role("vpn-up", TimelineRole.ACTIVE, "authenticate", "given"),
+                "vpn-down", new TimelineRoles.Role("vpn-down", TimelineRole.IDLE, "authenticate", "given"),
+                "doc-read", new TimelineRoles.Role("doc-read", TimelineRole.ACTION, "view", "schema"),
+                "noise", new TimelineRoles.Role("noise", TimelineRole.IGNORE, "event", "given")));
+
+        // Over MCP with no model: no codes left to classify, so no refusal.
+        final Map<String, Object> result = json(mcp(), arguments(Map.of()));
+
+        final Map<String, Object> source = ((List<Map<String, Object>>) result.get("sources")).getFirst();
+        // The type read from the index's event type field; its role the catalogue's.
+        assertThat(source).containsEntry("classified_by", Map.of("event type field", 5L));
+        assertThat((Map<String, Object>) source.get("roles_from")).containsOnlyKeys(TypeRoleLookup.FROM_CATALOGUE);
+        assertThat(result).containsEntry("events_ignored", 1L).doesNotContainKey("event_types_lines_to_offer");
+        // The object mapped for the index labels the period, which the catalogue's idle type ends.
+        assertThat(files.content(FOLDER + ActivityTimelineTool.SPANS_FILE).orElseThrow())
+                .contains("2026-11-10T09:10:00Z,2026-11-10T09:40:00Z,doc-read · intranet.example.org,doc-read ×2,");
+        // Its kind the catalogue's.
+        assertThat(files.content(FOLDER + ActivityTimelineTool.ACTIONS_FILE).orElseThrow()).contains(",view,");
+        // One batched lookup of the streams read; their roles read once for the translation; no XML.
+        Mockito.verify(streamProvenance, Mockito.times(1)).of(Set.of(9L));
+        Mockito.verify(streamProvenance, Mockito.times(1)).timelineRoles(facts);
+        Mockito.verifyNoInteractions(eventXml);
+    }
+
+    @Test
+    void anAgentsDocsEventTypesGiveRolesAndTheModelsClassificationIsOfferedAsLines() {
+        typed("09:00", 9, "Tun-Ascend", null);
+        typed("09:10", 9, "file-open", null);
+        typed("09:30", 9, "Tun-Recede", null);
+        Mockito.when(agentInstructions.fieldsRuled(Mockito.any(), Mockito.eq(EVENTS))).thenReturn(Map.of(
+                InstructionRules.EVENT_TYPE_FIELD, new FieldRule(List.of("TypeId"), "/")));
+        Mockito.when(agentInstructions.eventTypesRuled(Mockito.any(), Mockito.eq(EVENTS))).thenReturn(Map.of(
+                "tun-ascend", new TypeRoleRule(TimelineRole.ACTIVE, "/Indexes"),
+                "Tun-Recede", new TypeRoleRule(TimelineRole.IDLE, "/Indexes")));
+        final List<String> asked = new ArrayList<>();
+        final ModelSideCalls model = model(asked, "{\"file-open\": {\"role\": \"action\", \"kind\": "
+                                                  + "\"file open\"}}");
+
+        final Map<String, Object> result = json(mcpWith(model), arguments(Map.of()));
+
+        // Only the code no AGENTS line gives was asked of the model, once.
+        assertThat(asked).singleElement().asString().contains("file-open").doesNotContain("Tun-Ascend");
+        final Map<String, Object> source = ((List<Map<String, Object>>) result.get("sources")).getFirst();
+        assertThat((Map<String, Object>) source.get("roles_from")).containsOnlyKeys(TypeRoleLookup.FROM_AGENTS,
+                TypeRoleLookup.FROM_CODE);
+        final Map<String, Object> offer = (Map<String, Object>) result.get("event_types_lines_to_offer");
+        assertThat((Map<String, Object>) offer.get("by_index")).containsEntry("Events",
+                "## Event types\n\n- file-open: action\n");
+        assertThat((String) offer.get("how")).contains("propose_instructions");
+    }
+
+    @Test
+    void whereThePipelinesFeedingAnIndexDifferEachEventsFieldIsItsOwnPipelines() {
+        final DocRef oldIndexing = new DocRef("Pipeline", "old-uuid", "Endpoint indexing V1");
+        final DocRef newIndexing = new DocRef("Pipeline", "new-uuid", "Endpoint indexing V2");
+        Mockito.when(plans.feedingPlans(EVENTS)).thenReturn(new DataSourceDocumentation.FeedingPlans(
+                List.of(oldIndexing, newIndexing), Map.of(
+                oldIndexing, List.of(FieldPlan.of(FieldPlan.ELASTICSEARCH, "events", "EventTime", List.of(
+                        PlannedField.of("HostName", "keyword", "EventSource/Device/HostName")))),
+                newIndexing, List.of(FieldPlan.of(FieldPlan.ELASTICSEARCH, "events", "EventTime", List.of(
+                        PlannedField.of("host.name", "keyword", "EventSource/Device/HostName")))))));
+        Mockito.when(streamProvenance.of(Mockito.any())).thenReturn(new Provenance(Map.of(
+                21L, new StreamSource(21L, "ENDPOINT-A", "Events", oldIndexing, null, null),
+                22L, new StreamSource(22L, "ENDPOINT-B", "Events", newIndexing, null, null)), 0, Map.of(
+                oldIndexing.getUuid(), new PipelineFacts(oldIndexing, true, List.of(), null, null, null),
+                newIndexing.getUuid(), new PipelineFacts(newIndexing, true, List.of(), null, null, null))));
+        hosted("09:00", 21, Map.of("HostName", "ws-a"));
+        // The new version's document holds HostName too, meaning something else there.
+        hosted("09:05", 22, Map.of("HostName", "relay-01", "host.name", "ws-b"));
+        // A stream not looked up: the plans' field it holds.
+        hosted("09:10", 23, Map.of("host.name", "ws-c"));
+        elementInIndex = true;
+
+        final Map<String, Object> result = json(mcp(), arguments(Map.of("sources", List.of("Events"))));
+
+        assertThat((List<String>) result.get("span_hosts")).containsExactlyInAnyOrder("ws-a", "ws-b", "ws-c");
+        final Map<String, Object> source = ((List<Map<String, Object>>) result.get("sources")).getFirst();
+        assertThat((Map<String, Object>) source.get("fields_by_pipeline")).containsEntry("host", Map.of(
+                "HostName (the stream's pipeline)", 1L, "host.name (the stream's pipeline)", 1L,
+                "host.name (the field the event holds)", 1L));
+    }
+
+    @Test
+    void theXmlIsReadOnlyForWhatTheIndexDoesntMapAndOnlyForTheEventsCharacterised() {
+        elementInIndex = true;
+        week();
+
+        // Not characterising: the index holds every event's type, so nothing is read from the XML.
+        json(mcp(), arguments(Map.of()));
+        Mockito.verifyNoInteractions(eventXml);
+
+        // Characterising: the content the index doesn't map is read for those events alone, the paths named.
+        final Map<String, Object> result = json(mcp(), arguments(Map.of("characterise", true)));
+        final ArgumentCaptor<Map<Long, List<Long>>> ids = ArgumentCaptor.forClass(Map.class);
+        Mockito.verify(eventXml, Mockito.times(1)).read(Mockito.any(), ids.capture(), Mockito.anyInt(),
+                Mockito.any(), Mockito.any());
+        final int budget = new AiWorkspaceConfig().getCharacteriseMaxItems();
+        assertThat(ids.getValue().values().stream().mapToInt(List::size).sum()).isEqualTo(Math.min(11, budget));
+        final Map<String, Object> xmlRead = (Map<String, Object>) result.get("events_xml");
+        assertThat((List<Map<String, Object>>) xmlRead.get("paths_read")).singleElement().satisfies(paths -> {
+            assertThat(paths).containsEntry("index", "Events")
+                    .containsEntry("paths", ActivityTimelineTool.CONTENT_PATHS);
+            assertThat((String) paths.get("suggestion")).contains("index plan");
+        });
+    }
+
     private void week() {
         event("08:55", "Authenticate", "Logon", null, Map.of(), null);
         event("09:00", "View", null, null, Map.of("Resource/URL", "https://research.example.org/pricing"),
@@ -777,9 +920,11 @@ class TestActivityTimelineAnySource {
         doc.put("EventTime", at(time));
         doc.put("UserId", "pat");
         doc.put("HostName", "ws-09");
-        doc.put("SchemaAction", element);
-        if (action != null) {
-            doc.put("event.action", action);
+        if (elementInIndex) {
+            doc.put("SchemaAction", element);
+            if (action != null) {
+                doc.put("event.action", action);
+            }
         }
         doc.put("StreamId", STREAM);
         doc.put("EventId", id);
@@ -819,8 +964,12 @@ class TestActivityTimelineAnySource {
 
     private void web(final long time, final String user, final String url) {
         final long id = ++eventId;
-        events.add(new LinkedHashMap<>(Map.of("EventTime", time, "UserId", user, "HostName", "ws-09",
-                "SchemaAction", "View", "StreamId", STREAM, "EventId", id)));
+        final Map<String, Object> doc = new LinkedHashMap<>(Map.of("EventTime", time, "UserId", user, "HostName",
+                "ws-09", "StreamId", STREAM, "EventId", id));
+        if (elementInIndex) {
+            doc.put("SchemaAction", "View");
+        }
+        events.add(doc);
         xml.put(STREAM + ":" + id, "<Event><EventDetail><View><Resource><URL>" + url
                                    + "</URL></Resource></View></EventDetail></Event>");
     }
@@ -848,6 +997,55 @@ class TestActivityTimelineAnySource {
         arguments.put("userField", "UserId");
         arguments.putAll(more);
         return arguments;
+    }
+
+    // An event whose index holds its own type (its TypeId), and its object where given.
+    private void typed(final String time, final long stream, final String typeId, final String url) {
+        final long id = ++eventId;
+        final Map<String, Object> doc = new LinkedHashMap<>(Map.of("EventTime", at(time), "UserId", "pat",
+                "HostName", "ws-09", "TypeId", typeId, "StreamId", stream, "EventId", id));
+        NullSafe.consume(url, value -> doc.put("url", value));
+        events.add(doc);
+    }
+
+    // A View event of a stream with the host fields given.
+    private void hosted(final String time, final long stream, final Map<String, String> hosts) {
+        final long id = ++eventId;
+        final Map<String, Object> doc = new LinkedHashMap<>(Map.of("EventTime", at(time), "UserId", "pat",
+                "SchemaAction", "View", "StreamId", stream, "EventId", id));
+        doc.putAll(hosts);
+        events.add(doc);
+    }
+
+    // A model answering every side call with the text, each question kept.
+    private static ModelSideCalls model(final List<String> asked, final String answer) {
+        return new ModelSideCalls() {
+            @Override
+            public boolean available() {
+                return true;
+            }
+
+            @Override
+            public String via() {
+                return "a stub";
+            }
+
+            @Override
+            public Answer ask(final Question question) {
+                asked.add(question.user());
+                return new Answer(answer, 1, 1);
+            }
+        };
+    }
+
+    private ToolCallContext mcpWith(final ModelSideCalls sideCalls) {
+        return ToolCallContext.builder(new ToolSession(ToolSession.Kind.MCP, "mcp-1",
+                        new ToolCaller(ToolCaller.Kind.EXTERNAL_CLIENT, "A client")))
+                .workspace(new SessionWorkspace(files.workspace(), CHAT))
+                .userQuestions(UserQuestions.NONE)
+                .limits(SessionLimits.lookedUp(AiWorkspaceConfig::new))
+                .sideCalls(sideCalls)
+                .build();
     }
 
     private ToolCallContext mcp() {

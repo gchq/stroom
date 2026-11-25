@@ -160,7 +160,8 @@ final class EventCodes {
                + "Its codes and events, the commonest first: " + String.join(", ", shown)
                + (counts.size() > shown.size()
                 ? " and " + (counts.size() - shown.size()) + " more"
-                : "") + ".";
+                : "") + ". To keep them for every later run, offer them as an AGENTS doc's '## Event types' lines "
+               + "(- <code>: <role>) where the index is, with propose_instructions.";
     }
 
     // A classification as JSON, checked: a role that isn't one is an action; a kind is cut short.

@@ -34,10 +34,13 @@ import stroom.ai.impl.tools.ToolSchema;
 import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.UserQuestions;
+import stroom.ai.impl.tools.catalogue.TimelineRole;
+import stroom.ai.impl.tools.catalogue.TimelineRoles;
 import stroom.ai.impl.tools.compare.CompareActivityTool;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.instructions.InstructionRules;
+import stroom.ai.impl.tools.instructions.InstructionRules.TypeRoleRule;
 import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.query.DataSourceDocumentation;
 import stroom.ai.impl.tools.query.EsqlQueryTool;
@@ -52,6 +55,9 @@ import stroom.ai.impl.tools.sequence.StreamFilters;
 import stroom.ai.impl.tools.skills.SkillCatalogue;
 import stroom.ai.impl.tools.skills.SkillCatalogue.Listed;
 import stroom.ai.impl.tools.skills.SkillDoc;
+import stroom.ai.impl.tools.streams.StreamProvenance;
+import stroom.ai.impl.tools.streams.StreamProvenance.PipelineFacts;
+import stroom.ai.impl.tools.streams.StreamProvenance.Provenance;
 import stroom.ai.impl.tools.time.ToolTimeZone;
 import stroom.ai.impl.tools.time.UserTimeZones;
 import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Characterised;
@@ -74,6 +80,8 @@ import stroom.ai.impl.tools.timeline.TimelineLearning.SkillInUse;
 import stroom.ai.impl.tools.timeline.TimelineReader.Read;
 import stroom.ai.impl.tools.timeline.TimelineReader.RoleRead;
 import stroom.ai.impl.tools.timeline.TimelineReader.Source;
+import stroom.ai.impl.tools.timeline.TimelineReader.Varied;
+import stroom.ai.impl.tools.timeline.TimelineReading.XmlPaths;
 import stroom.ai.impl.tools.timeline.TimelineRun.EventRange;
 import stroom.ai.impl.tools.timeline.TimelineRun.Period;
 import stroom.ai.impl.tools.timeline.TimelineRun.SourceNote;
@@ -131,6 +139,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Function;
 
 /// `activity_timeline`: one user's (or entity's) activity over a period from any sources, worked out in code
 /// ([TimelineSessions], [TimelineSpans]), never by the model. Two levels: the detail spans (focus sessions of an
@@ -249,6 +258,12 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     static final double ELEMENT_SHARE = 0.9;
     /// The most event codes listed in the confirming form.
     static final int CODES_SHOWN = 15;
+    /// The paths read from the Events XML where an index doesn't hold an event's type.
+    static final List<String> TYPE_PATHS = List.of("EventDetail/TypeId", "EventDetail/* (the element)",
+            "EventDetail/*/Action");
+    /// The paths read from the Events XML where an index doesn't hold an event's content.
+    static final List<String> CONTENT_PATHS = List.of("EventDetail/*/*/Subject", "EventDetail/*/*/URL",
+            "EventDetail/*/*/Path", "EventDetail/*/*/Title", "EventDetail/Process/Command");
     /// What every result says of the events.
     static final String CAVEAT = "The events come straight from Elasticsearch, as sequence_query's do: they may "
                                  + "include events of streams the user can't see or that have been deleted.";
@@ -274,6 +289,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     private final DocumentAccess documentAccess;
     private final AgentInstructions agentInstructions;
     private final Provider<DataSourceDocumentation> dataSourceDocumentationProvider;
+    private final Provider<StreamProvenance> streamProvenanceProvider;
 
     /// @param workspace              The chats' workspaces.
     /// @param keyStreamsProvider     Reads each source's events for the entity, in time order.
@@ -288,6 +304,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     /// @param agentInstructions      Gives the folder an index is in.
     /// @param elasticEsqlProvider    Finds each source's first and last events where the period has none.
     /// @param dataSourceDocumentationProvider Describes the field the lanes are by, for the charts' lane axis.
+    /// @param streamProvenanceProvider Gives the pipeline that produced each stream read, and its translation's
+    ///                               catalogue.
     @Inject
     ActivityTimelineTool(final ChatWorkspace workspace,
                          final Provider<ElasticKeyStreams> keyStreamsProvider,
@@ -301,8 +319,10 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                          final DocumentAccess documentAccess,
                          final AgentInstructions agentInstructions,
                          final Provider<ElasticEsql> elasticEsqlProvider,
-                         final Provider<DataSourceDocumentation> dataSourceDocumentationProvider) {
+                         final Provider<DataSourceDocumentation> dataSourceDocumentationProvider,
+                         final Provider<StreamProvenance> streamProvenanceProvider) {
         super(workspace);
+        this.streamProvenanceProvider = streamProvenanceProvider;
         this.dataSourceDocumentationProvider = dataSourceDocumentationProvider;
         this.keyStreamsProvider = keyStreamsProvider;
         this.elasticEsqlProvider = elasticEsqlProvider;
@@ -567,22 +587,36 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final JoinBudget budget = new JoinBudget(config.getTimelineMaxEvents(), Long.MAX_VALUE, deadline,
                 context.stopped());
         context.progress().report("Reading " + entity + "'s events from " + sources.size() + " source(s)");
-        final Read read;
+        final Read scanned;
         try {
-            read = TimelineReader.read(keyStreamsProvider.get(), sources, period.timeRange(), budget);
+            scanned = TimelineReader.read(keyStreamsProvider.get(), sources, period.timeRange(), budget);
         } catch (final PermissionException e) {
             throw new WorkspaceException("You can't use one of the sources' Elastic Indexes: " + e.getMessage());
         }
-        audit(context, sources, read, entity, period);
+        audit(context, sources, scanned, entity, period);
         final TimelineTargets.Asked targets = booleanArg(request, INCLUDE_TARGETS_ARG, false)
                 ? targets(request, context, who, plan, period, deadline, config)
                 : null;
 
-        final XmlOutcome xml = readXml(context, config, sources, read);
+        // Where each event came from, by its stream (one batched lookup of the distinct streams read): its own
+        // pipeline's fields where the pipelines feeding an index differ, and its translation's catalogue.
+        final Provenance provenance = provenance(context, sources, scanned);
+        final StreamFields.Resolved resolved = StreamFields.resolve(scanned.events(), sources, scanned.extras(),
+                streamId -> pipelineOf(provenance, streamId));
+        final Read read = scanned.with(resolved.events(), resolved.extras());
+        final TypeRoleLookup roles = new TypeRoleLookup(plan.overrides(), catalogue(provenance),
+                agentsRoles(context, sources));
+        final boolean characterising = booleanArg(request, CHARACTERISE_ARG, false) || view != View.DETAIL;
+        final XmlOutcome xml = readXml(context, config, sources, read, plan.fields(), characterising);
+        final Map<Integer, Map<String, CodeRole>> classifiedNow = new LinkedHashMap<>();
         final Map<Integer, Map<String, CodeRole>> codes = codes(request, context, sources, read, plan.fields(),
-                xml.xml(), plan.overrides());
+                xml.xml(), roles, classifiedNow);
         final TimelineClassification.Result classification = TimelineClassification.classify(read.events(),
-                sources, read.extras(), plan.fields(), xml.xml(), codes, plan.overrides());
+                sources, read.extras(), plan.fields(), xml.xml(), codes, roles);
+        final TimelineReading reading = new TimelineReading(read.scans(), resolved.read(), xml.paths(),
+                offers(sources, classifiedNow), provenance == null
+                ? 0
+                : provenance.streams().size());
 
         final Set<Integer> withOpen = new LinkedHashSet<>();
         for (int i = 0; i < sources.size(); i++) {
@@ -615,7 +649,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 keys, options);
 
         final String folder = FOLDER + safe(entity) + "/";
-        final Characterised characterised = booleanArg(request, CHARACTERISE_ARG, false) || view != View.DETAIL
+        final Characterised characterised = characterising
                 ? characterise(request, context, workspace, config, built, byId, names, folder, zone)
                 : null;
         final Learned learned = TimelineLearning.learn(learnedEntries(request, sources, inferred, plan),
@@ -635,7 +669,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                         field));
         final TimelineRun run = new TimelineRun(entity, period, capMs, sources, plan.notes(), plan.chosen(), read,
                 classification, xml.summary(), timeline, built, byId, inferred.borderline(), characterised, view,
-                lanes, learned, zone, ranges, targets, hostLanes);
+                lanes, learned, zone, ranges, targets, hostLanes, reading);
         final Files files = TimelineTables.write(workspace, folder, run);
         // So its tables can be written elsewhere later, as they are (propose_timeline_dashboard).
         TimelineSnapshot.of(run, now).write(workspace, folder);
@@ -835,6 +869,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final List<Map<?, ?>> automaticSpecs = new ArrayList<>();
         final List<Prepared> prepared = new ArrayList<>();
         final List<Automatic> noneOfTheirs = new ArrayList<>();
+        final Map<Integer, String> sessions = new LinkedHashMap<>();
         for (int i = 0; i < specs.size(); i++) {
             final Map<?, ?> spec = specs.get(i);
             final String what = "Source " + (i + 1);
@@ -903,6 +938,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             sources.add(automatic.source(automatic.transforms(), extra));
             kept.add(one.spec());
             fields.put(sources.size() - 1, found);
+            NullSafe.consume(fieldOf(automatic.mapped(), InstructionRules.SESSION_FIELD), field ->
+                    sessions.put(sources.size() - 1, field));
             notes.add(new SourceNote(automatic.name(), automatic.doc().getName(), automatic.user().field(),
                     automatic.user().from(), transformNote(automatic.transforms()), null, automatic.by(), null,
                     automatic.suggestions()));
@@ -920,8 +957,16 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             sb.append(TimelineResult.rangesText(ranges));
             throw new WorkspaceException(sb.toString());
         }
+        final List<KeyRule> keys = new ArrayList<>(keysOf(kept));
+        // A session's key mapped for an index (an AGENTS doc's `session:`, an index plan's EventSource/SessionId)
+        // bounds its spans, as the call's spanBy would.
+        sessions.forEach((i, field) -> {
+            if (keys.stream().noneMatch(key -> key.source() == i && key.path().equals(field))) {
+                keys.add(new KeyRule(i, field, true));
+            }
+        });
         return new Plan(sources, notes, chosen, fields, pairsOf(kept, sources, skill), overridesOf(kept, sources,
-                skill), keysOf(kept), noneOfTheirs);
+                skill), keys, noneOfTheirs);
     }
 
     // An automatic source's index, its fields, and its user field found (or not yet).
@@ -966,26 +1011,66 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         if (user != null) {
             NullSafe.consume(user.suggestion(), suggestions::add);
         }
+        // Every thing the timeline reads, mapped once for the index: the call's, else found ([TimelineFields]),
+        // each with the field every feeding pipeline's plan gives it where they differ.
+        final Map<String, Found> mapped = new LinkedHashMap<>();
+        checked(spec.get(PROCESS_KEY), mapping, types, what, doc);
+        checked(spec.get(TITLE_KEY), mapping, types, what, doc);
+        checked(spec.get(OBJECT_KEY), mapping, types, what, doc);
+        checked(spec.get(TEXT_KEY), mapping, types, what, doc);
+        final Map<String, Object> givenBy = new LinkedHashMap<>();
+        givenBy.put(InstructionRules.HOST_FIELD, spec.get(HOST_KEY));
+        givenBy.put(InstructionRules.ELEMENT_FIELD, spec.get(ELEMENT_FIELD_KEY));
+        givenBy.put(InstructionRules.ACTION_FIELD, spec.get(ACTION_FIELD_KEY));
+        givenBy.put(InstructionRules.EVENT_TYPE_FIELD, spec.get(EVENT_TYPE_FIELD_KEY));
+        givenBy.put(InstructionRules.APPLICATION_FIELD, spec.get(PROCESS_KEY));
+        givenBy.put(InstructionRules.TITLE_FIELD, spec.get(TITLE_KEY));
+        givenBy.put(InstructionRules.OBJECT_FIELD, spec.get(OBJECT_KEY));
+        givenBy.put(InstructionRules.TEXT_FIELD, spec.get(TEXT_KEY));
+        givenBy.put(InstructionRules.SESSION_FIELD, null);
+        givenBy.put(TimelineFields.PROCESS_ID, null);
+        givenBy.forEach((thing, given) -> NullSafe.consume(mapped(context, doc, thing, given, mapping, types,
+                suggestions), found -> mapped.put(thing, found)));
+        if (user != null) {
+            mapped.put(InstructionRules.USER_FIELD, user);
+        }
         final Automatic automatic = new Automatic(name, doc, mapping, types, user == null
                 ? null
                 : new Found(userKey(user.field(), mapping), user.origin(), user.detail(), user.suggestion(),
                         user.byPipeline()),
-                found(context, doc, InstructionRules.HOST_FIELD, spec.get(HOST_KEY), mapping, types, suggestions),
-                found(context, doc, InstructionRules.ELEMENT_FIELD, spec.get(ELEMENT_FIELD_KEY), mapping, types,
-                        suggestions),
-                found(context, doc, InstructionRules.ACTION_FIELD, spec.get(ACTION_FIELD_KEY), mapping, types,
-                        suggestions),
-                found(context, doc, InstructionRules.EVENT_TYPE_FIELD, spec.get(EVENT_TYPE_FIELD_KEY), mapping,
-                        types, suggestions), checked(spec.get(OBJECT_KEY), mapping, types, what, doc),
-                new Described(checked(spec.get(PROCESS_KEY), mapping, types, what, doc), checked(spec.get(TITLE_KEY),
-                        mapping, types, what, doc), checked(spec.get(WINDOW_KEY), mapping, types, what, doc),
-                        checked(spec.get(TEXT_KEY), mapping, types, what, doc)), userTransforms(spec, what, scope,
+                fieldOf(mapped, InstructionRules.HOST_FIELD), fieldOf(mapped, InstructionRules.ELEMENT_FIELD),
+                fieldOf(mapped, InstructionRules.ACTION_FIELD), fieldOf(mapped, InstructionRules.EVENT_TYPE_FIELD),
+                fieldOf(mapped, InstructionRules.OBJECT_FIELD),
+                new Described(fieldOf(mapped, InstructionRules.APPLICATION_FIELD), fieldOf(mapped,
+                        InstructionRules.TITLE_FIELD), checked(spec.get(WINDOW_KEY), mapping, types, what, doc),
+                        fieldOf(mapped, InstructionRules.TEXT_FIELD)), userTransforms(spec, what, scope,
                 logonForms), scope.usable()
                         ? scope.by()
                         : PersonScope.By.LOGON, scope.usable()
                         ? scope.values()
-                        : who.logons(), scope.leftOut(), List.copyOf(suggestions));
+                        : who.logons(), scope.leftOut(), List.copyOf(suggestions), mapped);
         return new Prepared(spec, null, automatic);
+    }
+
+    // One thing's field found by TimelineFields, the call's first; one found by a guess adds its ## Fields line to
+    // the suggestions.
+    private Found mapped(final ToolCallContext context,
+                         final DocRef doc,
+                         final String what,
+                         final Object given,
+                         final Map<String, ElasticEql.Field> mapping,
+                         final Map<String, FieldType> types,
+                         final List<String> suggestions) {
+        final List<String> list = new ArrayList<>();
+        NullSafe.consume(text(given), list::add);
+        final Optional<Found> found = timelineFields.find(context.session(), doc, what, list,
+                field -> has(field, mapping, types));
+        found.map(Found::suggestion).ifPresent(suggestions::add);
+        return found.orElse(null);
+    }
+
+    private static String fieldOf(final Map<String, Found> mapped, final String thing) {
+        return NullSafe.get(mapped.get(thing), Found::field);
     }
 
     // The field holding one thing, found by TimelineFields (for what was done to the person, whose fields aren't
@@ -1379,41 +1464,177 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     // ------------------------------------------------------------------------------------------------
     // Classifying
 
-    // The automatic sources' events' Events XML, read by StreamId and EventId in time order up to the cap.
+    // The automatic sources' events' Events XML, read by StreamId and EventId, only for what the index doesn't map
+    // (decided with the user 2026-11-25): an event whose type the index doesn't hold (no element or event type
+    // field, or none for it), in time order up to the cap; and, characterising, an event of a typed source with no
+    // content mapped (its object, title or text), spread over the period up to characterisation's budget. Never
+    // every event: each path read is named with its index, to add to the index plan.
     private XmlOutcome readXml(final ToolCallContext context,
                                final AiWorkspaceConfig config,
                                final List<Source> sources,
-                               final Read read) {
-        final List<Event> wanted = read.events().stream()
-                .filter(event -> sources.get(event.source()).automatic() && event.streamId() != null
-                                 && event.eventId() != null && number(event.streamId()) != null
-                                 && number(event.eventId()) != null)
-                .sorted(Comparator.comparingLong(Event::time))
-                .toList();
-        if (wanted.isEmpty()) {
-            return new XmlOutcome(Map.of(), XmlRead.NONE);
+                               final Read read,
+                               final Map<Integer, Fields> fields,
+                               final boolean characterising) {
+        final List<Event> forType = new ArrayList<>();
+        final Map<Integer, List<Event>> forContent = new LinkedHashMap<>();
+        for (final Event event : read.events()) {
+            final Source source = sources.get(event.source());
+            if (!source.automatic() || number(event.streamId()) == null || number(event.eventId()) == null) {
+                continue;
+            }
+            final Fields found = fields.getOrDefault(event.source(), Fields.NONE);
+            final Map<String, String> extra = read.extras().getOrDefault(event.id(), Map.of());
+            if (!typedByIndex(found, extra)) {
+                forType.add(event);
+            } else if (characterising && event.object() == null && event.title() == null && event.text() == null) {
+                forContent.computeIfAbsent(event.source(), k -> new ArrayList<>()).add(event);
+            }
         }
+        if (forType.isEmpty() && forContent.isEmpty()) {
+            return new XmlOutcome(Map.of(), XmlRead.NONE, List.of());
+        }
+        forType.sort(Comparator.comparingLong(Event::time));
         final int cap = Math.max(0, config.getTimelineMaxXmlEvents());
         final Map<Long, List<Long>> ids = new TreeMap<>();
         final Set<String> seen = new LinkedHashSet<>();
-        for (final Event event : wanted) {
+        final Map<Integer, Integer> typeRead = new LinkedHashMap<>();
+        for (final Event event : forType) {
             if (seen.size() >= cap) {
                 break;
             }
             if (seen.add(event.streamId() + ":" + event.eventId())) {
                 ids.computeIfAbsent(number(event.streamId()), k -> new ArrayList<>()).add(number(event.eventId()));
+                typeRead.merge(event.source(), 1, Integer::sum);
             }
         }
-        final int pastCap = (int) wanted.stream()
+        final int pastCap = (int) forType.stream()
                 .map(event -> event.streamId() + ":" + event.eventId())
                 .distinct()
                 .count() - seen.size();
+        final int budget = Math.max(0, config.getCharacteriseMaxItems());
+        final Map<Integer, Integer> contentRead = new LinkedHashMap<>();
+        for (final Map.Entry<Integer, List<Event>> source : forContent.entrySet()) {
+            final List<Event> events = source.getValue().stream().sorted(Comparator.comparingLong(Event::time))
+                    .toList();
+            // Spread over the period, so the budget doesn't go on its first hours.
+            final double step = events.size() <= budget
+                    ? 1
+                    : (double) events.size() / Math.max(1, budget);
+            for (double at = 0; at < events.size() && contentRead.getOrDefault(source.getKey(), 0) < budget;
+                 at += step) {
+                final Event event = events.get((int) at);
+                if (seen.add(event.streamId() + ":" + event.eventId())) {
+                    ids.computeIfAbsent(number(event.streamId()), k -> new ArrayList<>())
+                            .add(number(event.eventId()));
+                    contentRead.merge(source.getKey(), 1, Integer::sum);
+                }
+            }
+        }
+        final List<XmlPaths> paths = new ArrayList<>();
+        typeRead.forEach((i, count) -> paths.add(new XmlPaths(sources.get(i).name(), sources.get(i).doc().getName(),
+                TYPE_PATHS, count)));
+        contentRead.forEach((i, count) -> paths.add(new XmlPaths(sources.get(i).name(),
+                sources.get(i).doc().getName(), CONTENT_PATHS, count)));
         context.progress().report("Reading the Events XML of " + seen.size() + " event(s)");
         final TimelineEventXml.Read xml = eventXml.read(context.session(), ids, config.getMaxEventBytes(),
                 context.stopped(), count -> context.progress().report("Read the Events XML of " + count + " of "
                                                                       + seen.size() + " event(s)"));
         return new XmlOutcome(xml.xml(), new XmlRead(seen.size() + pastCap, xml.xml().size(), xml.missing(),
-                xml.unreadable(), pastCap, xml.notAllowed(), cap));
+                xml.unreadable(), pastCap, xml.notAllowed(), cap), paths);
+    }
+
+    // True if the index's fields hold the event's type: its element (and Action), or its event code.
+    private static boolean typedByIndex(final Fields fields, final Map<String, String> extra) {
+        if (fields.element() != null && EventXmlClassifier.isElement(extra.get(fields.element()))) {
+            return true;
+        }
+        return fields.eventType() != null && NullSafe.isNonBlankString(extra.get(fields.eventType()));
+    }
+
+    // Where each event read came from: the streams' meta and producing pipelines, one batched lookup; null where no
+    // automatic source has StreamIds, or they can't be looked up.
+    private Provenance provenance(final ToolCallContext context, final List<Source> sources, final Read read) {
+        final Set<Long> streams = new LinkedHashSet<>();
+        for (final Event event : read.events()) {
+            if (sources.get(event.source()).automatic()) {
+                NullSafe.consume(number(event.streamId()), streams::add);
+            }
+        }
+        if (streams.isEmpty()) {
+            return null;
+        }
+        context.progress().report("Looking up where " + streams.size() + " stream(s) came from");
+        try {
+            return streamProvenanceProvider.get().of(streams);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("The streams' provenance wasn't looked up: {}", e.getMessage()), e);
+            return null;
+        }
+    }
+
+    // The pipeline that produced a stream, named where the user can read it; null where it isn't known.
+    private static DocRef pipelineOf(final Provenance provenance, final Long streamId) {
+        if (provenance == null || streamId == null) {
+            return null;
+        }
+        return provenance.pipelineOf(streamId).map(PipelineFacts::pipeline).orElse(null);
+    }
+
+    // The catalogue's roles of the translation that produced each stream, read once per pipeline.
+    private Function<String, Map<String, TimelineRoles.Role>> catalogue(final Provenance provenance) {
+        if (provenance == null) {
+            return streamId -> Map.of();
+        }
+        final Map<String, Map<String, TimelineRoles.Role>> byPipeline = new LinkedHashMap<>();
+        final StreamProvenance streamProvenance = streamProvenanceProvider.get();
+        return streamId -> {
+            final Long id = number(streamId);
+            final PipelineFacts facts = id == null
+                    ? null
+                    : provenance.pipelineOf(id).orElse(null);
+            if (facts == null) {
+                return Map.of();
+            }
+            return byPipeline.computeIfAbsent(facts.pipeline().getUuid(), uuid -> {
+                try {
+                    return NullSafe.map(streamProvenance.timelineRoles(facts));
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(() -> LogUtil.message("No catalogue roles of {}: {}", uuid, e.getMessage()), e);
+                    return Map.of();
+                }
+            });
+        };
+    }
+
+    // Each automatic source's types given a role by the AGENTS docs where its index is.
+    private Map<Integer, Map<String, TypeRoleRule>> agentsRoles(final ToolCallContext context,
+                                                                final List<Source> sources) {
+        final Map<Integer, Map<String, TypeRoleRule>> out = new LinkedHashMap<>();
+        for (int i = 0; i < sources.size(); i++) {
+            if (sources.get(i).automatic()) {
+                final Map<String, TypeRoleRule> ruled = NullSafe.map(agentInstructions.eventTypesRuled(
+                        context.session(), sources.get(i).doc()));
+                if (!ruled.isEmpty()) {
+                    out.put(i, ruled);
+                }
+            }
+        }
+        return out;
+    }
+
+    // The `## Event types` lines to offer for the codes classified this run (by the model), per index, so a later
+    // run takes them from the AGENTS doc.
+    private static Map<String, String> offers(final List<Source> sources,
+                                              final Map<Integer, Map<String, CodeRole>> classifiedNow) {
+        final Map<String, String> out = new LinkedHashMap<>();
+        classifiedNow.forEach((i, codes) -> {
+            final Map<String, TimelineRole> roles = new LinkedHashMap<>();
+            codes.forEach((code, role) -> TimelineRole.of(role.role()).ifPresent(found -> roles.put(code, found)));
+            if (!roles.isEmpty()) {
+                out.put(sources.get(i).doc().getName(), InstructionRules.eventTypesSection(roles));
+            }
+        });
+        return out;
     }
 
     // The event codes of each automatic source whose events neither XML nor an element field classify: kept from an
@@ -1428,9 +1649,11 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                                       final Read read,
                                                       final Map<Integer, Fields> fields,
                                                       final Map<String, String> xml,
-                                                      final Map<Integer, Map<String, RoleOverride>> overrides) {
+                                                      final TypeRoleLookup roles,
+                                                      final Map<Integer, Map<String, CodeRole>> classifiedNow) {
         final Map<Integer, Map<String, CodeRole>> out = new LinkedHashMap<>();
         final Map<Integer, Map<String, Integer>> counts = new LinkedHashMap<>();
+        final Set<Integer> settled = new LinkedHashSet<>();
         for (final Event event : read.events()) {
             final Fields found = fields.get(event.source());
             if (found == null || found.eventType() == null || xml.containsKey(event.streamId() + ":"
@@ -1442,7 +1665,10 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 continue;
             }
             final String code = extra.get(found.eventType());
-            if (code != null) {
+            // A code the call, the skill, its stream's catalogue or an AGENTS doc gives a role needs no other.
+            if (code != null && roles.settles(event.source(), event.streamId(), code)) {
+                settled.add(event.source());
+            } else if (code != null) {
                 counts.computeIfAbsent(event.source(), s -> new LinkedHashMap<>()).merge(code, 1, Integer::sum);
             }
         }
@@ -1461,16 +1687,16 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                     if (confirmed == null) {
                         // No form: used, but not kept, as the user hasn't confirmed it.
                         kept.putAll(asked);
+                        classifiedNow.put(source.getKey(), asked);
                     } else if (confirmed) {
                         asked.forEach((code, role) -> kept.put(code, new CodeRole(role.role(), role.kind(), true)));
                         EventCodes.keep(keptIn, doc.getUuid(), kept);
+                        classifiedNow.put(source.getKey(), asked);
                     }
                 });
             }
-            final Map<String, RoleOverride> given = overrides.getOrDefault(source.getKey(), Map.of());
-            final boolean anyRole = source.getValue().keySet().stream()
-                    .anyMatch(code -> kept.containsKey(code) || given.keySet().stream()
-                            .anyMatch(type -> type.equalsIgnoreCase(code)));
+            final boolean anyRole = settled.contains(source.getKey())
+                                    || source.getValue().keySet().stream().anyMatch(kept::containsKey);
             if (!anyRole) {
                 throw new WorkspaceException(EventCodes.unclassified(sources.get(source.getKey()).name(),
                         fields.get(source.getKey()).eventType(), source.getValue(), context.sideCalls()));
@@ -2163,28 +2389,76 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                              PersonScope.By by,
                              List<String> values,
                              String leftOut,
-                             List<String> suggestions) {
+                             List<String> suggestions,
+                             Map<String, Found> mapped) {
 
         Automatic withUser(final Found found) {
+            final Map<String, Found> withIt = new LinkedHashMap<>(mapped);
+            withIt.put(InstructionRules.USER_FIELD, found);
             return new Automatic(name, doc, mapping, types, found, host, element, action, eventType, object,
-                    described, transforms, by, values, leftOut, suggestions);
+                    described, transforms, by, values, leftOut, suggestions, withIt);
         }
 
+        // The application, title, window and text are the call's or those mapped for the index ([TimelineFields]):
+        // never guessed from a code or an element field, which say what an event was, not these (eval case 77 with
+        // no roles: focus sessions with no application).
         Source source(final List<Transform> sourceTransforms, final List<String> extraFields) {
             final boolean ids = mapping.containsKey(EqlSequenceResults.STREAM_ID)
                                 && mapping.containsKey(EqlSequenceResults.EVENT_ID);
-            // The call's own fields for the application, title, window and text: a code or an index field says
-            // what an event was, not these (eval case 77 with no roles: focus sessions with no application).
+            final List<String> fetched = new ArrayList<>(extraFields);
+            final Map<String, Varied> varied = varied();
+            for (final Varied one : varied.values()) {
+                one.fields().stream().filter(field -> !fetched.contains(field)).forEach(fetched::add);
+            }
+            for (final String thing : List.of(InstructionRules.SESSION_FIELD, TimelineFields.PROCESS_ID)) {
+                NullSafe.consume(fieldOf(mapped, thing), field -> {
+                    if (!fetched.contains(field)) {
+                        fetched.add(field);
+                    }
+                });
+            }
             return new Source(name, doc, user.field(), JoinKeys.kind(mapping.get(user.field()).nativeType()),
                     sourceTransforms, host, described.process(), described.title(), described.window(), object,
-                    described.text(), ids, List.of(new RoleRead(Role.ACTION, null, null)), true, extraFields, values,
-                    by);
+                    described.text(), ids, List.of(new RoleRead(Role.ACTION, null, null)), true, fetched, values,
+                    by, otherUserFields(), varied);
+        }
+
+        // The other fields the feeding pipelines' plans put the user in, as keys of the same kind.
+        private List<String> otherUserFields() {
+            final List<String> out = new ArrayList<>();
+            if (user == null || !user.varies()) {
+                return out;
+            }
+            final JoinKeys.Kind kind = JoinKeys.kind(mapping.get(user.field()).nativeType());
+            for (final String field : user.fields()) {
+                final String key = userKey(field, mapping);
+                if (key != null && !key.equals(user.field()) && !out.contains(key)
+                    && JoinKeys.kind(mapping.get(key).nativeType()) == kind) {
+                    out.add(key);
+                }
+            }
+            return out;
+        }
+
+        // The things the feeding pipelines' plans put in different fields (the user aside, read by each of its
+        // fields), each with its field per pipeline.
+        private Map<String, Varied> varied() {
+            final Map<String, Varied> out = new LinkedHashMap<>();
+            mapped.forEach((thing, found) -> {
+                if (!InstructionRules.USER_FIELD.equals(thing) && found.varies()) {
+                    final Map<String, String> byPipeline = new LinkedHashMap<>();
+                    found.byPipeline().forEach((field, pipelines) -> pipelines.forEach(pipeline ->
+                            byPipeline.putIfAbsent(pipeline, field)));
+                    out.put(thing, new Varied(found.field(), byPipeline));
+                }
+            });
+            return out;
         }
 
         Fields fields(final String detectedElement) {
             return new Fields(element != null
                     ? element
-                    : detectedElement, action, eventType);
+                    : detectedElement, action, eventType, fieldOf(mapped, TimelineFields.PROCESS_ID));
         }
     }
 
@@ -2236,7 +2510,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
 
 
     // The Events XML read, and its summary.
-    private record XmlOutcome(Map<String, String> xml, XmlRead summary) {
+    private record XmlOutcome(Map<String, String> xml, XmlRead summary, List<XmlPaths> paths) {
 
     }
 }

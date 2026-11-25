@@ -35,6 +35,7 @@ import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.query.DataSourceDocumentation;
 import stroom.ai.impl.tools.sequence.InMemoryKeyStreams;
 import stroom.ai.impl.tools.skills.SkillCatalogue;
+import stroom.ai.impl.tools.streams.StreamProvenance;
 import stroom.ai.impl.tools.workspace.GanttChartTool;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
@@ -93,6 +94,7 @@ class TestActivityTimelineTool {
     private final TabSnapshots tabSnapshots = Mockito.mock(TabSnapshots.class);
     private final SkillCatalogue skillCatalogue = Mockito.mock(SkillCatalogue.class);
     private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
+    private final StreamProvenance streamProvenance = Mockito.mock(StreamProvenance.class);
     private FakeTabWorkspace files;
     private ActivityTimelineTool tool;
     private List<Map<String, Object>> endpoint;
@@ -143,7 +145,7 @@ class TestActivityTimelineTool {
                 auditLog, eventXml, new TimelineFields(agentInstructions, dataSourceAccess, Optional.empty(),
                     () -> Mockito.mock(DataSourceDocumentation.class)),
                 new TimelineSourceChoice(dataSourceAccess, () -> tabSnapshots), () -> skillCatalogue, documentAccess,
-                agentInstructions, () -> Mockito.mock(ElasticEsql.class), () -> documentation);
+                agentInstructions, () -> Mockito.mock(ElasticEsql.class), () -> documentation, () -> streamProvenance);
 
         windows("08:30", "4800");
         windows("08:58", "4801");

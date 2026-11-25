@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.timeline.EventXmlClassifier.Route;
 import stroom.ai.impl.tools.timeline.TimelineReader.Source;
 import stroom.ai.impl.tools.timeline.TimelineSessions.Event;
 import stroom.ai.impl.tools.timeline.TimelineSessions.Role;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -33,10 +34,12 @@ import java.util.Objects;
 import java.util.Set;
 
 /// The automatic sources' events classified, each by the first way that tells (counted per source): its Events XML
-/// ([EventXmlClassifier], read by StreamId and EventId); else the element (and Action) fields the index holds; else
-/// the source's own event code, as classified once and confirmed ([EventCodes]); else not classified (an action of
-/// the source). Then the overrides (a skill's Event chains, the call's `typeRoles`): a type given a role takes it,
-/// one ignored is left out. The user and the time are the index's, never the XML's.
+/// ([EventXmlClassifier], read by StreamId and EventId, only where the index doesn't hold the event's type, or for the
+/// content of the events characterised); else the element (and Action) fields the index holds; else the source's own
+/// event code the index holds, as classified once and confirmed ([EventCodes]); else not classified (an action of
+/// the source). Each type's role is then decided once per type ([TypeRoleLookup]): the call's or skill's, the
+/// catalogue of the stream's translation, an AGENTS doc's `## Event types`, else its own; a type ignored is left out.
+/// The user and the time are the index's, never the XML's.
 final class TimelineClassification {
 
     private TimelineClassification() {
@@ -51,7 +54,8 @@ final class TimelineClassification {
     /// @param fields    Each automatic source's classifying fields, by its place.
     /// @param xml       The events' XML read, by `streamId:eventId`.
     /// @param codes     Each automatic source's codes' roles, by its place.
-    /// @param overrides Each source's types given a role (null: ignored), by its place.
+    /// @param roles     Each type's role, decided once per type: the call's or skill's, the catalogue of the stream's
+    ///                  translation, an AGENTS doc's, else its own as classified ([TypeRoleLookup]).
     /// @return The events as the timeline reads them (classified, the ignored left out), how each was classified,
     ///         and the counts per source and route.
     static Result classify(final List<Event> events,
@@ -60,7 +64,7 @@ final class TimelineClassification {
                            final Map<Integer, Fields> fields,
                            final Map<String, String> xml,
                            final Map<Integer, Map<String, CodeRole>> codes,
-                           final Map<Integer, Map<String, RoleOverride>> overrides) {
+                           final TypeRoleLookup roles) {
         final List<Event> out = new ArrayList<>();
         final Map<String, Classified> byId = new LinkedHashMap<>();
         final Map<Integer, Map<Route, Integer>> routes = new LinkedHashMap<>();
@@ -75,26 +79,19 @@ final class TimelineClassification {
             }
             final Fields sourceFields = fields.getOrDefault(event.source(), Fields.NONE);
             final Map<String, String> extra = extras.getOrDefault(event.id(), Map.of());
-            Classified classified = classifyOne(event, extra, sourceFields, xml, codes.getOrDefault(event.source(),
+            final Classified found = classifyOne(event, extra, sourceFields, xml, codes.getOrDefault(event.source(),
                     Map.of())).withKeys(indexKeys(source, sourceFields, event, extra));
-            routes.computeIfAbsent(event.source(), s -> new EnumMap<>(Route.class)).merge(classified.route(), 1,
+            routes.computeIfAbsent(event.source(), s -> new EnumMap<>(Route.class)).merge(found.route(), 1,
                     Integer::sum);
-            final RoleOverride override = overrideOf(classified, overrides.getOrDefault(event.source(), Map.of()));
-            if (override != null) {
-                if (override.role() == null) {
-                    ignored++;
-                    continue;
-                }
-                classified = classified.withRole(override.role());
-            }
-            if (classified.role() == null) {
+            final Classified classified = roles.decide(event.source(), event.streamId(), found).orElse(null);
+            if (classified == null || classified.role() == null) {
                 ignored++;
                 continue;
             }
             byId.put(event.id(), classified);
             out.add(asEvent(event, classified));
         }
-        return new Result(out, byId, routes, ignored);
+        return new Result(out, byId, routes, ignored, roles.origins());
     }
 
     private static Classified classifyOne(final Event event,
@@ -128,7 +125,9 @@ final class TimelineClassification {
                     null, Map.of(), Route.EVENT_CODE);
         }
         return new Classified(null, null, code, Role.ACTION, Objects.requireNonNullElse(code, "event"), null,
-                event.object(), null, Map.of(), Route.NONE);
+                event.object(), null, Map.of(), code == null
+                ? Route.NONE
+                : Route.TYPE_FIELD);
     }
 
     // The index's fields returned with an event, by their names, as correlation keys beside its XML's: what it
@@ -143,9 +142,13 @@ final class TimelineClassification {
         putKey(keys, source.windowField(), event.window());
         putKey(keys, source.processField(), event.process());
         putKey(keys, source.titleField(), event.title());
+        // A process's id the index holds, as the schema's pair matches a process's start to its end.
+        if (fields.processId() != null) {
+            putKey(keys, "ProcessId", extra.get(fields.processId()));
+        }
         final Set<String> typeFields = new HashSet<>();
         for (final String field : new String[]{fields.element(), fields.action(), fields.eventType(),
-                source.userField(), source.hostField()}) {
+                fields.processId(), source.userField(), source.hostField()}) {
             if (field != null) {
                 typeFields.add(field);
             }
@@ -164,15 +167,6 @@ final class TimelineClassification {
         }
     }
 
-    private static RoleOverride overrideOf(final Classified classified, final Map<String, RoleOverride> overrides) {
-        for (final Map.Entry<String, RoleOverride> entry : overrides.entrySet()) {
-            if (classified.isType(entry.getKey())) {
-                return entry.getValue();
-            }
-        }
-        return null;
-    }
-
     // The event as the timeline reads it: its role, kind, application, object and window from its classification;
     // its host the index's, else the XML's; its user and time the index's, always.
     private static Event asEvent(final Event event, final Classified c) {
@@ -185,7 +179,7 @@ final class TimelineClassification {
         // The index's own application, title and window where the call names their fields: a code or an index
         // field says what an event was, not its application (eval case 77 with no roles: focus sessions with none).
         final String application = event.process() != null
-                ? event.process()
+                ? NullSafe.nonBlankStringElse(EventXmlClassifier.baseName(event.process()), event.process())
                 : c.application();
         return new Event(event.time(), event.source(), event.id(), c.role(), c.kind(), host, application,
                 event.title(), firstNonNull(window, event.window()), event.object() != null
@@ -209,10 +203,24 @@ final class TimelineClassification {
     /// @param element   The field holding the EventDetail element, or null.
     /// @param action    The field holding its Action, or null.
     /// @param eventType The field holding the source's own event code, or null.
-    record Fields(String element, String action, String eventType) {
+    /// @param processId The field holding a process's id (the schema's `EventDetail/Process/ProcessId`), or null.
+    record Fields(String element, String action, String eventType, String processId) {
 
         /// No fields.
-        static final Fields NONE = new Fields(null, null, null);
+        static final Fields NONE = new Fields(null, null, null, null);
+
+        /// @param element   The field holding the EventDetail element, or null.
+        /// @param action    The field holding its Action, or null.
+        /// @param eventType The field holding the source's own event code, or null.
+        Fields(final String element, final String action, final String eventType) {
+            this(element, action, eventType, null);
+        }
+
+        /// @return True if the index holds what an event's type is (its element or event code), so its Events XML
+        /// isn't read to classify it.
+        boolean typed() {
+            return element != null || eventType != null;
+        }
     }
 
 
@@ -237,10 +245,12 @@ final class TimelineClassification {
     /// @param byId    How each automatic source's event was classified, by its id.
     /// @param routes  Each source's events by route.
     /// @param ignored The events left out, as a skill or the call (or a code) says to ignore their type.
+    /// @param roleFrom For each source, by its place, the types whose role each origin decided ([TypeRoleLookup]).
     record Result(List<Event> events,
                   Map<String, Classified> byId,
                   Map<Integer, Map<Route, Integer>> routes,
-                  int ignored) {
+                  int ignored,
+                  Map<Integer, Map<String, Set<String>>> roleFrom) {
 
     }
 }
