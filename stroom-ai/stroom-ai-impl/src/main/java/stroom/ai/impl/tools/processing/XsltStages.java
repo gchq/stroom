@@ -185,6 +185,17 @@ public class XsltStages {
         return StageRules.writtenTo(types);
     }
 
+    /// Whether an XSLT writes an `Events` or `Event` element, in any namespace (a literal result element, an
+    /// `xsl:element` of that name, or an `xsl:copy` of what it reads): a translation or a decoration does; a
+    /// flattener, an indexing XSLT or one writing Kafka records doesn't.
+    ///
+    /// @param code An XSLT's text.
+    /// @return True if it writes one; false if it doesn't, or isn't well-formed.
+    public static boolean writesEventsElements(final String code) {
+        final String text = XsltVersionHistory.strip(NullSafe.string(code));
+        return XmlTrees.tryParse(text).map(StageRules::writesEventsOrEvent).orElse(false);
+    }
+
     /// @return The Events namespaces: event-logging's, and those of this Stroom's forks of it.
     Set<String> eventsNamespaces() {
         final Set<String> namespaces = new LinkedHashSet<>();
@@ -413,7 +424,7 @@ public class XsltStages {
 
         // A literal Events or Event in any namespace, an xsl:element named one, or an xsl:copy (of what it reads,
         // Events: a decoration's identity template).
-        private static boolean writesEventsOrEvent(final Element root) {
+        static boolean writesEventsOrEvent(final Element root) {
             for (final Element element : XmlTrees.descendantsAndSelf(root)) {
                 if (!XmlTrees.XSL.equals(element.getNamespaceURI())) {
                     if (EVENTS_ELEMENTS.contains(element.getLocalName())) {

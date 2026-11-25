@@ -29,7 +29,14 @@ import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.instructions.InstructionRules.RequiredImport;
 import stroom.ai.impl.tools.validation.EventStreams;
 import stroom.ai.impl.tools.validation.XsltCompileCheck;
+import stroom.docref.DocRef;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.SharedElementData;
+import stroom.pipeline.shared.XsltDoc;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
+import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.pipeline.shared.stepping.SharedStepData;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.SteppingResult;
@@ -87,12 +94,27 @@ class TestDraftCefMappingTool {
             <TransportProtocol>TCP</TransportProtocol></Deny></Network></EventDetail></Event>
             </Events>""";
 
+    private static final String HANDOFF_NS = "urn:example:handoff";
+    // A shared Kafka XSLT: records of data pairs in, a Kafka record each out, its value the pair named cef, the topic
+    // set here.
+    private static final String SHARED = "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                                         + "version=\"2.0\" xpath-default-namespace=\"" + HANDOFF_NS + "\" "
+                                         + "xmlns=\"kafka-records:1\"><xsl:template match=\"/records\"><kafkaRecords>"
+                                         + "<xsl:for-each select=\"record\"><kafkaRecord topic=\"arcsight-prod\">"
+                                         + "<value><xsl:value-of select=\"data[@name='cef']/@value\"/></value>"
+                                         + "</kafkaRecord></xsl:for-each></kafkaRecords></xsl:template>"
+                                         + "</xsl:stylesheet>";
+    private static final DocRef TWO_STAGES = new DocRef(PipelineDoc.TYPE, "fwd", "Kafka Forwarding");
+    private static final DocRef ONE_STAGE = new DocRef(PipelineDoc.TYPE, "one", "CEF Kafka");
+
     private final SteppingWorld world = new SteppingWorld();
     private final AgentInstructions agentInstructions = Mockito.mock(AgentInstructions.class);
     private final Consent consent = Mockito.mock(Consent.class);
     private final EventStreams eventStreams = Mockito.mock(EventStreams.class);
     private final KeptMappings keptMappings = Mockito.mock(KeptMappings.class);
-    private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
+    // The world's: it reads the world's pipelines (and the XSLTs a test gives).
+    private final DocumentAccess documentAccess = world.documentAccess;
+    private final Map<String, XsltDoc> xslts = new LinkedHashMap<>();
     private final CefSources sources = Mockito.mock(CefSources.class);
     private final XsltSaves saves = Mockito.mock(XsltSaves.class);
     private final BuildPlan plan = Mockito.mock(BuildPlan.class);
@@ -118,6 +140,8 @@ class TestDraftCefMappingTool {
         Mockito.when(keptMappings.keptXslt(anyString())).thenReturn(Optional.empty());
         Mockito.when(saves.requiredFor(any(), anyString(), any(), any())).thenReturn(List.of());
         Mockito.when(plan.buildOf(any())).thenReturn(Optional.empty());
+        Mockito.when(documentAccess.read(any(DocRef.class), eq(XsltDoc.class))).thenAnswer(inv -> Optional.ofNullable(
+                xslts.get(((DocRef) inv.getArgument(0)).getUuid())));
     }
 
     @Test
@@ -371,6 +395,181 @@ class TestDraftCefMappingTool {
         assertThat(tool.isReadOnly(call("{\"stream_ids\": [7], \"uuid\": \"x\"}"))).isFalse();
         assertThat(tool.confirmsItself()).isFalse();
         assertThat(tool.changesOnlyItsBuild()).isTrue();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aTemplateWithASharedKafkaXsltGetsOnlyTheFlattenerHandingEachLineOn() throws Exception {
+        forwardingTemplates();
+        Mockito.when(sources.pipeline("Kafka Forwarding")).thenReturn(Optional.of(TWO_STAGES));
+        Mockito.when(saves.create(any(), any(), eq("b"), eq("CEF"), anyString(), any(), anyString())).thenReturn(Map.of(
+                "type", "XSLT", "uuid", "x-9", "name", "CEF", "version", "v1"));
+
+        final Map<String, Object> result = draft("{\"stream_ids\": [7], \"custom_keys\": false, \"topic\": "
+                                                 + "\"mine\", \"template\": \"Kafka Forwarding\", \"build\": \"b\", "
+                                                 + "\"name\": \"CEF\"}");
+
+        final Map<String, Object> shape = (Map<String, Object>) result.get("shape");
+        assertThat(shape).containsEntry("kind", "chained")
+                .containsEntry("decided_by", "the call names 'Kafka Forwarding'")
+                .containsEntry("flattener", "flattenFilter")
+                .containsEntry("handoff_checked", true);
+        assertThat((String) shape.get("handoff")).contains("<data name=\"cef\" value=\"CEF line\"/>");
+        assertThat(((Map<String, Object>) result.get("plan")).get("output")).isEqualTo("chained");
+        assertThat((Map<String, Object>) result.get("plan")).doesNotContainKey("topic");
+        assertThat((List<String>) result.get("notes")).anySatisfy(note -> assertThat(note)
+                .startsWith("topic 'mine' not used: the shared XSLT 'Shared Kafka output' the template supplies "
+                            + "sets the topic"));
+        assertThat((Map<String, Object>) result.get("chain_check")).containsEntry("ran", true)
+                .containsEntry("problems", List.of());
+        assertThat((List<?>) result.get("problems")).isEmpty();
+        assertThat(result).doesNotContainKey("kafka_configs");
+        final ArgumentCaptor<String> code = ArgumentCaptor.forClass(String.class);
+        Mockito.verify(saves).create(any(), any(), eq("b"), eq("CEF"), code.capture(), any(), anyString());
+        assertThat(code.getValue()).contains("<data name=\"cef\" value=\"{$line}\"").doesNotContain("kafkaRecord",
+                "mine");
+        assertThat((String) result.get("hint")).startsWith("Pipeline: create_pipeline template_uuid='fwd' (Kafka "
+                                                           + "Forwarding), setting only flattenFilter.xslt to 'x-9': "
+                                                           + "no topic or Kafka setting");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aTemplateTheInstructionsNameOfOneStageKeepsTheXsltWritingItsRecords() throws Exception {
+        forwardingTemplates();
+        Mockito.when(sources.pipeline("CEF Kafka")).thenReturn(Optional.of(ONE_STAGE));
+        instructions = List.of(Map.of("instructions", "Pipeline template: CEF Kafka\nKafka topic: arcsight"));
+
+        final Map<String, Object> result = draft("{\"stream_ids\": [7], \"custom_keys\": false}");
+
+        assertThat((Map<String, Object>) result.get("shape")).containsEntry("kind", "single")
+                .containsEntry("decided_by", "the standing instructions name 'CEF Kafka'");
+        assertThat((Map<String, Object>) result.get("plan")).containsEntry("topic", "arcsight")
+                .doesNotContainKey("handoff");
+        assertThat((String) result.get("example_line")).startsWith("CEF:0|Delinea|");
+    }
+
+    @Test
+    void withForwardingTemplatesOfBothShapesAndNothingNamingOneTheUserIsAsked() throws Exception {
+        forwardingTemplates();
+        Mockito.when(sources.templates(any(), anyList())).thenReturn(Map.of("forwarding_templates", List.of(
+                Map.of("uuid", "fwd", "name", "Kafka Forwarding"), Map.of("uuid", "one", "name", "CEF Kafka"))));
+
+        final Map<String, Object> asked = draft("{\"stream_ids\": [7], \"custom_keys\": false}");
+
+        assertThat(asked).containsEntry("status", "needs_guidance")
+                .containsEntry("question", DraftCefMappingTool.TEMPLATE_QUESTION);
+        assertThat(asked.get("options")).isEqualTo(List.of(
+                "'Kafka Forwarding' (two stages: its shared XSLT 'Shared Kafka output' writes the Kafka records and "
+                + "sets the topic)",
+                "'CEF Kafka' (one stage: the pipeline's own XSLT writes the records)"));
+
+        // Answered in a form: the two stages.
+        Mockito.when(consent.choose(any(), any(), eq(DraftCefMappingTool.NAME),
+                        eq(DraftCefMappingTool.TEMPLATE_QUESTION), anyList(), isNull()))
+                .thenAnswer(inv -> Optional.of(((List<String>) inv.getArgument(4)).getFirst()));
+        final Map<String, Object> chosen = draft("{\"stream_ids\": [7], \"custom_keys\": false}");
+        assertThat(((Map<?, ?>) chosen.get("shape")).get("decided_by")).isEqualTo("the user chose 'Kafka Forwarding'");
+        assertThat(((Map<?, ?>) chosen.get("plan")).get("output")).isEqualTo("chained");
+    }
+
+    @Test
+    void aBuildsCopyOfACefPipelineOfTwoStagesDecidesWithoutAsking() throws Exception {
+        forwardingTemplates();
+        world.pipeline("copy", "Vault CEF V1.1", "fwd", new PipelineDataBuilder()
+                .addProperty(new PipelineProperty("flattenFilter", "xslt",
+                        new PipelinePropertyValue(new DocRef(XsltDoc.TYPE, "fx", "Vault flattener")))));
+        xslt("fx", "Vault flattener", "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                                      + "version=\"2.0\"/>");
+        Mockito.when(sources.buildVersions("b")).thenReturn(List.of(new DocRef(PipelineDoc.TYPE, "copy",
+                "Vault CEF V1.1")));
+
+        final Map<String, Object> result = draft("{\"stream_ids\": [7], \"custom_keys\": false, \"build\": "
+                                                 + "\"b\"}");
+
+        assertThat(((Map<?, ?>) result.get("shape")).get("decided_by"))
+                .isEqualTo("the build's copy 'Vault CEF V1.1' of a CEF pipeline has two stages");
+        assertThat(((Map<?, ?>) ((Map<?, ?>) result.get("shape")).get("template")).get("uuid")).isEqualTo("fwd");
+    }
+
+    @Test
+    void aTemplateThatCantBeFoundOrWhoseSharedXsltCantBeReadIsRefused() {
+        forwardingTemplates();
+        assertThat(tool.execute(call("{\"stream_ids\": [7], \"custom_keys\": false, \"template\": \"nope\"}"),
+                world.context()).text()).contains("template 'nope' is no pipeline you may view");
+
+        Mockito.when(sources.pipeline("fwd")).thenReturn(Optional.of(TWO_STAGES));
+        xslt("sx", "Shared Kafka output", "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                                          + "version=\"2.0\" xmlns=\"kafka-records:1\"><xsl:template match=\"/\">"
+                                          + "<kafkaRecords/></xsl:template></xsl:stylesheet>");
+        assertThat(tool.execute(call("{\"stream_ids\": [7], \"custom_keys\": false, \"template\": \"fwd\"}"),
+                world.context()).text()).contains("Can't tell what the shared XSLT 'Shared Kafka output' (at "
+                                                  + "'kafkaOutputFilter') reads");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aForwarderOfTwoStagesIsReviewedThroughBoth() throws Exception {
+        forwardingTemplates();
+        world.pipeline("p-2", "Vault CEF", "fwd", new PipelineDataBuilder()
+                .addProperty(new PipelineProperty("flattenFilter", "xslt",
+                        new PipelinePropertyValue(new DocRef(XsltDoc.TYPE, "fx", "Vault flattener")))));
+        final String event = EVENTS.substring(0, EVENTS.indexOf("</Event>") + "</Event>".length()) + "</Events>";
+        final String line = "CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|suser=priya.patel";
+        final String handedOn = "<records xmlns=\"" + HANDOFF_NS + "\"><record><data name=\"cef\" value=\"" + line
+                                + "\"/></record></records>";
+        final Map<String, SharedElementData> elements = new LinkedHashMap<>();
+        elements.put("flattenFilter", new SharedElementData(event, handedOn, null, false, false, true));
+        elements.put("kafkaOutputFilter", new SharedElementData(handedOn, "<kafkaRecords xmlns=\"kafka-records:1\">"
+                                                                          + "<kafkaRecord topic=\"arcsight-prod\">"
+                                                                          + "<value>" + line + "</value></kafkaRecord>"
+                                                                          + "</kafkaRecords>", null, false, false,
+                true));
+        world.stepper = (stream, at) -> at.getRecordIndex() < 1
+                ? new SteppingResult("s", null, null, new StepLocation(stream, 0L, at.getRecordIndex()),
+                        new SharedStepData(null, elements), null, true, null, false, true)
+                : null;
+
+        final Map<String, Object> result = draft("{\"stream_ids\": [7], \"custom_keys\": false, \"pipeline_uuid\": "
+                                                 + "\"p-2\"}");
+
+        final Map<String, Object> review = (Map<String, Object>) result.get("review");
+        assertThat(review.get("lines")).isEqualTo(1);
+        assertThat(String.valueOf(review.get("implied_mapping"))).as("each key matched to the Event it carries")
+                .contains("path=EventSource/User/Id, key=suser");
+        assertThat((Map<String, Object>) result.get("shape")).containsEntry("kind", "chained")
+                .containsEntry("flattener", "flattenFilter")
+                .containsEntry("lines_read_at", "kafkaOutputFilter");
+        assertThat(((Map<?, ?>) result.get("plan")).get("output")).as("a plan saved from it hands its lines on")
+                .isEqualTo("chained");
+    }
+
+    // Two forwarding templates: `fwd`, an open flattener slot then a shared XSLT writing Kafka records; and `one`, an
+    // open XSLT slot writing them itself.
+    private void forwardingTemplates() {
+        xslt("sx", "Shared Kafka output", SHARED);
+        world.pipeline("fwd", "Kafka Forwarding", null, new PipelineDataBuilder()
+                .addElement(new PipelineElement("xmlParser", "XMLParser"))
+                .addElement(new PipelineElement("flattenFilter", "XSLTFilter"))
+                .addElement(new PipelineElement("kafkaOutputFilter", "XSLTFilter"))
+                .addElement(new PipelineElement("schemaFilter", "SchemaFilter"))
+                .addElement(new PipelineElement("kafkaProducer", "StandardKafkaProducer"))
+                .addLink("xmlParser", "flattenFilter")
+                .addLink("flattenFilter", "kafkaOutputFilter")
+                .addLink("kafkaOutputFilter", "schemaFilter")
+                .addLink("schemaFilter", "kafkaProducer")
+                .addProperty(new PipelineProperty("kafkaOutputFilter", "xslt",
+                        new PipelinePropertyValue(new DocRef(XsltDoc.TYPE, "sx", "Shared Kafka output")))));
+        world.pipeline("one", "CEF Kafka", null, new PipelineDataBuilder()
+                .addElement(new PipelineElement("xmlParser", "XMLParser"))
+                .addElement(new PipelineElement("xsltFilter", "XSLTFilter"))
+                .addElement(new PipelineElement("kafkaProducer", "StandardKafkaProducer"))
+                .addLink("xmlParser", "xsltFilter")
+                .addLink("xsltFilter", "kafkaProducer"));
+    }
+
+    private void xslt(final String uuid, final String name, final String code) {
+        xslts.put(uuid, XsltDoc.builder().uuid(uuid).name(name).data(code).build());
     }
 
     @SuppressWarnings("unchecked")

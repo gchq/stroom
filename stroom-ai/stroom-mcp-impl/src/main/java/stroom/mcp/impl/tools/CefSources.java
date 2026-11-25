@@ -28,6 +28,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +36,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /// Where a CEF pipeline should come from, for draft_cef_mapping: a template the standing instructions name (they
 /// decide), the environment's forwarding templates, the CEF pipelines there are already with the templates they inherit
@@ -57,20 +59,63 @@ class CefSources {
     private final PipelineTemplates pipelineTemplates;
     private final DocumentAccess documentAccess;
     private final WriteGuard guard;
+    private final Provider<BuildRecords> recordsProvider;
 
     /// @param pipelineIndex     Finds documents by name and content.
     /// @param pipelineTemplates Finds the forwarding templates.
     /// @param documentAccess    Reads each pipeline's parent.
     /// @param guard             Names the workspace folder, whose drafts are left out.
+    /// @param recordsProvider   The builds' records: the pipelines a build copied or made as new versions.
     @Inject
     CefSources(final PipelineIndex pipelineIndex,
                final PipelineTemplates pipelineTemplates,
                final DocumentAccess documentAccess,
-               final WriteGuard guard) {
+               final WriteGuard guard,
+               final Provider<BuildRecords> recordsProvider) {
         this.pipelineIndex = pipelineIndex;
         this.pipelineTemplates = pipelineTemplates;
         this.documentAccess = documentAccess;
         this.guard = guard;
+        this.recordsProvider = recordsProvider;
+    }
+
+    /// @param uuidOrName A pipeline's UUID, or its exact name.
+    /// @return The pipeline, as the user may view it: by UUID, else the first so named; empty if there is none.
+    Optional<DocRef> pipeline(final String uuidOrName) {
+        if (NullSafe.isBlankString(uuidOrName)) {
+            return Optional.empty();
+        }
+        final Optional<DocRef> byUuid = documentAccess.findDocRef(uuidOrName.strip())
+                .filter(ref -> PipelineDoc.TYPE.equals(ref.getType()));
+        if (byUuid.isPresent()) {
+            return byUuid;
+        }
+        return pipelineIndex.named(PipelineDoc.TYPE, uuidOrName.strip(), 1).stream().findFirst();
+    }
+
+    /// @param build A build, or null.
+    /// @return The pipelines the build copied or made as new versions (`version_of` in its record), as the user may
+    /// view them; none for no build.
+    List<DocRef> buildVersions(final String build) {
+        if (NullSafe.isBlankString(build)) {
+            return List.of();
+        }
+        final List<DocRef> out = new ArrayList<>();
+        try {
+            final Object docs = recordsProvider.get().load(build).get(BuildRecords.DOCS);
+            if (docs instanceof final Map<?, ?> entries) {
+                entries.forEach((uuid, entry) -> {
+                    if (entry instanceof final Map<?, ?> map && map.get("version_of") != null) {
+                        documentAccess.findDocRef(String.valueOf(uuid))
+                                .filter(ref -> PipelineDoc.TYPE.equals(ref.getType()))
+                                .ifPresent(out::add);
+                    }
+                });
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No versions read for build {}: {}", build, e.getMessage()));
+        }
+        return out;
     }
 
     /// @param said    What the standing instructions say of CEF output ([CefInstructions#fromInstructions]).

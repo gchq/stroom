@@ -297,6 +297,16 @@ class TestXsltStages {
     }
 
     @Test
+    void anXsltWritingEventsOrAnEventIsToldFromOneWritingSomethingElse() {
+        assertThat(XsltStages.writesEventsElements(TRANSLATION)).as("a translation").isTrue();
+        assertThat(XsltStages.writesEventsElements(DECORATION)).as("a decoration copying").isTrue();
+        assertThat(XsltStages.writesEventsElements(FLATTENER)).as("a flattener").isFalse();
+        assertThat(XsltStages.writesEventsElements(KAFKA)).as("Kafka records").isFalse();
+        assertThat(XsltStages.writesEventsElements("<xsl:stylesheet")).as("not well-formed").isFalse();
+        assertThat(XsltStages.writesEventsElements(null)).isFalse();
+    }
+
+    @Test
     void whatFollowsAnElementTellsWhereItsOutputGoes() {
         pipeline(CHILD, null, List.of("aFilter", "schemaFilter", "kafkaProducer"), Map.of());
         assertThat(XsltStages.writtenTo(merged("p"), "aFilter")).contains(Stage.OUTPUT);

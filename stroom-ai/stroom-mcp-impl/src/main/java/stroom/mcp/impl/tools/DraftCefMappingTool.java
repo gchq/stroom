@@ -33,6 +33,7 @@ import stroom.ai.impl.tools.cef.CefDocs;
 import stroom.ai.impl.tools.cef.CefDraft;
 import stroom.ai.impl.tools.cef.CefEvents;
 import stroom.ai.impl.tools.cef.CefField;
+import stroom.ai.impl.tools.cef.CefHandoff;
 import stroom.ai.impl.tools.cef.CefInstructions;
 import stroom.ai.impl.tools.cef.CefKeys;
 import stroom.ai.impl.tools.cef.CefLines;
@@ -50,6 +51,8 @@ import stroom.ai.impl.tools.generation.XsltStyle;
 import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.RequiredImport;
+import stroom.ai.impl.tools.processing.MergedPipeline;
+import stroom.ai.impl.tools.processing.MergedPipeline.ElementProperty;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.streams.SteppingWalks;
 import stroom.ai.impl.tools.streams.StreamReader;
@@ -59,12 +62,14 @@ import stroom.ai.impl.tools.validation.XsltCompileCheck;
 import stroom.ai.impl.workspace.ToolTimeoutException;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -106,6 +111,15 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
     static final String STYLE_ARG = "style";
     static final String DISCARD_HAND_EDIT_ARG = "discard_hand_edit";
     static final String HAND_EDIT_CHOICES_ARG = "hand_edit_choices";
+    static final String TEMPLATE_ARG = "template";
+
+    static final String TEMPLATE_QUESTION = "Which template will the CEF pipeline inherit from? It decides how its "
+                                            + "XSLT is written: with two stages, the pipeline's own XSLT hands each "
+                                            + "CEF line to the template's shared XSLT, which writes the Kafka records "
+                                            + "and sets the topic; with one, its own XSLT writes the Kafka records, "
+                                            + "the topic in it.";
+    static final String CHAINED = "chained";
+    static final String SINGLE = "single";
 
     static final String CUSTOM_QUESTION = "May the CEF output use keys outside ArcSight's CEF dictionary (e.g. "
                                           + "myCustomField1)? ArcSight usually doesn't index those. Its built-in "
@@ -128,6 +142,8 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
     private final BuildPlan plan;
     private final XsltCompileCheck compileCheck;
     private final CefChoices choices;
+    // The reviewed pipeline's inheritance; none in tests that make the tool themselves.
+    private Provider<PipelineInheritance> inheritanceProvider;
 
     @Inject
     DraftCefMappingTool(final AgentInstructions agentInstructions,
@@ -154,6 +170,15 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         this.choices = choices;
     }
 
+    /// Says which template a reviewed pipeline inherits from and flags an XSLT of its own where its template
+    /// supplies one (set by injection; none in tests that make the tool themselves).
+    ///
+    /// @param inheritance The pipelines' inheritance.
+    @Inject
+    void setInheritance(final Provider<PipelineInheritance> inheritance) {
+        this.inheritanceProvider = inheritance;
+    }
+
     @Override
     public ToolDefinition definition() {
         return ToolDefinition.builder()
@@ -171,8 +196,11 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                              + "should come from: a template the standing instructions name, else the "
                              + "environment's forwarding templates or the template its CEF pipelines inherit from. "
                              + "With build and name (or uuid) it saves the XSLT with the plan: a Kafka record per "
-                             + "Event (kafka-records:1, one Event a record) or lines of text. With pipeline_uuid it "
-                             + "reviews an existing CEF pipeline instead.")
+                             + "Event (kafka-records:1, one Event a record) or lines of text. A forwarder whose "
+                             + "template has a shared XSLT writing the Kafka records after an open XSLT slot (two "
+                             + "stages) gets only its first stage: each line handed on in the form that shared XSLT "
+                             + "reads, no topic (the template's). With pipeline_uuid it reviews an existing CEF "
+                             + "pipeline instead, through every stage.")
                 .parameters(ObjectSchema.builder()
                         .addProperty(STREAM_IDS_ARG, stringArraySchema("Events streams (the events pipeline's "
                                                                        + "output): the sample the mapping is "
@@ -213,6 +241,12 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                                                        + "XSLT's version history (and the documentation's version "
                                                        + "control when it is written), e.g. 'Rule for Secret "
                                                        + "Checkout events, seen once the whole feed was processed'.")
+                        .addStringProperty(TEMPLATE_ARG, "The pipeline template the CEF pipeline will be a child "
+                                                         + "of (UUID or exact name), or the CEF pipeline it is "
+                                                         + "the next version of: its shape decides how the XSLT "
+                                                         + "is written. Left out: the standing instructions' "
+                                                         + "template, else the build's copied CEF pipeline, else "
+                                                         + "asked where the forwarding templates differ.")
                         .addProperty(FEEDS_ARG, stringArraySchema("The Events feed: its folder's standing "
                                                                   + "instructions apply."))
                         .addProperty(FOLDERS_ARG, stringArraySchema("Folders the pipeline will live in."))
@@ -335,19 +369,33 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         final Optional<KeptMappings.KeptXslt> reviewedKept;
         // The sample Events, for what the documentation says of them.
         final List<XmlElement> sampled;
+        // How a new plan is written (one stage, or the first of two), where it was decided.
+        Shape shape = null;
         if (request.pipelineUuid() != null) {
             reviewedKept = keptMappings.keptXslt(request.pipelineUuid());
             final Stepped stepped = stepped(context, request.pipelineUuid(), request.streamIds(),
                     reviewedKept.map(KeptMappings.KeptXslt::element).orElse(null), cap);
             if (stepped.lines().isEmpty()) {
                 throw new ToolRefusal("Stepping the pipeline over streams " + request.streamIds() + " gave no CEF "
-                                      + "lines at its element '" + stepped.element() + "': check stream_ids are "
-                                      + "Events streams it reads, and step_sample it");
+                                      + "lines at its element '" + stepped.linesElement() + "': check stream_ids "
+                                      + "are Events streams it reads, and step_sample it");
             }
             final List<XmlElement> events = stepped.events().stream().filter(e -> e != null).toList();
             sampled = events;
             final Map<String, Object> reviewed = CefLines.review(stepped.lines(), events, allowed);
             result.put("review", reviewed);
+            if (!stepped.element().equals(stepped.linesElement())) {
+                // Two stages: the lines read at the shared stage's output, the Events at the flattener's input.
+                final Map<String, Object> chained = new LinkedHashMap<>();
+                chained.put("kind", CHAINED);
+                chained.put("flattener", stepped.element());
+                chained.put("lines_read_at", stepped.linesElement());
+                result.put("shape", chained);
+            }
+            if (inheritanceProvider != null) {
+                inheritanceProvider.get().facts(request.pipelineUuid(), null, null)
+                        .ifPresent(facts -> result.put("inheritance", facts.toMap()));
+            }
             if (stepped.stopped()) {
                 result.put("stopped_early", true);
             }
@@ -356,6 +404,9 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                 result.put("plan_from", "the plan kept with XSLT '" + reviewedKept.get().xslt().getName() + "'");
             } else {
                 drafted = implied(stepped, reviewed, allowed, request.header());
+                if (!stepped.element().equals(stepped.linesElement())) {
+                    drafted = handedOn(drafted, stepped, result);
+                }
                 result.put("plan_from", "the mapping its lines imply (its XSLT keeps no plan; header fields as the "
                                         + "first line had them): check it before saving a new XSLT from it");
             }
@@ -380,38 +431,63 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                     drafted = drafted.withHeader(head.getKey(), head.getValue());
                 }
             } else {
-                String choice = request.output();
-                if (choice == null) {
-                    final Map<String, Object> templates = sources.templates(said, request.folders());
-                    final Set<Object> kinds = new LinkedHashSet<>();
-                    NullSafe.list((List<?>) templates.get("forwarding_templates")).forEach(t ->
-                            kinds.add(((Map<?, ?>) t).get("backend")));
-                    choice = kinds.equals(Set.of(CefPlan.TEXT))
-                            ? CefPlan.TEXT
-                            : CefPlan.KAFKA;
-                    result.put("templates", templates);
+                shape = shape(call, context, request, said, result);
+                if (shape.question() != null) {
+                    return shape.question();
                 }
-                final CefDraft.Drafted made = CefDraft.draft(events, allowed, applied, request.header(), choice,
-                        orElse(request.topic(), (String) said.get(CefInstructions.TOPIC)),
-                        request.kafkaKey());
-                drafted = made.plan();
+                if (shape.decidedBy() != null) {
+                    result.put("shape", shape.toMap());
+                }
+                if (shape.chain() != null) {
+                    // Only the first stage: each line handed on in the form the shared XSLT reads, which writes the
+                    // Kafka records and sets the topic (decided with the user, 2026-11-25).
+                    final CefDraft.Drafted made = CefDraft.draft(events, allowed, applied, request.header(),
+                            CefPlan.KAFKA, null, null);
+                    drafted = made.plan().withHandoff(shape.handoff().handoff());
+                    final List<String> notes = new ArrayList<>(made.notes());
+                    notes.addAll(notApplied(request, said, shape));
+                    if (!notes.isEmpty()) {
+                        result.put("notes", notes);
+                    }
+                } else {
+                    String choice = request.output();
+                    if (choice == null) {
+                        final Map<String, Object> templates = sources.templates(said, request.folders());
+                        final Set<Object> kinds = new LinkedHashSet<>();
+                        NullSafe.list((List<?>) templates.get("forwarding_templates")).forEach(t ->
+                                kinds.add(((Map<?, ?>) t).get("backend")));
+                        choice = kinds.equals(Set.of(CefPlan.TEXT))
+                                ? CefPlan.TEXT
+                                : CefPlan.KAFKA;
+                        result.put("templates", templates);
+                    }
+                    final CefDraft.Drafted made = CefDraft.draft(events, allowed, applied, request.header(), choice,
+                            orElse(request.topic(), (String) said.get(CefInstructions.TOPIC)),
+                            request.kafkaKey());
+                    drafted = made.plan();
+                    if (!made.notes().isEmpty()) {
+                        result.put("notes", made.notes());
+                    }
+                }
                 done = applied.stream().map(DraftCefMappingTool::doneLine).toList();
-                if (!made.notes().isEmpty()) {
-                    result.put("notes", made.notes());
+            }
+            if (!drafted.chained()) {
+                if (request.topic() != null) {
+                    drafted = drafted.withTopic(request.topic());
                 }
-            }
-            if (request.topic() != null) {
-                drafted = drafted.withTopic(request.topic());
-            }
-            if (request.kafkaKey() != null) {
-                drafted = drafted.withKafkaKey(request.kafkaKey());
-            }
-            if (request.output() != null) {
-                drafted = drafted.withOutput(request.output());
+                if (request.kafkaKey() != null) {
+                    drafted = drafted.withKafkaKey(request.kafkaKey());
+                }
+                if (request.output() != null) {
+                    drafted = drafted.withOutput(request.output());
+                }
             }
             examples = new LinkedHashMap<>();
             if (!events.isEmpty()) {
                 sampleCheck(drafted, events, allowed, cap, examples, result);
+                if (shape != null && shape.chain() != null) {
+                    chainCheck(drafted, events, cap, shape, result);
+                }
             }
         }
         if (!result.containsKey("templates") && request.pipelineUuid() == null) {
@@ -437,7 +513,10 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         if (!standing.instructions().isEmpty()) {
             result.put("standing_instructions", standing.instructions());
         }
-        result.put("kafka_configs", sources.kafkaConfigs());
+        if (!drafted.chained()) {
+            // A chained forwarder's Kafka settings are its template's.
+            result.put("kafka_configs", sources.kafkaConfigs());
+        }
         if ((request.build() != null && request.name() != null) || request.uuid() != null) {
             return save(call, context, request, drafted, done, problems, reviewedKept, result);
         }
@@ -524,6 +603,186 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         return result;
     }
 
+
+    // How a new forwarder is written, from facts (decided with the user, 2026-11-25): the template the call names,
+    // the one the standing instructions name, the build's copy of a CEF pipeline of two stages; else the
+    // environment's forwarding templates, asked about where any has two stages, and one stage (as before) where
+    // none has.
+    private Shape shape(final ToolCall call,
+                        final ToolCallContext context,
+                        final Request request,
+                        final Map<String, Object> said,
+                        final Map<String, Object> result) {
+        if (request.template() != null) {
+            final DocRef ref = sources.pipeline(request.template()).orElseThrow(() -> new ToolRefusal(
+                    "template '" + request.template() + "' is no pipeline you may view: give its UUID or exact "
+                    + "name"));
+            return decided(ref, "the call names '" + ref.getName() + "'");
+        }
+        if (said.get(CefInstructions.TEMPLATE) instanceof final String named && !named.isBlank()) {
+            final Optional<DocRef> ref = sources.pipeline(named);
+            if (ref.isPresent()) {
+                return decided(ref.get(), "the standing instructions name '" + ref.get().getName() + "'");
+            }
+        }
+        for (final DocRef copy : sources.buildVersions(request.build())) {
+            final Optional<MergedPipeline> merged = MergedPipeline.load(documentAccess, copy.getUuid());
+            final Optional<CefChains.Chain> chain = merged.flatMap(pipeline -> CefChains.ofForwarder(pipeline,
+                    this::code));
+            if (chain.isPresent()) {
+                return chained(templateOf(merged.get()), chain.get(), "the build's copy '" + copy.getName()
+                                                                      + "' of a CEF pipeline has two stages");
+            }
+        }
+        final Map<String, Object> templates = sources.templates(said, request.folders());
+        final Map<String, String> options = new LinkedHashMap<>();
+        final Map<String, DocRef> byOption = new LinkedHashMap<>();
+        boolean anyChained = false;
+        for (final Object candidate : NullSafe.list((List<?>) templates.get("forwarding_templates"))) {
+            final Map<?, ?> map = JsonValues.mapOrEmpty(candidate);
+            final String uuid = ToolText.str(map.get("uuid"));
+            final Optional<CefChains.Chain> chain = MergedPipeline.load(documentAccess, uuid)
+                    .flatMap(pipeline -> CefChains.ofTemplate(pipeline, this::code));
+            anyChained |= chain.isPresent();
+            final String option = "'" + map.get("name") + "' (" + chain
+                    .map(found -> "two stages: its shared XSLT '" + found.sharedXslt().getName() + "' writes the "
+                                  + "Kafka records and sets the topic")
+                    .orElse("one stage: the pipeline's own XSLT writes the records") + ")";
+            options.put(option, uuid);
+            byOption.put(option, new DocRef(PipelineDoc.TYPE, uuid, ToolText.str(map.get("name"))));
+        }
+        result.put("templates", templates);
+        if (!anyChained) {
+            return Shape.single(null, null);
+        }
+        final List<String> offered = new ArrayList<>(options.keySet());
+        final Optional<String> chosen = consent.choose(call, context, NAME, TEMPLATE_QUESTION, offered, null);
+        if (chosen.isPresent() && byOption.containsKey(chosen.get())) {
+            return decided(byOption.get(chosen.get()), "the user chose '" + byOption.get(chosen.get()).getName()
+                                                       + "'");
+        }
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("status", "needs_guidance");
+        out.put("question", TEMPLATE_QUESTION);
+        out.put("options", offered);
+        out.put("templates", options.entrySet().stream()
+                .map(entry -> Map.of("option", entry.getKey(), "uuid", entry.getValue()))
+                .toList());
+        out.put("hint", "Ask the user exactly this, offering these options, then call again with template=<the "
+                        + "uuid of the one they choose>. Don't choose for them.");
+        return Shape.asking(out);
+    }
+
+    // The shape a named pipeline gives: a template of two stages, or a CEF pipeline of two (a predecessor, its own
+    // template the new one's), else one stage.
+    private Shape decided(final DocRef ref, final String why) {
+        final MergedPipeline merged = MergedPipeline.load(documentAccess, ref.getUuid()).orElseThrow(() ->
+                new ToolRefusal("Pipeline '" + ref.getName() + "' can't be read: it doesn't exist, or you don't "
+                                + "have permission to view it or a template it inherits from"));
+        final Optional<CefChains.Chain> ofTemplate = CefChains.ofTemplate(merged, this::code);
+        if (ofTemplate.isPresent()) {
+            return chained(new DocRef(PipelineDoc.TYPE, ref.getUuid(), ref.getName()), ofTemplate.get(), why);
+        }
+        final Optional<CefChains.Chain> ofForwarder = CefChains.ofForwarder(merged, this::code);
+        if (ofForwarder.isPresent()) {
+            return chained(templateOf(merged), ofForwarder.get(), why + ", a CEF pipeline of two stages");
+        }
+        return Shape.single(new DocRef(PipelineDoc.TYPE, ref.getUuid(), ref.getName()), why);
+    }
+
+    // Two stages: the form the shared XSLT reads, read from it.
+    private Shape chained(final DocRef template, final CefChains.Chain chain, final String why) {
+        final String code = code(chain.sharedXslt()).orElseThrow(() -> new ToolRefusal(
+                "The shared XSLT '" + chain.sharedXslt().getName() + "' (at '" + chain.stage() + "') can't be "
+                + "read: it decides what the CEF XSLT hands on, so ask its owner for View on it"));
+        final CefHandoff.Inferred inferred = CefHandoff.infer(code).orElseThrow(() -> new ToolRefusal(
+                "Can't tell what the shared XSLT '" + chain.sharedXslt().getName() + "' (at '" + chain.stage()
+                + "') reads: no form of it gives a Kafka record carrying a CEF line. Ask the user what it reads, "
+                + "or review a pipeline already running it (pipeline_uuid)"));
+        return new Shape(CHAINED, why, template, chain, inferred, code, null);
+    }
+
+    // The template a pipeline inherits from directly, or null.
+    private static DocRef templateOf(final MergedPipeline merged) {
+        final List<DocRef> layers = merged.templateChain();
+        return layers.size() > 1
+                ? layers.get(layers.size() - 2)
+                : null;
+    }
+
+    // What a chained draft doesn't use, said: a topic, a Kafka key or an output the call or instructions give.
+    private static List<String> notApplied(final Request request,
+                                           final Map<String, Object> said,
+                                           final Shape shape) {
+        final List<String> out = new ArrayList<>();
+        final String where = "the shared XSLT '" + shape.chain().sharedXslt().getName() + "' the template supplies";
+        final String topic = orElse(request.topic(), (String) said.get(CefInstructions.TOPIC));
+        if (topic != null) {
+            out.add("topic '" + topic + "' not used: " + where + " sets the topic, in one place; this XSLT sets no "
+                    + "topic or Kafka setting");
+        }
+        if (request.kafkaKey() != null) {
+            out.add("kafka_key not used: " + where + " writes the Kafka records");
+        }
+        if (request.output() != null) {
+            out.add("output '" + request.output() + "' not used: this XSLT hands each line on to " + where);
+        }
+        return out;
+    }
+
+    // The draft's output put through the shared XSLT here: it must give kafka-records:1 carrying each line.
+    private static void chainCheck(final CefPlan drafted,
+                                   final List<XmlElement> events,
+                                   final int cap,
+                                   final Shape shape,
+                                   final Map<String, Object> result) {
+        final Map<String, Object> checked = new LinkedHashMap<>();
+        checked.put("shared_stage", shape.chain().stage());
+        try {
+            final String output = CefSample.output(drafted, events, cap);
+            final CefHandoff.Checked ran = CefHandoff.check(shape.sharedCode(), output,
+                    CefSample.linesOf(drafted, output));
+            checked.put("ran", ran.ran());
+            checked.put("problems", ran.problems());
+        } catch (final RuntimeException e) {
+            checked.put("ran", false);
+            checked.put("problems", List.of(head(StreamSummaries.reason(e), 300)));
+        }
+        if (!Boolean.TRUE.equals(checked.get("ran"))) {
+            checked.put("note", "not run here: step the pipeline (step_sample, then draft_cef_mapping "
+                                + "pipeline_uuid=) to check the shared stage's records");
+        }
+        result.put("chain_check", checked);
+    }
+
+    // A reviewed pipeline of two stages: the plan its lines imply, handed on in the form its shared XSLT reads.
+    private CefPlan handedOn(final CefPlan implied, final Stepped stepped, final Map<String, Object> result) {
+        final Optional<CefHandoff.Inferred> form = Optional.ofNullable(stepped.sharedXslt())
+                .flatMap(this::code)
+                .flatMap(CefHandoff::infer);
+        if (form.isEmpty()) {
+            result.put("plan_note", "The form its shared stage '" + stepped.linesElement() + "' reads couldn't be "
+                                    + "told from its XSLT: a plan saved from this one would write the Kafka "
+                                    + "records itself, so change the flattener by hand, or ask the user");
+            return implied;
+        }
+        if (result.get("shape") instanceof final Map<?, ?> shown) {
+            @SuppressWarnings("unchecked") final Map<String, Object> shape = (Map<String, Object>) shown;
+            shape.put("handoff", form.get().handoff().said());
+        }
+        return implied.withHandoff(form.get().handoff());
+    }
+
+    // An XSLT's text, read as the user; empty where it can't be.
+    private Optional<String> code(final DocRef xslt) {
+        try {
+            return documentAccess.read(new DocRef(XsltDoc.TYPE, xslt.getUuid(), xslt.getName()), XsltDoc.class)
+                    .map(XsltDoc::getData);
+        } catch (final RuntimeException e) {
+            return Optional.empty();
+        }
+    }
+
     // The plan kept with an XSLT the tools saved.
     private CefPlan keptPlan(final String uuid) {
         final XsltDoc doc = documentAccess.read(new DocRef(XsltDoc.TYPE, uuid), XsltDoc.class)
@@ -604,7 +863,9 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
     }
 
     /// The CEF lines a pipeline writes from these Events streams, the Events they came from (in order, null where not
-    /// known), the element read, and how it sends them (`output`: kafka or text, `topic`).
+    /// known), the elements read, and how it sends them (`output`: kafka or text, `topic`). The lines are read at
+    /// the element's output, or for a forwarder of two stages at the shared stage's after it ([CefChains]), the
+    /// Events at the element's input.
     ///
     /// @throws ToolRefusal if the user may not step, or the pipeline can't be read.
     Stepped stepped(final ToolCallContext context,
@@ -617,6 +878,14 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         final String at = element != null
                 ? element
                 : pipeline.defaultOutputs().getFirst();
+        // A forwarder of two stages: its lines are the shared stage's output, its Events the flattener's input.
+        final String linesAt = CefChains.linesElement(pipeline.merged(), at);
+        final Object sharedSet = linesAt.equals(at)
+                ? null
+                : pipeline.merged().properties().get(new ElementProperty(linesAt, "xslt"));
+        final DocRef shared = sharedSet instanceof final Map<?, ?> doc
+                ? new DocRef(XsltDoc.TYPE, String.valueOf(doc.get("uuid")), ToolText.str(doc.get("name")))
+                : null;
         final List<String> lines = new ArrayList<>();
         final List<XmlElement> events = new ArrayList<>();
         final Map<String, String> sent = new LinkedHashMap<>();
@@ -631,7 +900,7 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                                                + " tool");
         }
         for (final PipelineStepping.Spread.Step step : spread.steps()) {
-            final String output = SteppingWalks.output(step.result(), at);
+            final String output = SteppingWalks.output(step.result(), linesAt);
             final List<String> made = CefLines.linesIn(output);
             if (output.contains("<kafkaRecord")) {
                 final Matcher topic = KAFKA_TOPIC.matcher(output);
@@ -658,7 +927,7 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
             }
         }
         return new Stepped(lines.subList(0, Math.min(cap, lines.size())),
-                events.subList(0, Math.min(cap, events.size())), at, sent, spread.stopped());
+                events.subList(0, Math.min(cap, events.size())), at, linesAt, shared, sent, spread.stopped());
     }
 
     /// Overrides on a plan that exists: a path moved to another key (or label), or left out.
@@ -740,6 +1009,20 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
     /// @param result   The result so far, with its `templates`.
     /// @return The next steps: the pipeline, stepping it, reviewing it and its documentation.
     static String next(final CefPlan drafted, final String xsltUuid, final Map<String, Object> result) {
+        final String xslt = xsltUuid != null
+                ? "'" + xsltUuid + "'"
+                : "the saved XSLT";
+        if (drafted.chained() && result.get("shape") instanceof final Map<?, ?> shape) {
+            final Map<?, ?> template = JsonValues.mapOrEmpty(shape.get("template"));
+            final Map<?, ?> shared = JsonValues.mapOrEmpty(shape.get("shared_stage"));
+            return "Pipeline: create_pipeline template_uuid='" + template.get("uuid") + "' (" + template.get("name")
+                   + "), setting only " + shape.get("flattener") + ".xslt to " + xslt + ": no topic or Kafka "
+                   + "setting, which are the template's (its shared XSLT '"
+                   + JsonValues.mapOrEmpty(shared.get("xslt")).get("name") + "' at '" + shared.get("element")
+                   + "' writes the Kafka records); never change that XSLT. Then step_sample over the Events "
+                   + "streams (stepping sends nothing), draft_cef_mapping pipeline_uuid=<it> stream_ids=... to "
+                   + "review the lines the shared stage writes, and write_documentation with the Events stream_ids.";
+        }
         final Map<?, ?> templates = result.get("templates") instanceof final Map<?, ?> map
                 ? map
                 : Map.of();
@@ -751,9 +1034,6 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                           + "pipelines inherit from"
                         : "no forwarding template exists: create_pipeline standalone='kafka' (the user confirms the "
                           + "chain)";
-        final String xslt = xsltUuid != null
-                ? "'" + xsltUuid + "'"
-                : "the saved XSLT";
         return "Pipeline: create_pipeline from " + where + ", setting the XSLT step's xslt to " + xslt
                + (CefPlan.KAFKA.equals(drafted.output())
                 ? " and standardKafkaProducer.kafkaConfig to the KafkaConfig the user picks (kafka_configs)"
@@ -904,7 +1184,8 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                 stringListArg(call, FOLDERS_ARG),
                 style(args.get(STYLE_ARG)),
                 ToolArgs.flag(call, DISCARD_HAND_EDIT_ARG),
-                choices(args.get(HAND_EDIT_CHOICES_ARG)));
+                choices(args.get(HAND_EDIT_CHOICES_ARG)),
+                stringArg(call, TEMPLATE_ARG));
     }
 
     @SuppressWarnings("unchecked")
@@ -1094,6 +1375,8 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
     /// @param style           How the XSLT is written, or null.
     /// @param discardHandEdit True if the user said to drop their hand edit.
     /// @param handEditChoices The user's answers about hand edits, or null.
+    /// @param template        The template the CEF pipeline will inherit from (or the CEF pipeline it follows), by
+    ///                        UUID or exact name, or null.
     record Request(List<Long> streamIds,
                    Boolean customKeys,
                    List<CefOverride> overrides,
@@ -1110,19 +1393,22 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                    List<String> folders,
                    XsltStyle style,
                    boolean discardHandEdit,
-                   Map<String, String> handEditChoices) {
+                   Map<String, String> handEditChoices,
+                   String template) {
 
     }
 
     /// What stepping a CEF pipeline gave.
     ///
-    /// @param lines   The CEF lines, in order.
-    /// @param events  The Event each came from, or null where not known.
-    /// @param element The element read.
-    /// @param sent    How it sends them: `output` (kafka or text) and `topic`.
-    /// @param stopped True if the call's time ran out before every record was stepped.
-    record Stepped(List<String> lines, List<XmlElement> events, String element, Map<String, String> sent,
-                   boolean stopped) {
+    /// @param lines        The CEF lines, in order.
+    /// @param events       The Event each came from, or null where not known.
+    /// @param element      The element whose input is the Events (the flattener of two stages).
+    /// @param linesElement The element whose output is the lines: the element itself, or a shared stage after it.
+    /// @param sharedXslt   The XSLT the shared stage runs, or null for one stage.
+    /// @param sent         How it sends them: `output` (kafka or text) and `topic`.
+    /// @param stopped      True if the call's time ran out before every record was stepped.
+    record Stepped(List<String> lines, List<XmlElement> events, String element, String linesElement,
+                   DocRef sharedXslt, Map<String, String> sent, boolean stopped) {
 
     }
 
@@ -1132,6 +1418,50 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
     /// @param done What each did.
     record Applied(CefPlan plan, List<String> done) {
 
+    }
+
+    /// How a new forwarder is written.
+    ///
+    /// @param kind       `chained` or `single`.
+    /// @param decidedBy  What decided it, or null where nothing did (one stage, as before).
+    /// @param template   The template it will inherit from, or null.
+    /// @param chain      The two stages, or null for one.
+    /// @param handoff    The form the shared XSLT reads, or null for one stage.
+    /// @param sharedCode The shared XSLT's text, or null for one stage.
+    /// @param question   The question to put to the user, or null where it was decided.
+    record Shape(String kind,
+                 String decidedBy,
+                 DocRef template,
+                 CefChains.Chain chain,
+                 CefHandoff.Inferred handoff,
+                 String sharedCode,
+                 Map<String, Object> question) {
+
+        static Shape single(final DocRef template, final String decidedBy) {
+            return new Shape(SINGLE, decidedBy, template, null, null, null, null);
+        }
+
+        static Shape asking(final Map<String, Object> question) {
+            return new Shape(null, null, null, null, null, null, question);
+        }
+
+        /// @return It as results give it: `kind`, `decided_by`, `template`, and for two stages the flattener, the
+        /// shared stage, the form handed on (`handoff`) and whether it was checked here.
+        Map<String, Object> toMap() {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("kind", kind);
+            out.put("decided_by", decidedBy);
+            out.put("template", MergedPipeline.docRef(template));
+            if (chain != null) {
+                out.putAll(chain.toMap());
+                out.put("handoff", handoff.handoff().said());
+                out.put("handoff_checked", handoff.checked());
+                if (handoff.why() != null) {
+                    out.put("handoff_note", handoff.why());
+                }
+            }
+            return out;
+        }
     }
 
     // The standing instructions' texts, and the docs as get_instructions gives them.
