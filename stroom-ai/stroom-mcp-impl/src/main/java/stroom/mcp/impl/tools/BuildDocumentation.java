@@ -265,6 +265,16 @@ class BuildDocumentation {
         if (asked != null) {
             return new Layout(asked, List.of());
         }
+        // The layout the user chose for a build of several feeds whose folders' AGENTS docs differ on it
+        // (compare_feeds, decided by the user 2026-11-25), else the AGENTS docs where the document is.
+        final Optional<FieldMappingLayout> chosen = chosenLayout(ref);
+        if (chosen.isPresent()) {
+            return new Layout(chosen.get().layout(), List.of("Field mapping laid out "
+                                                            + chosen.get().layout().replace('_', ' ') + ", as the "
+                                                            + "user chose for the build's feeds (the AGENTS docs of "
+                                                            + "their folders differ; this one is in "
+                                                            + chosen.get().from() + ")"));
+        }
         final Optional<FieldMappingLayout> ruled = agentInstructions.layoutRuled(session, ref);
         if (ruled.isEmpty()) {
             return new Layout(FieldDocs.BY_EVENT_TYPE, List.of());
@@ -273,6 +283,16 @@ class BuildDocumentation {
                                                         + ruled.get().layout().replace('_', ' ') + ", as the AGENTS "
                                                         + "doc in " + NullSafe.nonBlankStringElse(ruled.get().from(),
                 "(root)") + " says"));
+    }
+
+    // The layout chosen for the build the document is in, where its feeds' AGENTS docs conflict; empty otherwise.
+    private Optional<FieldMappingLayout> chosenLayout(final DocRef ref) {
+        try {
+            return guard.buildOf(ref).flatMap(build -> AgentsConflicts.layoutChosen(buildRecords.agentsChoices(
+                    build)));
+        } catch (final RuntimeException e) {
+            return Optional.empty();
+        }
     }
 
     /// @param previous The doc the documentation was written in before, or null.

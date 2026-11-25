@@ -129,6 +129,23 @@ class TestRequiredImports {
                                           + "exists");
     }
 
+    @Test
+    void theImportsTheUserChoseWhereTheFeedsAgentsDocsDifferAreTheOnesRequired() {
+        // Decided by the user (2026-11-25): a build of feeds whose folders' AGENTS docs require different imports
+        // asks which applies (compare_feeds), and that is what the build's XSLTs import.
+        require(InstructionRules.TRANSLATION, "Stream-Meta-V1");
+        world.world.folder("System/" + BuildWorld.WORKSPACE + "/acme");
+        world.world.records().rememberFeedComparison("acme", Map.of("agents", Map.of("required imports: translation",
+                Map.of("value", "Stream-Meta-V2", "folder", "/Feeds/Acme/Site-B"))));
+        world.requiredImports.setRecords(world.world::records);
+
+        assertThat(world.requiredImports.requiredFor(session, InstructionRules.TRANSLATION, "acme", List.of("ACME-A",
+                "ACME-B"))).containsExactly(new RequiredImport("Stream-Meta-V2", "/Feeds/Acme/Site-B"));
+        // Another build, with no choice kept: as the docs merge.
+        assertThat(world.requiredImports.requiredFor(session, InstructionRules.TRANSLATION, "other", List.of()))
+                .containsExactly(new RequiredImport("Stream-Meta-V1", "System"));
+    }
+
     private void require(final String stage, final String href) {
         Mockito.when(world.agentInstructions.importsRequired(any(), anyString(), any(), any())).thenAnswer(inv ->
                 stage.equals(inv.getArgument(1))

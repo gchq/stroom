@@ -18,7 +18,10 @@ package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.ToolOutputs;
 import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.fielddoc.Descriptions;
+import stroom.docref.DocRef;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
@@ -30,6 +33,27 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestBuildDocumentation {
+
+    @Test
+    void theLayoutTheUserChoseWhereTheFeedsAgentsDocsDifferIsUsed() {
+        // Decided by the user (2026-11-25): asked per conflict (compare_feeds), kept in the build and used.
+        final DocumentationWorld docs = new DocumentationWorld();
+        final BuildWorld.Node folder = docs.world.folder("System/" + BuildWorld.WORKSPACE + "/acme");
+        final BuildWorld.Node pipeline = docs.world.add(PipelineDoc.TYPE, "ACME-Events", folder.uuid, null);
+        final DocRef ref = new DocRef(PipelineDoc.TYPE, pipeline.uuid, "ACME-Events");
+        final ToolSession session = BuildToolCalls.context().session();
+        assertThat(docs.docs.layout(session, ref, null).layout()).isEqualTo("by_event_type");
+
+        docs.world.records().rememberFeedComparison("acme", Map.of("agents", Map.of(AgentsConflicts.DOCUMENTATION,
+                Map.of("value", "compact", "folder", "/Feeds/Acme/Site-A"))));
+
+        final BuildDocumentation.Layout chosen = docs.docs.layout(session, ref, null);
+        assertThat(chosen.layout()).isEqualTo("compact");
+        assertThat(String.valueOf(chosen)).contains("as the user chose for the build's feeds",
+                "/Feeds/Acme/Site-A");
+        // Asked for in the call: that wins.
+        assertThat(docs.docs.layout(session, ref, "by_event_type").layout()).isEqualTo("by_event_type");
+    }
 
     @Test
     void fieldsAreAskedToBeDescribedARoundAtATime() {

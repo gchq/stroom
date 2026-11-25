@@ -68,6 +68,8 @@ class RequiredImports {
     private final Provider<WriteGuard> guardProvider;
     private final Provider<DocFinder> docFinderProvider;
     private final DocumentAccess documentAccess;
+    // The build records, for the AGENTS rules the user chose; none in tests that make this themselves.
+    private Provider<BuildRecords> recordsProvider;
 
     /// @param agentInstructions The AGENTS docs, and the imports they require.
     /// @param guardProvider     Finds the build's folder.
@@ -82,6 +84,15 @@ class RequiredImports {
         this.guardProvider = guardProvider;
         this.docFinderProvider = docFinderProvider;
         this.documentAccess = documentAccess;
+    }
+
+    /// Where the user's choices for a build's conflicting AGENTS docs are kept (set by injection; none in tests that
+    /// make this themselves).
+    ///
+    /// @param records The build records.
+    @Inject
+    void setRecords(final Provider<BuildRecords> records) {
+        this.recordsProvider = records;
     }
 
     /// @param session The session, for the audit log.
@@ -103,7 +114,13 @@ class RequiredImports {
             }
         }
         try {
-            return agentInstructions.importsRequired(session, stage, folders, NullSafe.list(feeds));
+            final List<RequiredImport> merged = agentInstructions.importsRequired(session, stage, folders,
+                    NullSafe.list(feeds));
+            // The imports the user chose for a build of several feeds whose folders' AGENTS docs differ on them
+            // (compare_feeds, decided by the user 2026-11-25), in place of the merge.
+            return recordsProvider == null || NullSafe.isBlankString(build)
+                    ? merged
+                    : AgentsConflicts.importsChosen(recordsProvider.get().agentsChoices(build), stage, merged);
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> LogUtil.message("Unable to read the required imports: {}", e.getMessage()), e);
             return List.of();
