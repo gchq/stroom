@@ -102,7 +102,8 @@ final class EvalQuestionRecords {
     ///               in a stream the index's StreamId and EventId lead to ([#insiderEventXml]); with
     ///               `targets: true`, the events done to people by others too ([InsiderDataset#targetActs], with
     ///               `TargetPersonId` and `TargetUserName`), after the rest; with `noise: true`, the background
-    ///               people's archives and personal cloud use ([InsiderDataset#noiseActs]), after those.
+    ///               people's archives and personal cloud use ([InsiderDataset#noiseActs]), after those; with
+    ///               `cdn: true`, everyone's content delivery network fetches ([InsiderDataset#cdnActs]), last.
     /// @return The records, each its values by column.
     static List<Map<String, String>> generate(final Map<String, Object> spec) {
         final String kind = String.valueOf(spec.get("kind"));
@@ -154,6 +155,9 @@ final class EvalQuestionRecords {
         }
         if (Boolean.TRUE.equals(spec.get("noise"))) {
             acts.addAll(dataset.noiseActs());
+        }
+        if (Boolean.TRUE.equals(spec.get("cdn"))) {
+            acts.addAll(dataset.cdnActs());
         }
         return acts.stream()
                 .filter(act -> sources.isEmpty() || sources.contains(act.source().key()))

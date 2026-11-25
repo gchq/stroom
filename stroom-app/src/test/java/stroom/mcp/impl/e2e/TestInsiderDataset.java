@@ -36,7 +36,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -328,6 +330,46 @@ class TestInsiderDataset {
         // Every render works.
         reduced.noiseActs().forEach(act -> assertThat(InsiderRecords.document(act, 7)).containsEntry("user.id",
                 act.personId()));
+    }
+
+    @Test
+    void everyonesContentDeliveryNetworkFetchesAreAStreamOfTheirOwn() {
+        final InsiderDataset reduced = InsiderDataset.generate(Options.reduced());
+        // The reduced days hold every day's.
+        assertThat(reduced.cdnActs().stream().map(TestInsiderDataset::withoutNumber).toList())
+                .isEqualTo(everyDay.cdnActs().stream()
+                        .filter(act -> Options.reduced().keeps(day(act)))
+                        .map(TestInsiderDataset::withoutNumber)
+                        .toList());
+        assertThat(everyDay.cdnActs()).isNotEmpty().allSatisfy(act -> {
+            assertThat(act.source()).isEqualTo(Source.PROXY);
+            assertThat(act.field("domain")).endsWith("." + InsiderDataset.CDN);
+            assertThat(act.field("category")).isEqualTo(InsiderDataset.CDN_CATEGORY);
+        });
+        // Everyone fetches the common host; each subdomain is held by one person, rare by name only.
+        assertThat(everyDay.cdnActs().stream().filter(act -> InsiderDataset.CDN_HOST.equals(act.field("domain")))
+                .map(Act::personId).distinct().count()).isEqualTo(everyDay.people().size());
+        final Map<String, Set<String>> holders = new TreeMap<>();
+        everyDay.cdnActs().stream().filter(act -> !InsiderDataset.CDN_HOST.equals(act.field("domain")))
+                .forEach(act -> holders.computeIfAbsent(act.field("domain"), k -> new TreeSet<>())
+                        .add(act.personId()));
+        assertThat(holders).hasSizeGreaterThan(100);
+        assertThat(holders.values().stream().filter(people -> people.size() > 1).count())
+                .isLessThan(holders.size() / 20);
+        // At the times of the person's own proxy events, so their hours stay theirs.
+        final Map<String, Set<LocalDate>> proxyDays = new TreeMap<>();
+        everyDay.acts(Source.PROXY).forEach(act -> proxyDays.computeIfAbsent(act.personId(),
+                k -> new TreeSet<>()).add(day(act)));
+        assertThat(everyDay.cdnActs()).allSatisfy(act -> assertThat(proxyDays.get(act.personId()))
+                .contains(day(act)));
+        // Numbered on after their source's own, done-to-them and noise events.
+        final long proxy = reduced.acts(Source.PROXY).size() + reduced.targetActs(Source.PROXY).size()
+                           + reduced.noiseActs(Source.PROXY).size();
+        assertThat(reduced.cdnActs(Source.PROXY)).extracting(Act::number).first().isEqualTo((int) proxy + 1);
+        assertThat((Map<String, Object>) everyDay.knownAnswer().get("cdn")).containsEntry("parent",
+                InsiderDataset.CDN).containsEntry("events", everyDay.cdnActs().size());
+        // And the other events are the same with or without them: the acts' fingerprint is unchanged.
+        assertThat(fingerprint(reduced.acts())).isEqualTo("de49b640/21100");
     }
 
     @Test

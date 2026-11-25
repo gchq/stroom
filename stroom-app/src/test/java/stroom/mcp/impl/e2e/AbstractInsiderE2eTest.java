@@ -61,6 +61,16 @@ abstract class AbstractInsiderE2eTest extends AbstractE2eTest {
     /// @param options What to generate.
     /// @return The dataset and where each source went.
     Loaded load(final Options options) {
+        return load(options, false);
+    }
+
+    /// Loads the dataset into the test node and Stroom, with everyone's content delivery network fetches
+    /// ([InsiderDataset#cdnActs]) after the events done to people, numbered on from them, where asked.
+    ///
+    /// @param options What to generate.
+    /// @param cdn     True to load the content delivery network's fetches too.
+    /// @return The dataset and where each source went.
+    Loaded load(final Options options, final boolean cdn) {
         node = ElasticTestNode.getOrSkip();
         final InsiderDataset dataset = InsiderDataset.generate(options);
         final DocRef cluster = liveElasticCluster(node, "E2E insider cluster " + System.nanoTime());
@@ -70,6 +80,14 @@ abstract class AbstractInsiderE2eTest extends AbstractE2eTest {
             // The source's own events, then those done to people by others, numbered on after them.
             final List<Act> acts = new ArrayList<>(dataset.acts(source));
             acts.addAll(dataset.targetActs(source));
+            if (cdn) {
+                // Numbered on from the rest, so each event's place in the stream is its EventId.
+                final int from = acts.size();
+                final List<Act> fetches = dataset.cdnActs(source);
+                for (int i = 0; i < fetches.size(); i++) {
+                    acts.add(fetches.get(i).numbered(from + i + 1));
+                }
+            }
             if (acts.isEmpty()) {
                 continue;
             }

@@ -17,6 +17,7 @@
 package stroom.mcp.impl.e2e;
 
 import java.time.DayOfWeek;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -97,6 +98,11 @@ final class InsiderDataset {
     static final String SERVICE_DESK = "servicedesk@" + MAIL_DOMAIN;
     /// The MFA device added to the compromised account.
     static final String MFA_DEVICE = "Authenticator app (SM-A146)";
+    /// The content delivery network everyone's browser fetches from ([#cdnActs]): its common host, and its
+    /// subdomains (a new one most days for each person), each rare by name alone.
+    static final String CDN = "cdn-edge.example";
+    static final String CDN_HOST = "static." + CDN;
+    static final String CDN_CATEGORY = "Content Delivery";
 
     private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
     private static final int MINUTE = 60_000;
@@ -114,6 +120,7 @@ final class InsiderDataset {
     private final List<Act> acts = new ArrayList<>();
     private final List<Act> targetActs = new ArrayList<>();
     private final List<Act> noiseActs = new ArrayList<>();
+    private final List<Act> cdnActs = new ArrayList<>();
     private final List<Map<String, Object>> nearMisses = new ArrayList<>();
     private final List<Map<String, Object>> targetPlants = new ArrayList<>();
     private final List<Map<String, Object>> targetNoise = new ArrayList<>();
@@ -136,6 +143,7 @@ final class InsiderDataset {
         dataset.makeActs();
         dataset.makeTargets();
         dataset.makeNoise();
+        dataset.makeCdn();
         dataset.describePlants();
         return dataset;
     }
@@ -200,6 +208,24 @@ final class InsiderDataset {
         return noiseActs.stream().filter(act -> act.source() == source).toList();
     }
 
+    /// Everyone's browser fetching from a content delivery network, drawn from a stream of its own so every other
+    /// event is the same with or without it: on each day a person has proxy events, a few fetches of its common
+    /// host ([#CDN_HOST]) and, most days, one of a subdomain of its own (`e<hex>.cdn-edge.example`), each at one of
+    /// the person's own proxy events' times (so their hours are the same), with its tunnel from the pipeline change
+    /// on. The subdomains are each held by one person: rare by name, common by service ([#knownAnswer]'s `cdn`:
+    /// never flagged rare). Numbered on from the last of their source's [#acts], [#targetActs] and [#noiseActs].
+    ///
+    /// @return Them, in time order.
+    List<Act> cdnActs() {
+        return cdnActs;
+    }
+
+    /// @param source A source.
+    /// @return Its content delivery network events, in time order.
+    List<Act> cdnActs(final Source source) {
+        return cdnActs.stream().filter(act -> act.source() == source).toList();
+    }
+
     /// The known answer: the people (their ids, accounts, organisation, dates), each planted behaviour and decoy with
     /// its dates and what it left, the one-off anomalies, the approved exceptions, and the scenario people's tasks
     /// by day (what they were working on, for the evals).
@@ -248,6 +274,13 @@ final class InsiderDataset {
         map.put("target_events", targetActs.size());
         map.put("near_misses", nearMisses);
         map.put("noise_events", noiseActs.size());
+        map.put("cdn", Map.of("host", CDN_HOST, "parent", CDN, "events", cdnActs.size(), "what", "every person's "
+                                                                                             + "browser's content "
+                                                                                             + "delivery network: "
+                                                                                             + "its subdomains "
+                                                                                             + "are rare by name "
+                                                                                             + "only, never to be "
+                                                                                             + "flagged rare"));
         final Map<String, Object> counts = new LinkedHashMap<>();
         for (final Source source : Source.values()) {
             counts.put(source.key(), acts.stream().filter(act -> act.source() == source).count());
@@ -457,6 +490,78 @@ final class InsiderDataset {
         for (final Act act : made) {
             noiseActs.add(act.numbered(numbers.merge(act.source(), 1, Integer::sum)));
         }
+    }
+
+    // The content delivery network's fetches, on each person-day with proxy events, at those events' times.
+    private void makeCdn() {
+        final Map<String, Map<LocalDate, List<Act>>> proxyDays = new LinkedHashMap<>();
+        for (final Act act : acts) {
+            if (act.source() == Source.PROXY && act.personId() != null) {
+                proxyDays.computeIfAbsent(act.personId(), k -> new LinkedHashMap<>())
+                        .computeIfAbsent(Instant.ofEpochMilli(act.time()).atZone(ZONE).toLocalDate(),
+                                k -> new ArrayList<>()).add(act);
+            }
+        }
+        final List<Act> made = new ArrayList<>();
+        for (int p = 0; p < people.size(); p++) {
+            final Person person = people.get(p);
+            for (final Map.Entry<LocalDate, List<Act>> day : proxyDays.getOrDefault(person.id(), Map.of())
+                    .entrySet()) {
+                final SeededRandom random = new SeededRandom(Math.floorMod(options.seed() * 7_000_003L
+                                                                           + p * 10_039L
+                                                                           + day.getKey().toEpochDay() * 43L
+                                                                           + 777L, 4_294_967_296L));
+                for (int i = random.randint(2, 5); i > 0; i--) {
+                    made.addAll(cdn(random.choice(day.getValue()), CDN_HOST, day.getKey(), random));
+                }
+                if (random.random() < 0.6) {
+                    final String sub = "e%06x.".formatted(random.randint(0, 0xFFFFFF)) + CDN;
+                    made.addAll(cdn(random.choice(day.getValue()), sub, day.getKey(), random));
+                }
+            }
+        }
+        made.sort(Comparator.comparingLong(Act::time).thenComparing(Act::source).thenComparing(Act::personId)
+                .thenComparing(Act::type));
+        final Map<Source, Integer> numbers = new LinkedHashMap<>();
+        for (final Source source : Source.values()) {
+            numbers.put(source, (int) (acts.stream().filter(act -> act.source() == source).count()
+                                       + targetActs.stream().filter(act -> act.source() == source).count()
+                                       + noiseActs.stream().filter(act -> act.source() == source).count()));
+        }
+        for (final Act act : made) {
+            cdnActs.add(act.numbered(numbers.merge(act.source(), 1, Integer::sum)));
+        }
+    }
+
+    // A fetch from the content delivery network a moment after one of the person's own proxy events, with its
+    // tunnel from the pipeline change on.
+    private static List<Act> cdn(final Act beside, final String host, final LocalDate day, final SeededRandom random) {
+        final Map<String, String> fields = new LinkedHashMap<>();
+        fields.put("domain", host);
+        fields.put("url", "https://" + host + "/" + random.choice(List.of("app.js", "fonts.css", "logo.svg")));
+        fields.put("category", CDN_CATEGORY);
+        fields.put("method", "GET");
+        fields.put("bytes_out", String.valueOf(random.randint(300, 900)));
+        fields.put("bytes_in", String.valueOf(random.randint(5_000, 200_000)));
+        fields.put("ip", "203.0.113." + (1 + Math.floorMod(host.hashCode(), 250)));
+        fields.put("process", "chrome.exe");
+        fields.put("access", beside.field("access") == null
+                ? "Office"
+                : beside.field("access"));
+        final long at = beside.time() + random.randint(1, 20) * 1_000L;
+        final List<Act> out = new ArrayList<>();
+        out.add(new Act(at, Source.PROXY, beside.personId(), beside.account(), beside.host(), "web", fields,
+                beside.organisation(), 0));
+        if (!day.isBefore(PIPELINE_CHANGE)) {
+            final Map<String, String> tunnel = new LinkedHashMap<>(fields);
+            tunnel.put("method", "CONNECT");
+            tunnel.put("url", host + ":443");
+            tunnel.put("bytes_out", "0");
+            tunnel.put("bytes_in", "0");
+            out.add(new Act(at - 200, Source.PROXY, beside.personId(), beside.account(), beside.host(), "web",
+                    tunnel, beside.organisation(), 0));
+        }
+        return out;
     }
 
     // One near miss: the archive and the upload too far apart, the upload alone, or each by another person.
