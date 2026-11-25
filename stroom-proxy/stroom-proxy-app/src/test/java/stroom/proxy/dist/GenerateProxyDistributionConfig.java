@@ -47,7 +47,7 @@ public class GenerateProxyDistributionConfig {
 
     private static final Map<String, Object> DOCKER_CONTEXT = Map.of(
             DIST_KEY, "docker",
-            OUTPUT_FILE_NAME_KEY, "docker/build/config.yml");
+            OUTPUT_FILE_NAME_KEY, "../../docker/stroom-proxy/build/config.yml");
 
     private static final Map<String, Object> ZIP_CONTEXT = Map.of(
             DIST_KEY, "zip",

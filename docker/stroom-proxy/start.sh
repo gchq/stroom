@@ -47,7 +47,7 @@ main() {
   # TODO Change this to be like stroom's start.sh script if we introduce
   # DropWizard commands in proxy, i.e. to remove the hard coded 'server' arg
 
-  # Called via exec so we replave this shell process with java to ensure
+  # Called via exec so we replace this shell process with java to ensure
   # a SIGTERM from a docker stop reaches java for a graceful shutdown
   #shellcheck disable=2086
   exec java \

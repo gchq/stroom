@@ -48,9 +48,9 @@
 set -eo pipefail
 
 STROOM_DOCKER_REPO="gchq/stroom"
+STROOM_DOCKER_BUILD_TARGET="stroom_final_stage"
 STROOM_PROXY_DOCKER_REPO="gchq/stroom-proxy"
-STROOM_DOCKER_CONTEXT_ROOT="stroom-app/docker/."
-STROOM_PROXY_DOCKER_CONTEXT_ROOT="stroom-proxy/stroom-proxy-app/docker/."
+STROOM_PROXY_DOCKER_BUILD_TARGET="stroom_proxy_final_stage"
 VERSION_FIXED_TAG=""
 SNAPSHOT_FLOATING_TAG=""
 MAJOR_VER_FLOATING_TAG=""
@@ -159,6 +159,7 @@ start_services() {
     || true
 
   popd > /dev/null
+  echo -e "${GREEN}Completed async service start${NC}"
 }
 
 # Start the services in the background, so that pulling their images and
@@ -202,7 +203,7 @@ on_exit() {
 }
 
 generate_ddl_dump() {
-  echo "::group::DDL dump"
+  echo "::group::Prepare for DDL dump"
   mkdir -p "${DDL_DUMP_DIR}"
 
   stop_and_clear_down_stroom_all_dbs
@@ -229,12 +230,9 @@ generate_ddl_dump() {
 }
 
 generate_entity_rel_diagram() {
-
-  echo "::group::ERD generation"
   # Needs the stroom-all-dbs container to be running and populated with a vanilla
   # database schema for us to generate an ERD from
   "${BUILD_DIR}/container_build/runInJavaDocker.sh" ERD
-  echo "::endgroup::"
 }
 
 copy_release_artefact() {
@@ -270,8 +268,8 @@ gather_release_artefacts() {
   local -r release_config_dir="${BUILD_DIR}/stroom-app/build/release/config"
   local -r proxy_release_config_dir="${BUILD_DIR}/stroom-proxy/stroom-proxy-app/build/release/config"
 
-  local -r docker_build_dir="${BUILD_DIR}/stroom-app/docker/build"
-  local -r proxy_docker_build_dir="${BUILD_DIR}/stroom-proxy/stroom-proxy-app/docker/build"
+  local -r docker_build_dir="${BUILD_DIR}/docker/stroom/build"
+  local -r proxy_docker_build_dir="${BUILD_DIR}/docker/stroom-proxy/build"
 
   echo "Copying release artefacts to ${RELEASE_ARTEFACTS_DIR}"
 
@@ -374,7 +372,7 @@ format_manifest_file() {
   mv "${temp_file}" "${RELEASE_MANIFEST}"
 }
 
-# args: dockerRepo contextRoot tag1VersionPart tag2VersionPart ... tagNVersionPart
+# args: dockerRepo buildTarget tag1VersionPart tag2VersionPart ... tagNVersionPart
 releaseToDockerHub() {
   # echo "releaseToDockerHub called with args [$@]"
 
@@ -383,7 +381,7 @@ releaseToDockerHub() {
     exit 1
   fi
   dockerRepo="$1"
-  contextRoot="$2"
+  buildTarget="$2"
   # shift the the args so we can loop round the open ended list of tags,
   # $1 is now the first tag
   shift 2
@@ -403,15 +401,17 @@ releaseToDockerHub() {
   done
 
   echo "::group::Docker build (${dockerRepo})"
-  echo -e "Building a docker image with tags: ${GREEN}${allTagArgs[*]}${NC}"
-  echo -e "dockerRepo:  [${GREEN}${dockerRepo}${NC}]"
-  echo -e "contextRoot: [${GREEN}${contextRoot}${NC}]"
+  echo -e "Building a ${GREEN}${dockerRepo}${NC} docker image"
+  echo -e "Repo:              [${GREEN}${dockerRepo}${NC}]"
+  echo -e "Target:            [${GREEN}${buildTarget}${NC}]"
+  echo -e "Tags:              [${GREEN}${allTagArgs[*]}${NC}]"
   # If we have a BUILD_TAG (git tag) then use that, else use the floating tag
   docker build \
     "${allTagArgs[@]}" \
+    --target "${buildTarget}" \
     --build-arg GIT_COMMIT="${BUILD_COMMIT}" \
     --build-arg GIT_TAG="${BUILD_TAG:-${SNAPSHOT_FLOATING_TAG}}" \
-    "${contextRoot}"
+    "./docker"
   echo "::endgroup::"
 
   # Vulns with no-fix available, so just log them so we can investigate
@@ -492,6 +492,14 @@ docker_logout() {
   fi
 }
 
+install_docker_scout() {
+  # Install scout for docker image scanning
+  echo "::group::Docker Scout Install"
+  curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh \
+    | sh -s --
+  echo "::endgroup::"
+}
+
 copy_swagger_ui_content() {
   echo "::group::Copy Swagger content"
   local ghPagesDir=$BUILD_DIR/gh-pages
@@ -532,9 +540,6 @@ copy_swagger_ui_content() {
 }
 
 check_for_out_of_date_puml_svgs() {
-
-  echo "::group::Converting .puml files to .svg"
-
   local convert_cmd=( "./container_build/runInJavaDocker.sh" "SVG" )
 
   echo -e "${GREEN}Ensuring all PlantUML generated .svg files are up to date${NC}"
@@ -551,6 +556,7 @@ check_for_out_of_date_puml_svgs() {
   # are up to date with their puml file.
   # This is different to stroom-docs which does not check in svg files.
 
+  echo "::group::Check for SVGs not up to date in Git"
   # Example git status --porcelain output:
   #  M stroom-proxy/stroom-proxy-app/doc/storing-data.puml
   #  M stroom-proxy/stroom-proxy-app/doc/storing-data.svg
@@ -716,22 +722,18 @@ show_services_start_output
 # Don't do a docker build for pull requests
 if [ "$doDockerBuild" = true ]; then
 
-  # Install scout for docker image scanning
-  echo "::group::Docker Scout Install"
-  curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh \
-    | sh -s --
-  echo "::endgroup::"
+  install_docker_scout
 
   # build and release stroom image to dockerhub
   releaseToDockerHub \
     "${STROOM_DOCKER_REPO}" \
-    "${STROOM_DOCKER_CONTEXT_ROOT}" \
+    "${STROOM_DOCKER_BUILD_TARGET}" \
     "${allDockerTags[@]}"
 
   # build and release stroom-proxy image to dockerhub
   releaseToDockerHub \
     "${STROOM_PROXY_DOCKER_REPO}" \
-    "${STROOM_PROXY_DOCKER_CONTEXT_ROOT}" \
+    "${STROOM_PROXY_DOCKER_BUILD_TARGET}" \
     "${allDockerTags[@]}"
 fi
 
