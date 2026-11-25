@@ -62,23 +62,26 @@ do_docker_builds() {
   DOCKER_IMAGE_TAG="local-SNAPSHOT"
   CURRENT_GIT_COMMIT="$(git rev-parse HEAD)"
 
-  # Shared docker context root and dockerfile for stroom and proxy
-  # '--target' defines build stage to build
+  # '--progress=plain' stops it collapsing output in the console
+  # '--no-cache' ignores cached layers so builds everything
   local extra_docker_args=(
+    "--build-arg" "GIT_COMMIT=${CURRENT_GIT_COMMIT}"
+    "--build-arg" "GIT_TAG=${DOCKER_IMAGE_TAG}"
     #"--no-cache"
     #"--progress=plain"
   )
+
+  # Shared docker context root and dockerfile for stroom and proxy,
+  # so '--target' defines which build stage to build
 
   echo -e "${GREEN}Building stroom docker image" \
     "${BLUE}gchq/stroom:${DOCKER_IMAGE_TAG}${NC} for commit" \
     "${BLUE}${CURRENT_GIT_COMMIT}${NC}"
 
   docker build \
-    "${extra_docker_args[@]}" \
     --target stroom_final_stage \
     --tag gchq/stroom:${DOCKER_IMAGE_TAG} \
-    --build-arg GIT_COMMIT="${CURRENT_GIT_COMMIT}" \
-    --build-arg GIT_TAG="${DOCKER_IMAGE_TAG}" \
+    "${extra_docker_args[@]}" \
     ./docker
 
   echo -e "${GREEN}Building stroom-proxy docker image" \
@@ -86,11 +89,9 @@ do_docker_builds() {
     "${BLUE}${CURRENT_GIT_COMMIT}${NC}"
 
   docker build \
-    "${extra_docker_args[@]}" \
     --target stroom_proxy_final_stage \
     --tag gchq/stroom-proxy:${DOCKER_IMAGE_TAG} \
-    --build-arg GIT_COMMIT="${CURRENT_GIT_COMMIT}" \
-    --build-arg GIT_TAG="${DOCKER_IMAGE_TAG}" \
+    "${extra_docker_args[@]}" \
     ./docker
 }
 
