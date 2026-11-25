@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.skills;
 
 import stroom.ai.impl.ToolCallRecord;
+import stroom.ai.impl.ToolResultRecord;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.util.json.JsonUtil;
@@ -54,6 +55,27 @@ class TestSkillUsage {
     }
 
     @Test
+    void theResultsOfASkillsTimelineRunsAreReadNewestFirst() {
+        final List<AiChatMessage> chat = List.of(
+                message(1, AiMessageType.TOOL_CALL, timelineCall("t1", "User activity timeline")),
+                message(1, AiMessageType.TOOL_RESULT, result("t1", false, "first run")),
+                // Another skill's timeline, and one with no skill: not this skill's runs.
+                message(2, AiMessageType.TOOL_CALL, timelineCall("t2", "Other")),
+                message(2, AiMessageType.TOOL_RESULT, result("t2", false, "other run")),
+                message(3, AiMessageType.TOOL_CALL, JsonUtil.writeValueAsString(new ToolCallRecord("t3",
+                        SkillChecks.TIMELINE_TOOL, "{}", null))),
+                message(3, AiMessageType.TOOL_RESULT, result("t3", false, "no skill")),
+                // By its slug; a failed run says nothing.
+                message(4, AiMessageType.TOOL_CALL, timelineCall("t4", "user-activity-timeline")),
+                message(4, AiMessageType.TOOL_RESULT, result("t4", false, "second run")),
+                message(5, AiMessageType.TOOL_CALL, timelineCall("t5", "User activity timeline")),
+                message(5, AiMessageType.TOOL_RESULT, result("t5", true, "Error: failed")));
+
+        assertThat(SkillUsage.timelineResults(List.of(chat), "User activity timeline"))
+                .containsExactly("second run", "first run");
+    }
+
+    @Test
     void aShortNameInAQuestionIsntAskingForIt() {
         assertThat(SkillUsage.askedByName("a timeline please", "Line")).isFalse();
         assertThat(SkillUsage.askedByName("/skill:line", "Line")).isTrue();
@@ -61,6 +83,16 @@ class TestSkillUsage {
 
     private static AiChatMessage message(final int turn, final AiMessageType type, final String text) {
         return new AiChatMessage(null, 1, 0L, type, null, text, turn, null);
+    }
+
+    private static String timelineCall(final String id, final String skill) {
+        return JsonUtil.writeValueAsString(new ToolCallRecord(id, SkillChecks.TIMELINE_TOOL,
+                JsonUtil.writeValueAsString(Map.of("entity", "pat", "skill", skill)), null));
+    }
+
+    private static String result(final String id, final boolean error, final String text) {
+        return JsonUtil.writeValueAsString(new ToolResultRecord(id, SkillChecks.TIMELINE_TOOL, error, text, null,
+                text.length(), 0, null));
     }
 
     private static String call(final String name) {

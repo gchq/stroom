@@ -1037,10 +1037,15 @@ class TestActivityTimelineAnySource {
         // Both events' XML asked for, once, for their fields.
         Mockito.verify(eventXml, Mockito.times(1)).read(Mockito.any(), Mockito.eq(Map.of(31L, List.of((long) eventId - 1),
                 32L, List.of((long) eventId))), Mockito.anyInt(), Mockito.any(), Mockito.any());
-        assertThat(tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(arguments(
-                Map.of("sources", List.of("Events"))), false)), chat(UserQuestions.NONE, null)).text())
-                .contains("its feeding pipelines' plans differ, so each event's own was read: host by "
-                          + "EventSource/Device/HostName (the Events XML) 1, not read 1");
+        final String text = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
+                arguments(Map.of("sources", List.of("Events"))), false)), chat(UserQuestions.NONE, null)).text();
+        assertThat(text).contains("its feeding pipelines' plans differ, so each event's own was read: host by "
+                                  + "EventSource/Device/HostName (the Events XML) 1, not read 1");
+        // As check_skill reads a skill's runs back.
+        final TimelineReadNotes.Seen seen = TimelineReadNotes.seen(List.of(text));
+        assertThat(seen.fromXml()).isEqualTo(1);
+        assertThat(seen.notRead()).isEqualTo(1);
+        assertThat(seen.traced()).isZero();
     }
 
     @Test

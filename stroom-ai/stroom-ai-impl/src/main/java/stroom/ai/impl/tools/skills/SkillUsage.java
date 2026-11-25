@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.skills;
 
 import stroom.ai.impl.ToolCallRecord;
+import stroom.ai.impl.ToolResultRecord;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiMessageType;
 import stroom.util.json.JsonUtil;
@@ -43,6 +44,8 @@ public final class SkillUsage {
 
     /// The key of the offered skills in a [AiMessageType#SKILLS_OFFERED] message.
     public static final String OFFERED_KEY = "offered";
+    /// The most recent runs of a timeline skill read for what they read from the Events XML.
+    static final int MAX_RUNS = 10;
     /// The most questions kept as examples of a skill asked for by name and not offered.
     static final int MAX_EXAMPLES = 3;
     private static final int MAX_EXAMPLE_CHARS = 160;
@@ -109,6 +112,52 @@ public final class SkillUsage {
                     List.copyOf(askedNotOffered.getOrDefault(key, List.of()))));
         }
         return counts;
+    }
+
+    /// @param chats Each chat's messages, in order.
+    /// @param skill A skill's name.
+    /// @return The text of the results of the timeline calls made for it (`activity_timeline` with `skill` its name),
+    /// the newest first, at most [#MAX_RUNS].
+    static List<String> timelineResults(final Collection<List<AiChatMessage>> chats, final String skill) {
+        final List<String> out = new ArrayList<>();
+        for (final List<AiChatMessage> messages : chats) {
+            final Set<String> calls = new HashSet<>();
+            final List<String> results = new ArrayList<>();
+            for (final AiChatMessage message : NullSafe.list(messages)) {
+                if (message.getMessageType() == AiMessageType.TOOL_CALL) {
+                    timelineCallFor(message.getMessage(), skill).ifPresent(calls::add);
+                } else if (message.getMessageType() == AiMessageType.TOOL_RESULT) {
+                    try {
+                        final ToolResultRecord result = JsonUtil.readValue(message.getMessage(),
+                                ToolResultRecord.class);
+                        if (calls.contains(result.callId()) && !result.error() && result.text() != null) {
+                            results.add(result.text());
+                        }
+                    } catch (final RuntimeException e) {
+                        // A result that can't be read says nothing.
+                    }
+                }
+            }
+            out.addAll(results.reversed());
+        }
+        return out.stream().limit(MAX_RUNS).toList();
+    }
+
+    // The id of a timeline call made for the skill.
+    private static Optional<String> timelineCallFor(final String json, final String skill) {
+        try {
+            final ToolCallRecord call = JsonUtil.readValue(json, ToolCallRecord.class);
+            if (!SkillChecks.TIMELINE_TOOL.equals(call.tool()) || call.arguments() == null) {
+                return Optional.empty();
+            }
+            final Object name = JsonUtil.readValue(call.arguments(), Map.class).get("skill");
+            return name instanceof final String text && (text.strip().equalsIgnoreCase(skill)
+                                                         || SkillDoc.slug(text.strip()).equals(SkillDoc.slug(skill)))
+                    ? Optional.ofNullable(call.callId())
+                    : Optional.empty();
+        } catch (final RuntimeException e) {
+            return Optional.empty();
+        }
     }
 
     /// @param question A question, as the user sent it.

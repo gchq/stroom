@@ -31,6 +31,7 @@ import stroom.ai.impl.tools.skills.SkillDoc.Skill;
 import stroom.ai.impl.tools.skills.SkillDoc.Step;
 import stroom.ai.impl.tools.timeline.EventChains;
 import stroom.ai.impl.tools.timeline.TimelineChainCheck;
+import stroom.ai.impl.tools.timeline.TimelineReadNotes;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
@@ -63,6 +64,10 @@ final class SkillChecks {
     static final int OFTEN_OFFERED = 5;
     /// The chart kind the chat draws itself; anything else is a dashboard's.
     static final String CHAT_CHART = "gantt";
+    /// The fixes for a timeline that reads the Events XML or traces streams for what the indexes don't map.
+    static final String TIMELINE_READS_FIX = "Name the field in the skill's source (propose_skill), add a ## Fields "
+                                             + "line to the index's AGENTS doc (propose_instructions), or map the "
+                                             + "path in the index plan of the pipelines feeding it.";
     /// The tool a timeline skill's steps call, whose fields its Event chains are checked by.
     static final String TIMELINE_TOOL = "activity_timeline";
     /// The most data sources named like a missing one that its fix gives.
@@ -108,6 +113,7 @@ final class SkillChecks {
         nearDuplicates(skill, facts, findings);
         usage(skill, facts, findings);
         eventChains(skill, facts, findings);
+        timelineReads(skill, facts, findings);
         findings.sort(Comparator.comparing(Finding::kind));
         return List.copyOf(findings);
     }
@@ -143,6 +149,41 @@ final class SkillChecks {
         for (final String problem : facts.eventChains(usable, TimelineChainCheck.GivenFields.of(timelineCalls))) {
             findings.add(Finding.problem("event_chains", problem, "Correct the entry, or remove it so the timeline "
                                                                   + "infers the pair again."));
+        }
+    }
+
+    // A timeline skill whose runs would read, or did read, the Events XML or trace streams for what its indexes don't
+    // map: suggestions (it still runs), each with the ways to map it.
+    private static void timelineReads(final Skill skill, final Facts facts, final List<Finding> findings) {
+        final List<Map<String, Object>> timelineCalls = skill.calls().stream()
+                .filter(call -> call.problem() == null && TIMELINE_TOOL.equals(call.tool()))
+                .map(ExampleCall::arguments)
+                .toList();
+        if (timelineCalls.isEmpty()) {
+            return;
+        }
+        final TimelineReads reads = facts.timelineReads(skill.name(), timelineCalls);
+        for (final String note : reads.planned()) {
+            findings.add(Finding.suggestion("timeline_reads_xml", note, TIMELINE_READS_FIX));
+        }
+        final TimelineReadNotes.Seen seen = reads.seen();
+        if (seen != null && seen.any()) {
+            final List<String> parts = new ArrayList<>();
+            if (seen.xmlEvents() > 0) {
+                parts.add("read the Events XML of " + seen.xmlEvents() + " event(s) for what the indexes don't map ("
+                          + String.join("; ", seen.pathsByIndex().entrySet().stream()
+                        .map(entry -> "'" + entry.getKey() + "': " + String.join(", ", entry.getValue()))
+                        .toList()) + ")");
+            }
+            if (seen.traced() + seen.fromXml() + seen.notRead() > 0) {
+                parts.add("read fields the feeding plans differ on for " + (seen.traced() + seen.fromXml()
+                                                                             + seen.notRead())
+                          + " event(s): " + seen.traced() + " by their streams traced to their indexing pipelines, "
+                          + seen.fromXml() + " from their Events XML, " + seen.notRead() + " not read");
+            }
+            findings.add(Finding.suggestion("timeline_read_xml_in_runs", "Its last " + seen.runs() + " run(s) in "
+                                                                         + "your chats " + String.join(", and ",
+                    parts) + ".", TIMELINE_READS_FIX));
         }
     }
 
@@ -785,6 +826,29 @@ final class SkillChecks {
         default List<String> eventChains(final List<EventChains.Entry> entries,
                                          final TimelineChainCheck.GivenFields given) {
             return List.of();
+        }
+
+        /// @param skill         The skill's name.
+        /// @param timelineCalls Its timeline calls' arguments.
+        /// @return Where its timeline would read, or its recent runs did read, the Events XML or trace streams
+        /// rather than read the indexes' fields; nothing by default.
+        default TimelineReads timelineReads(final String skill, final List<Map<String, Object>> timelineCalls) {
+            return TimelineReads.NONE;
+        }
+    }
+
+    /// Where a timeline skill reads other than its indexes' fields.
+    ///
+    /// @param planned What its sources' fields say a run would read so, a note each ([TimelineReadNotes#planned]).
+    /// @param seen    What its recent runs in the reader's chats read so, or null if not known.
+    record TimelineReads(List<String> planned, TimelineReadNotes.Seen seen) {
+
+        /// Nothing known.
+        static final TimelineReads NONE = new TimelineReads(List.of(), null);
+
+        /// Copies the list.
+        TimelineReads {
+            planned = List.copyOf(NullSafe.list(planned));
         }
     }
 

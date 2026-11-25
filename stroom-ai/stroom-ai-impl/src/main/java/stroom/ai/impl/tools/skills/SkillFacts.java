@@ -33,7 +33,10 @@ import stroom.ai.impl.tools.skills.SkillChecks.DataSource;
 import stroom.ai.impl.tools.skills.SkillChecks.OtherSkill;
 import stroom.ai.impl.tools.skills.SkillDoc.Skill;
 import stroom.ai.impl.tools.timeline.EventChains;
+import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.timeline.TimelineChainCheck;
+import stroom.ai.impl.tools.timeline.TimelineFields;
+import stroom.ai.impl.tools.timeline.TimelineReadNotes;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
@@ -52,6 +55,7 @@ import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -70,6 +74,10 @@ class SkillFacts {
     /// The most chats read for how skills were used, newest first.
     static final int MAX_CHATS = 200;
     private static final int MAX_FIELDS = 2_000;
+    // A timeline call's source keys naming a field, by the thing it holds.
+    private static final Map<String, String> SOURCE_KEYS = Map.of("host", InstructionRules.HOST_FIELD,
+            "object", InstructionRules.OBJECT_FIELD, "eventTypeField", InstructionRules.EVENT_TYPE_FIELD,
+            "elementField", InstructionRules.ELEMENT_FIELD);
 
     private final Provider<BuiltInTools> builtInToolsProvider;
     // What the user's tool policies grant; unbound where there are none (e.g. a test's wiring): every tool allowed.
@@ -81,6 +89,7 @@ class SkillFacts {
     private final SkillCatalogue catalogue;
     private final Provider<AiService> aiServiceProvider;
     private final Provider<AiConfig> aiConfigProvider;
+    private final Provider<TimelineFields> timelineFieldsProvider;
 
     @Inject
     SkillFacts(final Provider<BuiltInTools> builtInToolsProvider,
@@ -88,7 +97,9 @@ class SkillFacts {
                final Provider<QueryService> queryServiceProvider,
                final SkillCatalogue catalogue,
                final Provider<AiService> aiServiceProvider,
-               final Provider<AiConfig> aiConfigProvider) {
+               final Provider<AiConfig> aiConfigProvider,
+               final Provider<TimelineFields> timelineFieldsProvider) {
+        this.timelineFieldsProvider = timelineFieldsProvider;
         this.builtInToolsProvider = builtInToolsProvider;
         this.dataSourceAccess = dataSourceAccess;
         this.queryServiceProvider = queryServiceProvider;
@@ -126,8 +137,11 @@ class SkillFacts {
     SkillChecks.Facts forSkill(final Skill skill, final DocRef doc, final boolean withUsage,
                                final ToolSession session) {
         final ToolGrants grants = grants();
+        final List<List<AiChatMessage>> chats = withUsage
+                ? recentChats()
+                : List.of();
         final Map<String, SkillUsage.Counts> usage = withUsage
-                ? usage(skill.name())
+                ? SkillUsage.collect(chats, List.of(skill.name()))
                 : Map.of();
         return new SkillChecks.Facts() {
             @Override
@@ -185,7 +199,54 @@ class SkillFacts {
                         ? List.of()
                         : timelineChainCheck.check(session, entries, given);
             }
+
+            @Override
+            public SkillChecks.TimelineReads timelineReads(final String name,
+                                                           final List<Map<String, Object>> timelineCalls) {
+                final List<String> planned = session == null
+                        ? List.of()
+                        : planned(session, timelineCalls);
+                final TimelineReadNotes.Seen seen = withUsage
+                        ? TimelineReadNotes.seen(SkillUsage.timelineResults(chats, name))
+                        : null;
+                return new SkillChecks.TimelineReads(planned, seen);
+            }
         };
+    }
+
+    // What the skill's timeline calls' sources' fields say a run would read other than the index's fields: per
+    // source a note each, each source once.
+    private List<String> planned(final ToolSession session, final List<Map<String, Object>> timelineCalls) {
+        final List<String> notes = new ArrayList<>();
+        final Set<String> seen = new LinkedHashSet<>();
+        for (final Map<String, Object> call : timelineCalls) {
+            for (final Object given : NullSafe.list(call.get("sources") instanceof final List<?> list
+                    ? list
+                    : null)) {
+                final Map<?, ?> spec = given instanceof final Map<?, ?> map
+                        ? map
+                        : Map.of("index", String.valueOf(given));
+                final String name = String.valueOf(spec.get("index"));
+                if (spec.get("index") == null || name.contains("{") || name.contains("[[") || !seen.add(name)) {
+                    continue;
+                }
+                final List<DocRef> found = dataSourceAccess.find(name);
+                final DataSource dataSource = dataSource(name);
+                if (found.isEmpty() || dataSource.fields() == null) {
+                    continue;
+                }
+                final Map<String, String> fields = new LinkedHashMap<>();
+                SOURCE_KEYS.forEach((key, thing) -> NullSafe.consume(spec.get(key),
+                        value -> fields.put(thing, String.valueOf(value))));
+                try {
+                    notes.addAll(TimelineReadNotes.planned(timelineFieldsProvider.get(), session, found.getFirst(),
+                            fields, !spec.containsKey("roles"), dataSource.fields()::contains));
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(() -> "Unable to read the fields of " + name, e);
+                }
+            }
+        }
+        return notes;
     }
 
     private Optional<ToolDefinition> tool(final String name) {
@@ -268,8 +329,8 @@ class SkillFacts {
         return described.size();
     }
 
-    // How each skill was used in the user's own chats in the evidence window, as instruction_evidence reads them.
-    private Map<String, SkillUsage.Counts> usage(final String skill) {
+    // The user's own chats in the evidence window, as instruction_evidence reads them, for how skills were used.
+    private List<List<AiChatMessage>> recentChats() {
         try {
             final AiInstructionSuggestionsConfig config = NullSafe.getOrElseGet(aiConfigProvider.get(),
                     AiConfig::getInstructionSuggestions, AiInstructionSuggestionsConfig::new);
@@ -282,10 +343,10 @@ class SkillFacts {
                     chats.add(aiService.getMessages(chat.getId()));
                 }
             }
-            return SkillUsage.collect(chats, List.of(skill));
+            return chats;
         } catch (final RuntimeException e) {
             LOGGER.debug(() -> "Unable to read how skills were used", e);
-            return Map.of();
+            return List.of();
         }
     }
 }

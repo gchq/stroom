@@ -727,6 +727,7 @@ final class TimelineResult {
                                                                    + "classified by the index's fields. Narrow the "
                                                                    + "period to classify them all by their XML.\n");
         }
+        reading(run).xmlPaths().forEach(paths -> sb.append(TimelineReadNotes.xmlLine(paths)).append('\n'));
         sb.append("\nSpans: ").append(kindsText(run.built()));
         if (run.built().count(Kind.ACTIVITY) > 0) {
             sb.append(" (an activity period shows ").append(TimelineSpans.ACTIVITY_MEANS).append(")");

@@ -87,8 +87,9 @@ public class CheckSkillTool extends AbstractBuiltInTool {
                              + "parameters used and listed), example calls against the tools' parameters and "
                              + "your tool policies, the data sources and fields they name, a hand edit since the "
                              + "doc's latest history entry; vague steps, values that should be parameters, a chart "
-                             + "the chat doesn't draw, a thin 'When to use', near-duplicates, and how your chats "
-                             + "used it.")
+                             + "the chat doesn't draw, a thin 'When to use', near-duplicates, how your chats "
+                             + "used it, and where a timeline skill reads the Events XML or traces streams for "
+                             + "what its indexes don't map (from its sources' fields and its recent runs).")
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(NAME_ARG, "A saved skill's name.")
                         .addStringProperty(FOLDER_ARG, "The folder of its skills doc, where two share a name; "

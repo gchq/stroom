@@ -30,6 +30,7 @@ import stroom.ai.impl.tools.skills.SkillChecks.OtherSkill;
 import stroom.ai.impl.tools.skills.SkillDoc.Skill;
 import stroom.ai.impl.tools.timeline.EventChains;
 import stroom.ai.impl.tools.timeline.TimelineChainCheck;
+import stroom.ai.impl.tools.timeline.TimelineReadNotes;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -314,6 +315,49 @@ class TestSkillChecks {
                 .anySatisfy(message -> assertThat(message).contains("activity_timeline",
                         "'sources[0].transform[0]' should be one of lowercase, strip_domain, file_name")
                         .doesNotContain("'logonForms"));
+    }
+
+    @Test
+    void aTimelineSkillThatReadsTheEventsXmlOrTracesStreamsIsGivenSuggestionsNotProblems() {
+        final List<List<Map<String, Object>>> asked = new ArrayList<>();
+        final SkillChecks.Facts facts = new DelegatingFacts(facts()) {
+            @Override
+            public SkillChecks.TimelineReads timelineReads(final String skill,
+                                                           final List<Map<String, Object>> timelineCalls) {
+                asked.add(timelineCalls);
+                return new SkillChecks.TimelineReads(List.of("'Endpoint': its feeding pipelines' index plans put "
+                                                             + "the host in different fields"),
+                        new TimelineReadNotes.Seen(2, 7, Map.of("Endpoint", Set.of("EventDetail/TypeId")), 4, 1,
+                                2));
+            }
+        };
+
+        final List<Finding> findings = SkillChecks.check(skill("""
+                ## Steps
+                1. Build it:
+                   ```json
+                   {"tool": "activity_timeline", "arguments": {"entity": "{user}", "sources": ["Endpoint"]}}
+                   ```"""), null, facts);
+
+        assertThat(asked).singleElement().satisfies(calls -> assertThat(calls).singleElement()
+                .satisfies(call -> assertThat(call).containsEntry("sources", List.of("Endpoint"))));
+        assertThat(findings).filteredOn(finding -> finding.rule().startsWith("timeline_read"))
+                .allSatisfy(finding -> {
+                    assertThat(finding.kind()).isEqualTo(Kind.SUGGESTION);
+                    assertThat(finding.fix()).contains("propose_skill", "## Fields", "propose_instructions",
+                            "index plan");
+                })
+                .extracting(Finding::message)
+                .containsExactlyInAnyOrder("'Endpoint': its feeding pipelines' index plans put the host in "
+                                           + "different fields",
+                        "Its last 2 run(s) in your chats read the Events XML of 7 event(s) for what the indexes "
+                        + "don't map ('Endpoint': EventDetail/TypeId), and read fields the feeding plans differ on "
+                        + "for 7 event(s): 4 by their streams traced to their indexing pipelines, 1 from their "
+                        + "Events XML, 2 not read.");
+        // A skill with no timeline call isn't asked about.
+        asked.clear();
+        SkillChecks.check(skill("## Steps\n1. Count them with `table`.\n"), null, facts);
+        assertThat(asked).isEmpty();
     }
 
     @Test
