@@ -204,6 +204,9 @@ class TestAiGanttChart {
                 """));
         // In a box the width of the bar, so it never runs past it; never in the pointer's way.
         assertThat(barLabels(svg)).containsExactly("Reviewing finance mail archive");
+        // Centred in its bar (asked for by the user, 2026-11-26).
+        assertThat(svg).contains("<text class=\"ai-gantt-bar-label\" x=\"50%\" y=\"9\" text-anchor=\"middle\">"
+                                 + "Reviewing finance mail archive</text>");
         // Drawn again at another width (a zoom or a resize), it is cut to the bar's width there.
         final MermaidGantt gantt = MermaidGanttParser.parse("""
                 gantt
@@ -228,6 +231,9 @@ class TestAiGanttChart {
                 """));
 
         assertThat(count(svg, "<path class=\"ai-gantt-edge")).isEqualTo(4);
+        // Each of its bar's colour (asked for by the user, 2026-11-26).
+        assertThat(count(svg, "<path class=\"ai-gantt-edge ai-gantt-c1\"")).isEqualTo(2);
+        assertThat(count(svg, "<path class=\"ai-gantt-edge ai-gantt-c2\"")).isEqualTo(2);
         assertThat(svg).contains("<title>Logon-User: 23 Nov 2026 09:00:00</title>",
                 "<title>Logoff-User: 23 Nov 2026 17:00:00</title>",
                 // Where the block names no events, what they are.

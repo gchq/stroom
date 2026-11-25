@@ -2746,11 +2746,11 @@ a.ai-stroom-link::after {
     pointer-events: none;
 }
 
-/* A bar's start and end markers: small diamonds of the page's text colour, ringed by its background. */
+/* A bar's start and end markers: small diamonds of the bar's colour (its series class), ringed by the page's
+   background so they show on the bar. */
 .ai-gantt-edge {
-    fill: var(--control__text-color);
     stroke: var(--page__background-color);
-    stroke-width: 1;
+    stroke-width: 1.5;
 }
 
 .ai-gantt--crit {

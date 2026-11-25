@@ -494,8 +494,8 @@ final class AiGanttChart {
             sb.append("<svg class=\"ai-gantt-bar-label-box").append(dimmed(series, highlight)).append("\" x=\"")
                     .append(number(left)).append("\" y=\"").append(top).append("\" width=\"")
                     .append(number(barWidth)).append("\" height=\"")
-                    .append(BAR_HEIGHT).append("\"><text class=\"ai-gantt-bar-label\" x=\"")
-                    .append(number(BAR_LABEL_PADDING)).append("\" y=\"").append(BAR_HEIGHT - 3).append("\">")
+                    .append(BAR_HEIGHT).append("\"><text class=\"ai-gantt-bar-label\" x=\"50%\" y=\"")
+                    .append(BAR_HEIGHT - 3).append("\" text-anchor=\"middle\">")
                     .append(AiChatOverview.escape(label)).append("</text></svg>");
         }
         // Its start and end, where the span drawn shows them: a diamond each, naming its event and when it was.
@@ -520,8 +520,9 @@ final class AiGanttChart {
         final String named = event == null
                 ? otherwise
                 : event;
-        // Of the page's text colour, not the bar's, so it shows on the bar.
-        sb.append("<path class=\"ai-gantt-edge").append(dimmed(series, highlight)).append("\" ")
+        // Of its bar's colour, ringed by the page's background so it shows on the bar (asked for by the user,
+        // 2026-11-26).
+        sb.append("<path class=\"ai-gantt-edge ").append(series).append(dimmed(series, highlight)).append("\" ")
                 .append(SERIES_ATTRIBUTE).append("=\"").append(series).append("\" d=\"")
                 .append(diamond(x, centre, EDGE_RADIUS)).append("\"><title>")
                 .append(AiChatOverview.escape(named + ": " + format(time, EDGE_TIME_FORMAT)))
