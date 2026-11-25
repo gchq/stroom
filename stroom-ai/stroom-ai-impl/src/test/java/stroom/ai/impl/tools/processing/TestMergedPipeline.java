@@ -102,6 +102,28 @@ class TestMergedPipeline {
     }
 
     @Test
+    void whatAnElementsOutputReachesFollowsItsLinksNotTheChainsOrder() {
+        // A schema filter left unlinked is listed in the chain, but reached from nothing.
+        final DocRef linked = new DocRef(PipelineDoc.TYPE, "l", "Linked");
+        fixture.add(linked, PipelineDoc.builder().uuid("l").name("Linked").pipelineData(new PipelineDataBuilder()
+                .addElement(new PipelineElement("dsParser", "DSParser"))
+                .addElement(new PipelineElement("translationFilter", "XSLTFilter"))
+                .addElement(new PipelineElement("xmlWriter", "XMLWriter"))
+                .addElement(new PipelineElement("schemaFilter", "SchemaFilter"))
+                .addLink("dsParser", "translationFilter")
+                .addLink("translationFilter", "xmlWriter")
+                .build()).build(), true);
+
+        final MergedPipeline merged = MergedPipeline.load(fixture.documentAccess(), "l").orElseThrow();
+
+        assertThat(merged.chain()).contains("schemaFilter");
+        assertThat(merged.downstream("dsParser")).containsExactlyInAnyOrder("translationFilter", "xmlWriter");
+        assertThat(merged.downstream("translationFilter")).containsExactly("xmlWriter");
+        assertThat(merged.downstream("xmlWriter")).isEmpty();
+        assertThat(merged.downstream("noSuchElement")).isEmpty();
+    }
+
+    @Test
     void aPipelineWhoseTemplateCantBeReadIsNotLoaded() {
         fixture.visible.remove("t");
 

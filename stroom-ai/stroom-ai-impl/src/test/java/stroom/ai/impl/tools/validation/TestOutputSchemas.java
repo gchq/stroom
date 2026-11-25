@@ -100,6 +100,35 @@ class TestOutputSchemas {
     }
 
     @Test
+    void eventsAreCheckedAgainstTheEventLoggingSchemaOrTheFork() {
+        // For stepping a pipeline with no schema filter after its translation (decided 2026-11-25).
+        final OutputSchemas events = new OutputSchemas(new HeldSchemasWorld()
+                .hold("file://event-logging-v4.1.0.xsd", "event-logging:3", HeldSchemasWorld.XSD_4_1_0, "EVENTS")
+                .hold(HeldSchemasWorld.FORK_SYSTEM_ID, HeldSchemasWorld.FORK_NS, HeldSchemasWorld.XSD_FORK, "EVENTS")
+                .heldSchemas());
+
+        assertThat(events.checkEvents("<Events xmlns=\"event-logging:3\"><Junk/></Events>"))
+                .hasValueSatisfying(checked -> {
+                    assertThat(checked.systemId()).isEqualTo("file://event-logging-v4.1.0.xsd");
+                    assertThat(checked.errors()).isNotEmpty();
+                });
+        assertThat(events.checkEvents("<Events xmlns=\"event-logging:3\" Version=\"4.1.0\"/>"))
+                .hasValueSatisfying(checked -> assertThat(checked.errors()).isEmpty());
+        assertThat(events.checkEvents("<Events xmlns=\"" + HeldSchemasWorld.FORK_NS + "\"><Junk/></Events>"))
+                .hasValueSatisfying(checked -> {
+                    assertThat(checked.systemId()).isEqualTo(HeldSchemasWorld.FORK_SYSTEM_ID);
+                    assertThat(checked.errors()).isNotEmpty();
+                });
+        // Not Events, Events in a namespace that is no fork, or not well-formed: not checked here.
+        assertThat(events.checkEvents("<records xmlns=\"records:2\"><entry/></records>")).isEmpty();
+        assertThat(events.checkEvents("<Events xmlns=\"urn:other\"><Junk/></Events>")).isEmpty();
+        assertThat(events.checkEvents("<Events xmlns=\"event-logging:3\">")).isEmpty();
+        assertThat(events.checkEvents(null)).isEmpty();
+        // No event-logging schema held: nothing to check against.
+        assertThat(outputSchemas.checkEvents("<Events xmlns=\"event-logging:3\"><Junk/></Events>")).isEmpty();
+    }
+
+    @Test
     void outputThatIsNotWellFormedOrEmptyIsLeftToStepping() {
         assertThat(outputSchemas.check("<records xmlns=\"records:2\"><record>")).isEmpty();
         assertThat(outputSchemas.check("")).isEmpty();

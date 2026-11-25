@@ -301,6 +301,23 @@ public final class MergedPipeline {
         return order;
     }
 
+    /// @param element An element's id.
+    /// @return The elements its output reaches, following links from it (itself not among them); none for an
+    /// element that links to nothing, or isn't in the pipeline. An element left unlinked (one a child pipeline's
+    /// layer took out of the chain) is reached from nothing, though [#chain] lists it.
+    public Set<String> downstream(final String element) {
+        final Set<String> reached = new LinkedHashSet<>();
+        final List<String> stack = new ArrayList<>(links.getOrDefault(element, List.of()));
+        while (!stack.isEmpty()) {
+            final String current = stack.removeLast();
+            if (reached.add(current)) {
+                stack.addAll(links.getOrDefault(current, List.of()));
+            }
+        }
+        reached.remove(element);
+        return reached;
+    }
+
     /// @param pipelineUuid The pipeline's UUID.
     /// @return The XSLTs and text converters the pipeline runs, and whether each is its own or its template's.
     public List<TranslationDoc> translationDocs(final String pipelineUuid) {

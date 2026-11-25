@@ -132,6 +132,25 @@ class TestStepSampleTool {
     }
 
     @Test
+    void eventsNoSchemaFilterChecksBlockWhenTheyFailTheEventLoggingSchemaAndTheCheckIsSaid() {
+        // Decided 2026-11-25: a hand-written pipeline with no schema filter after its translation; stepping left its
+        // Events to check_events, and processing wrote them invalid.
+        world.eventsWithoutSchemaFilter();
+        world.records(2, "<Events xmlns=\"event-logging:3\"><Event><Junk/></Event></Events>");
+        world.eventsChecked(true);
+
+        final Map<String, Object> result = stepSample("{\"pipeline_uuid\": \"p-1\", \"stream_ids\": [7]}");
+
+        assertThat(result.get("verdict")).isEqualTo("blocking");
+        assertThat(groups(result).getFirst().get("reason")).asString()
+                .startsWith("The translation's Events fail the event-logging schema");
+        assertThat(firstMessage(groups(result).getFirst())).contains(UnvalidatedOutput.EVENTS_NOT_CHECKED);
+        assertThat(String.valueOf(result.get("events_schema_check"))).contains("No schema filter follows "
+                                                                              + "translationFilter",
+                "2 of 2 record(s) failed it");
+    }
+
+    @Test
     void nothingSteppedIsNeverClean() {
         // An XSLT that doesn't compile: Stroom finds no record and reports the error on the element.
         world.stepper = (stream, at) -> SteppingWorld.none("XsltPool - Variable user has not been declared");

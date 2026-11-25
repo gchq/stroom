@@ -354,6 +354,7 @@ class StepRecordsTool extends AbstractBuiltInTool {
         found.addAll(SteppingVerdicts.emptyOutput(result, outputElement, key));
         final String output = SteppingWalks.output(result, outputElement);
         found.addAll(walked.unvalidated.markers(output, key));
+        found.addAll(walked.unvalidated.eventMarkers(result, key));
         final int events = EventXml.countEvents(output);
         if (SteppingVerdicts.writesUnknown(output)) {
             walked.unknown.add(key);
@@ -437,6 +438,7 @@ class StepRecordsTool extends AbstractBuiltInTool {
                 .count());
         result.put("draft_code_used", PipelineStepping.draftCodeUsed(draftCode));
         result.putAll(summary);
+        walked.unvalidated.eventsSaid().ifPresent(said -> result.put("events_schema_check", said));
         result.put("records", records.subList(0, Math.min(100, records.size())));
         if (records.size() == missing.size()) {
             SteppingVerdicts.nothingStepped(result, walked.markers, "the records "

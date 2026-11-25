@@ -72,6 +72,10 @@ rules:
   - {element: '*schema*', severity: [ERROR], message: 'Invalid content was found starting with element .*One of .* is expected', class: blocking,
      reason: "Output fails schema validation: an element the schema requires here (one of those it names as expected) was left out, so the schema reports the element written after it, which is in its place. In a mapping its entry's input was empty in these records: give the entry a default (or any_of with a field that is filled), rather than moving the element named"}
   - {element: '*schema*', severity: [ERROR], class: blocking, reason: 'Output fails schema validation'}
+  # A translation's Events checked by the step tools where no schema filter follows the translation
+  # (UnvalidatedOutput): processing writes them as they are, invalid (2026-11-25).
+  - {message: 'no schema filter after the translation checks its Events', class: blocking,
+     reason: "The translation's Events fail the event-logging schema (or the environment's fork of it), and no schema filter in the pipeline checks them, so processing writes them as they are, invalid. Fix the translation so its Events are valid, then step again"}
   # An XSLT's records:2, reference-data:2 or kafka-records:1 output checked by the step tools where no schema filter
   # does (UnvalidatedOutput): the element after it drops what doesn't fit, with no error (Stroom's Indexing template
   # has no schema filter).

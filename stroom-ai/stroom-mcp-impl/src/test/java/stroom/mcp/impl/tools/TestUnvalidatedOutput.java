@@ -32,6 +32,7 @@ import static org.mockito.ArgumentMatchers.any;
 class TestUnvalidatedOutput {
 
     private static final String OUTPUT = "<records xmlns=\"records:2\"><record><entry/></record></records>";
+    private static final String EVENTS = "<Events xmlns=\"event-logging:3\"><Event><Junk/></Event></Events>";
 
     private final SteppingWorld world = new SteppingWorld();
 
@@ -70,6 +71,75 @@ class TestUnvalidatedOutput {
         // The bundled rules say it blocks, and why.
         assertThat(ErrorTriage.bundled().classify("ERROR", "translationFilter", true, markers.getFirst().message())
                 .classification()).isEqualTo(ErrorTriage.BLOCKING);
+    }
+
+    @Test
+    void eventsNoSchemaFilterFollowsAreCheckedAsAnErrorOfTheTranslation() {
+        // Decided 2026-11-25: a hand-written pipeline with no schema filter writes invalid Events as they are, and
+        // stepping left them to check_events.
+        world.eventsWithoutSchemaFilter();
+        world.eventsChecked(true);
+        final UnvalidatedOutput check = world.stepping().unvalidatedOutput(world.stepping().load(SteppingWorld.UUID));
+
+        final List<ErrorTriage.Marker> markers = check.eventMarkers(SteppingWorld.step(7, 0, 0, EVENTS), "7:0");
+
+        assertThat(markers).singleElement().satisfies(marker -> {
+            assertThat(marker.severity()).isEqualTo("ERROR");
+            assertThat(marker.element()).isEqualTo("translationFilter");
+            assertThat(marker.location()).isEqualTo(Map.of("line", 3));
+            assertThat(marker.message()).startsWith("Invalid content was found starting with element 'Junk'")
+                    .contains("file://event-logging-v4.1.0.xsd at /Events/Event/EventDetail",
+                            UnvalidatedOutput.EVENTS_NOT_CHECKED);
+        });
+        assertThat(ErrorTriage.bundled().classify("ERROR", "translationFilter", true, markers.getFirst().message())
+                .classification()).isEqualTo(ErrorTriage.BLOCKING);
+        assertThat(check.eventsSaid()).hasValueSatisfying(said -> assertThat(said).contains(
+                "No schema filter follows translationFilter", "file://event-logging-v4.1.0.xsd",
+                "1 of 1 record(s) failed it"));
+    }
+
+    @Test
+    void validEventsAreSaidCheckedWithNoMarker() {
+        world.eventsWithoutSchemaFilter();
+        world.eventsChecked(false);
+        final UnvalidatedOutput check = world.stepping().unvalidatedOutput(world.stepping().load(SteppingWorld.UUID));
+
+        assertThat(check.eventMarkers(SteppingWorld.step(7, 0, 0, EVENTS), "7:0")).isEmpty();
+        assertThat(check.eventMarkers(SteppingWorld.step(7, 0, 1, EVENTS), "7:1")).isEmpty();
+        assertThat(check.eventsSaid()).contains("No schema filter follows translationFilter, so stepping checked "
+                                                + "its Events against file://event-logging-v4.1.0.xsd: all 2 "
+                                                + "record(s) valid. Processing writes Events as they are, valid or "
+                                                + "not, with no schema filter.");
+    }
+
+    @Test
+    void eventsASchemaFilterChecksAreLeftToIt() {
+        // The world's template has a schema filter after its translation.
+        world.eventsChecked(true);
+        final UnvalidatedOutput check = world.stepping().unvalidatedOutput(world.stepping().load(SteppingWorld.UUID));
+
+        assertThat(check.eventMarkers(SteppingWorld.step(7, 0, 0, EVENTS), "7:0")).isEmpty();
+        assertThat(check.eventsSaid()).isEmpty();
+        Mockito.verify(world.outputSchemas, Mockito.never()).checkEvents(any());
+    }
+
+    @Test
+    void aSchemaFilterLeftUnlinkedChecksNothing() {
+        // Seen in the e2e test: a child layer relinking the translation past the template's schema filter leaves the
+        // filter in the pipeline, reached from nothing, and listed last in its chain.
+        world.pipeline(SteppingWorld.TEMPLATE, "Events", null, new PipelineDataBuilder()
+                .addElement(new PipelineElement("dsParser", "DSParser"))
+                .addElement(new PipelineElement("translationFilter", "XSLTFilter"))
+                .addElement(new PipelineElement("xmlWriter", "XMLWriter"))
+                .addElement(new PipelineElement("schemaFilter", "SchemaFilter"))
+                .addLink("dsParser", "translationFilter")
+                .addLink("translationFilter", "xmlWriter"));
+        world.eventsChecked(true);
+
+        final UnvalidatedOutput check = world.stepping().unvalidatedOutput(world.stepping().load(SteppingWorld.UUID));
+
+        assertThat(check).isNotSameAs(UnvalidatedOutput.NONE);
+        assertThat(check.eventMarkers(SteppingWorld.step(7, 0, 0, EVENTS), "7:0")).hasSize(1);
     }
 
     @Test

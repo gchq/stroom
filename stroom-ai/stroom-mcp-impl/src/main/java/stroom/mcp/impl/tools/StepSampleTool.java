@@ -451,6 +451,7 @@ class StepSampleTool extends AbstractBuiltInTool {
         final List<ErrorTriage.Marker> found = new ArrayList<>(sifted.markers());
         found.addAll(SteppingVerdicts.emptyOutput(result, outputElement, key));
         found.addAll(walked.unvalidated.markers(output, key));
+        found.addAll(walked.unvalidated.eventMarkers(result, key));
         walked.markers.addAll(found);
         walked.records.add(new Stepped(key, found.size(), sifted.passedOver()));
         if (walked.keepOutputs) {
@@ -534,6 +535,7 @@ class StepSampleTool extends AbstractBuiltInTool {
         }
         result.put("draft_code_used", PipelineStepping.draftCodeUsed(draftCode));
         result.putAll(summary);
+        walked.unvalidated.eventsSaid().ifPresent(said -> result.put("events_schema_check", said));
         result.put("first_record_output", walked.firstOutput);
         if (keys.size() >= cap) {
             // Seen in production: max_records=1000 stepped 500 and said only that the sample had more; the agent

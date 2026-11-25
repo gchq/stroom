@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import javax.xml.namespace.QName;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -38,8 +39,9 @@ import javax.xml.stream.XMLStreamReader;
 /// namespace: records:2 (an IndexingFilter), reference-data:2 (a ReferenceDataFilter) and kafka-records:1 (a
 /// StandardKafkaProducer). Those elements read only the elements they know and pass over the rest, with no error,
 /// so without a schema filter in the pipeline, output in the wrong shape is lost silently (seen in Stroom's own
-/// Indexing template, which has none). Event-logging Events are checked by check_events, and JSON by the schema
-/// filter every Elasticsearch template has.
+/// Indexing template, which has none). A translation's Events are checked ([#checkEvents]) where no schema filter
+/// follows it (a hand-written pipeline may have none, and processing then writes invalid Events as they are), and
+/// by check_events once processed; JSON by the schema filter every Elasticsearch template has.
 public class OutputSchemas {
 
     /// The namespaces checked.
@@ -47,6 +49,8 @@ public class OutputSchemas {
             "kafka-records:1");
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OutputSchemas.class);
+    // The root element of a translation's output.
+    private static final String EVENTS = "Events";
 
     private final HeldSchemas heldSchemas;
 
@@ -83,9 +87,47 @@ public class OutputSchemas {
         }
     }
 
+    /// Validates a translation's Events against the event-logging schema Stroom holds for their namespace
+    /// (`event-logging:3`, or a fork's namespace, [HeldSchemas#forks]): the version its xsi:schemaLocation names,
+    /// where that is held for the namespace, else the newest held for it. For stepping a pipeline with no schema
+    /// filter after its translation.
+    ///
+    /// @param output An XSLT's output for one record.
+    /// @return What it was checked against, with its errors (none if valid); empty when it isn't Events in an
+    /// event-logging namespace, Stroom holds no schema for it (the user may view), or it isn't well-formed
+    /// (stepping reports that itself).
+    public Optional<Checked> checkEvents(final String output) {
+        final QName root = root(output);
+        if (root == null || !EVENTS.equals(root.getLocalPart())) {
+            return Optional.empty();
+        }
+        final String namespace = root.getNamespaceURI();
+        if (!HeldSchemas.EVENT_LOGGING_NS.equals(namespace) && heldSchemas.forksIn(namespace).isEmpty()) {
+            return Optional.empty();
+        }
+        final String systemId = systemIdFor(namespace, HeldSchemas.declaredSystemId(output));
+        if (systemId == null) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(new Checked(namespace, systemId, heldSchemas.validate(systemId, output)));
+        } catch (final XmlTrees.NotWellFormedException | ToolRefusal e) {
+            LOGGER.debug("Events in {} not checked against {}: {}", namespace, systemId, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
     /// @param output XML, or null.
     /// @return The namespace of its root element, or null if it has none or isn't XML.
     static String rootNamespace(final String output) {
+        final QName root = root(output);
+        return root == null || NullSafe.isBlankString(root.getNamespaceURI())
+                ? null
+                : root.getNamespaceURI();
+    }
+
+    // Its root element's name, or null if it isn't XML.
+    private static QName root(final String output) {
         if (NullSafe.isBlankString(output)) {
             return null;
         }
@@ -94,9 +136,7 @@ public class OutputSchemas {
             reader = factory().createXMLStreamReader(new StringReader(output));
             while (reader.hasNext()) {
                 if (reader.next() == XMLStreamConstants.START_ELEMENT) {
-                    return NullSafe.isBlankString(reader.getNamespaceURI())
-                            ? null
-                            : reader.getNamespaceURI();
+                    return reader.getName();
                 }
             }
             return null;
@@ -146,6 +186,15 @@ public class OutputSchemas {
     /// @param systemId  The schema it was validated against.
     /// @param errors    What the schema reports, in order.
     public record Failed(String namespace, String systemId, List<SchemaErrors.SchemaError> errors) {
+
+    }
+
+    /// Events checked against the schema of their namespace.
+    ///
+    /// @param namespace The Events' namespace.
+    /// @param systemId  The schema they were validated against.
+    /// @param errors    What the schema reports, in order; none if they are valid.
+    public record Checked(String namespace, String systemId, List<SchemaErrors.SchemaError> errors) {
 
     }
 }

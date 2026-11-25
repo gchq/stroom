@@ -172,6 +172,28 @@ final class SteppingWorld {
                 .addLink("translationFilter", "indexingFilter"));
     }
 
+    /// Makes the template an events one with no schema filter, as a hand-written pipeline may be: its translation
+    /// writes Events straight to the XML writer.
+    void eventsWithoutSchemaFilter() {
+        pipeline(TEMPLATE, "Events", null, new PipelineDataBuilder()
+                .addElement(new PipelineElement("dsParser", "DSParser"))
+                .addElement(new PipelineElement("translationFilter", "XSLTFilter"))
+                .addElement(new PipelineElement("xmlWriter", "XMLWriter"))
+                .addLink("dsParser", "translationFilter")
+                .addLink("translationFilter", "xmlWriter"));
+    }
+
+    /// Makes [#outputSchemas] check every record's Events against event-logging 4.1.0, failing them where said.
+    ///
+    /// @param fails True to fail every record's Events, at /Events/Event/EventDetail.
+    void eventsChecked(final boolean fails) {
+        Mockito.when(outputSchemas.checkEvents(any())).thenReturn(Optional.of(new OutputSchemas.Checked(
+                "event-logging:3", "file://event-logging-v4.1.0.xsd", fails
+                ? List.of(new SchemaErrors.SchemaError(3, "/Events/Event/EventDetail",
+                        "Invalid content was found starting with element 'Junk'"))
+                : List.of())));
+    }
+
     /// Makes [#outputSchemas] find every record's output in the wrong shape for records:2.
     void outputFailsItsSchema() {
         Mockito.when(outputSchemas.check(any())).thenReturn(Optional.of(new OutputSchemas.Failed("records:2",
