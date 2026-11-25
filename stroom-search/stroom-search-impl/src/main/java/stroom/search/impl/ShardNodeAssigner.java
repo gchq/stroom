@@ -16,7 +16,6 @@
 
 package stroom.search.impl;
 
-import stroom.index.impl.IndexShardResponsibility;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.util.shared.NullSafe;
@@ -91,8 +90,20 @@ final class ShardNodeAssigner {
     /// @param nodes   The nodes to choose from, which must not be empty.
     /// @return The chosen node.
     static String highestScoringNode(final long shardId, final Collection<String> nodes) {
-        // The same choice as is made of the node that looks after a shard.
-        return IndexShardResponsibility.highestScoringNode(shardId, nodes);
+        String best = null;
+        long bestScore = 0;
+        for (final String node : nodes) {
+            final long score = score(shardId, node);
+            // The name breaks a tie so that the choice never depends on the order of the nodes.
+            if (best == null || score > bestScore || (score == bestScore && node.compareTo(best) > 0)) {
+                best = node;
+                bestScore = score;
+            }
+        }
+        if (best == null) {
+            throw new IllegalArgumentException("No nodes to choose from");
+        }
+        return best;
     }
 
     // The writer records the time and document count of each commit, so a shard that has neither has only
@@ -103,6 +114,15 @@ final class ShardNodeAssigner {
 
     private static boolean isOnSharedVolume(final IndexShard indexShard) {
         return NullSafe.test(indexShard.getVolume(), volume -> volume.isShared());
+    }
+
+    // Every node must compute the same score, so this uses String.hashCode, which the language defines, and
+    // then mixes the bits well so that the scores of similar ids and names are unrelated.
+    private static long score(final long shardId, final String node) {
+        long hash = shardId * 0x9E3779B97F4A7C15L + node.hashCode();
+        hash = (hash ^ (hash >>> 30)) * 0xBF58476D1CE4E5B9L;
+        hash = (hash ^ (hash >>> 27)) * 0x94D049BB133111EBL;
+        return hash ^ (hash >>> 31);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
