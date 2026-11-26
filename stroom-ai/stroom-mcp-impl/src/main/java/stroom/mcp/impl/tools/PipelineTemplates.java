@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.processing.MergedPipeline;
 import stroom.ai.impl.tools.processing.MergedPipeline.TranslationDoc;
+import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.ai.impl.tools.validation.XmlTrees;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
@@ -36,6 +37,7 @@ import stroom.pipeline.shared.data.PipelineLink;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -45,6 +47,7 @@ import org.w3c.dom.Element;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -84,23 +87,28 @@ class PipelineTemplates {
     private final ProcessorFilters processorFilters;
     private final DocumentAccess documentAccess;
     private final Provider<DocFinder> docFinderProvider;
+    private final HeldSchemas heldSchemas;
 
     /// @param pipelineIndex     Lists the pipelines.
     /// @param pipelineShapes    Reads what each does.
     /// @param processorFilters  Gives the feeds each child's filters cover.
     /// @param documentAccess    Reads XSLTs, checking View.
     /// @param docFinderProvider Finds a shared XSLT by the name an import gives.
+    /// @param heldSchemas       Gives the forks of the event-logging schema this Stroom holds, whose namespaces a
+    ///                          shared XSLT's calls are placed in Events of.
     @Inject
     PipelineTemplates(final PipelineIndex pipelineIndex,
                       final PipelineShapes pipelineShapes,
                       final ProcessorFilters processorFilters,
                       final DocumentAccess documentAccess,
-                      final Provider<DocFinder> docFinderProvider) {
+                      final Provider<DocFinder> docFinderProvider,
+                      final HeldSchemas heldSchemas) {
         this.pipelineIndex = pipelineIndex;
         this.pipelineShapes = pipelineShapes;
         this.processorFilters = processorFilters;
         this.documentAccess = documentAccess;
         this.docFinderProvider = docFinderProvider;
+        this.heldSchemas = heldSchemas;
     }
 
     /// Finds the template pipelines for a stage, best first: configured template folders, then pipelines that
@@ -368,6 +376,7 @@ class PipelineTemplates {
     /// read.
     List<Map<String, Object>> sharedXsltUsage(final List<Map<String, Object>> pipelines) {
         final SharedReader shared = new SharedReader();
+        final Set<String> forks = forkNamespaces();
         final Map<List<Object>, Map<String, Object>> seen = new LinkedHashMap<>();
         for (final Map<String, Object> pipeline : pipelines.subList(0, Math.min(MAX_SHARED_PIPELINES,
                 pipelines.size()))) {
@@ -391,7 +400,7 @@ class PipelineTemplates {
                 }
                 final Map<String, String> texts = new LinkedHashMap<>();
                 hrefs.forEach(href -> texts.put(href, shared.shared(href)));
-                for (final Map<String, Object> use : SharedXslt.usage(text, texts)) {
+                for (final Map<String, Object> use : SharedXslt.usage(text, texts, forks)) {
                     final List<Object> key = new ArrayList<>();
                     key.add(use.get("href"));
                     key.add(use.get("template"));
@@ -433,6 +442,20 @@ class PipelineTemplates {
             usages.add(entry);
         });
         return usages;
+    }
+
+    // The namespaces of the forks of the event-logging schema this Stroom holds; none if they can't be read.
+    private Set<String> forkNamespaces() {
+        final Set<String> out = new LinkedHashSet<>();
+        try {
+            heldSchemas.forks().stream()
+                    .map(doc -> NullSafe.string(doc.getNamespaceURI()).strip())
+                    .filter(namespace -> !namespace.isEmpty())
+                    .forEach(out::add);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No forks of the event-logging schema read: {}", e.getMessage()));
+        }
+        return out;
     }
 
     /// How this environment uses a Stroom pipeline template, before making a child of it: its children, its

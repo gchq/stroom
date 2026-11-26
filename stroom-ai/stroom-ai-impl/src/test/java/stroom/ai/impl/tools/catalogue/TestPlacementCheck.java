@@ -19,6 +19,7 @@ package stroom.ai.impl.tools.catalogue;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.catalogue.CatalogueValidation.Problem;
 import stroom.ai.impl.tools.draft.LocalCheck;
+import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.ModelReader;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.ToolJson;
@@ -877,6 +878,47 @@ class TestPlacementCheck {
                         "{path: 'Name', change: {list: 'modifiedProperties', name: '");
     }
 
+    // The list a pair placement reads, inside JSON a field holds: the pair's XSLT reads the list as the record's own,
+    // which finds nothing there, so it is refused, whatever the list's key holds (a dot: `msg['rule.params']`).
+    @Test
+    void aPairOfAListInHeldJsonIsRefusedWhateverTheListsKeyHolds() {
+        final CatalogueSample sample = heldListSample();
+        final EventType plain = heldListType("Create", Map.of("path", "Configuration/Name", "pair",
+                Map.of("list", "msg.params", "name", "Name")));
+        final EventType dotted = heldListType("Create", Map.of("path", "Configuration/Name", "pair",
+                Map.of("list", "msg['rule.params']", "name", "Name")));
+        assertThat(MappingFacts.heldJsonField(List.of("msg"), "msg['rule.params']")).as("held, as the generator "
+                                                                                        + "tells it")
+                .isEqualTo("msg");
+
+        final List<String> plainProblems = said(CatalogueCheck.check(catalogue(plain), sample, SCHEMA).problems());
+        final List<String> dottedProblems = said(CatalogueCheck.check(catalogue(dotted), sample, SCHEMA)
+                .problems());
+
+        assertThat(plainProblems).as("the control").anyMatch(problem -> problem.contains("isn't one"));
+        assertThat(dottedProblems).as("a held list whose key holds a dot")
+                .anyMatch(problem -> problem.contains("isn't one"));
+    }
+
+    // The old/new list a change placement reads, inside JSON a field holds, is refused as a pair's is, whatever the
+    // list's key holds.
+    @Test
+    void aChangeOfAListInHeldJsonIsRefusedWhateverTheListsKeyHolds() {
+        final CatalogueSample sample = heldListSample();
+        final EventType plain = heldListType("Update", Map.of("path", "Configuration/Name", "change",
+                Map.of("list", "msg.changes", "name", "Name")));
+        final EventType dotted = heldListType("Update", Map.of("path", "Configuration/Name", "change",
+                Map.of("list", "msg['rule.changes']", "name", "Name")));
+
+        final List<String> plainProblems = said(CatalogueCheck.check(catalogue(plain), sample, SCHEMA).problems());
+        final List<String> dottedProblems = said(CatalogueCheck.check(catalogue(dotted), sample, SCHEMA)
+                .problems());
+
+        assertThat(plainProblems).as("the control").anyMatch(problem -> problem.contains("isn't one"));
+        assertThat(dottedProblems).as("a held list whose key holds a dot")
+                .anyMatch(problem -> problem.contains("isn't one"));
+    }
+
     // Four users updated, each with the properties changed (an old/new list, a name's old and new values) and the
     // members told (a list of things), and fields enough kept as Data for what could be typed to be said.
     private static CatalogueSample userSample() {
@@ -1104,5 +1146,37 @@ class TestPlacementCheck {
     private static Way way(final String operation) {
         return Way.read(new ModelReader(), Map.of("when", List.of(Map.of("field", "event.Operation", "equals",
                 operation))), List.of());
+    }
+
+    // Inbox rules, each with its parameters (a name/value list) and its changes (an old/new list) held as JSON text
+    // in msg, twice: by a key with a dot and by one without.
+    private static CatalogueSample heldListSample() {
+        final List<String> lines = new ArrayList<>();
+        for (int n = 0; n < 3; n++) {
+            final List<Object> parameters = List.of(parameter("Name", "Rule " + n), parameter("From", "b" + n));
+            final List<Object> changes = List.of(Map.of("Name", "Name", "OldValue", "Rule " + n, "NewValue",
+                    "Rule " + (n + 1)));
+            final Map<String, Object> held = new LinkedHashMap<>();
+            held.put("params", parameters);
+            held.put("rule.params", parameters);
+            held.put("changes", changes);
+            held.put("rule.changes", changes);
+            final Map<String, Object> record = new LinkedHashMap<>();
+            record.put("Operation", "New-InboxRule");
+            record.put("UserId", "jo@acme.com");
+            record.put("msg", ToolJson.dumps(held));
+            lines.add(ToolJson.dumps(record));
+        }
+        final TranslationMapping reading = CatalogueSample.reading("json", null, null, List.of("msg"), null, null,
+                null);
+        return CatalogueSample.read(reading, String.join("\n", lines), null, LocalCheck.JSON_PARSER_CUT, null);
+    }
+
+    private static EventType heldListType(final String detail, final Map<String, Object> placement) {
+        final Way way = Way.read(new ModelReader(), Map.of("when", List.of(Map.of("field", "Operation", "equals",
+                "New-InboxRule"))), List.of());
+        return new EventType(detail + "-InboxRule", detail + " inbox rule", null, detail, null, null, "UserId", null,
+                null, List.of(way), false, EventType.AGENT_KNOWLEDGE, "high", null, EventType.PROPOSED, null,
+                List.of(placement(placement)));
     }
 }

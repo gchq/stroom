@@ -5862,7 +5862,10 @@ before it is stepped (`PipelineStepping.checkDrafts`). In order:
 * **Refuses**: an empty `xslt`. Everything else is an error in the result, not a refusal.
 
 **Output XSLTs (2026-11-25).** The event-element-name check runs only for an XSLT that writes an `Events` or
-`Event` element (a literal, an `xsl:element` or an `xsl:copy`) or doesn't read Events: it is skipped for an output
+`Event` element (a literal, an `xsl:element`, an `xsl:copy`, or, 2026-11-27, an `xsl:element` with a computed name
+copying what it reads, as `xsl:copy` does) or doesn't read Events (an `xpath-default-namespace`, or a prefix bound to
+an Events namespace in a template's `match` or an instruction's `select`, `f:Events/f:Event` from `/`; create_pipeline
+tells a pipeline fed Events the same way): it is skipped for an output
 XSLT, one reading Events and writing no `Events`/`Event` (`XsltStages.isOutput`), e.g. a flattener's
 `<data name= value=/>` pairs in the Events namespace (seen in a reference environment: one refusal per pair from
 check_xslt, save_xslt and step_pipeline's draft_code). Every other check still runs; shared modules writing Events
@@ -6234,7 +6237,8 @@ What they share, all in `stroom-mcp-impl`:
   (`requiredFor`, `importNotes`, `refuseWithout`, `uncalled`, `xsltRole`).
 * **`SiblingSharedCalls`**: the named templates of shared XSLTs that the stage's existing pipelines call, and
   where (read from the children of the stage's templates, at most 5 templates, via
-  `PipelineTemplates.sharedXsltUsage`). A call counts only when at least two pipelines make it, and per place the
+  `PipelineTemplates.sharedXsltUsage`; a call is placed within the Events elements around it in event-logging's
+  namespace, the XSLT's own or a held fork's, by whatever prefix, 2026-11-27). A call counts only when at least two pipelines make it, and per place the
   call most pipelines make wins. Used before drafting (`intoMapping` for a translation mapping, `forPlan` for an index plan) and at save
   (`notFollowed`).
 * **`EventVersions`**: the event-logging versions this Stroom holds, and the one a build's translation writes: the
@@ -6417,8 +6421,8 @@ records in the sample (severity, names, addresses kept), then takes what the cat
 * **The vendor's code as Data**: every `equals`/`one_of` field of the way but the source type field, named after the
   field's last segment (`System/EventID` is `EventID`; a bracketed key's last key as written), under the action
   element (`EventDetail/<Action>/Data`, Network's own child), so searching by the code still works. A field another
-  event type tests for its code is still Data of this one's records; one a placement places (not `also_data`) isn't
-  Data too, the element holds it.
+  event type tests for its code is still Data of this one's records; one a placement places (not `also_data`, nor
+  converting the value) isn't Data too, the element holds it.
 * **Description**: the record's own message, alone, where the records carry one; else the event type's description
   (the vendor documentation's text, or the agent's) as fixed text.
 * The action element's Action and outcome, who acted (a field naming a person, not an address), the type's
@@ -6426,7 +6430,11 @@ records in the sample (severity, names, addresses kept), then takes what the cat
   in `unread_fields`; one in EventSource at its path from the root, left out and named there when the common entries
   write it), the user authenticating for Authenticate; then the fields left over that the way's own records
   hold, as Data of the action element. Each field once: the draft rule's entries below the action element reading a
-  placed field are taken out, and a placed field is Data too only with `also_data`. A placement's (or a common
+  placed field are taken out, and a placed field is Data too only with `also_data` (each field it reads: by `field`,
+  `any_of` or `xpath`) or where the placement converts the value (a `transform`, `map`, `time_format`, `default` or
+  `lookup`: `MappingFacts.convertsValue`, as a mapping change decides it, 2026-11-27). The fields an entry reads are
+  `Placement.reads`'s, for a common entry and a draft rule's too: a `join`'s, a lookup's key (or `key_fields`), a
+  group's array, not kept as Data beside it. A placement's (or a common
   entry's) `xpath` reads the fields it names as the records spell them (`XPathFieldReads`, 2026-11-26: a JSON key
   `*[@key='a']/*[@key='b']` is `a.b`, a key of held JSON through `json-to-xml(...)/*/*[@key='k']` is `<field>.k`, a
   Data Splitter's `data[@name='n']`, an XML path as it is); an xpath read no other way reads nothing here.
@@ -6874,7 +6882,8 @@ rows' pipeline), `output_feed`, `registry` (`uuid`, `name`, `translated`) and `g
     (`.../Data[@Name='x']/Data[@Name='y']`) and the `changes` removing one (the Data beside an element, else the less
     deep Data; a group's, when the copy is in one). Two typed elements (UserId as EventSource/User/Id and
     Send/Source/User/Id) and the same Data in two rules are not warned of; a top-level field written as it is to an
-    element and as Data keeps its own warning ("the Data entry says it again"). Seen in chat 182 (rule
+    element and as Data keeps its own warning ("the Data entry says it again"; 2026-11-27: a common Data copy of a
+    field the rule writes to an element too, said as a common entry). Seen in chat 182 (rule
     update_inboxrule): `event.Parameters`' items as Data of `Update/After/Object` and of `Update`, the draft's copy left
     in as the agent's removal named another path. The mapping's common entries are checked against each rule's too
     (2026-11-22; two common entries alike are not, as they would be said for every rule): a common entry and a

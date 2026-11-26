@@ -156,13 +156,12 @@ final class WrittenTwice {
         return ToolText.split(place.replaceAll("\\[[^\\]]*\\]", ""), "/").size();
     }
 
-    // A top-level field written as it is to an element and as Data: EventTrees warns of it in its own words.
+    // A top-level field written as it is to an element and as Data (the rule's, or a common one): EventTrees warns of
+    // it in its own words.
     private static boolean elementAndData(final Placed first, final Placed second) {
         final FieldMapping e = first.entry();
         return first.topLevel() && second.topLevel() && first.data() != second.data() && e.field() != null
-               && !e.field().isEmpty() && e.transform() == null && !e.hasMap()
-               && (e.timeFormat() == null || e.timeFormat().isEmpty()) && e.lookup() == null
-               && (e.dictionary() == null || e.dictionary().isEmpty()) && e.defaultValue() == null;
+               && !e.field().isEmpty() && !MappingFacts.convertsValue(e);
     }
 
     private static String message(final EventRule rule,

@@ -34,10 +34,11 @@ import java.util.Set;
 /// doesn't write the element from another field, a rule's entry its own rule), and the common ones for a common
 /// entry.
 /// Only plain entries count, the field read as it is: a placement that changes the value (a format, a map, a
-/// default, a transform) leaves the original worth keeping, and a Data entry given in the same changes is kept on
-/// purpose. An xpath giving one field as it is ([XPathFieldReads#plainField(String)], a key of the JSON a field
-/// holds) places that field. A copy is a Data entry reading the same field, whatever its Data is named (the
-/// data_names styling, or a vendor code's short name).
+/// default, a transform: [MappingFacts#convertsValue(Map)], as the catalogue's placements decide it) leaves the
+/// original worth keeping, and a Data entry given in the same changes is kept on purpose. An xpath giving one field
+/// as it is ([XPathFieldReads#plainField(String)], a key of the JSON a field holds) places that field. A copy is a
+/// Data entry reading the same field, whatever its Data is named (the data_names styling, or a vendor code's short
+/// name).
 final class PlacedCopies {
 
     private static final String COMMON = "common";
@@ -171,7 +172,7 @@ final class PlacedCopies {
     private static boolean plainPlacement(final Map<String, Object> entry, final Set<String> keys) {
         final String path = stripped(entry);
         return !JsonValues.truthy(entry.get(DATA_NAME)) && !path.isEmpty() && !path.endsWith("/Data")
-               && !TYPE_ID.equals(path) && keys.containsAll(entry.keySet());
+               && !TYPE_ID.equals(path) && !MappingFacts.convertsValue(entry) && keys.containsAll(entry.keySet());
     }
 
     // A Data entry reading the field as it is, whatever its Data is named (the draft's data_names styling, or a

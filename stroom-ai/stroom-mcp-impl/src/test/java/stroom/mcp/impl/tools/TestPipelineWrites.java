@@ -370,6 +370,22 @@ class TestPipelineWrites {
     }
 
     @Test
+    void aPipelineWhoseXsltReadsEventsByAPrefixedMatchReadsEvents() {
+        // The stage rules (EventsNamespaces.readsEvents) take a template matching an element by a prefix bound to
+        // an Events namespace as reading Events: create_pipeline does as they do.
+        final String forkNs = "file://xml/schema/test-fork/events";
+        final Set<String> events = Set.of("event-logging:3", forkNs);
+        pipelines.xslt("flattener", "Fork-Flattener", null);
+        pipelines.world.docs.put("flattener", XsltDoc.builder().uuid("flattener").name("Fork-Flattener")
+                .version("v0").data("<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                                    + "xmlns:f=\"" + forkNs + "\" version=\"3.0\"><xsl:template match=\"/f:Events\">"
+                                    + "<records/></xsl:template></xsl:stylesheet>").build());
+
+        assertThat(writes.readsEvents(List.of(PropertyValue.document("flattenerFilter", "xslt", "flattener",
+                "XSLT")), events)).isTrue();
+    }
+
+    @Test
     void xmlFragmentsUnderAnXmlParserAreToldToReplaceIt() {
         // Seen in testing: the XMLParser template taken for XML fragments, without replace_parser, kept only each
         // record's <System> block, so no rule of the translation matched.

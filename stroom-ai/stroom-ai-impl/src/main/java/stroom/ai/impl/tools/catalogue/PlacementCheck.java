@@ -25,6 +25,7 @@ import stroom.ai.impl.tools.draft.VendorCode;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.FieldMapping;
 import stroom.ai.impl.tools.generation.MappingError;
+import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.HeldText;
@@ -734,9 +735,7 @@ final class PlacementCheck {
     // key of it, as the JSONParser writes the record; null for a field of another input, or held JSON.
     private String jsonXpath(final String field, final String key, final String value, final String other) {
         final TranslationMapping reading = index.sample().reading();
-        if (!"json".equals(reading.input()) || NullSafe.list(reading.jsonFields()).stream()
-                .anyMatch(held -> field.equals(held) || field.startsWith(held + "."))
-            || value.indexOf('\'') >= 0) {
+        if (!"json".equals(reading.input()) || inHeldJson(reading, field) || value.indexOf('\'') >= 0) {
             return null;
         }
         final StringBuilder out = new StringBuilder();
@@ -1478,6 +1477,13 @@ final class PlacementCheck {
         return out;
     }
 
+    // Whether a field is one the reading's json_fields hold as JSON text, or a key inside one, however its key is
+    // spelt (`msg.params`, `msg['rule.params']`): the record's own tree has no such element.
+    private static boolean inHeldJson(final TranslationMapping reading, final String field) {
+        final List<String> held = NullSafe.list(reading.jsonFields());
+        return held.contains(field) || MappingFacts.heldJsonField(held, field) != null;
+    }
+
     // Why a placement's pair can't be read: the input isn't JSON's own, the list no record has, isn't a name/value
     // list, its keys aren't the items', or no pair has the name. Null when it reads.
     private String pairProblem(final Placement placement) {
@@ -1485,8 +1491,7 @@ final class PlacementCheck {
         final String list = ToolText.str(pair.get("list"));
         final String name = ToolText.str(pair.get("name"));
         final TranslationMapping reading = index.sample().reading();
-        if (!"json".equals(reading.input()) || NullSafe.list(reading.jsonFields()).stream()
-                .anyMatch(held -> list.equals(held) || list.startsWith(held + "."))) {
+        if (!"json".equals(reading.input()) || inHeldJson(reading, list)) {
             return "pair reads a name/value list of a JSON input's records; " + list + " isn't one (read a value "
                    + "of it with an xpath)";
         }
@@ -1639,8 +1644,7 @@ final class PlacementCheck {
             final String read = array == null
                     ? list
                     : array;
-            if (!"json".equals(reading.input()) || NullSafe.list(reading.jsonFields()).stream()
-                    .anyMatch(held -> read.equals(held) || read.startsWith(held + "."))) {
+            if (!"json".equals(reading.input()) || inHeldJson(reading, read)) {
                 return "change reads an old/new list of a JSON input's records; " + list + " isn't one (read a "
                        + "value of it with an xpath)";
             }

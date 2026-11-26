@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.feed.shared.FeedDoc;
@@ -102,7 +103,7 @@ class TestDescribeTemplateTool {
         Mockito.when(processorFilters.feedsByPipeline(filters)).thenReturn(Map.of("c", Set.of("ACME")));
         final PipelineTemplates templates = new PipelineTemplates(pipelineIndex,
                 PipelineLayers.shapes(pipelineService, new AiConfig()), processorFilters, documentAccess,
-                () -> docFinder);
+                () -> docFinder, Mockito.mock(HeldSchemas.class));
         tool = new DescribeTemplateTool(templates, documentAccess);
     }
 

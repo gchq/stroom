@@ -328,9 +328,10 @@ public record Placement(Map<String, Object> entry) {
         return JsonValues.truthy(entry.get(ALSO_DATA));
     }
 
-    /// @return The fields of the records it reads, each once: its field, any_of's, join's and a lookup's key field,
-    /// or a group's sources (for_each's) and its fields' that read the record (scope record); not a group item's
-    /// keys, nor what an xpath reads ([#reads()] adds that).
+    /// @return The fields of the records it reads, each once: its field, any_of's, join's and a lookup's key field
+    /// (or key_fields), or a group's sources (for_each's: its array, split field or zip's fields) and its fields'
+    /// that read the record (scope record); not a group item's keys, nor what an xpath reads ([#reads()] adds
+    /// that).
     public Set<String> inputs() {
         final Set<String> out = new LinkedHashSet<>();
         inputs(entry, true, out);
@@ -358,16 +359,19 @@ public record Placement(Map<String, Object> entry) {
         }
         out.addAll(JsonValues.strings(entry.get("any_of")));
         out.addAll(JsonValues.strings(entry.get("join")));
-        if (JsonValues.mapOrEmpty(entry.get(LOOKUP)).get(FIELD) instanceof final String key && !key.isBlank()) {
+        final Map<String, Object> lookup = JsonValues.mapOrEmpty(entry.get(LOOKUP));
+        if (lookup.get(FIELD) instanceof final String key && !key.isBlank()) {
             out.add(key);
         }
+        out.addAll(JsonValues.strings(lookup.get("key_fields")));
     }
 
     /// @return The fields of the records it reads, each once: its [#inputs()], then those its xpaths name
     /// ([XPathFieldReads]: its own xpath's, a lookup's key xpath's, and its group's fields' that read the record),
     /// as the records spell them. An xpath's aren't checked against the records (it may read into JSON a field holds
     /// that the sample's records don't have as fields), so only [#inputs()] are; these say which fields the
-    /// placement writes, so none is kept as Data too.
+    /// placement writes, so none is kept as Data too. Any translation mapping fields entry reads as a placement of
+    /// the same form does: the catalogue's translation tells the fields its entries read by this.
     public Set<String> reads() {
         return reads(Set.of());
     }

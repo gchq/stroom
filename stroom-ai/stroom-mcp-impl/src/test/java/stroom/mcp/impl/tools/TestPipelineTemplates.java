@@ -19,6 +19,7 @@ package stroom.mcp.impl.tools;
 import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.mcp.impl.tools.PipelineIndex.Entry;
@@ -62,7 +63,7 @@ class TestPipelineTemplates {
         Mockito.when(documentAccess.canView(any())).thenReturn(true);
         Mockito.when(documentAccess.read(any(), eq(XsltDoc.class))).thenReturn(Optional.empty());
         templates = new PipelineTemplates(pipelineIndex, PipelineLayers.shapes(pipelineService, new AiConfig()),
-                processorFilters, documentAccess, () -> docFinder);
+                processorFilters, documentAccess, () -> docFinder, Mockito.mock(HeldSchemas.class));
     }
 
     @Test

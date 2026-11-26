@@ -184,6 +184,91 @@ class TestXsltGeneratorReads extends XsltRuns {
                                + ToolJson.dumps(mapping)).contains("rpt-0");
     }
 
+    // A top-level field a rule writes as it is to an element and a common entry keeps as Data: the common Data copy
+    // is warned of, as the rule's own copy is.
+    @Test
+    void aCommonDataCopyOfAFieldARuleWritesToAnElementIsWarnedOf() {
+        final Map<String, Object> mapping = new LinkedHashMap<>();
+        mapping.put("input", "json");
+        mapping.put("common", List.of(
+                Map.of("path", "EventTime/TimeCreated", "field", "time"),
+                Map.of("path", "EventSource/System/Name", "value", "App"),
+                Map.of("path", "EventSource/System/Environment", "value", "Test"),
+                Map.of("path", "EventSource/Generator", "value", "App"),
+                Map.of("path", "EventSource/Device/HostName", "value", "h1"),
+                Map.of("path", "EventSource/User/Id", "field", "usr"),
+                Map.of("path", "EventSource/Data", "data_name", "host", "field", "host")));
+        mapping.put("events", List.of(Map.of("name", "logon", "fields", List.of(
+                Map.of("path", "EventDetail/TypeId", "value", "Logon"),
+                Map.of("path", "EventDetail/Authenticate/Action", "value", "Logon"),
+                Map.of("path", "EventDetail/Authenticate/Device/HostName", "field", "host")))));
+        // The same copy in the rule's own fields is warned of (EventTrees), as the control.
+        final Map<String, Object> inRule = new LinkedHashMap<>(mapping);
+        inRule.put("common", List.copyOf(JsonValues.maps(mapping.get("common"))).subList(0, 6));
+        final List<Object> ruleFields = new ArrayList<>(JsonValues.maps(JsonValues.maps(mapping.get("events"))
+                .getFirst().get("fields")));
+        ruleFields.add(Map.of("path", "EventDetail/Authenticate/Data", "data_name", "host", "field", "host"));
+        inRule.put("events", List.of(Map.of("name", "logon", "fields", ruleFields)));
+
+        final XsltGenerator.Generated control = XsltGenerator.generate(TranslationMapping.fromJson(inRule), SCHEMA,
+                "4.1.0");
+        final XsltGenerator.Generated common = XsltGenerator.generate(TranslationMapping.fromJson(mapping), SCHEMA,
+                "4.1.0");
+
+        assertThat(control.warnings()).as("the rule's own copy").anyMatch(warning -> warning.contains("'host'"));
+        assertThat(common.problems()).isEmpty();
+        assertThat(common.warnings()).as("the common copy").anyMatch(warning -> warning.contains("'host'"));
+    }
+
+    // PlacedCopies (changes=) and the catalogue's translation (placements) both decide whether a placement takes the
+    // field's Data copy with it: a placement that converts the value (transform) keeps the copy in both (decided by
+    // the user).
+    @Test
+    void aTransformedPlacementTakesTheFieldsDataCopyAlikeInChangesAndInTheCatalogue() {
+        // changes=: the Data copy kept, the value changed by the placement.
+        final Map<String, Object> merged = new LinkedHashMap<>();
+        merged.put("common", new ArrayList<>());
+        merged.put("events", new ArrayList<>(List.of(new LinkedHashMap<>(Map.of("name", "logon", "fields",
+                new ArrayList<>(List.of(
+                        Map.of("path", "EventDetail/View/Document/Id", "field", "ref", "transform", "upper"),
+                        Map.of("path", "EventDetail/View/Data", "data_name", "ref", "field", "ref"))))))));
+        final Map<String, Object> given = Map.of("events", List.of(Map.of("name", "logon", "fields", List.of(
+                Map.of("path", "EventDetail/View/Document/Id", "field", "ref", "transform", "upper")))));
+        PlacedCopies.afterChanges(merged, given);
+        final boolean keptByChanges = JsonValues.maps(JsonValues.maps(merged.get("events")).getFirst()
+                .get("fields")).stream().anyMatch(field -> "ref".equals(field.get("data_name")));
+
+        // The catalogue: the same placement as an event type's.
+        final String csv = """
+                ts,evt,ref
+                2026-10-01T08:00:00Z,4624,rpt-17
+                2026-10-01T08:05:00Z,4624,rpt-18
+                """;
+        final Map<String, Object> type = new LinkedHashMap<>();
+        type.put("type_id", "View-Report");
+        type.put("title", "Report viewed");
+        type.put("event_detail", "View");
+        type.put("recognised_by", List.of(Map.of("when", List.of(Map.of("field", "evt", "equals", "4624")),
+                "names", List.of())));
+        type.put("basis", "documentation");
+        type.put("confidence", "high");
+        type.put("status", "confirmed");
+        type.put("placements", List.of(Map.of("path", "Document/Id", "field", "ref", "transform", "upper")));
+        final Map<String, Object> notes = new LinkedHashMap<>();
+        notes.put("source", "App");
+        notes.put("fields", new ArrayList<>());
+        notes.put("event_types", List.of(type));
+        notes.put("catch_all", Map.of("status", "confirmed"));
+        final Map<String, Object> rule = JsonValues.maps(mapOf(DraftMapping.draft(List.of(csv), "App", "App",
+                "Test", notes, null, null).get("mapping")).get("events")).getFirst();
+        final boolean keptByCatalogue = JsonValues.maps(rule.get("fields")).stream()
+                .anyMatch(field -> "ref".equals(field.get("data_name")));
+
+        assertThat(keptByChanges).as("changes= keeps the Data copy").isTrue();
+        assertThat(keptByCatalogue).as("the catalogue keeps the Data copy as changes= does; rule: " + rule)
+                .isTrue();
+    }
+
     // --------------------------------------------------------------------------------
 
 

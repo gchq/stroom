@@ -21,6 +21,8 @@ import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.catalogue.CatalogueCheck;
 import stroom.ai.impl.tools.catalogue.CatalogueCheckResult;
 import stroom.ai.impl.tools.catalogue.CatalogueSample;
+import stroom.ai.impl.tools.catalogue.Placement;
+import stroom.ai.impl.tools.generation.ModelReader;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.SplitterSpec;
@@ -541,9 +543,8 @@ class TestCatalogueTranslation extends DraftFixtures {
         assertThat(viewed.get("EventDetail/View/Folder/Path")).containsEntry("field", "FolderPath")
                 .doesNotContainKey("also_data");
         assertThat(viewed.get("EventDetail/View/Folder/Size")).containsEntry("transform", "digits");
-        // also_data keeps the placed field as Data too.
-        assertThat(dataNames(rules.get("view_folder"))).contains("FolderPath").doesNotContain("Size")
-                .doesNotHaveDuplicates();
+        // also_data keeps the placed field as Data too, as a placement converting the value (transform) does.
+        assertThat(dataNames(rules.get("view_folder"))).contains("FolderPath", "Size").doesNotHaveDuplicates();
         // Generates, but for the device these records don't name (the agent's to map).
         assertThat(generate(mappingOf(draft)).problems()).as("generates")
                 .allMatch(problem -> problem.contains("EventSource/Device is required"));
@@ -1099,6 +1100,89 @@ class TestCatalogueTranslation extends DraftFixtures {
         assertThat(logon.droppedFirstBy()).isEqualTo("drop_when 'service accounts'");
     }
 
+    // A common entry joining two fields: they are read, so not kept as Data in every rule (and the catch-all) beside
+    // the element joining them.
+    @Test
+    void fieldsACommonEntryJoinsAreNotKeptAsDataToo() {
+        final Map<String, Object> join = Map.of("path", "EventSource/User/Name", "join", List.of("first", "last"),
+                "separator", " ");
+        assertThat(readPlacement(join).reads()).as("Placement's view").contains("first", "last");
+        final Map<String, Object> mapping = readsMapping(new ArrayList<>(List.of(join)), new ArrayList<>());
+        final List<Map<String, Object>> records = readsRecords("first", "Ann", "last", "Lee");
+
+        CatalogueTranslation.apply(mapping, List.of("evt", "first", "last"), readsValues(records), readsLogon(null),
+                null, List.of(), CHECK, records, PairMatches.create(), Map.of(), List.of());
+
+        for (final Map<String, Object> rule : JsonValues.maps(mapping.get("events"))) {
+            assertThat(readsDataFields(rule)).as(String.valueOf(rule)).doesNotContain("first", "last");
+        }
+    }
+
+    // A common lookup's key field is read, so not kept as Data in every rule beside the looked-up element.
+    @Test
+    void theKeyACommonLookupReadsIsNotKeptAsDataToo() {
+        final Map<String, Object> lookup = Map.of("path", "EventSource/User/Name", "lookup",
+                Map.of("map", "USER_NAMES", "field", "uid"));
+        final Map<String, Object> mapping = readsMapping(new ArrayList<>(List.of(lookup)), new ArrayList<>());
+        final List<Map<String, Object>> records = readsRecords("uid", "u-1");
+
+        CatalogueTranslation.apply(mapping, List.of("evt", "uid"), readsValues(records), readsLogon(null), null,
+                List.of(), CHECK, records, PairMatches.create(), Map.of(), List.of());
+
+        for (final Map<String, Object> rule : JsonValues.maps(mapping.get("events"))) {
+            assertThat(readsDataFields(rule)).as(String.valueOf(rule)).doesNotContain("uid");
+        }
+    }
+
+    // A draft rule's group over an array (as ListFields' snapshot groups are drafted, with no data_name): its array
+    // is read, so the whole array is not kept as Data beside the group.
+    @Test
+    void anArrayADraftedGroupReadsIsNotKeptAsDataToo() {
+        final Map<String, Object> group = new LinkedHashMap<>();
+        group.put("path", "EventDetail/Update/After/Object");
+        group.put("for_each", Map.of("array", "targets"));
+        group.put("fields", List.of(Map.of("path", "Id", "field", "id")));
+        assertThat(readPlacement(Map.of("path", "After/Object", "for_each", Map.of("array", "targets"), "fields",
+                List.of(Map.of("path", "Id", "field", "id")))).reads()).as("Placement's view").contains("targets");
+        final List<Object> events = new ArrayList<>(List.of(new LinkedHashMap<>(Map.of("name", "update", "when",
+                List.of(Map.of("field", "evt", "equals", "4738")), "fields", List.of(group)))));
+        final Map<String, Object> mapping = readsMapping(new ArrayList<>(), events);
+        final List<Map<String, Object>> records = readsRecords("targets", "[{\"id\": \"u-1\"}]");
+        final Map<String, Object> update = readsType("Update-User", "Update", null);
+        final Catalogue catalogue = SourceNotes.catalogue(readsNotes(update));
+
+        CatalogueTranslation.apply(mapping, List.of("evt", "targets"), readsValues(records), catalogue, null,
+                List.of(), CHECK, records, PairMatches.create(), Map.of(), List.of());
+
+        final Map<String, Object> rule = JsonValues.maps(mapping.get("events")).getFirst();
+        assertThat(JsonValues.maps(rule.get("fields"))).as("the group kept")
+                .anyMatch(field -> "EventDetail/Update/After/Object".equals(field.get("path")));
+        assertThat(readsDataFields(rule)).as(String.valueOf(rule)).doesNotContain("targets");
+    }
+
+    // also_data keeps a placed field as Data too, whatever reads it: a key placed by an xpath, or the first of any_of,
+    // is kept as Data where no draft rule held it already (a draft with no rule per kind of record, its catch-all
+    // only).
+    @Test
+    void alsoDataKeepsAFieldPlacedByAnXpathAsData() {
+        final Map<String, Object> byXpath = Map.of("path", "User/Id", "xpath", "*[@key='usr']", "also_data", true);
+        final Map<String, Object> byAnyOf = Map.of("path", "User/Name", "any_of", List.of("name"), "also_data",
+                true);
+        final Map<String, Object> byField = Map.of("path", "Device/HostName", "field", "host", "also_data", true);
+        final Map<String, Object> mapping = readsMapping(new ArrayList<>(), new ArrayList<>());
+        mapping.put("input", "json");
+        final List<Map<String, Object>> records = readsRecords("usr", "ann", "name", "Ann Lee", "host", "pc1");
+
+        CatalogueTranslation.apply(mapping, List.of("evt", "usr", "name", "host"), readsValues(records),
+                readsLogon(List.of(byXpath, byAnyOf, byField)), null, List.of(), CHECK, records,
+                PairMatches.create(), Map.of(), List.of());
+
+        final Map<String, Object> rule = JsonValues.maps(mapping.get("events")).getFirst();
+        // The field placement's kept, as the control.
+        assertThat(readsDataFields(rule)).as(String.valueOf(rule)).contains("host");
+        assertThat(readsDataFields(rule)).as(String.valueOf(rule)).contains("usr", "name");
+    }
+
     private static Map<String, Object> applyCounted(final Map<String, Object> mapping,
                                                     final Catalogue catalogue,
                                                     final List<Map<String, Object>> records) {
@@ -1260,6 +1344,93 @@ class TestCatalogueTranslation extends DraftFixtures {
         notes.put("catch_all", Map.of("status", catchAllConfirmed
                 ? "confirmed"
                 : "proposed"));
+        return notes;
+    }
+
+    private static Placement readPlacement(final Map<String, Object> entry) {
+        final ModelReader reader = new ModelReader();
+        final Placement read = Placement.read(reader, entry, List.of());
+        assertThat(reader.errors()).isEmpty();
+        return read;
+    }
+
+    private static Map<String, Object> readsMapping(final List<Object> common, final List<Object> events) {
+        final Map<String, Object> mapping = new LinkedHashMap<>();
+        mapping.put("input", "data_splitter");
+        mapping.put("common", common);
+        mapping.put("events", events);
+        return mapping;
+    }
+
+    // Records of evt 4738 and 4624, each with the given fields.
+    private static List<Map<String, Object>> readsRecords(final Object... keysAndValues) {
+        final List<Map<String, Object>> out = new ArrayList<>();
+        for (int n = 0; n < 3; n++) {
+            final Map<String, Object> record = new LinkedHashMap<>();
+            record.put("evt", n == 0
+                    ? "4624"
+                    : "4738");
+            for (int i = 0; i + 1 < keysAndValues.length; i += 2) {
+                record.put(String.valueOf(keysAndValues[i]), String.valueOf(keysAndValues[i + 1]));
+            }
+            out.add(record);
+        }
+        // Both kinds, so each way has records.
+        out.add(new LinkedHashMap<>(out.get(1)));
+        out.getLast().put("evt", "4624");
+        return out;
+    }
+
+    private static Map<String, List<String>> readsValues(final List<Map<String, Object>> records) {
+        final Map<String, List<String>> out = new LinkedHashMap<>();
+        for (final Map<String, Object> record : records) {
+            record.forEach((key, value) -> {
+                final List<String> held = out.computeIfAbsent(key, ignored -> new ArrayList<>());
+                if (!held.contains(String.valueOf(value))) {
+                    held.add(String.valueOf(value));
+                }
+            });
+        }
+        return out;
+    }
+
+    private static List<Object> readsDataFields(final Map<String, Object> rule) {
+        return JsonValues.maps(rule.get("fields")).stream()
+                .filter(field -> field.get("data_name") != null)
+                .map(field -> field.get("field"))
+                .toList();
+    }
+
+    private static Catalogue readsLogon(final List<Map<String, Object>> placements) {
+        return SourceNotes.catalogue(readsNotes(readsType("Authenticate-Logon", "Authenticate", placements)));
+    }
+
+    private static Map<String, Object> readsType(final String typeId,
+                                                 final String detail,
+                                                 final List<Map<String, Object>> placements) {
+        final Map<String, Object> type = new LinkedHashMap<>();
+        type.put("type_id", typeId);
+        type.put("title", typeId);
+        type.put("event_detail", detail);
+        type.put("recognised_by", List.of(Map.of("when", List.of(Map.of("field", "evt", "equals",
+                "Authenticate".equals(detail)
+                        ? "4624"
+                        : "4738")), "names", List.of())));
+        type.put("basis", "documentation");
+        type.put("confidence", "high");
+        type.put("status", "confirmed");
+        if (placements != null) {
+            type.put("placements", placements);
+        }
+        return type;
+    }
+
+    private static Map<String, Object> readsNotes(final Map<String, Object> type) {
+        final Map<String, Object> notes = new LinkedHashMap<>();
+        notes.put("source", "Acme");
+        notes.put("fields", new ArrayList<>());
+        notes.put("event_types", List.of(type));
+        notes.put("catch_all", Map.of("status", "confirmed"));
         return notes;
     }
 }

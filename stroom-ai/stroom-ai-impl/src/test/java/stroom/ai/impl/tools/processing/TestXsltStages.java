@@ -18,7 +18,9 @@ package stroom.ai.impl.tools.processing;
 
 import stroom.ai.impl.tools.ToolTestFixture;
 import stroom.ai.impl.tools.processing.XsltStages.How;
+import stroom.ai.impl.tools.processing.XsltStages.Reading;
 import stroom.ai.impl.tools.processing.XsltStages.Stage;
+import stroom.ai.impl.tools.processing.XsltStages.StageRules;
 import stroom.ai.impl.tools.processing.XsltStages.StagedXslt;
 import stroom.ai.impl.tools.streams.SteppingWalks;
 import stroom.ai.impl.tools.validation.HeldSchemas;
@@ -59,6 +61,7 @@ class TestXsltStages {
     private static final String JSON = "http://www.w3.org/2013/XSL/json";
     private static final String EVENTS = "event-logging:3";
     private static final String FORK = "file://xml/schema/accounting/events";
+    private static final Set<String> FORK_NAMESPACES = Set.of(EVENTS, FORK);
 
     /// Unpacks a nested JSON string: JSON to JSON.
     static final String PRE_PROCESS = "<xsl:stylesheet " + XSL + " xpath-default-namespace=\"" + JSON + "\" "
@@ -454,6 +457,44 @@ class TestXsltStages {
     }
 
     // ------------------------------------------------------------------------------------------------
+
+    @Test
+    void aComputedNameDecorationWritesEventsAsByContentSays() {
+        // A decoration written as an identity transform with xsl:element (a computed name), adding a Location: it
+        // reads Events and writes Events.
+        final String computed = "<xsl:stylesheet " + XSL + " xmlns=\"" + FORK + "\" "
+                                + "xpath-default-namespace=\"" + FORK + "\"><xsl:template match=\"*\">"
+                                + "<xsl:element name=\"{local-name()}\" namespace=\"{namespace-uri()}\">"
+                                + "<xsl:copy-of select=\"@*\"/><xsl:apply-templates/></xsl:element></xsl:template>"
+                                + "<xsl:template match=\"EventSource\"><xsl:element name=\"EventSource\" "
+                                + "namespace=\"" + FORK + "\"><xsl:apply-templates/><Location><Country>GB</Country>"
+                                + "</Location></xsl:element></xsl:template></xsl:stylesheet>";
+        final Reading reading = StageRules.byContent(computed, FORK_NAMESPACES, Set.of());
+
+        assertThat(reading.writesEvents()).as("byContent: writes Events").isTrue();
+        assertThat(XsltStages.isOutput(computed, FORK_NAMESPACES)).as("isOutput: no output").isFalse();
+    }
+
+    @Test
+    void aFlattenerReadingEventsByAPrefixedSelectReadsThemAsOneReadingThemByAPrefixedMatchDoes() {
+        final String byMatch = "<xsl:stylesheet " + XSL + " xmlns:f=\"" + FORK + "\" "
+                               + "xmlns=\"records:2\"><xsl:template match=\"/f:Events\"><records>"
+                               + "<xsl:for-each select=\"f:Event\"><record><data name=\"user\" "
+                               + "value=\"{f:EventSource/f:User/f:Id}\"/></record></xsl:for-each></records>"
+                               + "</xsl:template></xsl:stylesheet>";
+        final String bySelect = "<xsl:stylesheet " + XSL + " xmlns:f=\"" + FORK + "\" "
+                                + "xmlns=\"records:2\"><xsl:template match=\"/\"><records>"
+                                + "<xsl:for-each select=\"f:Events/f:Event\"><record><data name=\"user\" "
+                                + "value=\"{f:EventSource/f:User/f:Id}\"/></record></xsl:for-each></records>"
+                                + "</xsl:template></xsl:stylesheet>";
+        final Reading matched = StageRules.byContent(byMatch, FORK_NAMESPACES, Set.of());
+        final Reading selected = StageRules.byContent(bySelect, FORK_NAMESPACES, Set.of());
+
+        assertThat(matched.readsEvents()).as("by match").isTrue();
+        assertThat(selected.readsEvents()).as("by select: the same input read").isTrue();
+        assertThat(XsltStages.isOutput(bySelect, FORK_NAMESPACES)).isTrue()
+                .isEqualTo(XsltStages.isOutput(byMatch, FORK_NAMESPACES));
+    }
 
     private void forkHeld() {
         final XmlSchemaDoc fork = Mockito.mock(XmlSchemaDoc.class);

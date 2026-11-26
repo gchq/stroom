@@ -72,6 +72,9 @@ public final class MappingFacts {
             Pattern.UNICODE_CHARACTER_CLASS);
     private static final Set<String> OPERATORS = Set.of("and", "or", "return", "then", "else", "in", "satisfies",
             "eq", "ne", "lt", "le", "gt", "ge", "is", "union", "intersect", "except", "to", "div", "mod");
+    // The fields entry's keys converting the value it reads ([#convertsValue(Map)]).
+    private static final List<String> VALUE_CONVERSIONS = List.of("transform", "map", "time_format", "lookup",
+            "dictionary", "default");
     private static final Pattern CALL_START = Pattern.compile("[\\w:.-]+\\(", Pattern.UNICODE_CHARACTER_CLASS);
     // Pattern letters of Java's SimpleDateFormat and DateTimeFormatter; any other letter must be quoted.
     private static final String PATTERN_LETTERS = "GuyDMLdQqYwWEecFaHkKhmsSAnNVzOXxZp";
@@ -357,6 +360,34 @@ public final class MappingFacts {
             steps.set(at + 2, "*");
         }
         return String.join("/", steps);
+    }
+
+    /// Whether an entry converts the value it reads (a transform, a map, a time format, a lookup, a dictionary or a
+    /// default between the input and the element), so the element doesn't hold the field as it is: the field's Data
+    /// copy is then no copy, and is kept beside it (decided by the user for a transform: in a mapping change and in
+    /// the catalogue's placements alike). One written as it is takes its Data copy's place.
+    ///
+    /// @param entry A translation mapping's fields entry (or a catalogue placement), as JSON-like values.
+    /// @return True if it converts the value.
+    public static boolean convertsValue(final Map<String, ?> entry) {
+        return VALUE_CONVERSIONS.stream().anyMatch(key -> {
+            final Object given = entry.get(key);
+            return given != null && !(given instanceof final String text && text.isBlank())
+                   && !(given instanceof final Map<?, ?> map && map.isEmpty());
+        });
+    }
+
+    /// As [#convertsValue(Map)], for an entry read.
+    ///
+    /// @param entry A translation mapping's fields entry.
+    /// @return True if it converts the value.
+    public static boolean convertsValue(final FieldMapping entry) {
+        return entry.transform() != null || entry.hasMap() || nonEmpty(entry.timeFormat()) || entry.lookup() != null
+               || nonEmpty(entry.dictionary()) || entry.defaultValue() != null;
+    }
+
+    private static boolean nonEmpty(final String text) {
+        return text != null && !text.isEmpty();
     }
 
     /// @param jsonFields The mapping's json_fields.

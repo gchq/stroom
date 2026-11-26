@@ -47,6 +47,7 @@ import static org.mockito.ArgumentMatchers.eq;
 class TestCheckXsltTool {
 
     private static final String FORK_NS = "file://xml/schema/test-fork/events";
+    private static final String XSL_ATTRIBUTES = "xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"3.0\"";
     private static final String XSLT = """
             <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="event-logging:3"
              xmlns:stroom="stroom" xpath-default-namespace="records:2" version="3.0">
@@ -480,8 +481,55 @@ class TestCheckXsltTool {
         assertThat(result.text()).startsWith("Give xslt");
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    void aFlattenerReadingTheForkByAPrefixedSelectPassesAsTheSameFlattenerByAPrefixedMatchDoes() {
+        // The same flattener (the fork's Events in, records/record/data pairs out), told apart only by how it
+        // reaches the Events: a template matching f:Events, or a for-each selecting it from /.
+        holdingFork();
+        final String byMatch = forkFlattener("/f:Events", "f:Event");
+        final String bySelect = forkFlattener("/", "f:Events/f:Event");
+
+        final List<String> matchErrors = (List<String>) call(byMatch).get("errors");
+        final List<String> selectErrors = (List<String>) call(bySelect).get("errors");
+
+        assertThat(matchErrors).as("by match").isEmpty();
+        assertThat(selectErrors).as("by select: the same output, so the same verdict").isEqualTo(matchErrors);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aDecorationCopyingByAComputedXslElementHasItsElementNamesCheckedAsOneCopyingByXslCopyDoes() {
+        // An identity decoration written with xsl:element (computed name), adding an element the fork lacks.
+        holdingFork();
+        final String computed = "<xsl:stylesheet " + XSL_ATTRIBUTES + " xmlns=\"" + FORK_NS
+                                + "\" xpath-default-namespace=\"" + FORK_NS + "\"><xsl:template match=\"*\">"
+                                + "<xsl:element name=\"{local-name()}\" namespace=\"{namespace-uri()}\">"
+                                + "<xsl:copy-of select=\"@*\"/><xsl:apply-templates/></xsl:element></xsl:template>"
+                                + "<xsl:template match=\"EventDetail\"><xsl:element name=\"EventDetail\" namespace=\""
+                                + FORK_NS + "\"><xsl:apply-templates/><Bogus/></xsl:element></xsl:template>"
+                                + "</xsl:stylesheet>";
+        final String copying = computed.replace("<xsl:element name=\"{local-name()}\" "
+                                                + "namespace=\"{namespace-uri()}\">", "<xsl:copy>")
+                .replace("<xsl:element name=\"EventDetail\" namespace=\"" + FORK_NS + "\">", "<xsl:copy>")
+                .replace("</xsl:element>", "</xsl:copy>");
+
+        assertThat((List<String>) call(copying).get("errors")).as("by xsl:copy")
+                .anySatisfy(error -> assertThat(error).contains("No element 'Bogus'"));
+        assertThat((List<String>) call(computed).get("errors")).as("by xsl:element: the same output")
+                .anySatisfy(error -> assertThat(error).contains("No element 'Bogus'"));
+    }
+
     private Map<String, Object> call(final String xslt) {
         return BuildToolCalls.json(tool.execute(BuildToolCalls.call(CheckXsltTool.NAME,
                 JsonUtil.writeValueAsString(Map.of("xslt", xslt), false)), BuildToolCalls.context()).text());
+    }
+
+    // A flattener of the fork's Events: the template's match, and the for-each's select of each Event.
+    private static String forkFlattener(final String match, final String events) {
+        return "<xsl:stylesheet " + XSL_ATTRIBUTES + " xmlns=\"" + FORK_NS + "\" xmlns:f=\"" + FORK_NS + "\">"
+               + "<xsl:template match=\"" + match + "\"><records><xsl:for-each select=\"" + events + "\"><record>"
+               + "<data name=\"user\" value=\"{f:EventSource/f:User/f:Id}\"/></record></xsl:for-each></records>"
+               + "</xsl:template></xsl:stylesheet>";
     }
 }

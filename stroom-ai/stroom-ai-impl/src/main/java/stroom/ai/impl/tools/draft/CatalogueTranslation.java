@@ -29,7 +29,6 @@ import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.ListChange;
 import stroom.ai.impl.tools.generation.MappingFacts;
-import stroom.ai.impl.tools.generation.XPathFieldReads;
 import stroom.ai.impl.tools.sample.NameValueLists;
 import stroom.ai.impl.tools.sample.NameValueLists.ChangeList;
 import stroom.util.shared.NullSafe;
@@ -593,12 +592,17 @@ final class CatalogueTranslation {
                 read.add(name);
             }
         }
-        // A placed field the placement keeps as Data too (also_data), once.
+        // A placed field the placement keeps as Data too (also_data, or one converting the value), once: each field
+        // of the records it reads, whatever reads it (a field, any_of, an xpath).
         for (final Placement placement : type.allPlacements()) {
-            final String kept = placement.field();
-            if (placement.alsoData() && !UNKNOWN.equals(detail) && kept != null && field(kept) != null
-                && fields.stream().noneMatch(field -> kept.equals(field.get(FIELD)) && field.get(DATA_NAME) != null)) {
-                fields.add(entry(PATH, prefix + "Data", DATA_NAME, kept, FIELD, kept));
+            if (UNKNOWN.equals(detail) || !keepsData(placement)) {
+                continue;
+            }
+            for (final String kept : placement.reads(heldJson())) {
+                if (field(kept) != null && fields.stream()
+                        .noneMatch(field -> kept.equals(field.get(FIELD)) && field.get(DATA_NAME) != null)) {
+                    fields.add(entry(PATH, prefix + "Data", DATA_NAME, kept, FIELD, kept));
+                }
             }
         }
         final Map<String, Object> rule = new LinkedHashMap<>();
@@ -652,8 +656,8 @@ final class CatalogueTranslation {
     // The event type's typed placements ([Placement]), `affected`'s included, as entries of the rule in place of any
     // with their paths; the entries of other sources reading a placed field below the action element (the draft's
     // Data of it, say) taken out, as each field is written once (kept as Data too only where the placement says
-    // also_data). A placement reading a field the records haven't is left out, said. The fields placed (not also
-    // kept as Data) are returned.
+    // also_data, or converts the value). A placement reading a field the records haven't is left out, said. The
+    // fields placed (not also kept as Data) are returned.
     private Set<String> placements(final EventType type,
                                    final String typeId,
                                    final String detail,
@@ -712,7 +716,7 @@ final class CatalogueTranslation {
                 return paths.contains(path)
                        || !written.contains(existing) && path.startsWith(prefix)
                           && existing.get(FIELD) instanceof final String read && inputs.contains(read)
-                          && !(placement.alsoData() && path.endsWith("/Data"));
+                          && !(keepsData(placement) && path.endsWith("/Data"));
             });
             fields.addAll(entries);
             written.addAll(entries);
@@ -721,11 +725,18 @@ final class CatalogueTranslation {
                 fields.add(entry(PATH, prefix + "Data", DATA_NAME, ToolText.str(keyed.pair().get(NAME)), "pair",
                         keyed.pair()));
             }
-            if (!placement.alsoData()) {
+            if (!keepsData(placement)) {
                 placed.addAll(inputs);
             }
         }
         return placed;
+    }
+
+    // Whether a placement keeps the fields it reads as Data too: it says also_data, or it converts the value
+    // ([MappingFacts#convertsValue(Map)]: the element doesn't hold the field as it is, as a mapping change decides
+    // it too).
+    private static boolean keepsData(final Placement placement) {
+        return placement.alsoData() || MappingFacts.convertsValue(placement.entry());
     }
 
     // Whether a placement of both snapshots names its own (`After/User`), and another of the event type's places the
@@ -1125,22 +1136,17 @@ final class CatalogueTranslation {
                 .toList());
     }
 
-    // The fields entries read: as a field, or as Data under that name, the first of any_of's, or by an xpath.
+    // The fields entries read, as a placement of the same form reads them ([Placement#reads(Collection)]: a field,
+    // any_of's, join's, a lookup's key, a group's array and an xpath's), or as Data under that name.
     private Set<String> readBy(final List<Map<String, Object>> entries) {
         final Set<String> read = new LinkedHashSet<>();
         for (final Map<String, Object> entry : entries) {
             if (TYPE_ID.equals(entry.get(PATH))) {
                 continue;
             }
-            if (entry.get(FIELD) != null) {
-                read.add(ToolText.str(entry.get(FIELD)));
-            }
+            read.addAll(new Placement(entry).reads(heldJson()));
             if (entry.get(DATA_NAME) != null) {
                 read.add(ToolText.str(entry.get(DATA_NAME)));
-            }
-            JsonValues.strings(entry.get("any_of")).forEach(read::add);
-            if (entry.get("xpath") instanceof final String xpath) {
-                read.addAll(XPathFieldReads.fields(xpath, heldJson()));
             }
         }
         return read;

@@ -582,26 +582,40 @@ final class EventTrees {
     // A field a rule writes as it is to an element and as Data as well: the Data copy says it again. A warning, not a
     // problem, as a copy may be kept on purpose, alike across event types whose structures differ. Seen in
     // testing: 'item_id' as View/Object/Id and as Data in 13 SecretServer rules, the drafted Data kept
-    // beside the elements the agent mapped. TypeId is left out: a TypeId joining a field doesn't hold it alone.
+    // beside the elements the agent mapped. The common entries are written in every rule's events, so a common Data
+    // copy of a field the rule writes to an element is one too (and a rule's Data of a field a common entry writes);
+    // a common element and a common Data, alike in every rule, are not said once per rule. TypeId is left out: a
+    // TypeId joining a field doesn't hold it alone.
     private void writtenTwice(final EventRule rule) {
-        final List<FieldMapping> entries = new ArrayList<>(m.common());
+        final List<FieldMapping> common = m.common();
+        final List<FieldMapping> entries = new ArrayList<>(common);
         entries.addAll(rule.fields());
         final Map<String, String> elements = new LinkedHashMap<>();
-        for (final FieldMapping entry : entries) {
+        final Set<String> byRule = new HashSet<>();
+        for (int i = 0; i < entries.size(); i++) {
+            final FieldMapping entry = entries.get(i);
             final String read = plainRead(entry);
-            if (!isSet(entry.dataName()) && read != null && asItIs(entry)
+            if (!isSet(entry.dataName()) && read != null && !MappingFacts.convertsValue(entry)
                 && !"EventDetail/TypeId".equals(entry.strippedPath())) {
                 elements.putIfAbsent(read, entry.strippedPath() + (isSet(entry.field())
                         ? ""
                         : " (by its xpath)"));
+                if (i >= common.size()) {
+                    byRule.add(read);
+                }
             }
         }
-        for (final FieldMapping entry : rule.fields()) {
+        for (int i = 0; i < entries.size(); i++) {
+            final FieldMapping entry = entries.get(i);
+            final boolean commonData = i < common.size();
             final String read = plainRead(entry);
-            if (isSet(entry.dataName()) && read != null && asItIs(entry) && elements.containsKey(read)) {
+            if (isSet(entry.dataName()) && read != null && !MappingFacts.convertsValue(entry)
+                && elements.containsKey(read) && (!commonData || byRule.contains(read))) {
                 note(warnings, "[" + rule.name() + "] '" + read + "' is written as "
                                + elements.get(read) + " and as Data '" + entry.dataKey() + "' ("
-                               + entry.strippedPath() + "): the element holds it, so the Data entry says it again. "
+                               + entry.strippedPath() + (commonData
+                        ? ", a common entry, written in every rule's events"
+                        : "") + "): the element holds it, so the Data entry says it again. "
                                + "Remove the Data entry, unless it is kept on purpose (the same Data across event "
                                + "types that don't all have the element).");
             }
@@ -617,12 +631,6 @@ final class EventTrees {
         return isSet(entry.xpath())
                 ? XPathFieldReads.plainField(entry.xpath())
                 : null;
-    }
-
-    // Written as the input has it: no transform, map, time format, lookup or dictionary between.
-    private static boolean asItIs(final FieldMapping entry) {
-        return entry.transform() == null && !entry.hasMap() && !isSet(entry.timeFormat()) && entry.lookup() == null
-               && !isSet(entry.dictionary()) && entry.defaultValue() == null;
     }
 
     /// @return Each rule's required elements written only when their inputs have a value (paths below Event), by

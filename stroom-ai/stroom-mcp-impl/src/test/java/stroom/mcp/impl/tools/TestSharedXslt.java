@@ -16,6 +16,7 @@
 
 package stroom.mcp.impl.tools;
 
+import stroom.ai.impl.tools.validation.EventsNamespaces;
 import stroom.ai.impl.tools.validation.XmlTrees;
 
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -194,6 +196,35 @@ class TestSharedXslt {
                 .findFirst().orElseThrow();
         assertThat(SharedXslt.lookupThrough("ref:upper", "COMMON", upper)).isEmpty();
         assertThat(SharedXslt.lookupThrough("ref:upper", "COMMON", null)).isEmpty();
+    }
+
+    @Test
+    void aSharedCallInsideAPrefixedForkFragmentIsPlacedAsOneInsideADefaultNamespaceFragment() {
+        // A part module writing EventSource fragments of the fork, calling a shared template inside them: with the
+        // fork as the default namespace, the call is placed in EventSource; bound to a prefix, it is too, given the
+        // held forks' namespaces.
+        final String forkNs = "file://xml/schema/test-fork/events";
+        final String xsl = "xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"3.0\"";
+        final String byDefault = "<xsl:stylesheet " + xsl + " xmlns=\"" + forkNs + "\">"
+                                 + "<xsl:template name=\"source\"><EventSource><Device>"
+                                 + "<xsl:call-template name=\"location\"/></Device></EventSource></xsl:template>"
+                                 + "</xsl:stylesheet>";
+        final String byPrefix = "<xsl:stylesheet " + xsl + " xmlns:f=\"" + forkNs + "\">"
+                                + "<xsl:template name=\"source\"><f:EventSource><f:Device>"
+                                + "<xsl:call-template name=\"location\"/></f:Device></f:EventSource></xsl:template>"
+                                + "</xsl:stylesheet>";
+        final Set<String> namespaces = Set.of(EventsNamespaces.STANDARD, forkNs);
+        assertThat(EventsNamespaces.writtenBy(byPrefix, namespaces)).contains(forkNs);
+        assertThat(EventsNamespaces.writtenBy(byDefault, namespaces)).contains(forkNs);
+
+        final Map<String, List<String>> shared = Map.of("location", List.of("Location"));
+        final Object withinDefault = SharedXslt.callsOf(byDefault, shared, namespaces).getFirst().get("within");
+        final Object withinPrefix = SharedXslt.callsOf(byPrefix, shared, namespaces).getFirst().get("within");
+
+        assertThat(withinDefault).isEqualTo("EventSource/Device");
+        assertThat(withinPrefix).isEqualTo(withinDefault);
+        assertThat(SharedXslt.callsOf(byPrefix, shared).getFirst().get("within")).as("no forks held")
+                .isEqualTo("");
     }
 
     @Test

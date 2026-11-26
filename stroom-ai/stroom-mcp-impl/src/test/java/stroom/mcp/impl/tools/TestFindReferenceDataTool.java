@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.documents.DocumentAccess;
+import stroom.ai.impl.tools.validation.HeldSchemas;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.feed.shared.FeedDoc;
@@ -103,7 +104,7 @@ class TestFindReferenceDataTool {
         Mockito.when(processorFilters.feedsByPipeline(filters)).thenReturn(Map.of("loader", Set.of("ACME-USERS")));
         final PipelineShapes shapes = PipelineLayers.shapes(pipelineService, new AiConfig());
         final PipelineTemplates templates = new PipelineTemplates(pipelineIndex, shapes, processorFilters,
-                documentAccess, () -> Mockito.mock(DocFinder.class));
+                documentAccess, () -> Mockito.mock(DocFinder.class), Mockito.mock(HeldSchemas.class));
         tool = new FindReferenceDataTool(pipelineIndex, shapes, templates, new ReferenceData(pipelineIndex, shapes),
                 processorFilters, documentAccess);
     }

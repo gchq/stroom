@@ -25,6 +25,7 @@ import org.w3c.dom.Node;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -350,21 +351,38 @@ final class SharedXslt {
         }
     }
 
+    /// As [#callsOf(String, Map, Set)], no fork of the event-logging schema held.
+    ///
     /// @param xslt      A calling XSLT's text.
     /// @param templates The shared named templates, each with what it writes.
     /// @return Each call in the XSLT to one of them: `{template, within, writes, at, with_params}`.
     static List<Map<String, Object>> callsOf(final String xslt, final Map<String, List<String>> templates) {
+        return callsOf(xslt, templates, Set.of());
+    }
+
+    /// @param xslt             A calling XSLT's text.
+    /// @param templates        The shared named templates, each with what it writes.
+    /// @param eventsNamespaces The Events namespaces this Stroom holds (its forks'), beside those the XSLT itself
+    ///                         names ([EventsNamespaces#eventsNamespacesOf]): an element in one, by whatever prefix,
+    ///                         is an Event's.
+    /// @return Each call in the XSLT to one of them: `{template, within, writes, at, with_params}`.
+    static List<Map<String, Object>> callsOf(final String xslt,
+                                             final Map<String, List<String>> templates,
+                                             final Set<String> eventsNamespaces) {
         final Optional<Element> parsed = XmlTrees.tryParse(xslt);
         if (parsed.isEmpty()) {
             return List.of();
         }
+        final Set<String> namespaces = new HashSet<>(eventsNamespaces);
+        namespaces.addAll(EventsNamespaces.eventsNamespacesOf(parsed.get()));
         final List<Map<String, Object>> calls = new ArrayList<>();
         for (final Element call : XmlTrees.named(parsed.get(), XSL, "call-template")) {
             final String name = XmlTrees.attribute(call, "name");
             if (name == null || !templates.containsKey(name)) {
                 continue;
             }
-            final List<String> within = within(call, Collections.newSetFromMap(new IdentityHashMap<>()));
+            final List<String> within = within(call, Collections.newSetFromMap(new IdentityHashMap<>()),
+                    namespaces);
             final List<String> writes = templates.get(name);
             final Map<String, Object> passed = new LinkedHashMap<>();
             for (final Element withParam : XmlTrees.children(call)) {
@@ -397,13 +415,25 @@ final class SharedXslt {
     /// @param shared Each href it imports, with the shared XSLT's text (null when it could not be read).
     /// @return How it uses each.
     static List<Map<String, Object>> usage(final String xslt, final Map<String, String> shared) {
+        return usage(xslt, shared, Set.of());
+    }
+
+    /// As [#usage(String, Map)], the calls placed in Events of the namespaces this Stroom holds too.
+    ///
+    /// @param xslt             A calling XSLT's text.
+    /// @param shared           Each href it imports, with the shared XSLT's text (null when it could not be read).
+    /// @param eventsNamespaces The Events namespaces this Stroom holds (its forks').
+    /// @return How it uses each.
+    static List<Map<String, Object>> usage(final String xslt,
+                                           final Map<String, String> shared,
+                                           final Set<String> eventsNamespaces) {
         final List<Map<String, Object>> uses = new ArrayList<>();
         for (final String href : importsOf(xslt)) {
             final String text = shared.get(href);
             final Map<String, List<String>> templates = text == null
                     ? Map.of()
                     : templatesOf(text);
-            final List<Map<String, Object>> calls = callsOf(xslt, templates);
+            final List<Map<String, Object>> calls = callsOf(xslt, templates, eventsNamespaces);
             // {unreadable: true} for one that won't parse: no templates.
             final Object described = text == null
                     ? null
@@ -518,23 +548,23 @@ final class SharedXslt {
     // The literal elements (or JSON keys) a call sits inside, outermost first, below Event or the document map.
     // A call in a template of its own (a mode, or a named template) continues from where that template is applied:
     // seen live, shared templates called in a networkSource mode applied inside Network/Connect/Source.
-    private static List<String> within(final Element call, final Set<Element> seen) {
+    private static List<String> within(final Element call, final Set<Element> seen, final Set<String> namespaces) {
         final List<String> path = new ArrayList<>();
         Node node = call.getParentNode();
         while (node instanceof final Element element) {
             if (XmlTrees.is(element, XSL, "template")) {
-                final Element caller = caller(element, seen);
+                final Element caller = caller(element, seen, namespaces);
                 if (caller != null) {
                     final Set<Element> seenHere = Collections.newSetFromMap(new IdentityHashMap<>());
                     seenHere.addAll(seen);
                     seenHere.add(element);
-                    final List<String> outer = new ArrayList<>(within(caller, seenHere));
+                    final List<String> outer = new ArrayList<>(within(caller, seenHere, namespaces));
                     outer.addAll(path.reversed());
                     return outer;
                 }
                 break;
             }
-            if (isEventsElement(element)) {
+            if (isEventsElement(element, namespaces)) {
                 if ("Event".equals(element.getLocalName()) || "Events".equals(element.getLocalName())) {
                     break;
                 }
@@ -549,7 +579,7 @@ final class SharedXslt {
 
     // Where a part's template is run from: the first apply-templates of its mode, or call of its name, that is
     // inside an element (the record's own templates, with no element around the call, don't count).
-    private static Element caller(final Element template, final Set<Element> seen) {
+    private static Element caller(final Element template, final Set<Element> seen, final Set<String> namespaces) {
         if (seen.contains(template)) {
             return null;
         }
@@ -571,7 +601,7 @@ final class SharedXslt {
         for (final Element candidate : found) {
             Node node = candidate.getParentNode();
             while (node instanceof final Element element && !XmlTrees.is(element, XSL, "template")) {
-                if (isEventsElement(element) || FN.equals(element.getNamespaceURI())) {
+                if (isEventsElement(element, namespaces) || FN.equals(element.getNamespaceURI())) {
                     return candidate;
                 }
                 node = element.getParentNode();
@@ -580,12 +610,11 @@ final class SharedXslt {
         return null;
     }
 
-    // An element written in the Events namespace of its XSLT: event-logging:3, or an environment's fork's.
-    private static boolean isEventsElement(final Element element) {
+    // An element written in an Events namespace: event-logging:3, an environment's fork's (held, or named by the
+    // XSLT itself).
+    private static boolean isEventsElement(final Element element, final Set<String> namespaces) {
         final String namespace = element.getNamespaceURI();
-        return namespace != null
-               && EventsNamespaces.eventsNamespacesOf(element.getOwnerDocument().getDocumentElement())
-                       .contains(namespace);
+        return namespace != null && namespaces.contains(namespace);
     }
 
     // The stream meta a template reads, by its stroom:meta() calls.

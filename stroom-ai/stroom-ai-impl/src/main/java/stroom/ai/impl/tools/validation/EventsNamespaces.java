@@ -154,8 +154,9 @@ public final class EventsNamespaces {
 
     /// Whether an XSLT writes an `Events` or `Event` element, in any namespace: a literal result element of that
     /// name, an `xsl:element` of that name, or an `xsl:copy` (of what it reads, Events: a decoration's identity
-    /// template). A translation or a decoration does; a flattener, an indexing XSLT or one writing Kafka records
-    /// doesn't.
+    /// template), or an `xsl:element` whose name is computed (`{local-name()}`), which writes what it reads as
+    /// `xsl:copy` does unless its namespace is one Events are never in. A translation or a decoration does; a
+    /// flattener, an indexing XSLT or one writing Kafka records doesn't.
     ///
     /// @param root An XSLT's root element.
     /// @return True if it writes one.
@@ -170,7 +171,7 @@ public final class EventsNamespaces {
             } else if (XmlTrees.isXsl(element, "element")) {
                 final String name = element.getAttribute("name").strip();
                 final String local = name.substring(name.indexOf(':') + 1);
-                if (EVENTS.equals(local) || EVENT.equals(local)) {
+                if (EVENTS.equals(local) || EVENT.equals(local) || copiesByName(element)) {
                     return true;
                 }
             }
@@ -179,8 +180,9 @@ public final class EventsNamespaces {
     }
 
     /// Whether an XSLT reads an Events namespace: an `xpath-default-namespace` on any of its elements (or
-    /// `xsl:xpath-default-namespace` on a literal result element) is one, or a template's match names an element by
-    /// a prefix bound to one. An intermediate stage reading another's output in an Events namespace (`records/data`
+    /// `xsl:xpath-default-namespace` on a literal result element) is one, or a template's match, or an XSLT
+    /// instruction's select (`xsl:for-each select="f:Events/f:Event"` from `/`), names an element by a prefix bound
+    /// to one. An intermediate stage reading another's output in an Events namespace (`records/data`
     /// in `event-logging:3`) reads one too.
     ///
     /// @param root       An XSLT's root element.
@@ -194,17 +196,44 @@ public final class EventsNamespaces {
             if (!declared.isBlank() && namespaces.contains(declared.strip())) {
                 return true;
             }
-            if (XmlTrees.isXsl(element, "template") && element.hasAttribute("match")) {
-                final Map<String, String> bound = XmlTrees.namespaces(element);
-                final Matcher prefix = QNAME_PREFIX.matcher(element.getAttribute("match"));
-                while (prefix.find()) {
-                    if (namespaces.contains(bound.get(prefix.group(1)))) {
-                        return true;
-                    }
-                }
+            if (XmlTrees.isXsl(element, "template") && namesEvents(element, "match", namespaces)
+                || XmlTrees.XSL.equals(element.getNamespaceURI()) && namesEvents(element, "select", namespaces)) {
+                return true;
             }
         }
         return false;
+    }
+
+    // Whether an XSLT element's pattern or expression (a template's match, an xsl:for-each's or
+    // xsl:apply-templates' select) names an element by a prefix bound to an Events namespace.
+    private static boolean namesEvents(final Element element,
+                                       final String attribute,
+                                       final Collection<String> namespaces) {
+        if (!element.hasAttribute(attribute)) {
+            return false;
+        }
+        final Map<String, String> bound = XmlTrees.namespaces(element);
+        final Matcher prefix = QNAME_PREFIX.matcher(element.getAttribute(attribute));
+        while (prefix.find()) {
+            if (namespaces.contains(bound.get(prefix.group(1)))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Whether an xsl:element's name is computed (an attribute value template), copying the name of what it reads,
+    // in a namespace (its namespace attribute, else the default in scope) that isn't one Events are never in
+    // (records, JSON, ...).
+    private static boolean copiesByName(final Element element) {
+        if (!element.getAttribute("name").contains("{")) {
+            return false;
+        }
+        final String given = element.getAttribute("namespace").strip();
+        final String namespace = given.isEmpty()
+                ? Objects.requireNonNullElse(element.lookupNamespaceURI(null), "")
+                : given;
+        return namespace.contains("{") || !NOT_EVENTS.contains(namespace);
     }
 
     /// The namespaces an XSLT writes Events elements in: `event-logging:3`, that of any `<Events>` or `<Event>` it
