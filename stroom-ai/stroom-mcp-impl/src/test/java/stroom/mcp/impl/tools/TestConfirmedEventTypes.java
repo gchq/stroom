@@ -231,6 +231,28 @@ class TestConfirmedEventTypes {
     }
 
     @Test
+    void aDroppedEventTypeAnEventsRuleDropsIsNotWarnedOf() {
+        // Seen in testing: records taken by an events rule with drop: true were said to be translated by it.
+        final TranslationMapping dropped = mapping("""
+                [{"name": "logon", "when": [{"field": "action", "equals": "login"}],
+                  "fields": [{"path": "EventDetail/Authenticate/Action", "value": "Logon"}]},
+                 {"name": "usb", "when": [{"field": "action", "equals": "usb"}], "drop": true}]""");
+        final Catalogue types = catalogue(confirmed("Alert-Usb", "usb", "Alert", null).droppedByUser());
+
+        assertThat(ConfirmedEventTypes.undropped(dropped, RECORDS, types)).isEmpty();
+    }
+
+    @Test
+    void aConfirmedEventTypeAnEventsRuleDropsIsLost() {
+        final TranslationMapping dropped = mapping("""
+                [{"name": "logon", "when": [{"field": "action", "equals": "login"}], "drop": true}]""");
+
+        assertThat(ConfirmedEventTypes.lost(dropped, RECORDS, catalogue(confirmed("Authenticate-Logon", "login",
+                "Authenticate", "Logon")))).singleElement()
+                .extracting(ConfirmedEventTypes.Lost::writes).isEqualTo("dropped (logon)");
+    }
+
+    @Test
     void onlyWhatTheUserConfirmedIsCheckedAndEventTypesTheSampleLacksAreNot() {
         final TranslationMapping mapping = mapping("""
                 [{"name": "logon", "when": [{"field": "action", "equals": "login"}],

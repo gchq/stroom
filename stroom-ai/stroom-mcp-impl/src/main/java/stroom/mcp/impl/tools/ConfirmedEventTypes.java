@@ -143,7 +143,7 @@ final class ConfirmedEventTypes {
         final List<String> warnings = new ArrayList<>();
         for (final CatalogueKept.Taken taken : CatalogueKept.taken(checked, dropped, null)) {
             taken.byRule().forEach((rule, count) -> {
-                if (!rule.startsWith(CatalogueKept.DROP)) {
+                if (!drops(checked.mapping(), rule)) {
                     warnings.add("dropped event type " + taken.typeId() + ": " + count + " sample records are "
                                  + "translated by " + (rule.isEmpty()
                             ? "no rule (taken by none)"
@@ -258,6 +258,18 @@ final class ConfirmedEventTypes {
                 .isPresent();
     }
 
+    // Whether the rule leaves its records untranslated: one of drop_when (named 'drop: ...'), or an events rule
+    // with drop: true (seen in testing: records an events rule dropped were said to be translated by it).
+    private static boolean drops(final TranslationMapping mapping, final String ruleName) {
+        if (ruleName.startsWith(CatalogueKept.DROP)) {
+            return true;
+        }
+        final EventRule rule = ruleName.isEmpty()
+                ? null
+                : CatalogueKept.rule(mapping, ruleName);
+        return rule != null && rule.drop();
+    }
+
     // What the rule writes for the event type's records, when not what the user confirmed; none when it is.
     private static Optional<String> otherwise(final TranslationMapping mapping,
                                               final EventType type,
@@ -273,6 +285,9 @@ final class ConfirmedEventTypes {
         final EventRule rule = CatalogueKept.rule(mapping, ruleName);
         if (rule == null) {
             return Optional.empty();
+        }
+        if (rule.drop()) {
+            return Optional.of("dropped (" + ruleName + ")");
         }
         final CatalogueKept.Written written = CatalogueKept.written(mapping, rule);
         final String want = CatalogueKept.detailOf(type);
