@@ -29,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -504,6 +505,79 @@ class TestEvalCases {
                     (Map<String, Object>) call).as(id).doesNotContainKeys("personField", "userField",
                     "targetPersonField"));
         }
+    }
+
+    @Test
+    void theTimelinePeriodsCaseIsTheGeneratorsBadgeAndVpnEventsPairedBySiteAndZone() {
+        final Map<String, Object> evalCase = EvalCases.load("113_timeline_badges_logons_vpn_periods");
+        final List<Map<String, String>> records = records(evalCase, "akhan");
+        // Each period by brute force: an enter (connect) to the next leave (disconnect) of the same site and zone
+        // (laptop), whatever the door; a leave with none open from the last end of its key, else the week's start;
+        // an enter never left to the week's end.
+        final List<List<String>> periods = new ArrayList<>();
+        final Map<String, List<String>> open = new LinkedHashMap<>();
+        final Map<String, String> lastEnd = new LinkedHashMap<>();
+        for (final Map<String, String> record : records) {
+            final boolean badge = "badge".equals(record.get("Source"));
+            final boolean vpn = "vpn".equals(record.get("Source"));
+            if (!badge && !vpn) {
+                continue;
+            }
+            final String kind = badge
+                    ? "on_site"
+                    : "remote_session";
+            final String key = badge
+                    ? record.get("Site") + ", " + record.get("Zone")
+                    : record.get("Host");
+            final boolean start = "badge.enter".equals(record.get("EventCode")) || "Connect".equals(record.get(
+                    "Action"));
+            final String group = kind + "|" + key;
+            if (start) {
+                open.put(group, new ArrayList<>(List.of(kind, key, record.get("EventTime"), "", "seen", "")));
+            } else {
+                final List<String> period = open.containsKey(group)
+                        ? open.remove(group)
+                        : new ArrayList<>(List.of(kind, key, lastEnd.getOrDefault(group, "2026-11-16T00:00:00Z"),
+                                "", "start not seen", ""));
+                period.set(3, record.get("EventTime"));
+                period.set(5, "seen");
+                periods.add(period);
+                lastEnd.put(group, record.get("EventTime"));
+            }
+        }
+        open.values().forEach(period -> {
+            period.set(3, "2026-11-21T00:00:00Z");
+            period.set(5, "end not seen");
+            periods.add(period);
+        });
+        final Map<String, Object> timeline = EvalCases.map(EvalCases.map(evalCase.get("expected")).get("timeline"));
+        final List<Map<String, Object>> wanted = EvalCases.maps(timeline.get("periods"));
+
+        assertThat(wanted).hasSameSizeAs(periods).allSatisfy(want -> assertThat(periods).as(want.toString())
+                .anySatisfy(period -> {
+                    assertThat(period.get(0)).isEqualTo(want.get("kind"));
+                    assertThat(period.get(1)).isEqualTo(want.get("key"));
+                    assertThat(period.get(2)).startsWith(String.valueOf(want.getOrDefault("start", "")));
+                    assertThat(period.get(3)).startsWith(String.valueOf(want.get("end")));
+                    assertThat(period.get(4)).isEqualTo(want.get("start_seen"));
+                    assertThat(period.get(5)).isEqualTo(want.get("end_seen"));
+                }));
+        assertThat(EvalCases.map(timeline.get("periods_by_kind"))).isEqualTo(Map.of("on_site", 5, "remote_session",
+                3));
+        // Wednesday: badged in, never logged on.
+        assertThat(records).filteredOn(record -> record.get("EventTime").startsWith("2026-11-18"))
+                .extracting(record -> record.get("Source")).containsOnly("badge");
+        // Every zone left by another door than it was entered by, at least once.
+        assertThat(records).filteredOn(record -> "badge".equals(record.get("Source")))
+                .extracting(record -> record.get("Door")).contains("HQ-L2-North", "HQ-L2-South", "HQ-L2-East",
+                        "DEP-W1", "DEP-W3");
+    }
+
+    // A timeline case's records of one user, in time order.
+    private static List<Map<String, String>> records(final Map<String, Object> evalCase, final String user) {
+        return EvalCases.table(EvalCases.map(evalCase.get("elastic_index"))).records().stream()
+                .filter(record -> user.equals(record.get("UserName")))
+                .toList();
     }
 
     // One of a compare case's finding matchers.
