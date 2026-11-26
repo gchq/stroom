@@ -258,6 +258,47 @@ class TestMermaidGanttParser {
     }
 
     @Test
+    void aTasksLevelAndParentAreReadFromTheCommentAfterItAndTheChartIsDrawnALevelAtATime() {
+        final MermaidGantt gantt = MermaidGanttParser.parse("""
+                gantt
+                    dateFormat YYYY-MM-DD HH:mm:ss
+                    section Finance proposal
+                    Finance proposal :a1, 2026-11-23 09:00:00, 2026-11-23 12:00:00
+                    %% level 1 |
+                    Real-estate sites :m1, 2026-11-23 09:10:00, 2026-11-23 09:40:00
+                    %% events View | View
+                    %% level 2 | a1
+                    realestate.example :s3, 2026-11-23 09:10:00, 2026-11-23 09:20:00
+                    %% level 3 | m1
+                    No level :2026-11-23 10:00:00, 2026-11-23 10:30:00
+                """);
+
+        final List<Task> tasks = gantt.getSections().getFirst().tasks();
+        assertThat(tasks).extracting(Task::level).containsExactly(1, 2, 3, 0);
+        assertThat(tasks).extracting(Task::parent).containsExactly(null, "a1", "m1", null);
+        assertThat(tasks.get(1).startEvent()).isEqualTo("View");
+        assertThat(gantt.maxLevel()).isEqualTo(3);
+        assertThat(gantt.atLevel(1).getSections().getFirst().tasks()).extracting(Task::name)
+                .containsExactly("Finance proposal", "No level");
+        assertThat(gantt.atLevel(2).taskCount()).isEqualTo(3);
+        assertThat(MermaidGanttParser.parse(CHART).maxLevel()).isZero();
+    }
+
+    /// A level belongs to the task just before it, once, a number from 1 with an id or nothing after it.
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "gantt\n%% level 1 |",
+            "gantt\nt :2026-11-23, 1d\nsection s\n%% level 1 |",
+            "gantt\nt :2026-11-23, 1d\n%% level 1 |\n%% level 2 |",
+            "gantt\nt :2026-11-23, 1d\n%% level 0 |",
+            "gantt\nt :2026-11-23, 1d\n%% level 12 |",
+            "gantt\nt :2026-11-23, 1d\n%% level 2",
+            "gantt\nt :2026-11-23, 1d\n%% level 2 | not an id"})
+    void aLevelOutOfPlaceOrMalformedIsOutsideTheSubset(final String text) {
+        assertThatThrownBy(() -> MermaidGanttParser.parse(text)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void aBlockWithoutEventsHasNone() {
         final MermaidGantt gantt = MermaidGanttParser.parse(CHART);
 

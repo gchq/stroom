@@ -40,7 +40,10 @@ import java.util.stream.Collectors;
 /// comment), and every value from the data stripped of what Mermaid reads as syntax. Never `click`,
 /// callbacks or `%%{init}%%`. Large inputs are folded to stay readable, saying how: consecutive bars of one label
 /// in a lane merged, bars under a minimum length left out, the top labels kept and the rest shown as "Other", and
-/// at most [#MAX_BARS] bars and markers. Every block written is read back by the parser (a round trip).
+/// at most [#MAX_BARS] bars and markers. Rows with a level of detail (a table's `level`, `id` and `parent` columns)
+/// are written with a `%% level` comment each, for the chat to draw a level at a time: they keep their own labels
+/// and ids (never merged, nor shown as "Other"), and the deepest are left out first. Every block written is read
+/// back by the parser (a round trip).
 final class GanttCharts {
 
     /// The most labels kept, each with its own colour (the chat's chart has eight); the rest are "Other".
@@ -157,6 +160,30 @@ final class GanttCharts {
                 : cleaned;
     }
 
+    /// @param text An id from the data, or null.
+    /// @return It as a task's id may be written: letters, digits, `_` and `-`, anything else as `_`; null for none.
+    static String taskId(final String text) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+        final String id = text.strip().replaceAll("[^A-Za-z0-9_-]", "_");
+        return Character.isLetter(id.charAt(0))
+                ? id
+                : "t" + id;
+    }
+
+    // An id once in the chart: a second row of one (an activity's next day) numbered after it.
+    private static String uniqueId(final String text, final Map<String, Integer> seen) {
+        final String id = taskId(text);
+        if (id == null) {
+            return null;
+        }
+        final int times = seen.merge(id, 1, Integer::sum);
+        return times == 1
+                ? id
+                : id + "_" + times;
+    }
+
     /// @param seconds A length of time in seconds.
     /// @return It for people, e.g. "90 s", "5 min", "2 h".
     static String human(final long seconds) {
@@ -174,7 +201,7 @@ final class GanttCharts {
     // where there are bars too, so a chart of long sessions keeps its markers' labels.
     private static List<Item> labelled(final List<Row> rows, final Options options, final List<String> folded) {
         final Map<String, long[]> totals = new HashMap<>();
-        for (final Row row : rows) {
+        for (final Row row : rows.stream().filter(row -> row.level() <= 1).toList()) {
             final long[] total = totals.computeIfAbsent(taskName(row.label()), label -> new long[2]);
             total[0] += row.end() == null
                     ? 0
@@ -200,15 +227,17 @@ final class GanttCharts {
                        + ".");
         }
         final List<Item> items = new ArrayList<>(rows.size());
+        final Map<String, Integer> ids = new HashMap<>();
         for (final Row row : rows) {
             final String label = taskName(row.label());
-            items.add(new Item(kept.contains(label)
+            // A finer level's row keeps its own label: it is what the user drills down to.
+            items.add(new Item(kept.contains(label) || row.level() > 1
                     ? label
                     : OTHER, lane(row, options), row.start(), row.end() == null
                     ? row.start()
                     : row.end(), eventName(row.startEvent()), row.end() == null
                     ? ""
-                    : eventName(row.endEvent())));
+                    : eventName(row.endEvent()), row.level(), uniqueId(row.id(), ids), taskId(row.parent())));
         }
         return items;
     }
@@ -257,7 +286,10 @@ final class GanttCharts {
         Item lastMarker = null;
         final long gap = options.mergeSeconds() * 1_000;
         for (final Item item : items) {
-            if (item.isMarker()) {
+            if (item.level() > 0) {
+                // A row of a level keeps its id for its children: never merged.
+                kept.add(item);
+            } else if (item.isMarker()) {
                 if (lastMarker != null && lastMarker.label().equals(item.label())
                     && lastMarker.start() / 1_000 == item.start() / 1_000) {
                     continue;
@@ -279,7 +311,7 @@ final class GanttCharts {
         final long shortest = options.minSeconds() * 1_000;
         final List<Item> result = new ArrayList<>();
         for (final Item item : kept) {
-            if (!item.isMarker() && item.end() - item.start() < shortest) {
+            if (!item.isMarker() && item.level() == 0 && item.end() - item.start() < shortest) {
                 shortOnes[0]++;
             } else {
                 result.add(item);
@@ -297,7 +329,8 @@ final class GanttCharts {
         }
         final List<Item> bars = all.stream()
                 .filter(item -> !item.isMarker())
-                .sorted(Comparator.comparingLong((Item item) -> item.end() - item.start())
+                .sorted(Comparator.comparingInt((Item item) -> -item.level())
+                        .thenComparingLong(item -> item.end() - item.start())
                         .thenComparingLong(Item::start))
                 .toList();
         final List<Item> leftOut = new ArrayList<>(bars.subList(0, Math.min(over, bars.size())));
@@ -310,7 +343,8 @@ final class GanttCharts {
         if (over > 0) {
             final List<Item> markers = all.stream()
                     .filter(Item::isMarker)
-                    .sorted(Comparator.comparingLong(Item::start).reversed())
+                    .sorted(Comparator.comparingInt((Item item) -> -item.level())
+                            .thenComparing(Comparator.comparingLong(Item::start).reversed()))
                     .limit(over)
                     .toList();
             folded.add("Left out the " + markers.size() + " latest marker(s) to keep to " + MAX_BARS + ".");
@@ -334,12 +368,16 @@ final class GanttCharts {
             for (final Item item : items) {
                 final long start = item.start() / 1_000;
                 sb.append(INDENT).append(item.label()).append(" :");
+                final String id = item.id() == null
+                        ? ""
+                        : item.id() + ", ";
                 if (item.isMarker()) {
-                    sb.append("milestone, ").append(time(start, options)).append(", 0d\n");
+                    sb.append("milestone, ").append(id).append(time(start, options)).append(", 0d\n");
                 } else {
                     // A bar shorter than a second is drawn a second long, not as a marker.
                     final long end = Math.max(start + 1, item.end() / 1_000);
-                    sb.append(time(start, options)).append(", ").append(time(end, options)).append('\n');
+                    sb.append(id).append(time(start, options)).append(", ").append(time(end, options))
+                            .append('\n');
                 }
                 if (!item.startEvent().isEmpty() || !item.endEvent().isEmpty()) {
                     // No space at the end of a line.
@@ -348,6 +386,12 @@ final class GanttCharts {
                             : " |").append(item.endEvent().isEmpty()
                             ? ""
                             : " " + item.endEvent()).append('\n');
+                }
+                if (item.level() > 0) {
+                    sb.append(INDENT).append("%% level ").append(item.level()).append(" |")
+                            .append(item.parent() == null
+                                    ? ""
+                                    : " " + item.parent()).append('\n');
                 }
             }
         });
@@ -427,7 +471,35 @@ final class GanttCharts {
     /// @param lane       The lane it is in (e.g. a host), or null.
     /// @param startEvent The name of the event it starts at (e.g. `Logon-User`), or null.
     /// @param endEvent   The name of the event it ends at, or null; none for a marker.
-    record Row(long start, Long end, String label, String lane, String startEvent, String endEvent) {
+    /// @param level      Its level of detail, from 1 (the broadest), or 0 for none.
+    /// @param id         Its id, for its children to name as their parent, or null.
+    /// @param parent     The id of its parent, one level broader, or null.
+    record Row(long start,
+               Long end,
+               String label,
+               String lane,
+               String startEvent,
+               String endEvent,
+               int level,
+               String id,
+               String parent) {
+
+        /// A row of no level.
+        ///
+        /// @param start      When it starts, in epoch milliseconds.
+        /// @param end        When it ends, or null for a marker.
+        /// @param label      What it is.
+        /// @param lane       The lane it is in, or null.
+        /// @param startEvent The name of the event it starts at, or null.
+        /// @param endEvent   The name of the event it ends at, or null.
+        Row(final long start,
+            final Long end,
+            final String label,
+            final String lane,
+            final String startEvent,
+            final String endEvent) {
+            this(start, end, label, lane, startEvent, endEvent, 0, null, null);
+        }
 
         /// A row with no events named.
         ///
@@ -436,7 +508,7 @@ final class GanttCharts {
         /// @param label What it is.
         /// @param lane  The lane it is in, or null.
         Row(final long start, final Long end, final String label, final String lane) {
-            this(start, end, label, lane, null, null);
+            this(start, end, label, lane, null, null, 0, null, null);
         }
     }
 
@@ -476,19 +548,28 @@ final class GanttCharts {
     // --------------------------------------------------------------------------------
 
 
-    // A bar or marker as it is drawn: its label (or Other) and section, and its events' names (empty for none).
-    private record Item(String label, String section, long start, long end, String startEvent, String endEvent) {
+    // A bar or marker as it is drawn: its label (or Other) and section, its events' names (empty for none), and its
+    // level, id and parent (0 and nulls for none).
+    private record Item(String label,
+                        String section,
+                        long start,
+                        long end,
+                        String startEvent,
+                        String endEvent,
+                        int level,
+                        String id,
+                        String parent) {
 
         private boolean isMarker() {
             return end == start;
         }
 
         private Item in(final String otherSection) {
-            return new Item(label, otherSection, start, end, startEvent, endEvent);
+            return new Item(label, otherSection, start, end, startEvent, endEvent, level, id, parent);
         }
 
         private Item endingAt(final long otherEnd, final String otherEndEvent) {
-            return new Item(label, section, start, otherEnd, startEvent, otherEndEvent);
+            return new Item(label, section, start, otherEnd, startEvent, otherEndEvent, level, id, parent);
         }
     }
 }

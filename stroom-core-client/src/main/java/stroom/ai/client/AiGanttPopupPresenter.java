@@ -67,8 +67,9 @@ public class AiGanttPopupPresenter extends MyPresenterWidget<AiGanttPopupView> {
         if (gantt == null) {
             return;
         }
+        // At the chat's chart's level of detail, where it has levels.
         getView().setChart(AiMermaidCharts.chart(text, gantt, AiGanttInteraction.viewOf(chatChart),
-                AiGanttChart.WIDTH, false));
+                AiGanttChart.WIDTH, false, AiGanttInteraction.levelOf(chatChart)));
         final String caption = gantt.getTitle() == null || gantt.getTitle().isEmpty()
                 ? "Timeline"
                 : gantt.getTitle();

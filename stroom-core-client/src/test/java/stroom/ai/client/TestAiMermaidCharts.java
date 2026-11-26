@@ -69,6 +69,41 @@ class TestAiMermaidCharts {
     }
 
     @Test
+    void aChartWithLevelsIsDrawnALevelAtATimeWithItsDetailButtonsAndOneWithoutHasNone() {
+        final String text = """
+                gantt
+                    dateFormat YYYY-MM-DD HH:mm:ss
+                    section Finance proposal
+                    Finance proposal :a1, 2026-11-23 09:00:00, 2026-11-23 12:00:00
+                    %% level 1 |
+                    Real-estate sites :m1, 2026-11-23 09:10:00, 2026-11-23 09:40:00
+                    %% level 2 | a1
+                    realestate.example :s3, 2026-11-23 09:10:00, 2026-11-23 09:20:00
+                    %% level 3 | m1
+                """;
+        final MermaidGantt gantt = AiMermaidCharts.parse(text);
+
+        final String broadest = AiMermaidCharts.chart(text);
+        assertThat(broadest).contains("data-gantt-level=\"1\"")
+                .contains("class=\"ai-gantt-button ai-gantt-less\" title=\"Show broader spans\" aria-label=\"Show "
+                          + "broader spans\" disabled>")
+                .contains("class=\"ai-gantt-button ai-gantt-more\" title=\"Show finer spans\" aria-label=\"Show "
+                          + "finer spans\"><")
+                .contains("<span>Less detail</span>", "<span>More detail</span>");
+        // The plot has the broadest level only (the source keeps every level, to draw again).
+        assertThat(plot(broadest)).contains("Finance proposal").doesNotContain("Real-estate sites",
+                "realestate.example");
+
+        final String finest = AiMermaidCharts.chart(text, gantt, null, AiGanttChart.WIDTH, true, 7);
+        assertThat(plot(finest)).contains("Real-estate sites", "realestate.example");
+        assertThat(finest).contains("data-gantt-level=\"3\"")
+                .contains("ai-gantt-more\" title=\"Show finer spans\" aria-label=\"Show finer spans\" disabled>");
+
+        assertThat(AiMermaidCharts.chart("gantt\n    t :2026-11-23, 1d\n"))
+                .doesNotContain("ai-gantt-less", "ai-gantt-more", "data-gantt-level");
+    }
+
+    @Test
     void aChartInTheDialogIsDrawnAtItsWidthZoomedAndWithoutMaximise() {
         final String text = "gantt\n    dateFormat YYYY-MM-DD HH:mm:ss\n"
                             + "    t :2026-11-23 09:00:00, 2026-11-23 12:00:00\n";
@@ -130,5 +165,10 @@ class TestAiMermaidCharts {
         assertThat(AiMermaidCharts.chart("gantt\n" + AiMermaidCharts.unescape("t &#35;35; :2026-11-23, 1d")))
                 .isNull();
         assertThat(AiMermaidCharts.drawCharts(null)).isNull();
+    }
+
+    // The chart's plot: its SVG, after its source and buttons.
+    private static String plot(final String chart) {
+        return chart.substring(chart.indexOf("class=\"ai-gantt-plot\""));
     }
 }

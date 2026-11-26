@@ -39,6 +39,7 @@ import stroom.ai.impl.workspace.TableJoin;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiToolCategory;
+import stroom.ai.shared.MermaidGanttParser;
 
 import jakarta.inject.Inject;
 
@@ -52,6 +53,12 @@ import java.util.regex.Pattern;
 public class GanttChartTool extends AbstractWorkspaceTool {
 
     public static final String NAME = "gantt_chart";
+    /// The column of a table's levels of detail, drawn a level at a time in the chat.
+    static final String LEVEL_COLUMN = "level";
+    /// The column of a row's id, which its finer rows name as their parent.
+    static final String ID_COLUMN = "id";
+    /// The column of a row's parent, one level broader.
+    static final String PARENT_COLUMN = "parent";
     static final String START_ARG = "start";
     static final String END_ARG = "end";
     static final String LABEL_ARG = "label";
@@ -101,7 +108,8 @@ public class GanttChartTool extends AbstractWorkspaceTool {
                                  + "row's start to its end, a marker where it has no end, a section per lane or "
                                  + "per day, a colour per label). Large tables are folded to stay readable (bars "
                                  + "of a label merged, short ones left out, the top labels kept and the rest as "
-                                 + "Other), the result saying how. Never write chart code yourself.")
+                                 + "Other), the result saying how. A table with level, id and parent columns is "
+                                 + "drawn a level of detail at a time. Never write chart code yourself.")
                         .chatOnly(" Where a timeline is asked for and the user hasn't said where, ask them "
                                   + "(ask_user): in the chat, or a dashboard (propose_visualisation, kind "
                                   + "timeline, from the same columns). " + CHAT_DRAWS)
@@ -170,6 +178,10 @@ public class GanttChartTool extends AbstractWorkspaceTool {
         final int givenLane = column(spec.lane(), columns);
         final int startEvent = column(spec.startEvent(), columns);
         final int endEvent = column(spec.endEvent(), columns);
+        // A table with levels of detail (its level, id and parent columns, as a timeline's activity levels have) is
+        // drawn a level at a time in the chat.
+        final int[] levels = {named(LEVEL_COLUMN, columns), named(ID_COLUMN, columns), named(PARENT_COLUMN,
+                columns)};
 
         if (table.rows().isEmpty()) {
             throw new WorkspaceException(path + " has no rows, so there is nothing to draw.");
@@ -185,7 +197,8 @@ public class GanttChartTool extends AbstractWorkspaceTool {
         } else {
             lane = givenLane;
         }
-        final List<Row> rows = rows(table.rows(), start, end, label, lane, startEvent, endEvent, columns, folded);
+        final List<Row> rows = rows(table.rows(), start, end, label, lane, startEvent, endEvent, levels, columns,
+                folded);
         if (rows.isEmpty()) {
             throw new WorkspaceException("No row of " + path + " has a start time that could be read in "
                                          + columns.get(start) + ", so there is nothing to draw.");
@@ -207,6 +220,7 @@ public class GanttChartTool extends AbstractWorkspaceTool {
                                   final int lane,
                                   final int startEvent,
                                   final int endEvent,
+                                  final int[] levels,
                                   final List<String> columns,
                                   final List<String> folded) {
         final List<Row> rows = new ArrayList<>();
@@ -231,7 +245,11 @@ public class GanttChartTool extends AbstractWorkspaceTool {
                     ? null
                     : cell(row, startEvent), endEvent < 0
                     ? null
-                    : cell(row, endEvent)));
+                    : cell(row, endEvent), level(row, levels[0]), levels[0] < 0 || levels[1] < 0
+                    ? null
+                    : cell(row, levels[1]), levels[0] < 0 || levels[2] < 0
+                    ? null
+                    : cell(row, levels[2])));
         }
         if (noStart > 0) {
             folded.add("Left out " + noStart + " row(s) with no time in " + columns.get(start)
@@ -262,6 +280,31 @@ public class GanttChartTool extends AbstractWorkspaceTool {
         }
         sb.append("\n\n").append(zone.stated()).append("\n\n").append(CHAT_DRAWS);
         return sb.toString();
+    }
+
+    // A row's level of detail, 1 to the parser's deepest; 0 for none (no level column, or no number in it).
+    private static int level(final List<String> row, final int column) {
+        if (column < 0) {
+            return 0;
+        }
+        try {
+            final int level = Integer.parseInt(cell(row, column).strip());
+            return level >= 1 && level <= MermaidGanttParser.MAX_LEVEL
+                    ? level
+                    : 0;
+        } catch (final RuntimeException e) {
+            return 0;
+        }
+    }
+
+    // The index of a column of that name, any case, or -1 if the table has none.
+    private static int named(final String name, final List<String> columns) {
+        for (int i = 0; i < columns.size(); i++) {
+            if (columns.get(i).equalsIgnoreCase(name)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     // The index of a column, or -1 if none is named.

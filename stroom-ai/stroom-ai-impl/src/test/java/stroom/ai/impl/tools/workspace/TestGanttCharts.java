@@ -47,6 +47,36 @@ class TestGanttCharts {
             ToolTimeZone.Source.BROWSER, null);
 
     @Test
+    void rowsWithLevelsKeepTheirIdsAndLabelsAndAreWrittenWithTheirLevelsForTheChat() {
+        final List<Row> rows = new ArrayList<>();
+        rows.add(new Row(ms("09:00"), ms("12:00"), "Finance proposal", "Finance proposal", null, null, 1, "a1",
+                null));
+        // Its next day's row: an id of its own.
+        rows.add(new Row(ms("13:00"), ms("14:00"), "Finance proposal", "Finance proposal", null, null, 1, "a1",
+                null));
+        rows.add(new Row(ms("09:10"), ms("09:40"), "Real-estate sites", "Finance proposal", null, null, 2, "m1",
+                "a1"));
+        for (int i = 0; i < 12; i++) {
+            final long at = ms("09:10") + i * 60_000L;
+            rows.add(new Row(at, at + 30_000L, "site" + i + ".example", "Finance proposal", null, null, 3, "7:" + i,
+                    "m1"));
+        }
+
+        final Chart chart = GanttCharts.write(rows, new Options("Levels", UTC, true, 8, 0, 3_600));
+
+        final MermaidGantt gantt = MermaidGanttParser.parse(chart.mermaid());
+        final List<Task> tasks = gantt.getSections().getFirst().tasks();
+        assertThat(gantt.maxLevel()).isEqualTo(3);
+        assertThat(tasks).extracting(Task::id).contains("a1", "a1_2", "m1", "t7_0", "t7_11");
+        // Never merged, nor shown as Other, however many labels.
+        assertThat(tasks).filteredOn(task -> task.level() == 3).hasSize(12)
+                .allSatisfy(task -> assertThat(task.parent()).isEqualTo("m1"))
+                .noneMatch(task -> GanttCharts.OTHER.equals(task.name()));
+        assertThat(gantt.atLevel(1).taskCount()).isEqualTo(2);
+        assertThat(chart.mermaid()).contains("%% level 2 | a1\n");
+    }
+
+    @Test
     void rowsAreWrittenAsBarsAndMarkersInASectionPerLaneWithTheZoneInTheTitle() {
         final Chart chart = GanttCharts.write(List.of(
                 row("2026-11-23T09:00:00Z", "2026-11-23T09:30:00Z", "Chrome", "host-1"),
@@ -340,6 +370,10 @@ class TestGanttCharts {
         return new Row(Instant.parse(start).toEpochMilli(), end == null
                 ? null
                 : Instant.parse(end).toEpochMilli(), label, lane);
+    }
+
+    private static long ms(final String time) {
+        return Instant.parse("2026-11-23T" + time + ":00Z").toEpochMilli();
     }
 
     private static long hour(final int n) {

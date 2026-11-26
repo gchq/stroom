@@ -120,8 +120,18 @@ final class AiGanttChart {
     // Mermaid's axis format when a chart gives none.
     private static final String DEFAULT_AXIS_FORMAT = "%Y-%m-%d";
 
+    /// The level of detail a chart with levels is first drawn at: the broadest.
+    static final int FIRST_LEVEL = 1;
+
     private AiGanttChart() {
         // Static only.
+    }
+
+    /// @param wanted A level of detail asked for (a button's step from the one drawn).
+    /// @param levels The chart's deepest level ([MermaidGantt#maxLevel]).
+    /// @return The level to draw it at: the one asked for, kept within [#FIRST_LEVEL] and its deepest.
+    static int level(final int wanted, final int levels) {
+        return Math.max(FIRST_LEVEL, Math.min(Math.max(FIRST_LEVEL, levels), wanted));
     }
 
     /// @param available The width, in pixels, a chart has room for in the chat; 0 or less when it isn't known

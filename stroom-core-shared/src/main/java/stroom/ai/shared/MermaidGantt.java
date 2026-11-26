@@ -73,6 +73,36 @@ public final class MermaidGantt {
         return sections;
     }
 
+    /// @return Its deepest level of detail: 0 where no task has a level (it is drawn whole).
+    public int maxLevel() {
+        int max = 0;
+        for (final Section section : sections) {
+            for (final Task task : section.tasks()) {
+                max = Math.max(max, task.level());
+            }
+        }
+        return max;
+    }
+
+    /// @param level A level of detail, from 1.
+    /// @return It drawn at that level: the tasks of no level, or of that level or broader; a section left with
+    /// none left out.
+    public MermaidGantt atLevel(final int level) {
+        final List<Section> kept = new ArrayList<>();
+        for (final Section section : sections) {
+            final List<Task> tasks = new ArrayList<>();
+            for (final Task task : section.tasks()) {
+                if (task.level() <= level) {
+                    tasks.add(task);
+                }
+            }
+            if (!tasks.isEmpty()) {
+                kept.add(new Section(section.name(), tasks));
+            }
+        }
+        return new MermaidGantt(title, dateFormat, axisFormat, kept);
+    }
+
     /// @return How many tasks it has, in all its sections.
     public int taskCount() {
         int count = 0;
@@ -211,8 +241,11 @@ public final class MermaidGantt {
     /// @param end        When it ends, the same way, not before its start.
     /// @param startEvent The name of the event it starts at (e.g. `Logon-User`), or null.
     /// @param endEvent   The name of the event it ends at (e.g. `Logoff-User`), or null.
+    /// @param level      Its level of detail, from 1 (the broadest), or 0 for none: a chart with levels is drawn at
+    ///                   one level at a time, its tasks of that level and broader.
+    /// @param parent     The id of the task one level broader it belongs to, or null.
     public record Task(String name, String id, List<String> tags, long start, long end, String startEvent,
-                       String endEvent) {
+                       String endEvent, int level, String parent) {
 
         /// The tag that makes a task a marker.
         public static final String MILESTONE = "milestone";
@@ -232,6 +265,28 @@ public final class MermaidGantt {
             endEvent = endEvent == null || endEvent.isEmpty()
                     ? null
                     : endEvent;
+            parent = parent == null || parent.isEmpty()
+                    ? null
+                    : parent;
+        }
+
+        /// A task with no level.
+        ///
+        /// @param name       What it is called.
+        /// @param id         Its id, or null.
+        /// @param tags       Its tags, in the order given.
+        /// @param start      When it starts.
+        /// @param end        When it ends, not before its start.
+        /// @param startEvent The name of the event it starts at, or null.
+        /// @param endEvent   The name of the event it ends at, or null.
+        public Task(final String name,
+                    final String id,
+                    final List<String> tags,
+                    final long start,
+                    final long end,
+                    final String startEvent,
+                    final String endEvent) {
+            this(name, id, tags, start, end, startEvent, endEvent, 0, null);
         }
 
         /// A task with no events named.
@@ -242,7 +297,7 @@ public final class MermaidGantt {
         /// @param start When it starts.
         /// @param end   When it ends, not before its start.
         public Task(final String name, final String id, final List<String> tags, final long start, final long end) {
-            this(name, id, tags, start, end, null, null);
+            this(name, id, tags, start, end, null, null, 0, null);
         }
 
         /// @return True if it is drawn as a marker at its start: a milestone, or a task with no length.
@@ -254,7 +309,14 @@ public final class MermaidGantt {
         /// @param otherEndEvent   The name of the event it ends at, or null.
         /// @return It with those events.
         public Task withEvents(final String otherStartEvent, final String otherEndEvent) {
-            return new Task(name, id, tags, start, end, otherStartEvent, otherEndEvent);
+            return new Task(name, id, tags, start, end, otherStartEvent, otherEndEvent, level, parent);
+        }
+
+        /// @param otherLevel  Its level of detail, from 1.
+        /// @param otherParent The id of its parent task, or null.
+        /// @return It at that level.
+        public Task withLevel(final int otherLevel, final String otherParent) {
+            return new Task(name, id, tags, start, end, startEvent, endEvent, otherLevel, otherParent);
         }
     }
 }

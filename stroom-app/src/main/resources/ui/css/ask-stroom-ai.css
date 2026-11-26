@@ -2580,7 +2580,8 @@ a.ai-stroom-link::after {
     pointer-events: none;
 }
 
-/* The chart's own controls, above it: a hint, Reset zoom (only when zoomed) and Maximise. */
+/* The chart's own controls, above it: a hint, Less and More detail (a chart with levels), Reset zoom (only when
+   zoomed) and Maximise. */
 .ai-gantt-tools {
     display: flex;
     align-items: center;
@@ -2610,6 +2611,13 @@ a.ai-stroom-link::after {
 
 .ai-gantt-button[hidden] {
     display: none;
+}
+
+/* Less detail and More detail, disabled at their ends. */
+.ai-gantt-button:disabled {
+    opacity: .5;
+    cursor: default;
+    pointer-events: none;
 }
 
 .ai-gantt-button:hover,

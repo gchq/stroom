@@ -42,6 +42,9 @@ import java.util.List;
 ///   number and `ms`, `s`, `m`, `h`, `d` or `w`); a milestone or a task with no length is a marker;
 /// * `%% events <start> | <end>`, straight after a task, at most once: the names of the events it starts and ends
 ///   at, either may be empty. A Mermaid comment, so other apps draw the block as if it weren't there.
+/// * `%% level <n> | <parent id>`, after a task (and its events), at most once: its level of detail, from 1 to
+///   [#MAX_LEVEL], and the id of the task one level broader it belongs to, which may be empty. Also a comment, so
+///   other apps draw every level at once; the chat draws one level at a time.
 ///
 /// Anything else is outside it: other comments and directives (`%%`, so never `%%{init}%%`), `click`, `call` and
 /// callbacks, `after` and `until`, `excludes`, `todayMarker` and Mermaid's other statements, front matter, and
@@ -50,6 +53,8 @@ import java.util.List;
 /// keyword, or with `2026-11-23`): [#startsLikeAStatement(String)] says which, for the tool to avoid.
 public final class MermaidGanttParser {
 
+    /// The deepest level of detail a task may have.
+    public static final int MAX_LEVEL = 9;
     /// The longest block read: past it, a block is shown as code.
     public static final int MAX_CHARS = 200_000;
     /// The most tasks a block may have.
@@ -77,6 +82,7 @@ public final class MermaidGanttParser {
     private static final String SECTION = "section";
     private static final String COMMENT = "%%";
     private static final String EVENTS = "events";
+    private static final String LEVEL = "level";
     // Between a task's start event and its end event.
     private static final char EVENTS_SEPARATOR = '|';
     // The dayjs tokens of the subset (case matters: MM is the month, mm the minute).
@@ -181,13 +187,17 @@ public final class MermaidGanttParser {
         }
     }
 
-    // A task's events, `%% events <start> | <end>`: the only comment of the subset.
+    // A task's events, `%% events <start> | <end>`, or its level, `%% level <n> | <parent>`: the only comments of the
+    // subset.
     private static void events(final String line, final Builder builder) {
         final String comment = line.substring(COMMENT.length());
         final String trimmed = comment.trim();
-        if (comment.isEmpty() || !isSpace(comment.charAt(0)) || !trimmed.startsWith(EVENTS)
-            || trimmed.length() == EVENTS.length() || !isSpace(trimmed.charAt(EVENTS.length()))) {
-            throw new IllegalArgumentException("a comment is outside the subset, but '%% events'");
+        if (!comment.isEmpty() && isSpace(comment.charAt(0)) && isDirective(trimmed, LEVEL)) {
+            level(trimmed.substring(LEVEL.length()), builder);
+            return;
+        }
+        if (comment.isEmpty() || !isSpace(comment.charAt(0)) || !isDirective(trimmed, EVENTS)) {
+            throw new IllegalArgumentException("a comment is outside the subset, but '%% events' and '%% level'");
         }
         final String names = trimmed.substring(EVENTS.length());
         checkCharacters(names, "");
@@ -197,6 +207,29 @@ public final class MermaidGanttParser {
                                                + "and the end's");
         }
         builder.events(names.substring(0, separator).trim(), names.substring(separator + 1).trim());
+    }
+
+    private static boolean isDirective(final String trimmed, final String name) {
+        return trimmed.startsWith(name) && trimmed.length() > name.length() && isSpace(trimmed.charAt(name.length()));
+    }
+
+    // A task's level, ` <n> | <parent id>`.
+    private static void level(final String text, final Builder builder) {
+        checkCharacters(text, "");
+        final int separator = text.indexOf(EVENTS_SEPARATOR);
+        if (separator < 0 || text.indexOf(EVENTS_SEPARATOR, separator + 1) >= 0) {
+            throw new IllegalArgumentException("a level needs one '" + EVENTS_SEPARATOR + "' between it and its "
+                                               + "parent");
+        }
+        final String number = text.substring(0, separator).trim();
+        final String parent = text.substring(separator + 1).trim();
+        if (number.length() != 1 || number.charAt(0) < '1' || number.charAt(0) > (char) ('0' + MAX_LEVEL)) {
+            throw new IllegalArgumentException("a level is a number from 1 to " + MAX_LEVEL);
+        }
+        if (!parent.isEmpty() && !isId(parent)) {
+            throw new IllegalArgumentException("'" + parent + "' isn't an id");
+        }
+        builder.level(number.charAt(0) - '0', parent);
     }
 
     // Refuses a line with a character Mermaid reads as syntax in text, but those allowed.
@@ -434,9 +467,12 @@ public final class MermaidGanttParser {
         private boolean anyTask;
         // True while the last statement read is a task with no events yet.
         private boolean eventsMayFollow;
+        // True while the last task read has no level yet.
+        private boolean levelMayFollow;
 
         private void title(final String text) {
             eventsMayFollow = false;
+            levelMayFollow = false;
             if (title != null) {
                 throw new IllegalArgumentException("a second title");
             }
@@ -445,6 +481,7 @@ public final class MermaidGanttParser {
 
         private void dateFormat(final String format) {
             eventsMayFollow = false;
+            levelMayFollow = false;
             if (dateFormat != null) {
                 throw new IllegalArgumentException("a second date format");
             } else if (anyTask) {
@@ -455,6 +492,7 @@ public final class MermaidGanttParser {
 
         private void axisFormat(final String format) {
             eventsMayFollow = false;
+            levelMayFollow = false;
             if (axisFormat != null) {
                 throw new IllegalArgumentException("a second axis format");
             }
@@ -463,6 +501,7 @@ public final class MermaidGanttParser {
 
         private void section(final String name) {
             eventsMayFollow = false;
+            levelMayFollow = false;
             endSection();
             if (sections.size() >= MAX_SECTIONS) {
                 throw new IllegalArgumentException("more than " + MAX_SECTIONS + " sections");
@@ -513,6 +552,7 @@ public final class MermaidGanttParser {
             }
             anyTask = true;
             eventsMayFollow = true;
+            levelMayFollow = true;
             tasks.add(new Task(name, id, tags, start, end));
         }
 
@@ -522,6 +562,15 @@ public final class MermaidGanttParser {
             }
             eventsMayFollow = false;
             tasks.set(tasks.size() - 1, tasks.get(tasks.size() - 1).withEvents(startEvent, endEvent));
+        }
+
+        private void level(final int level, final String parent) {
+            if (!levelMayFollow) {
+                throw new IllegalArgumentException("a level must follow a task, once");
+            }
+            levelMayFollow = false;
+            eventsMayFollow = false;
+            tasks.set(tasks.size() - 1, tasks.get(tasks.size() - 1).withLevel(level, parent));
         }
 
         private void endSection() {

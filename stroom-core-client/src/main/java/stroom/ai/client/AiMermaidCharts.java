@@ -28,7 +28,9 @@ import stroom.svg.shared.SvgImage;
 ///
 /// A chart's element keeps the block's text (escaped, in [#SOURCE_ATTRIBUTE]) so it can be drawn again, zoomed or
 /// at another width ([AiGanttInteraction]), and has buttons to reset the zoom (shown only when zoomed) and to show
-/// it in a larger dialog.
+/// it in a larger dialog. A chart whose tasks have levels of detail (`%% level`) is drawn a level at a time, from
+/// level 1 (the broadest), with "Less detail" and "More detail" buttons (each disabled at its end); one with none
+/// has no such buttons and is drawn whole, as before.
 final class AiMermaidCharts {
 
     /// The class of the element a chart is drawn in.
@@ -49,6 +51,12 @@ final class AiMermaidCharts {
     static final String RESET_CLASS = "ai-gantt-reset";
     /// The class of the button that shows a chart in a larger dialog.
     static final String MAXIMISE_CLASS = "ai-gantt-maximise";
+    /// The attribute of a chart's element holding the level of detail it is drawn at, for a chart with levels.
+    static final String LEVEL_ATTRIBUTE = "data-gantt-level";
+    /// The class of the button that draws a chart with less detail.
+    static final String LESS_CLASS = "ai-gantt-less";
+    /// The class of the button that draws a chart with more detail.
+    static final String MORE_CLASS = "ai-gantt-more";
 
     private static final String LANGUAGE_CLASS = "language-mermaid";
     private static final String PRE = "<pre";
@@ -118,6 +126,25 @@ final class AiMermaidCharts {
                         final long[] view,
                         final int width,
                         final boolean maximisable) {
+        return chart(text, gantt, view, width, maximisable, AiGanttChart.FIRST_LEVEL);
+    }
+
+    /// @param text        The block's text.
+    /// @param gantt       The chart it holds.
+    /// @param view        The span to draw, or null for the whole period.
+    /// @param width       The width to draw it at.
+    /// @param maximisable True for a button to show it in a larger dialog (not in the dialog itself).
+    /// @param level       The level of detail to draw a chart with levels at ([AiGanttChart#level]).
+    /// @return The chart's element, as [#chart(String, MermaidGantt, long[], int, boolean)] gives it, with the
+    /// detail buttons where it has levels.
+    static String chart(final String text,
+                        final MermaidGantt gantt,
+                        final long[] view,
+                        final int width,
+                        final boolean maximisable,
+                        final int level) {
+        final int levels = gantt.maxLevel();
+        final int drawn = AiGanttChart.level(level, levels);
         final StringBuilder sb = new StringBuilder();
         sb.append("<div class=\"").append(CHART_CLASS).append("\" ").append(SOURCE_ATTRIBUTE).append("=\"")
                 .append(attribute(text)).append('"');
@@ -127,14 +154,25 @@ final class AiMermaidCharts {
         if (width != AiGanttChart.WIDTH) {
             sb.append(' ').append(WIDTH_ATTRIBUTE).append("=\"").append(width).append('"');
         }
+        if (levels > 0) {
+            sb.append(' ').append(LEVEL_ATTRIBUTE).append("=\"").append(drawn).append('"');
+        }
         sb.append("><div class=\"ai-gantt-tools\"><span class=\"ai-gantt-hint\">Drag across the times to zoom; "
                   + "click a bar or a name to pick it out").append("</span>");
+        if (levels > 0) {
+            sb.append(button(LESS_CLASS, SvgImage.COLLAPSE_ALL, "Less detail", "Show broader spans", false,
+                    drawn <= AiGanttChart.FIRST_LEVEL));
+            sb.append(button(MORE_CLASS, SvgImage.EXPAND_ALL, "More detail", "Show finer spans", false,
+                    drawn >= levels));
+        }
         sb.append(button(RESET_CLASS, SvgImage.UNDO, "Reset zoom", "Show the whole period again", view == null));
         if (maximisable) {
             sb.append(button(MAXIMISE_CLASS, SvgImage.MAXIMISE, "Maximise", "Show the chart in a larger dialog",
                     false));
         }
-        sb.append("</div><div class=\"").append(PLOT_CLASS).append("\">").append(AiGanttChart.svg(gantt, view, width))
+        sb.append("</div><div class=\"").append(PLOT_CLASS).append("\">").append(AiGanttChart.svg(levels > 0
+                        ? gantt.atLevel(drawn)
+                        : gantt, view, width))
                 .append("</div></div>");
         return sb.toString();
     }
@@ -169,9 +207,20 @@ final class AiMermaidCharts {
                                  final String label,
                                  final String title,
                                  final boolean hidden) {
+        return button(className, icon, label, title, hidden, false);
+    }
+
+    private static String button(final String className,
+                                 final SvgImage icon,
+                                 final String label,
+                                 final String title,
+                                 final boolean hidden,
+                                 final boolean disabled) {
         return "<button type=\"button\" class=\"ai-gantt-button " + className + "\" title=\"" + title
                + "\" aria-label=\"" + title + "\"" + (hidden
                 ? " hidden"
+                : "") + (disabled
+                ? " disabled"
                 : "") + "><div class=\"svgIcon " + icon.getClassName() + "\">" + icon.getSvg() + "</div><span>"
                + label + "</span></button>";
     }

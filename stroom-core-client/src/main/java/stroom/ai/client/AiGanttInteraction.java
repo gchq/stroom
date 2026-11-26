@@ -92,8 +92,13 @@ final class AiGanttInteraction {
         if (gantt == null || plot == null) {
             return;
         }
-        // The same escaped SVG as the chart was first drawn with, of the text it was drawn from.
-        plot.setInnerHTML(AiGanttChart.svg(gantt, view, width, highlightOf(chart)));
+        // The same escaped SVG as the chart was first drawn with, of the text it was drawn from, at its level of
+        // detail where it has levels.
+        final int levels = gantt.maxLevel();
+        final MermaidGantt drawn = levels > 0
+                ? gantt.atLevel(AiGanttChart.level(levelOf(chart), levels))
+                : gantt;
+        plot.setInnerHTML(AiGanttChart.svg(drawn, view, width, highlightOf(chart)));
         if (view == null) {
             chart.removeAttribute(AiMermaidCharts.VIEW_ATTRIBUTE);
         } else {
@@ -217,6 +222,49 @@ final class AiGanttInteraction {
             }
         } else if (button.hasClassName(AiMermaidCharts.MAXIMISE_CLASS)) {
             onMaximise.accept(chart);
+        } else if (button.hasClassName(AiMermaidCharts.LESS_CLASS)) {
+            detail(chart, -1);
+        } else if (button.hasClassName(AiMermaidCharts.MORE_CLASS)) {
+            detail(chart, 1);
+        }
+    }
+
+    // Draws a chart with levels a level less or more detailed, keeping its span, width and pick; each button is
+    // disabled at its end.
+    private static void detail(final Element chart, final int step) {
+        final MermaidGantt gantt = AiMermaidCharts.parse(chart.getAttribute(AiMermaidCharts.SOURCE_ATTRIBUTE));
+        if (gantt == null || gantt.maxLevel() == 0) {
+            return;
+        }
+        final int levels = gantt.maxLevel();
+        final int level = AiGanttChart.level(levelOf(chart) + step, levels);
+        chart.setAttribute(AiMermaidCharts.LEVEL_ATTRIBUTE, String.valueOf(level));
+        draw(chart, viewOf(chart), widthOf(chart));
+        enable(ElementUtil.findChild(chart, AiMermaidCharts.LESS_CLASS), level > AiGanttChart.FIRST_LEVEL);
+        enable(ElementUtil.findChild(chart, AiMermaidCharts.MORE_CLASS), level < levels);
+    }
+
+    private static void enable(final Element button, final boolean enabled) {
+        if (button == null) {
+            return;
+        }
+        if (enabled) {
+            button.removeAttribute("disabled");
+        } else {
+            button.setAttribute("disabled", "");
+        }
+    }
+
+    /// @param chart A chart's element.
+    /// @return The level of detail it is drawn at; the first where none is set.
+    static int levelOf(final Element chart) {
+        final String level = chart.getAttribute(AiMermaidCharts.LEVEL_ATTRIBUTE);
+        try {
+            return level == null || level.isEmpty()
+                    ? AiGanttChart.FIRST_LEVEL
+                    : Integer.parseInt(level);
+        } catch (final NumberFormatException e) {
+            return AiGanttChart.FIRST_LEVEL;
         }
     }
 

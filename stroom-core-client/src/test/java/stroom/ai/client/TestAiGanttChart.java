@@ -94,6 +94,29 @@ class TestAiGanttChart {
     }
 
     @Test
+    void aChartWithLevelsIsFilteredToALevelAndPackedIntoFewerRows() {
+        final Scale scale = new Scale(0, 10 * HOUR, 0, 1000);
+        final Task theme = task("theme", 0, 3 * HOUR).withLevel(1, null);
+        final Task merged = task("merged", 0, HOUR).withLevel(2, "a1");
+        final Task finest = task("finest", HOUR / 2, 2 * HOUR).withLevel(3, "m1");
+        final Task plain = task("plain", 4 * HOUR, 5 * HOUR);
+        final MermaidGantt gantt = new MermaidGantt(null, "YYYY-MM-DD", null,
+                List.of(new MermaidGantt.Section("lane", List.of(theme, merged, finest, plain))));
+
+        final List<Task> atOne = gantt.atLevel(AiGanttChart.level(0, gantt.maxLevel())).getSections().getFirst()
+                .tasks();
+        final List<Task> atThree = gantt.atLevel(AiGanttChart.level(9, gantt.maxLevel())).getSections().getFirst()
+                .tasks();
+
+        assertThat(atOne).containsExactly(theme, plain);
+        assertThat(atThree).containsExactly(theme, merged, finest, plain);
+        assertThat(AiGanttChart.rows(atOne, scale)).hasSize(1);
+        assertThat(AiGanttChart.rows(atThree, scale)).hasSize(3);
+        assertThat(AiGanttChart.level(2, 3)).isEqualTo(2);
+        assertThat(AiGanttChart.level(5, 0)).isEqualTo(AiGanttChart.FIRST_LEVEL);
+    }
+
+    @Test
     void namesAreColouredInTheOrderTheyFirstAppearWithOtherAndThoseAfterTheEighthGrey() {
         final List<String> names = List.of("a", "b", "Other", "c", "d", "e", "f", "g", "h", "i");
 
