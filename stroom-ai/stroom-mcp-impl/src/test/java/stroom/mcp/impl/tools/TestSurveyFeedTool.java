@@ -813,12 +813,16 @@ class TestSurveyFeedTool {
         assertThat(asking).containsEntry("status", "needs_source_type_field").doesNotContainKey("streams_read");
         assertThat((List<Map<String, Object>>) asking.get("candidates")).extracting(candidate -> candidate.get("field"))
                 .containsExactly("source");
+        // What the candidates were read from, so the agent can say how much was surveyed.
+        assertThat(asking.get("candidates_read_from")).asString().matches("the first \\d+ records of 1 stream "
+                                                                           + "\\(the newest, 7\\)");
 
         // In a form: the user confirms it; the kinds are told apart within the source types, and each is counted.
         final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "source"));
         final Map<String, Object> chosen = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
                                                      + "\"build\": \"acme-v1\"}", user.context()));
-        assertThat(user.shown()).first().asString().contains("source (", "aggregates several sources");
+        assertThat(user.shown()).first().asString().contains("source (", "aggregates several sources")
+                .containsPattern("Read from the first \\d+ records of 1 stream \\(the newest, 7\\) so far\\.");
         final Map<String, Object> sources = (Map<String, Object>) chosen.get("source_types");
         assertThat(sources).containsEntry("field", "source").containsEntry("by", "user");
         assertThat((Map<String, Object>) sources.get("records_read_by_value")).containsEntry("Security", 20)

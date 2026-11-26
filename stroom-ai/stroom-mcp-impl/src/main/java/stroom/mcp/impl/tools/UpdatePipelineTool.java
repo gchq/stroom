@@ -170,7 +170,10 @@ class UpdatePipelineTool extends AbstractBuiltInTool {
                                       + "chose to keep string values longer than the JSON parser's default limit "
                                       + "whole.");
         }
-        return result;
+        // The plan's next step, as every write tool's result has it (seen in testing: a chat stopped after setting
+        // the JSON parser's stringTruncateLength, the build half done).
+        return plan.nextFor(context, new DocRef(PipelineDoc.TYPE, pipelineUuid, (String) result.get("name")),
+                result);
     }
 
     // The JSON parser's stringTruncateLength, raised where the user chose to keep long values whole and this call

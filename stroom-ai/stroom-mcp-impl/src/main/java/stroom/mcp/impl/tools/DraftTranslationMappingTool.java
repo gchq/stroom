@@ -101,6 +101,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
     private final SiblingSharedCalls siblingSharedCalls;
     private final Consent consent;
     private final Provider<BuildRecords> buildRecords;
+    private final BuildPlan plan;
 
     @Inject
     DraftTranslationMappingTool(final EventVersions eventVersions,
@@ -110,7 +111,8 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                                 final CurrentTranslations currentTranslations,
                                 final SiblingSharedCalls siblingSharedCalls,
                                 final Consent consent,
-                                final Provider<BuildRecords> buildRecords) {
+                                final Provider<BuildRecords> buildRecords,
+                                final BuildPlan plan) {
         this.eventVersions = eventVersions;
         this.sampleStreamTexts = sampleStreamTexts;
         this.builds = builds;
@@ -119,6 +121,7 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         this.siblingSharedCalls = siblingSharedCalls;
         this.consent = consent;
         this.buildRecords = buildRecords;
+        this.plan = plan;
     }
 
     @Override
@@ -399,13 +402,16 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
                            + "lists the fields it carries as Data of its action element; keep it when you change the "
                            + "element. get_instructions guide=mapping lists every key a mapping and its entries take, "
                            + "the time formats, and how changes= merges.");
+        // The plan's next step, as every write tool's result has it: seen in testing, a chat stopped after the long
+        // values form, the draft's result giving no cue to go on to build_translation_xslt.
+        final Map<String, Object> withNext = plan.withNext(context, build, result);
         // A client outside Stroom takes only so much of a result; Stroom AI's chat keeps a large result itself, and
         // gives its model the outline in the result's stub.
         final Catalogue catalogue = SourceNotes.catalogue(sourceNotes);
-        final Map<String, Object> chatOutline = LargeResults.forCaller(context.caller(), result,
+        final Map<String, Object> chatOutline = LargeResults.forCaller(context.caller(), withNext,
                 (caller, said, limit) -> DraftOutline.outlineIfLarge(caller, said, context.workspace(), build,
                         catalogue, limit));
-        return JsonResults.of(result).withChatOutline(chatOutline);
+        return JsonResults.of(withNext).withChatOutline(chatOutline);
     }
 
     // Records with stack traces: how much of each the Events keep, as the user chooses (asked for by the user,

@@ -204,7 +204,7 @@ final class TranslationWorld {
     /// @return draft_translation_mapping, wired on the world.
     DraftTranslationMappingTool draftTool() {
         return new DraftTranslationMappingTool(eventVersions, sampleStreamTexts, builds, sampleProfiling,
-                currentTranslations, siblingSharedCalls, consent, world::records);
+                currentTranslations, siblingSharedCalls, consent, world::records, plan);
     }
 
     /// @return save_xslt, wired on the world, with no plans drafted.

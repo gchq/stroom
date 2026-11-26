@@ -165,6 +165,13 @@ public class AskStroomAIService {
                                                       + "turn id, reads them in full). Carry on with the task from "
                                                       + "where you were: don't start again, and don't stop to sum "
                                                       + "up what you have done.]";
+    // Told to the model (McpAgentChat) when its run carries on once the user has accepted a form or allowed tool
+    // calls: without it, the model sees the call's result after a form and tends to sum up and stop (seen in
+    // testing: a chat ended after the stringTruncateLength form, the mapping half built).
+    static final String RESUMED_AFTER_ANSWER_NOTE = "[The user has answered, and the tool calls that waited for "
+                                                    + "them have been made with their answer: the results are "
+                                                    + "above. Carry on with the task from where you were: don't "
+                                                    + "stop to sum up what you have done.]";
     // The messages the client may watch, as the server changes them in place: forms, which are cancelled if the run
     // stops, and what the user sent to steer a run, which becomes sent once the run picks it up (or a question of its
     // own if the run had finished).

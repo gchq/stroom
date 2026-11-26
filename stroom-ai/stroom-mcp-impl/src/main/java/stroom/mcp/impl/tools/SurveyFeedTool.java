@@ -738,7 +738,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         // A pipeline described in place whose translation a pre-processor feeds: each stream read where the
         // translation reads it, its records stepped there, as the head the survey reads.
         peeked.putAll(translationInputHeads(context, build, streams));
-        final Heads heads = new Heads(() -> peekRecords(streams.getFirst(), limits, peeked));
+        final Heads heads = new Heads(() -> peekRecords(streams.getFirst(), limits, peeked),
+                streams.getFirst().getId(), isNewest(streams.getFirst(), streams));
         // An aggregated feed's source type field first: the kinds of event are told apart within its source types.
         final PartAttributes attributes = new PartAttributes(streamReader);
         final SourceDecision sources = decideSources(call, context, request, feed, keptSources, heads,
@@ -1218,11 +1219,11 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 .map(SourceTypeFields.Candidate::label)
                 .toList());
         options.add(SourceTypeFields.NOT_AGGREGATED);
-        final Optional<String> answer = consent.answer(call, context, NAME, sourceIntro(feed, candidates),
-                SOURCE_FIELD_QUESTION, options);
+        final Optional<String> answer = consent.answer(call, context, NAME, sourceIntro(feed, candidates,
+                heads.said()), SOURCE_FIELD_QUESTION, options);
         if (answer.isEmpty()) {
             return new SourceDecision(null, null, needsSourceTypeField(consent.whyInChat(context, NAME,
-                    SOURCE_FIELD_QUESTION), feed, candidates), false);
+                    SOURCE_FIELD_QUESTION), feed, candidates, heads.said()), false);
         }
         final String said = answer.get().strip();
         // An option, or a field's name (or a reading into held values), said whole: anything else (seen in testing:
@@ -1290,25 +1291,49 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         return out;
     }
 
-    // The form's message: which fields could say each record's source, in plain text.
-    private static String sourceIntro(final String feed, final List<SourceTypeFields.Candidate> candidates) {
+    // The form's message: which fields could say each record's source, in plain text, and what they were read
+    // from (seen in testing: asked how many streams had been surveyed, the agent couldn't say).
+    private static String sourceIntro(final String feed,
+                                      final List<SourceTypeFields.Candidate> candidates,
+                                      final String read) {
         final List<String> lines = new ArrayList<>();
         candidates.forEach(candidate -> lines.add(SourceTypeReadings.said(candidate)));
         return "Feed '" + feed + "' looks like it aggregates several sources: the records of each value of this "
                + "field differ in their fields or messages, and each holds kinds of event of its own:\n"
-               + String.join("\n", lines) + "\nConfirmed, the survey profiles each source type, and the build's "
-               + "source types step lists them for you to choose the source types of this build's group.";
+               + String.join("\n", lines) + "\nRead from " + read + " so far. Confirmed, the survey profiles each "
+               + "source type, and the build's source types step lists them for you to choose the source types of "
+               + "this build's group.";
+    }
+
+    /// @param records  The records read from the head of the stream.
+    /// @param streamId The stream.
+    /// @param newest   True when it is the newest of the streams picked.
+    /// @return What the source type candidates were read from, in plain words, e.g. `the first 1,000 records of 1
+    /// stream (the newest, 42)`.
+    static String readSaid(final int records, final long streamId, final boolean newest) {
+        return "the first " + String.format(Locale.ROOT, "%,d", records) + " record" + (records == 1
+                ? ""
+                : "s") + " of 1 stream (" + (newest
+                ? "the newest, "
+                : "") + streamId + ")";
+    }
+
+    // True when the stream is the newest of those picked (as FeedSampling.pickSpread picks them, the first).
+    private static boolean isNewest(final Meta stream, final List<Meta> streams) {
+        return streams.stream().allMatch(other -> other.getCreateMs() <= stream.getCreateMs());
     }
 
     // With no form shown: the agent asks the user which field, in the chat (why: no form can be shown, the form
     // couldn't be, or the user put it aside for the chat).
     private static Map<String, Object> needsSourceTypeField(final String why,
                                                             final String feed,
-                                                            final List<SourceTypeFields.Candidate> candidates) {
+                                                            final List<SourceTypeFields.Candidate> candidates,
+                                                            final String read) {
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("feed", feed);
         result.put("status", "needs_source_type_field");
         result.put("candidates", candidates.stream().map(SourceTypeReadings::json).toList());
+        result.put("candidates_read_from", read);
         SourceTypeReadings.heldHint(candidates).ifPresent(hint -> result.put("held", hint));
         result.put("hint", why + ". Nothing was surveyed yet. The feed looks like it aggregates several sources: the "
                            + "records "
@@ -2937,10 +2962,19 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     private static final class Heads {
 
         private final Supplier<List<Map<String, Object>>> reader;
+        private final long streamId;
+        private final boolean newest;
         private List<Map<String, Object>> records;
 
-        private Heads(final Supplier<List<Map<String, Object>>> reader) {
+        private Heads(final Supplier<List<Map<String, Object>>> reader, final long streamId, final boolean newest) {
             this.reader = reader;
+            this.streamId = streamId;
+            this.newest = newest;
+        }
+
+        // What the head is, as the form and the agent are told it.
+        private String said() {
+            return readSaid(get().size(), streamId, newest);
         }
 
         private List<Map<String, Object>> get() {

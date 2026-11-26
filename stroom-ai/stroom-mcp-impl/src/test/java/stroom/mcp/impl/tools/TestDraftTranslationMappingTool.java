@@ -135,6 +135,9 @@ class TestDraftTranslationMappingTool {
         final Map<String, Object> draft = world.call(tool, Map.of("build", "vpn", "stream_ids", List.of(7)));
 
         assertThat(draft).containsKey("mapping").doesNotContainKey("error");
+        // The plan's next step, as every write tool's result has it (seen in testing: a chat stopped after the
+        // draft's long values form, with no cue to build the XSLT).
+        assertThat(draft).containsKey("next").containsEntry("done", false);
     }
 
     @Test

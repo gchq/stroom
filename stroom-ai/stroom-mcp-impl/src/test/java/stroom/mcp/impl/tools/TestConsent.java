@@ -342,6 +342,49 @@ class TestConsent {
     }
 
     @Test
+    void aQuestionPutAsideByAMessageIsFoundWhenItsIntroCountsHaveChangedSinceItWasAsked() {
+        // Seen in testing: survey_feed's source type question said "N values over M records" from the newest
+        // stream; a stream came in between the ask and the call made again, the intro's counts changed, the form
+        // put aside was missed, and a fresh form was shown (the run stopped again) instead of the agent being told
+        // to reply to the user's message.
+        final ChatForms chat = new ChatForms(7);
+        final ToolCall call = new ToolCall("call-1", "survey_feed", "{\"feed\": \"ACME\"}");
+        final ToolCallContext context = chat.context();
+        final List<String> options = List.of("event.app", "Not aggregated");
+        assertThatThrownBy(() -> consent.answer(call, context, "survey_feed",
+                "event.app: 4 values over 1,000 records", SOURCE_QUESTION, options))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        final String typed = "How many streams have you surveyed?";
+        assertThat(chat.userSendsInstead(typed)).isEqualTo(1);
+        final int formsShown = forms(chat);
+
+        final String told = toldTheAgent(() -> consent.answer(call, context, "survey_feed",
+                "event.app: 5 values over 1,000 records", SOURCE_QUESTION, options));
+
+        assertThat(told).as("what the re-made call tells the agent")
+                .containsIgnoringCase("sent a message instead")
+                .contains(typed);
+        assertThat(forms(chat)).as("forms shown").isEqualTo(formsShown);
+    }
+
+    @Test
+    void anAnsweredQuestionIsTakenWhenItsIntroCountsHaveChangedSinceItWasAsked() {
+        // The call made again once the user has answered is given their answer, though the counts it says moved.
+        final ChatForms chat = new ChatForms(7);
+        final ToolCall call = new ToolCall("call-1", "survey_feed", "{\"feed\": \"ACME\"}");
+        final ToolCallContext context = chat.context();
+        final List<String> options = List.of("event.app", "Not aggregated");
+        assertThatThrownBy(() -> consent.answer(call, context, "survey_feed",
+                "event.app: 4 values over 1,000 records", SOURCE_QUESTION, options))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        assertThat(chat.userAnswers(Map.of("answer", "event.app"))).isTrue();
+
+        assertThat(consent.answer(call, context, "survey_feed", "event.app: 5 values over 1,000 records",
+                SOURCE_QUESTION, options)).contains("event.app");
+        assertThat(forms(chat)).as("forms shown").isEqualTo(1);
+    }
+
+    @Test
     void aConfirmationPutAsideByAMessageTheUserTypedTellsTheAgentToReadTheMessageNotToAskAgain() {
         // As for a question (above): a confirmation's form put aside by a message the user typed.
         final ChatForms chat = new ChatForms(7);

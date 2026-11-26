@@ -912,6 +912,8 @@ class McpAgentChat {
                 }
             }
         }
+        final Set<String> accepted = McpElicitations.acceptedCalls(turn);
+        boolean resumedOnAnswer = false;
         int callNo = 0;
         for (final AiChatMessage message : turn) {
             if (message.getMessageType() != AiMessageType.TOOL_CALL) {
@@ -944,6 +946,7 @@ class McpAgentChat {
                 || (decided != null && decided.decision() == Decision.ALLOWED)) {
                 LOGGER.debug(() -> "Running tool '" + call.tool() + "' as the user has answered, in chatId="
                                    + chatId);
+                resumedOnAnswer |= decided != null || accepted.contains(call.callId());
                 // Said on the working line as when the call was made, with what it gets to as it runs.
                 final String progress = toolCallProgressMessage(call.rationale(), request);
                 taskContext.info(() -> progress);
@@ -963,6 +966,10 @@ class McpAgentChat {
                                                        + "again.", unattended, "Not approved");
             }
             conversation.add(ToolExecutionResultMessage.from(request, result));
+        }
+        // Only where the user accepted or allowed: a message sent instead is for the model to reply to.
+        if (resumedOnAnswer && !McpElicitations.sentSinceAsked(turn)) {
+            conversation.add(UserMessage.from(AskStroomAIService.RESUMED_AFTER_ANSWER_NOTE));
         }
     }
 

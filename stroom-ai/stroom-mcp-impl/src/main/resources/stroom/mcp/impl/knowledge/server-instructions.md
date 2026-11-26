@@ -27,8 +27,8 @@ streams stage 1 produced, then promotion. One tool call is never the whole job: 
 `next`, the plan's next step, and `done: false` until promotion; build_status shows every step's state. Keep going
 until `next` says promote. With a task-list tool (Stroom AI: task_list), write the plan's steps into it at the start and keep it to
 `next.progress` (the steps done, and the one now). A stage's end is no place to stop: don't end your turn to report
-it, go on to `next`; end your turn only for the user (a form, a paste, `user_actions`, promotion). A result's
-`user_actions` are the user's steps (enabling a filter, an Elasticsearch request for the cluster admin, a document to
+it, go on to `next`; stop only for the user (a form, a paste, `user_actions`, promotion), and carry on once a form
+is answered. A result's `user_actions` are the user's steps (enabling a filter, an Elasticsearch request for the cluster admin, a document to
 open), which a client may show as buttons: still say what each is for and wait for the user, and never take one as
 done; the next call reads Stroom to see. Never start with an indexing pipeline for raw data (a discovery index aside, which indexes it as it is);
 create_indexing_pipeline refuses until the build has an events pipeline or is given existing Events streams; create_processor_filter refuses a

@@ -497,6 +497,66 @@ class TestMcpElicitations {
     }
 
     @Test
+    void aFormPutAsideIsFoundForTheSameQuestionUnderAnotherKey() {
+        // Seen in testing: a form's key was worked out from its message, whose counts changed before the call was
+        // made again; the form put aside was missed and a fresh one shown, stopping the run again.
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+        question();
+        final Map<String, Object> form = Map.of("type", "object",
+                "properties", Map.of("answer", Map.of("type", "string", "title", "Which field?")));
+        assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "survey_feed", "c1#form:answer-aaaa",
+                "4 values over 1,000 records", form))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        aiDao.storeMessage(CHAT_ID, AiMessageType.STEER_MESSAGE, "How many streams?");
+        assertThat(elicitations.supersedePending(CHAT_ID)).isEqualTo(1);
+
+        final ElicitResult result = elicitations.askUser(CHAT_ID, "survey_feed", "c1#form:answer-bbbb",
+                "5 values over 1,000 records", form);
+
+        assertThat(McpElicitations.sentInstead(result)).contains("How many streams?");
+        assertThat(messages.values()).filteredOn(m -> m.getMessageType() == AiMessageType.ELICITATION).hasSize(1);
+    }
+
+    @Test
+    void aFormAnsweredIsNotTakenForAnotherKeysQuestionNorAFormOfAnotherCall() {
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+        question();
+        final Map<String, Object> form = Map.of("type", "object",
+                "properties", Map.of("answer", Map.of("type", "string", "title", "Which field?")));
+        assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "survey_feed", "c1#form:answer-aaaa", "Intro",
+                form))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        Mockito.when(runDao.getActive(CHAT_ID)).thenReturn(Optional.of(new AiChatRun(9, CHAT_ID,
+                AiChatRunStatus.WAITING_FOR_USER, AiChatRunStopReason.NEEDS_ANSWERS, 0L, null, false, null)));
+        assertThat(elicitations.answer(CHAT_ID, cardFor("c1#form:answer-aaaa").getId(), "ACCEPT",
+                Map.of("answer", "event.app"))).isTrue();
+
+        // An answer is only ever given to the very form it answered: another key may be another question.
+        assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "survey_feed", "c1#form:answer-bbbb", "Intro",
+                form))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        // Another call's form of the same question isn't this call's.
+        assertThat(elicitations.supersedePending(CHAT_ID)).isEqualTo(1);
+        assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "survey_feed", "c2#form:answer-bbbb", "Intro",
+                form))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+    }
+
+    @Test
+    void aTurnSaysWhichCallsTheUserAcceptedAndWhetherTheyWroteSinceTheLatestForm() {
+        final AiChatMessage accepted = form(1, "c1#form:answer-a", ElicitationRecord.Status.ACCEPTED);
+        final AiChatMessage declined = form(2, "c2", ElicitationRecord.Status.DECLINED);
+        final AiChatMessage steer = new AiChatMessage(3, CHAT_ID, 0L, AiMessageType.STEER_MESSAGE, null, "Why?", 1,
+                null);
+
+        assertThat(McpElicitations.acceptedCalls(List.of(accepted, declined))).containsExactly("c1");
+        assertThat(McpElicitations.sentSinceAsked(List.of(accepted, declined))).isFalse();
+        assertThat(McpElicitations.sentSinceAsked(List.of(accepted, steer))).isTrue();
+        // Written before the latest form: that form was answered since.
+        assertThat(McpElicitations.sentSinceAsked(List.of(steer, declined))).isFalse();
+    }
+
+    @Test
     void stroomsOwnFormAskedOutsideACallPutAsideByAMessageTellsTheToolWhatItSaid() throws Exception {
         // A call with no id waits for the answer, as for an MCP server, but is Stroom's own: told what was sent.
         final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
@@ -540,6 +600,12 @@ class TestMcpElicitations {
 
         assertThatThrownBy(() -> elicitations.answer(CHAT_ID, card.getId(), "DECLINE", null))
                 .hasMessageContaining("no longer waiting");
+    }
+
+    private static AiChatMessage form(final int id, final String callId, final ElicitationRecord.Status status) {
+        return new AiChatMessage(id, CHAT_ID, 0L, AiMessageType.ELICITATION, null, JsonUtil.writeValueAsString(
+                new ElicitationRecord(ElicitationRecord.KIND, status, "Stroom AI", "ask_user", "Which?", FORM,
+                        Long.MAX_VALUE, null, callId), false), 1, null);
     }
 
     // Adds a question from the user to the chat.

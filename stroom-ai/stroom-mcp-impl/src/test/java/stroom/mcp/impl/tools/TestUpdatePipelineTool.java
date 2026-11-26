@@ -70,6 +70,22 @@ class TestUpdatePipelineTool {
     }
 
     @Test
+    void theResultSaysThePlansNextStep() {
+        // Seen in testing: a chat stopped after update_pipeline set the JSON parser's stringTruncateLength, its
+        // result giving no cue to carry on with the build.
+        pipelines.buildPipeline("p", "Acme-Events", null, PipelineLayers.layer("p").chain("jsonParser",
+                "JSONParser", "translationFilter", "XSLTFilter"));
+        pipelines.xslt("x1", "Acme-Events", Map.of("input", "json"));
+
+        final Map<String, Object> result = PipelineWorld.json(call("{\"pipeline_uuid\": \"p\", \"set_properties\": "
+                                                                   + "[{\"element\": \"jsonParser\", \"name\": "
+                                                                   + "\"stringTruncateLength\", \"value\": "
+                                                                   + "60000}]}"));
+
+        assertThat(result).containsKey("next").containsEntry("done", false);
+    }
+
+    @Test
     void aJsonParserNeverSetForTheArraySampleIsSetToo() {
         // A pipeline made before its XSLT (or with one written by hand) never had the JSON parser set for an array.
         pipelines.buildPipeline("p", "Acme-Events", null, PipelineLayers.layer("p").chain("jsonParser",

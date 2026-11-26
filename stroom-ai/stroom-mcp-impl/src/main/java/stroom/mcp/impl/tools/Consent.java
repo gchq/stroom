@@ -368,7 +368,9 @@ public class Consent {
         schema.put("type", "object");
         schema.put("required", List.copyOf(fieldKeys.keySet()));
         schema.put("properties", properties);
-        final String digest = XsltCode.sha256(action + "\n" + intro + "\n" + questions.keySet()).substring(0, 16);
+        final String digest = formDigest(action, questions.keySet(), questions.values().stream()
+                .map(question -> question.text() + "=" + question.options())
+                .toList());
         final Optional<ElicitResult> asked = askShown(call, context, action, intro, "choices-" + digest, intro,
                 schema);
         if (asked.isEmpty()) {
@@ -441,7 +443,9 @@ public class Consent {
         schema.put("type", "object");
         schema.put("required", required);
         schema.put("properties", properties);
-        final String digest = XsltCode.sha256(action + "\n" + intro + "\n" + questions.keySet()).substring(0, 16);
+        final String digest = formDigest(action, questions.keySet(), questions.values().stream()
+                .map(question -> question.text() + "=" + question.options() + "|" + question.other())
+                .toList());
         final Optional<ElicitResult> asked = askShown(call, context, action, intro, "answers-" + digest, intro,
                 schema);
         if (asked.isEmpty()) {
@@ -541,7 +545,9 @@ public class Consent {
         schema.put("type", "object");
         schema.put("required", List.copyOf(fieldKeys.keySet()));
         schema.put("properties", properties);
-        final String digest = XsltCode.sha256(action + "\n" + intro + "\n" + items.keySet()).substring(0, 16);
+        final String digest = formDigest(action, text, items.keySet(), items.values().stream()
+                .map(Editable::title)
+                .toList());
         final Optional<ElicitResult> asked = askShown(call, context, action, text, "review-" + digest, intro,
                 schema);
         if (asked.isEmpty()) {
@@ -597,7 +603,7 @@ public class Consent {
             // Too large with what each option is: the options alone (the table in the chat says what each is).
             schema = pickSchema(question, options, text, suggested, false);
         }
-        final String digest = XsltCode.sha256(action + "\n" + intro + "\n" + options.keySet()).substring(0, 16);
+        final String digest = formDigest(action, question, options.keySet(), text);
         final Optional<ElicitResult> asked = askShown(call, context, action, question, "pick-" + digest, intro,
                 schema);
         if (asked.isEmpty()) {
@@ -717,7 +723,7 @@ public class Consent {
         schema.put("type", "object");
         schema.put("required", List.of("answer"));
         schema.put("properties", Map.of("answer", field));
-        final String digest = XsltCode.sha256(action + "\n" + intro + "\n" + question).substring(0, 16);
+        final String digest = formDigest(action, question, suggested);
         final Optional<ElicitResult> asked = askShown(call, context, action, question, "answer-" + digest, intro,
                 schema);
         if (asked.isEmpty()) {
@@ -740,6 +746,18 @@ public class Consent {
             throw new Declined("The user declined: " + heading(question));
         }
         return Optional.of(given);
+    }
+
+    // A form's key within its call, from what the form asks and offers (its questions, fields and choices), never
+    // its message: the message may say live counts (seen: a survey's "N values over M records" changed as a new
+    // stream came in between the ask and the call made again, so the form put aside was missed and asked anew).
+    private static String formDigest(final String action, final Object... asked) {
+        final List<String> parts = new ArrayList<>();
+        parts.add(action);
+        for (final Object part : asked) {
+            parts.add(String.valueOf(part));
+        }
+        return XsltCode.sha256(String.join("\n", parts)).substring(0, 16);
     }
 
     // The form asked, or empty where it can't be shown: too large (seen: a stand-ins form of a question for each of

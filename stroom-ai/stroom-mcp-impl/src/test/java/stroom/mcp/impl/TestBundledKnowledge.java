@@ -117,7 +117,8 @@ class TestBundledKnowledge {
                 .contains("One tool call is never the whole job: every write tool's result carries `next`, the "
                           + "plan's next step, and `done: false` until promotion")
                 .contains("Keep going until `next` says promote.")
-                .contains("end your turn only for the user (a form, a paste, `user_actions`, promotion)")
+                .contains("stop only for the user (a form, a paste, `user_actions`, promotion), and carry on once "
+                          + "a form is answered")
                 .contains("propose it by calling the tool, not by asking in the chat first")
                 .contains("Ask only what you can't decide from the result, the standing instructions or what the "
                           + "user has said, and not what a form from this server will ask; then carry on with "

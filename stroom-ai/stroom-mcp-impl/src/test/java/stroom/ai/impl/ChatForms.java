@@ -29,6 +29,7 @@ import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /// A Stroom AI chat's own forms, for the tests of Stroom's tools: the real [McpElicitations] (as
@@ -50,6 +51,10 @@ public final class ChatForms {
         Mockito.when(aiDao.storeMessage(Mockito.eq(chatId), Mockito.any(), Mockito.anyString()))
                 .thenAnswer(invocation -> store(invocation.getArgument(1), invocation.getArgument(2)));
         Mockito.when(aiDao.getMessages(chatId)).thenAnswer(invocation -> messages());
+        Mockito.when(aiDao.getMessagesSince(Mockito.eq(chatId), Mockito.anyInt())).thenAnswer(invocation ->
+                messages().stream()
+                        .filter(message -> message.getId() > (int) invocation.getArgument(1))
+                        .toList());
         Mockito.when(aiDao.compareAndSetMessageText(Mockito.anyInt(), Mockito.anyString(), Mockito.anyString()))
                 .thenAnswer(invocation -> changeText(invocation.getArgument(0), invocation.getArgument(1),
                         invocation.getArgument(2)));
@@ -76,6 +81,21 @@ public final class ChatForms {
     public int userSendsInstead(final String message) {
         store(AiMessageType.STEER_MESSAGE, message);
         return elicitations.supersedePending(chatId);
+    }
+
+    /// The user answers the latest form waiting for them, as the chat's form does.
+    ///
+    /// @param answer Each field's value as text.
+    /// @return True if the run is to be carried on.
+    public boolean userAnswers(final Map<String, String> answer) {
+        final AiChatMessage form = messages().stream()
+                .filter(message -> message.getMessageType() == AiMessageType.ELICITATION)
+                .filter(message -> McpElicitations.read(message)
+                        .filter(record -> record.status() == ElicitationRecord.Status.PENDING)
+                        .isPresent())
+                .reduce((first, second) -> second)
+                .orElseThrow(() -> new AssertionError("No form is waiting"));
+        return elicitations.answer(chatId, form.getId(), "ACCEPT", answer);
     }
 
     /// @return The chat's messages, in the order stored.

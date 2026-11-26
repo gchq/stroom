@@ -18,6 +18,7 @@ package stroom.ai.impl;
 
 import stroom.ai.impl.ElicitationRecord.Status;
 import stroom.ai.impl.tools.ToolRefusal;
+import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
@@ -39,9 +40,12 @@ import jakarta.inject.Singleton;
 
 import java.time.Duration;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -155,7 +159,9 @@ public class McpElicitations {
             return handle(chatId, STROOM_AI, tool, new ElicitFormRequest(message, schema, null));
         }
         // Asked before the run stopped: the answer, if there is one now.
-        final AiChatMessage askedMessage = findForCall(chatId, callId).orElse(null);
+        final AiChatMessage askedMessage = findForCall(chatId, callId)
+                .or(() -> findSameQuestion(chatId, tool, callId, schema))
+                .orElse(null);
         final ElicitationRecord asked = NullSafe.get(askedMessage, form -> read(form).orElse(null));
         if (asked != null) {
             return switch (asked.status()) {
@@ -482,6 +488,35 @@ public class McpElicitations {
         return result;
     }
 
+    /// @param turn The messages of a chat's turn so far.
+    /// @return The tool calls of the turn whose form the user accepted (not declined, put aside by a message,
+    /// closed or run out), by the call's id.
+    static Set<String> acceptedCalls(final List<AiChatMessage> turn) {
+        final Set<String> accepted = new HashSet<>();
+        turn.stream()
+                .filter(message -> message.getMessageType() == AiMessageType.ELICITATION)
+                .map(message -> read(message).orElse(null))
+                .filter(record -> record != null && record.callId() != null && record.status() == Status.ACCEPTED)
+                .forEach(record -> accepted.add(UserQuestions.toolCallId(record.callId())));
+        return accepted;
+    }
+
+    /// @param turn The messages of a chat's turn so far.
+    /// @return True if the user sent a message after the turn's latest form or request for approval: they wrote
+    /// instead of answering it (or as well), so the run carries on to reply to them.
+    static boolean sentSinceAsked(final List<AiChatMessage> turn) {
+        boolean sent = false;
+        for (final AiChatMessage message : turn) {
+            final AiMessageType type = message.getMessageType();
+            if (type == AiMessageType.ELICITATION || type == AiMessageType.APPROVAL_REQUEST) {
+                sent = false;
+            } else if (type == AiMessageType.STEER_MESSAGE || AiChatRunManager.QUEUED_STEERS.contains(type)) {
+                sent = true;
+            }
+        }
+        return sent;
+    }
+
     // A form put aside by a message the user sent instead: a cancel, as for an MCP server, carrying what they sent,
     // the first message sent to the chat's run after the form was shown (AskStroomAIService stores it, then puts
     // the form aside).
@@ -501,6 +536,61 @@ public class McpElicitations {
                 .filter(message -> message.getMessageType() == AiMessageType.ELICITATION)
                 .filter(message -> read(message).map(record -> callId.equals(record.callId())).orElse(false))
                 .reduce((first, second) -> second);
+    }
+
+    // A form of the same tool call put aside (or still waiting) that asked the same questions under another key: its
+    // key is worked out from what it asks, which may hold live counts that changed before the call was made again
+    // (seen: a survey's source type question, a new stream in between). Missed, a fresh form was shown, and the run
+    // stopped again rather than replying to the user's message. Only these: an answer is never given to a question
+    // that may have changed.
+    private Optional<AiChatMessage> findSameQuestion(final int chatId,
+                                                     final String tool,
+                                                     final String callId,
+                                                     final Map<String, Object> schema) {
+        final String kind = formKind(callId);
+        if (kind == null) {
+            return Optional.empty();
+        }
+        final String toolCallId = UserQuestions.toolCallId(callId);
+        final List<String> titles = fieldTitles(schema);
+        return aiDao.getMessages(chatId).stream()
+                .filter(message -> message.getMessageType() == AiMessageType.ELICITATION)
+                .filter(message -> read(message)
+                        .filter(record -> record.status() == Status.SUPERSEDED
+                                          || record.status() == Status.PENDING)
+                        .filter(record -> record.callId() != null
+                                          && toolCallId.equals(UserQuestions.toolCallId(record.callId()))
+                                          && kind.equals(formKind(record.callId()))
+                                          && Objects.equals(tool, record.tool())
+                                          && titles.equals(fieldTitles(record.schema())))
+                        .isPresent())
+                .reduce((first, second) -> second);
+    }
+
+    // The kind of form a form id names, its key up to the digest (e.g. 'answer' of 'call-1#form:answer-1a2b'), or
+    // null where the id names no key.
+    private static String formKind(final String callId) {
+        final int at = callId.indexOf(UserQuestions.FORM_SEPARATOR);
+        if (at < 0) {
+            return null;
+        }
+        final String key = callId.substring(at + UserQuestions.FORM_SEPARATOR.length());
+        final int dash = key.lastIndexOf('-');
+        return dash <= 0
+                ? key
+                : key.substring(0, dash);
+    }
+
+    // The titles of a form's fields, in order: its questions as the user sees them.
+    private static List<String> fieldTitles(final Map<String, Object> schema) {
+        if (!(NullSafe.map(schema).get("properties") instanceof final Map<?, ?> properties)) {
+            return List.of();
+        }
+        return properties.values().stream()
+                .map(field -> field instanceof final Map<?, ?> map
+                        ? String.valueOf(map.get("title"))
+                        : "")
+                .toList();
     }
 
     private Optional<AiChatMessage> find(final int chatId, final int messageId) {
