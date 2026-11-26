@@ -75,7 +75,6 @@ public final class MappingFacts {
     // The fields entry's keys that may lose the value it reads ([#keepsOriginal(Map)]).
     private static final String TRANSFORM = "transform";
     private static final String MAP = "map";
-    private static final String DEFAULT = "default";
     private static final Pattern CALL_START = Pattern.compile("[\\w:.-]+\\(", Pattern.UNICODE_CHARACTER_CLASS);
     // Pattern letters of Java's SimpleDateFormat and DateTimeFormatter; any other letter must be quoted.
     private static final String PATTERN_LETTERS = "GuyDMLdQqYwWEecFaHkKhmsSAnNVzOXxZp";
@@ -363,12 +362,12 @@ public final class MappingFacts {
         return String.join("/", steps);
     }
 
-    /// Whether an entry loses the value it reads on the way to the element, so the field's Data copy is no copy and
-    /// is kept beside it: a transform, or a lossy map (several values to one, or a default for the values it doesn't
-    /// name: e.g. allow/deny/drop to Permitted true/false). Decided by the user 2026-11-27, in a mapping change, the
-    /// catalogue's placements and the written-twice warnings alike: a time format, a lookup, a dictionary, a default
-    /// alone or a one-to-one map gives the field's value in the element's terms, and takes its Data copy's place, as
-    /// an entry written as it is does.
+    /// Whether an entry may lose the value it reads on the way to the element, so the field's Data copy is no copy
+    /// and is kept beside it: a transform, or a map (several values to one, a default for the values it doesn't name,
+    /// or with no default, no element for them: e.g. allow/deny to Permitted true/false, a reset left with none).
+    /// Decided by the user 2026-11-27, in a mapping change, the catalogue's placements and the written-twice warnings
+    /// alike: a time format, a lookup, a dictionary or a default alone gives the field's value in the element's
+    /// terms, and takes its Data copy's place, as an entry written as it is does.
     ///
     /// @param entry A translation mapping's fields entry (or a catalogue placement), as JSON-like values.
     /// @return True if the element doesn't keep the value whole.
@@ -379,10 +378,7 @@ public final class MappingFacts {
         if (transforms) {
             return true;
         }
-        if (!(entry.get(MAP) instanceof final Map<?, ?> map) || map.isEmpty()) {
-            return false;
-        }
-        return entry.get(DEFAULT) != null || new HashSet<>(map.values()).size() < map.size();
+        return entry.get(MAP) instanceof final Map<?, ?> map && !map.isEmpty();
     }
 
     /// As [#keepsOriginal(Map)], for an entry read.
@@ -390,11 +386,7 @@ public final class MappingFacts {
     /// @param entry A translation mapping's fields entry.
     /// @return True if the element doesn't keep the value whole.
     public static boolean keepsOriginal(final FieldMapping entry) {
-        if (entry.transform() != null) {
-            return true;
-        }
-        return entry.hasMap() && (entry.defaultValue() != null
-                                  || new HashSet<>(entry.map().values()).size() < entry.map().size());
+        return entry.transform() != null || entry.hasMap();
     }
 
     /// @param jsonFields The mapping's json_fields.

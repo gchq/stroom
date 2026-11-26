@@ -269,9 +269,10 @@ class TestXsltGeneratorReads extends XsltRuns {
                 .isTrue();
     }
 
-    // Only a placement that loses the value keeps its Data copy (decided by the user 2026-11-27): a transform, or a
-    // lossy map (several values to one, or a default); a time format, a lookup, a default alone or a one-to-one map
-    // gives the field in the element's terms and takes the copy, in changes= and in the catalogue alike.
+    // Only a placement that may lose the value keeps its Data copy (decided by the user 2026-11-27): a transform, or
+    // a map (several values to one, a default, or with no default no element for a value it doesn't name); a time
+    // format, a lookup or a default alone gives the field in the element's terms and takes the copy, in changes= and
+    // in the catalogue alike.
     @Test
     void onlyAPlacementThatLosesTheValueKeepsItsDataCopy() {
         assertThat(keptByBoth(Map.of("transform", "upper"))).as("a transform").containsExactly(true, true);
@@ -279,8 +280,9 @@ class TestXsltGeneratorReads extends XsltRuns {
                 .containsExactly(true, true);
         assertThat(keptByBoth(Map.of("map", Map.of("rpt-17", "A"), "default", "B"))).as("a map with a default")
                 .containsExactly(true, true);
+        // allow/deny with no default: a value it doesn't name (a reset) gets no element, so the original is kept.
         assertThat(keptByBoth(Map.of("map", Map.of("rpt-17", "A", "rpt-18", "B")))).as("a one-to-one map")
-                .containsExactly(false, false);
+                .containsExactly(true, true);
         assertThat(keptByBoth(Map.of("default", "none"))).as("a default alone").containsExactly(false, false);
         assertThat(MappingFacts.keepsOriginal(Map.of("path", "EventTime/TimeCreated", "field", "ts", "time_format",
                 "yyyy-MM-dd"))).as("a time format").isFalse();

@@ -36,7 +36,7 @@ import java.util.stream.Stream;
 /// doesn't write the element from another field, a rule's entry its own rule), and the common ones for a common
 /// entry.
 /// Only plain entries count: the field read as it is, or given in the element's terms (a time format, a lookup, a
-/// dictionary, a default or a one-to-one map); a transform or a lossy map ([MappingFacts#keepsOriginal(Map)], as the
+/// dictionary or a default); a transform or a map ([MappingFacts#keepsOriginal(Map)], as the
 /// catalogue's placements decide it) leaves the original worth keeping, and a Data entry given in the same changes is
 /// kept on purpose. An xpath giving one field as it is ([XPathFieldReads#plainField(String)], a key of the JSON a field
 /// holds) places that field. A copy is a Data entry reading the same field, whatever its Data is named (the data_names
@@ -53,10 +53,9 @@ final class PlacedCopies {
     private static final String DATA_NAME = "data_name";
     private static final String TYPE_ID = "EventDetail/TypeId";
     private static final String XPATH = "xpath";
-    // The conversions that may give the field in the element's terms: they take its Data copy's place as a plain
-    // read does, unless the value is lost on the way (a lossy map, [MappingFacts#keepsOriginal(Map)]; decided by the
-    // user 2026-11-27).
-    private static final Set<String> CONVERSIONS = Set.of("map", "time_format", "lookup", "dictionary", "default");
+    // The conversions giving the field in the element's terms: they take its Data copy's place as a plain read does;
+    // a transform or a map keeps it ([MappingFacts#keepsOriginal(Map)]; decided by the user 2026-11-27).
+    private static final Set<String> CONVERSIONS = Set.of("time_format", "lookup", "dictionary", "default");
     private static final Set<String> PLACEMENT_KEYS = Stream.concat(Stream.of(PATH, FIELD), CONVERSIONS.stream())
             .collect(Collectors.toUnmodifiableSet());
     private static final Set<String> XPATH_PLACEMENT_KEYS = Stream.concat(Stream.of(PATH, XPATH),

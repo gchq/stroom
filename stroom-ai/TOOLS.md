@@ -6454,11 +6454,11 @@ records in the sample (severity, names, addresses kept), then takes what the cat
   write it), the user authenticating for Authenticate; then the fields left over that the way's own records
   hold, as Data of the action element. Each field once: the draft rule's entries below the action element reading a
   placed field are taken out, and a placed field is Data too only with `also_data` (each field it reads: by `field`,
-  `any_of` or `xpath`) or where the placement loses the value on the way (a `transform`, or a
-  lossy `map`: several values to one, or a `default` for those it doesn't name; `MappingFacts.keepsOriginal`, as a
-  mapping change and the written-twice warning decide it; a `time_format`, `lookup`, `dictionary`, `default` alone or
-  a one-to-one `map` gives the field in the element's terms and takes its Data copy's place, decided by the user
-  2026-11-27). The fields an entry reads are
+  `any_of` or `xpath`) or where the placement may lose the value on the way (a `transform`, or
+  any `map`: several values to one, a `default` for those it doesn't name, or with no default no element for them;
+  `MappingFacts.keepsOriginal`, as a mapping change and the written-twice warning decide it; a `time_format`,
+  `lookup`, `dictionary` or `default` alone gives the field in the element's terms and takes its Data copy's place,
+  decided by the user 2026-11-27). The fields an entry reads are
   `Placement.reads`'s, for a common entry and a draft rule's too: a `join`'s, a lookup's key (or `key_fields`), a
   group's array, not kept as Data beside it. A placement's (or a common
   entry's) `xpath` reads the fields it names as the records spell them (`XPathFieldReads`, 2026-11-26: a JSON key

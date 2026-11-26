@@ -733,7 +733,7 @@ final class CatalogueTranslation {
     }
 
     // Whether a placement keeps the fields it reads as Data too: it says also_data, or it loses the value on the way,
-    // a transform or a lossy map ([MappingFacts#keepsOriginal(Map)]: the element doesn't hold the field as it is, as
+    // a transform or a map ([MappingFacts#keepsOriginal(Map)]: the element doesn't hold the field as it is, as
     // a mapping change decides it too).
     private static boolean keepsData(final Placement placement) {
         return placement.alsoData() || MappingFacts.keepsOriginal(placement.entry());
