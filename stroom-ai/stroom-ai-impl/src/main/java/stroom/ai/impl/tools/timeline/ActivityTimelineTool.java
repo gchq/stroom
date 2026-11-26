@@ -2449,7 +2449,9 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                         kept.putAll(asked);
                         classifiedNow.put(source.getKey(), asked);
                     } else if (confirmed) {
-                        asked.forEach((code, role) -> kept.put(code, new CodeRole(role.role(), role.kind(), true)));
+                        // Confirmed with its period's key, if it has one (seen in eval case 119: dropped here).
+                        asked.forEach((code, role) -> kept.put(code, new CodeRole(role.role(), role.kind(), true,
+                                role.key())));
                         EventCodes.keep(keptIn, doc.getUuid(), kept);
                         classifiedNow.put(source.getKey(), asked);
                     }

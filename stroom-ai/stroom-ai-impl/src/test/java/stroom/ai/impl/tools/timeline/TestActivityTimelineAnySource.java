@@ -323,6 +323,21 @@ class TestActivityTimelineAnySource {
         assertThat((List<Map<String, Object>>) periods.get("list"))
                 .extracting(period -> period.get("key"))
                 .containsExactly("HQ, L2", "Depot, Yard");
+
+        // In the chat, the user confirming the classification in its form: the key kept with it (seen in eval case
+        // 119 on Haiku: dropped on confirming, the periods unkeyed).
+        final Questions questions = new Questions(Map.of("use", ActivityTimelineTool.USE_CODES));
+        final String text = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
+                arguments(Map.of("sources", List.of(Map.of("index", "Codes", "user", "user", "eventTypeField",
+                        "code")))), false)), chat(questions, model(new ArrayList<>(), "{\"badge.enter\": {\"role\": "
+                                                                                   + "\"period_start on_site by Site, "
+                                                                                   + "Zone\"}, \"badge.leave\": "
+                                                                                   + "{\"role\": \"period_end on_site "
+                                                                                   + "by Site, Zone\"}}"))).text();
+        assertThat(questions.forms).isNotEmpty();
+        assertThat(files.content(FOLDER + ActivityTimelineTool.PERIODS_FILE).orElseThrow())
+                .contains("HQ, L2").contains("Depot, Yard");
+        assertThat(text).isNotBlank();
     }
 
     @Test
