@@ -16,11 +16,50 @@
 
 package stroom.util.client;
 
+import java.util.function.Function;
+
 public final class RedirectUrlUtil {
 
     private RedirectUrlUtil() {
         // Utility class.
     }
+
+    /// Checks whether a redirect target is a safe root-relative path or an absolute HTTP(S) URL
+    /// on the current page's origin. The browser normalises default ports when comparing origins.
+    ///
+    /// @param uri the redirect target, which may be null
+    /// @return whether the target can be used for a same-origin redirect
+    public static boolean isSameOrigin(final String uri) {
+        return isSameOrigin(uri, getPageOrigin(), RedirectUrlUtil::getAbsoluteHttpOrigin);
+    }
+
+    /// Checks a redirect target using the supplied origin parser for absolute URLs.
+    ///
+    /// @param uri the redirect target, which may be null
+    /// @param pageOrigin the current page's origin
+    /// @param absoluteHttpOrigin a parser returning the origin of an absolute HTTP(S) URL, or null
+    /// @return whether the target can be used for a same-origin redirect
+    static boolean isSameOrigin(final String uri,
+                                final String pageOrigin,
+                                final Function<String, String> absoluteHttpOrigin) {
+        return isSafeRootRelativePath(uri) || (uri != null && pageOrigin.equals(absoluteHttpOrigin.apply(uri)));
+    }
+
+    private static native String getPageOrigin() /*-{
+        return $wnd.location.origin;
+    }-*/;
+
+    private static native String getAbsoluteHttpOrigin(final String uri) /*-{
+        try {
+            var url = new $wnd.URL(uri);
+            if (url.protocol === "https:" || url.protocol === "http:") {
+                return url.origin;
+            }
+        } catch (e) {
+            // The URL constructor rejects relative and malformed targets.
+        }
+        return null;
+    }-*/;
 
     /**
      * Whether a redirect target is a root-relative path that cannot escape the current origin, and so is safe
