@@ -1148,7 +1148,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                     noneOfTheirs.add(automatic);
                     continue;
                 }
-                sources.add(automatic.source(automatic.transforms(), spanFields(one.spec(), automatic.mapping())));
+                sources.add(automatic.source(automatic.transforms(), keyFields(one.spec(), automatic.mapping())));
                 kept.add(one.spec());
                 notes.add(new SourceNote(automatic.name(), automatic.doc().getName(), automatic.user().field(),
                         automatic.user().from(), transformNote(automatic.transforms()), null, automatic.by(), hint,
@@ -1163,7 +1163,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                     extra.add(field);
                 }
             }
-            spanFields(one.spec(), automatic.mapping()).stream().filter(field -> !extra.contains(field))
+            keyFields(one.spec(), automatic.mapping()).stream().filter(field -> !extra.contains(field))
                     .forEach(extra::add);
             sources.add(automatic.source(automatic.transforms(), extra));
             kept.add(one.spec());
@@ -1595,6 +1595,28 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     // The index fields a source's spanBy names, fetched so they are keys of its events.
     private static List<String> spanFields(final Map<?, ?> spec, final Map<String, ElasticEql.Field> mapping) {
         return spanBy(spec).stream().filter(mapping::containsKey).toList();
+    }
+
+    // The index fields fetched so they are keys of a source's events: those its spanBy names, and those a period's
+    // key may name (a part of its typeRoles' keys, or of a well-known kind's default key, that is a field of the
+    // index), so a flat index's periods pair by them (`by Site, Zone`).
+    private static List<String> keyFields(final Map<?, ?> spec, final Map<String, ElasticEql.Field> mapping) {
+        final List<String> out = new ArrayList<>(spanFields(spec, mapping));
+        final List<String> keys = new ArrayList<>();
+        TimelinePeriod.KINDS.forEach(kind -> keys.add(TimelinePeriod.defaultKey(kind)));
+        if (spec.get(TYPE_ROLES_KEY) instanceof final Map<?, ?> given) {
+            given.values().forEach(role -> TimelinePeriod.parse(String.valueOf(role)).ifPresent(named ->
+                    keys.add(named.period().effectiveKey())));
+        }
+        for (final String key : keys) {
+            for (final List<String> part : TimelinePeriod.parts(key)) {
+                part.stream()
+                        .filter(field -> !TimelinePeriod.HOST.equalsIgnoreCase(field) && mapping.containsKey(field)
+                                         && !out.contains(field))
+                        .forEach(out::add);
+            }
+        }
+        return out;
     }
 
     private static List<String> spanBy(final Map<?, ?> spec) {

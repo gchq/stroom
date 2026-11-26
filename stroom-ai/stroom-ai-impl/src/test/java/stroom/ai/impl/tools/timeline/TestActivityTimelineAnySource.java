@@ -146,7 +146,7 @@ class TestActivityTimelineAnySource {
                 "keyword", "SchemaAction", "keyword", "event.action", "keyword", "StreamId", "long", "EventId",
                 "long", "TypeId", "keyword", "host.name", "keyword", "url", "keyword");
         final Map<String, String> codesMapping = Map.of("@timestamp", "date", "user", "keyword", "code", "keyword",
-                "client", "keyword", "staff", "keyword");
+                "client", "keyword", "staff", "keyword", "Site", "keyword", "Zone", "keyword", "Door", "keyword");
         Mockito.when(queryService.findFields(Mockito.any())).thenAnswer(invocation -> {
             final DocRef doc = invocation.<FindFieldCriteria>getArgument(0).getDataSourceRef();
             final List<QueryField> fields = new ArrayList<>();
@@ -260,6 +260,32 @@ class TestActivityTimelineAnySource {
                 .hasSize(3).first().isEqualTo(String.join(",", TimelineTables.PERIOD_COLUMNS));
         assertThat(files.content(FOLDER + ActivityTimelineTool.EVENTS_FILE).orElseThrow())
                 .contains(",period_start,remote_session,ws-09,");
+    }
+
+    @Test
+    void aPeriodKeyOfIndexFieldsPairsAFlatIndexsEntersAndLeavesByThemWhateverTheDoor() {
+        // Badge events of an index not built from Events, logged separately, at two sites at once: each site's leave
+        // by another door than its enter.
+        badge("08:00", "badge.enter", "HQ", "L2", "north");
+        badge("09:00", "badge.enter", "Depot", "Yard", "gate-1");
+        badge("10:00", "badge.leave", "HQ", "L2", "south");
+        badge("11:00", "badge.leave", "Depot", "Yard", "gate-2");
+        final Map<String, Object> source = Map.of("index", "Codes", "user", "user", "eventTypeField", "code",
+                "typeRoles", Map.of("badge.enter", "period_start on_site by Site, Zone", "badge.leave",
+                        "period_end on_site by Site, Zone"));
+
+        final Map<String, Object> result = json(mcp(), arguments(Map.of("sources", List.of(source))));
+
+        // The key's fields fetched from the index: each site's enter paired with its own leave, both seen.
+        final Map<String, Object> periods = (Map<String, Object>) result.get("periods");
+        assertThat(periods).containsEntry("by_kind", Map.of("on_site", 2L)).containsEntry("start_not_seen", 0L)
+                .containsEntry("end_not_seen", 0L);
+        assertThat((List<Map<String, Object>>) periods.get("list"))
+                .extracting(period -> period.get("key"), period -> period.get("start"), period -> period.get("end"))
+                .containsExactly(org.assertj.core.groups.Tuple.tuple("HQ, L2", "2026-11-10T08:00:00Z",
+                                "2026-11-10T10:00:00Z"),
+                        org.assertj.core.groups.Tuple.tuple("Depot, Yard", "2026-11-10T09:00:00Z",
+                                "2026-11-10T11:00:00Z"));
     }
 
     @Test
@@ -1554,6 +1580,13 @@ class TestActivityTimelineAnySource {
 
     private void code(final String time, final String user, final String value) {
         codes.add(new LinkedHashMap<>(Map.of("@timestamp", at(time), "user", user, "code", value)));
+    }
+
+    // A badge event of pat's in the codes index: its code, where (site and zone) and by which door.
+    private void badge(final String time, final String code, final String site, final String zone,
+                       final String door) {
+        codes.add(new LinkedHashMap<>(Map.of("@timestamp", at(time), "user", "pat", "code", code, "Site", site,
+                "Zone", zone, "Door", door)));
     }
 
     private void web(final long time, final String user, final String url) {

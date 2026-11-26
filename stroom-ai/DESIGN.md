@@ -2231,7 +2231,10 @@ most 40 characters), so periods can be searched, counted and compared. Well-know
   the event's host; a path matches an event's key path ending in it (`Location/Site` matches
   `EventSource/Door/Location/Site`) or a Data entry of that name (`SessionId` matches `Data[SessionId]`). A part with
   no value is left out; a key with none is the kind alone (one at a time). The values come from the events' keys
-  (`EventXmlClassifier.Classified#keys`: the Events XML's leaves, the index's fields). The account is the timeline's
+  (`EventXmlClassifier.Classified#keys`: the Events XML's leaves, the index's fields). An index's fields a key may
+  name (a part of a call's typeRoles key, or of a well-known kind's default key, that is a field of the index) are
+  fetched with its events, so a flat index's periods pair by them (`period_start on_site by Site, Zone`; found
+  building eval case 113, 2026-11-27: they weren't fetched, so its keys were empty). The account is the timeline's
   own person, so a default key names it only where an event names another (`RunAs`).
 * A role may give its own key (`timeline_period_key`; `by <key>` in the text forms) where the default doesn't fit.
 * Pairing is by kind and key, across hosts and sources: entering by door A-1 and leaving by A-4 pair at the site.
