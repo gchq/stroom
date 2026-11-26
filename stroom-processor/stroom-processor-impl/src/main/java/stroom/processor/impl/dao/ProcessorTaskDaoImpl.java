@@ -364,7 +364,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         final Supplier<String> msgSupplier = () -> LogUtil.message(
                 "claimTasks - filterId: {}, nodeName: {}, limit: {}", filterId, nodeName, limit);
 
-        final List<ProcessorTask> claimed = JooqUtil.withDeadlockRetries(() ->
+        final Result<Record> claimedRecords = JooqUtil.withDeadlockRetries(() ->
                         JooqUtil.transactionResult(processorDbConnProvider, context -> {
                             // Lock the oldest waiting tasks, stepping over any row another node is
                             // already claiming rather than queueing behind it. Read in index order so
@@ -381,7 +381,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                     .fetch(PROCESSOR_TASK.ID);
 
                             if (ids.isEmpty()) {
-                                return List.<ProcessorTask>of();
+                                return null;
                             }
 
                             // Straight to PROCESSING - there is no queue to sit in - so the tasks
@@ -402,9 +402,13 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                 throw new RuntimeException("Claimed " + ids.size() + " tasks but updated " + count);
                             }
 
-                            return convert(select(context, PROCESSOR_TASK.ID.in(ids)));
+                            return select(context, PROCESSOR_TASK.ID.in(ids));
                         }),
                 msgSupplier);
+
+        // Convert after the commit, so that a filter cache miss never takes a second connection while
+        // this claim's connection and row locks are held.
+        final List<ProcessorTask> claimed = NullSafe.getOrElse(claimedRecords, this::convert, List.of());
 
         LOGGER.debug(() -> LogUtil.message("claimTasks() - filter {} asked for {}, claimed {}",
                 filterId, limit, claimed.size()));
@@ -1387,38 +1391,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 .stream()
                 .map(DocRef::getUuid)
                 .toList();
-    }
-
-    @Override
-    public boolean changeTaskStatus(final long taskId,
-                                    final Set<TaskStatus> currentStatuses,
-                                    final TaskStatus newStatus) {
-        final long nowMs = System.currentTimeMillis();
-        final boolean toCreated = TaskStatus.CREATED.equals(newStatus);
-        final int count = JooqUtil.withDeadlockRetries(
-                () -> JooqUtil.contextResult(processorDbConnProvider, context -> context
-                        .update(PROCESSOR_TASK)
-                        .set(PROCESSOR_TASK.STATUS, newStatus.getPrimitiveValue())
-                        .set(PROCESSOR_TASK.STATUS_TIME_MS, nowMs)
-                        .set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, toCreated
-                                ? DSL.castNull(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID)
-                                : PROCESSOR_TASK.FK_PROCESSOR_NODE_ID)
-                        .set(PROCESSOR_TASK.START_TIME_MS, toCreated
-                                ? DSL.castNull(PROCESSOR_TASK.START_TIME_MS)
-                                : PROCESSOR_TASK.START_TIME_MS)
-                        .set(PROCESSOR_TASK.END_TIME_MS, toCreated
-                                ? DSL.castNull(PROCESSOR_TASK.END_TIME_MS)
-                                : PROCESSOR_TASK.END_TIME_MS)
-                        .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
-                        .where(PROCESSOR_TASK.ID.eq(taskId))
-                        .and(PROCESSOR_TASK.STATUS.in(currentStatuses
-                                .stream()
-                                .map(TaskStatus::getPrimitiveValue)
-                                .toList()))
-                        .execute()),
-                () -> "changeTaskStatus - taskId: " + taskId + ", newStatus: " + newStatus);
-        LOGGER.debug("changeTaskStatus - taskId: {}, newStatus: {}, count: {}", taskId, newStatus, count);
-        return count > 0;
     }
 
     @Override

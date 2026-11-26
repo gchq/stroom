@@ -40,5 +40,8 @@ dependencies {
 
     runtimeOnly libs.mysql.connector.java
 
+    testImplementation project(':stroom-test-common')
+
+    testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
 }
