@@ -26,8 +26,10 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
 import stroom.processor.api.ProcessorTaskService;
+import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
+import stroom.processor.shared.TaskStatus;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
@@ -35,15 +37,20 @@ import stroom.task.shared.TaskId;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
+import stroom.test.CommonTranslationTestHelper;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -69,6 +76,14 @@ class TestProcessorTaskQueueManager extends AbstractCoreIntegrationTest {
     private MetaService metaService;
     @Inject
     private MetaDaoImpl metaDao;
+    @Inject
+    private ProcessorTaskQueueManagerImpl processorTaskQueueManagerImpl;
+    @Inject
+    private CommonTranslationTestHelper commonTranslationTestHelper;
+    @Inject
+    private ProcessorTaskDao processorTaskDao;
+    @Inject
+    private Provider<ProcessorConfig> processorConfigProvider;
 
     @Test
     void testBasic() {
@@ -259,4 +274,69 @@ class TestProcessorTaskQueueManager extends AbstractCoreIntegrationTest {
         processorTaskTestHelper.createAndQueueTasks();
         assertThat(processorTaskQueueManager.getTaskQueueSize()).isEqualTo(1);
     }
+
+    @Test
+    void masterThatStopsPutsBackItsQueue() {
+        setUpQueuedTasks();
+        try {
+            processorTaskQueueManagerImpl.shutdown();
+
+            assertThat(getTasks()).extracting(ProcessorTask::getStatus).containsOnly(TaskStatus.CREATED);
+            assertThat(getTasks()).extracting(ProcessorTask::getNodeName).containsOnlyNulls();
+        } finally {
+            processorTaskQueueManagerImpl.startup();
+        }
+    }
+
+    @Test
+    void taskHandedOutAndNotStartedIsPutBackAndCannotThenBeStarted() {
+        setUpQueuedTasks();
+        final ProcessorTask handedOut = processorTaskTestHelper.assignTasks(1).getFirst();
+        final Instant now = Instant.now();
+
+        // Not yet, as it may still be started.
+        assertThat(processorTaskQueueManagerImpl.putBackLostTasks(nodeInfo.getThisNodeName(), now)).isZero();
+        assertThat(getTask(handedOut).getStatus()).isEqualTo(TaskStatus.QUEUED);
+
+        final Instant later = now.plus(processorConfigProvider.get().getTaskLeaseTimeout().getDuration())
+                .plusSeconds(1);
+        assertThat(processorTaskQueueManagerImpl.putBackLostTasks(nodeInfo.getThisNodeName(), later)).isOne();
+        assertThat(getTask(handedOut).getStatus()).isEqualTo(TaskStatus.CREATED);
+        // The rest are still in the queue.
+        assertThat(getTasks()).filteredOn(task -> task.getId() != handedOut.getId())
+                .extracting(ProcessorTask::getStatus)
+                .containsOnly(TaskStatus.QUEUED);
+
+        // The node it was handed out to starts it after all, but it is too late.
+        assertThat(commonTranslationTestHelper.process(handedOut).getRead()).isZero();
+        assertThat(getTask(handedOut).getStatus()).isEqualTo(TaskStatus.CREATED);
+    }
+
+    @Test
+    void tasksDroppedByANodeArePutBackByThatNode() {
+        setUpQueuedTasks();
+        final List<ProcessorTask> handedOut = processorTaskTestHelper.assignTasks(2);
+
+        // What the node they were handed to does, without asking the master.
+        assertThat(processorTaskDao.putBackTasks(handedOut, Set.of(TaskStatus.QUEUED), "Expected")).isEqualTo(2);
+
+        handedOut.forEach(task -> assertThat(getTask(task).getStatus()).isEqualTo(TaskStatus.CREATED));
+    }
+
+    private void setUpQueuedTasks() {
+        processorConfigProvider.get().setSkipEmptyFilterFetchDuration(StroomDuration.ZERO);
+        processorTaskTestHelper.setClaimTasksOnWorker(false);
+        commonTranslationTestHelper.setup();
+        processorTaskTestHelper.createAndQueueTasks();
+        assertThat(getTasks()).isNotEmpty().extracting(ProcessorTask::getStatus).containsOnly(TaskStatus.QUEUED);
+    }
+
+    private ProcessorTask getTask(final ProcessorTask task) {
+        return getTasks().stream().filter(other -> other.getId() == task.getId()).findFirst().orElseThrow();
+    }
+
+    private List<ProcessorTask> getTasks() {
+        return processorTaskService.find(new ExpressionCriteria()).getValues();
+    }
+
 }

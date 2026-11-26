@@ -18,6 +18,7 @@ package stroom.processor.impl.dao;
 
 import stroom.cache.impl.CacheModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
+import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
@@ -125,6 +126,7 @@ class AbstractProcessorTest {
                         Mockito.when(bindMock(ExpressionMapperFactory.class).create())
                                 .thenReturn(mockExpressionMapper);
                         bindMock(NodeInfo.class);
+                        bindMock(TargetNodeSetFactory.class);
                         bindMock(ProcessorTaskQueueManager.class);
                         bindMock(DocumentEventLog.class);
                         bindMock(DocumentPermissionService.class);
@@ -234,6 +236,30 @@ class AbstractProcessorTest {
 
     protected int getTaskVersion(final long taskId) {
         return fetchTaskField(taskId, PROCESSOR_TASK.VERSION);
+    }
+
+    /// Gets a task's run count from its row.
+    ///
+    /// @param taskId The id of the task.
+    /// @return The run count.
+    protected int getTaskRunCount(final long taskId) {
+        return fetchTaskField(taskId, PROCESSOR_TASK.RUN_COUNT);
+    }
+
+    /// Gets a task's fault count from its row.
+    ///
+    /// @param taskId The id of the task.
+    /// @return The fault count.
+    protected int getTaskFaultCount(final long taskId) {
+        return fetchTaskField(taskId, PROCESSOR_TASK.FAULT_COUNT);
+    }
+
+    /// Gets a task's reason from its row.
+    ///
+    /// @param taskId The id of the task.
+    /// @return The reason, or null if it has none.
+    protected String getTaskReason(final long taskId) {
+        return fetchTaskField(taskId, PROCESSOR_TASK.REASON);
     }
 
     protected long getTaskStatusTimeMs(final long taskId) {

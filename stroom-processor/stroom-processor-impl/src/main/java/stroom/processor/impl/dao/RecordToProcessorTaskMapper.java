@@ -54,6 +54,9 @@ class RecordToProcessorTaskMapper implements Function<Record, ProcessorTask> {
                 .createTimeMs(record.get(PROCESSOR_TASK.CREATE_TIME_MS))
                 .statusTimeMs(record.get(PROCESSOR_TASK.STATUS_TIME_MS))
                 .endTimeMs(record.get(PROCESSOR_TASK.END_TIME_MS))
+                .runCount(record.get(PROCESSOR_TASK.RUN_COUNT))
+                .faultCount(record.get(PROCESSOR_TASK.FAULT_COUNT))
+                .reason(record.get(PROCESSOR_TASK.REASON))
                 .build();
     }
 }

@@ -20,6 +20,7 @@ import stroom.processor.shared.ProcessorTask;
 
 import java.util.Collection;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Consumer;
 
 public class ProcessorTaskQueue {
 
@@ -35,6 +36,13 @@ public class ProcessorTaskQueue {
 
     public int size() {
         return queue.size();
+    }
+
+    /// Passes each task that is in the queue to a consumer. What is added or removed meanwhile may be missed.
+    ///
+    /// @param consumer The consumer.
+    public void forEach(final Consumer<ProcessorTask> consumer) {
+        queue.forEach(consumer);
     }
 
     public boolean hasItems() {

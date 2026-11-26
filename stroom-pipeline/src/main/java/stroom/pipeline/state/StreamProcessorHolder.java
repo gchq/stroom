@@ -16,6 +16,8 @@
 
 package stroom.pipeline.state;
 
+import stroom.processor.api.RunIndexing;
+import stroom.processor.api.RunOutput;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorTask;
 import stroom.util.pipeline.scope.PipelineScoped;
@@ -25,6 +27,8 @@ public class StreamProcessorHolder implements Holder {
 
     private Processor streamProcessor;
     private ProcessorTask streamTask;
+    private RunOutput runOutput;
+    private RunIndexing runIndexing;
 
     public Processor getStreamProcessor() {
         return streamProcessor;
@@ -34,8 +38,33 @@ public class StreamProcessorHolder implements Holder {
         return streamTask;
     }
 
-    public void setStreamProcessor(final Processor streamProcessor, final ProcessorTask streamTask) {
+    /// Gets what has to be told of every stream that is opened to write to.
+    ///
+    /// @return What has to be told, or null if this isn't a run of a task.
+    public RunOutput getRunOutput() {
+        return runOutput;
+    }
+
+    /// Gets what an index has to tell of the run, which decides how it ends.
+    ///
+    /// @return What has to be told, or null if this isn't a run of a task.
+    public RunIndexing getRunIndexing() {
+        return runIndexing;
+    }
+
+    /// Sets what is being run.
+    ///
+    /// @param streamProcessor The processor of the task.
+    /// @param streamTask      The task.
+    /// @param runOutput       What has to be told of every stream that is opened to write to.
+    /// @param runIndexing     What an index has to tell of the run.
+    public void setStreamProcessor(final Processor streamProcessor,
+                                   final ProcessorTask streamTask,
+                                   final RunOutput runOutput,
+                                   final RunIndexing runIndexing) {
         this.streamProcessor = streamProcessor;
         this.streamTask = streamTask;
+        this.runOutput = runOutput;
+        this.runIndexing = runIndexing;
     }
 }

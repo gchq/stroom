@@ -22,6 +22,7 @@ import stroom.task.api.SimpleTaskContextFactory;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
+import stroom.task.api.TerminationCause;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
 import stroom.task.shared.ThreadPool;
@@ -84,6 +85,11 @@ public class MockTaskModule extends AbstractModule {
 
             @Override
             public void terminate(final TaskId taskId) {
+
+            }
+
+            @Override
+            public void terminate(final TaskId taskId, final TerminationCause terminationCause) {
 
             }
 

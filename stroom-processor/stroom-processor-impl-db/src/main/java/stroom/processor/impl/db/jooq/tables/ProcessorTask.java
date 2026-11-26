@@ -18,13 +18,14 @@ import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
 import org.jooq.SQL;
 import org.jooq.Schema;
-import org.jooq.Select;
 import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableLike;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -58,7 +59,7 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
     /**
      * The column <code>stroom.processor_task.id</code>.
      */
-    public final TableField<ProcessorTaskRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
+    public final TableField<ProcessorTaskRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).generatedByDefaultAsIdentity(), this, "");
 
     /**
      * The column <code>stroom.processor_task.version</code>.
@@ -114,6 +115,21 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
      * The column <code>stroom.processor_task.data</code>.
      */
     public final TableField<ProcessorTaskRecord, String> DATA = createField(DSL.name("data"), SQLDataType.CLOB, this, "");
+
+    /**
+     * The column <code>stroom.processor_task.run_count</code>.
+     */
+    public final TableField<ProcessorTaskRecord, Integer> RUN_COUNT = createField(DSL.name("run_count"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.inline("0", SQLDataType.INTEGER)), this, "");
+
+    /**
+     * The column <code>stroom.processor_task.fault_count</code>.
+     */
+    public final TableField<ProcessorTaskRecord, Integer> FAULT_COUNT = createField(DSL.name("fault_count"), SQLDataType.INTEGER.nullable(false).defaultValue(DSL.inline("0", SQLDataType.INTEGER)), this, "");
+
+    /**
+     * The column <code>stroom.processor_task.reason</code>.
+     */
+    public final TableField<ProcessorTaskRecord, String> REASON = createField(DSL.name("reason"), SQLDataType.VARCHAR(1000), this, "");
 
     private ProcessorTask(Name alias, Table<ProcessorTaskRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -218,7 +234,7 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
      */
     @Override
     public ProcessorTask where(Condition condition) {
-        return new ProcessorTask(getQualifiedName(), aliased() ? this : null, null, condition);
+        return new ProcessorTask(getQualifiedName(), aliased() ? this : null, null, Internal.condition(this, condition));
     }
 
     /**
@@ -285,7 +301,7 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public ProcessorTask whereExists(Select<?> select) {
+    public ProcessorTask whereExists(TableLike<?> select) {
         return where(DSL.exists(select));
     }
 
@@ -293,7 +309,7 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public ProcessorTask whereNotExists(Select<?> select) {
+    public ProcessorTask whereNotExists(TableLike<?> select) {
         return where(DSL.notExists(select));
     }
 }

@@ -16,6 +16,7 @@
 
 package stroom.processor.impl;
 
+import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.meta.api.MetaService;
 import stroom.node.api.NodeInfo;
@@ -39,12 +40,14 @@ import stroom.util.time.StroomDuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -63,6 +66,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -71,6 +76,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -180,8 +186,9 @@ class TestProcessorTaskQueueManagerImpl {
             return ids.stream().sorted().map(tasksById::get).toList();
         });
         // Releasing moves tasks back to CREATED so they can be queued again.
-        when(processorTaskDao.releaseTasks(anySet(), any())).thenAnswer(invocation -> {
-            final Set<Long> ids = invocation.getArgument(0);
+        when(processorTaskDao.putBackTasks(any(), any(), any())).thenAnswer(invocation -> {
+            final Collection<ProcessorTask> tasks = invocation.getArgument(0);
+            final Set<Long> ids = tasks.stream().map(ProcessorTask::getId).collect(Collectors.toSet());
             queuedTaskIds.removeAll(ids);
             return ids.size();
         });
@@ -510,7 +517,8 @@ class TestProcessorTaskQueueManagerImpl {
         when(processorProfileCache.getProfile(NODE, PROFILE)).thenReturn(NONE);
         queueManager.exec();
         assertThat(queueManager.getTaskQueueSize()).isZero();
-        verify(processorTaskDao).releaseTasks(anySet(), eq(TaskStatus.QUEUED));
+        verify(processorTaskDao).putBackTasks(
+                any(), eq(Set.of(TaskStatus.QUEUED)), eq(ProcessorTaskQueueManagerImpl.REASON_PROFILE_ALLOWS_NONE));
 
         // Move back into a period where it allows them again.
         when(processorProfileCache.getProfile(NODE, PROFILE)).thenReturn(UNLIMITED);
@@ -547,7 +555,8 @@ class TestProcessorTaskQueueManagerImpl {
                 .findExistingCreatedTasks(anyLong(), eq(limited.getId()), anyInt());
         // But its queued tasks have still been released.
         assertThat(queuedTaskIds).doesNotContainAnyElementsOf(limitedIds);
-        verify(processorTaskDao).releaseTasks(anySet(), eq(TaskStatus.QUEUED));
+        verify(processorTaskDao).putBackTasks(
+                any(), eq(Set.of(TaskStatus.QUEUED)), eq(ProcessorTaskQueueManagerImpl.REASON_PROFILE_ALLOWS_NONE));
     }
 
     @Test
@@ -563,7 +572,8 @@ class TestProcessorTaskQueueManagerImpl {
         queueManager.exec();
 
         assertThat(queueManager.getTaskQueueSize()).isZero();
-        verify(processorTaskDao).releaseTasks(anySet(), eq(TaskStatus.QUEUED));
+        verify(processorTaskDao).putBackTasks(
+                any(), eq(Set.of(TaskStatus.QUEUED)), eq(ProcessorTaskQueueManagerImpl.REASON_FILTER_NOT_ENABLED));
     }
 
     @Test
@@ -577,6 +587,168 @@ class TestProcessorTaskQueueManagerImpl {
         queueManager.shutdown();
 
         assertThat(queueManager.getTaskQueueSize()).isZero();
+        // They are put back, not just forgotten.
+        assertThat(queuedTaskIds).isEmpty();
+    }
+
+    @Test
+    void fillThatRunsAfterTheNodeHasStoppedQueuesNothing() {
+        final ProcessorFilter filter = createFilter(1, null);
+        givenFilters(filter);
+        givenCreatedTasks(filter, 10);
+
+        queueManager.shutdown();
+        queueManager.exec();
+
+        assertThat(queueManager.getTaskQueueSize()).isZero();
+        assertThat(queuedTaskIds).isEmpty();
+
+        // Once it has started again it is filled as before.
+        queueManager.startup();
+        queueManager.exec();
+        assertThat(queueManager.getTaskQueueSize()).isEqualTo(10);
+    }
+
+    @Test
+    void masterPutsBackTasksThatWereHandedOutAndNotStarted() {
+        final ProcessorFilter filter = createFilter(1, null);
+        givenFilters(filter);
+        final List<Long> ids = givenCreatedTasks(filter, 10);
+        queueManager.exec();
+        final List<ProcessorTask> handedOut = queueManager.assignTasks(TaskId.createTestTaskId(), OTHER_NODE, 2)
+                .getList();
+        final Set<Long> handedOutIds = handedOut.stream().map(ProcessorTask::getId).collect(Collectors.toSet());
+        // All of them are queued by this node and have been for longer than the lease timeout. One is lost.
+        final ProcessorTask lost = tasksById.get(ids.getLast()).copy().id(1_000L).build();
+        when(processorTaskDao.findQueuedTasks(eq(NODE), any(), eq(-1L), anyInt())).thenReturn(
+                Stream.concat(ids.stream().map(tasksById::get), Stream.of(lost)).toList());
+        final Instant now = Instant.now();
+
+        assertThat(queueManager.putBackLostTasks(NODE, now)).isOne();
+
+        final ArgumentCaptor<Collection<ProcessorTask>> captor = ArgumentCaptor.forClass(Collection.class);
+        verify(processorTaskDao).putBackTasks(captor.capture(), eq(Set.of(TaskStatus.QUEUED)),
+                eq(ProcessorTaskQueueManagerImpl.REASON_HANDED_OUT_NOT_STARTED));
+        assertThat(captor.getValue()).containsExactly(lost);
+
+        // Once the lease timeout has passed, those that were handed out and not started are put back too.
+        clearInvocations(processorTaskDao);
+        queueManager.putBackLostTasks(NODE, now.plus(new ProcessorConfig().getTaskLeaseTimeout().getDuration())
+                .plusSeconds(1));
+        verify(processorTaskDao).putBackTasks(captor.capture(), eq(Set.of(TaskStatus.QUEUED)),
+                eq(ProcessorTaskQueueManagerImpl.REASON_HANDED_OUT_NOT_STARTED));
+        assertThat(captor.getValue())
+                .extracting(ProcessorTask::getId)
+                .containsExactlyInAnyOrderElementsOf(Stream.concat(handedOutIds.stream(), Stream.of(1_000L)).toList());
+    }
+
+    @Test
+    void masterFindsLostTasksBehindAFullPageOfQueuedOnes() {
+        final ProcessorFilter filter = createFilter(1, null);
+        givenFilters(filter);
+        final List<Long> ids = givenCreatedTasks(filter, 1_000);
+        queueManager.exec();
+        assertThat(queueManager.getTaskQueueSize()).isEqualTo(1_000);
+        final ProcessorTask lost = tasksById.get(ids.getLast()).copy().id(100_000L).build();
+        when(processorTaskDao.findQueuedTasks(eq(NODE), any(), anyLong(), anyInt())).thenAnswer(invocation -> {
+            final long afterId = invocation.getArgument(2);
+            return Stream.concat(ids.stream().map(tasksById::get), Stream.of(lost))
+                    .filter(task -> task.getId() > afterId)
+                    .limit(invocation.<Integer>getArgument(3))
+                    .toList();
+        });
+
+        assertThat(queueManager.putBackLostTasks(NODE, Instant.now())).isOne();
+
+        verify(processorTaskDao).putBackTasks(eq(List.of(lost)), eq(Set.of(TaskStatus.QUEUED)),
+                eq(ProcessorTaskQueueManagerImpl.REASON_HANDED_OUT_NOT_STARTED));
+    }
+
+    @Test
+    void nodeThatIsNoLongerTheMasterPutsBackItsQueueAndItsLostTasks() throws Exception {
+        final ProcessorFilter filter = createFilter(1, null);
+        givenFilters(filter);
+        final List<Long> ids = givenCreatedTasks(filter, 10);
+        queueManager.exec();
+        final ProcessorTask lost = tasksById.get(ids.getLast()).copy().id(1_000L).build();
+        when(processorTaskDao.findQueuedTasks(eq(NODE), any(), eq(-1L), anyInt())).thenReturn(List.of(lost));
+        when(targetNodeSetFactory.getMasterNode()).thenReturn(OTHER_NODE);
+
+        queueManager.releaseOldQueuedTasks();
+
+        assertThat(queueManager.getTaskQueueSize()).isZero();
+        assertThat(queuedTaskIds).isEmpty();
+        // An old master that is still active has nothing else to put back what it handed out and wasn't started.
+        verify(processorTaskDao).putBackTasks(eq(List.of(lost)), eq(Set.of(TaskStatus.QUEUED)),
+                eq(ProcessorTaskQueueManagerImpl.REASON_HANDED_OUT_NOT_STARTED));
+    }
+
+    @Test
+    void masterKeepsItsQueueAndPutsBackItsLostTasks() throws Exception {
+        final ProcessorFilter filter = createFilter(1, null);
+        givenFilters(filter);
+        final List<Long> ids = givenCreatedTasks(filter, 10);
+        queueManager.exec();
+        final ProcessorTask lost = tasksById.get(ids.getLast()).copy().id(1_000L).build();
+        when(processorTaskDao.findQueuedTasks(eq(NODE), any(), eq(-1L), anyInt())).thenReturn(
+                Stream.concat(ids.stream().map(tasksById::get), Stream.of(lost)).toList());
+        when(targetNodeSetFactory.getMasterNode()).thenReturn(NODE);
+
+        queueManager.releaseOldQueuedTasks();
+
+        assertThat(queueManager.getTaskQueueSize()).isEqualTo(10);
+        verify(processorTaskDao).putBackTasks(eq(List.of(lost)), eq(Set.of(TaskStatus.QUEUED)),
+                eq(ProcessorTaskQueueManagerImpl.REASON_HANDED_OUT_NOT_STARTED));
+    }
+
+    @Test
+    void nodeThatCannotTellWhichIsTheMasterKeepsItsQueue() throws Exception {
+        final ProcessorFilter filter = createFilter(1, null);
+        givenFilters(filter);
+        givenCreatedTasks(filter, 10);
+        queueManager.exec();
+        when(processorTaskDao.findQueuedTasks(any(), any(), anyLong(), anyInt())).thenReturn(List.of());
+        when(targetNodeSetFactory.getMasterNode()).thenThrow(new NullClusterStateException());
+
+        queueManager.releaseOldQueuedTasks();
+
+        assertThat(queueManager.getTaskQueueSize()).isEqualTo(10);
+        // Lost tasks are still looked for, as that doesn't depend on which node is the master.
+        verify(processorTaskDao).findQueuedTasks(eq(NODE), any(), eq(-1L), anyInt());
+    }
+
+    @Test
+    void nodeClaimingTasksPutsBackItsQueueAndLeavesTheRestToTheReaper() {
+        final ProcessorFilter filter = createFilter(1, null);
+        givenFilters(filter);
+        givenCreatedTasks(filter, 10);
+        queueManager.exec();
+        processorConfig.setClaimTasksOnWorker(true);
+
+        queueManager.releaseOldQueuedTasks();
+
+        assertThat(queueManager.getTaskQueueSize()).isZero();
+        assertThat(queuedTaskIds).isEmpty();
+        verify(processorTaskDao, never()).findQueuedTasks(any(), any(), anyLong(), anyInt());
+    }
+
+    @Test
+    void abandonedTasksArePutBackOnlyIfStillQueued() {
+        final ProcessorTask task = ProcessorTask.builder().id(1L).version(1).build();
+
+        assertThat(queueManager.abandonTasks(new ProcessorTaskList(OTHER_NODE, List.of(task)))).isTrue();
+
+        verify(processorTaskDao).putBackTasks(
+                eq(List.of(task)), eq(Set.of(TaskStatus.QUEUED)), eq(DataProcessorTaskFactory.REASON_GIVEN_BACK));
+    }
+
+    @Test
+    void masterPutsBackNothingIfNothingIsLost() {
+        when(processorTaskDao.findQueuedTasks(any(), any(), anyLong(), anyInt())).thenReturn(List.of());
+
+        assertThat(queueManager.putBackLostTasks(NODE, Instant.now())).isZero();
+
+        verify(processorTaskDao, never()).putBackTasks(any(), any(), any());
     }
 
     // --------------------------------------------------------------------------------

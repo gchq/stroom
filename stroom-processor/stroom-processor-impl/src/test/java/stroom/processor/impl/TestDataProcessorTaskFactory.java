@@ -23,6 +23,7 @@ import stroom.processor.shared.AssignTasksRequest;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.ProcessorTaskResource;
+import stroom.processor.shared.TaskStatus;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.shared.TaskId;
@@ -32,7 +33,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -54,6 +57,7 @@ class TestDataProcessorTaskFactory {
     private final ProcessorTaskResource processorTaskResource = Mockito.mock(ProcessorTaskResource.class);
     private final NodeInfo nodeInfo = Mockito.mock(NodeInfo.class);
     private final ProcessorTaskClaimer processorTaskClaimer = Mockito.mock(ProcessorTaskClaimer.class);
+    private final ProcessorTaskDao processorTaskDao = Mockito.mock(ProcessorTaskDao.class);
     private final ProcessorConfig processorConfig = new ProcessorConfig();
 
     /**
@@ -123,25 +127,66 @@ class TestDataProcessorTaskFactory {
         Mockito.verifyNoInteractions(targetNodeSetFactory, processorTaskResource);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
-    void queueModeAbandonsViaTheMaster() throws Exception {
+    void queueModePutsBackLocallyRatherThanViaTheMaster() throws Exception {
         processorConfig.setClaimTasksOnWorker(false);
-        Mockito.when(targetNodeSetFactory.isClusterStateInitialised()).thenReturn(true);
-        Mockito.when(targetNodeSetFactory.getMasterNode()).thenReturn(MASTER_NODE);
-        Mockito.when(processorTaskResource.abandonTasks(Mockito.eq(MASTER_NODE), Mockito.any()))
-                .thenReturn(true);
+        Mockito.when(processorTaskDao.putBackTasks(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(1);
 
         final DataProcessorTaskFactory factory = factory();
         final List<DistributedTask> tasks = distributedTasks(factory, task(1));
 
         assertThat(factory.abandon(THIS_NODE, tasks)).isTrue();
 
-        final ArgumentCaptor<ProcessorTaskList> captor = ArgumentCaptor.forClass(ProcessorTaskList.class);
-        Mockito.verify(processorTaskResource).abandonTasks(Mockito.eq(MASTER_NODE), captor.capture());
-        assertThat(captor.getValue().getList())
+        final ArgumentCaptor<Collection<ProcessorTask>> captor = ArgumentCaptor.forClass(Collection.class);
+        Mockito.verify(processorTaskDao).putBackTasks(
+                captor.capture(),
+                Mockito.eq(Set.of(TaskStatus.QUEUED)),
+                Mockito.eq(DataProcessorTaskFactory.REASON_GIVEN_BACK));
+        assertThat(captor.getValue())
                 .extracting(ProcessorTask::getId)
                 .containsExactly(1L);
-        Mockito.verifyNoInteractions(processorTaskClaimer);
+        // The master may be what has gone.
+        Mockito.verifyNoInteractions(processorTaskClaimer, targetNodeSetFactory, processorTaskResource);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void tasksArePutBackByHowTheyWereFetchedEvenIfTheSettingHasChanged() throws Exception {
+        final DataProcessorTaskFactory factory = factory();
+        processorConfig.setClaimTasksOnWorker(true);
+        final List<DistributedTask> claimed = distributedTasks(factory, task(1));
+        processorConfig.setClaimTasksOnWorker(false);
+        final List<DistributedTask> queued = distributedTasks(factory, task(2));
+        Mockito.when(processorTaskDao.putBackTasks(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(1);
+
+        // Fetched with the master queue, and given back after the setting has changed to claiming.
+        processorConfig.setClaimTasksOnWorker(true);
+        assertThat(factory.abandon(THIS_NODE, List.of(claimed.getFirst(), queued.getFirst()))).isTrue();
+
+        final ArgumentCaptor<List<ProcessorTask>> claimedCaptor = ArgumentCaptor.forClass(List.class);
+        Mockito.verify(processorTaskClaimer).abandonTasks(claimedCaptor.capture());
+        assertThat(claimedCaptor.getValue())
+                .extracting(ProcessorTask::getId)
+                .containsExactly(1L);
+        final ArgumentCaptor<Collection<ProcessorTask>> queuedCaptor = ArgumentCaptor.forClass(Collection.class);
+        Mockito.verify(processorTaskDao).putBackTasks(
+                queuedCaptor.capture(),
+                Mockito.eq(Set.of(TaskStatus.QUEUED)),
+                Mockito.eq(DataProcessorTaskFactory.REASON_GIVEN_BACK));
+        assertThat(queuedCaptor.getValue())
+                .extracting(ProcessorTask::getId)
+                .containsExactly(2L);
+    }
+
+    @Test
+    void failedPutBackIsReportedAsFailure() throws Exception {
+        processorConfig.setClaimTasksOnWorker(false);
+        Mockito.when(processorTaskDao.putBackTasks(Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenThrow(new RuntimeException("Database is down"));
+
+        final DataProcessorTaskFactory factory = factory();
+        assertThat(factory.abandon(THIS_NODE, distributedTasks(factory, task(1)))).isFalse();
     }
 
     /**
@@ -195,6 +240,7 @@ class TestDataProcessorTaskFactory {
                 nodeInfo,
                 taskContextFactory,
                 processorTaskClaimer,
+                processorTaskDao,
                 () -> processorConfig);
         factory.setRunnableFactory((processorTask, alreadyClaimed) -> {
             alreadyClaimedFlags.add(alreadyClaimed);

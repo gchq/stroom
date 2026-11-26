@@ -16,13 +16,14 @@ import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
 import org.jooq.SQL;
 import org.jooq.Schema;
-import org.jooq.Select;
 import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.TableLike;
 import org.jooq.TableOptions;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
@@ -55,7 +56,7 @@ public class Processor extends TableImpl<ProcessorRecord> {
     /**
      * The column <code>stroom.processor.id</code>.
      */
-    public final TableField<ProcessorRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<ProcessorRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).generatedByDefaultAsIdentity(), this, "");
 
     /**
      * The column <code>stroom.processor.version</code>.
@@ -205,7 +206,7 @@ public class Processor extends TableImpl<ProcessorRecord> {
      */
     @Override
     public Processor where(Condition condition) {
-        return new Processor(getQualifiedName(), aliased() ? this : null, null, condition);
+        return new Processor(getQualifiedName(), aliased() ? this : null, null, Internal.condition(this, condition));
     }
 
     /**
@@ -272,7 +273,7 @@ public class Processor extends TableImpl<ProcessorRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public Processor whereExists(Select<?> select) {
+    public Processor whereExists(TableLike<?> select) {
         return where(DSL.exists(select));
     }
 
@@ -280,7 +281,7 @@ public class Processor extends TableImpl<ProcessorRecord> {
      * Create an inline derived table from this table
      */
     @Override
-    public Processor whereNotExists(Select<?> select) {
+    public Processor whereNotExists(TableLike<?> select) {
         return where(DSL.notExists(select));
     }
 }

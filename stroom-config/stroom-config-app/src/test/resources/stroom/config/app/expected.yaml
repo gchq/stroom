@@ -952,6 +952,7 @@ appConfig:
       refreshAfterWrite: null
       statisticsMode: "INTERNAL"
   processor:
+    abortedTaskDeleteAge: "P30D"
     assignTasks: true
     claimTasksOnWorker: false
     createTasksBeyondProcessLimit: true
@@ -974,6 +975,7 @@ appConfig:
         prepStmtCacheSqlLimit: 256
     deleteAge: "P1D"
     fillTaskQueue: true
+    maxTaskFaults: 3
     processorCache:
       expireAfterAccess: "PT10S"
       expireAfterWrite: null
@@ -1011,6 +1013,7 @@ appConfig:
     taskAvailabilityInterval: "PT5S"
     taskCreationThreadCount: 5
     taskLeaseTimeout: "PT10M"
+    taskRetryDelay: "PT10M"
     tasksToCreate: 1000
     useMaxMetaIdFromPreviousPoll: true
     waitToQueueTasksDuration: "PT10S"

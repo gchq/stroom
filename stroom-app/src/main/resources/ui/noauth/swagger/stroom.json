@@ -26320,6 +26320,10 @@
             "type" : "integer",
             "format" : "int64"
           },
+          "faultCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
           "feedName" : {
             "type" : "string"
           },
@@ -26337,13 +26341,20 @@
           "processorFilter" : {
             "$ref" : "#/components/schemas/ProcessorFilter"
           },
+          "reason" : {
+            "type" : "string"
+          },
+          "runCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
           "startTimeMs" : {
             "type" : "integer",
             "format" : "int64"
           },
           "status" : {
             "type" : "string",
-            "enum" : [ "CREATED", "QUEUED", "ASSIGNED", "PROCESSING", "COMPLETE", "FAILED", "DELETED" ]
+            "enum" : [ "CREATED", "QUEUED", "ASSIGNED", "PROCESSING", "COMMITTING", "RETRY", "COMPLETE", "FAILED", "ABORTED", "DELETED" ]
           },
           "statusTimeMs" : {
             "type" : "integer",
@@ -26388,7 +26399,7 @@
           },
           "status" : {
             "type" : "string",
-            "enum" : [ "CREATED", "QUEUED", "ASSIGNED", "PROCESSING", "COMPLETE", "FAILED", "DELETED" ]
+            "enum" : [ "CREATED", "QUEUED", "ASSIGNED", "PROCESSING", "COMMITTING", "RETRY", "COMPLETE", "FAILED", "ABORTED", "DELETED" ]
           }
         }
       },

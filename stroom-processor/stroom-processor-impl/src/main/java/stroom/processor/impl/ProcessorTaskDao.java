@@ -19,6 +19,7 @@ package stroom.processor.impl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.Meta;
 import stroom.processor.api.InclusiveRanges;
+import stroom.processor.api.ProcessorTaskState;
 import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
@@ -33,6 +34,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public interface ProcessorTaskDao {
@@ -151,6 +153,15 @@ public interface ProcessorTaskDao {
      */
     long sweepQueuedTasks(Instant statusOlderThan);
 
+    /// Puts back tasks queued by nodes that are not active, which can only have been left by an earlier master that
+    /// died or was removed, as nothing else will put them back. A node that is active puts back its own. Each is put
+    /// back by id and version.
+    ///
+    /// @param statusOlderThan Only put back tasks that have been queued since before this.
+    /// @param activeNodeNames The nodes that are active, whose tasks are left alone.
+    /// @return The number of tasks put back.
+    long sweepQueuedTasksOfInactiveNodes(Instant statusOlderThan, Set<String> activeNodeNames);
+
     /**
      * Count the current number of tasks for a filter matching the specified status.
      *
@@ -207,26 +218,132 @@ public interface ProcessorTaskDao {
     List<ProcessorTask> queueTasks(Set<Long> idSet,
                                    String thisNodeName);
 
-    /**
-     * Release ownership for a set of tasks and abandon processing.
-     *
-     * @param idSet         The ids of the tasks to release.
-     * @param currentStatus The current status of tasks to release.
-     * @return The number of tasks changed.
-     */
-    int releaseTasks(Set<Long> idSet, TaskStatus currentStatus);
+    /// Puts tasks back to [TaskStatus#CREATED], unowned, so that they can be run, but only those that have not
+    /// changed since the caller knew them. A task that has just been started, or put back by something else, is left
+    /// alone. A task that has a reason keeps it, as it says why the task was last put back, or the last fault it hit,
+    /// and being taken back without being run doesn't change that.
+    ///
+    /// @param tasks           The tasks as the caller knows them.
+    /// @param currentStatuses The statuses that they may have.
+    /// @param reason          Why they are put back, which is given to those that have no reason.
+    /// @return The number of tasks that were put back.
+    int putBackTasks(Collection<ProcessorTask> tasks, Set<TaskStatus> currentStatuses, String reason);
 
-    ResultPage<ProcessorTask> changeTaskStatus(ExpressionCriteria criteria,
-                                               String nodeName,
-                                               TaskStatus status,
-                                               Long startTime,
-                                               Long endTime);
+    /// Puts back a task that a run tried to start, when it can't be told whether it was started. It is put back if
+    /// it is still [TaskStatus#QUEUED] as the run knew it, or if it is [TaskStatus#PROCESSING] for this node on the
+    /// run that the run would have started.
+    ///
+    /// @param task     The task as the run knew it before trying to start it.
+    /// @param nodeName The node the run is on.
+    /// @return True if it was put back.
+    boolean putBackUnstarted(ProcessorTask task, String nodeName);
 
-    ProcessorTask changeTaskStatus(ProcessorTask processorTask,
-                                   String nodeName,
-                                   TaskStatus status,
-                                   Long startTime,
-                                   Long endTime);
+    /// Finds tasks that a node has queued and that have been waiting longer than they should, so that those which
+    /// have been lost can be put back.
+    ///
+    /// @param nodeName        The node that queued them.
+    /// @param statusOlderThan Only find tasks that have been queued since before this.
+    /// @param afterId         Only find tasks with a higher id than this, to find the next page.
+    /// @param limit           The most tasks to find.
+    /// @return The tasks, with their ids and versions, in order of id.
+    List<ProcessorTask> findQueuedTasks(String nodeName, Instant statusOlderThan, long afterId, int limit);
+
+    /// Finds which tasks are being processed by a node, and the versions they have. A run still has its task only if
+    /// the task is one of these and has the version that the run knows it by.
+    ///
+    /// @param nodeName The node.
+    /// @param taskIds  The ids of the tasks to look for.
+    /// @return The versions of those that the node is processing, by task id.
+    Map<Long, Integer> findProcessingVersions(String nodeName, Collection<Long> taskIds);
+
+    /// Changes the status of a task with no reason to record and no fault to count. Any reason it had is cleared.
+    /// See [#changeTaskStatus(ProcessorTask, String, TaskStatus, Long, Long, String, boolean)].
+    ///
+    /// @param processorTask The task as the caller last knew it.
+    /// @param nodeName      The node that has the task, or null if none does.
+    /// @param status        The status to give it.
+    /// @param startTime     When processing started, or null.
+    /// @param endTime       When processing ended, or null.
+    /// @return What happened.
+    default TaskStatusChange changeTaskStatus(final ProcessorTask processorTask,
+                                              final String nodeName,
+                                              final TaskStatus status,
+                                              final Long startTime,
+                                              final Long endTime) {
+        return changeTaskStatus(processorTask, nodeName, status, startTime, endTime, null, false);
+    }
+
+    /// Changes the status of a task, but only if it still has the version the caller last knew. Setting a task
+    /// to [TaskStatus#PROCESSING] starts a new run of it, so its run count goes up in the same update.
+    ///
+    /// This is tried several times if the database can't be reached, and isn't given up if the thread is interrupted.
+    ///
+    /// @param processorTask The task as the caller last knew it.
+    /// @param nodeName      The node that has the task, or null if none does.
+    /// @param status        The status to give it.
+    /// @param startTime     When processing started, or null.
+    /// @param endTime       When processing ended, or null.
+    /// @param reason        Why the task is given the status, or null if there is nothing to say. This replaces
+    ///                      any reason it had.
+    /// @param countFault    True if the task's fault count is to go up in the same update.
+    /// @return What happened.
+    TaskStatusChange changeTaskStatus(ProcessorTask processorTask,
+                                      String nodeName,
+                                      TaskStatus status,
+                                      Long startTime,
+                                      Long endTime,
+                                      String reason,
+                                      boolean countFault);
+
+    /// Puts tasks of a filter that hit a fault back to [TaskStatus#CREATED], so that they are tried again. Those that
+    /// have waited longest are put back first. They keep their reason, so that it can be seen why they are being tried
+    /// again.
+    ///
+    /// @param filterId        The id of the filter.
+    /// @param statusOlderThan Only put back tasks that have been waiting since before this.
+    /// @param limit           The most tasks to put back.
+    /// @return The number of tasks that were put back.
+    int putBackRetryTasks(int filterId, Instant statusOlderThan, int limit);
+
+    /// Counts the tasks that hit a fault and are waiting to be tried again.
+    ///
+    /// @return The number of tasks for each filter that has any, by filter id.
+    Map<Integer, Integer> countRetryTasksByFilter();
+
+    /// Sets a task that is `Committing` from a run to `Complete`.
+    ///
+    /// @param taskId   The id of the task.
+    /// @param runCount The run that held it.
+    /// @return False if it isn't `Committing` from that run.
+    boolean completeHeld(long taskId, int runCount);
+
+    /// Puts back a task that is `Committing` from a run, without counting a fault.
+    ///
+    /// @param taskId   The id of the task.
+    /// @param runCount The run that held it.
+    /// @param reason   Why it was put back.
+    /// @return False if it isn't `Committing` from that run.
+    boolean putBackHeld(long taskId, int runCount, String reason);
+
+    /// Gets the status of tasks, and the run each is on.
+    ///
+    /// @param taskIds The ids of the tasks, of which there can be any number.
+    /// @return The state of each, by its id. A task that no longer exists is `Deleted`, with a run count of zero.
+    Map<Long, ProcessorTaskState> getStates(Collection<Long> taskIds);
+
+    /// Finds tasks that are `Committing`.
+    ///
+    /// @param olderThan Only tasks that were set to `Committing` before this are found.
+    /// @param afterId   Only tasks with a higher id than this are found.
+    /// @param limit     The most to find.
+    /// @return The tasks, in order of their ids.
+    List<ProcessorTaskState> findHeld(Instant olderThan, long afterId, int limit);
+
+    /// Finds the reason of the task of a filter that was the last to hit a fault, of those waiting to be tried again.
+    ///
+    /// @param filterId The id of the filter.
+    /// @return The reason, if there is such a task and it has one.
+    Optional<String> findLatestRetryReason(int filterId);
 
     ResultPage<ProcessorTask> find(final ExpressionCriteria criteria);
 
@@ -234,13 +351,22 @@ public interface ProcessorTaskDao {
 
     void search(ExpressionCriteria criteria, FieldIndex fieldIndex, ValuesConsumer consumer);
 
+    /// Logically deletes the unfinished tasks of a processor. Tasks that are committing are left to finish.
+    ///
+    /// @param processorId The id of the processor.
+    /// @return The number of logically deleted tasks.
     int logicalDeleteByProcessorId(int processorId);
 
+    /// Logically deletes the unfinished tasks of a processor filter. Tasks that are committing are left to finish.
+    ///
+    /// @param processorFilterId The id of the processor filter.
+    /// @return The number of logically deleted tasks.
     int logicalDeleteByProcessorFilterId(int processorFilterId);
 
     /**
      * Logically delete tasks that are associated with filters that have been logically deleted for longer than the
-     * threshold.
+     * threshold. Unlike when a filter is first deleted, this deletes them whatever their status, including those that
+     * are committing or have been aborted, so that the filter can then be physically deleted.
      *
      * @param deleteThreshold Only logically delete tasks with an update time older than the threshold.
      * @return The number of logically deleted tasks.
@@ -254,6 +380,12 @@ public interface ProcessorTaskDao {
      * @return The number of physically deleted tasks.
      */
     int physicallyDeleteOldTasks(Instant deleteThreshold);
+
+    /// Physically delete tasks that have been aborted for longer than the threshold.
+    ///
+    /// @param deleteThreshold Only physically delete tasks that were aborted before this.
+    /// @return The number of physically deleted tasks.
+    int physicallyDeleteOldAbortedTasks(Instant deleteThreshold);
 
     /**
      * Only used by the master queue, i.e. when stroom.processor.claimTasksOnWorker is false.

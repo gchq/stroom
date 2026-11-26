@@ -163,6 +163,9 @@ public class StreamAppender extends AbstractAppender {
         final String volumeGroupName = volumeGroupNameProvider
                 .getVolumeGroupName(feed, streamType, volumeGroup);
         streamTarget = streamStore.openTarget(metaProperties, volumeGroupName);
+        if (processorTask != null && streamProcessorHolder.getRunOutput() != null) {
+            streamProcessorHolder.getRunOutput().addOutput(streamTarget.getMeta().getId());
+        }
 
         final WrappedSegmentOutputStream wrappedSegmentOutputStream =
                 new WrappedSegmentOutputStream(streamTarget.next().get()) {

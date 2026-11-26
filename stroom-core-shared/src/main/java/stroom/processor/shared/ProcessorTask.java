@@ -55,6 +55,12 @@ public class ProcessorTask {
     private final Long endTimeMs;
     @JsonProperty
     private final TaskStatus status;
+    @JsonProperty
+    private final int runCount;
+    @JsonProperty
+    private final int faultCount;
+    @JsonProperty
+    private final String reason;
 
     // parent filter
     @JsonProperty
@@ -72,6 +78,9 @@ public class ProcessorTask {
                          @JsonProperty("startTimeMs") final Long startTimeMs,
                          @JsonProperty("endTimeMs") final Long endTimeMs,
                          @JsonProperty("status") final TaskStatus status,
+                         @JsonProperty("runCount") final Integer runCount,
+                         @JsonProperty("faultCount") final Integer faultCount,
+                         @JsonProperty("reason") final String reason,
                          @JsonProperty("processorFilter") final ProcessorFilter processorFilter) {
         this.id = Objects.requireNonNullElse(id, 0L);
         this.version = version;
@@ -84,6 +93,9 @@ public class ProcessorTask {
         this.startTimeMs = startTimeMs;
         this.endTimeMs = endTimeMs;
         this.status = status;
+        this.runCount = Objects.requireNonNullElse(runCount, 0);
+        this.faultCount = Objects.requireNonNullElse(faultCount, 0);
+        this.reason = reason;
         this.processorFilter = processorFilter;
     }
 
@@ -131,6 +143,23 @@ public class ProcessorTask {
         return endTimeMs;
     }
 
+    /// @return How many times the task has been given to a node to run, which numbers its runs upwards. A node can
+    /// put the task back before running it, so there may be fewer runs than this. Zero if it has never been given to
+    /// a node to run.
+    public int getRunCount() {
+        return runCount;
+    }
+
+    /// @return How many faults that count have been hit by runs of the task.
+    public int getFaultCount() {
+        return faultCount;
+    }
+
+    /// @return Why the task has the status it has, or null if there is nothing to say.
+    public String getReason() {
+        return reason;
+    }
+
     public ProcessorFilter getProcessorFilter() {
         return processorFilter;
     }
@@ -149,6 +178,9 @@ public class ProcessorTask {
                ", startTimeMs=" + startTimeMs +
                ", endTimeMs=" + endTimeMs +
                ", status=" + status +
+               ", runCount=" + runCount +
+               ", faultCount=" + faultCount +
+               ", reason='" + reason + '\'' +
                ", processorFilter=" + processorFilter +
                '}';
     }
@@ -191,6 +223,9 @@ public class ProcessorTask {
         private Long startTimeMs;
         private Long endTimeMs;
         private TaskStatus status;
+        private int runCount;
+        private int faultCount;
+        private String reason;
         private ProcessorFilter processorFilter;
 
         public Builder() {
@@ -209,6 +244,9 @@ public class ProcessorTask {
             this.startTimeMs = processorTask.startTimeMs;
             this.endTimeMs = processorTask.endTimeMs;
             this.status = processorTask.status;
+            this.runCount = processorTask.runCount;
+            this.faultCount = processorTask.faultCount;
+            this.reason = processorTask.reason;
             this.processorFilter = processorTask.processorFilter;
         }
 
@@ -267,6 +305,27 @@ public class ProcessorTask {
             return self();
         }
 
+        /// @param runCount How many times the task has been given to a node to run.
+        /// @return This builder.
+        public Builder runCount(final int runCount) {
+            this.runCount = runCount;
+            return self();
+        }
+
+        /// @param faultCount How many faults that count have been hit by runs of the task.
+        /// @return This builder.
+        public Builder faultCount(final int faultCount) {
+            this.faultCount = faultCount;
+            return self();
+        }
+
+        /// @param reason Why the task has the status it has, or null if there is nothing to say.
+        /// @return This builder.
+        public Builder reason(final String reason) {
+            this.reason = reason;
+            return self();
+        }
+
         public Builder processorFilter(final ProcessorFilter processorFilter) {
             this.processorFilter = processorFilter;
             return self();
@@ -291,6 +350,9 @@ public class ProcessorTask {
                     startTimeMs,
                     endTimeMs,
                     status,
+                    runCount,
+                    faultCount,
+                    reason,
                     processorFilter);
         }
     }

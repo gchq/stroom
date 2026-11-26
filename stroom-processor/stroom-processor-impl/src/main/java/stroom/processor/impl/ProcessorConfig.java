@@ -46,11 +46,15 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     private static final boolean DEFAULT_USE_MAX_META_ID_FROM_PREVIOUS_POLL = true;
     private static final StroomDuration DEFAULT_TASK_AVAILABILITY_INTERVAL = StroomDuration.ofSeconds(5);
     private static final StroomDuration DEFAULT_TASK_LEASE_TIMEOUT = StroomDuration.ofMinutes(10);
+    private static final StroomDuration DEFAULT_TASK_RETRY_DELAY = StroomDuration.ofMinutes(10);
+    private static final int DEFAULT_MAX_TASK_FAULTS = 3;
+    private static final StroomDuration DEFAULT_ABORTED_TASK_DELETE_AGE = StroomDuration.ofDays(30);
 
     private final ProcessorDbConfig dbConfig;
     private boolean claimTasksOnWorker;
     private final boolean assignTasks;
     private final StroomDuration deleteAge;
+    private final StroomDuration abortedTaskDeleteAge;
     private final boolean fillTaskQueue;
     private final int queueSize;
     private final StroomDuration waitToQueueTasksDuration;
@@ -69,6 +73,8 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
 
     private final StroomDuration taskAvailabilityInterval;
     private final StroomDuration taskLeaseTimeout;
+    private final StroomDuration taskRetryDelay;
+    private final int maxTaskFaults;
 
     private StroomDuration skipNonProducingFiltersDuration;
     private StroomDuration skipNonProducingFiltersMaxDuration;
@@ -80,6 +86,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         claimTasksOnWorker = DEFAULT_CLAIM_TASKS_ON_WORKER;
         assignTasks = DEFAULT_ASSIGN_TASKS;
         deleteAge = StroomDuration.ofDays(1);
+        abortedTaskDeleteAge = DEFAULT_ABORTED_TASK_DELETE_AGE;
         fillTaskQueue = DEFAULT_FILL_TASK_QUEUE;
         queueSize = DEFAULT_QUEUE_SIZE;
         waitToQueueTasksDuration = StroomDuration.ofSeconds(10);
@@ -112,6 +119,8 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                 .build();
         taskAvailabilityInterval = DEFAULT_TASK_AVAILABILITY_INTERVAL;
         taskLeaseTimeout = DEFAULT_TASK_LEASE_TIMEOUT;
+        taskRetryDelay = DEFAULT_TASK_RETRY_DELAY;
+        maxTaskFaults = DEFAULT_MAX_TASK_FAULTS;
         skipNonProducingFiltersDuration = StroomDuration.ofSeconds(10);
         skipNonProducingFiltersMaxDuration = StroomDuration.ofMinutes(1);
         skipEmptyFilterFetchDuration = StroomDuration.ofSeconds(10);
@@ -124,6 +133,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                            @JsonProperty("claimTasksOnWorker") final Boolean claimTasksOnWorker,
                            @JsonProperty("assignTasks") final Boolean assignTasks,
                            @JsonProperty("deleteAge") final StroomDuration deleteAge,
+                           @JsonProperty("abortedTaskDeleteAge") final StroomDuration abortedTaskDeleteAge,
                            @JsonProperty("fillTaskQueue") final Boolean fillTaskQueue,
                            @JsonProperty("queueSize") final Integer queueSize,
                            @JsonProperty("waitToQueueTasksDuration") final StroomDuration waitToQueueTasksDuration,
@@ -139,6 +149,8 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                            @JsonProperty("processorProfileCache") final CacheConfig processorProfileCache,
                            @JsonProperty("taskAvailabilityInterval") final StroomDuration taskAvailabilityInterval,
                            @JsonProperty("taskLeaseTimeout") final StroomDuration taskLeaseTimeout,
+                           @JsonProperty("taskRetryDelay") final StroomDuration taskRetryDelay,
+                           @JsonProperty("maxTaskFaults") final Integer maxTaskFaults,
                            @JsonProperty("skipNonProducingFiltersDuration") final StroomDuration
                                    skipNonProducingFiltersDuration,
                            @JsonProperty("skipNonProducingFiltersMaxDuration") final StroomDuration
@@ -153,6 +165,8 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         this.assignTasks =
                 Objects.requireNonNullElse(assignTasks, DEFAULT_ASSIGN_TASKS);
         this.deleteAge = deleteAge;
+        this.abortedTaskDeleteAge = Objects.requireNonNullElse(
+                abortedTaskDeleteAge, DEFAULT_ABORTED_TASK_DELETE_AGE);
         this.fillTaskQueue =
                 Objects.requireNonNullElse(fillTaskQueue, DEFAULT_FILL_TASK_QUEUE);
         this.queueSize =
@@ -175,6 +189,8 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         this.taskAvailabilityInterval = Objects.requireNonNullElse(
                 taskAvailabilityInterval, DEFAULT_TASK_AVAILABILITY_INTERVAL);
         this.taskLeaseTimeout = Objects.requireNonNullElse(taskLeaseTimeout, DEFAULT_TASK_LEASE_TIMEOUT);
+        this.taskRetryDelay = Objects.requireNonNullElse(taskRetryDelay, DEFAULT_TASK_RETRY_DELAY);
+        this.maxTaskFaults = Objects.requireNonNullElse(maxTaskFaults, DEFAULT_MAX_TASK_FAULTS);
         this.skipNonProducingFiltersDuration = skipNonProducingFiltersDuration;
         this.skipNonProducingFiltersMaxDuration = skipNonProducingFiltersMaxDuration;
         this.skipEmptyFilterFetchDuration = skipEmptyFilterFetchDuration;
@@ -230,6 +246,17 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                              "In ISO-8601 duration format, e.g. 'P1DT12H'")
     public StroomDuration getDeleteAge() {
         return deleteAge;
+    }
+
+    /// @return How long to keep aborted tasks for. Zero if they are kept for as long as their filter is. They are
+    /// also kept if [#getDeleteAge()] is zero, as that turns off all deletion of tasks.
+    @JsonPropertyDescription("How long to keep tasks that have been aborted before physically deleting them. They " +
+                             "are kept for longer than completed tasks so that there is time to find out why they " +
+                             "were aborted. Set to zero to keep them until their filter is deleted. " +
+                             "Not used if deleteAge is zero, as that turns off all deletion of tasks. " +
+                             "In ISO-8601 duration format, e.g. 'P1DT12H'")
+    public StroomDuration getAbortedTaskDeleteAge() {
+        return abortedTaskDeleteAge;
     }
 
 
@@ -338,6 +365,23 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         return taskLeaseTimeout;
     }
 
+    /// @return How long a task that hit a fault waits before it is tried again.
+    @JsonPropertyDescription("How long a task that hit a fault waits, with a status of Retry, before it is tried " +
+                             "again. The delay keeps a short outage from using up every try of every task. " +
+                             "In ISO-8601 duration format, e.g. 'P1DT12H'")
+    public StroomDuration getTaskRetryDelay() {
+        return taskRetryDelay;
+    }
+
+    /// @return How many faults that count a task may hit before it is aborted.
+    @Min(1)
+    @JsonPropertyDescription("How many faults a task may hit before it is aborted rather than being tried again. " +
+                             "Faults that have nothing to do with the stream being processed are not counted, e.g. " +
+                             "the run as user of the filter being disabled.")
+    public int getMaxTaskFaults() {
+        return maxTaskFaults;
+    }
+
 
     @JsonPropertyDescription("How long should we wait before retrying task creation for previously non producing " +
                              "filters. This is also the amount by which the wait increases after each successive " +
@@ -400,6 +444,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         return "ProcessorConfig{" +
                "dbConfig=" + dbConfig +
                ", deleteAge=" + deleteAge +
+               ", abortedTaskDeleteAge=" + abortedTaskDeleteAge +
                ", tasksToCreate=" + tasksToCreate +
                ", taskCreationThreadCount=" + taskCreationThreadCount +
                ", databaseMultiInsertMaxBatchSize=" + databaseMultiInsertMaxBatchSize +
@@ -415,6 +460,8 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                ", waitToQueueTasksDuration=" + waitToQueueTasksDuration +
                ", taskAvailabilityInterval=" + taskAvailabilityInterval +
                ", taskLeaseTimeout=" + taskLeaseTimeout +
+               ", taskRetryDelay=" + taskRetryDelay +
+               ", maxTaskFaults=" + maxTaskFaults +
                ", skipNonProducingFiltersDuration=" + skipNonProducingFiltersDuration +
                ", useMaxMetaIdFromPreviousPoll=" + useMaxMetaIdFromPreviousPoll +
                '}';

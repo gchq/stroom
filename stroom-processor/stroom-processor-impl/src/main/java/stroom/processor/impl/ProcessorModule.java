@@ -22,9 +22,11 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
+import stroom.processor.api.HeldProcessorTaskService;
 import stroom.processor.api.JobNames;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
+import stroom.processor.api.ProcessorTaskListener;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorFilterDoc;
 import stroom.processor.shared.ProcessorProfile;
@@ -56,6 +58,9 @@ public class ProcessorModule extends AbstractModule {
         bind(ProcessorResource.class).to(ProcessorResourceImpl.class);
         bind(ProcessorTaskResource.class).to(ProcessorTaskResourceImpl.class);
         bind(ProcessorTaskService.class).to(ProcessorTaskServiceImpl.class);
+        bind(HeldProcessorTaskService.class).to(HeldProcessorTaskServiceImpl.class);
+        // None until an index is told how runs go.
+        GuiceUtil.buildMultiBinder(binder(), ProcessorTaskListener.class);
         bind(ProcessorProfileService.class).to(ProcessorProfileServiceImpl.class);
 
         RestResourcesBinder.create(binder())
@@ -106,8 +111,10 @@ public class ProcessorModule extends AbstractModule {
                         .frequencySchedule("1m"))
                 .bindJobTo(ProcessorTaskManagerReleaseOldQueuedTasks.class, builder -> builder
                         .name("Processor Task Manager Release Old Queued Tasks")
-                        .description("Release queued tasks from old master nodes. Only does anything when "
-                                     + "stroom.processor.claimTasksOnWorker is false")
+                        .description("Put back the queue of a node that is no longer the master, or of any node "
+                                     + "when stroom.processor.claimTasksOnWorker is true. Otherwise also put back "
+                                     + "tasks that this node queued and handed out more than "
+                                     + "stroom.processor.taskLeaseTimeout ago that were not started")
                         .frequencySchedule("1m"))
                 .bindJobTo(ProcessorTaskRetention.class, builder -> builder
                         .name(PROCESSOR_TASK_RETENTION_JOB_NAME)
@@ -124,9 +131,11 @@ public class ProcessorModule extends AbstractModule {
                         .name(JobNames.PROCESSOR_TASK_REAPER)
                         .description("Return tasks whose processing node has died - detected by a heartbeat " +
                                      "(status time) not renewed within stroom.processor.taskLeaseTimeout - " +
-                                     "to the CREATED state so they can be processed by another node. " +
+                                     "to the CREATED state so they can be processed by another node. Also " +
+                                     "returns tasks that hit a fault, once they have waited for " +
+                                     "stroom.processor.taskRetryDelay, so that they are tried again. " +
                                      "Do not disable this job while tasks are being processed or tasks on " +
-                                     "a failed node will never be recovered")
+                                     "a failed node, and tasks that hit a fault, will never be recovered")
                         .frequencySchedule("1m"))
                 .bindJobTo(ProcessorTaskCreatorJob.class, builder -> builder
                         .name("Processor Task Creator")

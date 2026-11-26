@@ -24,9 +24,21 @@ import stroom.task.api.TaskContext;
 
 public interface ProcessorTaskExecutor {
 
+    /// Runs a task.
+    ///
+    /// @param taskContext     The context the task is running in.
+    /// @param processor       The processor of the task.
+    /// @param processorFilter The processor filter of the task.
+    /// @param processorTask   The task.
+    /// @param source          The stream to process.
+    /// @param runOutput       Has to be told of every stream that the run opens to write to.
+    /// @param runIndexing     What an index says of the run, which decides how it ends.
+    /// @return What was done.
     ProcessorResult exec(TaskContext taskContext,
                          Processor processor,
                          ProcessorFilter processorFilter,
                          ProcessorTask processorTask,
-                         Source source);
+                         Source source,
+                         RunOutput runOutput,
+                         RunIndexing runIndexing);
 }

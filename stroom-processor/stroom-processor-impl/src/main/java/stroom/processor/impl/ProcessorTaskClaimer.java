@@ -86,6 +86,10 @@ public class ProcessorTaskClaimer {
      */
     private static final long CLUSTER_COUNT_CACHE_MS = 1_000;
 
+    // Why claimed tasks are put back, which is only given to those that have no reason already.
+    static final String REASON_STREAM_LOCKED = "Put back as its stream was still locked";
+    static final String REASON_CLAIM_GIVEN_UP = "Put back as the node that claimed it will not run it";
+
     private final ProcessorTaskAvailability processorTaskAvailability;
     private final ProcessorTaskDao processorTaskDao;
     private final ProcessorProfileCache processorProfileCache;
@@ -223,11 +227,8 @@ public class ProcessorTaskClaimer {
         final Map<Boolean, List<ProcessorTask>> byLocked = tasks
                 .stream()
                 .collect(Collectors.partitioningBy(task -> lockedMetaIds.contains(task.getMetaId())));
-        final Set<Long> lockedTaskIds = byLocked.get(true)
-                .stream()
-                .map(ProcessorTask::getId)
-                .collect(Collectors.toSet());
-        final int released = processorTaskDao.releaseTasks(lockedTaskIds, TaskStatus.PROCESSING);
+        final int released = processorTaskDao.putBackTasks(
+                byLocked.get(true), Set.of(TaskStatus.PROCESSING), REASON_STREAM_LOCKED);
         lockedMetaReleases.addAndGet(released);
         LOGGER.debug(() -> LogUtil.message("releaseLockedMeta() - released {}/{} tasks claimed for {} "
                                            + "whose meta is still locked",
@@ -242,13 +243,13 @@ public class ProcessorTaskClaimer {
      * a lapse in heartbeats has to mean this node has died - otherwise a task claimed just before a
      * pause would look dead to the reaper through no fault of its own. The stroom task id that
      * self-fencing needs is only known once processing begins, and
-     * {@link DataProcessorTaskHandler} re-registers with it then.
+     * {@link DataProcessorTaskHandler} supplies it then.
      */
     private void registerHeartbeats(final List<ProcessorTask> tasks, final int filterId) {
         // The filter id comes from the claim rather than from the task, which carries whatever the
         // filter cache had: a cache miss there would leave the task uncounted by the per node
         // concurrency limit that countForFilter feeds.
-        tasks.forEach(task -> processorTaskHeartbeat.register(task.getId(), filterId, null));
+        tasks.forEach(task -> processorTaskHeartbeat.registerClaim(task, filterId));
     }
 
     /**
@@ -329,9 +330,9 @@ public class ProcessorTaskClaimer {
         if (tasks.isEmpty()) {
             return 0;
         }
-        final Set<Long> taskIds = tasks.stream().map(ProcessorTask::getId).collect(Collectors.toSet());
-        final int released = processorTaskDao.releaseTasks(taskIds, TaskStatus.PROCESSING);
-        taskIds.forEach(processorTaskHeartbeat::deregister);
+        // Only those that have not changed since they were claimed, e.g. by the reaper, are put back.
+        final int released = processorTaskDao.putBackTasks(tasks, Set.of(TaskStatus.PROCESSING), REASON_CLAIM_GIVEN_UP);
+        tasks.forEach(processorTaskHeartbeat::deregister);
         LOGGER.debug(() -> LogUtil.message("abandonTasks() - released {}/{} claimed tasks",
                 released, tasks.size()));
         return released;

@@ -20,6 +20,7 @@ import stroom.cluster.lock.api.ClusterLockService;
 import stroom.cluster.lock.mock.MockClusterLockService;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
+import stroom.processor.api.ProcessorTaskListener;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
@@ -38,6 +39,7 @@ public class MockProcessorModule extends AbstractModule {
         bind(ProcessorTaskDao.class).to(MockProcessorTaskDao.class);
         bind(ProcessorProfileDao.class).to(MockProcessorProfileDao.class);
         bind(ClusterLockService.class).to(MockClusterLockService.class);
+        GuiceUtil.buildMultiBinder(binder(), ProcessorTaskListener.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(MockProcessorDao.class)

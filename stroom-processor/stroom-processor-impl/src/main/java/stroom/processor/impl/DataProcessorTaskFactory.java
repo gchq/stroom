@@ -28,6 +28,7 @@ import stroom.processor.shared.AssignTasksRequest;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.ProcessorTaskResource;
+import stroom.processor.shared.TaskStatus;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
@@ -41,6 +42,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @DistributedTaskFactoryDescription(
@@ -52,11 +55,17 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataProcessorTaskFactory.class);
     private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Data Processor#", 1);
 
+    // Only given to tasks that have no reason already.
+    static final String REASON_GIVEN_BACK = "Put back as the node it was given to will not run it";
+
+    private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
+
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final ProcessorTaskResource processorTaskResource;
     private final NodeInfo nodeInfo;
     private final TaskContextFactory taskContextFactory;
     private final ProcessorTaskClaimer processorTaskClaimer;
+    private final ProcessorTaskDao processorTaskDao;
     private final Provider<ProcessorConfig> processorConfigProvider;
     private RunnableFactory runnableFactory;
 
@@ -67,6 +76,7 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
                              final NodeInfo nodeInfo,
                              final TaskContextFactory taskContextFactory,
                              final ProcessorTaskClaimer processorTaskClaimer,
+                             final ProcessorTaskDao processorTaskDao,
                              final Provider<ProcessorConfig> processorConfigProvider) {
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.processorTaskResource = processorTaskResource;
@@ -74,6 +84,7 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
         this.runnableFactory = new RunnableFactoryImpl(dataProcessorTaskHandlerProvider);
         this.taskContextFactory = taskContextFactory;
         this.processorTaskClaimer = processorTaskClaimer;
+        this.processorTaskDao = processorTaskDao;
         this.processorConfigProvider = processorConfigProvider;
     }
 
@@ -140,46 +151,63 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
                     return (DistributedTask) new DistributedDataProcessorTask(JobNames.DATA_PROCESSOR,
                             runnable,
                             THREAD_POOL,
-                            processorTask);
+                            processorTask,
+                            alreadyClaimed);
                 })
                 .collect(Collectors.toList());
     }
 
+    /// Puts back tasks that this node fetched and will not run, by how each was fetched, as the setting may have
+    /// changed since.
+    ///
+    /// @param nodeName This node.
+    /// @param tasks    The tasks, as fetched.
+    /// @return True if all of them could be put back, or were found to have changed since they were fetched.
     @Override
     public Boolean abandon(final String nodeName, final List<DistributedTask> tasks) {
-        final List<ProcessorTask> processorTasks = tasks
+        final Map<Boolean, List<ProcessorTask>> processorTasks = tasks
                 .stream()
                 .map(distributedTask -> (DistributedDataProcessorTask) distributedTask)
-                .map(DistributedDataProcessorTask::getProcessorTask)
-                .collect(Collectors.toList());
+                .collect(Collectors.partitioningBy(
+                        DistributedDataProcessorTask::isAlreadyClaimed,
+                        Collectors.mapping(DistributedDataProcessorTask::getProcessorTask, Collectors.toList())));
+        final boolean claimedPutBack = abandonClaimed(processorTasks.get(true));
+        final boolean queuedPutBack = abandonQueued(nodeName, processorTasks.get(false));
+        return claimedPutBack && queuedPutBack;
+    }
 
-        if (processorConfigProvider.get().isClaimTasksOnWorker()) {
-            try {
-                // We claimed these ourselves, so we put them back ourselves. Without this they
-                // would sit in PROCESSING until their lease expired.
-                processorTaskClaimer.abandonTasks(processorTasks);
-                return true;
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
-                return false;
-            }
+    private boolean abandonClaimed(final List<ProcessorTask> processorTasks) {
+        if (processorTasks.isEmpty()) {
+            return true;
         }
-
         try {
-            if (targetNodeSetFactory.isClusterStateInitialised()) {
-                final String masterNode = targetNodeSetFactory.getMasterNode();
-
-                final ProcessorTaskList processorTaskList = new ProcessorTaskList(nodeInfo.getThisNodeName(),
-                        processorTasks);
-
-                return processorTaskResource
-                        .abandonTasks(masterNode, processorTaskList);
-            }
-        } catch (final RuntimeException | NullClusterStateException | NodeNotFoundException e) {
+            // We claimed these ourselves, so we put them back ourselves. Without this they
+            // would sit in PROCESSING until their lease expired.
+            processorTaskClaimer.abandonTasks(processorTasks);
+            return true;
+        } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
+            return false;
         }
+    }
 
-        return false;
+    private boolean abandonQueued(final String nodeName, final List<ProcessorTask> processorTasks) {
+        if (processorTasks.isEmpty()) {
+            return true;
+        }
+        taskStatusTraceLog.putBackTasks(DataProcessorTaskFactory.class, processorTasks, nodeName);
+        try {
+            // They are put back here rather than by the master, which may be what has gone. They are still queued,
+            // as only a run moves them on, and only those that have not changed since are put back.
+            final int count = processorTaskDao.putBackTasks(
+                    processorTasks, Set.of(TaskStatus.QUEUED), REASON_GIVEN_BACK);
+            LOGGER.info("Put back {} of {} tasks that were handed to this node and will not be run",
+                    count, processorTasks.size());
+            return true;
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+            return false;
+        }
     }
 
 
@@ -189,17 +217,26 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
     private static class DistributedDataProcessorTask extends DistributedTask {
 
         private final ProcessorTask processorTask;
+        // Whether this node claimed the task itself, rather than being handed it by the master's queue.
+        private final boolean alreadyClaimed;
 
         public DistributedDataProcessorTask(final String jobName,
                                             final Runnable runnable,
                                             final ThreadPool threadPool,
-                                            final ProcessorTask processorTask) {
+                                            final ProcessorTask processorTask,
+                                            final boolean alreadyClaimed) {
             super(jobName, runnable, threadPool, String.valueOf(processorTask.getId()));
             this.processorTask = processorTask;
+            this.alreadyClaimed = alreadyClaimed;
         }
 
         public ProcessorTask getProcessorTask() {
             return processorTask;
+        }
+
+        /// @return True if this node claimed the task itself, rather than being handed it by the master's queue.
+        public boolean isAlreadyClaimed() {
+            return alreadyClaimed;
         }
     }
 

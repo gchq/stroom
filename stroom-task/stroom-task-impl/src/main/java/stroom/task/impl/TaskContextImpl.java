@@ -21,6 +21,7 @@ import stroom.security.api.UserIdentity;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.TerminateHandler;
+import stroom.task.api.TerminationCause;
 import stroom.task.shared.TaskId;
 import stroom.util.shared.NullSafe;
 
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
@@ -42,7 +44,8 @@ public class TaskContextImpl implements TaskContext {
     private final boolean useAsRead;
     private final Set<TaskContextImpl> children = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    private volatile boolean terminate;
+    // Not null once terminated. Only the first cause is kept.
+    private volatile TerminationCause terminationCause;
     private volatile Supplier<String> messageSupplier;
     private volatile Thread thread;
     private volatile TerminateHandler terminateHandler;
@@ -113,7 +116,12 @@ public class TaskContextImpl implements TaskContext {
 
     @Override
     public boolean isTerminated() {
-        return terminate;
+        return terminationCause != null;
+    }
+
+    @Override
+    public Optional<TerminationCause> getTerminationCause() {
+        return Optional.ofNullable(terminationCause);
     }
 
     @Override
@@ -123,9 +131,21 @@ public class TaskContextImpl implements TaskContext {
         }
     }
 
-    synchronized void terminate() {
-        this.terminate = true;
-        children.forEach(TaskContextImpl::terminate);
+    /// Terminates this task and its children without saying why.
+    void terminate() {
+        terminate(TerminationCause.NOT_GIVEN);
+    }
+
+    /// Terminates this task and its children.
+    ///
+    /// @param cause Why they are being terminated. This is ignored by any that have been terminated already.
+    synchronized void terminate(final TerminationCause cause) {
+        Objects.requireNonNull(cause, "Null cause");
+        if (terminationCause == null) {
+            terminationCause = cause;
+        }
+        // Tell the children why this was first terminated, as that is why they are being terminated.
+        children.forEach(child -> child.terminate(terminationCause));
 
         if (terminateHandler != null) {
             terminateHandler.onTerminate();
@@ -149,7 +169,7 @@ public class TaskContextImpl implements TaskContext {
 
     synchronized void setTerminateHandler(final TerminateHandler terminateHandler) {
         this.terminateHandler = terminateHandler;
-        if (terminate && terminateHandler != null) {
+        if (isTerminated() && terminateHandler != null) {
             terminateHandler.onTerminate();
         }
     }
@@ -172,7 +192,7 @@ public class TaskContextImpl implements TaskContext {
 
     String getName() {
         String name = this.name;
-        if (terminate) {
+        if (isTerminated()) {
             name = "<<terminated>> " + name;
         }
 
@@ -186,8 +206,8 @@ public class TaskContextImpl implements TaskContext {
 
     synchronized void addChild(final TaskContextImpl taskContext) {
         children.add(taskContext);
-        if (terminate) {
-            taskContext.terminate();
+        if (isTerminated()) {
+            taskContext.terminate(terminationCause);
         }
     }
 
