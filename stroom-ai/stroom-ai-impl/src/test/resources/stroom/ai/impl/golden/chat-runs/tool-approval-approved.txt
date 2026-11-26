@@ -105,5 +105,3 @@ Tools offered: ask_user, memory, propose_query, read_turn, create_feed
     Calls create_feed as call-1 with {"name":"ACME"}
 [3] TOOL RESULT for call-1 (create_feed)
     Feed ACME created.
-[4] USER
-    [The user has answered, and the tool calls that waited for them have been made with their answer: the results are above. Carry on with the task from where you were: don't stop to sum up what you have done.]

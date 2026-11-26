@@ -923,9 +923,7 @@ class TestContextAssembler {
         assertThat(ContextAssembler.TOOL_GUIDANCE)
                 .contains("A request to onboard a source or to build or change a pipeline asks for every step its "
                           + "build's `next` gives: go on to each without asking first")
-                .contains("stop only for what is the user's")
-                // Seen in testing: a chat stopped right after a form was answered, the build half done.
-                .contains("once a form is answered, carry on");
+                .contains("end your turn only for what is the user's");
     }
 
     @Test

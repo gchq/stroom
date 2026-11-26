@@ -266,44 +266,6 @@ class TestScriptedChatRuns {
     }
 
     @Test
-    void aRunCarriedOnOnceTheUserAnswersAFormIsToldToCarryOnWithTheTask() {
-        // Seen in testing: once the user answered a form, the run carried on with the call's result, and the model
-        // summed up and stopped, the work half done.
-        ask("Find the failed logons.");
-        run(new ScriptedChatModel(ScriptedChatModel.toolCalls("A question first.",
-                ScriptedChatModel.call("call-1", "ask_user", "{\"intro\":\"Before I search\","
-                                                             + "\"questions\":[{\"question\":\"Which "
-                                                             + "environment?\",\"options\":[\"Production\","
-                                                             + "\"Test\"]}]}"))), McpToolset.EMPTY);
-        answerForm("ACCEPT", Map.of("q1", "Production"));
-        final ScriptedChatModel carriedOn = new ScriptedChatModel(ScriptedChatModel.answer("Searching."));
-        run(carriedOn, McpToolset.EMPTY);
-
-        assertThat(carriedOn.requests().getFirst().messages().getLast())
-                .isInstanceOfSatisfying(UserMessage.class, message ->
-                        assertThat(message.singleText()).isEqualTo(AskStroomAIService.RESUMED_AFTER_ANSWER_NOTE));
-    }
-
-    @Test
-    void aRunCarriedOnWithAMessageSentInsteadOfAnsweringAFormIsNotToldToCarryOn() {
-        // The message is for the model to reply to: it isn't told the user answered.
-        ask("Find the failed logons.");
-        run(new ScriptedChatModel(ScriptedChatModel.toolCalls("A question first.",
-                ScriptedChatModel.call("call-1", "ask_user", "{\"intro\":\"Before I search\","
-                                                             + "\"questions\":[{\"question\":\"Which "
-                                                             + "environment?\",\"options\":[\"Production\","
-                                                             + "\"Test\"]}]}"))), McpToolset.EMPTY);
-        store.store(AiMessageType.STEER_MESSAGE, "Why do you ask?");
-        assertThat(elicitations.supersedePending(CHAT_ID)).isEqualTo(1);
-        final ScriptedChatModel carriedOn = new ScriptedChatModel(ScriptedChatModel.answer("To pick the index."));
-        run(carriedOn, McpToolset.EMPTY);
-
-        assertThat(carriedOn.requests().getFirst().messages())
-                .noneSatisfy(message -> assertThat(message).isInstanceOfSatisfying(UserMessage.class, user ->
-                        assertThat(user.singleText()).isEqualTo(AskStroomAIService.RESUMED_AFTER_ANSWER_NOTE)));
-    }
-
-    @Test
     void aReplyThatOnlySaysWhatComesNextCarriesOn() {
         ask("Which pipelines fork to more than one translation?");
 

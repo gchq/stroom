@@ -109,9 +109,8 @@ public class ContextAssembler {
             carry on calling tools in the same turn.
             - Only call tools that change things (create, update, delete, upload) when the user has asked for \
             that change. A request to onboard a source or to build or change a pipeline asks for every step its \
-            build's `next` gives: go on to each without asking first, and stop only for what is the user's (a \
-            form, a result's `user_actions`, promotion, or a decision only they can make); once a form is \
-            answered, carry on.
+            build's `next` gives: go on to each without asking first, and end your turn only for what is the \
+            user's (a form, a result's `user_actions`, promotion, or a decision only they can make).
             - Buttons a result offers the user (its `user_actions`, e.g. Apply to dashboard) are shown below your \
             answer once your turn ends, not as you go: finish everything first, then tell them what each does \
             (refer to them as below).

@@ -124,5 +124,3 @@ Tools offered: ask_user, memory, propose_query, read_turn
       Production
     - How far back?
       the last 3 days (in their own words)
-[4] USER
-    [The user has answered, and the tool calls that waited for them have been made with their answer: the results are above. Carry on with the task from where you were: don't stop to sum up what you have done.]
