@@ -66,6 +66,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.string.StringUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -1613,23 +1614,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     private String truncateReason(final String reason) {
-        return truncate(reason, PROCESSOR_TASK.REASON.getDataType().length());
-    }
-
-    /// Shortens text to fit a column, without splitting a character that takes two `char`s, as half of one can't be
-    /// stored.
-    ///
-    /// @param text      The text, which may be null.
-    /// @param maxLength The most `char`s that it may have.
-    /// @return The text, shortened if need be.
-    static String truncate(final String text, final int maxLength) {
-        if (text == null || text.length() <= maxLength) {
-            return text;
-        }
-        final int end = Character.isHighSurrogate(text.charAt(maxLength - 1))
-                ? maxLength - 1
-                : maxLength;
-        return text.substring(0, end);
+        // Half of a character that takes two chars can't be stored, so one is never split.
+        return StringUtil.truncate(reason, PROCESSOR_TASK.REASON.getDataType().length());
     }
 
     private Optional<ProcessorTask> fetch(final ProcessorTask processorTask) {

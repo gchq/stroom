@@ -20,6 +20,7 @@ import stroom.util.NullSafeExtra;
 import stroom.util.concurrent.DurationAdder;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.string.StringUtil;
 
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
@@ -381,21 +382,29 @@ public final class LogUtil {
         }
     }
 
+    /// Shortens text for a log message, adding `...` if any of it is cut off. A character that takes two `char`s,
+    /// e.g. an emoji, is never split.
+    ///
+    /// @param str       The text, which may be null.
+    /// @param maxLength The most `char`s of it to keep.
+    /// @return The text as it is if it is no longer than `maxLength`, else the start of it followed by `...`.
     public static String truncate(final String str, final int maxLength) {
-        if (str == null || str.length() < maxLength) {
-            return str;
-        } else {
-            return str.substring(0, maxLength) + "...";
-        }
+        return truncateUnless(str, maxLength, false);
     }
 
+    /// Shortens text for a log message, as [#truncate(String, int)], unless told not to.
+    ///
+    /// @param str                 The text, which may be null.
+    /// @param maxLength           The most `char`s of it to keep.
+    /// @param isTruncationSkipped True if the text is to be returned whole, e.g. when trace logging is on.
+    /// @return The text, shortened unless `isTruncationSkipped` is true.
     public static String truncateUnless(final String str,
                                         final int maxLength,
                                         final boolean isTruncationSkipped) {
-        if (str == null || str.length() < maxLength || isTruncationSkipped) {
+        if (str == null || str.length() <= maxLength || isTruncationSkipped) {
             return str;
         } else {
-            return str.substring(0, maxLength) + "...";
+            return StringUtil.truncate(str, maxLength) + "...";
         }
     }
 
