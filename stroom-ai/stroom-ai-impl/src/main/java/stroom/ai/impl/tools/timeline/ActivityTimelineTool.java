@@ -36,6 +36,7 @@ import stroom.ai.impl.tools.ToolSchema.ArraySchema;
 import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolTables;
 import stroom.ai.impl.tools.UserQuestions;
+import stroom.ai.impl.tools.catalogue.TimelinePeriod;
 import stroom.ai.impl.tools.catalogue.TimelineRole;
 import stroom.ai.impl.tools.catalogue.TimelineRoles;
 import stroom.ai.impl.tools.compare.CompareActivityTool;
@@ -491,7 +492,9 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                                             + "destination.domain (session ids are found)."))
                 .addProperty(TYPE_ROLES_KEY, ObjectSchema.builder()
                         .description("Optional: the user's corrections, an event type's role: {\"<type>\": "
-                                     + "\"active|idle|focus|open|close|action|ignore\"}.")
+                                     + "\"active|idle|focus|open|close|action|ignore\"}, or \"period_start "
+                                     + "<kind>\" / \"period_end <kind>\" (a state such as remote_session or "
+                                     + "on_site; no activity).")
                         .build())
                 .required(INDEX_KEY)
                 .build();
@@ -1634,8 +1637,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                     for (int i = 0; i < sources.size(); i++) {
                         if (entry.appliesTo(sources.get(i).name()) || entry.appliesTo(sources.get(i).doc()
                                 .getName())) {
-                            out.computeIfAbsent(i, k -> new LinkedHashMap<>()).put(entry.type(), new RoleOverride(
-                                    EventCodes.role(entry.role()), "skill"));
+                            out.computeIfAbsent(i, k -> new LinkedHashMap<>()).put(entry.type(),
+                                    RoleOverride.of(entry.role(), "skill"));
                         }
                     }
                 }
@@ -1643,8 +1646,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         }
         for (int i = 0; i < specs.size(); i++) {
             for (final Map.Entry<String, String> typeRole : typeRoles(specs.get(i), i).entrySet()) {
-                out.computeIfAbsent(i, k -> new LinkedHashMap<>()).put(typeRole.getKey(), new RoleOverride(
-                        EventCodes.role(typeRole.getValue()), "call"));
+                out.computeIfAbsent(i, k -> new LinkedHashMap<>()).put(typeRole.getKey(),
+                        RoleOverride.of(typeRole.getValue(), "call"));
             }
         }
         return out;
@@ -1661,12 +1664,12 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                          + "each role one of " + String.join(", ", EventChains.ROLES) + ".");
         }
         map.forEach((type, role) -> {
-            final String name = String.valueOf(role).strip().toLowerCase(Locale.ROOT);
-            if (!EventChains.ROLES.contains(name)) {
+            final TimelinePeriod.RoleText named = TimelinePeriod.role(String.valueOf(role)).orElse(null);
+            if (named == null) {
                 throw new WorkspaceException("Source " + (i + 1) + ": '" + role + "' isn't a role: give one of "
-                                             + String.join(", ", EventChains.ROLES) + ".");
+                                             + String.join(", ", TimelineRoles.ASKED_ROLES) + ".");
             }
-            out.put(String.valueOf(type).strip(), name);
+            out.put(String.valueOf(type).strip(), named.text());
         });
         return out;
     }
@@ -2064,10 +2067,11 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                               final Map<Integer, Map<String, CodeRole>> classifiedNow) {
         final Map<String, String> out = new LinkedHashMap<>();
         classifiedNow.forEach((i, codes) -> {
-            final Map<String, TimelineRole> roles = new LinkedHashMap<>();
-            codes.forEach((code, role) -> TimelineRole.of(role.role()).ifPresent(found -> roles.put(code, found)));
+            final Map<String, String> roles = new LinkedHashMap<>();
+            codes.forEach((code, role) -> TimelinePeriod.role(role.text()).ifPresent(found -> roles.put(code,
+                    found.text())));
             if (!roles.isEmpty()) {
-                out.put(sources.get(i).doc().getName(), InstructionRules.eventTypesSection(roles));
+                out.put(sources.get(i).doc().getName(), InstructionRules.eventTypesTextSection(roles));
             }
         });
         return out;
@@ -2179,7 +2183,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final List<Typed> out = new ArrayList<>();
         classification.byId().forEach((id, c) -> {
             final Event event = byId.get(id);
-            if (event != null && c.type() != null && event.role() != Role.FOCUS) {
+            if (event != null && c.type() != null && event.role() != Role.FOCUS && !event.role().isPeriod()) {
                 out.add(new Typed(id, event.source(), event.time(), TimelineSpans.lane(event, options), c.type(),
                         c.schemaType(), c.keys()));
             }
@@ -2262,15 +2266,21 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         }
         plan.overrides().forEach((source, types) -> types.forEach((type, override) -> {
             if ("call".equals(override.from())) {
-                entries.add(Entry.role(sources.get(source).doc().getName(), type, roleName(override.role())));
+                entries.add(Entry.role(sources.get(source).doc().getName(), type, roleName(override)));
             }
         }));
         return entries;
     }
 
-    private static String roleName(final Role role) {
+    private static String roleName(final RoleOverride override) {
+        final Role role = override.role();
         if (role == null) {
             return "ignore";
+        }
+        if (override.period() != null) {
+            return override.period().text(role == Role.PERIOD_START
+                    ? TimelineRole.PERIOD_START
+                    : TimelineRole.PERIOD_END);
         }
         return switch (role) {
             case IDLE_END -> "active";

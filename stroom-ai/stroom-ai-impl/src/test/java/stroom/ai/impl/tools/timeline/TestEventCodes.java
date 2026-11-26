@@ -55,6 +55,27 @@ class TestEventCodes {
     }
 
     @Test
+    void aPeriodsKindIsReadFromItsRoleOrItsKindAndAPeriodWithNoKindIsAnAction() {
+        final ModelSideCalls model = stub("""
+                {"20": {"role": "period_start", "kind": "Remote Session"}, "21": {"role": "period_end call"},
+                "22": {"role": "period_end"}}""", new ArrayList<>());
+        final Map<String, Integer> counts = new LinkedHashMap<>();
+        counts.put("20", 3);
+        counts.put("21", 2);
+        counts.put("22", 1);
+
+        final Map<String, CodeRole> roles = EventCodes.ask(model, "VPN", counts).orElseThrow();
+
+        assertThat(roles).containsEntry("20", new CodeRole("period_start", "remote_session", false))
+                .containsEntry("21", new CodeRole("period_end", "call", false))
+                .containsEntry("22", new CodeRole("action", "22", false));
+        assertThat(EventCodes.role(roles.get("20").text())).isEqualTo(Role.PERIOD_START);
+        assertThat(EventCodes.period(roles.get("21").text()).kind()).isEqualTo("call");
+        assertThat(EventCodes.lines(roles, 5)).contains("20: period_start remote_session");
+        assertThat(EventCodes.INSTRUCTIONS).contains("period_start <kind>");
+    }
+
+    @Test
     void anAnswerThatCantBeReadOrNoModelGivesNothing() {
         assertThat(EventCodes.ask(stub("no idea", new ArrayList<>()), "Windows", Map.of("1", 1))).isEmpty();
         assertThat(EventCodes.ask(ModelSideCalls.NONE, "Windows", Map.of("1", 1))).isEmpty();

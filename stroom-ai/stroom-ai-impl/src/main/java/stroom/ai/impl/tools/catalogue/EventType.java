@@ -17,12 +17,14 @@
 package stroom.ai.impl.tools.catalogue;
 
 import stroom.ai.impl.tools.generation.ModelReader;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 /// One event type of a source's catalogue: what type of event it is, what it means, how a record of it is
 /// recognised, and where that knowledge came from.
@@ -52,6 +54,9 @@ import java.util.Objects;
 ///                       when not settled ([TimelineRoles]).
 /// @param timelineRoleFrom `timeline_role_from`: [TimelineRoles#FROM_SCHEMA] (filled in from its element and Action)
 ///                       or [TimelineRoles#FROM_GIVEN] (the user's answer); null with no role.
+/// @param timelinePeriod `timeline_period` and `timeline_period_key`: the kind of period a `period_start` or
+///                       `period_end` role starts or ends, and the key its ends are paired by where not the kind's
+///                       default ([TimelinePeriod]); null for any other role.
 public record EventType(String typeId,
                         String title,
                         String description,
@@ -70,7 +75,8 @@ public record EventType(String typeId,
                         String doubt,
                         List<Placement> placements,
                         String timelineRole,
-                        String timelineRoleFrom) {
+                        String timelineRoleFrom,
+                        TimelinePeriod timelinePeriod) {
 
     /// The seed's, from the draft's rules: never the user's until the user confirms it.
     public static final String DRAFT = "draft";
@@ -101,10 +107,15 @@ public record EventType(String typeId,
     public static final String TIMELINE_ROLE = "timeline_role";
     /// The key of where its timeline role came from.
     public static final String TIMELINE_ROLE_FROM = "timeline_role_from";
+    /// The key of the kind of period its timeline role starts or ends.
+    public static final String TIMELINE_PERIOD = "timeline_period";
+    /// The key of the key its period's ends are paired by.
+    public static final String TIMELINE_PERIOD_KEY = "timeline_period_key";
     /// Where a timeline role may come from.
     public static final List<String> ROLE_FROMS = List.of(TimelineRoles.FROM_SCHEMA, TimelineRoles.FROM_GIVEN);
 
-    /// Fills in empty lists for null ones, null for a blank doubt, and no role's source for no role.
+    /// Fills in empty lists for null ones, null for a blank doubt, no role's source for no role, and no period for a
+    /// role that isn't a period's (nor a period role with no kind).
     public EventType {
         recognisedBy = List.copyOf(Objects.requireNonNullElse(recognisedBy, List.of()));
         placements = List.copyOf(Objects.requireNonNullElse(placements, List.of()));
@@ -115,6 +126,55 @@ public record EventType(String typeId,
         timelineRoleFrom = timelineRole == null
                 ? null
                 : Objects.requireNonNullElse(timelineRoleFrom, TimelineRoles.FROM_GIVEN);
+        final boolean periodRole = TimelineRole.of(timelineRole).map(TimelineRole::isPeriod).orElse(false);
+        timelinePeriod = periodRole && timelinePeriod != null && timelinePeriod.kind() != null
+                ? timelinePeriod
+                : null;
+    }
+
+    /// An event type with no period to its timeline role.
+    ///
+    /// @param typeId           Its TypeId, or null.
+    /// @param title            Its title.
+    /// @param description      What happened.
+    /// @param eventDetail      Its action element.
+    /// @param action           Its Action, or null.
+    /// @param success          Its outcome, or null.
+    /// @param actor            Who acted, or null.
+    /// @param affected         What was acted on, or null.
+    /// @param affectedAs       What that is under the action element, or null.
+    /// @param recognisedBy     The ways a record of it is told.
+    /// @param drop             True when its records are dropped.
+    /// @param basis            Where it came from.
+    /// @param confidence       `high`, `medium` or `low`.
+    /// @param oneTypeBecause   Why records that look like several event types are one, or null.
+    /// @param status           `proposed` or `confirmed`.
+    /// @param doubt            Why the agent is unsure of it, or null.
+    /// @param placements       Its placements.
+    /// @param timelineRole     Its timeline role, or null.
+    /// @param timelineRoleFrom Where it came from, or null.
+    public EventType(final String typeId,
+                     final String title,
+                     final String description,
+                     final String eventDetail,
+                     final String action,
+                     final String success,
+                     final String actor,
+                     final String affected,
+                     final String affectedAs,
+                     final List<Way> recognisedBy,
+                     final boolean drop,
+                     final String basis,
+                     final String confidence,
+                     final String oneTypeBecause,
+                     final String status,
+                     final String doubt,
+                     final List<Placement> placements,
+                     final String timelineRole,
+                     final String timelineRoleFrom) {
+        this(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs, recognisedBy,
+                drop, basis, confidence, oneTypeBecause, status, doubt, placements, timelineRole, timelineRoleFrom,
+                null);
     }
 
     /// An event type with no timeline role given.
@@ -263,18 +323,52 @@ public record EventType(String typeId,
                 role(fields),
                 fields.optionalString(TIMELINE_ROLE) == null
                         ? null
-                        : fields.literal(TIMELINE_ROLE_FROM, TimelineRoles.FROM_GIVEN, ROLE_FROMS));
+                        : fields.literal(TIMELINE_ROLE_FROM, TimelineRoles.FROM_GIVEN, ROLE_FROMS),
+                period(fields));
         return fields.ok()
                 ? eventType
                 : null;
     }
 
-    // Its timeline role, one of the roles' names, any case; null where not given.
+    // Its timeline role, one of the roles' names, any case (a period role's text form, `period_start on_site`,
+    // too); null where not given.
     private static String role(final ModelReader.Fields fields) {
         final String given = fields.optionalString(TIMELINE_ROLE);
-        return given == null
-                ? null
-                : fields.literal(TIMELINE_ROLE, TimelineRole.ACTION.label(), TimelineRole.NAMES);
+        if (given == null) {
+            return null;
+        }
+        final Optional<TimelinePeriod.RoleText> period = TimelinePeriod.parse(given);
+        if (period.isPresent()) {
+            return period.get().role().label();
+        }
+        return fields.literal(TIMELINE_ROLE, TimelineRole.ACTION.label(), TimelineRole.NAMES);
+    }
+
+    // Its period: `timeline_period` (and `timeline_period_key`), else the kind its role's text gives; a period role
+    // with no kind refused.
+    private static TimelinePeriod period(final ModelReader.Fields fields) {
+        final String given = fields.optionalString(TIMELINE_ROLE);
+        final Optional<TimelineRole> role = given == null
+                ? Optional.empty()
+                : TimelinePeriod.role(given).map(TimelinePeriod.RoleText::role)
+                        .or(() -> TimelineRole.of(given));
+        if (role.isEmpty() || !role.get().isPeriod()) {
+            return null;
+        }
+        final TimelinePeriod fromText = TimelinePeriod.parse(given).map(TimelinePeriod.RoleText::period)
+                .orElse(null);
+        final String kind = TimelinePeriod.kindOf(fields.optionalString(TIMELINE_PERIOD));
+        final String key = fields.optionalString(TIMELINE_PERIOD_KEY);
+        if (kind == null && fromText == null) {
+            fields.valueError("a " + role.get().label() + " role needs its " + TIMELINE_PERIOD + ": one of "
+                              + String.join(", ", TimelinePeriod.KINDS) + ", or a kind of your own");
+            return null;
+        }
+        return new TimelinePeriod(kind != null
+                ? kind
+                : fromText.kind(), key != null
+                ? key
+                : NullSafe.get(fromText, TimelinePeriod::key));
     }
 
     // An outcome may be given as a boolean (true, false) or a field's name: read as its text.
@@ -314,6 +408,12 @@ public record EventType(String typeId,
             out.put(TIMELINE_ROLE, timelineRole);
             out.put(TIMELINE_ROLE_FROM, timelineRoleFrom);
         }
+        if (timelinePeriod != null) {
+            out.put(TIMELINE_PERIOD, timelinePeriod.kind());
+            if (timelinePeriod.key() != null) {
+                out.put(TIMELINE_PERIOD_KEY, timelinePeriod.key());
+            }
+        }
         return out;
     }
 
@@ -324,14 +424,14 @@ public record EventType(String typeId,
                 recognisedBy, drop, DRAFT.equals(basis)
                 ? USER_CONFIRMED
                 : basis, confidence, oneTypeBecause, CONFIRMED, doubt, placements,
-                timelineRole, timelineRoleFrom);
+                timelineRole, timelineRoleFrom, timelinePeriod);
     }
 
     /// @return It dropped by the user, in the user's form: its records left untranslated, on the user's word.
     public EventType droppedByUser() {
         return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
                 recognisedBy, true, USER_CONFIRMED, confidence, oneTypeBecause, CONFIRMED, doubt, placements,
-                timelineRole, timelineRoleFrom);
+                timelineRole, timelineRoleFrom, timelinePeriod);
     }
 
     /// @return It confirmed.
@@ -344,7 +444,7 @@ public record EventType(String typeId,
     public EventType readBack() {
         return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
                 recognisedBy, drop, EXISTING_PIPELINE, confidence, oneTypeBecause, PROPOSED, doubt, placements,
-                timelineRole, timelineRoleFrom);
+                timelineRole, timelineRoleFrom, timelinePeriod);
     }
 
     /// @param typeId Its new TypeId.
@@ -352,7 +452,7 @@ public record EventType(String typeId,
     public EventType withTypeId(final String typeId) {
         return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
                 recognisedBy, drop, basis, confidence, oneTypeBecause, status, doubt, placements,
-                timelineRole, timelineRoleFrom);
+                timelineRole, timelineRoleFrom, timelinePeriod);
     }
 
     /// @param affectedAs Its new `affected_as`.
@@ -360,7 +460,7 @@ public record EventType(String typeId,
     public EventType withAffectedAs(final String affectedAs) {
         return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
                 recognisedBy, drop, basis, confidence, oneTypeBecause, status, doubt, placements,
-                timelineRole, timelineRoleFrom);
+                timelineRole, timelineRoleFrom, timelinePeriod);
     }
 
     /// @param ways Its new ways of being recognised.
@@ -368,15 +468,23 @@ public record EventType(String typeId,
     public EventType withRecognisedBy(final List<Way> ways) {
         return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
                 ways, drop, basis, confidence, oneTypeBecause, status, doubt, placements,
-                timelineRole, timelineRoleFrom);
+                timelineRole, timelineRoleFrom, timelinePeriod);
     }
 
     /// @param role The role's name, or null for none.
     /// @param from Where it came from ([TimelineRoles#FROM_SCHEMA] or [TimelineRoles#FROM_GIVEN]), or null.
-    /// @return It with that timeline role.
+    /// @return It with that timeline role, its period kept (where the role is a period's).
     public EventType withTimelineRole(final String role, final String from) {
+        return withTimelineRole(role, from, timelinePeriod);
+    }
+
+    /// @param role   The role's name, or null for none.
+    /// @param from   Where it came from ([TimelineRoles#FROM_SCHEMA] or [TimelineRoles#FROM_GIVEN]), or null.
+    /// @param period Its period, for a period role; else null.
+    /// @return It with that timeline role and period.
+    public EventType withTimelineRole(final String role, final String from, final TimelinePeriod period) {
         return new EventType(typeId, title, description, eventDetail, action, success, actor, affected, affectedAs,
-                recognisedBy, drop, basis, confidence, oneTypeBecause, status, doubt, placements, role, from);
+                recognisedBy, drop, basis, confidence, oneTypeBecause, status, doubt, placements, role, from, period);
     }
 
     /// Its placements, with what `affected` and `affected_as` say (the catalogue's form before placements, kept for

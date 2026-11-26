@@ -113,7 +113,10 @@ final class TimelineSpans {
                        final List<PairRule> pairs,
                        final List<KeySpans.KeyRule> keys,
                        final Options options) {
-        final List<Event> sorted = new ArrayList<>(events);
+        // A period's start or end is the periods' ([TimelinePeriods]): in no pair, key span or activity period.
+        final List<Event> sorted = new ArrayList<>(events.stream()
+                .filter(event -> !event.role().isPeriod())
+                .toList());
         sorted.sort(Comparator.comparingLong(Event::time).thenComparingInt(Event::source).thenComparing(Event::id));
         final int focusCount = timeline.sessions().size();
         final Map<FlagName, List<String>> flags = new LinkedHashMap<>();

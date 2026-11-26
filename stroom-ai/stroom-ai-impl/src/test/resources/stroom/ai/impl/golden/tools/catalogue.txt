@@ -725,7 +725,7 @@ Builds one user's (or entity's) activity timeline for a period from any Elastic 
               "type" : "array"
             },
             "typeRoles" : {
-              "description" : "Optional: the user's corrections, an event type's role: {\"<type>\": \"active|idle|focus|open|close|action|ignore\"}.",
+              "description" : "Optional: the user's corrections, an event type's role: {\"<type>\": \"active|idle|focus|open|close|action|ignore\"}, or \"period_start <kind>\" / \"period_end <kind>\" (a state such as remote_session or on_site; no activity).",
               "properties" : { },
               "required" : [ ],
               "type" : "object"

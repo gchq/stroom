@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.timeline;
 
+import stroom.ai.impl.tools.catalogue.TimelinePeriod;
 import stroom.ai.impl.tools.catalogue.TimelineRoles;
 import stroom.ai.impl.tools.generation.XmlElement;
 import stroom.ai.impl.tools.generation.XmlParser;
@@ -35,8 +36,10 @@ import java.util.Set;
 ///
 /// | Element and Action | Role |
 /// | --- | --- |
-/// | Authenticate Logon, ScreenUnlock, Connect, Reconnect | active from here (`idle_end`) |
-/// | Authenticate Logoff, ScreenLock, Disconnect | idle from here (`idle_start`) |
+/// | Authenticate Logon, ScreenUnlock | active from here (`idle_end`) |
+/// | Authenticate Logoff, ScreenLock | idle from here (`idle_start`) |
+/// | Authenticate Connect, Reconnect | a remote session starts (`period_start`) |
+/// | Authenticate Disconnect | a remote session ends (`period_end`) |
 /// | Process Execute, Startup | opened (`open`) |
 /// | Process Terminate, Shutdown | closed (`close`) |
 /// | any other (View, Create, Send, Network...) | an action of that kind |
@@ -157,7 +160,7 @@ final class EventXmlClassifier {
         final String spelt = spelt(element);
         final Role role = role(spelt, action);
         return new Classified(spelt, blankToNull(action), blankToNull(typeId), role, kind(spelt, action),
-                application, object, host, keys, route);
+                application, object, host, keys, route, TimelineRoles.periodBySchema(spelt, action));
     }
 
     /// @param element An EventDetail element, as an index may hold it (any case).
@@ -189,6 +192,12 @@ final class EventXmlClassifier {
             }
             if (IDLE_FROM.stream().anyMatch(spelt::equalsIgnoreCase)) {
                 return Role.IDLE_START;
+            }
+            if (TimelineRoles.REMOTE_STARTS.stream().anyMatch(spelt::equalsIgnoreCase)) {
+                return Role.PERIOD_START;
+            }
+            if (TimelineRoles.REMOTE_ENDS.stream().anyMatch(spelt::equalsIgnoreCase)) {
+                return Role.PERIOD_END;
             }
         }
         if (PROCESS.equals(element) && spelt != null) {
@@ -419,6 +428,8 @@ final class EventXmlClassifier {
     ///                    whole paths (e.g. `EventSource/Client/IPAddress`), never its time, user or type; and, from
     ///                    [TimelineClassification], the index's fields returned with the event, by their names.
     /// @param route       How it was classified.
+    /// @param period      The period a `period_start` or `period_end` role starts or ends (its kind and key), else
+    ///                    null.
     record Classified(String element,
                       String action,
                       String typeId,
@@ -428,13 +439,45 @@ final class EventXmlClassifier {
                       String object,
                       String host,
                       Map<String, String> keys,
-                      Route route) {
+                      Route route,
+                      TimelinePeriod period) {
 
-        /// Copies the map.
+        /// Copies the map; a period only for a period role, its kind the event's kind.
         Classified {
             keys = keys == null
                     ? Map.of()
                     : Map.copyOf(keys);
+            period = role != null && role.isPeriod()
+                    ? period
+                    : null;
+            if (period != null) {
+                kind = period.kind();
+            }
+        }
+
+        /// An event classified with no period.
+        ///
+        /// @param element     The EventDetail element, or null.
+        /// @param action      Its Action, or null.
+        /// @param typeId      The event's TypeId, or null.
+        /// @param role        Its role.
+        /// @param kind        An action's kind.
+        /// @param application The application, or null.
+        /// @param object      What it touched, or null.
+        /// @param host        The host the XML names, or null.
+        /// @param keys        The event's correlation keys.
+        /// @param route       How it was classified.
+        Classified(final String element,
+                   final String action,
+                   final String typeId,
+                   final Role role,
+                   final String kind,
+                   final String application,
+                   final String object,
+                   final String host,
+                   final Map<String, String> keys,
+                   final Route route) {
+            this(element, action, typeId, role, kind, application, object, host, keys, route, null);
         }
 
         /// @return Its type by the schema: its element and Action, e.g. `Authenticate/Logon`.
@@ -470,13 +513,15 @@ final class EventXmlClassifier {
             }
             final Map<String, String> merged = new LinkedHashMap<>(keys);
             more.forEach(merged::putIfAbsent);
-            return new Classified(element, action, typeId, role, kind, application, object, host, merged, route);
+            return new Classified(element, action, typeId, role, kind, application, object, host, merged, route,
+                    period);
         }
 
         /// @param role A role in its place.
         /// @return It with that role (an override).
         Classified withRole(final Role role) {
-            return new Classified(element, action, typeId, role, kind, application, object, host, keys, route);
+            return new Classified(element, action, typeId, role, kind, application, object, host, keys, route,
+                    period);
         }
 
         /// @param newRole A role in its place.
@@ -485,7 +530,19 @@ final class EventXmlClassifier {
         Classified withRole(final Role newRole, final String newKind) {
             return new Classified(element, action, typeId, newRole, newKind == null
                     ? kind
-                    : newKind, application, object, host, keys, route);
+                    : newKind, application, object, host, keys, route, period);
+        }
+
+        /// @param newRole   A role in its place.
+        /// @param newKind   An action's kind in its place, or null to keep its own.
+        /// @param newPeriod The period a period role starts or ends, or null to keep its own (the schema's).
+        /// @return It with that role, kind and period.
+        Classified withRole(final Role newRole, final String newKind, final TimelinePeriod newPeriod) {
+            return new Classified(element, action, typeId, newRole, newKind == null
+                    ? kind
+                    : newKind, application, object, host, keys, route, newPeriod == null
+                    ? period
+                    : newPeriod);
         }
     }
 }

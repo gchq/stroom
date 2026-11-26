@@ -2333,8 +2333,32 @@ keeps the finer ones underneath, each naming its parent.
   one covers exactly its units' times; anything else leaves them separate. Cached by the run's facts.
 * **Output**: `activity-levels.csv`, `activities.csv`'s columns plus `level` and `parent`: every level's rows (the
   activities and period bands at 1, the thematic spans at 2, the finest at 3, labelled by their own label and
-  laned and coloured by their activity's label); `activities.csv` unchanged (level 1, drawn ready in the chat). The
-  result counts each level and names the table, for gantt_chart to draw more detail on asking.
+  laned and coloured by their activity's label); `activities.csv` unchanged (level 1). The result counts each
+  level. Both open at level 1 (the user, 2026-11-26).
+* **Less or more detail in the chat** (decided by the user 2026-11-26): the activities view's ready chart is drawn
+  from `activity-levels.csv` with its levels, and the chat's chart (`AiGanttChart`) has "Less detail" and "More
+  detail" buttons (disabled at the ends) that redraw it with the tasks of level at most the one chosen, from 1. The
+  block carries each task's level and parent in a Mermaid comment straight after it, as `%% events` does
+  (`%% level <n> | <parent id>`; `MermaidGanttParser`), so other apps draw it as before and a block with no levels
+  draws as today, with no buttons. gantt_chart takes `level` and `parent` columns. The spans view's charts have no
+  levels and no buttons.
+* **Runs of point events** (the user, 2026-11-26): level 3 holds the actions themselves where they are a source's
+  own record (a message, a command), level 2 their runs: events sharing a thread key (a conversation, channel or
+  recipients; a shell session, a parent process, a session id; a catalogued source's own key field, else host and
+  account), split on gaps past the idle cap, each run a span from its first event to its last, at least 3 events.
+  The model characterises each run's content in the batched, cached side calls ("discussed the Q3 budget with
+  Alice", "listed directory users and exported them to CSV"), may split a run where its topic changes (at an event
+  of the run) and join runs into themes across sources (level 1); the text is data, excerpts cut to the
+  characterisation's cap, every description citing its evidence (event ids of the run), checked in code.
+* **Noise** (the user, 2026-11-26): before any model call, event types (or a type and object pattern) that are
+  very noisy are found in code by statistical and structural signals only: a high rate an hour, regular intervals
+  (a low spread of the gaps), near-identical repeats, no focus or other activity around them, a service account as
+  a field says (never a list of names), the same pattern on many hosts at once, background requests with no page
+  or title change. They are proposed to the user, never dropped unasked: in a chat, in the timeline's short form
+  (the pattern, its count and share, a few examples); over MCP with no form, listed in the result, not excluded. On
+  the user's yes they are excluded before the characterisation and its side calls, persistently: the catalogue's
+  event type given `ignore` where it is one, else an exclusion kept with the investigation (`exclusions.json`
+  beside `corrections.json`), applied on every re-run; the result says what was excluded and how many.
 * **Less or more detail on the dashboard** (`TimelineDashboardConfig`, the activities Data Connection drawn from
   `activity-levels.csv`): a List input (`list-input`, key `level`, values 1, 2 and 3, default 1) beside the query,
   whose term `level <= ${level}` the parameter fills, so the chart and table redraw with more or fewer bars. Real
@@ -2342,7 +2366,10 @@ keeps the finer ones underneath, each naming its parent.
   parameter, which Stroom's visualisations can't do today) or in GWT: not built.
 * **Tests**: `TestThematicSpans` (grouping by each fact, the cap, interleaving, the model's runs with a scripted side
   call and every check), the levels and parents (`TestTimelineTables` or `TestActivityTimelineTool`),
-  `TestTimelineDashboardConfig` (the input and the term), e2e `TestE2eActivityTimeline` (the levels file).
+  `TestTimelineDashboardConfig` (the input and the term), `TestMermaidGanttParser` and `TestAiGanttChart` (the
+  level directive, the filtering and packing by level), the point-event runs with message and command fixtures and
+  a scripted side call, `TestTimelineNoise` (each signal, the proposal, the exclusion before the side calls with the
+  items counted before and after, kept across re-runs), e2e `TestE2eActivityTimeline` (the levels file).
 
 ### Stop and Elasticsearch errors (built 2026-11-16)
 

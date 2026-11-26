@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.timeline;
 
+import stroom.ai.impl.tools.catalogue.TimelinePeriod;
 import stroom.ai.impl.tools.catalogue.TimelineRole;
 import stroom.ai.impl.tools.catalogue.TimelineRoles;
 import stroom.ai.impl.tools.instructions.InstructionRules.TypeRoleRule;
@@ -105,7 +106,7 @@ final class TypeRoleLookup {
         if (decision.role() == null) {
             return Optional.of(c);
         }
-        return Optional.of(c.withRole(decision.role(), decision.kind()));
+        return Optional.of(c.withRole(decision.role(), decision.kind(), decision.period()));
     }
 
     /// @param source   A source, by its place.
@@ -137,7 +138,8 @@ final class TypeRoleLookup {
             if (c.isType(entry.getKey())) {
                 return entry.getValue().role() == null
                         ? Decision.ignore(entry.getValue().from())
-                        : new Decision(entry.getValue().role(), null, entry.getValue().from(), false);
+                        : new Decision(entry.getValue().role(), null, entry.getValue().from(), false,
+                                entry.getValue().period());
             }
         }
         if (c.typeId() != null) {
@@ -145,13 +147,13 @@ final class TypeRoleLookup {
                 if (entry.getKey().equalsIgnoreCase(c.typeId())) {
                     return of(entry.getValue().role(), entry.getValue().role() == TimelineRole.ACTION
                             ? entry.getValue().kind()
-                            : null, FROM_CATALOGUE);
+                            : null, FROM_CATALOGUE, entry.getValue().period());
                 }
             }
         }
         for (final Map.Entry<String, TypeRoleRule> entry : agents.getOrDefault(source, Map.of()).entrySet()) {
             if (c.isType(entry.getKey())) {
-                return of(entry.getValue().role(), null, FROM_AGENTS);
+                return of(entry.getValue().role(), null, FROM_AGENTS, entry.getValue().period());
             }
         }
         final String own = switch (c.route()) {
@@ -163,25 +165,34 @@ final class TypeRoleLookup {
         };
         return c.role() == null && c.route() != Route.NONE && c.route() != Route.TYPE_FIELD
                 ? Decision.ignore(own)
-                : new Decision(null, null, own, false);
+                : new Decision(null, null, own, false, null);
     }
 
-    private static Decision of(final TimelineRole role, final String kind, final String from) {
+    private static Decision of(final TimelineRole role,
+                               final String kind,
+                               final String from,
+                               final TimelinePeriod period) {
         if (role == TimelineRole.IGNORE) {
             return Decision.ignore(from);
         }
-        return new Decision(EventCodes.role(role.label()), kind, from, false);
+        if (role.isPeriod()) {
+            // A period role with no kind is none: the type's own is kept.
+            return period == null
+                    ? new Decision(null, null, from, false, null)
+                    : new Decision(EventCodes.role(period.text(role)), null, from, false, period);
+        }
+        return new Decision(EventCodes.role(role.label()), kind, from, false, null);
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    // A type's role: null to keep its own; ignored to leave its events out.
-    private record Decision(Role role, String kind, String from, boolean ignored) {
+    // A type's role: null to keep its own; ignored to leave its events out; a period role's period.
+    private record Decision(Role role, String kind, String from, boolean ignored, TimelinePeriod period) {
 
         static Decision ignore(final String from) {
-            return new Decision(null, null, from, true);
+            return new Decision(null, null, from, true, null);
         }
     }
 }

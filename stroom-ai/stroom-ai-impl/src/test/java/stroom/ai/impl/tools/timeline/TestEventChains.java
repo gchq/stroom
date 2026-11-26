@@ -65,6 +65,20 @@ class TestEventChains {
     }
 
     @Test
+    void aPeriodRoleLineKeepsItsKindAndKeyAndOneWithNoKindIsUnread() {
+        final Parsed parsed = EventChains.parse("""
+                - Doors: Badge-In is period_start on_site by Location/Building
+                - VPN: Tun-Down is PERIOD_END remote_session
+                - Doors: Badge-Out is period_end
+                """);
+
+        assertThat(parsed.entries()).containsExactly(
+                Entry.role("Doors", "Badge-In", "period_start on_site by Location/Building"),
+                Entry.role("VPN", "Tun-Down", "period_end remote_session"));
+        assertThat(parsed.unread()).containsExactly("- Doors: Badge-Out is period_end");
+    }
+
+    @Test
     void aSkillWithoutTheSectionGetsItBeforeItsOutput() {
         final String changed = EventChains.withEntries(SKILL, List.of(Entry.pair("Proxy", "Tun-Ascend",
                 "Tun-Recede", "Tunnel/Id", null)));

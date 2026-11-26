@@ -55,7 +55,8 @@ A table in the chat, in time order.
 - A timeline skill's `## Event chains`: what its sources' events mean beyond the schema, a line each:
   `- <index>: pair <start type> -> <end type> by <key path>` or
   `- <index>: <type> is active|idle|focus|open|close|action|ignore` (focus: a window or application coming to the
-  front, which starts a focus session).
+  front, which starts a focus session), or `is period_start <kind>` / `is period_end <kind>` (a state such as
+  remote_session or on_site, paired by its kind's key; no activity).
   activity_timeline (with `skill`) applies them first and offers to add what it learns; check_skill checks them
   against the index's recent events.
 

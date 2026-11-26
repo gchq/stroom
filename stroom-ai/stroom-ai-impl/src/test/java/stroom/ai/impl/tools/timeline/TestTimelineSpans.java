@@ -352,8 +352,11 @@ class TestTimelineSpans {
         // A pair other than a session's is an item of the characterisation; a logon's isn't.
         assertThat(built.spans()).filteredOn(span -> span.kind() == Kind.PAIR).isNotEmpty()
                 .allSatisfy(span -> assertThat(span.isItem()).isTrue());
-        assertThat(TimelineSpans.sessionLevel(EventXmlClassifier.of("Authenticate", "Connect", null, null, null,
+        assertThat(TimelineSpans.sessionLevel(EventXmlClassifier.of("Authenticate", "Logon", null, null, null,
                 null, Map.of(), Route.XML))).isTrue();
+        // A connect starts a remote session's period (decided 2026-11-26), not a session.
+        assertThat(TimelineSpans.sessionLevel(EventXmlClassifier.of("Authenticate", "Connect", null, null, null,
+                null, Map.of(), Route.XML))).isFalse();
         assertThat(TimelineSpans.sessionLevel(EventXmlClassifier.of("Authenticate", "Other", null, null, null,
                 null, Map.of(), Route.XML))).isFalse();
     }

@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.instructions;
 
+import stroom.ai.impl.tools.catalogue.TimelinePeriod;
 import stroom.ai.impl.tools.catalogue.TimelineRole;
 import stroom.ai.impl.tools.instructions.AgentInstructions.InstructionDoc;
 import stroom.ai.impl.tools.instructions.InstructionRules.ComponentRule;
@@ -188,6 +189,23 @@ class TestInstructionRules {
         assertThat(InstructionRules.eventTypes(List.of())).isEmpty();
         assertThat(InstructionRules.problems("## Event types\n- odd-one: sideways\n")).singleElement().asString()
                 .startsWith("'## Event types' line '- odd-one: sideways' names no role the tools know");
+    }
+
+    @Test
+    void anEventTypesLineGivesAPeriodRoleWithItsKindAndOneWithNoKindIsAProblem() {
+        final Map<String, TypeRoleRule> found = InstructionRules.eventTypes(List.of(doc("/", """
+                ## Event types
+                - Badge-In: period_start on_site by Location/Building
+                - Badge-Out: period_end
+                """)));
+
+        assertThat(found).containsOnlyKeys("Badge-In");
+        assertThat(found.get("Badge-In")).isEqualTo(new TypeRoleRule(TimelineRole.PERIOD_START, "/",
+                new TimelinePeriod("on_site", "Location/Building")));
+        assertThat(InstructionRules.problems("## Event types\n- Badge-Out: period_end\n")).singleElement()
+                .asString().contains("period_start <kind>");
+        assertThat(InstructionRules.eventTypesTextSection(Map.of("Vpn-Up", "period_start remote_session")))
+                .isEqualTo("## Event types\n\n- Vpn-Up: period_start remote_session\n");
     }
 
     @Test

@@ -16,7 +16,9 @@
 
 package stroom.ai.impl.tools.instructions;
 
+import stroom.ai.impl.tools.catalogue.TimelinePeriod;
 import stroom.ai.impl.tools.catalogue.TimelineRole;
+import stroom.ai.impl.tools.catalogue.TimelineRoles;
 import stroom.ai.impl.tools.instructions.AgentInstructions.InstructionDoc;
 import stroom.util.shared.NullSafe;
 
@@ -353,23 +355,24 @@ public final class InstructionRules {
         for (final InstructionDoc doc : NullSafe.list(applying)) {
             eventTypeLines(doc.text()).forEach((type, role) -> {
                 out.keySet().removeIf(known -> known.equalsIgnoreCase(type));
-                out.put(type, new TypeRoleRule(role, doc.folder()));
+                out.put(type, new TypeRoleRule(role.role(), doc.folder(), role.period()));
             });
         }
         return out;
     }
 
     /// @param text A doc's text.
-    /// @return Its `## Event types` lines whose role the tools know, by type, each role lower case.
-    static Map<String, TimelineRole> eventTypeLines(final String text) {
-        final Map<String, TimelineRole> out = new LinkedHashMap<>();
+    /// @return Its `## Event types` lines whose role the tools know, by type: a period's role with its kind
+    /// (`period_start on_site`).
+    static Map<String, TimelinePeriod.RoleText> eventTypeLines(final String text) {
+        final Map<String, TimelinePeriod.RoleText> out = new LinkedHashMap<>();
         for (final String line : section(text, EVENT_TYPES_HEADING).orElse("").split("\\R")) {
             final Matcher bullet = BULLET.matcher(line);
             if (!bullet.matches()) {
                 continue;
             }
             final String type = stripChars(bullet.group(1).strip(), "`*").strip();
-            TimelineRole.of(stripChars(bullet.group(2).strip(), "`*.").strip())
+            TimelinePeriod.role(stripChars(bullet.group(2).strip(), "`*.").strip())
                     .filter(role -> !type.isEmpty())
                     .ifPresent(role -> out.put(type, role));
         }
@@ -405,11 +408,22 @@ public final class InstructionRules {
     /// @param roles Each event type's role, in order.
     /// @return The section, its heading and a line each; empty for none.
     public static String eventTypesSection(final Map<String, TimelineRole> roles) {
+        final Map<String, String> texts = new LinkedHashMap<>();
+        NullSafe.map(roles).forEach((type, role) -> texts.put(type, role.label()));
+        return eventTypesTextSection(texts);
+    }
+
+    /// The `## Event types` lines the agent would offer, each role as text (a period's with its kind,
+    /// `period_start remote_session`).
+    ///
+    /// @param roles Each event type's role as text, in order.
+    /// @return The section, its heading and a line each; empty for none.
+    public static String eventTypesTextSection(final Map<String, String> roles) {
         if (NullSafe.isEmptyMap(roles)) {
             return "";
         }
         final StringBuilder sb = new StringBuilder("## ").append(EVENT_TYPES_SECTION).append("\n\n");
-        roles.forEach((type, role) -> sb.append("- ").append(type).append(": ").append(role.label()).append('\n'));
+        roles.forEach((type, role) -> sb.append("- ").append(type).append(": ").append(role).append('\n'));
         return sb.toString();
     }
 
@@ -468,9 +482,9 @@ public final class InstructionRules {
         keyProblems(out, text, SOURCES_HEADING, SOURCES_SECTION, SOURCES_KEYS, BULLET);
         for (final String line : section(text, EVENT_TYPES_HEADING).orElse("").split("\\R")) {
             final Matcher bullet = BULLET.matcher(line);
-            if (bullet.matches() && TimelineRole.of(stripChars(bullet.group(2).strip(), "`*.").strip()).isEmpty()) {
+            if (bullet.matches() && TimelinePeriod.role(stripChars(bullet.group(2).strip(), "`*.").strip()).isEmpty()) {
                 out.add("'## " + EVENT_TYPES_SECTION + "' line '" + line.strip() + "' names no role the tools know ("
-                        + String.join(", ", TimelineRole.NAMES) + "), so it would be left out");
+                        + String.join(", ", TimelineRoles.ASKED_ROLES) + "), so it would be left out");
             }
         }
         for (final String line : section(text, DOCUMENTATION_HEADING).orElse("").split("\\R")) {
@@ -646,10 +660,18 @@ public final class InstructionRules {
 
     /// An event type's timeline role an AGENTS doc's `## Event types` line gives.
     ///
-    /// @param role The role.
-    /// @param from The folder of the AGENTS doc that gives it.
-    public record TypeRoleRule(TimelineRole role, String from) {
+    /// @param role   The role.
+    /// @param from   The folder of the AGENTS doc that gives it.
+    /// @param period Its period, for a period role (`period_start on_site`); else null.
+    public record TypeRoleRule(TimelineRole role, String from, TimelinePeriod period) {
 
+        /// A role that is no period's.
+        ///
+        /// @param role The role.
+        /// @param from The folder of the AGENTS doc that gives it.
+        public TypeRoleRule(final TimelineRole role, final String from) {
+            this(role, from, null);
+        }
     }
 
 

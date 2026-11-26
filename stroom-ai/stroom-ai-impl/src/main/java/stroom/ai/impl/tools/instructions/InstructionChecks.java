@@ -16,7 +16,9 @@
 
 package stroom.ai.impl.tools.instructions;
 
+import stroom.ai.impl.tools.catalogue.TimelinePeriod;
 import stroom.ai.impl.tools.catalogue.TimelineRole;
+import stroom.ai.impl.tools.catalogue.TimelineRoles;
 import stroom.ai.impl.tools.instructions.AgentInstructions.InstructionDoc;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.util.shared.NullSafe;
@@ -295,7 +297,7 @@ public final class InstructionChecks {
             return;
         }
         final String given = InstructionRules.stripChars(bullet.group(2).strip(), "`*.").strip();
-        if (TimelineRole.of(given).isPresent()) {
+        if (TimelinePeriod.role(given).isPresent()) {
             return;
         }
         final List<String> close = closest(given.toLowerCase(Locale.ROOT), TimelineRole.NAMES);
@@ -308,7 +310,7 @@ public final class InstructionChecks {
         } else {
             findings.add(Finding.problem("unknown_role", "'## " + InstructionRules.EVENT_TYPES_SECTION + "' line '"
                                                          + line.strip() + "' names no role the tools know ("
-                                                         + String.join(", ", TimelineRole.NAMES) + "), so they "
+                                                         + String.join(", ", TimelineRoles.ASKED_ROLES) + "), so they "
                                                          + "leave it out.", "write one of those.", List.of(),
                     List.of()));
         }

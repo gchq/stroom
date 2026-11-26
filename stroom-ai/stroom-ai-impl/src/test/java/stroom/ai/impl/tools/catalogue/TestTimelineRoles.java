@@ -141,12 +141,13 @@ class TestTimelineRoles {
 
         assertThat(asked).containsExactly(
                 "Switch-Session, Odd-Thing: the schema doesn't settle them; say each one's role in your answer "
-                + "(focus, active, idle, open, close, action, ignore), or leave it for the timeline to judge",
+                + "(focus, active, idle, open, close, action, ignore, period_start <kind>, period_end <kind>), or "
+                + "leave it for the timeline to judge",
                 "Given: Gained-Focus active (yours to change in your answer)");
         assertThat(TimelineRoles.askedInForm(List.of(type("Switch-Session", "Authenticate", "Other"))))
                 .containsExactly("Switch-Session: the schema doesn't settle it; say its role in your answer "
-                                 + "(focus, active, idle, open, close, action, ignore), or leave it for the "
-                                 + "timeline to judge");
+                                 + "(focus, active, idle, open, close, action, ignore, period_start <kind>, "
+                                 + "period_end <kind>), or leave it for the timeline to judge");
         // Every role the schema's: nothing to ask.
         assertThat(TimelineRoles.askedInForm(List.of(type("Logon-User", "Authenticate", "Logon")))).isEmpty();
         assertThat(TimelineRoles.askedInForm(List.of())).isEmpty();
@@ -179,6 +180,97 @@ class TestTimelineRoles {
         final ModelReader reader = new ModelReader();
         assertThat(EventType.read(reader, json, List.of())).isNull();
         assertThat(reader.errors()).isNotEmpty();
+    }
+
+    @Test
+    void aConnectStartsAndADisconnectEndsARemoteSessionByTheSchema() {
+        assertThat(TimelineRoles.bySchema("Authenticate", "Connect")).contains(TimelineRole.PERIOD_START);
+        assertThat(TimelineRoles.bySchema("Authenticate", "reconnect")).contains(TimelineRole.PERIOD_START);
+        assertThat(TimelineRoles.bySchema("Authenticate", "Disconnect")).contains(TimelineRole.PERIOD_END);
+        assertThat(TimelineRoles.periodBySchema("Authenticate", "Connect"))
+                .isEqualTo(new TimelinePeriod(TimelinePeriod.REMOTE_SESSION, null));
+        // A logon and a lock stay attention's, with no period.
+        assertThat(TimelineRoles.bySchema("Authenticate", "Logon")).contains(TimelineRole.ACTIVE);
+        assertThat(TimelineRoles.periodBySchema("Authenticate", "Logon")).isNull();
+        assertThat(TimelineRoles.bySchema("Authenticate", "ScreenLock")).contains(TimelineRole.IDLE);
+        // ElevatePrivilege names no end, so it stays asked.
+        assertThat(TimelineRoles.bySchema("Authenticate", "ElevatePrivilege")).isEmpty();
+    }
+
+    @Test
+    void aConnectFilledInAsActiveBeforeIsFilledInAgainAsARemoteSessionAndAGivenOneKept() {
+        // As a catalogue written before 2026-11-26 holds it: active, from the schema.
+        final EventType before = type("Connect-Vpn", "Authenticate", "Connect")
+                .withTimelineRole("active", TimelineRoles.FROM_SCHEMA);
+
+        final EventType settled = TimelineRoles.settled(before);
+
+        assertThat(settled.timelineRole()).isEqualTo("period_start");
+        assertThat(settled.timelineRoleFrom()).isEqualTo(TimelineRoles.FROM_SCHEMA);
+        assertThat(settled.timelinePeriod().kind()).isEqualTo(TimelinePeriod.REMOTE_SESSION);
+        // The user's own active is kept.
+        final EventType given = before.withTimelineRole("active", TimelineRoles.FROM_GIVEN);
+        assertThat(TimelineRoles.settled(given).timelineRole()).isEqualTo("active");
+        assertThat(TimelineRoles.settled(given).timelinePeriod()).isNull();
+    }
+
+    @Test
+    void aPeriodRoleIsReadByTypeIdWithItsKindAndKey() {
+        final Catalogue catalogue = new Catalogue(List.of(type("Connect-Vpn", "Authenticate", "Connect"),
+                type("Enter-Door", "Unknown", null).withTimelineRole("period_start", TimelineRoles.FROM_GIVEN,
+                        new TimelinePeriod("on_site", "Location/Building")),
+                // A period role with no kind (written by hand) is no role.
+                type("Odd-Thing", "Unknown", null).withTimelineRole("period_end", TimelineRoles.FROM_GIVEN)), null,
+                null);
+
+        final Map<String, TimelineRoles.Role> roles = TimelineRoles.byTypeId(catalogue);
+
+        assertThat(roles.keySet()).containsExactly("Connect-Vpn", "Enter-Door");
+        assertThat(roles.get("Connect-Vpn").period().kind()).isEqualTo(TimelinePeriod.REMOTE_SESSION);
+        assertThat(roles.get("Enter-Door").role()).isEqualTo(TimelineRole.PERIOD_START);
+        assertThat(roles.get("Enter-Door").period()).isEqualTo(new TimelinePeriod("on_site", "Location/Building"));
+    }
+
+    @Test
+    void aSetSaysItsPeriodRolesWithTheirKindsAndHowToGiveOne() {
+        final List<EventType> set = List.of(type("Connect-Vpn", "Authenticate", "Connect"),
+                type("Enter-Door", "Unknown", null).withTimelineRole("period_start", TimelineRoles.FROM_GIVEN,
+                        new TimelinePeriod("on_site", null)));
+
+        assertThat(TimelineRoles.said(set)).contains("Connect-Vpn period_start (remote_session)")
+                .contains("Given: Enter-Door period_start (on_site)")
+                .contains("as period_start or period_end with its kind (remote_session, on_site, elevated, "
+                          + "device_attached, call, or your own)");
+        assertThat(TimelineRoles.askedInForm(set))
+                .containsExactly("Given: Enter-Door period_start on_site (yours to change in your answer)");
+    }
+
+    @Test
+    void aPeriodRoleIsWrittenWithItsKindAndKeyAndReadBackEitherWay() {
+        final EventType door = type("Enter-Door", "Unknown", null).withTimelineRole("period_start",
+                TimelineRoles.FROM_GIVEN, new TimelinePeriod("on_site", "Location/Building"));
+        final Map<String, Object> json = door.toJson();
+        assertThat(json).containsEntry(EventType.TIMELINE_ROLE, "period_start")
+                .containsEntry(EventType.TIMELINE_PERIOD, "on_site")
+                .containsEntry(EventType.TIMELINE_PERIOD_KEY, "Location/Building");
+        assertThat(EventType.read(new ModelReader(), json, List.of())).isEqualTo(door);
+
+        // The role's text form, as a proposal may give it.
+        final Map<String, Object> text = new LinkedHashMap<>(type("Leave-Door", "Unknown", null).toJson());
+        text.put(EventType.TIMELINE_ROLE, "period_end On Site");
+        final EventType read = EventType.read(new ModelReader(), text, List.of());
+        assertThat(read.timelineRole()).isEqualTo("period_end");
+        assertThat(read.timelinePeriod()).isEqualTo(new TimelinePeriod("on_site", null));
+
+        // A period role with no kind is refused; a kind on another role is dropped.
+        final Map<String, Object> noKind = new LinkedHashMap<>(type("Leave-Door", "Unknown", null).toJson());
+        noKind.put(EventType.TIMELINE_ROLE, "period_end");
+        final ModelReader reader = new ModelReader();
+        assertThat(EventType.read(reader, noKind, List.of())).isNull();
+        assertThat(reader.errors()).isNotEmpty();
+        noKind.put(EventType.TIMELINE_ROLE, "action");
+        noKind.put(EventType.TIMELINE_PERIOD, "on_site");
+        assertThat(EventType.read(new ModelReader(), noKind, List.of()).timelinePeriod()).isNull();
     }
 
     @Test

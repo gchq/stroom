@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.timeline;
 
+import stroom.ai.impl.tools.catalogue.TimelinePeriod;
 import stroom.ai.impl.tools.timeline.EventCodes.CodeRole;
 import stroom.ai.impl.tools.timeline.EventXmlClassifier.Classified;
 import stroom.ai.impl.tools.timeline.EventXmlClassifier.Route;
@@ -180,8 +181,8 @@ final class TimelineClassification {
         }
         if (code != null && codes.containsKey(code)) {
             final CodeRole role = codes.get(code);
-            return new Classified(null, null, code, EventCodes.role(role.role()), role.kind(), null, event.object(),
-                    null, Map.of(), Route.EVENT_CODE);
+            return new Classified(null, null, code, EventCodes.role(role.text()), role.kind(), null, event.object(),
+                    null, Map.of(), Route.EVENT_CODE, EventCodes.period(role.text()));
         }
         return new Classified(null, null, code, Role.ACTION, Objects.requireNonNullElse(code, "event"), null,
                 event.object(), null, Map.of(), code == null
@@ -288,10 +289,25 @@ final class TimelineClassification {
 
     /// A type's role given by a skill or the call.
     ///
-    /// @param role The role, or null to leave its events out.
-    /// @param from Where it came from (`skill`, `call`).
-    record RoleOverride(Role role, String from) {
+    /// @param role   The role, or null to leave its events out.
+    /// @param from   Where it came from (`skill`, `call`).
+    /// @param period Its period, for a period role; else null.
+    record RoleOverride(Role role, String from, TimelinePeriod period) {
 
+        /// A role that is no period's.
+        ///
+        /// @param role The role, or null to leave its events out.
+        /// @param from Where it came from.
+        RoleOverride(final Role role, final String from) {
+            this(role, from, null);
+        }
+
+        /// @param text A role as text gives it (a period's with its kind, `period_start on_site`).
+        /// @param from Where it came from.
+        /// @return It as an override.
+        static RoleOverride of(final String text, final String from) {
+            return new RoleOverride(EventCodes.role(text), from, EventCodes.period(text));
+        }
     }
 
 

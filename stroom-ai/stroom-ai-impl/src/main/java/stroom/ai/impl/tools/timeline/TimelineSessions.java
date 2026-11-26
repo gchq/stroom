@@ -85,7 +85,10 @@ final class TimelineSessions {
     /// @return The sessions, the window lifetimes, the actions with where each was attached, the daily totals and
     ///         the data-quality flags.
     static Timeline build(final List<Event> events, final Options options) {
-        final List<Event> sorted = new ArrayList<>(events);
+        // A period's start or end implies no activity: it takes no part in the sessions ([TimelinePeriods]).
+        final List<Event> sorted = new ArrayList<>(events.stream()
+                .filter(event -> !event.role().isPeriod())
+                .toList());
         sorted.sort(Comparator.comparingLong(Event::time).thenComparingInt(Event::source)
                 .thenComparing(Event::id));
         final Flags flags = new Flags();
@@ -279,7 +282,7 @@ final class TimelineSessions {
     }
 
     private static boolean isActivity(final Role role) {
-        return role == Role.FOCUS || role == Role.ACTION;
+        return role.impliesActivity();
     }
 
     // Events out of time order within their stream (by event id) beyond a tolerance, and events after now.
@@ -427,11 +430,26 @@ final class TimelineSessions {
         /// The user came back: an unlock, wake or logon.
         IDLE_END,
         /// Something the user did: a clipboard copy, a file copy, a web access, a process started.
-        ACTION;
+        ACTION,
+        /// A period of its kind started: a remote session connected, a door entered ([TimelinePeriods]).
+        PERIOD_START,
+        /// A period of its kind ended: a remote session disconnected, a door left.
+        PERIOD_END;
 
         /// @return Its name as a call gives it, e.g. `idle_start`.
         String argName() {
             return name().toLowerCase(Locale.ROOT);
+        }
+
+        /// @return True if it implies the user is active (decided with the user 2026-11-26): a focus, an action, an
+        /// open or a close; an idle start or end is attention's, a period's start or end implies nothing.
+        boolean impliesActivity() {
+            return this == FOCUS || this == ACTION || this == OPEN || this == CLOSE;
+        }
+
+        /// @return True if it starts or ends a period.
+        boolean isPeriod() {
+            return this == PERIOD_START || this == PERIOD_END;
         }
     }
 

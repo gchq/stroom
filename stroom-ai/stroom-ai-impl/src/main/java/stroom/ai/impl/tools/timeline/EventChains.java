@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.timeline;
 
+import stroom.ai.impl.tools.catalogue.TimelinePeriod;
 import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
@@ -37,21 +38,24 @@ import java.util.regex.Pattern;
 /// ```
 ///
 /// A pair's `by` is the key path the two are matched by (none: the host alone), its `label` the key path that labels
-/// its spans; a type's role is `active` (active from here), `idle` (idle from here), `open`, `close`, `action` or
-/// `ignore` (left out of the timeline). The source is an index's name (or `any`).
+/// its spans; a type's role is `active` (active from here), `idle` (idle from here), `open`, `close`, `action`,
+/// `ignore` (left out of the timeline), or `period_start <kind>` / `period_end <kind>` (optionally `by <key>`;
+/// [stroom.ai.impl.tools.catalogue.TimelinePeriod]). The source is an index's name (or `any`).
 public final class EventChains {
 
     /// The section's heading, as a skill's sections are keyed (lower case).
     public static final String SECTION = "event chains";
     /// The roles a line may give a type.
-    public static final List<String> ROLES = List.of("active", "idle", "focus", "open", "close", "action", "ignore");
+    public static final List<String> ROLES = List.of("active", "idle", "focus", "open", "close", "action", "ignore",
+            "period_start", "period_end");
     /// The source of a line for every source.
     public static final String ANY = "any";
     private static final Pattern PAIR = Pattern.compile(
             "^\\s*[-*]\\s*(.+?):\\s*pair\\s+(.+?)\\s*->\\s*(.+?)(?:\\s+by\\s+(\\S+))?(?:\\s+label\\s+(\\S+))?\\s*$",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern ROLE = Pattern.compile(
-            "^\\s*[-*]\\s*(.+?):\\s*(.+?)\\s+is\\s+(active|idle|focus|open|close|action|ignore)\\b.*$",
+            "^\\s*[-*]\\s*(.+?):\\s*(.+?)\\s+is\\s+((?:period_start|period_end)\\s+\\S.*?(?=\\s*$)"
+            + "|(?:active|idle|focus|open|close|action|ignore)\\b).*$",
             Pattern.CASE_INSENSITIVE);
     private static final Pattern BULLET = Pattern.compile("^\\s*[-*]\\s+\\S.*$");
     private static final Pattern SECTION_HEADING = Pattern.compile("^##\\s+event chains\\s*#*\\s*$",
@@ -60,6 +64,14 @@ public final class EventChains {
 
     private EventChains() {
         // Static only.
+    }
+
+    // A role line's role as text: a period's with its kind and key as given (a key path keeps its case), else the
+    // role's name.
+    private static String roleText(final String given) {
+        return TimelinePeriod.parse(given)
+                .map(TimelinePeriod.RoleText::text)
+                .orElse(given.strip().toLowerCase(Locale.ROOT));
     }
 
     /// @param section The section's text (below its heading), or null.
@@ -75,8 +87,7 @@ public final class EventChains {
                 entries.add(Entry.pair(pair.group(1).strip(), pair.group(2).strip(), pair.group(3).strip(),
                         pair.group(4), pair.group(5)));
             } else if (role.matches()) {
-                entries.add(Entry.role(role.group(1).strip(), role.group(2).strip(),
-                        role.group(3).toLowerCase(Locale.ROOT)));
+                entries.add(Entry.role(role.group(1).strip(), role.group(2).strip(), roleText(role.group(3))));
             } else if (BULLET.matcher(line).matches()) {
                 unread.add(line.strip());
             }

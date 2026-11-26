@@ -16,6 +16,7 @@
 
 package stroom.ai.impl.tools.timeline;
 
+import stroom.ai.impl.tools.catalogue.TimelinePeriod;
 import stroom.ai.impl.tools.catalogue.TimelineRole;
 import stroom.ai.impl.tools.catalogue.TimelineRoles;
 import stroom.ai.impl.tools.instructions.InstructionRules.TypeRoleRule;
@@ -111,6 +112,38 @@ class TestTypeRoleLookup {
         assertThat(lookup.decide(0, null, none)).contains(none);
         assertThat(lookup.decide(0, null, code("x"))).isPresent();
         assertThat(lookup.origins().get(0)).containsOnlyKeys(TypeRoleLookup.FROM_NONE, TypeRoleLookup.FROM_CODE);
+    }
+
+    @Test
+    void aPeriodRoleComesWithItsKindAndKeyFromEveryOriginAndTheSchemasConnectIsARemoteSession() {
+        final TypeRoleLookup lookup = new TypeRoleLookup(
+                Map.of(0, Map.of("badge-in", RoleOverride.of("period_start on_site by Location/Room", "call"))),
+                streamId -> Map.of("usb-in", new TimelineRoles.Role("usb-in", TimelineRole.PERIOD_START, "event",
+                        "given", new TimelinePeriod("device_attached", null))),
+                Map.of(0, Map.of("join-call", new TypeRoleRule(TimelineRole.PERIOD_START, "/",
+                        new TimelinePeriod("call", null)))));
+
+        final Classified badge = lookup.decide(0, "9", code("badge-in")).orElseThrow();
+        assertThat(badge.role()).isEqualTo(Role.PERIOD_START);
+        assertThat(badge.period()).isEqualTo(new TimelinePeriod("on_site", "Location/Room"));
+        assertThat(badge.kind()).isEqualTo("on_site");
+        assertThat(lookup.decide(0, "9", code("usb-in")).orElseThrow().period().kind())
+                .isEqualTo("device_attached");
+        assertThat(lookup.decide(0, "9", code("join-call")).orElseThrow().period().kind()).isEqualTo("call");
+        final Classified connect = lookup.decide(0, "9", element("Authenticate", "Connect", null)).orElseThrow();
+        assertThat(connect.role()).isEqualTo(Role.PERIOD_START);
+        assertThat(connect.period().kind()).isEqualTo(TimelinePeriod.REMOTE_SESSION);
+    }
+
+    @Test
+    void aPeriodRoleGivenAsAnotherRoleLosesItsPeriod() {
+        final TypeRoleLookup lookup = new TypeRoleLookup(
+                Map.of(0, Map.of("Authenticate/Connect", RoleOverride.of("active", "call"))), null, Map.of());
+
+        final Classified connect = lookup.decide(0, null, element("Authenticate", "Connect", null)).orElseThrow();
+
+        assertThat(connect.role()).isEqualTo(Role.IDLE_END);
+        assertThat(connect.period()).isNull();
     }
 
     // ------------------------------------------------------------------------------------------------

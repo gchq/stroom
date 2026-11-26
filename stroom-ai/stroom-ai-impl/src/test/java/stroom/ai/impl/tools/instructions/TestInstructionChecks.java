@@ -104,7 +104,8 @@ class TestInstructionChecks {
         });
         assertThat(findings.getFirst().fix()).isEqualTo("replace it with '- Tun-Ascend: active'.");
         assertThat(findings.get(1).message()).contains("names no role the tools know (focus, active, idle, open, "
-                                                       + "close, action, ignore)");
+                                                       + "close, action, ignore, period_start <kind>, "
+                                                       + "period_end <kind>)");
     }
 
     @Test

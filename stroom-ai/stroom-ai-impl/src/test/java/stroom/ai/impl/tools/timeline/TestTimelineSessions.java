@@ -332,6 +332,23 @@ class TestTimelineSessions {
 
     // ------------------------------------------------------------------------------------------------
 
+    @Test
+    void aPeriodsStartOrEndImpliesNoActivitySoNeitherStartsNorKeepsAliveASession() {
+        focus("ws-01", "WINWORD.EXE", "09:00", "Q3 Proposal.docx - Word");
+        // A remote session's connect and disconnect every 20 minutes: no activity, so the cap still ends the focus.
+        idle(Role.PERIOD_START, "ws-01", "09:20");
+        idle(Role.PERIOD_END, "ws-01", "09:40");
+        idle(Role.PERIOD_START, "ws-02", "10:00");
+
+        final Timeline timeline = build("12:00");
+
+        assertThat(timeline.sessions()).extracting(Session::host, Session::endReason)
+                .containsExactly(tuple("ws-01", "cap"));
+        assertThat(timeline.sessions().getFirst().end()).isEqualTo(at("09:30"));
+        assertThat(timeline.sessions().getFirst().eventIds()).hasSize(1);
+        assertThat(timeline.actions()).isEmpty();
+    }
+
     private Timeline build(final String end) {
         return TimelineSessions.build(events, options(end, CAP, Set.of()));
     }

@@ -183,7 +183,8 @@ public final class CatalogueFromMapping {
                 eventDetail, orElse(action, was.action()),
                 orElse(success, was.success()), orElse(actor, was.actor()),
                 was.affected(), was.affectedAs(), ways, false, was.basis(), was.confidence(), was.oneTypeBecause(),
-                was.status(), was.doubt(), was.placements(), was.timelineRole(), was.timelineRoleFrom());
+                was.status(), was.doubt(), was.placements(), was.timelineRole(), was.timelineRoleFrom(),
+                was.timelinePeriod());
     }
 
     // The way's conditions without a leading line format's condition (the translation prefixes it per variant), so
@@ -223,7 +224,7 @@ public final class CatalogueFromMapping {
                     : new EventType(typeId, was.title(), was.description(), was.eventDetail(), was.action(),
                             was.success(), was.actor(), was.affected(), was.affectedAs(), ways, true, was.basis(),
                             was.confidence(), was.oneTypeBecause(), was.status(), was.doubt(), was.placements(),
-                            was.timelineRole(), was.timelineRoleFrom()));
+                            was.timelineRole(), was.timelineRoleFrom(), was.timelinePeriod()));
         });
     }
 
