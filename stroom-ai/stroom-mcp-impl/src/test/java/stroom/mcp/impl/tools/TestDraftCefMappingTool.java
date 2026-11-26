@@ -104,6 +104,21 @@ class TestDraftCefMappingTool {
                                          + "<value><xsl:value-of select=\"data[@name='cef']/@value\"/></value>"
                                          + "</kafkaRecord></xsl:for-each></kafkaRecords></xsl:template>"
                                          + "</xsl:stylesheet>";
+    // A template's first shared XSLT of two: each pair named cef out as a line in a neutral wrapper.
+    private static final String TO_LINES = "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                                           + "version=\"2.0\" xpath-default-namespace=\"" + HANDOFF_NS + "\">"
+                                           + "<xsl:template match=\"/records\"><Lines>"
+                                           + "<xsl:for-each select=\"record\"><Line>"
+                                           + "<xsl:value-of select=\"data[@name='cef']/@value\"/></Line>"
+                                           + "</xsl:for-each></Lines></xsl:template></xsl:stylesheet>";
+    // The second: the wrapper's lines to Kafka records, the topic set here.
+    private static final String LINES_TO_KAFKA = "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                                                 + "version=\"2.0\" xmlns=\"kafka-records:1\">"
+                                                 + "<xsl:template match=\"/Lines\"><kafkaRecords>"
+                                                 + "<xsl:for-each select=\"Line\"><kafkaRecord topic=\"t\"><value>"
+                                                 + "<xsl:value-of select=\".\"/></value></kafkaRecord>"
+                                                 + "</xsl:for-each></kafkaRecords></xsl:template>"
+                                                 + "</xsl:stylesheet>";
     private static final DocRef TWO_STAGES = new DocRef(PipelineDoc.TYPE, "fwd", "Kafka Forwarding");
     private static final DocRef ONE_STAGE = new DocRef(PipelineDoc.TYPE, "one", "CEF Kafka");
 
@@ -546,6 +561,90 @@ class TestDraftCefMappingTool {
         assertThat((String) result.get("hint")).contains("Pipeline: its flattener runs the saved XSLT; the "
                                                          + "template's shared stage after it writes the Kafka "
                                                          + "records");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aTemplateRunningTwoSharedXsltsHasTheFlattenerCheckedThroughBoth() throws Exception {
+        twoSharedXslts();
+        Mockito.when(sources.pipeline("Two Shared")).thenReturn(Optional.of(new DocRef(PipelineDoc.TYPE, "fwd2",
+                "Two Shared")));
+
+        final Map<String, Object> result = draft("{\"stream_ids\": [7], \"custom_keys\": false, \"topic\": "
+                                                 + "\"mine\", \"template\": \"Two Shared\"}");
+
+        final Map<String, Object> shape = (Map<String, Object>) result.get("shape");
+        assertThat(shape).containsEntry("kind", "chained").containsEntry("handoff_checked", true)
+                .containsKey("shared_stages");
+        assertThat((Map<String, Object>) shape.get("shared_stage")).containsEntry("element", "lineFilter");
+        assertThat((String) shape.get("handoff")).contains("<data name=\"cef\" value=\"CEF line\"/>");
+        assertThat((Map<String, Object>) result.get("chain_check")).containsEntry("ran", true)
+                .containsEntry("problems", List.of());
+        assertThat((List<String>) result.get("notes")).anySatisfy(note -> assertThat(note)
+                .startsWith("topic 'mine' not used: the shared XSLTs 'Wrap lines' then 'Lines to Kafka' the "
+                            + "template supplies set the topic"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aForwarderRunningTwoSharedXsltsIsReviewedThroughThemAndItsFormReadFromTheFirst() throws Exception {
+        twoSharedXslts();
+        world.pipeline("p-3", "Vault CEF", "fwd2", new PipelineDataBuilder()
+                .addProperty(new PipelineProperty("flattenFilter", "xslt",
+                        new PipelinePropertyValue(new DocRef(XsltDoc.TYPE, "fx", "Vault flattener")))));
+        final String event = EVENTS.substring(0, EVENTS.indexOf("</Event>") + "</Event>".length()) + "</Events>";
+        final String line = "CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|suser=priya.patel";
+        final String handedOn = "<records xmlns=\"" + HANDOFF_NS + "\"><record><data name=\"cef\" value=\"" + line
+                                + "\"/></record></records>";
+        final String wrapped = "<Lines><Line>" + line + "</Line></Lines>";
+        final Map<String, SharedElementData> elements = new LinkedHashMap<>();
+        elements.put("flattenFilter", new SharedElementData(event, handedOn, null, false, false, true));
+        elements.put("lineFilter", new SharedElementData(handedOn, wrapped, null, false, false, true));
+        elements.put("kafkaOutputFilter", new SharedElementData(wrapped, "<kafkaRecords xmlns=\"kafka-records:1\">"
+                                                                         + "<kafkaRecord topic=\"t\"><value>" + line
+                                                                         + "</value></kafkaRecord></kafkaRecords>",
+                null, false, false, true));
+        world.stepper = (stream, at) -> at.getRecordIndex() < 1
+                ? new SteppingResult("s", null, null, new StepLocation(stream, 0L, at.getRecordIndex()),
+                        new SharedStepData(null, elements), null, true, null, false, true)
+                : null;
+
+        final Map<String, Object> result = draft("{\"stream_ids\": [7], \"custom_keys\": false, \"pipeline_uuid\": "
+                                                 + "\"p-3\"}");
+
+        assertThat(((Map<String, Object>) result.get("review")).get("lines")).isEqualTo(1);
+        final Map<String, Object> shape = (Map<String, Object>) result.get("shape");
+        assertThat(shape).containsEntry("lines_read_at", "kafkaOutputFilter");
+        assertThat(((Map<?, ?>) shape.get("shared_xslt")).get("uuid")).isEqualTo("wl");
+        assertThat((List<Map<String, Object>>) shape.get("shared_xslts")).extracting(xslt -> xslt.get("uuid"))
+                .containsExactly("wl", "lk");
+        assertThat(String.valueOf(shape.get("handoff"))).as("the form the first reads, not the wrapper")
+                .contains("<records xmlns=\"" + HANDOFF_NS + "\"><record><data name=\"cef\"");
+        assertThat(((Map<?, ?>) result.get("plan")).get("output")).isEqualTo("chained");
+        assertThat(result).doesNotContainKey("plan_note");
+    }
+
+    // A forwarding template `fwd2`: an open flattener slot, then two shared XSLTs, the first writing each line in a
+    // wrapper, the second the Kafka records.
+    private void twoSharedXslts() {
+        xslt("wl", "Wrap lines", TO_LINES);
+        xslt("lk", "Lines to Kafka", LINES_TO_KAFKA);
+        world.pipeline("fwd2", "Two Shared", null, new PipelineDataBuilder()
+                .addElement(new PipelineElement("xmlParser", "XMLParser"))
+                .addElement(new PipelineElement("flattenFilter", "XSLTFilter"))
+                .addElement(new PipelineElement("lineFilter", "XSLTFilter"))
+                .addElement(new PipelineElement("kafkaOutputFilter", "XSLTFilter"))
+                .addElement(new PipelineElement("schemaFilter", "SchemaFilter"))
+                .addElement(new PipelineElement("kafkaProducer", "StandardKafkaProducer"))
+                .addLink("xmlParser", "flattenFilter")
+                .addLink("flattenFilter", "lineFilter")
+                .addLink("lineFilter", "kafkaOutputFilter")
+                .addLink("kafkaOutputFilter", "schemaFilter")
+                .addLink("schemaFilter", "kafkaProducer")
+                .addProperty(new PipelineProperty("lineFilter", "xslt",
+                        new PipelinePropertyValue(new DocRef(XsltDoc.TYPE, "wl", "Wrap lines"))))
+                .addProperty(new PipelineProperty("kafkaOutputFilter", "xslt",
+                        new PipelinePropertyValue(new DocRef(XsltDoc.TYPE, "lk", "Lines to Kafka")))));
     }
 
     // Two forwarding templates: `fwd`, an open flattener slot then a shared XSLT writing Kafka records; and `one`, an

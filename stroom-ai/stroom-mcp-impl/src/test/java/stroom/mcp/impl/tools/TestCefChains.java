@@ -112,6 +112,44 @@ class TestCefChains {
         assertThat(CefChains.linesElement(own, "flattenFilter")).isEqualTo("kafkaOutputFilter");
     }
 
+    @Test
+    void aTemplateRunningTwoSharedXsltsBeforeTheProducerHoldsThemBothInOrder() {
+        // A first shared XSLT writing each line in a wrapper, a second turning that into the records: both have the
+        // producer downstream, so the first was taken as the whole shared stage.
+        final PipelineDataBuilder data = new PipelineDataBuilder();
+        final List<String> ids = List.of("xmlParser", "flattenFilter", "lineFilter", "kafkaOutputFilter",
+                "schemaFilter", "kafkaProducer");
+        final Map<String, String> types = Map.of("xmlParser", "XMLParser", "flattenFilter", "XSLTFilter",
+                "lineFilter", "XSLTFilter", "kafkaOutputFilter", "XSLTFilter", "schemaFilter", "SchemaFilter",
+                "kafkaProducer", "StandardKafkaProducer");
+        for (int i = 0; i < ids.size(); i++) {
+            data.addElement(new PipelineElement(ids.get(i), types.get(ids.get(i))));
+            if (i > 0) {
+                data.addLink(ids.get(i - 1), ids.get(i));
+            }
+        }
+        data.addProperty(xslt("lineFilter", "lines")).addProperty(xslt("kafkaOutputFilter", "shared"));
+        code.put("lines", "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"2.0\">"
+                          + "<xsl:template match=\"/\"><Lines/></xsl:template></xsl:stylesheet>");
+        final MergedPipeline template = MergedPipeline.of(List.of(layer(TEMPLATE, data)));
+
+        final CefChains.Chain chain = CefChains.ofTemplate(template, reader).orElseThrow();
+
+        assertThat(chain.shared()).extracting(CefChains.SharedStage::element)
+                .containsExactly("lineFilter", "kafkaOutputFilter");
+        assertThat(chain.stage()).as("the form is read from the first").isEqualTo("lineFilter");
+        assertThat(chain.sharedXslt().getUuid()).isEqualTo("lines");
+        assertThat(chain.said()).isEqualTo("the shared XSLTs 'lines' then 'shared'");
+        assertThat(chain.toMap()).containsKey("shared_stages");
+        // As a forwarder's template: both inherited, stepped in order, the lines read at the last.
+        final MergedPipeline child = MergedPipeline.of(List.of(layer(TEMPLATE, data), layer(CHILD,
+                new PipelineDataBuilder().addProperty(xslt("flattenFilter", "own")))));
+        assertThat(CefChains.ofForwarder(child, reader)).map(found -> found.shared().size()).contains(2);
+        assertThat(CefChains.sharedStages(child, "flattenFilter")).extracting(stage -> stage.xslt().getUuid())
+                .containsExactly("lines", "shared");
+        assertThat(CefChains.linesElement(child, "flattenFilter")).isEqualTo("kafkaOutputFilter");
+    }
+
     // A parser, an open flattener slot, then the stage given (its XSLT set if given), a schema filter and the last
     // element: a producer, a writer or an appender.
     private static PipelineDataBuilder chain(final String last, final String stage, final String stageXslt) {

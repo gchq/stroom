@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /// CEF forwarders of two shapes through the REAL tools on a real Stroom (decided with the user, 2026-11-25). A
 /// forwarding template of two stages: an open flattener slot, then a shared XSLT (its topic set once, in it) turning
 /// `<data name="cef" value="CEF:..."/>` pairs into kafka-records:1 for the Kafka producer; and one of one stage, its
-/// open XSLT writing the Kafka records itself. In three parts:
+/// open XSLT writing the Kafka records itself. In four parts:
 ///
 /// 1. Two stages: draft_cef_mapping names the template and drafts only the flattener (the form the shared XSLT reads,
 ///    read from it; no topic), checked through the shared XSLT; saved; a child of the template sets only the
@@ -49,6 +49,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 ///    siblings; a next version from production's template flagged against its predecessor; a child overriding the
 ///    shared XSLT flagged as not following its template.
 /// 3. One stage: as before, the topic in its own XSLT, stepped and reviewed.
+/// 4. A template running two shared XSLTs in turn (a neutral wrapper of lines, then the Kafka records): the
+///    flattener drafted in the form the first reads, checked and stepped through both; a hand-written forwarder of
+///    it reviewed through both.
 class TestE2eCefChained extends AbstractE2eTest {
 
     private static final String STAMP = "1";
@@ -83,6 +86,33 @@ class TestE2eCefChained extends AbstractE2eTest {
                   <xsl:for-each select="record">
                     <kafkaRecord topic="%s">
                       <value><xsl:value-of select="data[@name='cef']/@value"/></value>
+                    </kafkaRecord>
+                  </xsl:for-each>
+                </kafkaRecords>
+              </xsl:template>
+            </xsl:stylesheet>
+            """;
+    // A template's first shared XSLT of two: each record's pair named cef out as a line in a neutral wrapper.
+    private static final String TO_LINES = """
+            <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="2.0">
+              <xsl:template match="/records">
+                <Lines>
+                  <xsl:for-each select="record">
+                    <Line><xsl:value-of select="data[@name='cef']/@value"/></Line>
+                  </xsl:for-each>
+                </Lines>
+              </xsl:template>
+            </xsl:stylesheet>
+            """;
+    // The second: the wrapper's lines to Kafka records, the topic set here, once.
+    private static final String LINES_TO_KAFKA = """
+            <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" \
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="kafka-records:1" version="2.0">
+              <xsl:template match="/Lines">
+                <kafkaRecords xsi:schemaLocation="kafka-records:1 file://kafka-records-v1.1.xsd">
+                  <xsl:for-each select="Line">
+                    <kafkaRecord topic="%s">
+                      <value><xsl:value-of select="."/></value>
                     </kafkaRecord>
                   </xsl:for-each>
                 </kafkaRecords>
@@ -276,6 +306,76 @@ class TestE2eCefChained extends AbstractE2eTest {
                 .contains("sets its own XSLT 'My Kafka output' on 'kafkaOutputFilter', where its template '"
                           + templates.twoStagesName() + "' supplies '" + templates.sharedName() + "'",
                         "won't follow the template"));
+    }
+
+    // A template running two shared XSLTs before the producer (one wrapping each line, the next writing the Kafka
+    // records): the flattener drafted in the form the first reads, checked through both, stepped through both to
+    // kafka-records:1; a hand-written forwarder of it reviewed through both, its form read from the first.
+    @Test
+    @SuppressWarnings("unchecked")
+    void aTemplateOfTwoSharedXsltsHasItsFlattenerCheckedAndSteppedThroughBoth() {
+        final String build = "cefchain2-" + STAMP;
+        final String feed = "CEF-CHAIN2-EVENTS-" + STAMP;
+        agreed("create_feed", args("build", build, "name", feed, "stream_type", "Events"));
+        final long eventsId = number(client.json("upload_sample", args("feed", feed, "sample", events(),
+                "stream_type", "Events")).get("stream_id"));
+        final ExplorerNode folder = folder(ROOT + "/Templates C");
+        final DocRef kafka = create(KafkaConfigDoc.TYPE, "CEF-CHAIN2-KAFKA-" + STAMP, folder).getDocRef();
+        final DocRef toLines = create(XsltDoc.TYPE, "E2E Shared lines " + STAMP, folder).getDocRef();
+        editXslt(toLines.getUuid(), doc -> doc.copy().data(TO_LINES).build());
+        final DocRef toKafka = create(XsltDoc.TYPE, "E2E Shared lines to Kafka " + STAMP, folder).getDocRef();
+        editXslt(toKafka.getUuid(), doc -> doc.copy().data(LINES_TO_KAFKA.formatted(TOPIC)).build());
+        final String template = forwardingTemplateRunning(folder, "E2E Kafka Forwarding (two shared) " + STAMP,
+                kafka, List.of(toLines, toKafka));
+
+        // Drafted: only the flattener, in the form the first shared XSLT reads, checked through both.
+        final Map<String, Object> drafted = client.json("draft_cef_mapping", args("stream_ids", List.of(eventsId),
+                "custom_keys", false, "template", template));
+        dump("two shared draft", drafted);
+        final Map<String, Object> shape = map(drafted, "shape");
+        assertThat(shape).containsEntry("kind", "chained").containsEntry("flattener", "flattenFilter")
+                .containsEntry("handoff_checked", true);
+        assertThat(map(shape, "shared_stage")).containsEntry("element", "sharedFilter1");
+        assertThat((List<Map<String, Object>>) shape.get("shared_stages")).extracting(stage -> stage.get("element"))
+                .containsExactly("sharedFilter1", "kafkaOutputFilter");
+        assertThat(String.valueOf(shape.get("handoff"))).contains("<records><record><data name=\"cef\" "
+                                                                 + "value=\"CEF line\"/></record></records>");
+        assertThat(map(drafted, "chain_check")).containsEntry("ran", true).containsEntry("problems", List.of());
+        assertThat(drafted).containsEntry("problems", List.of());
+
+        // Saved, and a child of the template setting only the flattener stepped clean to Kafka records.
+        final Map<String, Object> saved = agreed("draft_cef_mapping", args("stream_ids", List.of(eventsId),
+                "custom_keys", false, "template", template, "build", build, "name", "CEF-CHAIN2-" + STAMP));
+        final String xslt = (String) map(saved, "saved").get("uuid");
+        final String pipeline = uuidOf(agreed("create_pipeline", args("build", build, "name",
+                "CEF-CHAIN2-" + STAMP + "-Kafka", "template_uuid", template, "set_properties",
+                List.of(docProperty("flattenFilter", "xslt", xslt, XsltDoc.TYPE)))));
+        assertThat(client.json("step_sample", args("pipeline_uuid", pipeline, "stream_ids", List.of(eventsId))))
+                .containsEntry("verdict", "clean");
+        assertThat(sharedStageOutput(pipeline, eventsId)).as("kafka-records:1 carrying the line")
+                .contains("kafkaRecord topic=\"" + TOPIC + "\"",
+                        "<value>CEF:0|Delinea|SecretServer|11.4|User-Login|User logged in|3|");
+        final Map<String, Object> review = client.json("draft_cef_mapping", args("stream_ids", List.of(eventsId),
+                "custom_keys", false, "pipeline_uuid", pipeline));
+        dump("two shared review", review);
+        assertThat(map(review, "review")).containsEntry("lines", 2).containsEntry("problems", List.of());
+        assertThat(map(review, "shape")).containsEntry("lines_read_at", "kafkaOutputFilter");
+
+        // A hand-written forwarder of the template: reviewed through both, a plan from it handing its lines on in
+        // the form the first shared XSLT reads.
+        final DocRef hand = create(XsltDoc.TYPE, "Vault CEF flattener (two shared)", folder).getDocRef();
+        editXslt(hand.getUuid(), doc -> doc.copy().data(HAND_FLATTENER).build());
+        final String vault = childPipeline(folder, "Vault CEF (two shared)", template,
+                List.of(property("flattenFilter", "xslt", hand)));
+        final Map<String, Object> handReview = client.json("draft_cef_mapping", args("stream_ids",
+                List.of(eventsId), "custom_keys", false, "pipeline_uuid", vault));
+        dump("two shared hand review", handReview);
+        assertThat(map(handReview, "review")).containsEntry("lines", 2);
+        assertThat(String.valueOf(handReview.get("plan_from"))).startsWith("the mapping its lines imply");
+        assertThat(map(handReview, "plan")).containsEntry("output", "chained").doesNotContainKey("topic");
+        assertThat(String.valueOf(map(handReview, "shape").get("handoff")))
+                .as("the form the first shared XSLT reads, not the wrapper").contains("<records><record>");
+        assertThat(handReview).doesNotContainKey("plan_note");
     }
 
     // Two forwarding templates of two stages (production and pre-production, each its shared XSLT and topic) and one

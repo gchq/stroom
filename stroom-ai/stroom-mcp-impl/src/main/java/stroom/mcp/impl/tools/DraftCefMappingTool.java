@@ -52,7 +52,6 @@ import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.RequiredImport;
 import stroom.ai.impl.tools.processing.MergedPipeline;
-import stroom.ai.impl.tools.processing.MergedPipeline.ElementProperty;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.streams.SteppingWalks;
 import stroom.ai.impl.tools.streams.StreamReader;
@@ -72,10 +71,12 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -391,6 +392,9 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                 chained.put("flattener", stepped.element());
                 chained.put("lines_read_at", stepped.linesElement());
                 chained.put("shared_xslt", MergedPipeline.docRef(stepped.sharedXslt()));
+                if (stepped.sharedXslts().size() > 1) {
+                    chained.put("shared_xslts", stepped.sharedXslts().stream().map(MergedPipeline::docRef).toList());
+                }
                 result.put("shape", chained);
             }
             if (inheritanceProvider != null) {
@@ -649,8 +653,10 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                     .flatMap(pipeline -> CefChains.ofTemplate(pipeline, this::code));
             anyChained |= chain.isPresent();
             final String option = "'" + map.get("name") + "' (" + chain
-                    .map(found -> "two stages: its shared XSLT '" + found.sharedXslt().getName() + "' writes the "
-                                  + "Kafka records and sets the topic")
+                    .map(found -> "two stages: " + found.said().replaceFirst("^the ", "its ") + (found.shared()
+                            .size() == 1
+                            ? " writes the Kafka records and sets"
+                            : " write the Kafka records and set") + " the topic")
                     .orElse("one stage: the pipeline's own XSLT writes the records") + ")";
             options.put(option, uuid);
             byOption.put(option, new DocRef(PipelineDoc.TYPE, uuid, ToolText.str(map.get("name"))));
@@ -694,16 +700,22 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         return Shape.single(new DocRef(PipelineDoc.TYPE, ref.getUuid(), ref.getName()), why);
     }
 
-    // Two stages: the form the shared XSLT reads, read from it.
+    // Two stages: the form the (first) shared XSLT reads, read from it, and checked through every shared XSLT.
     private Shape chained(final DocRef template, final CefChains.Chain chain, final String why) {
         final String code = code(chain.sharedXslt()).orElseThrow(() -> new ToolRefusal(
                 "The shared XSLT '" + chain.sharedXslt().getName() + "' (at '" + chain.stage() + "') can't be "
                 + "read: it decides what the CEF XSLT hands on, so ask its owner for View on it"));
-        final CefHandoff.Inferred inferred = CefHandoff.infer(code).orElseThrow(() -> new ToolRefusal(
+        final List<String> codes = new ArrayList<>();
+        codes.add(code);
+        chain.shared().subList(1, chain.shared().size()).forEach(later -> codes.add(code(later.xslt())
+                .orElse(null)));
+        final CefHandoff.Inferred inferred = CefHandoff.inferChain(codes).orElseThrow(() -> new ToolRefusal(
                 "Can't tell what the shared XSLT '" + chain.sharedXslt().getName() + "' (at '" + chain.stage()
-                + "') reads: no form of it gives a Kafka record carrying a CEF line. Ask the user what it reads, "
-                + "or review a pipeline already running it (pipeline_uuid)"));
-        return new Shape(CHAINED, why, template, chain, inferred, code, null);
+                + "') reads: no form of it gives a Kafka record carrying a CEF line" + (codes.size() == 1
+                        ? ""
+                        : ", run through " + chain.said()) + ". Ask the user what it reads, or review a pipeline "
+                + "already running it (pipeline_uuid)"));
+        return new Shape(CHAINED, why, template, chain, inferred, Collections.unmodifiableList(codes), null);
     }
 
     // The template a pipeline inherits from directly, or null.
@@ -719,14 +731,18 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
                                            final Map<String, Object> said,
                                            final Shape shape) {
         final List<String> out = new ArrayList<>();
-        final String where = "the shared XSLT '" + shape.chain().sharedXslt().getName() + "' the template supplies";
+        final String where = shape.chain().said() + " the template supplies";
+        final boolean one = shape.chain().shared().size() == 1;
         final String topic = orElse(request.topic(), (String) said.get(CefInstructions.TOPIC));
         if (topic != null) {
-            out.add("topic '" + topic + "' not used: " + where + " sets the topic, in one place; this XSLT sets no "
-                    + "topic or Kafka setting");
+            out.add("topic '" + topic + "' not used: " + where + (one
+                    ? " sets"
+                    : " set") + " the topic, in one place; this XSLT sets no topic or Kafka setting");
         }
         if (request.kafkaKey() != null) {
-            out.add("kafka_key not used: " + where + " writes the Kafka records");
+            out.add("kafka_key not used: " + where + (one
+                    ? " writes"
+                    : " write") + " the Kafka records");
         }
         if (request.output() != null) {
             out.add("output '" + request.output() + "' not used: this XSLT hands each line on to " + where);
@@ -734,7 +750,8 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         return out;
     }
 
-    // The draft's output put through the shared XSLT here: it must give kafka-records:1 carrying each line.
+    // The draft's output put through the shared XSLTs here, in turn: the last must give kafka-records:1 carrying each
+    // line.
     private static void chainCheck(final CefPlan drafted,
                                    final List<XmlElement> events,
                                    final int cap,
@@ -744,7 +761,7 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         checked.put("shared_stage", shape.chain().stage());
         try {
             final String output = CefSample.output(drafted, events, cap);
-            final CefHandoff.Checked ran = CefHandoff.check(shape.sharedCode(), output,
+            final CefHandoff.Checked ran = CefHandoff.checkChain(shape.sharedCodes(), output,
                     CefSample.linesOf(drafted, output));
             checked.put("ran", ran.ran());
             checked.put("problems", ran.problems());
@@ -759,15 +776,22 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         result.put("chain_check", checked);
     }
 
-    // A reviewed pipeline of two stages: the plan its lines imply, handed on in the form its shared XSLT reads.
+    // A reviewed pipeline of two stages: the plan its lines imply, handed on in the form its (first) shared XSLT
+    // reads, checked through every shared XSLT.
     private CefPlan handedOn(final CefPlan implied, final Stepped stepped, final Map<String, Object> result) {
-        final Optional<CefHandoff.Inferred> form = Optional.ofNullable(stepped.sharedXslt())
-                .flatMap(this::code)
-                .flatMap(CefHandoff::infer);
+        final List<String> codes = new ArrayList<>();
+        stepped.sharedXslts().forEach(xslt -> codes.add(code(xslt).orElse(null)));
+        final Optional<CefHandoff.Inferred> form = codes.isEmpty() || codes.getFirst() == null
+                ? Optional.empty()
+                : CefHandoff.inferChain(codes);
         if (form.isEmpty()) {
-            result.put("plan_note", "The form its shared stage '" + stepped.linesElement() + "' reads couldn't be "
-                                    + "told from its XSLT: a plan saved from this one would write the Kafka "
-                                    + "records itself, so change the flattener by hand, or ask the user");
+            final String where = stepped.sharedXslts().size() == 1
+                    ? "its shared stage '" + stepped.linesElement() + "'"
+                    : "the first of its " + stepped.sharedXslts().size() + " shared stages (XSLT '"
+                      + NullSafe.get(stepped.sharedXslt(), DocRef::getName) + "')";
+            result.put("plan_note", "The form " + where + " reads couldn't be told from its XSLT: a plan saved from "
+                                    + "this one would write the Kafka records itself, so change the flattener by "
+                                    + "hand, or ask the user");
             return implied;
         }
         if (result.get("shape") instanceof final Map<?, ?> shown) {
@@ -882,14 +906,12 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
         final String at = element != null
                 ? element
                 : pipeline.defaultOutputs().getFirst();
-        // A forwarder of two stages: its lines are the shared stage's output, its Events the flattener's input.
-        final String linesAt = CefChains.linesElement(pipeline.merged(), at);
-        final Object sharedSet = linesAt.equals(at)
-                ? null
-                : pipeline.merged().properties().get(new ElementProperty(linesAt, "xslt"));
-        final DocRef shared = sharedSet instanceof final Map<?, ?> doc
-                ? new DocRef(XsltDoc.TYPE, String.valueOf(doc.get("uuid")), ToolText.str(doc.get("name")))
-                : null;
+        // A forwarder of two stages: its lines are the last shared stage's output, its Events the flattener's input.
+        final List<CefChains.SharedStage> stages = CefChains.sharedStages(pipeline.merged(), at);
+        final String linesAt = stages.isEmpty()
+                ? at
+                : stages.getLast().element();
+        final List<DocRef> shared = stages.stream().map(CefChains.SharedStage::xslt).toList();
         final List<String> lines = new ArrayList<>();
         final List<XmlElement> events = new ArrayList<>();
         final Map<String, String> sent = new LinkedHashMap<>();
@@ -1417,12 +1439,23 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
     /// @param events       The Event each came from, or null where not known.
     /// @param element      The element whose input is the Events (the flattener of two stages).
     /// @param linesElement The element whose output is the lines: the element itself, or a shared stage after it.
-    /// @param sharedXslt   The XSLT the shared stage runs, or null for one stage.
+    /// @param sharedXslts  The XSLTs the shared stages run, in order; none for one stage.
     /// @param sent         How it sends them: `output` (kafka or text) and `topic`.
     /// @param stopped      True if the call's time ran out before every record was stepped.
     record Stepped(List<String> lines, List<XmlElement> events, String element, String linesElement,
-                   DocRef sharedXslt, Map<String, String> sent, boolean stopped) {
+                   List<DocRef> sharedXslts, Map<String, String> sent, boolean stopped) {
 
+        /// Copies the shared XSLTs.
+        Stepped {
+            sharedXslts = List.copyOf(Objects.requireNonNullElse(sharedXslts, List.of()));
+        }
+
+        /// @return The first shared XSLT, whose form the flattener hands its lines on in; null for one stage.
+        DocRef sharedXslt() {
+            return sharedXslts.isEmpty()
+                    ? null
+                    : sharedXslts.getFirst();
+        }
     }
 
     /// Overrides applied to a plan.
@@ -1440,14 +1473,15 @@ class DraftCefMappingTool extends AbstractBuiltInTool {
     /// @param template   The template it will inherit from, or null.
     /// @param chain      The two stages, or null for one.
     /// @param handoff    The form the shared XSLT reads, or null for one stage.
-    /// @param sharedCode The shared XSLT's text, or null for one stage.
+    /// @param sharedCodes The shared XSLTs' texts, in the order run (null for one that can't be read), or null for
+    ///                    one stage.
     /// @param question   The question to put to the user, or null where it was decided.
     record Shape(String kind,
                  String decidedBy,
                  DocRef template,
                  CefChains.Chain chain,
                  CefHandoff.Inferred handoff,
-                 String sharedCode,
+                 List<String> sharedCodes,
                  Map<String, Object> question) {
 
         static Shape single(final DocRef template, final String decidedBy) {

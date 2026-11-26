@@ -1312,11 +1312,33 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
     /// @param shared The shared XSLT, or null for a template of one stage.
     /// @return Its UUID.
     String forwardingTemplate(final ExplorerNode folder, final String name, final DocRef kafka, final DocRef shared) {
+        return forwardingTemplateRunning(folder, name, kafka, shared == null
+                ? List.of()
+                : List.of(shared));
+    }
+
+    /// As [#forwardingTemplate(ExplorerNode, String, DocRef, DocRef)], with several shared XSLTs run in turn after
+    /// the open slot: each but the last at `sharedFilter1`, `sharedFilter2`..., the last at `kafkaOutputFilter`.
+    ///
+    /// @param folder The folder it goes in.
+    /// @param name   Its name.
+    /// @param kafka  The KafkaConfig its producer sends with.
+    /// @param shared The shared XSLTs, in the order run; none for a template of one stage.
+    /// @return Its UUID.
+    String forwardingTemplateRunning(final ExplorerNode folder,
+                                     final String name,
+                                     final DocRef kafka,
+                                     final List<DocRef> shared) {
         final List<List<String>> chain = new ArrayList<>(List.of(List.of("xmlParser", "XMLParser"),
                 List.of("splitFilter", "SplitFilter")));
-        if (shared != null) {
+        final List<String> sharedAt = new ArrayList<>();
+        if (!shared.isEmpty()) {
             chain.add(List.of("flattenFilter", "XSLTFilter"));
-            chain.add(List.of("kafkaOutputFilter", "XSLTFilter"));
+            for (int i = 1; i < shared.size(); i++) {
+                sharedAt.add("sharedFilter" + i);
+            }
+            sharedAt.add("kafkaOutputFilter");
+            sharedAt.forEach(element -> chain.add(List.of(element, "XSLTFilter")));
         } else {
             chain.add(List.of("xsltFilter", "XSLTFilter"));
         }
@@ -1334,8 +1356,8 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
         data.addProperty(new PipelineProperty("schemaFilter", "namespaceURI",
                 new PipelinePropertyValue("kafka-records:1")));
         data.addProperty(property("standardKafkaProducer", "kafkaConfig", kafka));
-        if (shared != null) {
-            data.addProperty(property("kafkaOutputFilter", "xslt", shared));
+        for (int i = 0; i < shared.size(); i++) {
+            data.addProperty(property(sharedAt.get(i), "xslt", shared.get(i)));
         }
         final DocRef ref = create(PipelineDoc.TYPE, name, folder).getDocRef();
         asUser(admin, () -> pipelineStore.writeDocument(pipelineStore.readDocument(ref).copy()

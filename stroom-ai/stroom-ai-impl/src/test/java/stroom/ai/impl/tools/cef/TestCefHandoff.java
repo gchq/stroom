@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.generation.DumpMode;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -134,6 +135,55 @@ class TestCefHandoff {
         assertThat(inferred.checked()).isFalse();
         assertThat(inferred.why()).startsWith("the shared XSLT can't be run here");
         assertThat(inferred.handoff().path()).containsExactly("records", "record", "data");
+    }
+
+    /// A template's first shared XSLT of two: records of `data` pairs in, each pair named `cef` out as a line in a
+    /// neutral wrapper; no Kafka records.
+    static final String TO_LINES = "<xsl:stylesheet " + XSL + " xpath-default-namespace=\"" + FORK + "\">"
+                                   + "<xsl:template match=\"/records\"><Lines><xsl:for-each select=\"record\">"
+                                   + "<Line><xsl:value-of select=\"data[@name='cef']/@value\"/></Line>"
+                                   + "</xsl:for-each></Lines></xsl:template></xsl:stylesheet>";
+    /// The second: the wrapper's lines to Kafka records, the topic set here.
+    static final String LINES_TO_KAFKA = "<xsl:stylesheet " + XSL + " xmlns=\"kafka-records:1\">"
+                                         + "<xsl:template match=\"/Lines\"><kafkaRecords><xsl:for-each select=\"Line\">"
+                                         + "<kafkaRecord topic=\"arcsight-prod\"><value><xsl:value-of select=\".\"/>"
+                                         + "</value></kafkaRecord></xsl:for-each></kafkaRecords></xsl:template>"
+                                         + "</xsl:stylesheet>";
+
+    @Test
+    void aTemplateOfTwoSharedXsltsHasItsFormReadFromTheFirstAndCheckedThroughBoth() {
+        // The first writes no Kafka records itself: read alone, no form of it passes.
+        assertThat(CefHandoff.infer(TO_LINES)).isEmpty();
+
+        final CefHandoff.Inferred inferred = CefHandoff.inferChain(List.of(TO_LINES, LINES_TO_KAFKA)).orElseThrow();
+
+        assertThat(inferred.checked()).isTrue();
+        assertThat(inferred.handoff()).isEqualTo(new CefHandoff(FORK, List.of("records", "record", "data"), "name",
+                "cef", "value"));
+        final List<String> lines = List.of("CEF:0|a|b|1|c|d|3|suser=x", "CEF:0|a|b|1|c|d|3|suser=y");
+        final String document = inferred.handoff().document(lines);
+        assertThat(CefHandoff.checkChain(List.of(TO_LINES, LINES_TO_KAFKA), document, lines).problems()).isEmpty();
+        assertThat(CefHandoff.check(TO_LINES, document, lines).problems()).as("the first alone")
+                .containsExactly("it wrote no kafkaRecords in kafka-records:1");
+        // The second given the document itself (not the first's output): no line reaches a value.
+        assertThat(CefHandoff.checkChain(List.of(LINES_TO_KAFKA), document, lines).problems())
+                .containsExactly("it wrote no kafkaRecords in kafka-records:1");
+    }
+
+    @Test
+    void aLaterSharedXsltThatCantBeReadOrRunHereLeavesTheFormUnchecked() {
+        final CefHandoff.Inferred unread = CefHandoff.inferChain(Arrays.asList(TO_LINES, null)).orElseThrow();
+
+        assertThat(unread.checked()).isFalse();
+        assertThat(unread.why()).isEqualTo("shared XSLT 2 of 2 can't be read here");
+        assertThat(unread.handoff().path()).containsExactly("records", "record", "data");
+        final String stroomFunctions = LINES_TO_KAFKA.replace("<xsl:stylesheet ",
+                "<xsl:stylesheet xmlns:stroom=\"stroom\" ").replace("topic=\"arcsight-prod\"",
+                "topic=\"{stroom:feed-name()}\"");
+        final CefHandoff.Checked notRun = CefHandoff.checkChain(List.of(TO_LINES, stroomFunctions),
+                unread.handoff().document(List.of(CefHandoff.CHECK_LINE)), List.of(CefHandoff.CHECK_LINE));
+        assertThat(notRun.ran()).isFalse();
+        assertThat(notRun.problems()).singleElement().asString().startsWith("shared XSLT 2 of 2 can't be run here");
     }
 
     @Test

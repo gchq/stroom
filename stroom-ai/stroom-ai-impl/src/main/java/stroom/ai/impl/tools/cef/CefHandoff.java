@@ -24,6 +24,7 @@ import stroom.util.shared.NullSafe;
 import org.w3c.dom.Element;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -41,7 +42,9 @@ import java.util.regex.Pattern;
 /// The form is read from the shared XSLT itself, never assumed: from its templates' match patterns, the paths it
 /// selects and the values it takes (e.g. it matches `data[@name='x']` and takes `@value`), as candidates
 /// ([#candidates]), each then checked by running the shared XSLT over a document of that form ([#infer], [#check]):
-/// it must write kafka-records:1 with the CEF line as a record's value.
+/// it must write kafka-records:1 with the CEF line as a record's value. Where the template runs several shared XSLTs
+/// in turn ([#inferChain], [#checkChain]), the form is read from the first, and the check runs every
+/// one in order, each given the one before's output: the last must write the records.
 ///
 /// @param namespace      The namespace the elements are in, or "" for none.
 /// @param path           The elements from the root to the one carrying the line, e.g. `records`, `record`, `data`:
@@ -121,9 +124,22 @@ public record CefHandoff(String namespace,
     /// @param xslt The shared XSLT's text.
     /// @return The form and whether it was checked; empty if no candidate can be read from it, or none passes.
     public static Optional<Inferred> infer(final String xslt) {
-        final List<CefHandoff> candidates = candidates(xslt);
+        return inferChain(Collections.singletonList(xslt));
+    }
+
+    /// As [#infer(String)], for a template running several shared XSLTs in turn: the candidates read from the first,
+    /// each checked through them all ([#checkChain]).
+    ///
+    /// @param xslts The shared XSLTs' texts, in the order run; null for one that can't be read here.
+    /// @return The form and whether it was checked; empty if no candidate can be read from the first, or none
+    /// passes.
+    public static Optional<Inferred> inferChain(final List<String> xslts) {
+        if (xslts == null || xslts.isEmpty()) {
+            return Optional.empty();
+        }
+        final List<CefHandoff> candidates = candidates(xslts.getFirst());
         for (final CefHandoff candidate : candidates) {
-            final Checked checked = check(xslt, candidate.document(List.of(CHECK_LINE)), List.of(CHECK_LINE));
+            final Checked checked = checkChain(xslts, candidate.document(List.of(CHECK_LINE)), List.of(CHECK_LINE));
             if (checked.ran() && checked.problems().isEmpty()) {
                 return Optional.of(new Inferred(candidate, true, null));
             }
@@ -142,13 +158,32 @@ public record CefHandoff(String namespace,
     /// @param lines    The CEF lines in it, in order.
     /// @return What it wrote and its problems; not run where it can't be here.
     public static Checked check(final String xslt, final String document, final List<String> lines) {
-        final String output;
-        try {
-            output = CefSample.transform(XsltVersionHistory.strip(NullSafe.string(xslt)), document);
-        } catch (final RuntimeException e) {
-            return new Checked(false, null, List.of("the shared XSLT can't be run here: "
-                                                    + NullSafe.string(e.getMessage()).lines().findFirst()
-                                                            .orElse("")));
+        return checkChain(Collections.singletonList(xslt), document, lines);
+    }
+
+    /// As [#check(String, String, List)], for a template running several shared XSLTs in turn: the document run
+    /// through each in order, each given the one before's output; the last must write kafka-records:1.
+    ///
+    /// @param xslts    The shared XSLTs' texts, in the order run; null for one that can't be read here.
+    /// @param document A document of the intermediate form, e.g. what the flattener writes.
+    /// @param lines    The CEF lines in it, in order.
+    /// @return What the last wrote and its problems; not run where one can't be read or run here.
+    public static Checked checkChain(final List<String> xslts, final String document, final List<String> lines) {
+        String output = document;
+        for (int i = 0; i < xslts.size(); i++) {
+            final String which = xslts.size() == 1
+                    ? "the shared XSLT"
+                    : "shared XSLT " + (i + 1) + " of " + xslts.size();
+            if (xslts.get(i) == null) {
+                return new Checked(false, null, List.of(which + " can't be read here"));
+            }
+            try {
+                output = CefSample.transform(XsltVersionHistory.strip(xslts.get(i)), output);
+            } catch (final RuntimeException e) {
+                return new Checked(false, null, List.of(which + " can't be run here: "
+                                                        + NullSafe.string(e.getMessage()).lines().findFirst()
+                                                                .orElse("")));
+            }
         }
         return new Checked(true, output, kafkaProblems(output, lines));
     }
