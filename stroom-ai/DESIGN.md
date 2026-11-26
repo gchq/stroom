@@ -2290,7 +2290,12 @@ characterisation; a period is never an activity.
 **Insider and compare follow-ups (noted, not built).** compare_activity's baseline and screen could count periods
 by kind (remote sessions a week, nights on site); "on site but no logon" and "a device attached then a copy" as
 sequence_query steps over periods; ElevatePrivilege's end from a source's own type; the insider dataset's badge
-and USB events given period roles.
+and USB events given period roles. Periods in compare_activity (the user, 2026-11-26, follow-up only):
+code-derived period features (remote-session hours and their out-of-hours share, on-site hours, elevated time,
+device attachments) against the person's own baseline, computed from events with a per-day cap and cached per
+person and day; peers by aggregate approximations only (counts of connects, enters and inserts by hour); the
+model-worded themes never comparison features, only explaining findings by linking a flagged day or hour to the
+timeline's spans; exclusions applied to the aggregates too.
 
 **Migration.** Nothing stored changes form: a role filled in from the schema (`FROM_SCHEMA`) is filled in again
 whenever it is read (the timeline reads `TimelineRoles.settled`), so existing catalogues' Connect types become
@@ -2331,10 +2336,15 @@ keeps the finer ones underneath, each naming its parent.
   Checked in code: a run given; `one` only at high or medium confidence; a description of one line, at most 80
   characters, with no clock time or date; evidence naming at least one of the run's labels or domains. A run made
   one covers exactly its units' times; anything else leaves them separate. Cached by the run's facts.
-* **Output**: `activity-levels.csv`, `activities.csv`'s columns plus `level` and `parent`: every level's rows (the
-  activities and period bands at 1, the thematic spans at 2, the finest at 3, labelled by their own label and
-  laned and coloured by their activity's label); `activities.csv` unchanged (level 1). The result counts each
-  level. Both open at level 1 (the user, 2026-11-26).
+* **Output**: `activity-levels.csv`: every level's rows (the activities and period bands at 1, the thematic spans
+  and runs at 2, the finest spans and point events at 3), each with its `id`, `level` and `parent`, labelled by its
+  own label (`bar_label`), laned and coloured by its activity's label, with how its members were chosen (`how`:
+  code's rule, or the model's confidence and evidence) and its event count; `activities.csv` unchanged (level 1).
+  The result counts each level. Both open at level 1 (the user, 2026-11-26).
+* **Traceable** (the user, 2026-11-26): every span at every level, and every period, has a stable id and a parent;
+  `events.csv` gives each event's spans (`span`), its thematic span or run (`merged`), its activity (`activity`)
+  and the periods it fell in (`periods`), with its StreamId and EventId, so "which events make up the span about
+  xyz" is a filter of one table; the result says so in one line.
 * **Less or more detail in the chat** (decided by the user 2026-11-26): the activities view's ready chart is drawn
   from `activity-levels.csv` with its levels, and the chat's chart (`AiGanttChart`) has "Less detail" and "More
   detail" buttons (disabled at the ends) that redraw it with the tasks of level at most the one chosen, from 1. The
@@ -2350,15 +2360,24 @@ keeps the finer ones underneath, each naming its parent.
   Alice", "listed directory users and exported them to CSV"), may split a run where its topic changes (at an event
   of the run) and join runs into themes across sources (level 1); the text is data, excerpts cut to the
   characterisation's cap, every description citing its evidence (event ids of the run), checked in code.
-* **Noise** (the user, 2026-11-26): before any model call, event types (or a type and object pattern) that are
-  very noisy are found in code by statistical and structural signals only: a high rate an hour, regular intervals
-  (a low spread of the gaps), near-identical repeats, no focus or other activity around them, a service account as
-  a field says (never a list of names), the same pattern on many hosts at once, background requests with no page
-  or title change. They are proposed to the user, never dropped unasked: in a chat, in the timeline's short form
-  (the pattern, its count and share, a few examples); over MCP with no form, listed in the result, not excluded. On
-  the user's yes they are excluded before the characterisation and its side calls, persistently: the catalogue's
-  event type given `ignore` where it is one, else an exclusion kept with the investigation (`exclusions.json`
-  beside `corrections.json`), applied on every re-run; the result says what was excluded and how many.
+* **Noise** (the user, 2026-11-26; both views, to declutter the timeline and to spare the model): right after the
+  events are read and classified, before the sessions, spans or any model call, event types (or a type at one
+  object, where the type is at others too) that are very noisy are found in code (`TimelineNoise`) by statistical
+  and structural signals only: a high rate an hour, regular intervals (a low spread of the gaps), near-identical
+  repeats, no window focus on the host within the idle cap before them and no other activity near, a service
+  account as a field says (never a list of names), the same pattern on many hosts at once, background requests
+  with no page or title change. A pattern of at least 30 events and 5% of the timeline's is noise where it shows
+  two kinds of signal, one of them saying its events are alike or not the person's (repeats or background
+  requests, a service account, many hosts): rate and regularity alone never are (seen in the insider e2e: a
+  steady scripted download of many documents, the planted exfiltration, was proposed while regularity sufficed).
+  Proposed, never dropped unasked: in a chat, one short form, every pattern ticked by default (one click leaves
+  them all out, or the user unticks some), each with its count, share, signals and examples; over MCP, or with no
+  form, listed in the result (`noise_proposed`), not left out. The user's answer is kept, either way, in the
+  user's own workspace (`/outputs/timelines/exclusions.json`, as event-code classifications are), so later runs
+  start decluttered and ask nothing again; the result says what was left out and how many (`excluded`).
+  *Judged in the build:* the exclusion is kept as a timeline-level filter, not written into the catalogue as the
+  event type's `ignore` role: the timeline doesn't write source notes, and a role given there would hide the type
+  from every timeline of every user; the user's own `ignore` in the catalogue (or an AGENTS line) does that.
 * **Less or more detail on the dashboard** (`TimelineDashboardConfig`, the activities Data Connection drawn from
   `activity-levels.csv`): a List input (`list-input`, key `level`, values 1, 2 and 3, default 1) beside the query,
   whose term `level <= ${level}` the parameter fills, so the chart and table redraw with more or fewer bars. Real

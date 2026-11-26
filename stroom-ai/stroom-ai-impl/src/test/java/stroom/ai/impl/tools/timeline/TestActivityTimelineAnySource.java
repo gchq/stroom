@@ -261,6 +261,62 @@ class TestActivityTimelineAnySource {
     }
 
     @Test
+    void noiseIsProposedOverMcpLeftOutOnTheUsersYesBeforeAnyModelCallAndKeptForTheNextRun() {
+        week();
+        // A beacon every 30 seconds for two hours, to one URL with no page: noise.
+        for (int i = 0; i < 240; i++) {
+            web(at("12:00") + i * 30_000L, "pat", "https://telemetry.example.net/ping");
+        }
+        final List<String> asked = new ArrayList<>();
+        final ModelSideCalls model = model(asked, "[]");
+
+        // Over MCP with no form: proposed, never left out.
+        final Map<String, Object> listed = json(mcpWith(model), arguments(Map.of("view", "activities",
+                ActivityTimelineTool.RUN_ANYWAY_ARG, true)));
+        assertThat((Map<String, Object>) listed.get("noise_proposed")).satisfies(proposed -> assertThat(
+                (List<Map<String, Object>>) proposed.get("patterns")).singleElement().satisfies(pattern ->
+                assertThat(String.valueOf(pattern.get("pattern"))).startsWith("Events: View at "
+                                                                              + "https://telemetry.example.net/ping "
+                                                                              + "(240 events")));
+        assertThat(listed).doesNotContainKey("excluded");
+        final long itemsBefore = items(asked);
+        assertThat(itemsBefore).isPositive();
+
+        // In the chat, the user's yes (everything ticked, the default) leaves them out before the model is asked.
+        asked.clear();
+        final Questions questions = new Questions(Map.of(ActivityTimelineTool.EXCLUDE, List.of("noise-1"),
+                ActivityTimelineTool.BEYOND_FORM, ActivityTimelineTool.CLASSIFY));
+        final String text = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
+                arguments(Map.of("view", "activities")), false)), chat(questions, model)).text();
+        final Map<String, Object> noiseForm = questions.forms.stream()
+                .filter(form -> ((Map<String, Object>) form.get("properties"))
+                        .containsKey(ActivityTimelineTool.EXCLUDE))
+                .findFirst().orElseThrow();
+        assertThat((List<String>) ((Map<String, Object>) ((Map<String, Object>) noiseForm.get("properties"))
+                .get(ActivityTimelineTool.EXCLUDE)).get("default")).containsExactly("noise-1");
+        assertThat(text).contains("Left out as noise, as the user chose (kept in " + TimelineNoise.FILE + "): 240 "
+                                  + "event(s): Events: View at https://telemetry.example.net/ping 240.");
+        assertThat(items(asked)).isLessThan(itemsBefore);
+        assertThat(files.content(FOLDER + ActivityTimelineTool.EVENTS_FILE).orElseThrow())
+                .doesNotContain("telemetry.example.net");
+
+        // The next run, either view, starts without them and asks nothing.
+        final int forms = questions.forms.size();
+        final Map<String, Object> again = json(mcp(), arguments(Map.of()));
+        assertThat((Map<String, Object>) again.get("excluded")).containsEntry("events", 240L);
+        assertThat(again).doesNotContainKey("noise_proposed");
+        assertThat(questions.forms).hasSize(forms);
+    }
+
+    // The items sent to the model in the characterisation's batches.
+    private static long items(final List<String> asked) {
+        return asked.stream()
+                .filter(question -> question.contains("Items:"))
+                .mapToLong(question -> question.split("\"item\":", -1).length - 1)
+                .sum();
+    }
+
+    @Test
     void theSchemaTakesASourceAsAnIndexsNameOrAnObject() {
         final ToolSchema sources = tool.definition().parameters().properties().get("sources");
 

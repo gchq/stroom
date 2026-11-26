@@ -270,6 +270,10 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     static final String LEAVE_OUT = "Leave it out";
     /// The form's key for confirming an index's event codes' classification.
     static final String CODES_FORM = "timeline-event-codes";
+    /// The form's key for the noise to leave out.
+    static final String NOISE_FORM = "timeline-noise";
+    /// The noise form's field: the patterns to leave out.
+    static final String EXCLUDE = "exclude";
     static final String USE_CODES = "Use it";
     static final String DONT_USE_CODES = "Don't use it";
     /// The events of an automatic source probed first: whether the user has any there, and which of its fields
@@ -706,9 +710,13 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         }
         final List<String> names = sources.stream().map(Source::name).toList();
         final Options options = new Options(capMs, period.toMs(), now, zone.zone(), names, withOpen);
-        final Timeline timeline = TimelineSessions.build(classification.events(), options);
+        // Noise found in code before anything else is worked out, proposed to the user, and the exclusions they
+        // agreed to (now or on an earlier run) applied in both views, before any span or model call.
+        final TimelineNoise.Outcome noise = noise(request, context, workspace, classification, names, capMs);
+        final List<Event> kept = noise.applied().kept();
+        final Timeline timeline = TimelineSessions.build(kept, options);
         final Map<String, Event> byId = new LinkedHashMap<>();
-        classification.events().forEach(event -> byId.put(event.id(), event));
+        kept.forEach(event -> byId.put(event.id(), event));
 
         final List<PairRule> pairs = new ArrayList<>(plan.pairs());
         pairs.addAll(PairRule.SCHEMA);
@@ -719,17 +727,16 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                     Origin.INFERRED, candidate.share()));
         }
         final List<KeyRule> keys = new ArrayList<>(plan.keys());
-        for (final KeyRule found : KeySpans.find(typed, pairs, new KeySpans.Idle(classification.events().stream()
+        for (final KeyRule found : KeySpans.find(typed, pairs, new KeySpans.Idle(kept.stream()
                 .map(Event::time).toList(), capMs))) {
             if (keys.stream().noneMatch(key -> key.source() == found.source() && key.path().equals(found.path()))) {
                 keys.add(found);
             }
         }
-        final Built built = TimelineSpans.build(timeline, classification.events(), classification.byId(), pairs,
-                keys, options);
+        final Built built = TimelineSpans.build(timeline, kept, classification.byId(), pairs, keys, options);
         // The periods, beside the sessions: a state the person was in, implying no activity.
-        final List<TimelinePeriods.Period> periods = TimelinePeriods.build(classification.events(),
-                classification.byId(), period.fromMs(), period.toMs(), options);
+        final List<TimelinePeriods.Period> periods = TimelinePeriods.build(kept, classification.byId(),
+                period.fromMs(), period.toMs(), options);
 
         final String folder = FOLDER + safe(entity) + "/";
         final Characterised characterised = characterising
@@ -756,7 +763,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                         field));
         final TimelineRun run = new TimelineRun(entity, period, capMs, sources, plan.notes(), plan.chosen(), read,
                 classification, xml.summary(), timeline, built, byId, inferred.borderline(), characterised, view,
-                lanes, learned, zone, ranges, targets, hostLanes, reading, described);
+                lanes, learned, zone, ranges, targets, hostLanes, reading, described, noise);
         final Files files = TimelineTables.write(workspace, folder, run);
         // So its tables can be written elsewhere later, as they are (propose_timeline_dashboard).
         TimelineSnapshot.of(run, now).write(workspace, folder);
@@ -2156,6 +2163,64 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                         fields.get(source.getKey()).eventType(), source.getValue(), context.sideCalls()));
             }
             out.put(source.getKey(), kept);
+        }
+        return out;
+    }
+
+    // ------------------------------------------------------------------------------------------------
+    // Noise
+
+    // The noisy patterns found, proposed in a chat's form (all ticked, so one click leaves them all out) and decided
+    // there, kept with the user's exclusions; over MCP, or with no form, only listed. The exclusions agreed to, now
+    // or before, applied.
+    private static TimelineNoise.Outcome noise(final ToolCall request,
+                                               final ToolCallContext context,
+                                               final SessionWorkspace workspace,
+                                               final TimelineClassification.Result classification,
+                                               final List<String> names,
+                                               final long capMs) {
+        final SessionWorkspace keptIn = context.userWorkspace().orElse(workspace);
+        final List<TimelineNoise.Exclusion> decided = new ArrayList<>(TimelineNoise.kept(keptIn));
+        List<TimelineNoise.Noise> proposed = TimelineNoise.find(classification.events(), classification.byId(),
+                names, decided, capMs);
+        if (!proposed.isEmpty() && context.session().isChat() && context.userQuestions().canAsk()) {
+            final List<String> picked = askNoise(request, context, proposed);
+            if (picked != null) {
+                proposed.forEach(found -> decided.add(found.decided(picked.contains(found.id()))));
+                TimelineNoise.keep(keptIn, decided);
+                proposed = List.of();
+            }
+        }
+        return new TimelineNoise.Outcome(proposed, TimelineNoise.apply(classification.events(),
+                classification.byId(), names, decided), TimelineNoise.FILE);
+    }
+
+    // The noise the user picks to leave out, by id; null if they couldn't be asked or didn't answer.
+    private static List<String> askNoise(final ToolCall request,
+                                         final ToolCallContext context,
+                                         final List<TimelineNoise.Noise> proposed) {
+        final List<Map<String, Object>> choices = proposed.stream()
+                .map(found -> Map.<String, Object>of("const", found.id(), "title", found.said()))
+                .toList();
+        final Map<String, Object> field = Map.of("type", "array", "title", "Leave out", "items",
+                Map.of("type", "string", "anyOf", choices), "default", proposed.stream()
+                        .map(TimelineNoise.Noise::id).toList());
+        final List<String> lines = new ArrayList<>();
+        proposed.forEach(found -> lines.add("- " + found.said() + ", e.g. " + String.join("; ",
+                found.examples())));
+        final ElicitResult answer = context.userQuestions().ask(NAME, UserQuestions.formCallId(request.id(),
+                NOISE_FORM), "These look like background noise, not the person's own activity. Leave them out of "
+                                 + "this and later timelines (kept, and said in the result)?\n"
+                                 + String.join("\n", lines), Map.of("type", "object", "properties",
+                Map.of(EXCLUDE, field)));
+        McpElicitations.unlessSentInstead(answer, "Leave these out of the timeline?", NAME, "");
+        if (answer.action() != ElicitResult.Action.ACCEPT) {
+            return null;
+        }
+        final Object chosen = NullSafe.map(answer.content()).get(EXCLUDE);
+        final List<String> out = new ArrayList<>();
+        if (chosen instanceof final List<?> list) {
+            list.forEach(id -> out.add(String.valueOf(id)));
         }
         return out;
     }

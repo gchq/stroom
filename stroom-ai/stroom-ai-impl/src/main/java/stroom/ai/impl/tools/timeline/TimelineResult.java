@@ -150,6 +150,7 @@ final class TimelineResult {
             map.put("left_out", leftOut);
         }
         map.put("events_read", run.read().events().size());
+        NullSafe.consume(noise(run), found -> map.putAll(found));
         map.put("scans", run.read().scans());
         if (!NullSafe.list(run.ranges()).isEmpty()) {
             map.put("none_in_period", run.ranges().stream().map(TimelineResult::range).toList());
@@ -835,6 +836,7 @@ final class TimelineResult {
                     .append(pair.get("alternating_percent")).append("% alternating, ").append(pair.get("source"))
                     .append("): ").append(pair.get("spans")).append(" span(s)\n");
         }
+        sb.append(noiseText(run));
         sb.append(periodsText(run, files));
         if (!run.borderline().isEmpty()) {
             sb.append("Borderline pairs (not used; ask the user whether any is a real pair):\n");
@@ -969,6 +971,51 @@ final class TimelineResult {
         }
         map.put("table", files.periods().toString());
         return map;
+    }
+
+    // What the noise left out and what it proposes, for the JSON result; null for neither.
+    private static Map<String, Object> noise(final TimelineRun run) {
+        final TimelineNoise.Outcome noise = run.noise();
+        if (noise == null || (noise.applied().leftOut() == 0 && noise.proposed().isEmpty())) {
+            return null;
+        }
+        final Map<String, Object> map = new LinkedHashMap<>();
+        if (noise.applied().leftOut() > 0) {
+            final List<Map<String, Object>> left = new ArrayList<>();
+            noise.applied().left().forEach((exclusion, count) -> left.add(Map.of("pattern", exclusion.said(),
+                    "events", count)));
+            map.put("excluded", Map.of("events", noise.applied().leftOut(), "patterns", left, "kept_in",
+                    noise.file()));
+        }
+        if (!noise.proposed().isEmpty()) {
+            final List<Map<String, Object>> proposed = new ArrayList<>();
+            noise.proposed().forEach(found -> proposed.add(Map.of("pattern", found.said(), "examples",
+                    found.examples())));
+            map.put("noise_proposed", Map.of("patterns", proposed, "how", "Not left out: the user wasn't asked. "
+                                                                          + "Ask whether to leave them out."));
+        }
+        return map;
+    }
+
+    // The chat's lines of the noise left out and proposed; empty for neither.
+    private static String noiseText(final TimelineRun run) {
+        final TimelineNoise.Outcome noise = run.noise();
+        if (noise == null) {
+            return "";
+        }
+        final StringBuilder sb = new StringBuilder();
+        if (noise.applied().leftOut() > 0) {
+            final List<String> left = new ArrayList<>();
+            noise.applied().left().forEach((exclusion, count) -> left.add(exclusion.said() + " " + count));
+            sb.append("\nLeft out as noise, as the user chose (kept in ").append(noise.file()).append("): ")
+                    .append(noise.applied().leftOut()).append(" event(s): ").append(String.join("; ", left))
+                    .append(".\n");
+        }
+        if (!noise.proposed().isEmpty()) {
+            sb.append("\nLooks like noise, not left out (ask the user):\n");
+            noise.proposed().forEach(found -> sb.append("- ").append(found.said()).append('\n'));
+        }
+        return sb.toString();
     }
 
     // The periods' count by kind, in order of first seen.
