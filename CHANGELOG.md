@@ -13,6 +13,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Bug **#6127** : Fix the internal sign-in redirect when Stroom's public URL explicitly includes the default HTTP or HTTPS port.
+
+
 ## [v7.14-beta.19] - 2026-11-23
 
 * Bug : Fix the clean up of temporary files created by the the FS stream store during path validation.
