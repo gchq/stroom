@@ -35,8 +35,9 @@ import java.util.Objects;
 /// The agent's proposals to a catalogue of event types (`catalogue_event_types` `proposals=`), applied by TypeId:
 /// `add` a new event type, `change` the keys given of one (the rest kept), `remove` one. The catalogue is never sent
 /// whole (seen: 304 kinds in one build). Each proposal is read laxly ([EventType#read]), and one that can't be
-/// applied (not read, a TypeId that isn't Verb-Object, an add of a TypeId already there, a change or remove of one
-/// not there, the user's basis claimed) is refused with why. A drop is the user's word only, relayed by the agent:
+/// applied (not read, a TypeId that isn't Verb-Object (a drop rule's that isn't a short label), an add of a TypeId
+/// already there, a change or remove of one not there, the user's basis claimed) is refused with why. A drop is the
+/// user's word only, relayed by the agent:
 /// an event type proposed with `drop: true` has the user's basis (`user_confirmed`), and is still put to the user in
 /// its form. An event type proposed or changed is the agent's until
 /// the user confirms it in a form: its status is `proposed` whatever the proposal says. The event types are kept in
@@ -113,10 +114,14 @@ final class CatalogueProposals {
         if (read == null || !reader.errors().isEmpty()) {
             return said(reader.errors());
         }
+        // A drop rule writes no event: its TypeId a plain label, its title's (or its description's first words)
+        // where none is given (seen in testing: 'Drop-PEGAOperational' made up to pass as Verb-Object).
         final EventType type = read.typeId() == null || read.typeId().isBlank()
-                ? read.withTypeId(TypeIds.defaultTypeId(read))
+                ? read.withTypeId(TypeIds.defaultFor(read))
                 : read;
-        final String problem = TypeIds.problem(type.typeId());
+        final String problem = type.drop()
+                ? TypeIds.dropProblem(type.typeId())
+                : TypeIds.problem(type.typeId());
         if (problem != null) {
             return problem;
         }

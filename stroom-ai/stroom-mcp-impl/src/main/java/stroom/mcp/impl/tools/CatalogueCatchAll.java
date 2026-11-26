@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /// The catch-all of [CatalogueEventTypesTool]: its confirmation form for the uncatalogued records (those no event
 /// type recognises), what it is shown and said as, and the translation a call gives it.
@@ -75,6 +76,12 @@ class CatalogueCatchAll {
         details.put("uncatalogued records", check.uncatalogued().records() + " in the sample, of "
                                             + check.uncatalogued().shapes().size() + " shape(s), in the chat");
         final Catalogue.CatchAll.Translation own = catalogue.catchAll().translation();
+        if (check.uncatalogued().dropped() > 0) {
+            details.put(untranslatedBy != null && own == null
+                    ? "left untranslated"
+                    : "kept as " + translatedAs(own), check.uncatalogued().unknown() + " of the uncatalogued records");
+        }
+        dropped(check, catalogue).ifPresent(said -> details.put("records dropped", said));
         if (untranslatedBy != null && own == null) {
             return Consent.Request.confirmation(NAME, "Leave the uncatalogued records (those no event type "
                                                       + "recognises) untranslated (no Event), as '" + untranslatedBy
@@ -86,6 +93,44 @@ class CatalogueCatchAll {
         return Consent.Request.confirmation(NAME, "Keep the uncatalogued records (those no event type recognises) "
                                                   + "as " + translatedAs(own) + ", their fields kept as Data",
                 details);
+    }
+
+    /// The records drop rules drop, in words: those the catalogue's drop rules recognise, and those of the
+    /// uncatalogued records the build's mapping's own drop rules drop (seen in testing: every record of the sample
+    /// said to become Unknown, whatever the drops planned).
+    ///
+    /// @param check     The catalogue's check.
+    /// @param catalogue The catalogue.
+    /// @return E.g. `4,380 by the catalogue's drop rules; 20 of the uncatalogued records by the build's mapping's
+    /// drop rules`; empty when none are dropped.
+    static Optional<String> dropped(final CatalogueCheckResult check, final Catalogue catalogue) {
+        final int byCatalogue = droppedByDropRules(check, catalogue);
+        final int byMapping = check.uncatalogued().dropped();
+        final List<String> parts = new ArrayList<>();
+        if (byCatalogue > 0) {
+            parts.add(String.format("%,d", byCatalogue) + " by the catalogue's drop rules");
+        }
+        if (byMapping > 0) {
+            parts.add(String.format("%,d", byMapping) + " of the uncatalogued records by the build's mapping's drop "
+                      + "rules");
+        }
+        return parts.isEmpty()
+                ? Optional.empty()
+                : Optional.of(String.join("; ", parts));
+    }
+
+    // The sample's records the catalogue's drop rules recognise.
+    private static int droppedByDropRules(final CatalogueCheckResult check, final Catalogue catalogue) {
+        int out = 0;
+        for (final EventType type : catalogue.eventTypes()) {
+            final CatalogueCheckResult.Count count = type.drop()
+                    ? check.counts().get(type.typeId())
+                    : null;
+            if (count != null) {
+                out += count.records();
+            }
+        }
+        return out;
     }
 
     /// What the catch-all writes, in words: Unknown events, or the event the user said.
@@ -121,16 +166,26 @@ class CatalogueCatchAll {
                                 final Catalogue catalogue,
                                 final String untranslatedBy) {
         final String become = untranslatedBy != null && catalogue.catchAll().translation() == null
-                ? "left untranslated (no Event), as '" + untranslatedBy + "' leaves them."
+                ? "left untranslated (no Event), as '" + untranslatedBy + "' leaves them"
                 : "translated as " + translatedAs(catalogue.catchAll().translation()) + ", their fields kept as "
-                  + "Data.";
-        final List<String> lines = new ArrayList<>(List.of("**Uncatalogued records**: " + check.uncatalogued().records()
-                                                            + " of the sample's records no event type recognises, "
-                                                            + become));
+                  + "Data";
+        final CatalogueCheckResult.Uncatalogued uncatalogued = check.uncatalogued();
+        final List<String> lines = new ArrayList<>(List.of("**Uncatalogued records**: " + uncatalogued.records()
+                                                            + " of the sample's records no event type recognises"
+                                                            + (uncatalogued.dropped() == 0
+                ? ", " + become + "."
+                : ": " + uncatalogued.unknown() + " " + become + "; " + uncatalogued.dropped() + " dropped by the "
+                  + "build's mapping's drop rules.")));
         final List<String> shapes = CatalogueTables.uncataloguedShapes(check);
         if (!shapes.isEmpty()) {
             lines.add("");
             shapes.forEach(shape -> lines.add("- " + shape));
+        }
+        final int byCatalogue = droppedByDropRules(check, catalogue);
+        if (byCatalogue > 0) {
+            lines.add("");
+            lines.add("**" + CatalogueSummary.heading(CatalogueSummary.DROPPED) + "**: " + byCatalogue + " more of the "
+                      + "sample's records, recognised by the catalogue's drop rules.");
         }
         return String.join("\n", lines);
     }
@@ -164,9 +219,13 @@ class CatalogueCatchAll {
                                    final CatalogueCheckResult check,
                                    final String untranslatedBy,
                                    final String notRecorded) {
-        final String become = untranslatedBy != null && catalogue.catchAll().translation() == null
+        final String become = (untranslatedBy != null && catalogue.catchAll().translation() == null
                 ? "left untranslated (no Event), as '" + untranslatedBy + "' leaves them"
-                : "translated as " + translatedAs(catalogue.catchAll().translation());
+                : "translated as " + translatedAs(catalogue.catchAll().translation()))
+                              + (check.uncatalogued().dropped() > 0
+                ? " (" + check.uncatalogued().unknown() + " of them; the build's mapping's drop rules drop the other "
+                  + check.uncatalogued().dropped() + ")"
+                : "");
         if (notRecorded != null) {
             // Seen in testing: a drop proposal refused, the form shown again, declined, and the agent sent back to
             // the same proposal, round and round.

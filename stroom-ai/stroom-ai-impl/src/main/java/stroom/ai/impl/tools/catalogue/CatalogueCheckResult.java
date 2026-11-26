@@ -343,11 +343,14 @@ public record CatalogueCheckResult(Map<String, Count> counts,
     // --------------------------------------------------------------------------------
 
 
-    /// The records no event type recognises: the catch-all translates them.
+    /// The records no event type recognises: the catch-all translates them, but those the build's mapping's own drop
+    /// rules drop.
     ///
     /// @param records How many.
     /// @param shapes  Their shapes, commonest first.
-    public record Uncatalogued(int records, List<Shape> shapes) {
+    /// @param dropped How many of them the build's mapping's own drop rules (`drop_when`, events rules with
+    ///                `drop: true`) drop: the rest become Unknown ([#unknown]).
+    public record Uncatalogued(int records, List<Shape> shapes, int dropped) {
 
         /// None.
         public static final Uncatalogued NONE = new Uncatalogued(0, List.of());
@@ -357,9 +360,26 @@ public record CatalogueCheckResult(Map<String, Count> counts,
             shapes = List.copyOf(shapes);
         }
 
+        /// Records no event type recognises, none of them dropped by the build's mapping.
+        ///
+        /// @param records How many.
+        /// @param shapes  Their shapes, commonest first.
+        public Uncatalogued(final int records, final List<Shape> shapes) {
+            this(records, shapes, 0);
+        }
+
+        /// @return How many of them the catch-all writes (as Unknown, or as the event the user said): those the
+        /// build's mapping doesn't drop.
+        public int unknown() {
+            return records - dropped;
+        }
+
         Map<String, Object> toJson(final boolean full) {
             final Map<String, Object> out = new LinkedHashMap<>();
             out.put("records", records);
+            if (dropped > 0) {
+                out.put("dropped_by_mapping", dropped);
+            }
             out.put("shapes", shown(full).stream().map(shape -> shape.toJson(full)).toList());
             return out;
         }

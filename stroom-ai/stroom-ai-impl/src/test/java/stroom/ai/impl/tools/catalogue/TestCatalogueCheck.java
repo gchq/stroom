@@ -19,6 +19,7 @@ package stroom.ai.impl.tools.catalogue;
 import stroom.ai.impl.tools.catalogue.CatalogueCheckResult.Several;
 import stroom.ai.impl.tools.catalogue.CatalogueValidation.Problem;
 import stroom.ai.impl.tools.draft.LocalCheck;
+import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.TranslationMapping;
@@ -71,6 +72,37 @@ class TestCatalogueCheck {
         assertThat(check.problems()).isEmpty();
         // The SOAP, REST and Executable records: none recognises them.
         assertThat(check.uncatalogued().records()).isEqualTo(21 + 6 + 1);
+    }
+
+    // Seen in testing: the catch-all said every uncatalogued record would become Unknown, whatever drops the build's
+    // mapping held.
+    @Test
+    void theUncataloguedRecordsTheBuildsMappingDropsAreCountedApart() {
+        final Catalogue catalogue = catalogue(securityTypes(EventType.AGENT_KNOWLEDGE).toArray(EventType[]::new));
+        final CatalogueSample sample = CatalogueSample.read(READING, String.join("\n", pegaLines()), null,
+                LocalCheck.JSON_PARSER_CUT, null);
+        // The draft's own drop_when, and one the catalogue's drop rules wrote (theirs, not the mapping's).
+        final Map<String, Object> draft = Map.of("drop_when", List.of(
+                Map.of("reason", "SOAP noise", "when", List.of(Map.of("field", "event.logger_name", "equals", SOAP))),
+                Map.of("reason", SourceNotes.DROPPED_REASON + ": Old rule", "when", List.of(Map.of("field",
+                        "event.level", "equals", "INFO")))));
+        // The build's latest mapping: an events rule with drop: true.
+        final Map<String, Object> latest = Map.of("events", List.of(Map.of("name", "rest", "drop", true, "when",
+                List.of(Map.of("field", "event.logger_name", "equals", REST)))));
+
+        final CatalogueCheckResult none = CatalogueCheck.check(catalogue, sample, null);
+        final CatalogueCheckResult dropped = CatalogueCheck.check(catalogue, sample, null,
+                CatalogueCheck.Drafted.of(draft).withDropsOf(latest));
+
+        assertThat(none.uncatalogued().dropped()).isZero();
+        assertThat(none.uncatalogued().unknown()).isEqualTo(21 + 6 + 1);
+        // The SOAP records by the draft's drop_when, the REST ones by the latest mapping's rule; the Executable one
+        // becomes Unknown. The catalogue's own drop_when (by its reason) is left to the catalogue.
+        assertThat(dropped.uncatalogued().records()).isEqualTo(21 + 6 + 1);
+        assertThat(dropped.uncatalogued().dropped()).isEqualTo(21 + 6);
+        assertThat(dropped.uncatalogued().unknown()).isEqualTo(1);
+        assertThat(dropped.toJson().get("uncatalogued")).asString().contains("dropped_by_mapping=27");
+        assertThat(CatalogueCheck.Drafted.dropsOf(draft)).hasSize(1);
     }
 
     @Test
@@ -399,14 +431,69 @@ class TestCatalogueCheck {
 
         final CatalogueCheckResult check = check(catalogue(security), lines);
 
+        // The held field itself is cut, so none of its keys are there: said so (seen in testing: refused only as
+        // "depends on processing's string cut", the agent left to guess why).
         assertThat(said(check)).singleElement().asString().isEqualTo(
-                "Process-SecurityEventLogger#0: whether the condition on event.logger_name holds depends on "
-                + "processing's string cut: on 1 record(s) it holds read whole but not as processing reads them, "
-                + "its strings cut at stringTruncateLength (10,000 characters): test what comes before the cut, or "
-                + "raise the pipeline's stringTruncateLength");
+                "Process-SecurityEventLogger#0: 'event' is longer than stringTruncateLength (10,000 characters) on 1 "
+                + "record(s), so in processing none of its keys (logger_name among them) can be read there: the cut "
+                + "text isn't JSON, and the condition on event.logger_name never holds on them; raise the pipeline's "
+                + "stringTruncateLength (long_values=whole), or test a field outside 'event'");
         // Cut short, its held JSON doesn't parse: counted as such.
         assertThat(check.unparsed().records()).isEqualTo(1);
         assertThat(check.counts().get("Process-SecurityEventLogger").records()).isEqualTo(25);
+    }
+
+    @Test
+    void aDropRulesConditionInsideACutHeldFieldSaysWhetherItsRecordsAreDropped() {
+        final Map<String, Object> held = new LinkedHashMap<>();
+        held.put("padding", "p".repeat(10_050));
+        held.put("logger_name", SECURITY);
+        final List<String> lines = new ArrayList<>(pegaLines());
+        lines.add(line(held));
+        final EventType kept = type("Process-SecurityEventLogger", "Security event", EventType.AGENT_KNOWLEDGE,
+                way(equalsTo("event.logger_name", SECURITY)));
+        final EventType positive = type("Security events", "Security events", EventType.USER_CONFIRMED,
+                way(equalsTo("event.logger_name", SECURITY))).droppedByUser();
+        final Map<String, Object> notSecurity = new LinkedHashMap<>();
+        notSecurity.put("field", "event.logger_name");
+        notSecurity.put("equals", SECURITY);
+        notSecurity.put("not", true);
+        final EventType negated = type("Other loggers", "Other loggers", EventType.USER_CONFIRMED,
+                way(Condition.fromJson(notSecurity))).droppedByUser();
+
+        // A positive condition never holds where the held field is cut: the drop rule never drops those records.
+        assertThat(said(check(catalogue(positive), lines))).singleElement().asString()
+                .startsWith("Security events#0: 'event' is longer than stringTruncateLength (10,000 characters) on 1 "
+                            + "record(s)")
+                .contains("the condition on event.logger_name never holds on them, so this drop rule never drops "
+                          + "them;");
+        // A negated one always holds there: the drop rule drops them whatever they hold.
+        assertThat(said(check(catalogue(kept, negated), lines))).filteredOn(said -> said.startsWith("Other"))
+                .singleElement().asString()
+                .contains("the condition on event.logger_name holds on them whatever they hold, so this drop rule "
+                          + "drops them whatever they hold;");
+    }
+
+    @Test
+    void aConditionOnALongPlainFieldThatDependsOnTheCutIsSaidAsBefore() {
+        final Map<String, Object> record = new LinkedHashMap<>();
+        record.put("body", "p".repeat(10_050) + "TAIL");
+        final Map<String, Object> contains = new LinkedHashMap<>();
+        contains.put("field", "body");
+        contains.put("contains", "TAIL");
+        final EventType tail = type("Process-Tail", "Tail", EventType.USER_CONFIRMED,
+                way(Condition.fromJson(contains))).droppedByUser();
+        final TranslationMapping reading = TranslationMapping.parse(Map.of("input", "json", "events",
+                List.of(Map.of("name", "r", "fields", List.of()))));
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue(tail), CatalogueSample.read(reading,
+                ToolJson.dumps(record), null, LocalCheck.JSON_PARSER_CUT, null), null);
+
+        assertThat(said(check)).anySatisfy(said -> assertThat(said).isEqualTo(
+                "Process-Tail#0: whether the condition on body holds depends on processing's string cut: on 1 "
+                + "record(s) it holds read whole but not as processing reads them, its strings cut at "
+                + "stringTruncateLength (10,000 characters), so in processing this drop rule doesn't drop them: "
+                + "test what comes before the cut, or raise the pipeline's stringTruncateLength"));
     }
 
     @Test
@@ -448,8 +535,9 @@ class TestCatalogueCheck {
 
         assertThat(check.order()).containsExactly("Process-Integration", "Process-SOAPService");
         assertThat(said(check)).singleElement().asString().startsWith("Process-Integration#0: condition on "
-                                                                      + "event.log_type, the build's source type "
-                                                                      + "field");
+                                                                      + "event.log_type: it reads the build's "
+                                                                      + "source type field (event>log_type, "
+                                                                      + "recorded by the survey");
         assertThat(check.toJson()).containsOnlyKeys("counts", "overlaps", "uncatalogued", "unparsed", "several",
                 "problems", "order");
         assertThat(check.toJson().get("problems")).isEqualTo(List.of(Map.of("type_id", "Process-Integration", "way",

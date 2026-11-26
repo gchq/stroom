@@ -162,8 +162,10 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
     static final String CATALOGUE = CatalogueSteps.CATALOGUE;
     /// The start choice's option for starting a build from the existing pipeline.
     static final String START_FROM_EXISTING = "Start from the existing pipeline (recommended)";
-    /// A catalogue form's message: how many event types it puts to the user.
-    static final Pattern ACCEPT_ALL = Pattern.compile("Accept all (\\d+) event types?");
+    /// A catalogue form's message: how many event types it puts to the user, and how many drop rules (counted apart:
+    /// "Accept all 2 event types and 1 drop rule", "Accept all 1 drop rule").
+    static final Pattern ACCEPT_ALL = Pattern.compile("Accept all (?:(\\d+) event types?)?(?: and )?(?:(\\d+) drop "
+                                                      + "rules?)?");
 
     // The next calls [#leadsOn] makes: those that only read or step, so following them leaves the suite's state
     // as it was.
@@ -816,14 +818,19 @@ abstract class AbstractE2eTest extends AbstractAiIntegrationTest {
     }
 
     /// @param forms Forms the user was shown.
-    /// @return How many event types each catalogue form put to them ("Accept all N event types"), in order;
+    /// @return How many event types (drop rules among them) each catalogue form put to them ("Accept all N event
+    /// types"), in order;
     /// forms of anything else left out.
     static List<Integer> eventTypesPutInEachForm(final List<ElicitFormRequest> forms) {
         final List<Integer> sizes = new ArrayList<>();
         for (final ElicitFormRequest form : forms) {
             final Matcher accept = ACCEPT_ALL.matcher(form.message());
-            if (accept.find()) {
-                sizes.add(Integer.parseInt(accept.group(1)));
+            if (accept.find() && (accept.group(1) != null || accept.group(2) != null)) {
+                sizes.add((accept.group(1) == null
+                        ? 0
+                        : Integer.parseInt(accept.group(1))) + (accept.group(2) == null
+                        ? 0
+                        : Integer.parseInt(accept.group(2))));
             }
         }
         return sizes;

@@ -84,6 +84,26 @@ class TestCatalogueTables {
                 + "from the agent's knowledge |"));
     }
 
+    // Seen in testing: a drop proposed as an event type ('Drop-PEGAOperational'); the user read it as a rule.
+    @Test
+    void aDropRuleIsSaidAsOneInTheNotesAndTheSetsTable() {
+        final EventType logon = type("Authenticate-Logon", "Authenticate", "high", EventType.DOCUMENTATION);
+        final EventType operational = new EventType("Operational logging", "Operational logging", "Test", null,
+                null, null, null, null, null, List.of(), true, EventType.USER_CONFIRMED, "high", null,
+                EventType.PROPOSED);
+        final Catalogue catalogue = new Catalogue(List.of(logon, operational), Catalogue.CatchAll.PROPOSED,
+                Catalogue.Scope.NONE);
+
+        final List<String> table = CatalogueTables.notesTable(catalogue, Map.of("Operational logging", 9));
+
+        assertThat(table.stream().filter(line -> line.startsWith("### ")).toList()).containsExactly(
+                "### Authenticate", "### Drop rules (not translated)", "### Uncatalogued records");
+        assertThat(table).anySatisfy(line -> assertThat(line).startsWith("| `Operational logging` Operational "
+                                                                         + "logging | Test | every record | 9 | drop "
+                                                                         + "rule (not translated) |"));
+        assertThat(CatalogueTables.translatedAs(operational)).isEqualTo("drop rule (not translated)");
+    }
+
     private static EventType type(final String typeId,
                                   final String eventDetail,
                                   final String confidence,

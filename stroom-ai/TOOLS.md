@@ -4707,8 +4707,8 @@ result), from `stream_ids`, else the streams the catalogue was last checked agai
 sample streams, else (a build on an existing feed) the streams its survey read; with the `splitter` given, else the
 build's saved Data Splitter (`read_with`). They are read as the build's latest mapping reads them (the draft last sent,
 else the mapping kept with the XSLT: its input, held fields, nil values and extractions), and as processing will read
-them: strings cut at the JSONParser's `stringTruncateLength` (10,000 by default), and read whole too, so a condition
-that depends on the cut is found. The reading, in order: the `reading` given; else a `reading` an earlier call gave (kept in the notes' confirming block, so confirm calls read the same records); else the build's latest mapping; else the draft's own (2026-11-20: an earlier draft reading whole batches no longer overrides a `for_each` given). draft_translation_mapping reads the records the same way. A source with no mapping yet is read as the draft reads it, or as `reading` says
+them: strings cut at the JSONParser's `stringTruncateLength` (10,000 by default; the raised limit where the user chose
+`long_values=whole`, `LongValues.cutLength`), and read whole too, so a condition that depends on the cut is found. The reading, in order: the `reading` given; else a `reading` an earlier call gave (kept in the notes' confirming block, so confirm calls read the same records); else the build's latest mapping; else the draft's own (2026-11-20: an earlier draft reading whole batches no longer overrides a `for_each` given). draft_translation_mapping reads the records the same way. A source with no mapping yet is read as the draft reads it, or as `reading` says
 (`input`, `json_fields`, `xml_fields`, `extract`, `pairs`). Conditions are evaluated by the one evaluator the
 generated XSLT agrees with (`LocalCheck`; parity suites `TestConditionParity`, `TestE2eConditionParityProcessed`).
 
@@ -4756,7 +4756,10 @@ when the type is written two ways), `drop`, `basis` (`draft`, `agent_knowledge`,
 (high, medium, low), `one_type_because` and, optionally, `doubt` (why the agent is unsure of it: said to the user
 among those worth a look; 2026-11-20). A proposal with no TypeId gets the default (`TypeIds.defaultTypeId`: the
 event detail as the verb, `affected_as`, else the first `equals` value's last segment, else the title's first word;
-e.g. `Process-SOAPService`). A proposed or changed event type is `proposed` whatever the proposal says, until the user
+e.g. `Process-SOAPService`). A **drop rule** (`drop: true`) writes no event: its `type_id` is a plain short label
+(`TypeIds.dropProblem`: letters, digits, spaces and `_ . , ( ) / ' -`, at most 60), its title (else its description's
+first words) where none is given, never a made-up Verb-Object (2026-11-26, seen in testing:
+`Drop-PEGAOperational`, "sounds like a rule"). A proposed or changed event type is `proposed` whatever the proposal says, until the user
 confirms it; a change of any event type puts a confirmed catch-all back to the user. `basis: user_confirmed` is
 refused (only the user's form gives it), but for `drop: true`, the user's word relayed by the agent, which is still
 put to them in the form. Each proposal that can't be applied is in `refused` (its place, TypeId and why: not
@@ -4778,7 +4781,10 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
   the fields whose values tell their other records apart (`TellingFields`), so one can be tightened. Two ways of one
   type may overlap.
 * `uncatalogued`: records no event type recognises, by shape with examples; not refused (the catch-all translates
-  them as Unknown), but counted and shown in the review.
+  them as Unknown), but counted and shown in the review. Those the build's mapping's own drop rules drop (the draft's
+  and its latest mapping's `drop_when`, the catalogue's own aside, and events rules with `drop: true`) are counted
+  apart (`dropped_by_mapping`; 2026-11-26): the catch-all's summary and form say how many become Unknown, how many the
+  mapping drops, and how many the catalogue's drop rules take.
 * `unparsed`: records whose held values, read by a condition, don't parse (a bad escape, a value cut short): counted
   with why, not called uncatalogued.
 * `several`: an event type whose records split by a field of their own (its conditions' fields aside) or come in
@@ -4787,15 +4793,20 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
   extraction gives), and placements whose values it doesn't read (an `xpath`'s, a `lookup`'s; 2026-11-22): said, not
   refused, never skipped silently.
 * `problems`: the catalogue's own (`CatalogueValidation`): a TypeId not Verb-Object
-  (`^[A-Z][A-Za-z0-9]*-[A-Z][A-Za-z0-9]*(?:-[A-Z][A-Za-z0-9]*)*$`, at most 100 characters) or given twice; a title
+  (`^[A-Z][A-Za-z0-9]*-[A-Z][A-Za-z0-9]*(?:-[A-Z][A-Za-z0-9]*)*$`, at most 100 characters; a drop rule's not a short
+  label) or given twice; a title
   given twice, ignoring case; a way with no conditions, but for a sole event type of its source type or line format; a
-  condition on the build's source type field, in any spelling; capture `names` not unique in the build or not as many
+  condition on the build's source type field, in any spelling (naming the field the survey recorded, and
+  `survey_feed source_type_field=` to change it); capture `names` not unique in the build or not as many
   as the regex's groups; a regex not in XPath's dialect (`XPathRegex.problem`: no lookaround) or over 500 characters;
   what the type means against the event-logging schema (an action element taking Data, its Action enumeration naming
   the values allowed, its outcome); a drop not the user's; and what the records show: a field no record has (with the
   nearest names); the **regex guard**, a regex over its time budget (timed in Saxon's engine, as processing runs it),
   and a regex or `contains` over values past 10,000 characters where `starts_with` or `contains` recognises the same
-  records (refused with that suggestion); a condition that depends on processing's **string cut**, naming the setting;
+  records (refused with that suggestion); a condition that depends on processing's **string cut**, naming the setting
+(2026-11-26: where the cut leaves a held JSON field it reads unparsable, so none of its keys are there, that is said,
+with whether a drop rule's records are then dropped or kept; `build_translation_xslt`'s sample check warns the same of
+the mapping's drop rules, `CutHeldDrops`);
   an event type recognised by every record of a line format that shares it; an `equals` or `one_of` naming a value of a
   field with at least 3 values written alike, the named one among them, differing only in a part that varies (a message holding an object's id; masked
   as the survey's shapes are), refused with `starts_with` or `matches` with a named group suggested; a code (`Login`,
@@ -4906,8 +4917,9 @@ can ask about any of them in the chat, and the form links the notes too (`every 
 Each comes first with `status: needs_showing`: Stroom AI's chat
 shows it itself, as it is, and the agent is told not to repeat it; another client's agent is told to show it whole.
 The next call (within 90 seconds of the summary, or the same call made again with the answer) asks one short plain
-form bound to that summary: "Accept all N event types, or type your amendments, or ask about any of them". A summary
-shown longer ago is shown again before its form. Accepted, the set is `confirmed` (the seed's basis becoming `user_confirmed`; documentation's and the
+form bound to that summary: "Accept all N event types, or type your amendments, or ask about any of them" (drop rules
+counted apart: "Accept all 2 event types and 1 drop rule", and listed in the summary's own "Drop rules (not
+translated)" section). A summary shown longer ago is shown again before its form. Accepted, the set is `confirmed` (the seed's basis becoming `user_confirmed`; documentation's and the
 agent's kept) and the next set's table comes back (`confirmed_now`). Amended, nothing of the set is confirmed:
 `status: needs_confirmation` with the user's `amendments` and the `amended` TypeIds; the agent proposes them
 (`op: change`, or add and remove; `drop: true` only where the user said so), and the set is put to the user again; a

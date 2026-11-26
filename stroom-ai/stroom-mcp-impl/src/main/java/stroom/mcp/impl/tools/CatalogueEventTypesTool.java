@@ -239,7 +239,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         this.plan = plan;
         this.builds = builds;
         this.clock = clock;
-        this.recordReading = new CatalogueReading(sampleStreamTexts, plan, builds);
+        this.recordReading = new CatalogueReading(sampleStreamTexts, plan, builds, buildRecords);
         this.catchAllForms = new CatalogueCatchAll(notes);
     }
 
@@ -340,7 +340,9 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                                 .items(ObjectSchema.builder()
                                         .addStringProperty(CatalogueProposals.OP, "add, change or remove.")
                                         .addStringProperty(CatalogueProposals.TYPE_ID, "Verb-Object, e.g. "
-                                                                                       + "Update-Password.")
+                                                                                       + "Update-Password; a drop "
+                                                                                       + "rule's (drop: true) a "
+                                                                                       + "short label.")
                                         .addStringProperty("description", "Written into every event of the "
                                                                           + "type (EventDetail/Description): what "
                                                                           + "happened, in a sentence. Never counts "
@@ -1126,8 +1128,10 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         }
         if (check.uncatalogued().records() > 0) {
             said.add(check.uncatalogued().records() + " record(s) no event type recognises (check.uncatalogued, by "
-                     + "shape): the catch-all translates them as Unknown; propose event types for those that are "
-                     + "events of their own.");
+                     + "shape): the catch-all translates them as Unknown" + (check.uncatalogued().dropped() > 0
+                    ? ", but the " + check.uncatalogued().dropped() + " the build's mapping's drop rules drop "
+                      + "(check.uncatalogued.dropped_by_mapping)"
+                    : "") + "; propose event types for those that are events of their own.");
         }
         if (said.isEmpty() || recorded && !check.refused()) {
             said.add("When the catalogue is right, " + NAME + " confirm=true puts it to the user a set at a time "
@@ -1170,9 +1174,13 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         // What the draft writes: for every event (not an event type's Data, its user Authenticate's), and by its own
         // rules, which the translation's rules start from.
         // Old/new lists by the user's answers for the build, as the draft takes them (2026-11-23).
+        // The drop rules of the draft and of the build's latest mapping: the uncatalogued records they drop are told
+        // apart from those the catch-all writes as Unknown (seen in testing: every record of the sample said to
+        // become Unknown, whatever the drops planned).
         return CatalogueCheck.check(catalogue, read.sample(), schema, CatalogueCheck.Drafted.of(
                 JsonValues.mapOrEmpty(read.draft().get("mapping"))).withChangeSides(ChangeSides.kept(
-                buildRecords.get(), calling.build())));
+                buildRecords.get(), calling.build())).withDropsOf(builds.latestMapping(calling.context(),
+                calling.build()).orElse(null)));
     }
 
     // The full listing (the catalogue and its check, in full) saved to the session's workspace: its path, or empty
@@ -1293,12 +1301,15 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                     ? catalogue.withCatchAllConfirmedByUser(catchAllForms.catchAllReason(calling))
                     : catalogue.withCatchAllConfirmedByUser();
         } else {
-            final String accept = "Accept all " + set.size() + " event type" + (set.size() == 1
-                    ? ""
-                    : "s");
+            // A drop rule is no event type: counted apart (seen in testing: "How is Drop-PEGAOperational an event
+            // type, sounds like a rule").
+            final String accept = "Accept all " + CatalogueSummary.counted(set);
             final Map<String, Object> details = new LinkedHashMap<>();
-            details.put("event types", "the " + set.size() + " " + confidenceOf(set) + "-confidence ones "
-                                       + "summarised in the chat, as they are");
+            details.put("event types", set.stream().anyMatch(EventType::drop)
+                    ? "the " + CatalogueSummary.counted(set) + " of " + confidenceOf(set) + " confidence summarised "
+                      + "in the chat, as they are"
+                    : "the " + set.size() + " " + confidenceOf(set) + "-confidence ones summarised in the chat, as "
+                      + "they are");
             // The roles the schema leaves, asked in the set's own form, and those given (decided with the user
             // 2026-11-25; seen in eval case 109 on Sonnet: asked only in the table, which the agent didn't show).
             final List<String> roles = TimelineRoles.askedInForm(set);

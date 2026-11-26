@@ -983,6 +983,46 @@ class TestCatalogueEventTypesTool {
                 new Catalogue.CatchAll.Translation("Process-Records", "Process", null, "Other records processed")));
     }
 
+    // Seen in testing: a drop proposed as an event type ('Drop-PEGAOperational', "sounds like a rule"), and the
+    // catch-all's form saying every uncatalogued record would become Unknown, whatever the drops planned.
+    @Test
+    void dropRulesAreCountedApartAndTheCatchAllSaysWhatIsDroppedAndWhatBecomesUnknown() {
+        withAnUncataloguedRecord();
+        // The build's latest mapping drops the archive records.
+        Mockito.when(builds.latestMapping(Mockito.any(), Mockito.eq(BUILD))).thenReturn(Optional.of(Map.of(
+                "drop_when", List.of(Map.of("reason", "archive runs", "when", List.of(Map.of("field", "action",
+                        "equals", "archive")))))));
+        final Map<String, Object> proposed = propose(List.of(type("Authenticate-Logon", "Authenticate", "high",
+                        "login"), type("Authenticate-Logoff", "Authenticate", "high", "logout"),
+                withKeys(type(null, null, "high", "export"), "type_id", "Exports", "title", "Exports",
+                        "description", "Report exports, not wanted", "drop", true)));
+        assertThat(proposed).containsEntry("recorded", true);
+        final BuildToolCalls.FormUser user = user(McpAnswers.ACCEPT);
+
+        final Map<String, Object> shown = call(Map.of("build", BUILD, "confirm", true), user.context());
+        assertThat(String.valueOf(shown.get("table"))).startsWith("**2 high-confidence event types and 1 drop "
+                                                                  + "rule**")
+                .contains("**Drop rules (not translated)** (1)", "- `Exports` Exports: recognised by action is "
+                                                                 + "export; 8 records");
+        final Map<String, Object> catchAll = call(Map.of("build", BUILD, "confirm", true), user.context());
+        assertThat(user.shown()).singleElement().satisfies(form -> assertThat(form)
+                .startsWith("Accept all 2 event types and 1 drop rule, or type your amendments"));
+        // The purge and archive records no event type recognises: the archive one dropped by the build's mapping,
+        // the purge one Unknown; the exports dropped by the catalogue's drop rule.
+        assertThat(String.valueOf(catchAll.get("table")))
+                .contains("**Uncatalogued records**: 2 of the sample's records no event type recognises: 1 "
+                          + "translated as Unknown events, their fields kept as Data; 1 dropped by the build's "
+                          + "mapping's drop rules.")
+                .contains("**Drop rules (not translated)**: 8 more of the sample's records, recognised by the "
+                          + "catalogue's drop rules.");
+        call(Map.of("build", BUILD, "confirm", true, "catch_all", Map.of("allow_unknown", "The user keeps the "
+                                                                                          + "rest as Unknown")),
+                user.context());
+        assertThat(user.shown().getLast()).contains("8 by the catalogue's drop rules; 1 of the uncatalogued records "
+                                                    + "by the build's mapping's drop rules")
+                .contains("1 of the uncatalogued records");
+    }
+
     @Test
     void theCatchAllIsNotPutToTheUserOverProposalsThatRecordedNothing() {
         // Seen in testing: a drop proposal for the uncatalogued records was refused, the catch-all's form showed the

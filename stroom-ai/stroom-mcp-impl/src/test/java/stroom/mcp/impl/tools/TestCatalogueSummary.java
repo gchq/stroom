@@ -200,15 +200,44 @@ class TestCatalogueSummary {
     }
 
     @Test
-    void aDroppedEventTypeIsGroupedApartAndWorthALook() {
+    void aDropRuleIsGroupedApart() {
         final List<EventType> set = List.of(type("Authenticate-Logon", "Authenticate", "Logon"),
-                dropped(type("Process-Heartbeat", "Process", null)));
-        final CatalogueCheckResult check = check(set, Map.of("Authenticate-Logon", 2, "Process-Heartbeat", 9));
+                dropped(type("Heartbeats", "Process", null)));
+        final CatalogueCheckResult check = check(set, Map.of("Authenticate-Logon", 2, "Heartbeats", 9));
 
         assertThat(CatalogueSummary.groups(set, check)).extracting(CatalogueSummary.Group::whatHappened)
-                .containsExactly("Authenticate", "dropped (not translated)");
+                .containsExactly("Authenticate", "drop rules (not translated)");
         assertThat(CatalogueSummary.unusual(set, check)).singleElement().satisfies(one -> assertThat(one.why())
-                .containsExactly("its records are dropped"));
+                .containsExactly("a drop rule: its records are left untranslated"));
+    }
+
+    // Seen in testing: "How is Drop-PEGAOperational an event type, sounds like a rule".
+    @Test
+    void dropRulesAreCountedApartAndListedInTheirOwnSectionNotAsEventTypes() {
+        final List<EventType> set = List.of(type("Authenticate-Logon", "Authenticate", "Logon"),
+                type("Authenticate-Logoff", "Authenticate", "Logoff"),
+                dropped(type("Operational logging", "Process", null)));
+        final CatalogueCheckResult check = check(set, Map.of("Authenticate-Logon", 2, "Authenticate-Logoff", 1,
+                "Operational logging", 4_380));
+
+        final String summary = CatalogueSummary.summary(set, check, DOC);
+
+        assertThat(summary)
+                .startsWith("**2 high-confidence event types and 1 drop rule**, by what happened. Each one, row by "
+                            + "row, is in the source notes 'acme source notes'")
+                .contains("- Authenticate: 2 event types, 3 records")
+                .contains("**Drop rules (not translated)** (1): their records are left untranslated, no event "
+                          + "written.")
+                .contains("- `Operational logging` Operational logging: recognised by every record; 4380 records")
+                .contains("Worth a look: none.");
+        assertThat(summary.lines().filter(line -> line.startsWith("|"))).isEmpty();
+        assertThat(CatalogueSummary.summary(List.of(set.getLast()), check, DOC))
+                .startsWith("**1 high-confidence drop rule**. Each one")
+                .doesNotContain("Worth a look");
+        assertThat(CatalogueSummary.counted(set)).isEqualTo("2 event types and 1 drop rule");
+        assertThat(CatalogueSummary.counted(1, 2)).isEqualTo("1 event type and 2 drop rules");
+        assertThat(CatalogueSummary.counted(0, 1)).isEqualTo("1 drop rule");
+        assertThat(CatalogueSummary.counted(3, 0)).isEqualTo("3 event types");
     }
 
     @Test

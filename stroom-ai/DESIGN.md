@@ -4318,7 +4318,7 @@ The build's source notes hold the catalogue, an ordered list of event types. Eac
 | **Placements** | `placements` (decided by the user 2026-11-21) | Where its fields go in the schema: each a mapping fields entry (`Placement`), its `path` below `event_detail` (`Email/Subject`, `After/Object/Name`), a `field` or a constant `value`, the mapping's conversions (`transform`, `time_format`, `timezone`, `map`, `default`, `repeat`) and repeated groups (`for_each` with `fields`); `also_data: true` keeps the field as Data too. From the agent's knowledge of the source: no field-name-to-schema-name matching anywhere. `affected` with `affected_as` is read as one more placement (the affected field at the object's leaf), checked the same way, so catalogues written before keep working; `placements` is written only when given. |
 | **Recognition** | `recognised_by`: one or more ways, each conditions (`when`) and `names` | How a record of the type is told (below). More than one way when a type is written in more than one way (two log formats, two loggers): one event type, not two. A feed is taken to name its event fields consistently (decided by the user 2026-11-20, for now): an event type's fields are read under one spelling, not per way. A type from documentation may have none in the sample (said, not dropped). |
 | **Provenance** | `basis`, `confidence`, `one_type_because`, `status` | `basis`: `draft` (the seed's), `agent_knowledge`, `documentation` or `user_confirmed`; `confidence` high, medium or low; `status` proposed or confirmed. |
-| | `drop` | True for an event type whose records are dropped (the user's word only), written as a `drop_when` rule. |
+| | `drop` | True for a **drop rule**: records left untranslated (the user's word only), written as a `drop_when` rule. Its `type_id` is a plain short label (`TypeIds.dropProblem`), never Verb-Object; shown and counted as a drop rule, not an event type (2026-11-26). |
 
 **Description.** An event type gives `EventDetail/Description` where it can, which adds context and the freedom to
 say what happened; it is not required (decided by the user 2026-11-20: the check doesn't refuse an event type
@@ -4356,7 +4356,8 @@ works. A field another event type tests for its code is still Data of this one's
 `affected_as`, else the last segment of its first `equals` value as it is, else its title's first word; e.g.
 `Process-SOAPService`. A candidate of digits alone is passed over; other characters are dropped and the first letter
 made a capital (`log-in` is `Login`). No tidying of names in code beyond that (no suffix lists): the agent's proposal
-or the user's amendment tidies it. The user sees and may change it in the confirmation table.
+or the user's amendment tidies it. The user sees and may change it in the confirmation table. A drop rule's default is
+its title, else its description's first words (`TypeIds.defaultDropLabel`).
 
 **Order.** The tool keeps the catalogue's ways of recognising types ordered more specific first (more conditions
 before fewer, ties kept as given), an event type recognised by every record last, the catch-all after them all
@@ -4499,7 +4500,7 @@ every medium in one, every low in one, each shown as a summary by what happened 
 TypeIds with records) and the event types worth a look row by row, at most 10, the rest counted (`CatalogueSummary`:
 changed since the user last saw the set, whoever changed it (`changed since shown:`, decided by the user
 2026-11-20), no record in the sample, no event written, a lone action element in a set of 10 or more, no description
-of its own, dropped, a `doubt` given; in a medium or low set every one, with its `doubt` where the agent gave one, the
+of its own, a `doubt` given; drop rules in a section of their own, "Drop rules (not translated)"; in a medium or low set every one, with its `doubt` where the agent gave one, the
 optional proposal key added 2026-11-20); every row in the source notes' Event types part (a section per action
 element, with Records, Translated as and Status; the Translated as column back, decided by the user 2026-11-20),
 which the summary links and the form names. The user may ask
@@ -4508,7 +4509,8 @@ read; a question it answers from `explain=` (an event type's meaning, recognitio
 example records; a group's members; changing nothing) and puts the set again; only a change is proposed; acceptance
 stays the form's. The summary goes in the chat and the form refers to it (forms are short plain
 text): the set's summary is shown first (`needs_showing`; Stroom AI's chat shows it itself, other clients' agents
-show it whole), then a form bound to that summary, "Accept all N event types, or type your amendments"; a summary
+show it whole), then a form bound to that summary, "Accept all N event types (and M drop rules), or type your
+amendments"; a summary
 shown more than 90 seconds before its form is shown again. The rows worth a look: `| Event type | Recognised by |
 Records | Translated as | Worth a look |`: Event type (TypeId and title), Recognised by (in words: `logger_name is
 …SecurityEventLogger and eventType is "Password change"`), Records, Translated as (event detail, action, who acted,
@@ -4517,7 +4519,8 @@ agreeing to event types, so it is accepted only in its form, never from the chat
 the user's words, taken from the form's text or the chat; the agent proposes them (`op: change`, or add and remove),
 and the set is put to the user again; dropping only on the user's word. A form put aside by a message is answered as
 forms are (reply first). A client that can't show forms confirms through `needs_review` and its `review_id`, as now.
-The catch-all is confirmed last, named "uncatalogued records", with their count and shapes, and its agreement
+The catch-all is confirmed last, named "uncatalogued records", with their count and shapes (those the build's mapping's
+own drop rules drop counted apart from those that become Unknown, and the records the drop rules take said), and its agreement
 (`catch_all: {allow_unknown}`, given on any confirm call, used at its turn). **Declined** (decided 2026-11-20): the
 user wants something else for those records, so the agent asks them in the chat and calls again with their answer:
 event types that recognise them (`op: add`, `drop: true` for records they say to drop), or another event for all of

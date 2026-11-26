@@ -81,8 +81,12 @@ class TestCatalogueValidation {
                 type("Process-Request", "Request", way(equalsTo(field, "Integration"), equalsTo("a", "1"))),
                 type("Process-Response", "Response", way(equalsTo("a", "2"))));
 
+        // The field named, and where it was recorded and how it is changed (seen in testing: the refusal didn't say
+        // which field the build had recorded).
         assertThat(said(catalogue)).singleElement().asString().startsWith("Process-Request#0: condition on " + field
-                                                                          + ", the build's source type field");
+                                                                          + ": it ")
+                .contains("the build's source type field (system + event>log_type | event>xml:@type, recorded by "
+                          + "the survey; survey_feed source_type_field= changes it");
         assertThat(CatalogueValidation.onSourceTypeField("system + event>log_type | event>xml:@type",
                 "event//@type")).isTrue();
         assertThat(CatalogueValidation.onSourceTypeField("event>log_type", "event.level")).isFalse();
@@ -128,10 +132,32 @@ class TestCatalogueValidation {
                 null, List.of(way(equalsTo("a", "pw"))), false, EventType.DRAFT, "high", null, EventType.CONFIRMED);
 
         assertThat(said(catalogue(null, noise, seed))).containsExactly(
-                "Process-Heartbeat: drop is the user's word only: an event type is dropped when the user says so in "
-                + "the form (basis user_confirmed)",
+                "Process-Heartbeat: drop is the user's word only: a drop rule is made when the user says so in the "
+                + "form (basis user_confirmed)",
                 "Update-Password: basis draft is the draft's seed, never confirmed but by the user in the form");
         assertThat(said(catalogue(null, noise.droppedByUser(), seed.confirmedByUser()))).isEmpty();
+    }
+
+    // Seen in testing: "How is Drop-PEGAOperational an event type, sounds like a rule": a drop rule writes no event,
+    // so its TypeId is a plain label, never Verb-Object.
+    @Test
+    void aDropRulesTypeIdIsAPlainLabelStillUnique() {
+        final EventType operational = new EventType("PEGA operational logging", "Operational", null, null, null,
+                null, null, null, null, List.of(way(equalsTo("a", "op"))), true, EventType.USER_CONFIRMED, "high",
+                null, EventType.PROPOSED);
+        final EventType again = new EventType("PEGA operational logging", "Operational again", null, null, null,
+                null, null, null, null, List.of(way(equalsTo("a", "op2"))), true, EventType.USER_CONFIRMED, "high",
+                null, EventType.PROPOSED);
+        final EventType notADrop = new EventType("PEGA operational logging", "Kept", null, "Process", null, null,
+                null, null, null, List.of(way(equalsTo("a", "kept"))), false, EventType.AGENT_KNOWLEDGE, "high",
+                null, EventType.PROPOSED);
+
+        assertThat(said(catalogue(null, operational))).isEmpty();
+        assertThat(said(catalogue(null, operational, again))).containsExactly("PEGA operational logging: type_id "
+                                                                              + "'PEGA operational logging' is given "
+                                                                              + "to two event types: each has its "
+                                                                              + "own");
+        assertThat(said(catalogue(null, notADrop))).singleElement().asString().contains("isn't Verb-Object");
     }
 
     @Test

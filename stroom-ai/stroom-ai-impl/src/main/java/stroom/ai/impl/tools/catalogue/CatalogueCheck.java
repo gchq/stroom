@@ -29,8 +29,10 @@ import stroom.ai.impl.tools.catalogue.CatalogueCheckResult.Uncatalogued;
 import stroom.ai.impl.tools.catalogue.CatalogueCheckResult.Unparsed;
 import stroom.ai.impl.tools.catalogue.CatalogueValidation.Problem;
 import stroom.ai.impl.tools.draft.LocalCheck;
+import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.XPathText;
+import stroom.ai.impl.tools.sample.JsonFieldNames;
 import stroom.ai.impl.tools.sample.KindFields;
 import stroom.ai.impl.tools.sample.RecordSplitter;
 import stroom.ai.impl.tools.sample.SampleProfiler;
@@ -387,7 +389,8 @@ public final class CatalogueCheck {
         private final List<List<BitSet>> byWay = new ArrayList<>();
         private final List<BitSet> byType = new ArrayList<>();
         private final List<String> keys = new ArrayList<>();
-        private final Map<Condition, List<String>> conditionProblems = new HashMap<>();
+        // By condition, and whether it is a drop rule's (a cut is said of a drop rule's records as dropped or not).
+        private final Map<Map.Entry<Condition, Boolean>, List<String>> conditionProblems = new HashMap<>();
         // By field: how many of its values are written each way, their variable parts masked (uniqueValues).
         private final Map<String, Map<String, Integer>> writtenAlike = new HashMap<>();
         private final Predicate<String> onSourceType;
@@ -423,7 +426,7 @@ public final class CatalogueCheck {
                     ways.add(way);
                     all.or(way);
                     for (final Condition c : type.recognisedBy().get(w).when()) {
-                        for (final String problem : conditionProblems(c)) {
+                        for (final String problem : conditionProblems(c, type.drop())) {
                             problems.add(new Problem(type.typeId(), w, problem));
                         }
                         final Optional<String> unchecked = notChecked(c);
@@ -560,9 +563,10 @@ public final class CatalogueCheck {
             return out;
         }
 
-        // What the records show of a condition, said once however many ways have it.
-        private List<String> conditionProblems(final Condition c) {
-            final List<String> known = conditionProblems.get(c);
+        // What the records show of a condition, said once however many ways have it (a drop rule's apart).
+        private List<String> conditionProblems(final Condition c, final boolean drop) {
+            final Map.Entry<Condition, Boolean> key = Map.entry(c, drop);
+            final List<String> known = conditionProblems.get(key);
             if (known != null) {
                 return known;
             }
@@ -570,7 +574,7 @@ public final class CatalogueCheck {
             final String field = c.field();
             if (notChecked(c).isPresent()) {
                 // Said as not checked ([#notChecked]), not refused.
-                conditionProblems.put(c, out);
+                conditionProblems.put(key, out);
                 return out;
             }
             if (index.overBudget(c)) {
@@ -588,10 +592,10 @@ public final class CatalogueCheck {
                     out.add(missing(field));
                 }
                 longValues(c).ifPresent(out::add);
-                cutProblem(c).ifPresent(out::add);
+                cutProblem(c, drop).ifPresent(out::add);
                 uniqueValues(c).ifPresent(out::add);
             }
-            conditionProblems.put(c, out);
+            conditionProblems.put(key, out);
             return out;
         }
 
@@ -729,33 +733,72 @@ public final class CatalogueCheck {
         }
 
         // A condition whose verdict on some record read whole differs from processing's, which cuts strings first.
-        private Optional<String> cutProblem(final Condition c) {
+        // Where the cut leaves a held JSON field (json_fields) it is read through unreadable, that is said: none of
+        // its keys are there, so a condition on one never holds (a negated one always does), as mcp:json-to-xml of
+        // the cut text gives nothing (seen in testing: a drop rule on event.appender_ref refused as "depends on the
+        // string cut", the agent left to guess why). A drop rule's is said as its records dropped or not.
+        private Optional<String> cutProblem(final Condition c, final boolean drop) {
             final BitSet differing = index.differing();
             int changed = 0;
             Boolean wholeHolds = null;
+            int heldChanged = 0;
+            String held = null;
+            Boolean heldCutHolds = null;
             for (int n = differing.nextSetBit(0); n >= 0; n = differing.nextSetBit(n + 1)) {
                 final Boolean cut = index.holdsAt(c, n);
                 final Boolean whole = cut == null
                         ? null
                         : index.holdsWhole(c, n);
-                if (whole != null && !whole.equals(cut)) {
+                if (whole == null || whole.equals(cut)) {
+                    continue;
+                }
+                final String cutHeld = index.cutHeld(c.field(), n);
+                if (cutHeld != null) {
+                    heldChanged++;
+                    if (held == null) {
+                        held = cutHeld;
+                        heldCutHolds = cut;
+                    }
+                } else {
                     changed++;
                     if (wholeHolds == null) {
                         wholeHolds = whole;
                     }
                 }
             }
-            if (changed == 0) {
+            if (changed == 0 && heldChanged == 0) {
                 return Optional.empty();
             }
-            final int cut = index.sample().stringTruncateLength();
-            return Optional.of("whether the condition on " + c.field() + " holds depends on processing's "
-                                         + "string cut: on " + changed + " record(s) it " + (wholeHolds
-                    ? "holds read whole but not"
-                    : "doesn't hold read whole but does") + " as processing reads them, its strings cut at "
-                                         + "stringTruncateLength (" + String.format("%,d", cut) + " characters): "
-                                         + "test what comes before the cut, or raise the pipeline's "
-                                         + "stringTruncateLength");
+            final String length = "stringTruncateLength (" + String.format("%,d",
+                    index.sample().stringTruncateLength()) + " characters)";
+            final List<String> said = new ArrayList<>();
+            if (heldChanged > 0) {
+                said.add("'" + held + "' is longer than " + length + " on " + heldChanged + " record(s), so in "
+                         + "processing none of its keys (" + NullSafe.nonBlankStringElse(JsonFieldNames.below(held,
+                        c.field()), c.field()) + " among them) can be read there: the cut text isn't JSON, and the "
+                         + "condition on " + c.field() + (heldCutHolds
+                        ? " holds on them whatever they hold"
+                        : " never holds on them") + (drop
+                        ? heldCutHolds
+                                ? ", so this drop rule drops them whatever they hold"
+                                : ", so this drop rule never drops them"
+                        : "") + "; raise the pipeline's stringTruncateLength (long_values=whole), or test a field "
+                         + "outside '" + held + "'");
+            }
+            if (changed > 0) {
+                said.add("whether the condition on " + c.field() + " holds depends on processing's string cut: on "
+                         + changed + (heldChanged > 0
+                        ? " other"
+                        : "") + " record(s) it " + (wholeHolds
+                        ? "holds read whole but not"
+                        : "doesn't hold read whole but does") + " as processing reads them, its strings cut at "
+                         + length + (drop
+                        ? wholeHolds
+                                ? ", so in processing this drop rule doesn't drop them"
+                                : ", so in processing this drop rule drops them"
+                        : "") + ": test what comes before the cut, or raise the pipeline's stringTruncateLength");
+            }
+            return Optional.of(String.join("; ", said));
         }
 
         // An event type recognised by every record of a line format (its conditions only on the variant field) that
@@ -865,6 +908,8 @@ public final class CatalogueCheck {
             if (left.isEmpty()) {
                 return Uncatalogued.NONE;
             }
+            final BitSet dropped = droppedByMapping();
+            dropped.and(left);
             final List<Integer> at = new ArrayList<>();
             final List<String> texts = new ArrayList<>();
             final List<Map<String, Object>> parsed = new ArrayList<>();
@@ -884,7 +929,26 @@ public final class CatalogueCheck {
             bySignature.forEach((signature, members) -> shapes.add(new Shape(signature, members.size(),
                     examples(members).stream().map(index::recordText).toList())));
             shapes.sort(Comparator.comparingInt(Shape::records).reversed());
-            return new Uncatalogued(left.cardinality(), shapes);
+            return new Uncatalogued(left.cardinality(), shapes, dropped.cardinality());
+        }
+
+        // The records the build's mapping's own drop rules drop: every condition of one of them holds (one that can't
+        // be told here drops nothing).
+        private BitSet droppedByMapping() {
+            final BitSet out = new BitSet(size);
+            for (final List<Condition> when : drafted.drops()) {
+                final BitSet all = new BitSet(size);
+                all.set(0, size);
+                for (final Condition c : when) {
+                    if (!LocalCheck.evaluable(c) || index.untold(c.field())) {
+                        all.clear();
+                        break;
+                    }
+                    all.and(index.verdicts(c).holds());
+                }
+                out.or(all);
+            }
+            return out;
         }
 
         // A shape's examples: its first record, then each time the one that differs most from those chosen.
@@ -1079,14 +1143,19 @@ public final class CatalogueCheck {
     /// @param rules        The draft's own rules with conditions, in order.
     /// @param changeSides  The user's answers of which key of each old/new list holds the value before the change
     ///                     (2026-11-23, kept with the build), by the list; none where none were given.
+    /// @param drops        The conditions of the build's mapping's own drop rules (`drop_when`, and events rules with
+    ///                     `drop: true`), each rule's: the uncatalogued records they drop are counted apart from those
+    ///                     the catch-all writes as Unknown ([Uncatalogued#dropped]). The catalogue's own drop rules
+    ///                     aside (they are its event types with `drop: true`).
     public record Drafted(Set<String> commonFields,
                           String commonUser,
                           List<String> commonPaths,
                           List<Rule> rules,
-                          Map<String, String> changeSides) {
+                          Map<String, String> changeSides,
+                          List<List<Condition>> drops) {
 
         /// Nothing drafted.
-        public static final Drafted NONE = new Drafted(Set.of(), null, List.of(), List.of(), Map.of());
+        public static final Drafted NONE = new Drafted(Set.of(), null, List.of(), List.of(), Map.of(), List.of());
 
         /// Copies the parts.
         public Drafted {
@@ -1094,6 +1163,25 @@ public final class CatalogueCheck {
             commonPaths = List.copyOf(Objects.requireNonNullElse(commonPaths, List.of()));
             rules = List.copyOf(Objects.requireNonNullElse(rules, List.of()));
             changeSides = Map.copyOf(Objects.requireNonNullElse(changeSides, Map.of()));
+            drops = Objects.requireNonNullElse(drops, List.<List<Condition>>of()).stream()
+                    .map(List::copyOf)
+                    .toList();
+        }
+
+        /// What the draft writes, with no drop rules of its own.
+        ///
+        /// @param commonFields The fields the common entries read.
+        /// @param commonUser   The field EventSource/User/Id is read from, or null.
+        /// @param commonPaths  The paths the common entries write, below Event.
+        /// @param rules        The draft's own rules with conditions, in order.
+        /// @param changeSides  The user's answers of which key of each old/new list holds the value before the
+        ///                     change, by the list.
+        public Drafted(final Set<String> commonFields,
+                       final String commonUser,
+                       final List<String> commonPaths,
+                       final List<Rule> rules,
+                       final Map<String, String> changeSides) {
+            this(commonFields, commonUser, commonPaths, rules, changeSides, List.of());
         }
 
         /// @param sides The user's answers of which key of each old/new list holds the value before the change, by
@@ -1101,11 +1189,54 @@ public final class CatalogueCheck {
         ///              array's items).
         /// @return It with those answers, which the check's old/new lists follow as the draft does.
         public Drafted withChangeSides(final Map<String, String> sides) {
-            return new Drafted(commonFields, commonUser, commonPaths, rules, sides);
+            return new Drafted(commonFields, commonUser, commonPaths, rules, sides, drops);
         }
 
-        /// @param mapping A draft's mapping (JSON): `common` and `events`, or null.
-        /// @return What it writes.
+        /// @param mapping Another mapping of the build (JSON; its latest, built or sent), or null.
+        /// @return It with that mapping's drop rules too ([#dropsOf]), each once.
+        public Drafted withDropsOf(final Map<String, Object> mapping) {
+            final Set<List<Condition>> all = new LinkedHashSet<>(drops);
+            all.addAll(dropsOf(mapping));
+            return new Drafted(commonFields, commonUser, commonPaths, rules, changeSides, List.copyOf(all));
+        }
+
+        /// The conditions of a mapping's own drop rules: each `drop_when` rule's but those the catalogue's drop
+        /// rules wrote (their reason [SourceNotes#DROPPED_REASON]'s: the catalogue holds them, as it now is), and
+        /// each events rule's with `drop: true`. A rule whose conditions don't read is left out.
+        ///
+        /// @param mapping A mapping (JSON), or null.
+        /// @return Each rule's conditions, in the mapping's order.
+        public static List<List<Condition>> dropsOf(final Map<String, Object> mapping) {
+            final Map<String, Object> json = NullSafe.map(mapping);
+            final List<List<Condition>> out = new ArrayList<>();
+            for (final Map<String, Object> drop : JsonValues.maps(json.get("drop_when"))) {
+                if (!ToolText.str(drop.get("reason")).startsWith(SourceNotes.DROPPED_REASON)) {
+                    conditionsOf(drop).ifPresent(out::add);
+                }
+            }
+            for (final Map<String, Object> rule : JsonValues.maps(json.get("events"))) {
+                if (JsonValues.truthy(rule.get("drop"))) {
+                    conditionsOf(rule).ifPresent(out::add);
+                }
+            }
+            return out;
+        }
+
+        // A rule's conditions; empty when it has none or they don't read.
+        private static Optional<List<Condition>> conditionsOf(final Map<String, Object> rule) {
+            final List<Map<String, Object>> when = JsonValues.maps(rule.get("when"));
+            if (when.isEmpty()) {
+                return Optional.empty();
+            }
+            try {
+                return Optional.of(when.stream().map(Condition::fromJson).toList());
+            } catch (final IllegalArgumentException e) {
+                return Optional.empty();
+            }
+        }
+
+        /// @param mapping A draft's mapping (JSON): `common`, `events` and `drop_when`, or null.
+        /// @return What it writes, and what it drops ([#dropsOf]).
         public static Drafted of(final Map<String, Object> mapping) {
             final Map<String, Object> json = NullSafe.map(mapping);
             final Set<String> fields = new LinkedHashSet<>();
@@ -1137,7 +1268,7 @@ public final class CatalogueCheck {
                     // A rule whose conditions don't read takes no records here.
                 }
             }
-            return new Drafted(fields, user, commonPaths, rules, Map.of());
+            return new Drafted(fields, user, commonPaths, rules, Map.of(), dropsOf(json));
         }
 
 

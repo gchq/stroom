@@ -53,4 +53,39 @@ class TestCatalogueProposals {
                     .contains("\"evt=logon\" is {\"field\": \"evt\", \"equals\": \"logon\"}");
         });
     }
+
+    // Seen in testing: "How is Drop-PEGAOperational an event type, sounds like a rule": a drop rule writes no event,
+    // so it is named by a plain label, never a made-up Verb-Object TypeId.
+    @Test
+    void aDropRuleIsNamedByAPlainLabelItsTitleWhereNoneIsGiven() {
+        final Catalogue empty = Catalogue.fromJson(Map.of("event_types", List.of()));
+        final Map<String, Object> labelled = Map.of(
+                "op", "add",
+                "type_id", "Operational logging",
+                "title", "Operational logging",
+                "recognised_by", List.of(Map.of("when", List.of(Map.of("field", "event.logger_name", "equals",
+                        "x")), "names", List.of())),
+                "drop", true);
+        final Map<String, Object> untitled = Map.of(
+                "op", "add",
+                "title", "Heartbeats",
+                "recognised_by", List.of(Map.of("when", List.of(Map.of("field", "event.logger_name", "equals",
+                        "hb")), "names", List.of())),
+                "drop", true);
+        final Map<String, Object> notADrop = Map.of(
+                "op", "add",
+                "type_id", "Other logging",
+                "title", "Other",
+                "event_detail", "Process",
+                "recognised_by", List.of(Map.of("when", List.of(Map.of("field", "event.logger_name", "equals",
+                        "y")), "names", List.of())));
+
+        final CatalogueProposals.Applied applied = CatalogueProposals.apply(empty, List.of(labelled, untitled,
+                notADrop));
+
+        assertThat(applied.catalogue().eventTypes()).extracting(type -> type.typeId())
+                .containsExactly("Operational logging", "Heartbeats");
+        assertThat(applied.refused()).singleElement().satisfies(refused -> assertThat(refused.why())
+                .contains("isn't Verb-Object"));
+    }
 }

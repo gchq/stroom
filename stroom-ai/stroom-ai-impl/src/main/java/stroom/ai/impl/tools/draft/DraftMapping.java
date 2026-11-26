@@ -2764,6 +2764,10 @@ public final class DraftMapping {
                     notes.add(count + " sampled record(s) no event type recognises: the catch-all translates them "
                               + "as Unknown (uncatalogued records).");
                 }
+                if (applied.get("uncatalogued_dropped") instanceof final Integer count && count > 0) {
+                    notes.add(count + " more sampled record(s) no event type recognises are dropped by the "
+                              + "mapping's own drop rules (drop_when).");
+                }
             }
             return left;
         }

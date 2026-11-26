@@ -33,7 +33,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-/// The checks of a catalogue that need no records: each event type's TypeId (Verb-Object, unique) and title
+/// The checks of a catalogue that need no records: each event type's TypeId (Verb-Object, unique; a drop rule's a
+/// plain short label, [TypeIds#dropProblem]) and title
 /// (unique), its ways of being recognised (each with conditions, but for a sole event type; none on the build's
 /// source type field; capture names unique and as many as the regex's groups; XPath's regex dialect, at most
 /// [#MAX_REGEX_LENGTH] long), what it means (the event-logging schema's checks, [EventMeaning]), and its provenance
@@ -68,10 +69,9 @@ public final class CatalogueValidation {
         final boolean sole = catalogue.eventTypes().size() == 1;
         for (final EventType type : catalogue.eventTypes()) {
             final String id = type.typeId();
-            // An existing pipeline's TypeId is kept as it writes it: changing it would change its Events.
-            final String idProblem = EventType.EXISTING_PIPELINE.equals(type.basis())
-                    ? TypeIds.keptProblem(id)
-                    : TypeIds.problem(id);
+            // An existing pipeline's TypeId is kept as it writes it: changing it would change its Events. A drop
+            // rule writes no event: its TypeId is a plain label.
+            final String idProblem = TypeIds.problemOf(type);
             if (idProblem != null) {
                 problems.add(new Problem(id, -1, idProblem));
             } else if (typeIds.merge(id, 1, Integer::sum) == 2) {
@@ -117,10 +117,8 @@ public final class CatalogueValidation {
             final List<Condition> regexes = new ArrayList<>();
             for (final Condition condition : way.when()) {
                 if (onSourceTypeField(catalogue.scope().sourceTypeField(), condition.field())) {
-                    problems.add(new Problem(id, n, "condition on " + condition.field() + ", the build's source type "
-                                                    + "field: the source type group's module passes other source "
-                                                    + "types over already, so tell the event types apart by "
-                                                    + "their records' other fields or shape"));
+                    problems.add(new Problem(id, n, sourceTypeFieldProblem(catalogue.scope().sourceTypeField(),
+                            condition.field())));
                 }
                 if (condition.matches() != null) {
                     regexes.add(condition);
@@ -130,6 +128,20 @@ public final class CatalogueValidation {
             }
             names(id, n, way, regexes, names, problems);
         }
+    }
+
+    /// Why a condition on the build's source type field is refused, naming the field and where it was recorded.
+    ///
+    /// @param sourceTypeField The build's source type field, as the survey recorded it.
+    /// @param field           The condition's field, a spelling of it.
+    /// @return Why, in words.
+    static String sourceTypeFieldProblem(final String sourceTypeField, final String field) {
+        return "condition on " + field + ": " + (field.equals(sourceTypeField)
+                ? "it is"
+                : "it reads") + " the build's source type field (" + sourceTypeField + ", recorded by the survey; "
+               + "survey_feed source_type_field= changes it, as the user says), and the source type group's module "
+               + "passes other source types over already, so tell the event types apart by their records' other "
+               + "fields or shape";
     }
 
     private static Optional<String> regexProblem(final String regex) {
@@ -177,7 +189,7 @@ public final class CatalogueValidation {
     // Dropped only on the user's word; the draft's seed never confirmed but in the user's form.
     private static void provenance(final EventType type, final List<Problem> problems) {
         if (type.drop() && !EventType.USER_CONFIRMED.equals(type.basis())) {
-            problems.add(new Problem(type.typeId(), -1, "drop is the user's word only: an event type is dropped when "
+            problems.add(new Problem(type.typeId(), -1, "drop is the user's word only: a drop rule is made when "
                                                         + "the user says so in the form (basis user_confirmed)"));
         }
         if (EventType.DRAFT.equals(type.basis()) && type.confirmed()) {

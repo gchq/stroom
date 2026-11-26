@@ -24,6 +24,7 @@ import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XPathRegex;
 import stroom.ai.impl.tools.generation.XPathText;
+import stroom.ai.impl.tools.sample.JsonFieldNames;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.sample.XmlTree;
 
@@ -456,6 +457,27 @@ final class RecordIndex {
             }
         }
         return differing;
+    }
+
+    // The held JSON field (json_fields) a field is read through that processing's string cut leaves unreadable on a
+    // record: its text cut (shorter than read whole) and no longer JSON, so none of its keys are there; the
+    // outermost such, or null when none is.
+    String cutHeld(final String field, final int n) {
+        if (sample.whole() == null || field == null) {
+            return null;
+        }
+        final List<String> held = reading.jsonFields().stream()
+                .filter(json -> JsonFieldNames.below(json, field) != null)
+                .sorted(Comparator.comparingInt(String::length))
+                .toList();
+        for (final String json : held) {
+            final String cut = LocalCheck.valueOf(records.get(n), json);
+            final String whole = LocalCheck.valueOf(sample.whole().get(n), json);
+            if (cut != null && whole != null && cut.length() < whole.length() && jsonProblem(json, cut) != null) {
+                return json;
+            }
+        }
+        return null;
     }
 
     // Whether a condition holds on a record read whole (no string cut); null when it can't be told.

@@ -55,10 +55,13 @@ import java.util.Set;
 ///   for them);
 /// * its TypeId's verb is itself an action element of the schema, other than the one it is written as
 ///   (`Move-MailToDeletedItems` as Update; never a refusal: the verb may be the source's word);
-/// * its records are dropped (not translated);
 /// * the agent said why it doubts it (`doubt`);
 /// * it is of a medium or low set: each of those is doubtful by its confidence, so every one is worth a look, with
 ///   why where the agent said (its `doubt`, and why records that look like several event types are one).
+///
+/// A drop rule (an event type with `drop: true`: its records left untranslated, no event written) is no event type:
+/// counted apart, and listed in its own section, "Drop rules (not translated)", each with how its records are
+/// recognised and how many there are, and why it is worth a look where it is (amended, not in the sample, doubtful).
 ///
 /// At most [#MOST_LISTED] rows are listed, the rest counted, so a medium or low set of hundreds is still a summary:
 /// the amended first (the user is checking those), then those a rule above or the agent's doubt picks out, then
@@ -79,7 +82,8 @@ final class CatalogueSummary {
 
     private static final String HIGH = "high";
     private static final String NO_ELEMENT = "no action element";
-    private static final String DROPPED = "dropped (not translated)";
+    /// What a drop rule's records become, and the heading of the drop rules' section.
+    static final String DROPPED = "drop rules (not translated)";
     private static final Set<String> NO_EVENT_WORDS = Set.of("other", "unknown");
 
     private CatalogueSummary() {
@@ -109,20 +113,23 @@ final class CatalogueSummary {
                           final Amendments amendments) {
         final String confidence = confidenceOf(set);
         final boolean doubtful = !HIGH.equals(confidence);
-        final List<Unusual> unusual = worthALook(set, check, amendments);
+        final List<EventType> drops = set.stream().filter(EventType::drop).toList();
+        final List<EventType> types = set.stream().filter(type -> !type.drop()).toList();
+        final List<Unusual> unusual = worthALook(types, check, amendments);
         // Those the table lists are only in the table, not in the list by what happened as well (seen in chat 192:
         // four of seven event types in both).
         final List<Unusual> listed = unusual.subList(0, Math.min(MOST_LISTED, unusual.size()));
         final Set<EventType> inTable = new HashSet<>();
         listed.forEach(one -> inTable.add(one.type()));
-        final List<EventType> rest = set.stream()
+        final List<EventType> rest = types.stream()
                 .filter(type -> !inTable.contains(type))
                 .toList();
         final List<String> lines = new ArrayList<>();
-        lines.add("**" + set.size() + " " + confidence + "-confidence event type" + plural(set.size()) + "**, by "
-                  + "what happened" + (doubtful
-                ? ": each is doubtful, so each is worth a look below"
-                : whereListed(listed.size(), rest.size())) + ". Each one, row by row, is in the source notes "
+        lines.add("**" + counted(types.size(), drops.size(), confidence + "-confidence ") + "**" + (types.isEmpty()
+                ? ""
+                : ", by what happened" + (doubtful
+                        ? ": each is doubtful, so each is worth a look below"
+                        : whereListed(listed.size(), rest.size()))) + ". Each one, row by row, is in the source notes "
                   + notesDoc + "; ask about any of them in the chat.");
         lines.add("");
         if (!rest.isEmpty()) {
@@ -131,12 +138,18 @@ final class CatalogueSummary {
             }
             lines.add("");
         }
+        if (!drops.isEmpty()) {
+            lines.addAll(dropRules(drops, check, amendments, doubtful));
+        }
         final List<String> removed = amendments.removed().stream()
                 .filter(typeId -> set.stream().noneMatch(type -> typeId.equalsIgnoreCase(type.typeId())))
                 .toList();
         if (!removed.isEmpty()) {
             lines.add("Removed since shown: " + String.join(", ", removed) + ".");
             lines.add("");
+        }
+        if (types.isEmpty()) {
+            return String.join("\n", lines).stripTrailing();
         }
         if (unusual.isEmpty()) {
             lines.add("Worth a look: none. Every one is in the sample, written as an event under its action "
@@ -161,6 +174,81 @@ final class CatalogueSummary {
                       + notesDoc + ".");
         }
         return String.join("\n", lines);
+    }
+
+    /// Event types and drop rules counted apart, in words: `2 event types and 1 drop rule`, `3 event types`,
+    /// `1 drop rule`.
+    ///
+    /// @param types How many event types (drop rules aside).
+    /// @param drops How many drop rules.
+    /// @return The count in words.
+    static String counted(final int types, final int drops) {
+        return counted(types, drops, "");
+    }
+
+    // Counted, the first noun qualified (`2 high-confidence event types and 1 drop rule`).
+    private static String counted(final int types, final int drops, final String qualifier) {
+        final String typesSaid = types + " " + qualifier + "event type" + plural(types);
+        final String dropsSaid = drops + " " + (types == 0
+                ? qualifier
+                : "") + "drop rule" + plural(drops);
+        if (drops == 0) {
+            return typesSaid;
+        }
+        return types == 0
+                ? dropsSaid
+                : typesSaid + " and " + dropsSaid;
+    }
+
+    /// @param set Event types, drop rules among them.
+    /// @return Them counted apart, in words ([#counted]).
+    static String counted(final List<EventType> set) {
+        final int drops = (int) set.stream().filter(EventType::drop).count();
+        return counted(set.size() - drops, drops);
+    }
+
+    // The drop rules' own section: each one, how its records are recognised, how many, and why it is worth a look.
+    private static List<String> dropRules(final List<EventType> drops,
+                                          final CatalogueCheckResult check,
+                                          final Amendments amendments,
+                                          final boolean doubtful) {
+        final List<String> lines = new ArrayList<>();
+        lines.add("**" + heading(DROPPED) + "** (" + drops.size() + "): their records are left untranslated, no "
+                  + "event written.");
+        lines.add("");
+        for (final EventType type : drops) {
+            final List<String> parts = new ArrayList<>();
+            parts.add("recognised by " + CatalogueTables.recognisedBy(type));
+            if (check != null) {
+                final int records = records(type, check);
+                parts.add(records == 0
+                        ? "no record of it in the sample"
+                        : records + " record" + plural(records));
+            }
+            final List<String> amended = amendments.of(type.typeId());
+            if (!amended.isEmpty()) {
+                parts.add("changed since shown: " + String.join(", ", amended));
+            }
+            if (doubtful) {
+                parts.add(type.confidence() + " confidence" + (type.doubt() == null
+                        ? ""
+                        : ": " + type.doubt()));
+            } else if (type.doubt() != null) {
+                parts.add("doubtful: " + type.doubt());
+            }
+            lines.add("- `" + type.typeId() + "`" + (NullSafe.isBlankString(type.title())
+                    ? ""
+                    : " " + type.title()) + ": " + String.join("; ", parts));
+        }
+        lines.add("");
+        return lines;
+    }
+
+    // A heading: its first letter a capital.
+    static String heading(final String text) {
+        return text.isEmpty()
+                ? text
+                : Character.toUpperCase(text.charAt(0)) + text.substring(1);
     }
 
     // Where a high set's event types are, when some are worth a look: those in the table aren't in the list too.
@@ -225,8 +313,8 @@ final class CatalogueSummary {
         return out;
     }
 
-    /// The set grouped by what happened: one group an action element (a dropped event type's group is the dropped
-    /// ones), in the order each element first comes in the set.
+    /// The set grouped by what happened: one group an action element (the drop rules a group of their own, [#DROPPED]),
+    /// in the order each element first comes in the set.
     ///
     /// @param set   The event types.
     /// @param check Their catalogue's check (for their records), or null.
@@ -258,7 +346,7 @@ final class CatalogueSummary {
                 why.add("no record of it in the sample");
             }
             if (type.drop()) {
-                why.add("its records are dropped");
+                why.add("a drop rule: its records are left untranslated");
             } else if (NullSafe.isBlankString(type.eventDetail())) {
                 why.add("no action element: its records are written as Unknown");
             } else if (noEventWord(type.action())) {
@@ -311,7 +399,7 @@ final class CatalogueSummary {
                 : "");
     }
 
-    // What happened, for grouping: the action element; the dropped ones together.
+    // What happened, for grouping: the action element; the drop rules together.
     private static String whatHappened(final EventType type) {
         if (type.drop()) {
             return DROPPED;

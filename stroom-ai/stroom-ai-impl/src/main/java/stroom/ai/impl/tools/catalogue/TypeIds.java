@@ -19,11 +19,14 @@ package stroom.ai.impl.tools.catalogue;
 import stroom.ai.impl.tools.generation.Condition;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
 /// An event type's TypeId: Verb-Object (`Authenticate-Logon`, `Update-Password`, `Process-SOAPRequest`), and the
-/// default suggested when a proposal gives none.
+/// default suggested when a proposal gives none. A drop rule (an event type with `drop: true`, whose records are
+/// left untranslated) writes no event, so its `type_id` is a plain short label ([#dropProblem]): only its name and
+/// the reason its records are dropped.
 public final class TypeIds {
 
     /// A TypeId: a verb, then one or more objects, each a capital letter then letters and digits, joined by `-`.
@@ -35,12 +38,25 @@ public final class TypeIds {
     public static final String UNKNOWN_VERB = "Unknown";
     /// The object of a default TypeId when nothing else gives one.
     public static final String DEFAULT_OBJECT = "Event";
+    /// The longest a drop rule's label may be.
+    public static final int MAX_DROP_LENGTH = 60;
+    /// A drop rule's label when nothing else gives one.
+    public static final String DEFAULT_DROP_LABEL = "Dropped records";
+    /// A drop rule's label: a letter or digit, then letters, digits, spaces and `_ . , ( ) / ' -`, no run of `-` (it
+    /// is written in XSLT comments) and no `-` last.
+    public static final Pattern DROP_LABEL = Pattern.compile("^[A-Za-z0-9](?:[A-Za-z0-9 _.,()/']|-(?!-))*(?<![- ])$");
 
     private static final Pattern NOT_ALPHANUMERIC = Pattern.compile("[^A-Za-z0-9]");
     // What splits a value into its segments: a code's dots, slashes, backslashes and colons.
     private static final Pattern SEGMENTS = Pattern.compile("[./\\\\:]");
     private static final Pattern WORDS = Pattern.compile("\\s+");
     private static final Pattern OBJECT = Pattern.compile("^[A-Z][A-Za-z0-9]*$");
+    // What a drop rule's default label may not hold, and the words of a description it is made from.
+    private static final Pattern NOT_LABEL = Pattern.compile("[^A-Za-z0-9 _.,()/'-]+");
+    private static final Pattern DASHES = Pattern.compile("-{2,}");
+    private static final Pattern SENTENCE_END = Pattern.compile("[.;:](?:\\s|$)");
+    private static final Pattern LABEL_ENDS = Pattern.compile("^[^A-Za-z0-9]+|[- ]+$");
+    private static final int LABEL_WORDS = 6;
 
     private TypeIds() {
         // Static only.
@@ -61,6 +77,91 @@ public final class TypeIds {
                    + "capital letter, letters and digits only, joined by '-' (Update-Password, Process-SOAPRequest)";
         }
         return null;
+    }
+
+    /// @param label A drop rule's label (its `type_id`).
+    /// @return Why it can't be one (none, too long, or holding what a short label doesn't), or null when it can.
+    public static String dropProblem(final String label) {
+        if (label == null || label.isBlank()) {
+            return "type_id is needed: a drop rule's short label, e.g. Operational logging";
+        }
+        if (label.length() > MAX_DROP_LENGTH) {
+            return "type_id '" + label.substring(0, 40) + "...' is " + label.length() + " characters long: a drop "
+                   + "rule's label is at most " + MAX_DROP_LENGTH;
+        }
+        if (!DROP_LABEL.matcher(label).matches()) {
+            return "type_id '" + label + "' isn't a drop rule's short label: letters, digits and spaces (and "
+                   + "_ . , ( ) / ' -), starting with a letter or digit, e.g. Operational logging";
+        }
+        return null;
+    }
+
+    /// @param type An event type.
+    /// @return Why its TypeId can't be kept: a drop rule's as a label ([#dropProblem]), an existing pipeline's as it
+    /// writes it ([#keptProblem]), any other's as Verb-Object ([#problem]); null when it can.
+    public static String problemOf(final EventType type) {
+        if (type.drop()) {
+            return dropProblem(type.typeId());
+        }
+        return EventType.EXISTING_PIPELINE.equals(type.basis())
+                ? keptProblem(type.typeId())
+                : problem(type.typeId());
+    }
+
+    /// The TypeId suggested for an event type that gives none: a drop rule's default label ([#defaultDropLabel]),
+    /// any other's default TypeId ([#defaultTypeId]).
+    ///
+    /// @param type The event type.
+    /// @return Its default TypeId.
+    public static String defaultFor(final EventType type) {
+        return type.drop()
+                ? defaultDropLabel(type)
+                : defaultTypeId(type);
+    }
+
+    /// The label suggested for a drop rule that gives none: its title, else the first words of its description, each
+    /// kept to what a label may hold; else [#DEFAULT_DROP_LABEL]. Never a made-up prefix or Verb-Object: a drop rule
+    /// is no event.
+    ///
+    /// @param type The drop rule.
+    /// @return Its default label.
+    public static String defaultDropLabel(final EventType type) {
+        for (final String candidate : Arrays.asList(type.title(), firstWords(type.description()))) {
+            final String label = asLabel(candidate);
+            if (label != null) {
+                return label;
+            }
+        }
+        return DEFAULT_DROP_LABEL;
+    }
+
+    // The first words of a text, up to its first full stop, or null.
+    private static String firstWords(final String text) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+        final String sentence = SENTENCE_END.split(text.strip(), 2)[0];
+        final String[] words = WORDS.split(sentence.strip(), -1);
+        return String.join(" ", Arrays.asList(words).subList(0, Math.min(LABEL_WORDS, words.length)));
+    }
+
+    // A candidate kept to what a drop rule's label may hold, at most its length; null when nothing is left.
+    private static String asLabel(final String candidate) {
+        if (candidate == null) {
+            return null;
+        }
+        String label = DASHES.matcher(NOT_LABEL.matcher(candidate).replaceAll(" ")).replaceAll("-");
+        label = WORDS.matcher(label).replaceAll(" ").strip();
+        if (label.length() > MAX_DROP_LENGTH) {
+            final int space = label.lastIndexOf(' ', MAX_DROP_LENGTH);
+            label = label.substring(0, space > 0
+                    ? space
+                    : MAX_DROP_LENGTH);
+        }
+        label = LABEL_ENDS.matcher(label).replaceAll("");
+        return label.isEmpty() || !DROP_LABEL.matcher(label).matches()
+                ? null
+                : label;
     }
 
     /// @param typeId A TypeId an existing pipeline writes, kept as it is (any form).

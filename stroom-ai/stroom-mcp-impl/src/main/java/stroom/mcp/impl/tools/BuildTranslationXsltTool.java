@@ -36,6 +36,7 @@ import stroom.ai.impl.tools.ToolSchema.ObjectSchema;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.draft.CutHeldDrops;
 import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.draft.SnapshotChanges;
@@ -176,6 +177,9 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
     private final LookupKeyCounts lookupKeyCounts;
     private final BuildPlan plan;
     private final Clock clock;
+    // The build records: the user's choice for long JSON string values (where processing cuts them); none in tests
+    // that make the tool themselves.
+    private Provider<BuildRecords> buildRecords;
 
     @Inject
     BuildTranslationXsltTool(final TranslationDocs translationDocs,
@@ -225,6 +229,15 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         this.lookupKeyCounts = lookupKeyCounts;
         this.plan = plan;
         this.clock = clock;
+    }
+
+    /// The build records (set by injection; none in tests that make the tool themselves): where processing cuts a
+    /// build's long JSON string values, by the user's choice, which the check of its drop rules follows.
+    ///
+    /// @param buildRecords The build records.
+    @Inject
+    void setBuildRecords(final Provider<BuildRecords> buildRecords) {
+        this.buildRecords = buildRecords;
     }
 
     @Override
@@ -1154,6 +1167,15 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 MappingSampleCheck.check(mapping, texts, spec, b.schema, guessed, clock, SourceNotes.catalogue(notes),
                         scope.orElse(null), b.earlierCheck));
         b.earlierCheck = (MappingSampleCheck.Earlier) check.remove(MappingSampleCheck.EARLIER);
+        if (b.earlierCheck != null) {
+            // Drop rules on a key of a held JSON field that processing's string cut leaves unreadable: the check
+            // reads the records whole.
+            final int cut = LongValues.cutLength(buildRecords == null
+                    ? null
+                    : buildRecords.get(), build);
+            CutHeldDrops.warnings(b.earlierCheck.checked(), cut).forEach(warning -> warnings.add("sample: "
+                                                                                                 + warning));
+        }
         b.lost = (List<ConfirmedEventTypes.Lost>) check.remove(MappingSampleCheck.CONFIRMED_LOST);
         b.contradictions = (List<String>) check.remove(MappingSampleCheck.CATALOGUE_CONTRADICTIONS);
         b.lost.forEach(one -> warnings.add(lostWarning(one)));

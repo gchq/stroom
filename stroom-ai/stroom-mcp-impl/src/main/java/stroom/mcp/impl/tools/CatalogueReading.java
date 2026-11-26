@@ -68,6 +68,7 @@ class CatalogueReading {
     private final SampleStreamTexts sampleStreamTexts;
     private final BuildPlan plan;
     private final TranslationBuilds builds;
+    private final Provider<BuildRecords> buildRecords;
     // Reads a build's records at its translation's input; none in tests that make the tool themselves.
     private Provider<TranslationInputs> inputs;
 
@@ -75,12 +76,16 @@ class CatalogueReading {
     /// @param plan              The build's plan: its sample streams.
     /// @param builds            The builds: the streams their surveys read, their scopes, saved Data Splitters and
     ///                          latest mappings.
+    /// @param buildRecords      The build records: the user's choice for long JSON string values, which sets where
+    ///                          processing cuts them ([LongValues#cutLength]).
     CatalogueReading(final SampleStreamTexts sampleStreamTexts,
                      final BuildPlan plan,
-                     final TranslationBuilds builds) {
+                     final TranslationBuilds builds,
+                     final Provider<BuildRecords> buildRecords) {
         this.sampleStreamTexts = sampleStreamTexts;
         this.plan = plan;
         this.builds = builds;
+        this.buildRecords = buildRecords;
     }
 
     /// @param inputs Reads a build's records at its translation's input (a pipeline described in place whose
@@ -155,7 +160,7 @@ class CatalogueReading {
                 .map(CatalogueReading::parsedReading)
                 .orElseGet(() -> reading(mapping)), sampleTexts, splitter == null
                 ? inferred(draft)
-                : splitter, LocalCheck.JSON_PARSER_CUT, variantField, matches);
+                : splitter, cutLength(calling.build()), variantField, matches);
         final Map<String, Object> given = AbstractBuiltInTool.argsMap(calling.call())
                 .get(CatalogueEventTypesTool.READING_ARG) == null
                 ? null
@@ -167,6 +172,19 @@ class CatalogueReading {
                         : "the build's Data Splitter '" + readWith + "'", draft, sample, scoped == null
                 ? null
                 : scoped.said(), HeldKindRecords.unpacked(raw, reading.orElse(mapping), matches), given);
+    }
+
+    // Where processing cuts the build's JSON strings: past the longest where the user chose to keep them whole (the
+    // parser's limit raised), else at the parser's default; a condition is checked against the records as cut there.
+    private int cutLength(final String build) {
+        try {
+            return LongValues.cutLength(buildRecords == null
+                    ? null
+                    : buildRecords.get(), build);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No long values choice read for {}: {}", build, e.getMessage()));
+            return LocalCheck.JSON_PARSER_CUT;
+        }
     }
 
     // Each stream's records at the translation's input, a text a stream ([TranslationInputs]).

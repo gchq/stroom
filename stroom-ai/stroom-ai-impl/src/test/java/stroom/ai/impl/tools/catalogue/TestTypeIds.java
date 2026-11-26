@@ -81,6 +81,56 @@ class TestTypeIds {
         }
     }
 
+    // Seen in testing: a drop rule given a made-up Verb-Object TypeId ('Drop-PEGAOperational') to pass the check.
+    @ParameterizedTest
+    @ValueSource(strings = {"Operational logging", "PEGA operational", "Heartbeats (load balancer)", "Drop-Rule1",
+            "noise", "4624 events"})
+    void aDropRulesTypeIdIsAPlainShortLabel(final String label) {
+        assertThat(TypeIds.dropProblem(label)).isNull();
+        assertThat(TypeIds.problemOf(drop(label))).isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {" ", "-noise", "noise-", "two--dashes", "a <tag>", "line\nbreak", "trailing "})
+    void aDropRulesLabelHoldsOnlyWhatAShortLabelDoes(final String label) {
+        assertThat(TypeIds.dropProblem(label)).isNotNull();
+        assertThat(TypeIds.dropProblem(null)).contains("type_id is needed");
+        assertThat(TypeIds.dropProblem("a".repeat(TypeIds.MAX_DROP_LENGTH + 1))).contains("at most 60");
+    }
+
+    @Test
+    void anEventTypeThatIsNoDropRuleIsStillVerbObject() {
+        final EventType kept = type("Update", null, "Operational logging", null).withTypeId("Operational logging");
+
+        assertThat(TypeIds.problemOf(kept)).contains("isn't Verb-Object");
+    }
+
+    @Test
+    void aDropRulesDefaultLabelIsItsTitleElseItsDescriptionsFirstWordsNeverAMadeUpPrefix() {
+        assertThat(TypeIds.defaultFor(dropOf("PEGA operational logging", null)))
+                .isEqualTo("PEGA operational logging");
+        assertThat(TypeIds.defaultFor(dropOf(null, "Records of loggers other than the security and SOAP ones. "
+                                                   + "Not wanted."))).isEqualTo("Records of loggers other than the");
+        assertThat(TypeIds.defaultFor(dropOf("<<<>>>", null))).isEqualTo(TypeIds.DEFAULT_DROP_LABEL);
+        assertThat(TypeIds.defaultFor(dropOf("Heartbeats -- load balancer!", null)))
+                .isEqualTo("Heartbeats - load balancer");
+        for (final EventType drop : List.of(dropOf("x".repeat(80) + " y", null), dropOf(null, null),
+                dropOf("  -- ", "!"))) {
+            assertThat(TypeIds.dropProblem(TypeIds.defaultFor(drop))).as(TypeIds.defaultFor(drop)).isNull();
+        }
+        // An event type that is no drop rule keeps its Verb-Object default.
+        assertThat(TypeIds.defaultFor(type("Update", null, "password change", null))).isEqualTo("Update-Password");
+    }
+
+    private static EventType drop(final String label) {
+        return dropOf(label, null).withTypeId(label);
+    }
+
+    private static EventType dropOf(final String title, final String description) {
+        return new EventType(null, title, description, null, null, null, null, null, null, List.of(), true,
+                EventType.USER_CONFIRMED, "high", null, EventType.PROPOSED);
+    }
+
     private static EventType type(final String detail, final String affectedAs, final String title,
                                   final String equals) {
         final List<Way> ways = equals == null

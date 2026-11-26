@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.draft;
 
 import stroom.ai.impl.tools.JsonValues;
+import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.SplitterSpec;
@@ -713,6 +714,30 @@ class TestCatalogueTranslation extends DraftFixtures {
         }
         assertThat(notes(draft)).anyMatch(note -> note.contains("empty in every sampled record")
                                                   && note.contains("AppAccessContext.IssuedAtTime"));
+    }
+
+    // Seen in testing: every uncatalogued record said to become Unknown, whatever the mapping's own drops.
+    @Test
+    void theUncataloguedRecordsTheMappingsOwnDropRulesDropAreCountedApart() {
+        final Map<String, Object> mapping = new LinkedHashMap<>();
+        mapping.put("input", "data_splitter");
+        mapping.put("common", new ArrayList<>());
+        mapping.put("events", new ArrayList<>());
+        mapping.put("drop_when", new ArrayList<>(List.of(Map.of("reason", "heartbeats", "when",
+                List.of(eq("evt", "1102"))))));
+        final List<Map<String, Object>> records = new ArrayList<>();
+        for (final String evt : List.of("4624", "4624", "1102", "1102", "1102", "7777")) {
+            records.add(new LinkedHashMap<>(Map.of("evt", evt, "usr", "alice")));
+        }
+        final Catalogue catalogue = SourceNotes.catalogue(notes(List.of(type("Authenticate-Logon", "Logon",
+                "Authenticate", "Logon", "true", way(eq("evt", "4624")))), true));
+
+        final Map<String, Object> applied = CatalogueTranslation.apply(mapping, List.of("evt", "usr"),
+                Map.of("evt", List.of("4624", "1102", "7777"), "usr", List.of("alice")), catalogue, null, List.of(),
+                CHECK, records, PairMatches.create(), Map.of());
+
+        // Three dropped by the mapping's own drop rule, one left to the catch-all as Unknown.
+        assertThat(applied).containsEntry("uncatalogued", 1).containsEntry("uncatalogued_dropped", 3);
     }
 
     private static Map<String, Object> draft(final String sample, final Map<String, Object> notes) {

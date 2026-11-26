@@ -191,6 +191,23 @@ final class LongValues {
         }
     }
 
+    /// The length processing cuts a build's JSON string values at: the limit its pipeline's parser is raised to where
+    /// the user chose to keep long values whole, else the parser's default
+    /// ([JsonStringValues#DEFAULT_TRUNCATE_LENGTH]).
+    ///
+    /// @param records The build records.
+    /// @param build   The build, or null.
+    /// @return The length.
+    static int cutLength(final BuildRecords records, final String build) {
+        if (records == null || build == null) {
+            return JsonStringValues.DEFAULT_TRUNCATE_LENGTH;
+        }
+        return recorded(records, build)
+                .filter(kept -> WHOLE.equals(kept.get(CHOICE)) && kept.get(LIMIT) instanceof Number)
+                .map(kept -> (int) Math.min(Integer.MAX_VALUE, ((Number) kept.get(LIMIT)).longValue()))
+                .orElse(JsonStringValues.DEFAULT_TRUNCATE_LENGTH);
+    }
+
     /// The JSON parser's `stringTruncateLength` for a build whose user chose to keep long values whole, where the
     /// pipeline's parser keeps less: the parser's limit raised past the longest value.
     ///

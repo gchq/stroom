@@ -30,8 +30,8 @@ import java.util.List;
 import java.util.Map;
 
 /// The catalogue of event types as the user reads it, in the design's words (source type, event type, record,
-/// recognised by, uncatalogued records): the table a set of event types is confirmed by, shown in the chat (the
-/// form refers to it: forms are short plain text), and the source notes' "Event types" part, a section per action
+/// recognised by, drop rule, uncatalogued records): the table a set of event types is confirmed by, shown in the chat
+/// (the form refers to it: forms are short plain text), and the source notes' "Event types" part, a section per action
 /// element, the uncatalogued records last. How a record of an event type is recognised is said in words
 /// (`logger_name is …SecurityEventLogger and eventType is "Password change"`), never as the conditions' JSON.
 final class CatalogueTables {
@@ -67,8 +67,9 @@ final class CatalogueTables {
     }
 
     /// The source notes' "Event types" part, for people (decided by the user 2026-11-20): a section per action
-    /// element, as the chat's summaries group them and in their order, each a table of its event types (TypeId and
-    /// title, what happened, how a record is recognised in words, records, what it is translated as (decided by the
+    /// element (the drop rules one of their own, "Drop rules (not translated)"), as the chat's summaries group them
+    /// and in their order, each a table of its event types (TypeId and title, what happened, how a record is
+    /// recognised in words, records, what it is translated as (decided by the
     /// user 2026-11-20), and the status in short words), then the
     /// uncatalogued records in a section of their own. It holds every event type, so the chat need show only a
     /// summary of a large set. Descriptions are never cut.
@@ -205,7 +206,7 @@ final class CatalogueTables {
                         ? ""
                         : " " + type.action()));
         if (type.drop()) {
-            parts.set(0, "dropped (not translated)");
+            parts.set(0, "drop rule (not translated)");
         }
         if (type.success() != null) {
             parts.add("outcome " + type.success());

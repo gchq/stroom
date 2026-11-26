@@ -182,6 +182,12 @@ final class CatalogueTranslation {
         final List<String> rest = rest(common);
         final List<Map<String, Object>> rules = new ArrayList<>();
         final List<Map<String, Object>> drops = new ArrayList<>(JsonValues.maps(mapping.get("drop_when")));
+        // The mapping's own drop rules (the draft's), before the catalogue's are added: the uncatalogued records
+        // they drop are counted apart from those the catch-all writes as Unknown.
+        final List<List<Condition>> ownDrops = drops.stream()
+                .map(drop -> WayCheck.conditions(drop.get(WHEN)))
+                .filter(when -> when != null && !when.isEmpty())
+                .toList();
         final List<String> said = new ArrayList<>();
         final List<String> notInSample = new ArrayList<>();
         final List<String> dropped = new ArrayList<>();
@@ -239,9 +245,16 @@ final class CatalogueTranslation {
         final Map<String, Object> applied = new LinkedHashMap<>();
         applied.put("events", said);
         applied.put("not_in_sample", notInSample);
-        applied.put("uncatalogued", sole
-                ? 0
-                : (int) records.stream().filter(record -> !recognised.contains(record)).count());
+        final List<Map<String, Object>> uncatalogued = sole
+                ? List.of()
+                : records.stream().filter(record -> !recognised.contains(record)).toList();
+        final int droppedByMapping = (int) uncatalogued.stream()
+                .filter(record -> ownDrops.stream().anyMatch(when -> check.recognises(when, record)))
+                .count();
+        applied.put("uncatalogued", uncatalogued.size() - droppedByMapping);
+        if (droppedByMapping > 0) {
+            applied.put("uncatalogued_dropped", droppedByMapping);
+        }
         applied.put("dropped", dropped);
         applied.put("unread_fields", unread);
         return applied;
@@ -762,7 +775,7 @@ final class CatalogueTranslation {
     private static String typeId(final EventType type) {
         return NullSafe.isNonBlankString(type.typeId())
                 ? type.typeId()
-                : TypeIds.defaultTypeId(type);
+                : TypeIds.defaultFor(type);
     }
 
     private static String ruleName(final String typeId, final int way) {

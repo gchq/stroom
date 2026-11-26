@@ -259,11 +259,11 @@ public final class CatalogueKept {
     }
 
     /// @param type An event type.
-    /// @return Its TypeId, or the default the translation writes when it has none ([TypeIds#defaultTypeId]).
+    /// @return Its TypeId, or the default the translation writes when it has none ([TypeIds#defaultFor]).
     public static String typeIdOf(final EventType type) {
         return NullSafe.isNonBlankString(type.typeId())
                 ? type.typeId()
-                : TypeIds.defaultTypeId(type);
+                : TypeIds.defaultFor(type);
     }
 
     /// @param type An event type.
