@@ -560,7 +560,7 @@ class TestIndexShardWriterCacheImpl {
             assertThat(second.getWriterId()).isNotNull().isNotEqualTo(first.getWriterId());
             Mockito.verify(indexShardDao).markOpen(SHARD, first.getWriterId());
             Mockito.verify(indexShardDao).markOpen(SHARD, second.getWriterId());
-            Mockito.verify(commitRecorder).createListener(SHARD, first.getWriterId());
+            Mockito.verify(commitRecorder).createListener(SHARD, first);
         }
 
         @Test

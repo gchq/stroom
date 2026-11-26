@@ -23,7 +23,7 @@ public interface IndexRunTracker {
     /// For a pipeline that is not run by a processor task, which records nothing.
     IndexRunTracker NONE = new IndexRunTracker() {
         @Override
-        public void beforeAdd(final long indexShardId, final String writerId) {
+        public void beforeAdd(final long indexShardId, final IndexShardWriter writer) {
             // Nothing is recorded.
         }
 
@@ -45,12 +45,13 @@ public interface IndexRunTracker {
 
     /// Called before a document is given to a writer. The first time for a shard and writer, the row that
     /// says the run has written to it is saved, so that the shard never holds documents of the run that the
-    /// record does not know about.
+    /// record does not know about, and then the stream is purged from the shard if it has to be. Each call is
+    /// followed by a call to [#added] or [#addFailed] if it returns normally.
     ///
     /// @param indexShardId The id of the shard.
-    /// @param writerId     The writer the document is about to be given to.
+    /// @param writer       The writer the document is about to be given to.
     /// @throws RunStoppedException If the run must add nothing more.
-    void beforeAdd(long indexShardId, String writerId);
+    void beforeAdd(long indexShardId, IndexShardWriter writer);
 
     /// Called once a document has been given to a writer.
     ///

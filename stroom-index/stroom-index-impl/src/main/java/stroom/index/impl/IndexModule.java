@@ -101,8 +101,10 @@ public class IndexModule extends AbstractModule {
                         .frequencySchedule("10m"))
                 .bindJobTo(IndexShardStreamRecoveryJob.class, builder -> builder
                         .name("Index Shard Stream Recovery")
-                        .description("Job to take index shards on shared volumes from nodes that have stopped " +
-                                     "renewing their leases on them")
+                        .description("Job to take index shards from nodes that have stopped renewing their " +
+                                     "leases, put back indexing tasks whose documents were lost before they were " +
+                                     "committed, complete those that were missed, purge streams from shards " +
+                                     "nobody has open, and remove the records of tasks that are finished with")
                         .frequencySchedule("1m"))
                 .bindJobTo(IndexWriterCacheSweep.class, builder -> builder
                         .name("Index Writer Cache Sweep")

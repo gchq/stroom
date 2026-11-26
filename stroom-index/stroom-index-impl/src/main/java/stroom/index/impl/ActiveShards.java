@@ -258,7 +258,7 @@ public class ActiveShards {
                                   final IndexShard indexShard,
                                   final IndexShardWriter indexShardWriter) {
         try {
-            tracker.beforeAdd(indexShard.getId(), indexShardWriter.getWriterId());
+            tracker.beforeAdd(indexShard.getId(), indexShardWriter);
         } catch (final RunStoppedException e) {
             throw e;
         } catch (final RuntimeException e) {

@@ -256,7 +256,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                     // write to it, so that it can be told whether the documents they gave it were committed.
                     final String writerId = UUID.randomUUID().toString();
                     writer.setWriterId(writerId);
-                    writer.setCommitListener(commitRecorder.createListener(indexShardId, writerId));
+                    writer.setCommitListener(commitRecorder.createListener(indexShardId, writer));
 
                     // We have opened the index so update the DB object.
                     if (!indexShardDao.markOpen(indexShardId, writerId)) {

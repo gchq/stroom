@@ -434,6 +434,64 @@ class TestIndexShardIO extends StroomUnitTest {
     }
 
     @Test
+    void testDeleteStreams_committedWithTheNextCommit() throws IOException {
+        final IndexShard indexShard = createShardOn(VolumeType.LOCAL);
+        final IndexShardWriter writer = createWriter(indexShard);
+        for (long streamId = 1; streamId <= 3; streamId++) {
+            for (int i = 0; i < 10; i++) {
+                writer.addDocument(buildStreamDocument(streamId));
+            }
+        }
+        // Some of the documents to delete are committed and some are not.
+        writer.flush();
+        for (int i = 0; i < 5; i++) {
+            writer.addDocument(buildStreamDocument(2));
+        }
+
+        writer.deleteStreams(List.of(2L, 99L));
+        // Not committed by itself.
+        assertThat(countCommittedDocuments(indexShard)).isEqualTo(30);
+        // Added after the delete, so kept.
+        writer.addDocument(buildStreamDocument(2));
+        writer.flush();
+
+        assertThat(countCommittedDocuments(indexShard)).isEqualTo(21);
+        assertThat(writer.getDocumentCount()).isEqualTo(21);
+        writer.close();
+    }
+
+    @Test
+    void testDeleteStreams_refusedWithoutTheLease() throws IOException {
+        final AtomicBoolean leaseHeld = new AtomicBoolean(true);
+        final IndexShard indexShard = createShardOn(VolumeType.SHARED);
+        final IndexShardWriter writer = createWriter(indexShard);
+        writer.setLeaseCheck(INSTANCE, leaseHeld::get);
+        writer.addDocument(buildStreamDocument(1));
+        writer.flush();
+
+        leaseHeld.set(false);
+
+        assertThatThrownBy(() -> writer.deleteStreams(List.of(1L))).isInstanceOf(IndexException.class);
+        writer.close();
+    }
+
+    @Test
+    void testDeleteStreams_refusedOnceClosed() throws IOException {
+        final IndexShardWriter writer = createWriter(createShardOn(VolumeType.LOCAL));
+        writer.addDocument(buildStreamDocument(1));
+        writer.close();
+
+        assertThatThrownBy(() -> writer.deleteStreams(List.of(1L))).isInstanceOf(IndexException.class);
+    }
+
+    private IndexDocument buildStreamDocument(final long streamId) {
+        final IndexDocument d = new IndexDocument();
+        d.add(new FieldValue(LuceneIndexField.createIdField(IndexConstants.STREAM_ID), ValLong.create(streamId)));
+        d.add(new FieldValue(LuceneIndexField.createField("Test"), ValString.create("Test")));
+        return d;
+    }
+
+    @Test
     void testWriterId() throws IOException {
         final IndexShardWriter writer = createWriter(createShardOn(VolumeType.LOCAL));
         assertThat(writer.getWriterId()).isNull();

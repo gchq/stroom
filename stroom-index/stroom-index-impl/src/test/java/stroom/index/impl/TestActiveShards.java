@@ -313,7 +313,7 @@ class TestActiveShards {
         activeShards.addDocument(new IndexDocument(), tracker);
 
         final InOrder inOrder = Mockito.inOrder(tracker, myIndexShardWriter);
-        inOrder.verify(tracker).beforeAdd(anyLong(), Mockito.eq("writer"));
+        inOrder.verify(tracker).beforeAdd(anyLong(), Mockito.eq(myIndexShardWriter));
         inOrder.verify(myIndexShardWriter).addDocument(any());
         inOrder.verify(tracker).added(anyLong(), Mockito.eq("writer"));
     }

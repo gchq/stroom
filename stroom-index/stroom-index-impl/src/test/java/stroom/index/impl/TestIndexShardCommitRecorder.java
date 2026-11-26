@@ -20,6 +20,7 @@ import stroom.security.mock.MockSecurityContext;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 import org.mockito.Mockito;
 
 import java.util.List;
@@ -36,6 +37,8 @@ class TestIndexShardCommitRecorder {
     private IndexShardTaskDao taskDao;
     private IndexShardPurgeDao purgeDao;
     private IndexShardTaskCompletion completion;
+    private IndexShardPurger purger;
+    private IndexShardWriter writer;
     private IndexShardCommitRecorder recorder;
 
     @BeforeEach
@@ -43,7 +46,11 @@ class TestIndexShardCommitRecorder {
         taskDao = Mockito.mock(IndexShardTaskDao.class);
         purgeDao = Mockito.mock(IndexShardPurgeDao.class);
         completion = Mockito.mock(IndexShardTaskCompletion.class);
-        recorder = new IndexShardCommitRecorder(taskDao, purgeDao, completion, MockSecurityContext.getInstance());
+        purger = Mockito.mock(IndexShardPurger.class);
+        writer = Mockito.mock(IndexShardWriter.class);
+        Mockito.when(writer.getWriterId()).thenReturn(WRITER);
+        recorder = new IndexShardCommitRecorder(
+                taskDao, purgeDao, completion, purger, MockSecurityContext.getInstance());
     }
 
     @Test
@@ -56,7 +63,11 @@ class TestIndexShardCommitRecorder {
         Mockito.when(purgeDao.findByShard(SHARD)).thenReturn(List.of(ours, waiting));
         Mockito.when(taskDao.markCommitted(SHARD, WRITER, List.of(row), List.of(ours))).thenReturn(true);
 
-        final Runnable afterCommit = recorder.createListener(SHARD, WRITER).beforeCommit();
+        final Runnable afterCommit = recorder.createListener(SHARD, writer).beforeCommit();
+        // The waiting purges are done first, so the commit removes them too.
+        final InOrder inOrder = Mockito.inOrder(purger, taskDao);
+        inOrder.verify(purger).purgeWaiting(SHARD, writer);
+        inOrder.verify(taskDao).findWritten(SHARD, WRITER);
         // Nothing is marked until the commit has succeeded.
         Mockito.verify(taskDao, Mockito.never()).markCommitted(anyLong(), any(), any(), any());
 
@@ -73,14 +84,14 @@ class TestIndexShardCommitRecorder {
         Mockito.when(taskDao.findWritten(SHARD, WRITER)).thenReturn(List.of(row));
         Mockito.when(taskDao.markCommitted(anyLong(), any(), any(), any())).thenReturn(false);
 
-        recorder.createListener(SHARD, WRITER).beforeCommit().run();
+        recorder.createListener(SHARD, writer).beforeCommit().run();
 
         Mockito.verify(completion, Mockito.never()).check(any());
     }
 
     @Test
     void testCommit_nothingWritten_nothingRecorded() {
-        recorder.createListener(SHARD, WRITER).beforeCommit().run();
+        recorder.createListener(SHARD, writer).beforeCommit().run();
 
         Mockito.verify(taskDao, Mockito.never()).markCommitted(anyLong(), any(), any(), any());
     }

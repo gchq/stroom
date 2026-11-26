@@ -18,6 +18,7 @@ package stroom.index.impl;
 
 import stroom.index.shared.IndexException;
 
+import java.util.Collection;
 import java.util.function.BooleanSupplier;
 
 public interface IndexShardWriter {
@@ -46,6 +47,16 @@ public interface IndexShardWriter {
     ///
     /// @param writerId The id.
     void setWriterId(String writerId);
+
+    /// Deletes every document of the given streams from the shard. Not committed until the writer next
+    /// commits. Lucene applies a delete only to the documents added before it, so documents added afterwards
+    /// are kept.
+    ///
+    /// @param streamIds The ids of the streams.
+    /// @throws IndexException If the writer can't delete, e.g. as it is closed or has lost its lease.
+    default void deleteStreams(final Collection<Long> streamIds) throws IndexException {
+        throw new IndexException("This index shard writer can't delete streams");
+    }
 
     /// Gives the writer something to tell about each commit it makes while it is open.
     ///

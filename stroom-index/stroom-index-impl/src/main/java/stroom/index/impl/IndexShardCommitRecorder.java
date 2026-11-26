@@ -39,6 +39,7 @@ public class IndexShardCommitRecorder {
     private final IndexShardTaskDao taskDao;
     private final IndexShardPurgeDao purgeDao;
     private final IndexShardTaskCompletion completion;
+    private final IndexShardPurger purger;
     private final SecurityContext securityContext;
 
     /// Creates the recorder.
@@ -46,27 +47,33 @@ public class IndexShardCommitRecorder {
     /// @param taskDao         Reads and marks the rows.
     /// @param purgeDao        Reads the purges.
     /// @param completion      Completes the tasks that may be finished.
+    /// @param purger          Purges the shard before each commit.
     /// @param securityContext Records as the processing user.
     @Inject
     IndexShardCommitRecorder(final IndexShardTaskDao taskDao,
                              final IndexShardPurgeDao purgeDao,
                              final IndexShardTaskCompletion completion,
+                             final IndexShardPurger purger,
                              final SecurityContext securityContext) {
         this.taskDao = taskDao;
         this.purgeDao = purgeDao;
         this.completion = completion;
+        this.purger = purger;
         this.securityContext = securityContext;
     }
 
-    /// Makes what a writer tells of its commits. Listing before the commit is what makes marking after it
-    /// safe: a *written* row's run has ended, so all its documents were in the writer before the commit began.
+    /// Makes what a writer tells of its commits. Before each commit, the streams waiting to be purged from the
+    /// shard are deleted, so that a busy shard that stays open for days is still purged. Listing before the
+    /// commit is what makes marking after it safe: a *written* row's run has ended, so all its documents were in
+    /// the writer before the commit began.
     ///
     /// @param indexShardId The id of the shard.
-    /// @param writerId     The writer.
+    /// @param writer       The writer, which must have its id.
     /// @return What the writer is to tell.
-    public IndexShardCommitListener createListener(final long indexShardId, final String writerId) {
-        Objects.requireNonNull(writerId);
+    public IndexShardCommitListener createListener(final long indexShardId, final IndexShardWriter writer) {
+        final String writerId = Objects.requireNonNull(writer.getWriterId());
         return () -> securityContext.asProcessingUserResult(() -> {
+            purger.purgeWaiting(indexShardId, writer);
             final List<IndexShardTaskRow> rows = taskDao.findWritten(indexShardId, writerId);
             final List<IndexShardPurge> purges = purgeDao.findByShard(indexShardId)
                     .stream()

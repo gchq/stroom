@@ -31,6 +31,8 @@ import org.mockito.Mockito;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -51,6 +53,9 @@ class TestTaskIndexRunTracker {
     private IndexShardTaskDao taskDao;
     private HeldProcessorTaskService heldProcessorTaskService;
     private RunIndexing runIndexing;
+    private IndexShardPurger purger;
+    private IndexShardWriter writer;
+    private IndexShardWriter otherWriter;
     private TaskIndexRunTracker tracker;
 
     @BeforeEach
@@ -63,16 +68,19 @@ class TestTaskIndexRunTracker {
                         invocation.getArgument(3), invocation.getArgument(4), IndexShardTaskState.WRITING)));
         stateIs(TaskStatus.PROCESSING, RUN);
         runIndexing = new RunIndexing();
+        purger = Mockito.mock(IndexShardPurger.class);
+        writer = writer(WRITER);
+        otherWriter = writer(OTHER_WRITER);
         final ProcessorTask task = ProcessorTask.builder().id(TASK).metaId(STREAM).runCount(RUN).build();
         tracker = new TaskIndexRunTracker(
-                taskDao, heldProcessorTaskService, MockSecurityContext.getInstance(), task, runIndexing);
+                taskDao, heldProcessorTaskService, MockSecurityContext.getInstance(), task, runIndexing, purger);
     }
 
     @Test
     void testFirstDocument_rowIsSavedOnceForEachShardAndWriter() {
-        tracker.beforeAdd(SHARD, WRITER);
+        tracker.beforeAdd(SHARD, writer);
         tracker.added(SHARD, WRITER);
-        tracker.beforeAdd(SHARD, WRITER);
+        tracker.beforeAdd(SHARD, writer);
         tracker.added(SHARD, WRITER);
 
         Mockito.verify(taskDao, Mockito.times(1)).insertWriting(TASK, SHARD, STREAM, RUN, WRITER);
@@ -81,7 +89,7 @@ class TestTaskIndexRunTracker {
 
     @Test
     void testFirstDocument_taskCheckedOnlyAfterTheRowIsSaved() {
-        tracker.beforeAdd(SHARD, WRITER);
+        tracker.beforeAdd(SHARD, writer);
 
         final InOrder inOrder = Mockito.inOrder(taskDao, heldProcessorTaskService);
         inOrder.verify(taskDao).insertWriting(TASK, SHARD, STREAM, RUN, WRITER);
@@ -93,7 +101,7 @@ class TestTaskIndexRunTracker {
         // Reaped and run again elsewhere since this run started.
         stateIs(TaskStatus.PROCESSING, RUN + 1);
 
-        assertThatThrownBy(() -> tracker.beforeAdd(SHARD, WRITER)).isInstanceOf(RunStoppedException.class);
+        assertThatThrownBy(() -> tracker.beforeAdd(SHARD, writer)).isInstanceOf(RunStoppedException.class);
     }
 
     @Test
@@ -101,7 +109,7 @@ class TestTaskIndexRunTracker {
         Mockito.when(taskDao.fetch(TASK, SHARD))
                 .thenReturn(Optional.of(row(RUN + 1, OTHER_WRITER, IndexShardTaskState.WRITING)));
 
-        assertThatThrownBy(() -> tracker.beforeAdd(SHARD, WRITER)).isInstanceOf(RunStoppedException.class);
+        assertThatThrownBy(() -> tracker.beforeAdd(SHARD, writer)).isInstanceOf(RunStoppedException.class);
 
         Mockito.verify(taskDao, Mockito.never()).insertWriting(anyLong(), anyLong(), anyLong(), anyInt(), any());
     }
@@ -112,7 +120,7 @@ class TestTaskIndexRunTracker {
         Mockito.when(taskDao.fetch(TASK, SHARD)).thenReturn(Optional.of(earlier));
         Mockito.when(taskDao.toPurges(List.of(earlier))).thenReturn(List.of(earlier));
 
-        tracker.beforeAdd(SHARD, WRITER);
+        tracker.beforeAdd(SHARD, writer);
 
         final InOrder inOrder = Mockito.inOrder(taskDao);
         inOrder.verify(taskDao).toPurges(List.of(earlier));
@@ -126,7 +134,7 @@ class TestTaskIndexRunTracker {
         Mockito.when(taskDao.update(committed, RUN, WRITER, IndexShardTaskState.WRITING))
                 .thenReturn(Optional.of(row(RUN, WRITER, IndexShardTaskState.WRITING)));
 
-        tracker.beforeAdd(SHARD, WRITER);
+        tracker.beforeAdd(SHARD, writer);
 
         Mockito.verify(taskDao).update(committed, RUN, WRITER, IndexShardTaskState.WRITING);
         assertThat(runIndexing.isDocumentsLost()).isFalse();
@@ -138,7 +146,7 @@ class TestTaskIndexRunTracker {
         Mockito.when(taskDao.fetch(TASK, SHARD))
                 .thenReturn(Optional.of(row(RUN, OTHER_WRITER, IndexShardTaskState.WRITING)));
 
-        assertThatThrownBy(() -> tracker.beforeAdd(SHARD, WRITER)).isInstanceOf(RunStoppedException.class);
+        assertThatThrownBy(() -> tracker.beforeAdd(SHARD, writer)).isInstanceOf(RunStoppedException.class);
 
         assertThat(runIndexing.isDocumentsLost()).isTrue();
         Mockito.verify(taskDao, Mockito.never()).update(any(), anyInt(), any(), any());
@@ -146,13 +154,13 @@ class TestTaskIndexRunTracker {
 
     @Test
     void testAddFailed_beforeAnyDocument_newRowIsRemoved() {
-        tracker.beforeAdd(SHARD, WRITER);
+        tracker.beforeAdd(SHARD, writer);
 
         tracker.addFailed(SHARD, WRITER);
 
         Mockito.verify(taskDao).delete(row(RUN, WRITER, IndexShardTaskState.WRITING));
         // A later document saves it again.
-        tracker.beforeAdd(SHARD, WRITER);
+        tracker.beforeAdd(SHARD, writer);
         Mockito.verify(taskDao, Mockito.times(2)).insertWriting(TASK, SHARD, STREAM, RUN, WRITER);
     }
 
@@ -163,7 +171,7 @@ class TestTaskIndexRunTracker {
         Mockito.when(taskDao.fetch(TASK, SHARD)).thenReturn(Optional.of(committed));
         Mockito.when(taskDao.update(committed, RUN, WRITER, IndexShardTaskState.WRITING))
                 .thenReturn(Optional.of(writing));
-        tracker.beforeAdd(SHARD, WRITER);
+        tracker.beforeAdd(SHARD, writer);
 
         tracker.addFailed(SHARD, WRITER);
 
@@ -174,7 +182,7 @@ class TestTaskIndexRunTracker {
 
     @Test
     void testAddFailed_afterADocument_rowIsKept() {
-        tracker.beforeAdd(SHARD, WRITER);
+        tracker.beforeAdd(SHARD, writer);
         tracker.added(SHARD, WRITER);
 
         tracker.addFailed(SHARD, WRITER);
@@ -186,6 +194,95 @@ class TestTaskIndexRunTracker {
     @Test
     void testNothingWritten() {
         assertThat(tracker.hasWritten()).isFalse();
+    }
+
+    @Test
+    void testFirstDocument_streamIsPurgedAfterTheRowIsSavedAndTheTaskChecked() {
+        tracker.beforeAdd(SHARD, writer);
+
+        final InOrder inOrder = Mockito.inOrder(taskDao, heldProcessorTaskService, purger);
+        inOrder.verify(taskDao).insertWriting(TASK, SHARD, STREAM, RUN, WRITER);
+        inOrder.verify(heldProcessorTaskService).getStates(List.of(TASK));
+        inOrder.verify(purger).purgeBeforeWriting(SHARD, STREAM, TASK, writer);
+        // Only once for each shard and writer.
+        tracker.added(SHARD, WRITER);
+        tracker.beforeAdd(SHARD, writer);
+        Mockito.verify(purger, Mockito.times(1)).purgeBeforeWriting(anyLong(), anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void testStopped_addsNothingMoreAndReportsItsDocumentsLost() {
+        tracker.beforeAdd(SHARD, writer);
+        tracker.added(SHARD, WRITER);
+
+        tracker.stop();
+
+        assertThatThrownBy(() -> tracker.beforeAdd(SHARD, writer)).isInstanceOf(RunStoppedException.class);
+        assertThat(runIndexing.isDocumentsLost()).isTrue();
+    }
+
+    @Test
+    void testStop_waitsForADocumentBeingAdded() throws Exception {
+        tracker.beforeAdd(SHARD, writer);
+        final Thread stopper = new Thread(tracker::stop);
+        stopper.start();
+        stopper.join(200);
+        // Still being added.
+        assertThat(stopper.isAlive()).isTrue();
+
+        tracker.added(SHARD, WRITER);
+
+        stopper.join(10_000);
+        assertThat(stopper.isAlive()).isFalse();
+    }
+
+    @Test
+    void testStop_whileTheRunIsSavingItsRow_doesNotWaitAndTheRunAddsNothing() throws Exception {
+        // The run is held up saving its row, e.g. waiting for the writer a purge holds while it stops the run.
+        final CountDownLatch saving = new CountDownLatch(1);
+        final CountDownLatch release = new CountDownLatch(1);
+        Mockito.doAnswer(invocation -> {
+            saving.countDown();
+            release.await();
+            return null;
+        }).when(purger).purgeBeforeWriting(anyLong(), anyLong(), anyLong(), any());
+        final Thread runThread = new Thread(() -> {
+            try {
+                tracker.beforeAdd(SHARD, writer);
+            } catch (final RunStoppedException e) {
+                // Expected.
+            }
+        });
+        runThread.start();
+        assertThat(saving.await(10, TimeUnit.SECONDS)).isTrue();
+
+        final Thread stopper = new Thread(tracker::stop);
+        stopper.start();
+        stopper.join(10_000);
+        assertThat(stopper.isAlive()).isFalse();
+
+        release.countDown();
+        runThread.join(10_000);
+        assertThat(runIndexing.isDocumentsLost()).isTrue();
+        assertThatThrownBy(() -> tracker.beforeAdd(SHARD, writer)).isInstanceOf(RunStoppedException.class);
+    }
+
+    @Test
+    void testKnowsWhatItHasWrittenTo() {
+        assertThat(tracker.hasWrittenTo(SHARD)).isFalse();
+
+        tracker.beforeAdd(SHARD, writer);
+
+        assertThat(tracker.hasWrittenTo(SHARD)).isTrue();
+        assertThat(tracker.getTaskId()).isEqualTo(TASK);
+        assertThat(tracker.getRun()).isEqualTo(RUN);
+        assertThat(tracker.getStreamId()).isEqualTo(STREAM);
+    }
+
+    private static IndexShardWriter writer(final String writerId) {
+        final IndexShardWriter writer = Mockito.mock(IndexShardWriter.class);
+        Mockito.when(writer.getWriterId()).thenReturn(writerId);
+        return writer;
     }
 
     private void stateIs(final TaskStatus status, final int runCount) {

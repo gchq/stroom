@@ -26,6 +26,7 @@ import stroom.index.impl.ShardFullException;
 import stroom.index.impl.UncheckedLockObtainException;
 import stroom.index.impl.WriterClosingException;
 import stroom.index.lucene553.analyser.AnalyzerFactory;
+import stroom.index.shared.IndexConstants;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexVolume;
@@ -50,6 +51,10 @@ import org.apache.lucene553.index.IndexNotFoundException;
 import org.apache.lucene553.index.IndexWriter;
 import org.apache.lucene553.index.IndexWriterConfig;
 import org.apache.lucene553.index.LiveIndexWriterConfig;
+import org.apache.lucene553.index.Term;
+import org.apache.lucene553.search.NumericRangeQuery;
+import org.apache.lucene553.search.Query;
+import org.apache.lucene553.search.TermQuery;
 import org.apache.lucene553.store.Directory;
 import org.apache.lucene553.store.LockObtainFailedException;
 import org.apache.lucene553.store.NIOFSDirectory;
@@ -61,6 +66,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -126,6 +134,8 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
     private volatile boolean closing;
     // Set once a close has committed everything it was given while the lease was held.
     private volatile boolean closedCleanly;
+    // Set when streams have been deleted since the last commit, after which the document count is read again.
+    private volatile boolean streamsDeleted;
     // Set once this writer has found that the lease is no longer held. It then never writes again, even if
     // a late renewal makes the lease look held once more.
     private volatile boolean leaseLost;
@@ -397,6 +407,10 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
         final Runnable afterCommit = beforeCommit();
         if (prepareCommit()) {
             indexWriter.commit();
+            if (streamsDeleted) {
+                streamsDeleted = false;
+                documentCount.set(indexWriter.numDocs());
+            }
             afterCommit.run();
             return true;
         } else {
@@ -451,6 +465,28 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
         }
         return () -> {
         };
+    }
+
+    @Override
+    public void deleteStreams(final Collection<Long> streamIds) throws IndexException {
+        if (!open.get() || closing || leaseLost || !leaseHeld.getAsBoolean()) {
+            throw new IndexException("Unable to delete streams from index shard " + indexShardId
+                                     + " as its writer is closing or no longer holds the lease on it");
+        }
+        try {
+            // The stream id is indexed as a number in all but the oldest indexes, where it is a term. Each
+            // query matches nothing in an index of the other kind.
+            final List<Query> queries = new ArrayList<>();
+            for (final Long streamId : streamIds) {
+                queries.add(NumericRangeQuery.newLongRange(IndexConstants.STREAM_ID, streamId, streamId, true, true));
+                queries.add(new TermQuery(new Term(IndexConstants.STREAM_ID, streamId.toString())));
+            }
+            indexWriter.deleteDocuments(queries.toArray(new Query[0]));
+            streamsDeleted = true;
+        } catch (final IOException | RuntimeException e) {
+            throw new IndexException("Unable to delete streams from index shard " + indexShardId
+                                     + ": " + e.getMessage(), e);
+        }
     }
 
     @Override

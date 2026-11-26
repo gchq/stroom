@@ -28,18 +28,27 @@ class IndexRunTrackerFactoryImpl implements IndexRunTrackerFactory {
     private final IndexShardTaskDao taskDao;
     private final HeldProcessorTaskService heldProcessorTaskService;
     private final SecurityContext securityContext;
+    private final IndexShardPurger purger;
+    private final IndexRunRegistry runRegistry;
 
     @Inject
     IndexRunTrackerFactoryImpl(final IndexShardTaskDao taskDao,
                                final HeldProcessorTaskService heldProcessorTaskService,
-                               final SecurityContext securityContext) {
+                               final SecurityContext securityContext,
+                               final IndexShardPurger purger,
+                               final IndexRunRegistry runRegistry) {
         this.taskDao = taskDao;
         this.heldProcessorTaskService = heldProcessorTaskService;
         this.securityContext = securityContext;
+        this.purger = purger;
+        this.runRegistry = runRegistry;
     }
 
     @Override
     public IndexRunTracker create(final ProcessorTask task, final RunIndexing runIndexing) {
-        return new TaskIndexRunTracker(taskDao, heldProcessorTaskService, securityContext, task, runIndexing);
+        final TaskIndexRunTracker tracker = new TaskIndexRunTracker(
+                taskDao, heldProcessorTaskService, securityContext, task, runIndexing, purger);
+        runRegistry.add(tracker);
+        return tracker;
     }
 }

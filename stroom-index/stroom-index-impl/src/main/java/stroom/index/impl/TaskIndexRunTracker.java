@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /// Keeps the rows of `index_shard_task` for one run of a processor task. The node remembers which shards and
 /// writers the run has rows for, so it saves one row for each shard, not one for each document.
@@ -40,6 +41,8 @@ class TaskIndexRunTracker implements IndexRunTracker {
 
     // Tries at saving a row, when another node changes it at the same moment.
     private static final int MAX_TRIES = 5;
+    // The longest a stop waits for a document being added.
+    private static final long STOP_WAIT_MS = 30_000;
 
     private final IndexShardTaskDao taskDao;
     private final HeldProcessorTaskService heldProcessorTaskService;
@@ -48,6 +51,14 @@ class TaskIndexRunTracker implements IndexRunTracker {
     private final int run;
     private final long streamId;
     private final RunIndexing runIndexing;
+    private final IndexShardPurger purger;
+    // The documents being given to writers now. Counted before the run's stop flag is looked at, so that a stop
+    // can wait for them.
+    private final AtomicInteger adding = new AtomicInteger();
+    // Set while the row for a shard is being saved, before anything is given to the shard's writer. A stop does
+    // not wait for that, as it may be waiting for the same writer, and the run looks again once it has saved.
+    private volatile boolean saving;
+    private volatile boolean stopped;
     // The row saved for each shard, with what it was before and whether the writer has had a document.
     private final Map<Long, Saved> saved = new HashMap<>();
     private boolean written;
@@ -56,7 +67,8 @@ class TaskIndexRunTracker implements IndexRunTracker {
                         final HeldProcessorTaskService heldProcessorTaskService,
                         final SecurityContext securityContext,
                         final ProcessorTask task,
-                        final RunIndexing runIndexing) {
+                        final RunIndexing runIndexing,
+                        final IndexShardPurger purger) {
         this.taskDao = taskDao;
         this.heldProcessorTaskService = heldProcessorTaskService;
         this.securityContext = securityContext;
@@ -64,11 +76,40 @@ class TaskIndexRunTracker implements IndexRunTracker {
         this.run = task.getRunCount();
         this.streamId = Objects.requireNonNull(task.getMetaId());
         this.runIndexing = runIndexing;
+        this.purger = purger;
     }
 
     @Override
-    public synchronized void beforeAdd(final long indexShardId, final String writerId) {
-        Objects.requireNonNull(writerId, "A writer of a run's documents must have an id");
+    public void beforeAdd(final long indexShardId, final IndexShardWriter writer) {
+        adding.incrementAndGet();
+        try {
+            checkNotStopped();
+            saving = true;
+            try {
+                saveFirst(indexShardId, writer);
+            } finally {
+                saving = false;
+            }
+            // Again, as a stop made while saving did not wait.
+            checkNotStopped();
+        } catch (final RuntimeException e) {
+            adding.decrementAndGet();
+            throw e;
+        }
+    }
+
+    private void checkNotStopped() {
+        if (stopped) {
+            // Replaced, and what it wrote is being purged.
+            runIndexing.documentsLost();
+            throw new RunStoppedException("Run " + run + " of processor task " + taskId
+                                          + " has been replaced, so must add nothing more");
+        }
+    }
+
+    private synchronized void saveFirst(final long indexShardId, final IndexShardWriter writer) {
+        final String writerId = Objects.requireNonNull(writer.getWriterId(),
+                "A writer of a run's documents must have an id");
         final Saved current = saved.get(indexShardId);
         if (current != null && current.row().writerId().equals(writerId)) {
             return;
@@ -78,7 +119,38 @@ class TaskIndexRunTracker implements IndexRunTracker {
             // The task may have been taken from this run since it started, e.g. by the reaper, and run again
             // elsewhere, which turned this run's rows into purges. A row saved now would then be missed.
             checkStillThisRuns();
+            // Looked for only once the row is saved, as a purge made in between would otherwise later delete
+            // what this run writes.
+            purger.purgeBeforeWriting(indexShardId, streamId, taskId, writer);
         });
+    }
+
+    /// Stops the run adding any more documents, as it has been replaced, and waits for any it is adding now.
+    /// It waits only for a document being given to a writer, never for the run itself, nor for a run that is
+    /// still saving its row, which looks at the stop once it has.
+    void stop() {
+        stopped = true;
+        final long giveUpAtMs = System.currentTimeMillis() + STOP_WAIT_MS;
+        while (adding.get() > 0 && !saving && System.currentTimeMillis() < giveUpAtMs) {
+            Thread.onSpinWait();
+        }
+        LOGGER.info("Stopped run {} of processor task {} as it has been replaced", run, taskId);
+    }
+
+    long getTaskId() {
+        return taskId;
+    }
+
+    int getRun() {
+        return run;
+    }
+
+    long getStreamId() {
+        return streamId;
+    }
+
+    synchronized boolean hasWrittenTo(final long indexShardId) {
+        return saved.containsKey(indexShardId);
     }
 
     // Saves the row that says this run is writing to a shard, before its first document there.
@@ -137,16 +209,30 @@ class TaskIndexRunTracker implements IndexRunTracker {
     }
 
     @Override
-    public synchronized void added(final long indexShardId, final String writerId) {
-        final Saved current = saved.get(indexShardId);
-        if (current != null && current.row().writerId().equals(writerId) && !current.documentAdded()) {
-            saved.put(indexShardId, new Saved(current.row(), current.previous(), true));
+    public void added(final long indexShardId, final String writerId) {
+        try {
+            synchronized (this) {
+                final Saved current = saved.get(indexShardId);
+                if (current != null && current.row().writerId().equals(writerId) && !current.documentAdded()) {
+                    saved.put(indexShardId, new Saved(current.row(), current.previous(), true));
+                }
+                written = true;
+            }
+        } finally {
+            adding.decrementAndGet();
         }
-        written = true;
     }
 
     @Override
-    public synchronized void addFailed(final long indexShardId, final String writerId) {
+    public void addFailed(final long indexShardId, final String writerId) {
+        try {
+            putBack(indexShardId, writerId);
+        } finally {
+            adding.decrementAndGet();
+        }
+    }
+
+    private synchronized void putBack(final long indexShardId, final String writerId) {
         final Saved current = saved.get(indexShardId);
         if (current == null || !current.row().writerId().equals(writerId) || current.documentAdded()) {
             return;
