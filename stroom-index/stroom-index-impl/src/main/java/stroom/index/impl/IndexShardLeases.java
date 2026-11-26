@@ -71,11 +71,12 @@ public class IndexShardLeases {
     private final NodeInfo nodeInfo;
     private final Provider<IndexWriterConfig> indexWriterConfigProvider;
     private final LongSupplier nanoClock;
+    private final LongSupplier millisClock;
     // Made anew each time the process starts, so a lease held by an earlier process on this node is not
     // mistaken for one held by this process.
     private final String instanceId = UUID.randomUUID().toString();
-    // When each lease was last known to be held, on this process's monotonic clock.
-    private final Map<Long, Long> lastRenewedNanos = new ConcurrentHashMap<>();
+    // When each lease was last known to be held.
+    private final Map<Long, Renewal> lastRenewed = new ConcurrentHashMap<>();
 
     // Leases this process could not give up because the database was unavailable, with the prune delay each
     // was to be released with. They are given up when it next can be. Guarded by this.
@@ -86,27 +87,36 @@ public class IndexShardLeases {
     private ScheduledExecutorService renewalExecutor;
     private volatile boolean warnedOfInterval;
 
+    /// Creates the lease holder with the system's clocks.
+    ///
+    /// @param indexShardDao             Reads and writes the lease columns.
+    /// @param nodeInfo                  Names this node.
+    /// @param indexWriterConfigProvider Supplies the lease duration and renewal interval.
     @Inject
     IndexShardLeases(final IndexShardDao indexShardDao,
                      final NodeInfo nodeInfo,
                      final Provider<IndexWriterConfig> indexWriterConfigProvider) {
-        this(indexShardDao, nodeInfo, indexWriterConfigProvider, System::nanoTime);
+        this(indexShardDao, nodeInfo, indexWriterConfigProvider, System::nanoTime, System::currentTimeMillis);
     }
 
-    /// Creates the lease holder with a given clock.
+    /// Creates the lease holder with given clocks.
     ///
     /// @param indexShardDao             Reads and writes the lease columns.
     /// @param nodeInfo                  Names this node.
     /// @param indexWriterConfigProvider Supplies the lease duration and renewal interval.
     /// @param nanoClock                 A monotonic clock in nanoseconds.
+    /// @param millisClock               The time of day in milliseconds, which unlike the monotonic clock
+    ///                                  moves on while the host is suspended.
     IndexShardLeases(final IndexShardDao indexShardDao,
                      final NodeInfo nodeInfo,
                      final Provider<IndexWriterConfig> indexWriterConfigProvider,
-                     final LongSupplier nanoClock) {
+                     final LongSupplier nanoClock,
+                     final LongSupplier millisClock) {
         this.indexShardDao = indexShardDao;
         this.nodeInfo = nodeInfo;
         this.indexWriterConfigProvider = indexWriterConfigProvider;
         this.nanoClock = nanoClock;
+        this.millisClock = millisClock;
     }
 
     /// Gets the id of this process, which is what tells its leases from any other's.
@@ -138,14 +148,14 @@ public class IndexShardLeases {
         }
 
         // Taken before the claim is made, so the lease is never thought to last longer than it does.
-        final long nowNanos = nanoClock.getAsLong();
+        final Renewal now = now();
         final boolean claimed = indexShardDao.claimLease(
                 shardId,
                 nodeInfo.getThisNodeName(),
                 instanceId,
                 getLeaseDuration().toMillis());
         if (claimed) {
-            lastRenewedNanos.put(shardId, nowNanos);
+            lastRenewed.put(shardId, now);
             startRenewing();
         }
         LOGGER.debug("claim() - shardId: {}, claimed: {}", shardId, claimed);
@@ -158,15 +168,15 @@ public class IndexShardLeases {
     /// @param pruneCommitsDelayMs How long from now the shard's replaced commits must be kept for, or null
     ///                            if its writer left none behind.
     public synchronized void release(final long shardId, final Long pruneCommitsDelayMs) {
-        lastRenewedNanos.remove(shardId);
+        lastRenewed.remove(shardId);
         final FailedRelease release = new FailedRelease(pruneCommitsDelayMs);
         try {
             releaseInDatabase(shardId, release);
         } catch (final RuntimeException e) {
             // Left as it is the shard would stay leased to this process, and unusable, until it restarts.
             failedReleases.put(shardId, release);
-            LOGGER.error(() -> "Unable to give up the lease on index shard " + shardId
-                               + ". Will try again: " + LogUtil.exceptionMessage(e), e);
+            LOGGER.error(() -> LogUtil.message("Unable to give up the lease on index shard {}. Will try again: {}",
+                    shardId, LogUtil.exceptionMessage(e)), e);
         }
     }
 
@@ -180,9 +190,19 @@ public class IndexShardLeases {
     /// @param shardId The id of the shard.
     /// @return True if the lease was claimed or renewed recently enough that it cannot have expired.
     public boolean isHeld(final long shardId) {
-        final Long renewedNanos = lastRenewedNanos.get(shardId);
-        return renewedNanos != null
-               && nanoClock.getAsLong() - renewedNanos < getLeaseDuration().toNanos() * USABLE_FRACTION;
+        final Renewal renewal = lastRenewed.get(shardId);
+        if (renewal == null) {
+            return false;
+        }
+        final double usableMs = getLeaseDuration().toMillis() * USABLE_FRACTION;
+        // Both clocks, as the monotonic one stops while the host is suspended, when other nodes see the
+        // lease expire, and the time of day can be put back.
+        return nanoClock.getAsLong() - renewal.nanos() < usableMs * 1_000_000
+               && millisClock.getAsLong() - renewal.millis() < usableMs;
+    }
+
+    private Renewal now() {
+        return new Renewal(nanoClock.getAsLong(), millisClock.getAsLong());
     }
 
     /// Makes the check a writer uses before it adds a document or commits.
@@ -198,11 +218,11 @@ public class IndexShardLeases {
         final List<Long> lostShardIds = new ArrayList<>();
         synchronized (this) {
             retryFailedReleases();
-            if (lastRenewedNanos.isEmpty()) {
+            if (lastRenewed.isEmpty()) {
                 return;
             }
             // Taken before the renewal is made, so a lease is never thought to last longer than it does.
-            final long nowNanos = nanoClock.getAsLong();
+            final Renewal now = now();
             final Set<Long> leasedShardIds;
             try {
                 indexShardDao.renewLeases(instanceId, getLeaseDuration().toMillis());
@@ -210,17 +230,18 @@ public class IndexShardLeases {
             } catch (final RuntimeException e) {
                 // The leases are not extended, so the writers stop of their own accord once the last
                 // renewal that worked is too long ago.
-                LOGGER.error(() -> "Unable to renew index shard leases: " + LogUtil.exceptionMessage(e), e);
+                LOGGER.error(() -> LogUtil.message("Unable to renew index shard leases: {}",
+                        LogUtil.exceptionMessage(e)), e);
                 return;
             }
-            for (final Long shardId : lastRenewedNanos.keySet()) {
+            for (final Long shardId : lastRenewed.keySet()) {
                 if (leasedShardIds.contains(shardId)) {
-                    lastRenewedNanos.put(shardId, nowNanos);
+                    lastRenewed.put(shardId, now);
                 } else {
                     lostShardIds.add(shardId);
                 }
             }
-            lostShardIds.forEach(lastRenewedNanos::remove);
+            lostShardIds.forEach(lastRenewed::remove);
         }
 
         // Told outside the lock, as closing a writer releases its lease.
@@ -231,7 +252,7 @@ public class IndexShardLeases {
             try {
                 lostLeaseHandler.accept(shardId);
             } catch (final RuntimeException e) {
-                LOGGER.error(() -> "Error closing index shard " + shardId + " after losing its lease", e);
+                LOGGER.error("Error closing index shard {} after losing its lease", shardId, e);
             }
         }
     }
@@ -244,7 +265,8 @@ public class IndexShardLeases {
                 releaseInDatabase(entry.getKey(), entry.getValue());
                 iterator.remove();
             } catch (final RuntimeException e) {
-                LOGGER.debug(() -> "Still unable to give up the lease on index shard " + entry.getKey(), e);
+                LOGGER.debug(() -> LogUtil.message("Still unable to give up the lease on index shard {}",
+                        entry.getKey()), e);
                 // The database is probably still unavailable, so leave the rest for next time.
                 break;
             }
@@ -296,7 +318,7 @@ public class IndexShardLeases {
                 try {
                     renew();
                 } catch (final RuntimeException e) {
-                    LOGGER.error(() -> "Error renewing index shard leases", e);
+                    LOGGER.error("Error renewing index shard leases", e);
                 } finally {
                     scheduleNextRenewal(executor);
                 }
@@ -319,6 +341,15 @@ public class IndexShardLeases {
 
 
     private record FailedRelease(Long pruneCommitsDelayMs) {
+
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // When a lease was last known to be held, on each clock.
+    private record Renewal(long nanos, long millis) {
 
     }
 }

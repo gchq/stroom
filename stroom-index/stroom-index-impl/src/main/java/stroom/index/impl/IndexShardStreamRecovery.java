@@ -36,6 +36,11 @@ public class IndexShardStreamRecovery {
     private final SecurityContext securityContext;
     private final Provider<IndexWriterConfig> indexWriterConfigProvider;
 
+    /// Creates the job's work.
+    ///
+    /// @param indexShardDao             Reads and writes the shards' leases.
+    /// @param securityContext           Runs the job as the processing user.
+    /// @param indexWriterConfigProvider Supplies the takeover grace period and replaced commit retention.
     @Inject
     IndexShardStreamRecovery(final IndexShardDao indexShardDao,
                              final SecurityContext securityContext,
@@ -54,7 +59,8 @@ public class IndexShardStreamRecovery {
         try {
             LOGGER.logDurationIfDebugEnabled(runnable, name);
         } catch (final RuntimeException e) {
-            LOGGER.error(() -> "Error in index shard stream recovery (" + name + "): " + e.getMessage(), e);
+            LOGGER.error(() -> LogUtil.message("Error in index shard stream recovery ({}): {}",
+                    name, e.getMessage()), e);
         }
     }
 

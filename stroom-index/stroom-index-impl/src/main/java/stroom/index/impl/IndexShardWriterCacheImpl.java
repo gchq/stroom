@@ -79,6 +79,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private final IndexShardDao indexShardDao;
     private final StroomCache<Long, IndexShardWriter> cache;
     private final Map<Long, IndexShardWriter> openShards = new ConcurrentHashMap<>();
+    // The writers removed from the cache whose closes are queued but have not yet run.
+    private final Set<IndexShardWriter> queuedCloses = ConcurrentHashMap.newKeySet();
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final SecurityContext securityContext;
@@ -129,14 +131,16 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                 .runAsync(() -> dropWriterOfLostLease(indexShardId), executor)
                 .whenComplete((r, t) -> {
                     if (t != null) {
-                        LOGGER.error(() -> "Error closing index shard " + indexShardId
-                                           + " after losing its lease", t);
+                        LOGGER.error("Error closing index shard {} after losing its lease", indexShardId, t);
                     }
                 });
     }
 
-    // Under the cache's lock for the shard, so it waits for a writer being opened. If the lease is held
-    // again by then, the writer in the cache is a new one with a lease of its own, and is left alone.
+    /// Drops the writer of a shard whose lease has been lost, which closes it. Done under the cache's lock
+    /// for the shard, so it waits for a writer being opened. If the lease is held again by then, the writer
+    /// in the cache is a new one with a lease of its own, and is left alone.
+    ///
+    /// @param indexShardId The id of the shard.
     void dropWriterOfLostLease(final long indexShardId) {
         cache.compute(indexShardId, (k, v) -> v == null || indexShardLeases.isHeld(indexShardId)
                 ? v
@@ -244,7 +248,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                         // If this was a new shard then delete it immediately.
                         LOGGER.error(() -> "Deleting new index shard because (" + e + ")", e);
                         try {
-                            indexShardDao.logicalDelete(indexShardId);
+                            indexShardDao.logicalDelete(indexShardId, indexShardLeases.getInstanceId());
                         } finally {
                             releaseLease(indexShardId, null);
                         }
@@ -285,7 +289,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                             indexShardDao.setStatus(indexShardId, IndexShardStatus.CLOSING);
                         } catch (final RuntimeException e) {
                             // The writer is closed all the same.
-                            LOGGER.error(() -> "Unable to mark index shard " + indexShardId + " as closing", e);
+                            LOGGER.error("Unable to mark index shard {} as closing", indexShardId, e);
                         }
                     }
 
@@ -447,12 +451,14 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
      */
     @Override
     public void sweep() {
-        LOGGER.logDurationIfDebugEnabled(
-                cache::evictExpiredElements,
-                "sweep()");
+        // Before evicting, as the cache reports what it evicts on another thread, so writers it has just
+        // evicted would look like orphans.
         LOGGER.logDurationIfDebugEnabled(
                 this::closeOrphanedWriters,
                 "closeOrphanedWriters()");
+        LOGGER.logDurationIfDebugEnabled(
+                cache::evictExpiredElements,
+                "sweep()");
         LOGGER.logDurationIfDebugEnabled(
                 (Runnable) this::pruneReplacedCommits,
                 "pruneReplacedCommits()");
@@ -466,7 +472,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         final Map<Long, IndexShardWriter> cached = new HashMap<>();
         cache.forEach(cached::put);
         openShards.forEach((indexShardId, writer) -> {
-            if (cached.get(indexShardId) != writer) {
+            if (cached.get(indexShardId) != writer && !queuedCloses.contains(writer)) {
                 // Under the cache's lock for the shard, as the writer may be one that is still being opened.
                 final AtomicBoolean orphaned = new AtomicBoolean();
                 cache.compute(indexShardId, (k, v) -> {
@@ -474,8 +480,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                     return v;
                 });
                 if (orphaned.get()) {
-                    LOGGER.info(() -> "Closing the writer of index shard " + indexShardId
-                                      + ", which the writer cache no longer holds");
+                    LOGGER.info("Closing the writer of index shard {}, which the writer cache no longer holds",
+                            indexShardId);
                     close(writer, executor);
                 }
             }
@@ -493,10 +499,14 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     @Override
     public void delete(final long indexShardId) {
-        indexShardDao.logicalDelete(indexShardId);
-        LOGGER.debug(() -> "Deleted " + indexShardId);
-        cache.invalidate(indexShardId);
-        cache.evictExpiredElements();
+        if (indexShardDao.logicalDelete(indexShardId, indexShardLeases.getInstanceId())) {
+            LOGGER.debug("Deleted {}", indexShardId);
+            cache.invalidate(indexShardId);
+            cache.evictExpiredElements();
+        } else {
+            // Another node is writing to it. It is deleted once that node has given it up.
+            LOGGER.info("Index shard {} not deleted as another node holds the lease on it", indexShardId);
+        }
     }
 
     private CompletableFuture<Void> flush(final long indexShardId,
@@ -524,6 +534,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private void close(final IndexShardWriter indexShardWriter,
                        final Executor executor) {
         final long indexShardId = indexShardWriter.getIndexShardId();
+        queuedCloses.add(indexShardWriter);
         securityContext.asProcessingUser(() -> {
             try {
                 // Close the shard.
@@ -533,6 +544,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                         taskContext -> {
                             taskContext.info(() -> "Closing writer for index shard " +
                                                    indexShardId);
+                            queuedCloses.remove(indexShardWriter);
                             openShards.compute(indexShardId, (k, v) -> {
                                 if (v != indexShardWriter) {
                                     // The shard was opened again before this ran, which closed the old
@@ -553,6 +565,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                             }
                         });
             } catch (final Exception e) {
+                // Not queued, so left for the orphan check to close.
+                queuedCloses.remove(indexShardWriter);
                 LOGGER.error(e::getMessage, e);
             }
         });
@@ -581,9 +595,9 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             LOGGER.info(() -> "Index shard writer cache shutdown");
             LOGGER.logDurationIfDebugEnabled(() -> {
                 try {
-                    // Close any remaining writers.
-                    cache.clear();
+                    // Close any remaining writers, those the cache holds and any it no longer does.
                     closeOrphanedWriters();
+                    cache.clear();
 
                     // Report on closing progress.
                     if (!openShards.isEmpty()) {

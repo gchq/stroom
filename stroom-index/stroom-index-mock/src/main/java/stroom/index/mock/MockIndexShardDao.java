@@ -200,8 +200,9 @@ public class MockIndexShardDao implements IndexShardDao {
     }
 
     @Override
-    public void logicalDelete(final Long id) {
-        setStatus(id, IndexShardStatus.DELETED);
+    public synchronized boolean logicalDelete(final long id, final String instanceId) {
+        final String holder = leases.get(id);
+        return (holder == null || holder.equals(instanceId)) && setStatus(id, IndexShardStatus.DELETED);
     }
 
     @Override

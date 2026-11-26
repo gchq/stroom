@@ -153,7 +153,6 @@ public class ActiveShards {
                                 final boolean throwException) {
         try {
             final IndexShardWriter indexShardWriter = indexShardWriterCache.getOrOpenWriter(indexShard.getId());
-            final boolean usableBefore = !indexShardWriter.isUnusable();
             try {
                 indexShardWriter.addDocument(document);
                 return true;
@@ -169,9 +168,9 @@ public class ActiveShards {
                     // Close it or it would be used again for every document. The shard itself may be fine,
                     // so it is not removed, and is opened again by the next attempt.
                     indexShardWriterCache.close(indexShardWriter);
-                    if (usableBefore) {
-                        // The document itself broke a writer that was working. It would break every other
-                        // writer it was tried in, so it is not tried again.
+                    if (indexShardWriter.isBrokenBy(e)) {
+                        // The document itself broke the writer. It would break every other writer it was
+                        // tried in, so it is not tried again.
                         LOGGER.error(e::getMessage, e);
                         throw new DocumentBrokeWriterException(indexShard.getId(), e);
                     }

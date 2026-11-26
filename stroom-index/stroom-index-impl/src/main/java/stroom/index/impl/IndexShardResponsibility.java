@@ -57,6 +57,10 @@ public class IndexShardResponsibility {
     private final NodeInfo nodeInfo;
     private final TargetNodeSetFactory targetNodeSetFactory;
 
+    /// Creates the test of which shards this node looks after.
+    ///
+    /// @param nodeInfo             Names this node.
+    /// @param targetNodeSetFactory Says which nodes are enabled and can be reached.
     @Inject
     IndexShardResponsibility(final NodeInfo nodeInfo,
                              final TargetNodeSetFactory targetNodeSetFactory) {

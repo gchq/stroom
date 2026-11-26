@@ -147,10 +147,14 @@ public interface IndexShardDao {
     /// @param id The database ID of the shard.
     void clearPruneCommitsTime(long id);
 
-    /**
-     * Force the status of a shard to be deleted
-     */
-    void logicalDelete(Long id);
+    /// Marks a shard as deleted, unless another process holds the lease on it. That process may be writing
+    /// to the shard, and would not know it had been deleted, so documents it went on to add would be lost
+    /// when the shard's files were removed.
+    ///
+    /// @param id         The database ID of the shard.
+    /// @param instanceId The id of the process asking, which may hold the lease itself.
+    /// @return True if the shard has been marked as deleted.
+    boolean logicalDelete(long id, String instanceId);
 
     /// Says whether any process holds a lease on a shard, whether or not the lease has expired.
     ///

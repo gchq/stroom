@@ -47,6 +47,7 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -180,9 +181,10 @@ class TestActiveShards {
     @Test
     void testDocumentBreaksAUsableWriter_isNotTriedAgain() {
         // Lucene closes its writer after an error it can't recover from, here caused by the document.
-        Mockito.when(myIndexShardWriter.isUnusable()).thenReturn(false).thenReturn(true);
-        Mockito.doThrow(new IllegalStateException("tragic event"))
-                .when(myIndexShardWriter).addDocument(any());
+        final IllegalStateException tragicEvent = new IllegalStateException("tragic event");
+        Mockito.when(myIndexShardWriter.isUnusable()).thenReturn(true);
+        Mockito.when(myIndexShardWriter.isBrokenBy(tragicEvent)).thenReturn(true);
+        Mockito.doThrow(tragicEvent).when(myIndexShardWriter).addDocument(any());
         Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong())).thenReturn(myIndexShardWriter);
         final ActiveShards activeShards = createActiveShards();
 
@@ -195,6 +197,27 @@ class TestActiveShards {
         Mockito.verify(indexShardWriterCache, times(1)).getOrOpenWriter(anyLong());
         Mockito.verify(indexShardWriterCache).close(myIndexShardWriter);
         assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isOne();
+    }
+
+    @Test
+    void testWriterClosedByAnotherThreadWhileAdding_documentIsAddedElsewhere() {
+        // Usable until the document is given to it, when another thread closes it, e.g. as its lease was
+        // lost. The document did not break it.
+        final AtomicBoolean closed = new AtomicBoolean();
+        Mockito.when(myIndexShardWriter.isUnusable()).thenAnswer(invocation -> closed.get());
+        Mockito.doAnswer(invocation -> {
+            closed.set(true);
+            throw new IllegalStateException("this IndexWriter is closed");
+        }).when(myIndexShardWriter).addDocument(any());
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong()))
+                .thenReturn(myIndexShardWriter)
+                .thenReturn(anotherIndexShardWriter);
+        final ActiveShards activeShards = createActiveShards();
+
+        activeShards.addDocument(new IndexDocument());
+
+        Mockito.verify(indexShardWriterCache).close(myIndexShardWriter);
+        Mockito.verify(anotherIndexShardWriter).addDocument(any());
     }
 
     @Test

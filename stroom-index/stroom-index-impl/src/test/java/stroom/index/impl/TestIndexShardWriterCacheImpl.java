@@ -219,7 +219,7 @@ class TestIndexShardWriterCacheImpl {
                 .build()));
         Mockito.when(luceneProvider.createIndexShardWriter(any(), anyInt()))
                 .thenThrow(new RuntimeException("no volume"));
-        Mockito.doThrow(new RuntimeException("no database")).when(indexShardDao).logicalDelete(SHARD);
+        Mockito.doThrow(new RuntimeException("no database")).when(indexShardDao).logicalDelete(SHARD, INSTANCE_ID);
 
         assertThatThrownBy(() -> writerCache.getOrOpenWriter(SHARD)).hasMessage("no volume");
 
@@ -499,6 +499,20 @@ class TestIndexShardWriterCacheImpl {
             realWriterCache.closeOrphanedWriters();
             assertNothingQueued();
             Mockito.verify(newWriter, Mockito.never()).close();
+        }
+
+        @Test
+        void testOrphanCheck_writerWhoseCloseIsQueuedIsLeftToIt() throws InterruptedException {
+            final IndexShardWriter writer = realWriterCache.getOrOpenWriter(SHARD);
+            realWriterCache.close(writer);
+            final Runnable queuedClose = takeQueuedTask();
+
+            realWriterCache.closeOrphanedWriters();
+
+            // Only the close that was already queued.
+            assertNothingQueued();
+            queuedClose.run();
+            Mockito.verify(writer).close();
         }
 
         private IndexShardWriter createWriter(final long indexShardId) {

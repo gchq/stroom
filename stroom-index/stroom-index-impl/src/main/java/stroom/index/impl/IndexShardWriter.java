@@ -55,6 +55,16 @@ public interface IndexShardWriter {
         // Writers that can't be used on shared volumes need no lease.
     }
 
+    /// Says whether an exception thrown by [#addDocument(IndexDocument)] is the one that left this writer
+    /// unusable, so that the document itself broke the writer. False if the writer was already closed, e.g.
+    /// by another thread, when the document was given to it.
+    ///
+    /// @param e The exception thrown while adding a document.
+    /// @return True if the document broke the writer.
+    default boolean isBrokenBy(final Throwable e) {
+        return false;
+    }
+
     /// Says whether the shard holds commits that this writer has replaced but is keeping for a while, for
     /// the sake of readers on other nodes that may still be using them.
     ///

@@ -390,9 +390,11 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
 
     // The first step of a commit. Returns false if the lease was not held, or was lost while the files
     // were being written. Lucene is stopped from changing files as soon as the lease has gone, so losing it
-    // part way through shows up as a failure to write.
+    // part way through shows up as a failure to write. Once the lease has been seen to be gone, the writer
+    // never writes again, even if a late renewal makes it look held once more.
     private boolean prepareCommit() throws IOException {
-        if (!leaseHeld.getAsBoolean()) {
+        if (leaseLost || !leaseHeld.getAsBoolean()) {
+            leaseLost = true;
             return false;
         }
         try {
@@ -401,14 +403,27 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
             if (leaseHeld.getAsBoolean()) {
                 throw e;
             }
-            LOGGER.debug(() -> "Index shard " + indexShardId + " not committed: " + e.getMessage(), e);
+            LOGGER.debug(() -> LogUtil.message("Index shard {} not committed: {}", indexShardId, e.getMessage()), e);
+            leaseLost = true;
+            return false;
         }
-        return leaseHeld.getAsBoolean();
+        if (!leaseHeld.getAsBoolean()) {
+            leaseLost = true;
+            return false;
+        }
+        return true;
     }
 
     @Override
     public boolean isUnusable() {
         return leaseLost || !open.get() || !indexWriter.isOpen();
+    }
+
+    @Override
+    public boolean isBrokenBy(final Throwable e) {
+        // Lucene throws the exception that broke its writer from the call that broke it. Later calls throw an
+        // exception of their own that only has it as the cause.
+        return e != null && e == indexWriter.getTragicException();
     }
 
     @Override
@@ -498,10 +513,9 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
         // stops it, so if there is anything it wants to delete it fails, having still closed the writer.
         // The files this writer leaves behind are removed by the next writer to open the shard.
         final int committedDocumentCount = rollBack(true);
-        LOGGER.error(() -> "Unable to " + action + " index shard " + indexShardId
-                           + " as this node no longer holds the lease on it. Discarded about "
-                           + Math.max(0, documentCountBefore - committedDocumentCount)
-                           + " documents that had not been committed. " + this);
+        LOGGER.error(() -> LogUtil.message("Unable to {} index shard {} as this node no longer holds the lease "
+                                           + "on it. Discarded about {} documents that had not been committed. {}",
+                action, indexShardId, Math.max(0, documentCountBefore - committedDocumentCount), this));
     }
 
     // Has Lucene let go of the shard when it could not be closed normally. Until it does it keeps its lock,
@@ -522,7 +536,8 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
             indexWriter.rollback();
         } catch (final IOException | RuntimeException e) {
             if (failureExpected) {
-                LOGGER.debug(() -> "Index shard " + indexShardId + " left as it is: " + e.getMessage(), e);
+                LOGGER.debug(() -> LogUtil.message("Index shard {} left as it is: {}", indexShardId,
+                        e.getMessage()), e);
             } else {
                 LOGGER.error(buildErrorMessage("Error rolling back writer.", e), e);
             }

@@ -247,9 +247,13 @@ class TestIndexShardLeasing extends AbstractCoreIntegrationTest {
         final Path dir = IndexShardUtil.getIndexPath(indexShard, pathCreator);
         assertThat(dir).isDirectory();
 
-        // Another node opens the shard, and then it is deleted.
+        // Another node opens the shard. This node can't delete it while it does.
         assertThat(indexShardDao.claimLease(shardId, OTHER_NODE, OTHER_PROCESS, LEASE_MS)).isTrue();
-        indexShardDao.logicalDelete(shardId);
+        indexShardWriterCache.delete(shardId);
+        assertThat(getStatus(shardId)).isNotEqualTo(IndexShardStatus.DELETED);
+
+        // The other node deletes it, while it still has it open.
+        assertThat(indexShardDao.logicalDelete(shardId, OTHER_PROCESS)).isTrue();
 
         // This node is the only one running, so deleting the files falls to it, but it must wait.
         indexShardManager.deleteFromDisk();

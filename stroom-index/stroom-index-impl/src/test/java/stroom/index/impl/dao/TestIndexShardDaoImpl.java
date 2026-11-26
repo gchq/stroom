@@ -250,7 +250,7 @@ class TestIndexShardDaoImpl {
 
         assertThat(indexShardDao.claimLease(indexShard.getId(), "node2", PROCESS_B, LEASE_MS)).isFalse();
 
-        indexShardDao.logicalDelete(indexShard.getId());
+        assertThat(indexShardDao.logicalDelete(indexShard.getId(), PROCESS_B)).isTrue();
         assertThat(indexShardDao.claimLease(indexShard.getId(), "node2", PROCESS_B, LEASE_MS)).isFalse();
     }
 
@@ -316,10 +316,27 @@ class TestIndexShardDaoImpl {
     void testReleaseLease_deletedShardStaysDeleted() {
         final IndexShard indexShard = createClosedShard(VolumeType.SHARED, "node1");
         indexShardDao.claimLease(indexShard.getId(), "node1", PROCESS_A, LEASE_MS);
-        indexShardDao.logicalDelete(indexShard.getId());
+        assertThat(indexShardDao.logicalDelete(indexShard.getId(), PROCESS_A)).isTrue();
 
         assertThat(indexShardDao.releaseLease(indexShard.getId(), PROCESS_A, null)).isTrue();
 
+        assertThat(indexShardDao.fetch(indexShard.getId()).orElseThrow().getStatus())
+                .isEqualTo(IndexShardStatus.DELETED);
+    }
+
+    @Test
+    void testLogicalDelete_notWhileAnotherProcessHoldsTheLease() {
+        final IndexShard indexShard = createClosedShard(VolumeType.SHARED, "node1");
+        indexShardDao.claimLease(indexShard.getId(), "node2", PROCESS_B, LEASE_MS);
+
+        // Process B may be writing to it, and would not know it had been deleted.
+        assertThat(indexShardDao.logicalDelete(indexShard.getId(), PROCESS_A)).isFalse();
+        assertThat(indexShardDao.fetch(indexShard.getId()).orElseThrow().getStatus())
+                .isEqualTo(IndexShardStatus.OPENING);
+
+        // Once it has given the shard up, the shard can be deleted.
+        indexShardDao.releaseLease(indexShard.getId(), PROCESS_B, null);
+        assertThat(indexShardDao.logicalDelete(indexShard.getId(), PROCESS_A)).isTrue();
         assertThat(indexShardDao.fetch(indexShard.getId()).orElseThrow().getStatus())
                 .isEqualTo(IndexShardStatus.DELETED);
     }
@@ -391,7 +408,7 @@ class TestIndexShardDaoImpl {
         indexShardDao.claimLease(lapsed.getId(), "node1", PROCESS_A, -3_600_000);
         indexShardDao.setStatus(lapsed.getId(), IndexShardStatus.OPEN);
         indexShardDao.claimLease(lapsedAndDeleted.getId(), "node1", PROCESS_A, -3_600_000);
-        indexShardDao.logicalDelete(lapsedAndDeleted.getId());
+        indexShardDao.logicalDelete(lapsedAndDeleted.getId(), PROCESS_A);
         indexShardDao.claimLease(live.getId(), "node1", PROCESS_B, LEASE_MS);
 
         // Not yet out of the grace period.
@@ -419,6 +436,25 @@ class TestIndexShardDaoImpl {
         // The old holder can no longer renew or give up what it has lost.
         assertThat(indexShardDao.findLeasedShardIds(PROCESS_A)).isEmpty();
         assertThat(indexShardDao.releaseLease(lapsed.getId(), PROCESS_A, null)).isFalse();
+    }
+
+    @Test
+    void testReleaseLapsedLeases_replacedCommitsAreKeptForTheRetentionPeriod() {
+        final IndexShard indexShard = createClosedShard(VolumeType.SHARED, "node1");
+        // An earlier close recorded a time that has passed.
+        indexShardDao.claimLease(indexShard.getId(), "node1", PROCESS_A, LEASE_MS);
+        indexShardDao.releaseLease(indexShard.getId(), PROCESS_A, -1_000L);
+        assertThat(indexShardDao.findShardsWithCommitsToPrune(100))
+                .extracting(IndexShard::getId)
+                .contains(indexShard.getId());
+        // Then a node wrote to it, replacing commits that readers may still use, and died.
+        indexShardDao.claimLease(indexShard.getId(), "node2", PROCESS_B, -3_600_000);
+
+        assertThat(indexShardDao.releaseLapsedLeases(300_000, 3_600_000)).isEqualTo(1);
+
+        assertThat(indexShardDao.findShardsWithCommitsToPrune(100))
+                .extracting(IndexShard::getId)
+                .doesNotContain(indexShard.getId());
     }
 
     @Test

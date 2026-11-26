@@ -356,12 +356,13 @@ class IndexShardDaoImpl implements IndexShardDao {
     }
 
     @Override
-    public void logicalDelete(final Long id) {
-        JooqUtil.context(indexDbConnProvider, context -> context
+    public boolean logicalDelete(final long id, final String instanceId) {
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .update(INDEX_SHARD)
                 .set(INDEX_SHARD.STATUS, IndexShardStatus.DELETED.getPrimitiveValue())
                 .where(INDEX_SHARD.ID.eq(id))
-                .execute());
+                .and(INDEX_SHARD.LEASE_INSTANCE_ID.isNull().or(INDEX_SHARD.LEASE_INSTANCE_ID.eq(instanceId)))
+                .execute()) > 0;
     }
 
     @Override
@@ -456,9 +457,10 @@ class IndexShardDaoImpl implements IndexShardDao {
                     .set(INDEX_SHARD.STATUS, closedIfOpen())
                     .setNull(INDEX_SHARD.LEASE_INSTANCE_ID)
                     .setNull(INDEX_SHARD.LEASE_EXPIRY_MS)
-                    // The old writer may have been keeping commits it had replaced.
-                    .set(INDEX_SHARD.PRUNE_COMMITS_AFTER_MS, DSL.coalesce(
-                            INDEX_SHARD.PRUNE_COMMITS_AFTER_MS,
+                    // The old writer may have been keeping commits it had replaced, which nothing recorded.
+                    // Any time that is recorded is from an earlier close, so is too soon.
+                    .set(INDEX_SHARD.PRUNE_COMMITS_AFTER_MS, DSL.greatest(
+                            DSL.coalesce(INDEX_SHARD.PRUNE_COMMITS_AFTER_MS, DSL.inline(0L)),
                             DB_TIME_MS.plus(replacedCommitRetentionMs)))
                     .where(lapsed)
                     .execute();

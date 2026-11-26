@@ -48,6 +48,7 @@ class TestIndexShardLeases {
     private static final Duration USABLE = Duration.ofSeconds(45);
 
     private final AtomicLong nanoClock = new AtomicLong(1_000_000_000L);
+    private final AtomicLong millisClock = new AtomicLong(1_700_000_000_000L);
     private final Set<Long> leasedInDb = new HashSet<>();
     private final List<Long> lostShardIds = new ArrayList<>();
 
@@ -73,7 +74,7 @@ class TestIndexShardLeases {
         // Tests renew by hand. The timer does not fire in the time one takes.
         Mockito.when(config.getShardLeaseRenewInterval()).thenReturn(StroomDuration.ofHours(1));
 
-        leases = new IndexShardLeases(indexShardDao, nodeInfo, () -> config, nanoClock::get);
+        leases = new IndexShardLeases(indexShardDao, nodeInfo, () -> config, nanoClock::get, millisClock::get);
         leases.setLostLeaseHandler(lostShardIds::add);
     }
 
@@ -101,7 +102,8 @@ class TestIndexShardLeases {
 
     @Test
     void testEachProcessHasItsOwnInstanceId() {
-        final IndexShardLeases otherProcess = new IndexShardLeases(indexShardDao, null, null, nanoClock::get);
+        final IndexShardLeases otherProcess =
+                new IndexShardLeases(indexShardDao, null, null, nanoClock::get, millisClock::get);
 
         assertThat(leases.getInstanceId()).isNotBlank().isNotEqualTo(otherProcess.getInstanceId());
     }
@@ -308,6 +310,26 @@ class TestIndexShardLeases {
     }
 
     @Test
+    void testIsHeld_notAfterTheHostWasSuspended() {
+        leases.claim(SHARD);
+        assertThat(leases.isHeld(SHARD)).isTrue();
+
+        // The monotonic clock does not move while the host is suspended, but other nodes see time pass.
+        millisClock.addAndGet(Duration.ofMinutes(10).toMillis());
+
+        assertThat(leases.isHeld(SHARD)).isFalse();
+    }
+
+    @Test
+    void testIsHeld_timeOfDayPutBack_stillHeld() {
+        leases.claim(SHARD);
+
+        millisClock.addAndGet(-Duration.ofMinutes(10).toMillis());
+
+        assertThat(leases.isHeld(SHARD)).isTrue();
+    }
+
+    @Test
     void testStop_canBeCalledBeforeAnythingIsLeasedAndMoreThanOnce() {
         leases.stop();
         leases.claim(SHARD);
@@ -320,5 +342,6 @@ class TestIndexShardLeases {
 
     private void advance(final Duration duration) {
         nanoClock.addAndGet(duration.toNanos());
+        millisClock.addAndGet(duration.toMillis());
     }
 }
