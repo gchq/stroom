@@ -478,6 +478,42 @@ class TestCatalogueCheck {
     }
 
     @Test
+    void anEventTypeOfRecordsWhoseSourceTypeTheCutHidesIsRefused() {
+        // Seen in eval case 112 on Haiku (2026-11-26): logons with long stack traces, recognised by a contains on
+        // the held text (which the cut keeps), their source type field read inside it: in processing the group's
+        // pipeline passed them over as of no source type, while the check counted them as logons.
+        final List<String> lines = new ArrayList<>();
+        lines.add(line(securityEvent("")));
+        lines.add(line(securityEvent("p".repeat(10_050))));
+        final EventType logon = type("Authenticate-Logon", "Logon", EventType.AGENT_KNOWLEDGE,
+                way(contains("event", "Login failed")));
+        final EventType dropped = type("Security noise", "Security noise", EventType.USER_CONFIRMED,
+                way(contains("event", "Login failed"))).droppedByUser();
+
+        assertThat(said(check(catalogue(logon), lines))).containsExactly("Authenticate-Logon: the source type "
+                + "field event>log_type is read from a value longer than stringTruncateLength (10,000 characters) on "
+                + "1 record(s): processing cuts the value there, the source type can't be read from the cut text, and "
+                + "the group's pipeline passes those records over untranslated, whatever they hold; keep long values "
+                + "whole (long_values=whole, the pipeline's stringTruncateLength raised), or read the source type "
+                + "from a field outside the long value");
+        // Kept whole (the parser's limit raised past the longest): nothing is cut.
+        assertThat(said(CatalogueCheck.check(catalogue(logon), CatalogueSample.read(READING, String.join("\n",
+                lines), null, 20_000, null), null))).isEmpty();
+        // A drop rule's records are untranslated either way.
+        assertThat(said(check(catalogue(dropped), lines))).isEmpty();
+    }
+
+    // A security logon whose event holds its source type first, then its padding.
+    private static Map<String, Object> securityEvent(final String padding) {
+        final Map<String, Object> held = new LinkedHashMap<>();
+        held.put("log_type", "Security");
+        held.put("logger_name", SECURITY);
+        held.put("eventType", "Login");
+        held.put("message", "Login failed" + padding);
+        return held;
+    }
+
+    @Test
     void aConditionOnALongPlainFieldThatDependsOnTheCutIsSaidAsBefore() {
         final Map<String, Object> record = new LinkedHashMap<>();
         record.put("body", "p".repeat(10_050) + "TAIL");

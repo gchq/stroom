@@ -4816,7 +4816,10 @@ saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
   records (refused with that suggestion); a condition that depends on processing's **string cut**, naming the setting
 (2026-11-26: where the cut leaves a held JSON field it reads unparsable, so none of its keys are there, that is said,
 with whether a drop rule's records are then dropped or kept; `build_translation_xslt`'s sample check warns the same of
-the mapping's drop rules, `CutHeldDrops`);
+the mapping's drop rules, `CutHeldDrops`; 2026-11-27, eval case 112: an event type some of whose records have a
+source type field read inside a value the cut leaves unreadable is refused, as the group's pipeline passes those
+records over untranslated, and `build_translation_xslt` refuses a group's save on such sample records the same way,
+`CutSourceTypes`: keep long values whole, or read the source type from a field outside the long value);
   an event type recognised by every record of a line format that shares it; an `equals` or `one_of` naming a value of a
   field with at least 3 values written alike, the named one among them, differing only in a part that varies (a message holding an object's id; masked
   as the survey's shapes are), refused with `starts_with` or `matches` with a named group suggested; a code (`Login`,

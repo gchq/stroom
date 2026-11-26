@@ -37,6 +37,7 @@ import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.documents.KeptMapping;
 import stroom.ai.impl.tools.draft.CutHeldDrops;
+import stroom.ai.impl.tools.draft.CutSourceTypes;
 import stroom.ai.impl.tools.draft.DraftMapping;
 import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.draft.SnapshotChanges;
@@ -1167,12 +1168,16 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
                 MappingSampleCheck.check(mapping, texts, spec, b.schema, guessed, clock, SourceNotes.catalogue(notes),
                         scope.orElse(null), b.earlierCheck));
         b.earlierCheck = (MappingSampleCheck.Earlier) check.remove(MappingSampleCheck.EARLIER);
+        Optional<String> sourceTypeCut = Optional.empty();
         if (b.earlierCheck != null) {
             // Drop rules on a key of a held JSON field that processing's string cut leaves unreadable: the check
             // reads the records whole.
             final int cut = LongValues.cutLengthOrDefault(buildRecords, build);
             CutHeldDrops.warnings(b.earlierCheck.checked(), cut).forEach(warning -> warnings.add("sample: "
                                                                                                  + warning));
+            // The group's records whose source type the cut leaves unreadable: passed over untranslated in
+            // processing, as the catalogue refuses them.
+            sourceTypeCut = CutSourceTypes.problem(b.earlierCheck.checked(), scope.orElse(null), cut);
         }
         b.lost = (List<ConfirmedEventTypes.Lost>) check.remove(MappingSampleCheck.CONFIRMED_LOST);
         b.contradictions = (List<String>) check.remove(MappingSampleCheck.CATALOGUE_CONTRADICTIONS);
@@ -1186,6 +1191,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         b.result.put("sample_check", check);
         JsonValues.strings(check.get("warnings")).forEach(warning -> warnings.add("sample: " + warning));
         final List<String> found = new ArrayList<>(JsonValues.strings(check.get("problems")));
+        sourceTypeCut.ifPresent(found::add);
         if (saves(request) && !JsonValues.truthy(check.get("records"))) {
             // A check over no record says nothing of the mapping: saved on it, the forms it drives (domain split,
             // placeholders, confirmed event types, rules kept as Unknown) were all skipped.

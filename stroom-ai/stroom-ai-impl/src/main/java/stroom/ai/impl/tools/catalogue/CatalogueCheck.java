@@ -28,6 +28,7 @@ import stroom.ai.impl.tools.catalogue.CatalogueCheckResult.TellingField;
 import stroom.ai.impl.tools.catalogue.CatalogueCheckResult.Uncatalogued;
 import stroom.ai.impl.tools.catalogue.CatalogueCheckResult.Unparsed;
 import stroom.ai.impl.tools.catalogue.CatalogueValidation.Problem;
+import stroom.ai.impl.tools.draft.CutSourceTypes;
 import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.generation.Condition;
@@ -455,6 +456,7 @@ public final class CatalogueCheck {
                 counts.put(key, count(type, ways, all, possible, dropsFirst));
             }
             problems.addAll(soleOfLineFormat());
+            problems.addAll(sourceTypeCut());
             problems.addAll(countsInDescriptions(counts));
             final List<Problem> unplaced = new ArrayList<>();
             final Map<String, CatalogueCheckResult.Typing> typing = new LinkedHashMap<>();
@@ -893,6 +895,41 @@ public final class CatalogueCheck {
                         : "") + ": test what comes before the cut, or raise the pipeline's stringTruncateLength");
             }
             return Optional.of(String.join("; ", said));
+        }
+
+        // An event type (not a drop rule) some of whose records have a source type processing can't read once it
+        // cuts their strings ([CutSourceTypes]): the group's pipeline passes them over untranslated, whatever this
+        // check counts them as (seen in eval case 112 on Haiku, 2026-11-26: logons with long stack traces, refused
+        // on event.eventType, recognised instead by a contains on the cut text, and passed over in processing).
+        private List<Problem> sourceTypeCut() {
+            final String field = catalogue.scope().sourceTypeField();
+            final List<Object> whole = index.sample().whole();
+            final List<Problem> out = new ArrayList<>();
+            if (field == null || field.isBlank() || whole == null) {
+                return out;
+            }
+            final BitSet lost = new BitSet(size);
+            final BitSet differing = index.differing();
+            for (int n = differing.nextSetBit(0); n >= 0; n = differing.nextSetBit(n + 1)) {
+                if (CutSourceTypes.lost(field, whole.get(n), index.sample().records().get(n))) {
+                    lost.set(n);
+                }
+            }
+            if (lost.isEmpty()) {
+                return out;
+            }
+            for (int t = 0; t < types.size(); t++) {
+                if (types.get(t).drop()) {
+                    continue;
+                }
+                final BitSet its = (BitSet) byType.get(t).clone();
+                its.and(lost);
+                if (!its.isEmpty()) {
+                    out.add(new Problem(types.get(t).typeId(), -1, CutSourceTypes.said(field, its.cardinality(),
+                            index.sample().stringTruncateLength())));
+                }
+            }
+            return out;
         }
 
         // An event type recognised by every record of a line format (its conditions only on the variant field) that

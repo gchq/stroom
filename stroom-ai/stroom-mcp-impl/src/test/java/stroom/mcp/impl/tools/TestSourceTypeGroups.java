@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolResult;
 import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.documents.KeptMapping;
+import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.HelpersXslt;
 import stroom.ai.impl.tools.generation.ModuleChecks;
@@ -175,6 +176,40 @@ class TestSourceTypeGroups {
 
         assertThat(saved.get("problems")).as("%s", saved).isEqualTo(List.of());
         assertThat(JsonValues.mapOrEmpty(saved.get("group"))).containsEntry("system_name", "PEGA Security");
+    }
+
+    @Test
+    void aGroupWhoseSourceTypeTheStringCutHidesOnSomeRecordsIsRefused() {
+        // Seen in eval case 112 on Haiku (2026-11-26): the source type field read inside a held JSON string longer
+        // than the JSON parser keeps on some records (logons with long stack traces), the long values cut: the
+        // group's pipeline passed them over as of no source type, untranslated, the save warning of nothing.
+        final Map<String, Object> state = new LinkedHashMap<>(registry().state());
+        state.put("field", "message>kind");
+        written.add(SourceTypeRegistry.render(state));
+        sample = heldKindRecord("alice", "") + heldKindRecord("bob", "p".repeat(LocalCheck.JSON_PARSER_CUT + 50));
+
+        final Map<String, Object> saved = world.call(tool, args(security(), "PEGA security",
+                List.of("PegaSecurityEvent")));
+
+        assertThat(saved.get("ok")).isEqualTo(false);
+        assertThat(JsonValues.strings(saved.get("problems"))).anySatisfy(problem -> assertThat(problem).startsWith(
+                "sample: the source type field message>kind is read from a value longer than stringTruncateLength "
+                + "(10,000 characters) on 1 record(s)").endsWith("(login 1)"));
+    }
+
+    // A security login whose message holds its source type (kind) first, then its padding, as JSON text.
+    private static String heldKindRecord(final String operator, final String padding) {
+        final Map<String, Object> message = new LinkedHashMap<>();
+        message.put("kind", "PegaSecurityEvent");
+        message.put("eventType", "login");
+        message.put("operatorId", operator);
+        message.put("detail", "failed" + padding);
+        final Map<String, Object> record = new LinkedHashMap<>();
+        record.put("timestamp", "2026-09-28T10:00:00.000Z");
+        record.put("hostname", "h1");
+        record.put("app", "pega");
+        record.put("message", ToolJson.dumps(message));
+        return ToolJson.dumps(record) + "\n";
     }
 
     @Test
