@@ -131,7 +131,7 @@ class TestIndexShardLeases {
 
         leases.renew();
 
-        Mockito.verify(indexShardDao).renewLeases(leases.getInstanceId(), LEASE.toMillis());
+        Mockito.verify(indexShardDao).renewLeases(leases.getInstanceId(), Set.of(SHARD), LEASE.toMillis());
         // Trusted for the usable period from the renewal, not from the claim.
         advance(USABLE.minusMillis(1));
         assertThat(leases.isHeld(SHARD)).isTrue();
@@ -161,7 +161,8 @@ class TestIndexShardLeases {
     @Test
     void testRenew_databaseUnavailable_leasesRunOutOnTheirOwn() {
         leases.claim(SHARD);
-        Mockito.when(indexShardDao.renewLeases(any(), anyLong())).thenThrow(new RuntimeException("no database"));
+        Mockito.when(indexShardDao.renewLeases(any(), any(), anyLong()))
+                .thenThrow(new RuntimeException("no database"));
 
         advance(Duration.ofSeconds(20));
         leases.renew();
@@ -197,7 +198,7 @@ class TestIndexShardLeases {
     void testRenew_nothingLeased_doesNotTouchTheDatabase() {
         leases.renew();
 
-        Mockito.verify(indexShardDao, Mockito.never()).renewLeases(any(), anyLong());
+        Mockito.verify(indexShardDao, Mockito.never()).renewLeases(any(), any(), anyLong());
     }
 
     @Test
@@ -385,6 +386,19 @@ class TestIndexShardLeases {
         millisClock.addAndGet(-Duration.ofMinutes(10).toMillis());
 
         assertThat(leases.isHeld(SHARD)).isTrue();
+    }
+
+    @Test
+    void testRenew_aForgottenLeaseIsNotRenewed() {
+        leases.claim(SHARD);
+        leases.claim(OTHER_SHARD);
+
+        leases.forget(SHARD);
+        leases.renew();
+
+        // So that it lapses, and the shard is taken from this process.
+        Mockito.verify(indexShardDao).renewLeases(leases.getInstanceId(), Set.of(OTHER_SHARD), LEASE.toMillis());
+        assertThat(leases.isHeld(SHARD)).isFalse();
     }
 
     @Test

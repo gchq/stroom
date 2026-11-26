@@ -465,11 +465,17 @@ class IndexShardDaoImpl implements IndexShardDao {
     }
 
     @Override
-    public int renewLeases(final String instanceId, final long leaseDurationMs) {
+    public int renewLeases(final String instanceId,
+                           final Collection<Long> shardIds,
+                           final long leaseDurationMs) {
+        if (shardIds.isEmpty()) {
+            return 0;
+        }
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .update(INDEX_SHARD)
                 .set(INDEX_SHARD.LEASE_EXPIRY_MS, DB_TIME_MS.plus(leaseDurationMs))
                 .where(INDEX_SHARD.LEASE_INSTANCE_ID.eq(instanceId))
+                .and(INDEX_SHARD.ID.in(shardIds))
                 .and(INDEX_SHARD.LEASE_EXPIRY_MS.ge(DB_TIME_MS))
                 .execute());
     }

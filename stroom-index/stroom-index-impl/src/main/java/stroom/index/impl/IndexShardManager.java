@@ -19,6 +19,7 @@ package stroom.index.impl;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.index.shared.FindIndexShardCriteria;
+import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexVolume;
@@ -356,8 +357,10 @@ public class IndexShardManager {
             throw new PermissionException(
                     securityContext.getUserRef(),
                     "You do not have permission to delete index shard");
-        } else {
-            indexShardWriterCache.delete(indexShard.getId());
+        } else if (!indexShardWriterCache.delete(indexShard.getId())) {
+            // Counted as an error, so the user is not told that it was deleted. Retention tries again itself.
+            throw new IndexException("Unable to delete index shard " + indexShard.getId()
+                                     + " as another node is writing to it, or it no longer exists");
         }
     }
 

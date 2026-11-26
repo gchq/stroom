@@ -78,12 +78,13 @@ public class MockIndexShardWriterCache implements IndexShardWriterCache {
     }
 
     @Override
-    public void delete(final long indexShardId) {
+    public boolean delete(final long indexShardId) {
         openWritersByShardId.values().forEach(indexShardWriter -> {
             if (indexShardWriter.getIndexShardId() == indexShardId) {
                 close(indexShardWriter);
             }
         });
+        return true;
     }
 
     public void shutdown() {

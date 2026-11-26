@@ -104,6 +104,19 @@ class TestIndexRun {
     }
 
     @Test
+    void testRecordCouldNotBeKept_faultNotCounted() {
+        final IndexRun indexRun = IndexRun.start(holder, factory);
+        Mockito.doThrow(new IndexRunTrackingException("no database", null))
+                .when(indexer).addDocument(any(), any(), any());
+
+        assertThatThrownBy(() -> indexRun.addDocument(indexer, KEY, document))
+                .isInstanceOf(IndexRunTrackingException.class);
+
+        assertThat(runIndexing.getCouldNotIndexReason()).contains("no database");
+        assertThat(runIndexing.isCouldNotIndexCounted()).isFalse();
+    }
+
+    @Test
     void testRunStopped_saysNothingMore() {
         final IndexRun indexRun = IndexRun.start(holder, factory);
         Mockito.doThrow(new RunStoppedException("replaced")).when(indexer).addDocument(any(), any(), any());

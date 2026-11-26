@@ -267,12 +267,25 @@ class TestIndexShardDaoImpl {
         indexShardDao.claimLease(expiredShard.getId(), "node1", PROCESS_A, -1_000);
         indexShardDao.claimLease(otherProcessShard.getId(), "node2", PROCESS_B, LEASE_MS);
 
-        assertThat(indexShardDao.renewLeases(PROCESS_A, LEASE_MS)).isEqualTo(2);
+        assertThat(indexShardDao.renewLeases(PROCESS_A,
+                List.of(shard1.getId(), shard2.getId(), expiredShard.getId(), otherProcessShard.getId()),
+                LEASE_MS)).isEqualTo(2);
 
         // An expired lease is not brought back by renewing, as its holder must stop writing first.
         assertThat(indexShardDao.findLeasedShardIds(PROCESS_A))
                 .containsExactlyInAnyOrder(shard1.getId(), shard2.getId());
         assertThat(indexShardDao.findLeasedShardIds(PROCESS_B)).containsExactly(otherProcessShard.getId());
+    }
+
+    @Test
+    void testRenewLeases_onlyTheShardsGiven() {
+        final IndexShard kept = createClosedShard(VolumeType.SHARED, "node1");
+        final IndexShard forgotten = createClosedShard(VolumeType.SHARED, "node1");
+        indexShardDao.claimLease(kept.getId(), "node1", PROCESS_A, 1_000);
+        indexShardDao.claimLease(forgotten.getId(), "node1", PROCESS_A, 1_000);
+
+        assertThat(indexShardDao.renewLeases(PROCESS_A, List.of(kept.getId()), LEASE_MS)).isOne();
+        assertThat(indexShardDao.renewLeases(PROCESS_A, List.of(), LEASE_MS)).isZero();
     }
 
     @Test

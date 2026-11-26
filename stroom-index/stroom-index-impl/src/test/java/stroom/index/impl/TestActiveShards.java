@@ -256,6 +256,54 @@ class TestActiveShards {
     }
 
     @Test
+    void testWriterClosing_shardStaysInUse() {
+        Mockito.doThrow(new WriterClosingException("closing")).when(myIndexShardWriter).addDocument(any());
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong()))
+                .thenReturn(myIndexShardWriter)
+                .thenReturn(anotherIndexShardWriter);
+        final ActiveShards activeShards = createActiveShards();
+
+        activeShards.addDocument(new IndexDocument());
+
+        // Added to the same shard by its new writer, and no shard is made.
+        Mockito.verify(anotherIndexShardWriter).addDocument(any());
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isOne();
+    }
+
+    @Test
+    void testRunTrackingFails_shardStaysInUse() {
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong())).thenReturn(myIndexShardWriter);
+        final IndexRunTracker tracker = Mockito.mock(IndexRunTracker.class);
+        Mockito.doThrow(new RuntimeException("lock wait timeout")).when(tracker).beforeAdd(anyLong(), any());
+        final ActiveShards activeShards = createActiveShards();
+
+        assertThatThrownBy(() -> activeShards.addDocument(new IndexDocument(), tracker))
+                .isInstanceOf(IndexRunTrackingException.class)
+                .hasMessageContaining("lock wait timeout");
+
+        Mockito.verify(myIndexShardWriter, never()).addDocument(any());
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isOne();
+    }
+
+    @Test
+    void testRefusedByAnOldShardOnly_isNotTheDocumentsFault() {
+        // The old shard holds a field of a type that has since changed, and no new shard can be opened.
+        Mockito.doThrow(new IllegalArgumentException("Inconsistency of field data structures"))
+                .when(myIndexShardWriter).addDocument(any());
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong())).thenAnswer(invocation -> {
+            if (invocation.<Long>getArgument(0) == 1L) {
+                return myIndexShardWriter;
+            }
+            throw new IndexException("Unable to claim the lease");
+        });
+        final ActiveShards activeShards = createActiveShards();
+
+        assertThatThrownBy(() -> activeShards.addDocument(new IndexDocument()))
+                .isInstanceOf(IndexException.class)
+                .isNotInstanceOf(DocumentRefusedException.class);
+    }
+
+    @Test
     void testRunTracker_toldOfEachDocumentAroundTheAdd() {
         Mockito.when(myIndexShardWriter.getWriterId()).thenReturn("writer");
         Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong())).thenReturn(myIndexShardWriter);

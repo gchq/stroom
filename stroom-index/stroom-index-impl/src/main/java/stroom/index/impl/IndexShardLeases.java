@@ -281,7 +281,7 @@ public class IndexShardLeases {
         final Renewal now = now(leaseDurationMs);
         final Set<Long> leasedShardIds;
         try {
-            indexShardDao.renewLeases(instanceId, leaseDurationMs);
+            indexShardDao.renewLeases(instanceId, held.keySet(), leaseDurationMs);
             leasedShardIds = indexShardDao.findLeasedShardIds(instanceId);
         } catch (final RuntimeException e) {
             // The leases are not extended, so the writers stop of their own accord once the last renewal

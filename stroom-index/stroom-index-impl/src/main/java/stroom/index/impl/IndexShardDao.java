@@ -25,6 +25,7 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.shared.ResultPage;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -119,13 +120,15 @@ public interface IndexShardDao {
     /// @return True if the lease was claimed, false if the shard is not closed or is leased already.
     boolean claimLease(long id, String nodeName, String instanceId, long leaseDurationMs);
 
-    /// Extends every lease held by a process that has not yet expired. A lease that has expired is left
-    /// alone, as its holder must stop writing before it can have the shard again.
+    /// Extends the leases a process holds on the given shards that have not yet expired. A lease that has
+    /// expired is left alone, as its holder must stop writing before it can have the shard again, and so is
+    /// one the process holds on a shard that is not given, which it has stopped relying on and must lapse.
     ///
     /// @param instanceId      The id of the process holding the leases.
+    /// @param shardIds        The ids of the shards whose leases the process still relies on.
     /// @param leaseDurationMs How long the leases last from now if they are not renewed again.
     /// @return The number of leases extended.
-    int renewLeases(String instanceId, long leaseDurationMs);
+    int renewLeases(String instanceId, Collection<Long> shardIds, long leaseDurationMs);
 
     /// Finds the shards a process holds an unexpired lease on.
     ///

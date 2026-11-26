@@ -29,6 +29,7 @@ import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.shared.ResultPage;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -174,8 +175,10 @@ public class MockIndexShardDao implements IndexShardDao {
     }
 
     @Override
-    public synchronized int renewLeases(final String instanceId, final long leaseDurationMs) {
-        return findLeasedShardIds(instanceId).size();
+    public synchronized int renewLeases(final String instanceId,
+                                        final Collection<Long> shardIds,
+                                        final long leaseDurationMs) {
+        return (int) findLeasedShardIds(instanceId).stream().filter(shardIds::contains).count();
     }
 
     @Override

@@ -24,6 +24,7 @@ import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.ShardFullException;
 import stroom.index.impl.UncheckedLockObtainException;
+import stroom.index.impl.WriterClosingException;
 import stroom.index.lucene.analyser.AnalyzerFactory;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
@@ -321,7 +322,8 @@ class LuceneIndexShardWriter implements IndexShardWriter {
         adding.incrementAndGet();
         try {
             if (closing) {
-                throw new IndexException("Unable to add to index shard " + indexShardId + " as it is closing");
+                throw new WriterClosingException("Unable to add to index shard " + indexShardId
+                                                 + " as its writer is closing");
             }
             // An Exception might be thrown here if the index
             // has been deleted. If this happens log the error

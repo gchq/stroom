@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -244,7 +245,8 @@ class TestIndexShardWriterCacheImpl {
         Mockito.when(indexShardDao.logicalDelete(SHARD, INSTANCE_ID)).thenReturn(false);
         Mockito.when(indexShardDao.isLeased(SHARD)).thenReturn(true);
 
-        writerCache.delete(SHARD);
+        // Reported as not deleted, so it isn't counted as if it had been.
+        assertThat(writerCache.delete(SHARD)).isFalse();
 
         Mockito.verify(cache, Mockito.never()).invalidate(any());
     }
@@ -253,7 +255,7 @@ class TestIndexShardWriterCacheImpl {
     void testDelete_closesThisNodesWriter() {
         Mockito.when(indexShardDao.logicalDelete(SHARD, INSTANCE_ID)).thenReturn(true);
 
-        writerCache.delete(SHARD);
+        assertThat(writerCache.delete(SHARD)).isTrue();
 
         Mockito.verify(cache).invalidate(SHARD);
     }
@@ -606,18 +608,36 @@ class TestIndexShardWriterCacheImpl {
         void testClose_databaseUnavailable_isTriedAgain() throws InterruptedException {
             volumeType = VolumeType.SHARED;
             final IndexShardWriter writer = realWriterCache.getOrOpenWriter(SHARD);
+            final String writerId = writer.getWriterId();
+            final CountDownLatch databaseBack = new CountDownLatch(1);
             Mockito.when(indexShardDao.closeWriter(anyLong(), any(), any(), any(), anyBoolean()))
                     .thenThrow(new RuntimeException("no database"))
-                    .thenReturn(Optional.of(Set.of()));
+                    .thenAnswer(invocation -> {
+                        databaseBack.await();
+                        return Optional.of(Set.of());
+                    });
 
             realWriterCache.close(writer);
             runQueuedTask();
 
-            Mockito.verify(indexShardDao, Mockito.times(2))
-                    .closeWriter(SHARD, writer.getWriterId(), INSTANCE_ID, null, false);
-            // Given up with the close, in the same transaction.
-            Mockito.verify(indexShardLeases).forget(SHARD);
+            // Tried again later, outside the lock for the shard, which is not opened again meanwhile.
+            assertThatThrownBy(() -> realWriterCache.getOrOpenWriter(SHARD))
+                    .hasMessageContaining("has still to be recorded");
+            databaseBack.countDown();
+            Mockito.verify(indexShardDao, Mockito.timeout(10_000).times(2))
+                    .closeWriter(SHARD, writerId, INSTANCE_ID, null, false);
+            // The lease was given up by the close, in the same transaction.
+            Mockito.verify(indexShardLeases, Mockito.timeout(10_000)).forget(SHARD);
             Mockito.verify(indexShardLeases, Mockito.never()).release(anyLong(), any());
+            // And the shard can be opened again.
+            for (int i = 0; i < 100 && writers.size() < 2; i++) {
+                try {
+                    realWriterCache.getOrOpenWriter(SHARD);
+                } catch (final RuntimeException e) {
+                    Thread.sleep(100);
+                }
+            }
+            assertThat(writers).hasSize(2);
         }
 
         private void verifyClosedInDatabase() {
