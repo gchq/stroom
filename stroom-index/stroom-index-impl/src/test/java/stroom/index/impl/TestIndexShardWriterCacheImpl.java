@@ -198,6 +198,9 @@ class TestIndexShardWriterCacheImpl {
 
         Mockito.verify(indexShardDao).resetAfterRestart(
                 SHARD, new MockNodeInfo().getThisNodeName(), INSTANCE_ID, getRetentionMs());
+        // Also the leases of the shards it had open that were deleted meanwhile.
+        Mockito.verify(indexShardDao).clearLeasesOfUnusableShardsAfterRestart(
+                new MockNodeInfo().getThisNodeName(), INSTANCE_ID);
     }
 
     @Test
@@ -225,6 +228,25 @@ class TestIndexShardWriterCacheImpl {
 
         // Kept, the lease would leave the shard unusable by any node until this process stopped.
         Mockito.verify(indexShardLeases).release(SHARD, null);
+    }
+
+    @Test
+    void testDelete_shardAnotherNodeHoldsIsLeftOpenThere() {
+        Mockito.when(indexShardDao.logicalDelete(SHARD, INSTANCE_ID)).thenReturn(false);
+        Mockito.when(indexShardDao.isLeased(SHARD)).thenReturn(true);
+
+        writerCache.delete(SHARD);
+
+        Mockito.verify(cache, Mockito.never()).invalidate(any());
+    }
+
+    @Test
+    void testDelete_closesThisNodesWriter() {
+        Mockito.when(indexShardDao.logicalDelete(SHARD, INSTANCE_ID)).thenReturn(true);
+
+        writerCache.delete(SHARD);
+
+        Mockito.verify(cache).invalidate(SHARD);
     }
 
     private static long getRetentionMs() {

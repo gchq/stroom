@@ -223,7 +223,9 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                         luceneIndexDoc.getMaxDocsPerShard());
                 try {
                     if (leased) {
-                        writer.setLeaseCheck(indexShardLeases.leaseCheck(indexShardId));
+                        writer.setLeaseCheck(
+                                indexShardLeases.getInstanceId(),
+                                indexShardLeases.leaseCheck(indexShardId));
                     }
 
                     // We have opened the index so update the DB object.
@@ -371,7 +373,9 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                             .get(luceneVersion)
                             .createIndexShardWriter(indexShard, luceneIndexDoc.getMaxDocsPerShard());
                     try {
-                        writer.setLeaseCheck(indexShardLeases.leaseCheck(indexShardId));
+                        writer.setLeaseCheck(
+                                indexShardLeases.getInstanceId(),
+                                indexShardLeases.leaseCheck(indexShardId));
                         writer.pruneReplacedCommits();
                     } finally {
                         writer.close();
@@ -503,9 +507,11 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             LOGGER.debug("Deleted {}", indexShardId);
             cache.invalidate(indexShardId);
             cache.evictExpiredElements();
-        } else {
+        } else if (indexShardDao.isLeased(indexShardId)) {
             // Another node is writing to it. It is deleted once that node has given it up.
             LOGGER.info("Index shard {} not deleted as another node holds the lease on it", indexShardId);
+        } else {
+            LOGGER.debug("Index shard {} not deleted as it no longer exists", indexShardId);
         }
     }
 
@@ -585,6 +591,15 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                 final ResultPage<IndexShard> indexShardResultPage = indexShardDao.find(criteria);
                 for (final IndexShard indexShard : indexShardResultPage.getValues()) {
                     clean(indexShard);
+                }
+                // A shard deleted while it was open is not reset above, as it stays deleted, but the lease
+                // the earlier process held on it would stop its files ever being deleted.
+                try {
+                    indexShardDao.clearLeasesOfUnusableShardsAfterRestart(
+                            nodeInfo.getThisNodeName(),
+                            indexShardLeases.getInstanceId());
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e::getMessage, e);
                 }
             }, "Index shard writer cache startup");
         });

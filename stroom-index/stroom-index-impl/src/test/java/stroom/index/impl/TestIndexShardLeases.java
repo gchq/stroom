@@ -30,6 +30,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 
@@ -307,6 +310,61 @@ class TestIndexShardLeases {
 
         // Two renewals fit in the 45 seconds a lease is trusted for.
         assertThat(leases.getEffectiveRenewIntervalMs()).isEqualTo(22_500);
+    }
+
+    @Test
+    void testIsHeld_durationRaisedSinceTheLeaseWasGranted_trustedOnlyForTheDurationGranted() {
+        leases.claim(SHARD);
+
+        // The lease in the database lasts a minute, whatever is set now.
+        Mockito.when(config.getShardLeaseDuration()).thenReturn(StroomDuration.of(Duration.ofMinutes(10)));
+        advance(USABLE.plusSeconds(1));
+
+        assertThat(leases.isHeld(SHARD)).isFalse();
+    }
+
+    @Test
+    void testRenew_doesNotWaitForAClaimThatIsWaitingForTheDatabase() throws Exception {
+        leases.claim(SHARD);
+        final CountDownLatch claimStarted = new CountDownLatch(1);
+        final CountDownLatch databaseBack = new CountDownLatch(1);
+        Mockito.when(indexShardDao.claimLease(eq(OTHER_SHARD), any(), any(), anyLong())).thenAnswer(invocation -> {
+            claimStarted.countDown();
+            databaseBack.await();
+            return true;
+        });
+        final Thread claimThread = new Thread(() -> leases.claim(OTHER_SHARD));
+        claimThread.start();
+        try {
+            assertThat(claimStarted.await(10, TimeUnit.SECONDS)).isTrue();
+            advance(Duration.ofSeconds(30));
+
+            final CompletableFuture<Void> renewal = CompletableFuture.runAsync(leases::renew);
+
+            // Renewed while the claim still waits.
+            renewal.get(10, TimeUnit.SECONDS);
+            advance(Duration.ofSeconds(30));
+            assertThat(leases.isHeld(SHARD)).isTrue();
+        } finally {
+            databaseBack.countDown();
+            claimThread.join();
+        }
+    }
+
+    @Test
+    void testRenew_releasedMeanwhile_isNotTrustedAgain() {
+        leases.claim(SHARD);
+        // The renewal finds the lease, then the shard is closed before it records that it did.
+        Mockito.when(indexShardDao.findLeasedShardIds(any())).thenAnswer(invocation -> {
+            final Set<Long> leased = new HashSet<>(leasedInDb);
+            leases.release(SHARD, null);
+            return leased;
+        });
+
+        leases.renew();
+
+        assertThat(leases.isHeld(SHARD)).isFalse();
+        assertThat(lostShardIds).isEmpty();
     }
 
     @Test

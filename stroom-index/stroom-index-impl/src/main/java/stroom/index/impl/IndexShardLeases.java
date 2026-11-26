@@ -27,7 +27,6 @@ import jakarta.inject.Singleton;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +38,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BooleanSupplier;
 import java.util.function.LongConsumer;
 import java.util.function.LongSupplier;
@@ -79,8 +79,11 @@ public class IndexShardLeases {
     private final Map<Long, Renewal> lastRenewed = new ConcurrentHashMap<>();
 
     // Leases this process could not give up because the database was unavailable, with the prune delay each
-    // was to be released with. They are given up when it next can be. Guarded by this.
-    private final Map<Long, FailedRelease> failedReleases = new HashMap<>();
+    // was to be released with. They are given up when it next can be. Changed only under the lock.
+    private final Map<Long, FailedRelease> failedReleases = new ConcurrentHashMap<>();
+    // Held while a lease is claimed or given up, or failed releases are tried again, so that a failed release
+    // of a shard is always made before the shard is claimed again. Not held while leases are renewed.
+    private final ReentrantLock lock = new ReentrantLock();
 
     private volatile LongConsumer lostLeaseHandler = shardId -> {
     };
@@ -138,28 +141,34 @@ public class IndexShardLeases {
     /// @param shardId The id of the shard, which must be on a shared volume.
     /// @return True if this process now holds the lease. False if the shard is not closed or another
     /// process holds its lease.
-    public synchronized boolean claim(final long shardId) {
-        // A lease this process has still to give up must go first. A retry of that release cannot tell the
-        // old lease from the one claimed here, as this process holds both, so it would give up the new one.
-        final FailedRelease failedRelease = failedReleases.get(shardId);
-        if (failedRelease != null) {
-            releaseInDatabase(shardId, failedRelease);
-            failedReleases.remove(shardId);
-        }
+    public boolean claim(final long shardId) {
+        lock.lock();
+        try {
+            // A lease this process has still to give up must go first. A retry of that release cannot tell the
+            // old lease from the one claimed here, as this process holds both, so it would give up the new one.
+            final FailedRelease failedRelease = failedReleases.get(shardId);
+            if (failedRelease != null) {
+                releaseInDatabase(shardId, failedRelease);
+                failedReleases.remove(shardId);
+            }
 
-        // Taken before the claim is made, so the lease is never thought to last longer than it does.
-        final Renewal now = now();
-        final boolean claimed = indexShardDao.claimLease(
-                shardId,
-                nodeInfo.getThisNodeName(),
-                instanceId,
-                getLeaseDuration().toMillis());
-        if (claimed) {
-            lastRenewed.put(shardId, now);
-            startRenewing();
+            // Taken before the claim is made, so the lease is never thought to last longer than it does.
+            final long leaseDurationMs = getLeaseDuration().toMillis();
+            final Renewal now = now(leaseDurationMs);
+            final boolean claimed = indexShardDao.claimLease(
+                    shardId,
+                    nodeInfo.getThisNodeName(),
+                    instanceId,
+                    leaseDurationMs);
+            if (claimed) {
+                lastRenewed.put(shardId, now);
+                startRenewing();
+            }
+            LOGGER.debug("claim() - shardId: {}, claimed: {}", shardId, claimed);
+            return claimed;
+        } finally {
+            lock.unlock();
         }
-        LOGGER.debug("claim() - shardId: {}, claimed: {}", shardId, claimed);
-        return claimed;
     }
 
     /// Gives up the lease on a shard, which also marks the shard as closed, so any node may claim it.
@@ -167,16 +176,21 @@ public class IndexShardLeases {
     /// @param shardId             The id of the shard.
     /// @param pruneCommitsDelayMs How long from now the shard's replaced commits must be kept for, or null
     ///                            if its writer left none behind.
-    public synchronized void release(final long shardId, final Long pruneCommitsDelayMs) {
-        lastRenewed.remove(shardId);
-        final FailedRelease release = new FailedRelease(pruneCommitsDelayMs);
+    public void release(final long shardId, final Long pruneCommitsDelayMs) {
+        lock.lock();
         try {
-            releaseInDatabase(shardId, release);
-        } catch (final RuntimeException e) {
-            // Left as it is the shard would stay leased to this process, and unusable, until it restarts.
-            failedReleases.put(shardId, release);
-            LOGGER.error(() -> LogUtil.message("Unable to give up the lease on index shard {}. Will try again: {}",
-                    shardId, LogUtil.exceptionMessage(e)), e);
+            lastRenewed.remove(shardId);
+            final FailedRelease release = new FailedRelease(pruneCommitsDelayMs);
+            try {
+                releaseInDatabase(shardId, release);
+            } catch (final RuntimeException e) {
+                // Left as it is the shard would stay leased to this process, and unusable, until it restarts.
+                failedReleases.put(shardId, release);
+                LOGGER.error(() -> LogUtil.message("Unable to give up the lease on index shard {}. Will try again: {}",
+                        shardId, LogUtil.exceptionMessage(e)), e);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -194,15 +208,16 @@ public class IndexShardLeases {
         if (renewal == null) {
             return false;
         }
-        final double usableMs = getLeaseDuration().toMillis() * USABLE_FRACTION;
+        // For as long as the lease was granted for, not the duration set now, which may since have been raised.
+        final double usableMs = renewal.leaseDurationMs() * USABLE_FRACTION;
         // Both clocks, as the monotonic one stops while the host is suspended, when other nodes see the
         // lease expire, and the time of day can be put back.
         return nanoClock.getAsLong() - renewal.nanos() < usableMs * 1_000_000
                && millisClock.getAsLong() - renewal.millis() < usableMs;
     }
 
-    private Renewal now() {
-        return new Renewal(nanoClock.getAsLong(), millisClock.getAsLong());
+    private Renewal now(final long leaseDurationMs) {
+        return new Renewal(nanoClock.getAsLong(), millisClock.getAsLong(), leaseDurationMs);
     }
 
     /// Makes the check a writer uses before it adds a document or commits.
@@ -215,34 +230,7 @@ public class IndexShardLeases {
 
     /// Extends every lease this process holds, and finds any it has lost. Run on a timer.
     public void renew() {
-        final List<Long> lostShardIds = new ArrayList<>();
-        synchronized (this) {
-            retryFailedReleases();
-            if (lastRenewed.isEmpty()) {
-                return;
-            }
-            // Taken before the renewal is made, so a lease is never thought to last longer than it does.
-            final Renewal now = now();
-            final Set<Long> leasedShardIds;
-            try {
-                indexShardDao.renewLeases(instanceId, getLeaseDuration().toMillis());
-                leasedShardIds = indexShardDao.findLeasedShardIds(instanceId);
-            } catch (final RuntimeException e) {
-                // The leases are not extended, so the writers stop of their own accord once the last
-                // renewal that worked is too long ago.
-                LOGGER.error(() -> LogUtil.message("Unable to renew index shard leases: {}",
-                        LogUtil.exceptionMessage(e)), e);
-                return;
-            }
-            for (final Long shardId : lastRenewed.keySet()) {
-                if (leasedShardIds.contains(shardId)) {
-                    lastRenewed.put(shardId, now);
-                } else {
-                    lostShardIds.add(shardId);
-                }
-            }
-            lostShardIds.forEach(lastRenewed::remove);
-        }
+        final List<Long> lostShardIds = renewHeldLeases();
 
         // Told outside the lock, as closing a writer releases its lease.
         for (final Long shardId : lostShardIds) {
@@ -255,6 +243,50 @@ public class IndexShardLeases {
                 LOGGER.error("Error closing index shard {} after losing its lease", shardId, e);
             }
         }
+
+        // Last, and only if nothing else holds the lock, as the renewals that follow must never wait for a
+        // claim or release. If this is skipped it is tried at the next renewal.
+        if (!failedReleases.isEmpty() && lock.tryLock()) {
+            try {
+                retryFailedReleases();
+            } finally {
+                lock.unlock();
+            }
+        }
+    }
+
+    // Not under this object's lock, so that renewal never waits behind claims and releases, whose database
+    // calls may be slow, until every lease is too old to trust. A lease claimed or given up meanwhile has a
+    // different entry by the time this records anything, and that entry is left as it is.
+    private List<Long> renewHeldLeases() {
+        final Map<Long, Renewal> held = Map.copyOf(lastRenewed);
+        if (held.isEmpty()) {
+            return List.of();
+        }
+        // Taken before the renewal is made, so a lease is never thought to last longer than it does.
+        final long leaseDurationMs = getLeaseDuration().toMillis();
+        final Renewal now = now(leaseDurationMs);
+        final Set<Long> leasedShardIds;
+        try {
+            indexShardDao.renewLeases(instanceId, leaseDurationMs);
+            leasedShardIds = indexShardDao.findLeasedShardIds(instanceId);
+        } catch (final RuntimeException e) {
+            // The leases are not extended, so the writers stop of their own accord once the last renewal
+            // that worked is too long ago.
+            LOGGER.error(() -> LogUtil.message("Unable to renew index shard leases: {}",
+                    LogUtil.exceptionMessage(e)), e);
+            return List.of();
+        }
+
+        final List<Long> lostShardIds = new ArrayList<>();
+        held.forEach((shardId, renewal) -> {
+            if (leasedShardIds.contains(shardId)) {
+                lastRenewed.replace(shardId, renewal, now);
+            } else if (lastRenewed.remove(shardId, renewal)) {
+                lostShardIds.add(shardId);
+            }
+        });
+        return lostShardIds;
     }
 
     private void retryFailedReleases() {
@@ -274,10 +306,15 @@ public class IndexShardLeases {
     }
 
     /// Stops renewing leases. For use once every writer has been closed and its lease given up.
-    public synchronized void stop() {
-        if (renewalExecutor != null) {
-            renewalExecutor.shutdownNow();
-            renewalExecutor = null;
+    public void stop() {
+        lock.lock();
+        try {
+            if (renewalExecutor != null) {
+                renewalExecutor.shutdownNow();
+                renewalExecutor = null;
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -348,8 +385,8 @@ public class IndexShardLeases {
     // --------------------------------------------------------------------------------
 
 
-    // When a lease was last known to be held, on each clock.
-    private record Renewal(long nanos, long millis) {
+    // When a lease was last known to be held, on each clock, and how long it was granted for then.
+    private record Renewal(long nanos, long millis, long leaseDurationMs) {
 
     }
 }

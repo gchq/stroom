@@ -50,8 +50,9 @@ public interface IndexShardWriter {
     /// committed, because another node may by then be writing to the shard. A writer that is never given a
     /// check, as for a shard on a local volume, always writes.
     ///
-    /// @param leaseHeld Returns true while this node holds the lease on the shard.
-    default void setLeaseCheck(final BooleanSupplier leaseHeld) {
+    /// @param leaseInstanceId The process that holds the lease, which the shard's row is only changed under.
+    /// @param leaseHeld       Returns true while this node holds the lease on the shard.
+    default void setLeaseCheck(final String leaseInstanceId, final BooleanSupplier leaseHeld) {
         // Writers that can't be used on shared volumes need no lease.
     }
 

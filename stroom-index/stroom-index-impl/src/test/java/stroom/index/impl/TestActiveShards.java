@@ -253,7 +253,7 @@ class TestActiveShards {
                 nodeInfo.getThisNodeName(),
                 LuceneVersionUtil.CURRENT_LUCENE_VERSION.getDisplayValue());
         indexShardDao.setStatus(myIndexShard.getId(), status);
-        indexShardDao.update(myIndexShard.getId(), documentCount, 0L, 0L, 0L);
+        indexShardDao.update(myIndexShard.getId(), documentCount, 0L, 0L, 0L, null);
 
         Mockito.lenient().when(indexShardWriterCache.getOrOpenWriter(anyLong())).thenReturn(anotherIndexShardWriter);
         Mockito.lenient().when(indexShardWriterCache.getOrOpenWriter(myIndexShard.getId()))

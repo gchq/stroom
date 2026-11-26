@@ -35,6 +35,9 @@ public record IndexShardTaskRow(long taskId,
                                 IndexShardTaskState state,
                                 long updateTimeMs) {
 
+    /// Checks that the row has a writer and a state.
+    ///
+    /// @throws NullPointerException If either is missing.
     public IndexShardTaskRow {
         Objects.requireNonNull(writerId);
         Objects.requireNonNull(state);

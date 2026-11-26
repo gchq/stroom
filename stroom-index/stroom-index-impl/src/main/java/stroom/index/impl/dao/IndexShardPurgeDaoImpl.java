@@ -69,7 +69,13 @@ class IndexShardPurgeDaoImpl implements IndexShardPurgeDao {
                 request(context, indexShardId, streamId, context.select(DbTime.NOW_MS).fetchOne(DbTime.NOW_MS)));
     }
 
-    // Shared with the task rows, which ask for purges in their own transactions.
+    /// Asks for a stream to be deleted from a shard, as [#request(long, long)] does, within a transaction
+    /// that is already open. Shared with the task rows, which ask for purges in their own transactions.
+    ///
+    /// @param context      The open context.
+    /// @param indexShardId The id of the shard.
+    /// @param streamId     The id of the stream.
+    /// @param nowMs        The time now, in database time, recorded if the purge is new.
     static void request(final DSLContext context,
                         final long indexShardId,
                         final long streamId,

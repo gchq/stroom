@@ -83,7 +83,7 @@ class IndexShardFixtures {
                 "1.0-test");
         indexShardDao.setStatus(indexShard.getId(), IndexShardStatus.OPENING);
         indexShardDao.setStatus(indexShard.getId(), IndexShardStatus.CLOSED);
-        indexShardDao.update(indexShard.getId(), 1, 1L, System.currentTimeMillis(), 1L);
+        indexShardDao.update(indexShard.getId(), 1, 1L, System.currentTimeMillis(), 1L, null);
         return indexShard.getId();
     }
 

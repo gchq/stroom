@@ -179,14 +179,29 @@ public interface IndexShardDao {
     ///                            kept for, or null if it can have left none behind.
     void resetAfterRestart(Long id, String nodeName, String instanceId, Long pruneCommitsDelayMs);
 
-    /**
-     * Update the details of the contents of a shard
-     *
-     * @param id               The database ID
-     * @param documentCount    The number of documents
-     * @param commitDurationMs commitDurationMs
-     * @param commitMs         commitMs
-     * @param fileSize         fileSize
-     */
-    void update(Long id, Integer documentCount, Long commitDurationMs, Long commitMs, Long fileSize);
+    /// Clears the leases that an earlier process on this node held on shards that are deleted or corrupt,
+    /// keeping their status. Nothing else would clear them, and a leased shard's files are never deleted. For
+    /// use on startup.
+    ///
+    /// @param nodeName   The name of this node. Only leases held under its name are cleared.
+    /// @param instanceId The id of the process that is starting, whose own leases are left alone.
+    /// @return The number of leases cleared.
+    int clearLeasesOfUnusableShardsAfterRestart(String nodeName, String instanceId);
+
+    /// Records the details of a shard's contents after a commit, if the writer that committed may still
+    /// change the shard's row: only while its process holds the shard's lease, or, for a shard on a local
+    /// volume, while nobody does.
+    ///
+    /// @param id               The database ID of the shard.
+    /// @param documentCount    The number of documents.
+    /// @param commitDurationMs How long the commit took.
+    /// @param commitMs         When the commit finished.
+    /// @param fileSize         The size of the shard's files.
+    /// @param leaseInstanceId  The process holding the lease the writer wrote under, or null if it had none.
+    void update(Long id,
+                Integer documentCount,
+                Long commitDurationMs,
+                Long commitMs,
+                Long fileSize,
+                String leaseInstanceId);
 }

@@ -115,6 +115,8 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
     private final RetainReplacedCommitsDeletionPolicy replacedCommitsPolicy;
     // Says whether this node still holds the lease on the shard. A shard on a local volume has no lease.
     private volatile BooleanSupplier leaseHeld = () -> true;
+    // The process that holds the lease, or null if the shard has none.
+    private volatile String leaseInstanceId;
     // Set once this writer has found that the lease is no longer held. It then never writes again, even if
     // a late renewal makes the lease look held once more.
     private volatile boolean leaseLost;
@@ -558,7 +560,8 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
     }
 
     @Override
-    public void setLeaseCheck(final BooleanSupplier leaseHeld) {
+    public void setLeaseCheck(final String leaseInstanceId, final BooleanSupplier leaseHeld) {
+        this.leaseInstanceId = Objects.requireNonNull(leaseInstanceId);
         this.leaseHeld = Objects.requireNonNull(leaseHeld);
     }
 
@@ -581,9 +584,9 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
     }
 
     private synchronized void updateShardInfo(final long startTime) {
-        if (leaseLost || !leaseHeld.getAsBoolean()) {
-            // The shard's row is no longer this node's to change, or soon may not be, e.g. after a close that
-            // failed for want of the lease.
+        if (leaseLost) {
+            // The shard's row is no longer this node's to change. Otherwise the database only changes it if
+            // this process still holds the lease, as the lease may have gone meanwhile.
             return;
         }
         try {
@@ -651,7 +654,7 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
             LOGGER.debug(() -> String.format("Documents written %s (%s)",
                     documentCount,
                     ModelStringUtil.formatDurationString(commitDurationMs)));
-            indexShardDao.update(indexShardId, documentCount, commitDurationMs, commitMs, fileSize);
+            indexShardDao.update(indexShardId, documentCount, commitDurationMs, commitMs, fileSize, leaseInstanceId);
         }
     }
 

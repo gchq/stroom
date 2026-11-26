@@ -22,9 +22,12 @@ import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.dropwizard.validation.ValidationMethod;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.Objects;
@@ -37,6 +40,8 @@ public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig 
     private static final StroomDuration DEFAULT_SHARD_LEASE_DURATION = StroomDuration.ofMinutes(1);
     private static final StroomDuration DEFAULT_SHARD_LEASE_RENEW_INTERVAL = StroomDuration.ofSeconds(20);
     private static final StroomDuration DEFAULT_SHARD_LEASE_TAKEOVER_GRACE = StroomDuration.ofMinutes(5);
+    private static final int MIN_SHARD_LEASE_DURATION_SECONDS = 10;
+    private static final int MIN_SHARD_LEASE_RENEW_INTERVAL_SECONDS = 1;
 
     private final CacheConfig activeShardCache;
     private final CacheConfig indexShardWriterCache;
@@ -160,7 +165,9 @@ public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig 
 
     /// Gets how long after a lease on an index shard has expired before the shard is taken from its holder.
     ///
-    /// @return The grace period.
+    /// @return The grace period, never null.
+    @NotNull
+    @JsonProperty
     @JsonPropertyDescription("How long after the lease on an index shard on a shared index volume has expired " +
             "before the shard is taken from the node that held it, so that other nodes can write to it. A node " +
             "that cannot renew its leases stops writing well before they expire. This period is the margin " +
@@ -168,6 +175,24 @@ public class IndexWriterConfig extends AbstractConfig implements IsStroomConfig 
             "longer than any pause a node could suffer. Until it has passed, new documents go to other shards.")
     public StroomDuration getShardLeaseTakeoverGrace() {
         return shardLeaseTakeoverGrace;
+    }
+
+    /// Says whether the lease settings are usable. Too short a lease would have every node renew its leases
+    /// with the database all the time, and no lease would ever be trusted.
+    ///
+    /// @return True if they are.
+    @SuppressWarnings("unused") // Used by jakarta.validation
+    @JsonIgnore
+    @ValidationMethod(message = "shardLeaseDuration must be at least " + MIN_SHARD_LEASE_DURATION_SECONDS
+                                + " seconds and shardLeaseRenewInterval at least "
+                                + MIN_SHARD_LEASE_RENEW_INTERVAL_SECONDS + " second")
+    @Valid
+    // Seems to be ignored if not prefixed with 'is'
+    public boolean isValidShardLease() {
+        return shardLeaseDuration != null
+               && shardLeaseRenewInterval != null
+               && shardLeaseDuration.toMillis() >= MIN_SHARD_LEASE_DURATION_SECONDS * 1000L
+               && shardLeaseRenewInterval.toMillis() >= MIN_SHARD_LEASE_RENEW_INTERVAL_SECONDS * 1000L;
     }
 
     @Override

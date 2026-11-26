@@ -164,7 +164,8 @@ class TestIndexShardDaoImpl {
                 123,
                 456L,
                 nowMs,
-                ByteSizeUnit.GIBIBYTE.longBytes(5));
+                ByteSizeUnit.GIBIBYTE.longBytes(5),
+                null);
 
         final IndexShard indexShard2 = indexShardDao.fetch(indexShard.getId()).get();
 
@@ -339,6 +340,50 @@ class TestIndexShardDaoImpl {
         assertThat(indexShardDao.logicalDelete(indexShard.getId(), PROCESS_A)).isTrue();
         assertThat(indexShardDao.fetch(indexShard.getId()).orElseThrow().getStatus())
                 .isEqualTo(IndexShardStatus.DELETED);
+    }
+
+    @Test
+    void testClearLeasesOfUnusableShardsAfterRestart() {
+        final IndexShard deleted = createClosedShard(VolumeType.SHARED, "node1");
+        indexShardDao.claimLease(deleted.getId(), "node1", PROCESS_A, LEASE_MS);
+        indexShardDao.logicalDelete(deleted.getId(), PROCESS_A);
+        final IndexShard open = createClosedShard(VolumeType.SHARED, "node1");
+        indexShardDao.claimLease(open.getId(), "node1", PROCESS_A, LEASE_MS);
+        final IndexShard otherNodes = createClosedShard(VolumeType.SHARED, "node1");
+        indexShardDao.claimLease(otherNodes.getId(), "node2", PROCESS_A, LEASE_MS);
+        indexShardDao.logicalDelete(otherNodes.getId(), PROCESS_A);
+        final IndexShard own = createClosedShard(VolumeType.SHARED, "node1");
+        indexShardDao.claimLease(own.getId(), "node1", PROCESS_B, LEASE_MS);
+        indexShardDao.logicalDelete(own.getId(), PROCESS_B);
+
+        assertThat(indexShardDao.clearLeasesOfUnusableShardsAfterRestart("node1", PROCESS_B)).isOne();
+
+        assertThat(indexShardDao.isLeased(deleted.getId())).isFalse();
+        assertThat(indexShardDao.fetch(deleted.getId()).orElseThrow().getStatus())
+                .isEqualTo(IndexShardStatus.DELETED);
+        // An open shard is reset as usual, a shard another node holds is left to it, and the starting process
+        // keeps its own.
+        assertThat(indexShardDao.isLeased(open.getId())).isTrue();
+        assertThat(indexShardDao.isLeased(otherNodes.getId())).isTrue();
+        assertThat(indexShardDao.isLeased(own.getId())).isTrue();
+    }
+
+    @Test
+    void testUpdate_onlyUnderTheLeaseTheWriterHeld() {
+        final IndexShard indexShard = createClosedShard(VolumeType.SHARED, "node1");
+        indexShardDao.claimLease(indexShard.getId(), "node1", PROCESS_A, LEASE_MS);
+
+        indexShardDao.update(indexShard.getId(), 10, 1L, 1L, 1L, PROCESS_A);
+        assertThat(indexShardDao.fetch(indexShard.getId()).orElseThrow().getDocumentCount()).isEqualTo(10);
+
+        // The shard has been taken from process A and claimed by B, which A does not know yet.
+        indexShardDao.releaseLease(indexShard.getId(), PROCESS_A, null);
+        indexShardDao.claimLease(indexShard.getId(), "node2", PROCESS_B, LEASE_MS);
+        indexShardDao.update(indexShard.getId(), 20, 1L, 1L, 1L, PROCESS_A);
+        // Nor as if it had no lease.
+        indexShardDao.update(indexShard.getId(), 30, 1L, 1L, 1L, null);
+
+        assertThat(indexShardDao.fetch(indexShard.getId()).orElseThrow().getDocumentCount()).isEqualTo(10);
     }
 
     @Test

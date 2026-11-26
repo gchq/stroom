@@ -232,13 +232,33 @@ public class MockIndexShardDao implements IndexShardDao {
     }
 
     @Override
-    public void update(final Long id,
-                       final Integer documentCount,
-                       final Long commitDurationMs,
-                       final Long commitMs,
-                       final Long fileSize) {
+    public synchronized int clearLeasesOfUnusableShardsAfterRestart(final String nodeName,
+                                                                    final String instanceId) {
+        final List<Long> cleared = leases.entrySet()
+                .stream()
+                .filter(entry -> !entry.getValue().equals(instanceId))
+                .map(Map.Entry::getKey)
+                .filter(id -> {
+                    final IndexShard indexShard = map.get(id);
+                    return indexShard != null
+                           && nodeName.equals(indexShard.getNodeName())
+                           && (IndexShardStatus.DELETED.equals(indexShard.getStatus())
+                               || IndexShardStatus.CORRUPT.equals(indexShard.getStatus()));
+                })
+                .toList();
+        cleared.forEach(leases::remove);
+        return cleared.size();
+    }
+
+    @Override
+    public synchronized void update(final Long id,
+                                    final Integer documentCount,
+                                    final Long commitDurationMs,
+                                    final Long commitMs,
+                                    final Long fileSize,
+                                    final String leaseInstanceId) {
         final IndexShard indexShard = map.get(id);
-        if (indexShard != null) {
+        if (indexShard != null && Objects.equals(leases.get(id), leaseInstanceId)) {
             map.put(id, indexShard
                     .copy()
                     .documentCount(documentCount)

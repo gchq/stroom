@@ -542,6 +542,20 @@ class IndexShardDaoImpl implements IndexShardDao {
                         : DB_TIME_MS.plus(pruneCommitsDelayMs));
     }
 
+    @Override
+    public int clearLeasesOfUnusableShardsAfterRestart(final String nodeName, final String instanceId) {
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
+                .update(INDEX_SHARD)
+                .setNull(INDEX_SHARD.LEASE_INSTANCE_ID)
+                .setNull(INDEX_SHARD.LEASE_EXPIRY_MS)
+                .where(INDEX_SHARD.NODE_NAME.eq(nodeName))
+                .and(INDEX_SHARD.LEASE_INSTANCE_ID.ne(instanceId))
+                .and(INDEX_SHARD.STATUS.in(
+                        IndexShardStatus.DELETED.getPrimitiveValue(),
+                        IndexShardStatus.CORRUPT.getPrimitiveValue()))
+                .execute());
+    }
+
     private void reset(final Long id, final Condition leaseCondition, final Field<Long> pruneCommitsAfterMs) {
         JooqUtil.context(indexDbConnProvider, context -> context
                 .update(INDEX_SHARD)
@@ -560,7 +574,8 @@ class IndexShardDaoImpl implements IndexShardDao {
                        final Integer documentCount,
                        final Long commitDurationMs,
                        final Long commitMs,
-                       final Long fileSize) {
+                       final Long fileSize,
+                       final String leaseInstanceId) {
         JooqUtil.context(indexDbConnProvider, context -> context
                 .update(INDEX_SHARD)
                 .set(INDEX_SHARD.DOCUMENT_COUNT, documentCount)
@@ -569,6 +584,9 @@ class IndexShardDaoImpl implements IndexShardDao {
                 .set(INDEX_SHARD.COMMIT_MS, commitMs)
                 .set(INDEX_SHARD.FILE_SIZE, fileSize)
                 .where(INDEX_SHARD.ID.eq(id))
+                .and(leaseInstanceId == null
+                        ? INDEX_SHARD.LEASE_INSTANCE_ID.isNull()
+                        : INDEX_SHARD.LEASE_INSTANCE_ID.eq(leaseInstanceId))
                 .and(INDEX_SHARD.DOCUMENT_COUNT.ne(documentCount)
                         .or(INDEX_SHARD.FILE_SIZE.ne(fileSize))
                 )

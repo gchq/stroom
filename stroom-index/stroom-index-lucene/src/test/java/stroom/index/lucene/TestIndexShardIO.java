@@ -72,6 +72,8 @@ import static org.mockito.ArgumentMatchers.eq;
 
 class TestIndexShardIO extends StroomUnitTest {
 
+    private static final String INSTANCE = "instance";
+
     private static final int MAX_DOCS = 1000000000;
 
     private PathCreator pathCreator;
@@ -103,7 +105,7 @@ class TestIndexShardIO extends StroomUnitTest {
     void testLeaseHeld_documentsAreCommitted() throws IOException {
         final IndexShard indexShard = createShardOn(VolumeType.SHARED);
         final IndexShardWriter writer = createWriter(indexShard);
-        writer.setLeaseCheck(() -> true);
+        writer.setLeaseCheck(INSTANCE, () -> true);
 
         writer.addDocument(buildDocument(1));
         writer.flush();
@@ -118,7 +120,7 @@ class TestIndexShardIO extends StroomUnitTest {
         final AtomicBoolean leaseHeld = new AtomicBoolean(true);
         final IndexShard indexShard = createShardOn(VolumeType.SHARED);
         final IndexShardWriter writer = createWriter(indexShard);
-        writer.setLeaseCheck(leaseHeld::get);
+        writer.setLeaseCheck(INSTANCE, leaseHeld::get);
         writer.addDocument(buildDocument(1));
 
         leaseHeld.set(false);
@@ -136,7 +138,7 @@ class TestIndexShardIO extends StroomUnitTest {
         final AtomicBoolean leaseHeld = new AtomicBoolean(true);
         final IndexShard indexShard = createShardOn(VolumeType.SHARED);
         final IndexShardWriter writer = createWriter(indexShard);
-        writer.setLeaseCheck(leaseHeld::get);
+        writer.setLeaseCheck(INSTANCE, leaseHeld::get);
         writer.addDocument(buildDocument(1));
         writer.flush();
         writer.addDocument(buildDocument(2));
@@ -164,7 +166,7 @@ class TestIndexShardIO extends StroomUnitTest {
         final AtomicBoolean leaseHeld = new AtomicBoolean(true);
         final IndexShard indexShard = createShardOn(VolumeType.SHARED);
         final IndexShardWriter writer = createWriter(indexShard);
-        writer.setLeaseCheck(leaseHeld::get);
+        writer.setLeaseCheck(INSTANCE, leaseHeld::get);
         writer.addDocument(buildDocument(1));
         writer.flush();
         writer.addDocument(buildDocument(2));
@@ -188,7 +190,7 @@ class TestIndexShardIO extends StroomUnitTest {
         final AtomicBoolean leaseHeld = new AtomicBoolean(true);
         final IndexShard indexShard = createShardOn(VolumeType.SHARED);
         final IndexShardWriter writer = createWriter(indexShard);
-        writer.setLeaseCheck(leaseHeld::get);
+        writer.setLeaseCheck(INSTANCE, leaseHeld::get);
         writer.addDocument(buildDocument(1));
         writer.flush();
         writer.addDocument(buildDocument(2));
@@ -274,7 +276,7 @@ class TestIndexShardIO extends StroomUnitTest {
     void testIsUnusable_onceTheShardHasBeenGivenUp() throws IOException {
         final AtomicBoolean leaseHeld = new AtomicBoolean(true);
         final IndexShardWriter writer = createWriter(createShardOn(VolumeType.SHARED));
-        writer.setLeaseCheck(leaseHeld::get);
+        writer.setLeaseCheck(INSTANCE, leaseHeld::get);
         writer.addDocument(buildDocument(1));
 
         // A lease that can't be relied on for a while may yet be renewed.
@@ -340,28 +342,42 @@ class TestIndexShardIO extends StroomUnitTest {
         writer.flush();
 
         // The shard holds no more than it did at its last commit.
-        Mockito.verify(indexShardDao, Mockito.never()).update(anyLong(), any(), any(), any(), any());
+        Mockito.verify(indexShardDao, Mockito.never()).update(anyLong(), any(), any(), any(), any(), any());
 
         Files.deleteIfExists(obstruction);
         writer.flush();
-        Mockito.verify(indexShardDao).update(eq(indexShard.getId()), eq(1), any(), any(), any());
+        Mockito.verify(indexShardDao).update(eq(indexShard.getId()), eq(1), any(), any(), any(), any());
         writer.close();
     }
 
     @Test
-    void testCloseFailsAndLeaseGoes_shardRowIsLeftAlone() throws IOException {
+    void testCloseFailsAndLeaseGoes_shardRowIsOnlyChangedUnderTheLease() throws IOException {
         final IndexShardDao indexShardDao = Mockito.mock(IndexShardDao.class);
         final IndexShard indexShard = createShardOn(VolumeType.SHARED);
         final IndexShardWriter writer = createWriter(indexShardDao, indexShard);
         // Held for as long as Lucene's writer is open, so it goes as the failed close rolls back. By then
         // the shard may be another node's.
-        writer.setLeaseCheck(() -> !writer.isUnusable());
+        writer.setLeaseCheck(INSTANCE, () -> !writer.isUnusable());
         writer.addDocument(buildDocument(1));
         obstructNextCommit(indexShard);
 
         writer.close();
 
-        Mockito.verify(indexShardDao, Mockito.never()).update(anyLong(), any(), any(), any(), any());
+        // The database changes the row only if this process still holds the lease.
+        Mockito.verify(indexShardDao).update(eq(indexShard.getId()), any(), any(), any(), any(), eq(INSTANCE));
+    }
+
+    @Test
+    void testFlush_aShardWithNoLeaseIsChangedOnlyWhileNobodyHasALease() throws IOException {
+        final IndexShardDao indexShardDao = Mockito.mock(IndexShardDao.class);
+        final IndexShard indexShard = createShardOn(VolumeType.LOCAL);
+        final IndexShardWriter writer = createWriter(indexShardDao, indexShard);
+        writer.addDocument(buildDocument(1));
+
+        writer.flush();
+
+        Mockito.verify(indexShardDao).update(eq(indexShard.getId()), eq(1), any(), any(), any(), eq(null));
+        writer.close();
     }
 
     @Test
