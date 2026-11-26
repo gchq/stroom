@@ -2362,7 +2362,9 @@ keeps the finer ones underneath, each naming its parent.
   The model characterises each run's content in the batched, cached side calls ("discussed the Q3 budget with
   Alice", "listed directory users and exported them to CSV"), may split a run where its topic changes (at an event
   of the run) and join runs into themes across sources (level 1); the text is data, excerpts cut to the
-  characterisation's cap, every description citing its evidence (event ids of the run), checked in code.
+  characterisation's cap, every description citing its evidence (event ids of the run), checked in code; a split
+  run's parts each keep their own evidence in `how` (found building eval case 115, 2026-11-27: each part carried
+  the whole run's).
 * **Noise** (the user, 2026-11-26; both views, to declutter the timeline and to spare the model): right after the
   events are read and classified, before the sessions, spans or any model call, event types (or a type at one
   object, where the type is at others too) that are very noisy are found in code (`TimelineNoise`) by statistical

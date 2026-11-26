@@ -543,6 +543,7 @@ final class ThematicSpans {
             int previous = 0;
             final List<int[]> bounds = new ArrayList<>();
             final List<String> descriptions = new ArrayList<>();
+            final List<String> hows = new ArrayList<>();
             for (final Object part : parts) {
                 if (!(part instanceof final Map<?, ?> map)) {
                     return null;
@@ -555,6 +556,8 @@ final class ThematicSpans {
                 }
                 bounds.add(new int[]{from, 0});
                 descriptions.add(description);
+                // Each part cites its own evidence.
+                hows.add("model (" + answer.get("confidence") + "): " + evidenceText(map.get("evidence")));
                 previous = from;
             }
             for (int i = 0; i < bounds.size(); i++) {
@@ -564,7 +567,7 @@ final class ThematicSpans {
                         : run.eventIds().size();
                 final List<String> ids = run.eventIds().subList(from, to);
                 out.add(new Unit(run.id() + "-" + (i + 1), Unit.RUN, run.lane(), events.get(ids.getFirst()).time(),
-                        events.get(ids.getLast()).time(), descriptions.get(i), modelHow(answer), List.of(), ids,
+                        events.get(ids.getLast()).time(), descriptions.get(i), hows.get(i), List.of(), ids,
                         null, null));
             }
             return out;
