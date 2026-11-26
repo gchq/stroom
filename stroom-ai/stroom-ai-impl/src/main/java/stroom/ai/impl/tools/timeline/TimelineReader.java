@@ -154,6 +154,51 @@ final class TimelineReader {
         return new Read(events, counts, budget.reached(), cut > 0, extras, accounts, scans);
     }
 
+    /// More fields of one source's events for the user, read again (a period's key the classification of their codes
+    /// gave after the first read, decided by the user 2026-11-27): the same scan as [#read], fetching only these.
+    ///
+    /// @param streams   The key streams.
+    /// @param source    The source, with the values its user (or person) field is filtered on.
+    /// @param timeRange The period.
+    /// @param fields    The fields to fetch.
+    /// @param budget    The events cap, the time limit and the stop.
+    /// @return Each document's values of the fields, by `index/id` (an event's id without its role's tag).
+    static Map<String, Map<String, String>> more(final ElasticKeyStreams streams,
+                                                 final Source source,
+                                                 final TimeRange timeRange,
+                                                 final List<String> fields,
+                                                 final JoinBudget budget) {
+        final Map<String, Map<String, String>> out = new LinkedHashMap<>();
+        for (final String userField : source.userFields()) {
+            final Side side = new Side(source.doc(), List.of(new KeyField(userField, source.transforms())), null,
+                    timeRange, KeyRange.ALL, List.of(source.terms()));
+            try (final KeyGroupSource scan = KeyGroupSource.scan(streams, List.of(side), fields, PAGE_SIZE,
+                    JoinKeys.comparator(List.of(source.kind())), budget)) {
+                KeyGroup group = refused(scan::next);
+                while (group != null) {
+                    for (final Row row : group.rows()) {
+                        final Map<String, String> values = new LinkedHashMap<>();
+                        for (final String field : fields) {
+                            NullSafe.consume(first(row.fields(), field), value -> values.put(field, value));
+                        }
+                        out.putIfAbsent(row.index() + "/" + row.id(), values);
+                    }
+                    if (budget.check()) {
+                        break;
+                    }
+                    group = refused(scan::next);
+                }
+            }
+            if (budget.stoppedByUser()) {
+                throw new TaskTerminatedException();
+            }
+            if (budget.reached() != null) {
+                break;
+            }
+        }
+        return out;
+    }
+
     /// The first events of one source for the user, with the fields asked for: to tell which of an index's fields
     /// holds what (e.g. the EventDetail element), by their values.
     ///

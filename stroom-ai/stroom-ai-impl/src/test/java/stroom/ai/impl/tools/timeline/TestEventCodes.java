@@ -44,7 +44,7 @@ class TestEventCodes {
         counts.put("1102", 1);
         counts.put("9999", 1);
 
-        final Map<String, CodeRole> roles = EventCodes.ask(model, "Windows", counts).orElseThrow();
+        final Map<String, CodeRole> roles = EventCodes.ask(model, "Windows", counts, List.of()).orElseThrow();
 
         assertThat(roles).containsEntry("4624", new CodeRole("active", "4624", false))
                 .containsEntry("4634", new CodeRole("idle", "4634", false))
@@ -64,7 +64,7 @@ class TestEventCodes {
         counts.put("21", 2);
         counts.put("22", 1);
 
-        final Map<String, CodeRole> roles = EventCodes.ask(model, "VPN", counts).orElseThrow();
+        final Map<String, CodeRole> roles = EventCodes.ask(model, "VPN", counts, List.of()).orElseThrow();
 
         assertThat(roles).containsEntry("20", new CodeRole("period_start", "remote_session", false))
                 .containsEntry("21", new CodeRole("period_end", "call", false))
@@ -76,9 +76,37 @@ class TestEventCodes {
     }
 
     @Test
+    void aPeriodsKeyIsTakenOnlyOfTheFieldsGivenAtMostThreeWithTheirCase() {
+        // Seen in eval case 119 (2026-11-27): the badge codes classified as on-site periods with no key, so an enter
+        // at one site could be closed by a leave at another.
+        final List<String> asked = new ArrayList<>();
+        final ModelSideCalls model = stub("""
+                {"badge.enter": {"role": "period_start on_site by Site, Zone"},
+                 "badge.leave": {"role": "period_end on_site by Site, Nowhere"},
+                 "vpn.up": {"role": "period_start remote_session by A, B, C, D"}}""", asked);
+        final Map<String, Integer> counts = new LinkedHashMap<>();
+        counts.put("badge.enter", 3);
+        counts.put("badge.leave", 3);
+        counts.put("vpn.up", 1);
+
+        final Map<String, CodeRole> roles = EventCodes.ask(model, "Site access", counts, List.of("A", "B", "C", "D",
+                "Site", "Zone")).orElseThrow();
+
+        assertThat(roles.get("badge.enter")).isEqualTo(new CodeRole("period_start", "on_site", false, "Site, Zone"));
+        assertThat(roles.get("badge.enter").text()).isEqualTo("period_start on_site by Site, Zone");
+        assertThat(EventCodes.period(roles.get("badge.enter").text()).key()).isEqualTo("Site, Zone");
+        // A field the index hasn't, or more than three: no key, the kind's own.
+        assertThat(roles.get("badge.leave").key()).isNull();
+        assertThat(roles.get("vpn.up").key()).isNull();
+        assertThat(String.valueOf(asked)).contains("Its fields: [\"A\",\"B\",\"C\",\"D\",\"Site\",\"Zone\"]");
+        assertThat(EventCodes.INSTRUCTIONS).contains("by <field>, <field>");
+    }
+
+    @Test
     void anAnswerThatCantBeReadOrNoModelGivesNothing() {
-        assertThat(EventCodes.ask(stub("no idea", new ArrayList<>()), "Windows", Map.of("1", 1))).isEmpty();
-        assertThat(EventCodes.ask(ModelSideCalls.NONE, "Windows", Map.of("1", 1))).isEmpty();
+        assertThat(EventCodes.ask(stub("no idea", new ArrayList<>()), "Windows", Map.of("1", 1), List.of()))
+                .isEmpty();
+        assertThat(EventCodes.ask(ModelSideCalls.NONE, "Windows", Map.of("1", 1), List.of())).isEmpty();
     }
 
     @Test

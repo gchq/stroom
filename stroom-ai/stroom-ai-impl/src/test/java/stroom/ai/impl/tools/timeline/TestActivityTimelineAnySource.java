@@ -301,6 +301,31 @@ class TestActivityTimelineAnySource {
     }
 
     @Test
+    void aPeriodKeyTheCodesClassificationGivesHasItsFieldsReadAgainSoTheRunsPeriodsAreKeyed() {
+        // Eval case 119 (2026-11-27): no typeRoles, the codes classified by the model as on-site periods; the key it
+        // gives (Site, Zone) names fields the first read didn't fetch, so they are read again for those codes.
+        badge("08:00", "badge.enter", "HQ", "L2", "north");
+        badge("09:00", "badge.enter", "Depot", "Yard", "gate-1");
+        badge("10:00", "badge.leave", "HQ", "L2", "south");
+        badge("11:00", "badge.leave", "Depot", "Yard", "gate-2");
+        final List<String> asked = new ArrayList<>();
+        final ModelSideCalls model = model(asked, "{\"badge.enter\": {\"role\": \"period_start on_site by Site, "
+                                                  + "Zone\"}, \"badge.leave\": {\"role\": \"period_end on_site by "
+                                                  + "Site, Zone\"}}");
+        final Map<String, Object> source = Map.of("index", "Codes", "user", "user", "eventTypeField", "code");
+
+        final Map<String, Object> result = json(mcpWith(model), arguments(Map.of("sources", List.of(source))));
+
+        assertThat(asked).singleElement().asString().contains("Its fields:", "\"Site\"", "\"Zone\"");
+        final Map<String, Object> periods = (Map<String, Object>) result.get("periods");
+        assertThat(periods).containsEntry("by_kind", Map.of("on_site", 2L)).containsEntry("start_not_seen", 0L)
+                .containsEntry("end_not_seen", 0L);
+        assertThat((List<Map<String, Object>>) periods.get("list"))
+                .extracting(period -> period.get("key"))
+                .containsExactly("HQ, L2", "Depot, Yard");
+    }
+
+    @Test
     void aFlatIndexsCategoryFieldIsFetchedSoItsSitesVisitsMergeByCategoryInCode() {
         // Eval case 114: three listing sites visited by turns, each request of the proxy's category, in an index not
         // built from Events.

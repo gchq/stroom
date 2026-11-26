@@ -2048,6 +2048,9 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
   workspace) and applied on the chat's every run; `## Exclusions` lines (`- <event type>: <object>`, a prefix ending
   `*`) in the AGENTS doc where the index is, or in the skill in use, applied first with no form and never proposed;
   `excluded` says what was left out, a written line with its doc or skill.
+* A period's key from the codes' classification: the side call is shown the index's keyword fields and may answer
+  `period_start on_site by Site, Zone` (fields the index has, at most three); those fields, unread, are read again
+  for the source (`TimelineReader.more`) and joined by document, so the run's periods are keyed.
 * Unmapped fields (`TimelineFieldHints`): a thing nothing names a field for is named with the index's fields whose
   names have its own words and at most one more (`not_mapped`, e.g. `event type (maybe EventCode)`; in the
   no-user refusal `maybe UserName`), never used unasked; a later call in the chat still leaving the user or event

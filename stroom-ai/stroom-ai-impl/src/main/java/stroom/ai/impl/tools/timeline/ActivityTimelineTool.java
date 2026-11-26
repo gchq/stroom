@@ -275,6 +275,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     static final String USER_FIELDS_FORM = "timeline-user-fields";
     /// The form's key for the fields a later call in a chat still couldn't map.
     static final String HINTED_FIELDS_FORM = "timeline-hinted-fields";
+    // The most of an index's fields shown to the model classifying its codes, for a period's key.
+    private static final int KEY_FIELDS_SHOWN = 40;
     static final String LEAVE_OUT = "Leave it out";
     /// The form's key for confirming an index's event codes' classification.
     static final String CODES_FORM = "timeline-event-codes";
@@ -586,7 +588,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                                          + "e.g. 30m (default the setting, 30 minutes).")
                         .addEnumProperty(VIEW_ARG, List.of(View.ACTIVITIES.argName(), View.DETAIL.argName(),
                                 View.BOTH.argName()), "Which level to draw: activities (what the user was working "
-                                                      + "on; turns characterise on), detail (the spans), or both "
+                                                      + "on, did or discussed: runs of messages and commands; "
+                                                      + "turns characterise on), detail (the spans), or both "
                                                       + "(default detail).")
                         .addEnumProperty(LANES_ARG, List.of("day", "activity", "host", "source"), "Optional: "
                                                                                                   + "the lanes: "
@@ -703,8 +706,9 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final Map<Integer, Map<String, CodeRole>> classifiedNow = new LinkedHashMap<>();
         final Map<Integer, Map<String, CodeRole>> codes = codes(request, context, sources, read, plan.fields(),
                 xml.xml(), roles, classifiedNow);
-        final TimelineClassification.Result classification = TimelineClassification.classify(read.events(),
-                sources, read.extras(), plan.fields(), xml.xml(), codes, roles);
+        final Read keyed = withPeriodKeys(context, sources, read, plan.fields(), codes, period, deadline, config);
+        final TimelineClassification.Result classification = TimelineClassification.classify(keyed.events(),
+                sources, keyed.extras(), plan.fields(), xml.xml(), codes, roles);
         final TimelineReading reading = new TimelineReading(read.scans(), resolved.read(), xml.paths(),
                 offers(sources, classifiedNow), provenance == null
                 ? 0
@@ -2287,6 +2291,91 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         return out;
     }
 
+    // The fields of the periods' keys the classification of a source's codes gave after the first read (decided by
+    // the user 2026-11-27: seen in eval case 119, on-site periods unkeyed), read again for its events and joined to
+    // them by their documents, so the periods are keyed in this run: one more scan of the source, fetching only the
+    // code's field and the keys' (not the host, the lane already).
+    private Read withPeriodKeys(final ToolCallContext context,
+                                final List<Source> sources,
+                                final Read read,
+                                final Map<Integer, Fields> fields,
+                                final Map<Integer, Map<String, CodeRole>> codes,
+                                final Period period,
+                                final Instant deadline,
+                                final AiWorkspaceConfig config) {
+        Map<String, Map<String, String>> extras = null;
+        for (final Map.Entry<Integer, Map<String, CodeRole>> entry : codes.entrySet()) {
+            final int i = entry.getKey();
+            final Source source = sources.get(i);
+            final Fields found = fields.get(i);
+            if (found == null || found.eventType() == null) {
+                continue;
+            }
+            final Set<String> keyedCodes = new LinkedHashSet<>();
+            final List<String> wanted = new ArrayList<>();
+            entry.getValue().forEach((code, role) -> {
+                if (role.key() == null) {
+                    return;
+                }
+                keyedCodes.add(code);
+                TimelinePeriod.parts(role.key()).forEach(part -> part.stream()
+                        .filter(field -> !TimelinePeriod.HOST.equalsIgnoreCase(field)
+                                         && !source.extraFields().contains(field) && !wanted.contains(field))
+                        .forEach(wanted::add));
+            });
+            if (wanted.isEmpty()) {
+                continue;
+            }
+            final List<String> fetch = new ArrayList<>(wanted);
+            fetch.add(found.eventType());
+            context.progress().report("Reading the fields keying " + source.name() + "'s periods: "
+                                      + String.join(", ", wanted));
+            final Map<String, Map<String, String>> byDoc;
+            try {
+                byDoc = TimelineReader.more(keyStreamsProvider.get(), source, period.timeRange(), fetch,
+                        new JoinBudget(config.getTimelineMaxEvents(), Long.MAX_VALUE, deadline, context.stopped()));
+            } catch (final PermissionException e) {
+                throw new WorkspaceException("You can't use Elastic Index '" + source.doc().getName() + "'.");
+            }
+            if (extras == null) {
+                extras = new LinkedHashMap<>(read.extras());
+            }
+            for (final Event event : read.events()) {
+                if (event.source() != i) {
+                    continue;
+                }
+                final Map<String, String> values = byDoc.get(event.id().substring(0, Math.max(0,
+                        event.id().lastIndexOf('/'))));
+                if (values == null || !keyedCodes.contains(values.get(found.eventType()))) {
+                    continue;
+                }
+                final Map<String, String> merged = new LinkedHashMap<>(extras.getOrDefault(event.id(), Map.of()));
+                wanted.forEach(field -> NullSafe.consume(values.get(field), value -> merged.put(field, value)));
+                extras.put(event.id(), merged);
+            }
+        }
+        return extras == null
+                ? read
+                : read.with(read.events(), extras);
+    }
+
+    // An index's keyword fields, a period's key may name (the time, StreamId and EventId never), in name order.
+    private List<String> keywordFields(final DocRef doc) {
+        try {
+            return target(doc, doc.getName()).fields().values().stream()
+                    .filter(field -> KEYWORD_TYPES.contains(field.nativeType()))
+                    .map(ElasticEql.Field::name)
+                    .filter(name -> !EqlSequenceResults.STREAM_ID.equals(name)
+                                    && !EqlSequenceResults.EVENT_ID.equals(name))
+                    .sorted()
+                    .limit(KEY_FIELDS_SHOWN)
+                    .toList();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to read the fields of " + doc, e);
+            return List.of();
+        }
+    }
+
     // The `## Event types` lines to offer for the codes classified this run (by the model), per index, so a later
     // run takes them from the AGENTS doc.
     private static Map<String, String> offers(final List<Source> sources,
@@ -2353,7 +2442,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                     .filter(entry -> !kept.containsKey(entry.getKey()))
                     .forEach(entry -> unknown.put(entry.getKey(), entry.getValue()));
             if (!unknown.isEmpty()) {
-                EventCodes.ask(context.sideCalls(), doc.getName(), unknown).ifPresent(asked -> {
+                EventCodes.ask(context.sideCalls(), doc.getName(), unknown, keywordFields(doc)).ifPresent(asked -> {
                     final Boolean confirmed = confirmCodes(request, context, doc, asked);
                     if (confirmed == null) {
                         // No form: used, but not kept, as the user hasn't confirmed it.

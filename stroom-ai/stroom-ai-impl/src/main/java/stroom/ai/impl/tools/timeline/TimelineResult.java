@@ -60,7 +60,7 @@ final class TimelineResult {
     /// Which table answers "which events make up a span": one line in the result.
     static final String MEMBERSHIP = "Which events make up a span, run, activity or period: events.csv's span, merged, "
                                      + "activity and periods columns give each event's ids, with its StreamId and "
-                                     + "EventId.";
+                                     + "EventId; its events are those with its id there, not those in its times.";
     /// The most periods the JSON result lists.
     static final int PERIODS_LISTED = 20;
     /// The most periods the chat's result lists.

@@ -770,7 +770,7 @@ Builds one user's (or entity's) activity timeline for a period from any Elastic 
       "type" : "string"
     },
     "view" : {
-      "description" : "Which level to draw: activities (what the user was working on; turns characterise on), detail (the spans), or both (default detail).",
+      "description" : "Which level to draw: activities (what the user was working on, did or discussed: runs of messages and commands; turns characterise on), detail (the spans), or both (default detail).",
       "enum" : [ "activities", "detail", "both" ],
       "type" : "string"
     }

@@ -2395,6 +2395,12 @@ keeps the finer ones underneath, each naming its parent.
   each said with the doc or skill it is written in; check_instructions points out a line naming no object (a whole
   type is an `## Event types` line's `ignore`). Accepted noise isn't offered for recording there (the user's
   choice, 2026-11-27).
+* **A period's key from the codes' classification** (decided by the user 2026-11-27; seen in eval case 119 on Haiku
+  and Sonnet: the badge codes classified as on-site periods with no key): the side call classifying a source's
+  codes is shown its keyword fields and may end a period's role `by <field>, <field>` (checked: fields the index
+  has, at most three, else the kind's own key). The first read didn't fetch them, so they are read again (one more
+  scan of the source, only the code's field and the key's) and joined to the events by their documents, so the
+  periods are keyed in the same run; the key is kept with the classification.
 * **Unmapped fields** (`TimelineFieldHints`, decided by the user 2026-11-27; seen in eval cases 113 to 115 on Haiku
   and Sonnet: `UserName`, `Host`, `Object` and `EventCode` unread, the first call refused, the codes unclassified):
   where nothing names a thing's field (the call, `## Fields`, an index plan, the index's documentation, a
