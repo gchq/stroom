@@ -23,6 +23,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.TaskStatus;
@@ -195,8 +196,7 @@ class TestProcessorTaskOutputCleaner {
 
     @Test
     void outputOfOlderTasksThatHaveFinishedIsSuperseded() {
-        final Set<TaskStatus> finished = EnumSet.of(
-                TaskStatus.COMPLETE, TaskStatus.COMMITTING, TaskStatus.ABORTED, TaskStatus.DELETED);
+        final Set<TaskStatus> finished = EnumSet.of(TaskStatus.COMPLETE, TaskStatus.ABORTED, TaskStatus.DELETED);
         final List<ProcessorTask> tasks = new ArrayList<>();
         final List<Long> expected = new ArrayList<>();
         for (final TaskStatus status : TaskStatus.values()) {
@@ -220,11 +220,51 @@ class TestProcessorTaskOutputCleaner {
         givenStream(1, TASK_ID, Status.UNLOCKED);
         givenStream(2, TASK_ID + 1, Status.UNLOCKED);
         givenStream(3, TASK_ID + 2, Status.UNLOCKED);
-        givenTasks(task(TASK_ID + 1, TaskStatus.COMPLETE), task(TASK_ID + 2, TaskStatus.COMMITTING));
+        givenTasks(task(TASK_ID + 1, TaskStatus.COMPLETE), task(TASK_ID + 2, TaskStatus.COMPLETE));
 
         cleaner.clearSuperseded(task, meta, processor);
 
         assertThat(getDeleted()).containsExactly(1L, 2L);
+    }
+
+    @Test
+    void outputOfAHeldTaskIsKeptButDoesNotMakeOthersOutOfDate() {
+        givenStream(1, TASK_ID, Status.UNLOCKED);
+        givenStream(2, TASK_ID - 1, Status.UNLOCKED);
+        givenStream(3, TASK_ID + 1, Status.UNLOCKED);
+        givenTasks(task(TASK_ID - 1, TaskStatus.COMMITTING), task(TASK_ID + 1, TaskStatus.COMMITTING));
+
+        cleaner.clearSuperseded(task, meta, processor);
+
+        // The newer one may yet be put back, so this task's output is kept as well.
+        assertThat(getDeleted()).isEmpty();
+    }
+
+    @Test
+    void heldTaskThatIsCompleteClearsWhatItHasMadeOutOfDate() {
+        final ProcessorTask held = task(TASK_ID + 1, TaskStatus.COMPLETE)
+                .copy()
+                .processorFilter(ProcessorFilter.builder().id(1).processor(processor).build())
+                .build();
+        givenStream(1, TASK_ID, Status.UNLOCKED);
+        givenStream(2, held.getId(), Status.UNLOCKED);
+        // The held task is found first when it is looked up.
+        givenTasks(held, task(TASK_ID, TaskStatus.COMPLETE));
+        Mockito.when(metaService.getMeta(META_ID, true)).thenReturn(meta);
+
+        cleaner.clearSuperseded(held.getId());
+
+        assertThat(getDeleted()).containsExactly(1L);
+    }
+
+    @Test
+    void heldTaskThatHasGoneHasNothingToClear() {
+        givenStream(1, TASK_ID, Status.UNLOCKED);
+        givenTasks();
+
+        cleaner.clearSuperseded(TASK_ID + 1);
+
+        assertThat(getDeleted()).isEmpty();
     }
 
     @Test

@@ -79,6 +79,16 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
     ProcessorFilter processorFilter3;
 
     @Test
+    void reasonIsShortenedWithoutSplittingACharacter() {
+        // The face is two chars, so it is dropped whole rather than leaving half of it.
+        final String text = "ab" + Character.toString(0x1F600);
+        assertThat(ProcessorTaskDaoImpl.truncate(text, 3)).isEqualTo("ab");
+        assertThat(ProcessorTaskDaoImpl.truncate(text, 4)).isEqualTo(text);
+        assertThat(ProcessorTaskDaoImpl.truncate("abcdef", 3)).isEqualTo("abc");
+        assertThat(ProcessorTaskDaoImpl.truncate(null, 3)).isNull();
+    }
+
+    @Test
     void testReleaseOwnedTasks() {
         assertThat(getProcessorCount(null)).isZero();
         assertThat(countTasks()).isZero();

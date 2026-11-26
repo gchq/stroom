@@ -1613,10 +1613,23 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     private String truncateReason(final String reason) {
-        final int maxLength = PROCESSOR_TASK.REASON.getDataType().length();
-        return reason != null && reason.length() > maxLength
-                ? reason.substring(0, maxLength)
-                : reason;
+        return truncate(reason, PROCESSOR_TASK.REASON.getDataType().length());
+    }
+
+    /// Shortens text to fit a column, without splitting a character that takes two `char`s, as half of one can't be
+    /// stored.
+    ///
+    /// @param text      The text, which may be null.
+    /// @param maxLength The most `char`s that it may have.
+    /// @return The text, shortened if need be.
+    static String truncate(final String text, final int maxLength) {
+        if (text == null || text.length() <= maxLength) {
+            return text;
+        }
+        final int end = Character.isHighSurrogate(text.charAt(maxLength - 1))
+                ? maxLength - 1
+                : maxLength;
+        return text.substring(0, end);
     }
 
     private Optional<ProcessorTask> fetch(final ProcessorTask processorTask) {
