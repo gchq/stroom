@@ -146,7 +146,7 @@ class CatalogueCatchAll {
     static String catchAllDeclined(final String build,
                                    final Catalogue catalogue,
                                    final CatalogueCheckResult check) {
-        return catchAllDeclined(build, catalogue, check, null);
+        return catchAllDeclined(build, catalogue, check, null, null);
     }
 
     /// As [#catchAllDeclined(String, Catalogue, CatalogueCheckResult)], for a catalogue read back from an existing
@@ -156,14 +156,26 @@ class CatalogueCatchAll {
     /// @param catalogue      The catalogue.
     /// @param check          The catalogue's check.
     /// @param untranslatedBy The existing pipeline that leaves them untranslated, or null.
+    /// @param notRecorded    Why the latest proposals, sent over the catalogue as it is, recorded nothing, or null
+    ///                       where they were recorded.
     /// @return What the agent is told.
     static String catchAllDeclined(final String build,
                                    final Catalogue catalogue,
                                    final CatalogueCheckResult check,
-                                   final String untranslatedBy) {
+                                   final String untranslatedBy,
+                                   final String notRecorded) {
         final String become = untranslatedBy != null && catalogue.catchAll().translation() == null
                 ? "left untranslated (no Event), as '" + untranslatedBy + "' leaves them"
                 : "translated as " + translatedAs(catalogue.catchAll().translation());
+        if (notRecorded != null) {
+            // Seen in testing: a drop proposal refused, the form shown again, declined, and the agent sent back to
+            // the same proposal, round and round.
+            return "The user declined the catch-all: they don't want the " + check.uncatalogued().records()
+                   + " uncatalogued records " + become + ". Your latest proposals for them were not recorded ("
+                   + notRecorded + "): nothing is confirmed. Correct those proposals and send them again ("
+                   + NAME + " build=" + build + " proposals=...), rather than asking the user again; ask them in "
+                   + "the chat only what you can't tell.";
+        }
         return "The user declined the catch-all: they don't want the " + check.uncatalogued().records()
                + " uncatalogued records (those no event type recognises) " + become + ". Nothing is confirmed, and "
                + "the "

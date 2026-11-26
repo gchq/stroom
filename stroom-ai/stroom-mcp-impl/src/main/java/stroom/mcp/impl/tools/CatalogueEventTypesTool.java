@@ -41,6 +41,7 @@ import stroom.ai.impl.tools.catalogue.TimelineRoles;
 import stroom.ai.impl.tools.draft.SourceNotes;
 import stroom.ai.impl.tools.sample.KindFields;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.ai.impl.workspace.WorkspacePath;
@@ -166,6 +167,12 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     private static final String ASKED_BY = "asked_by";
     private static final String DIGEST = "digest";
     private static final String AMENDED = "amended";
+    // The proposals of the latest call that recorded nothing, and why: the catch-all isn't put to the user over a
+    // catalogue they would have changed (seen in testing: a drop proposal refused, the catch-all form showed the same
+    // records to become Unknown, the user declined, and the agent was sent back to the same proposal).
+    private static final String NOT_RECORDED = "proposals_not_recorded";
+    private static final String WHY = "why";
+    private static final String TOLD = "told";
     // What the agent is told of fields kept as Data whose meaning an element carries (asked for by the user
     // 2026-11-22: worded more strongly, with an example of the call; 2026-11-23, chat 187: one test, the element that
     // means it, as a setting's value was put in a Description the schema "had a home for").
@@ -971,9 +978,31 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         final Map<String, Object> confirmingNow = recorded
                 ? withChanges(confirming(calling.notesNow()), calling.catalogue(), kept)
                 : confirming(calling.notesNow());
+        confirmingNow.remove(NOT_RECORDED);
         if (recorded) {
             result.put("source_notes", notes.recordCatalogue(calling.context(), calling.build(), calling.source(),
                     kept, withRecords(withStreams(confirmingNow, read), check)));
+        }
+        final String notRecordedWhy = recorded
+                ? null
+                : notRecordedWhy(brought, applied);
+        if (notRecordedWhy != null) {
+            result.put("not_recorded", "Nothing was recorded: " + notRecordedWhy + ". The catalogue is as it was: "
+                                       + "correct the proposals and send them again; don't put the catch-all to "
+                                       + "the user over this catalogue (its records would still be counted as "
+                                       + "uncatalogued).");
+        }
+        // Kept for the catch-all's turn only where the proposals bring problems (a proposal for the uncatalogued
+        // records the check refuses, as seen): one naming no event type of the catalogue is said in refused alone.
+        final Map<String, Object> refusalMarks = confirming(calling.notesNow());
+        if (!recorded && !brought.isEmpty()) {
+            final Map<String, Object> mark = new LinkedHashMap<>();
+            mark.put(WHY, notRecordedWhy);
+            mark.put(DIGEST, catalogueDigest(calling.catalogue()));
+            refusalMarks.put(NOT_RECORDED, mark);
+            notes.recordCatalogue(calling.context(), calling.build(), calling.source(), kept, refusalMarks);
+        } else if (!recorded && refusalMarks.remove(NOT_RECORDED) != null) {
+            notes.recordCatalogue(calling.context(), calling.build(), calling.source(), kept, refusalMarks);
         }
         final boolean amendmentSent = !changed && brought.isEmpty() && applied.refused().isEmpty()
                                       && amendedDigest(confirming(calling.notesNow())) != null;
@@ -982,6 +1011,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             // the rule as it was): the set is put to them again. Seen in eval case 61: kept as amended, every
             // confirm=true replayed the amendment, and the build stopped.
             final Map<String, Object> marks = withStreams(confirming(calling.notesNow()), read);
+            marks.remove(NOT_RECORDED);
             marks.remove(AMENDED);
             marks.put(RecordSourceNotesTool.RECORDS, CatalogueTables.recordsOf(check));
             notes.recordCatalogue(calling.context(), calling.build(), calling.source(), kept, marks);
@@ -1013,6 +1043,37 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                                                                    + "its table shown in the chat, then a short form")
                 : next(calling.build(), Map.of(PROPOSALS_ARG, "<corrections>"), "checks the catalogue again"));
         return result;
+    }
+
+    // Why proposals recorded nothing, in plain words: the problems they bring, or why each was refused; null where
+    // there is nothing to say (proposals that change nothing, with nothing refused).
+    private static String notRecordedWhy(final List<String> brought, final CatalogueProposals.Applied applied) {
+        if (!brought.isEmpty()) {
+            return "the proposals bring problems: " + String.join("; ", brought.subList(0, Math.min(5,
+                    brought.size())));
+        }
+        if (!applied.refused().isEmpty()) {
+            return "the proposals were refused: " + String.join("; ", applied.refused().stream()
+                    .limit(5)
+                    .map(refused -> NullSafe.nonBlankStringElse(refused.typeId(), "proposal " + refused.index())
+                                    + ": " + refused.why())
+                    .toList());
+        }
+        return null;
+    }
+
+    // The catalogue's identity, to tell whether it changed since a mark was made.
+    private static String catalogueDigest(final Catalogue catalogue) {
+        return Consent.reviewId(ToolJson.dumpsSortedKeys(catalogue.toJson()));
+    }
+
+    // Why the latest proposals recorded nothing, where they were sent over the catalogue as it is now; empty where
+    // they were recorded, or the catalogue has changed since.
+    private static Optional<Map<String, Object>> notRecorded(final Calling calling) {
+        final Map<String, Object> mark = JsonValues.map(confirming(calling.notesNow()).get(NOT_RECORDED));
+        return mark != null && catalogueDigest(calling.catalogue()).equals(mark.get(DIGEST))
+                ? Optional.of(mark)
+                : Optional.empty();
     }
 
     private static String proposedHint(final boolean recorded,
@@ -1164,6 +1225,26 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             throw new ToolRefusal(notPlaced(unplaced));
         }
         final boolean catchAll = set.isEmpty();
+        // The catch-all's own translation given in this call (the user said another event for them) is theirs to
+        // confirm: the form is shown.
+        final Optional<Map<String, Object>> notRecorded = catchAll && catalogue.equals(calling.catalogue())
+                ? notRecorded(calling)
+                : Optional.empty();
+        if (notRecorded.isPresent() && !Boolean.TRUE.equals(notRecorded.get().get(TOLD))) {
+            // Shown now, the form would put the records the refused proposals were for to the user as before: the
+            // agent fixes the proposals first. Said once: a second confirm=true puts the catch-all to the user.
+            final Map<String, Object> marks = new LinkedHashMap<>(confirming);
+            final Map<String, Object> told = new LinkedHashMap<>(notRecorded.get());
+            told.put(TOLD, true);
+            marks.put(NOT_RECORDED, told);
+            notes.recordCatalogue(calling.context(), calling.build(), calling.source(), calling.catalogue(), marks);
+            throw new ToolRefusal("The catch-all isn't put to the user yet: your latest proposals were not "
+                                  + "recorded (" + notRecorded.get().get(WHY) + "), so the "
+                                  + check.uncatalogued().records() + " uncatalogued records are counted as before. "
+                                  + "Correct the proposals and send them again (" + NAME + " build="
+                                  + calling.build() + " proposals=...). Only if the user wants the catch-all as it "
+                                  + "is, call confirm=true again: its form is then shown.");
+        }
         final String untranslatedBy = untranslatedBy(calling, catalogue);
         final String shown = catchAll
                 ? CatalogueCatchAll.catchAllShown(check, catalogue, untranslatedBy)
@@ -1203,7 +1284,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             } catch (final ToolRefusal e) {
                 if (Consent.notAgreed(request.summary(), NAME, false).equals(e.getMessage())) {
                     throw new ToolRefusal(CatalogueCatchAll.catchAllDeclined(calling.build(), catalogue, check,
-                            untranslatedBy));
+                            untranslatedBy, notRecorded.map(mark -> String.valueOf(mark.get(WHY))).orElse(null)));
                 }
                 throw e;
             }
