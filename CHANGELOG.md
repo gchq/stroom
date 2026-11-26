@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.20-parallel-pathways] - 2026-11-26
+
 * Feature **#6079** : Add XSLT sandbox.
 
 * Bug **#6077** : Fix StroomQL rules that are run on a schedule with a `window` clause never judging a window that reads, with `lag()`, a window before the rule's time range. A rule now judges each window in the run whose time range holds the end of the window, or of the last window it reads with `lead()`, and searches back as far as it needs to.
@@ -3011,7 +3013,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.19-parallel-pathways...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.20-parallel-pathways...HEAD
+[v7.14-beta.20-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.19-parallel-pathways...v7.14-beta.20-parallel-pathways
 [v7.14-beta.19-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.18-parallel-pathways...v7.14-beta.19-parallel-pathways
 [v7.14-beta.18-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.17-parallel-pathways...v7.14-beta.18-parallel-pathways
 [v7.14-beta.17-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.16-parallel-pathways...v7.14-beta.17-parallel-pathways
