@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13.12] - 2026-11-26
+
+* Bug **#6127** : Fix the internal sign-in redirect when Stroom's public URL explicitly includes the default HTTP or HTTPS port.
+
+
 ## [v7.13.11] - 2026-11-23
 
 * Dependency : Uplift java in docker images from 25.0.5_8 to 25.0.5.1_2.
@@ -2684,7 +2689,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.12...HEAD
+[v7.13.12]: https://github.com/gchq/stroom/compare/v7.13.11...v7.13.12
 [v7.13.11]: https://github.com/gchq/stroom/compare/v7.13.10...v7.13.11
 [v7.13.10]: https://github.com/gchq/stroom/compare/v7.13.9...v7.13.10
 [v7.13.9]: https://github.com/gchq/stroom/compare/v7.13.8...v7.13.9
