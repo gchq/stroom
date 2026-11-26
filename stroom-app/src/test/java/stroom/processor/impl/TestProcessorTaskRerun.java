@@ -17,6 +17,7 @@
 package stroom.processor.impl;
 
 import stroom.data.shared.StreamTypeNames;
+import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
@@ -25,14 +26,18 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
+import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorTaskService;
+import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTranslationTestHelper;
+import stroom.test.StoreCreationTool;
 import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
@@ -68,6 +73,10 @@ class TestProcessorTaskRerun extends AbstractCoreIntegrationTest {
     private NodeInfo nodeInfo;
     @Inject
     private Provider<ProcessorConfig> processorConfigProvider;
+    @Inject
+    private StoreCreationTool storeCreationTool;
+    @Inject
+    private ProcessorFilterService processorFilterService;
 
     @BeforeEach
     void setUp() {
@@ -141,6 +150,47 @@ class TestProcessorTaskRerun extends AbstractCoreIntegrationTest {
         assertThat(getTask(task).getStatus()).isEqualTo(TaskStatus.COMPLETE);
         assertThat(getStatus(old)).isEqualTo(Status.DELETED);
         assertThat(findOutput(task)).isNotEmpty();
+    }
+
+    @Test
+    void completeRunKeepsItsOutputWhenATaskOfAnotherPipelineOnTheStreamIsNewer() {
+        final ProcessorTask task = assignEventsTask(true);
+        final String pipelineUuid = task.getProcessorFilter().getProcessor().getPipelineUuid();
+        // Output of a task of the same pipeline that has finished, so is out of date once this task completes, as it
+        // would be if the stream was being reprocessed.
+        final Meta old = createOutput(task, task.getId() + 1_000_000, Status.UNLOCKED);
+        // Another pipeline processes the same stream, with a newer task that completes first.
+        final DocRef otherPipeline = storeCreationTool.duplicatePipeline(
+                task.getProcessorFilter().getProcessor().getPipeline(), "Other pipeline", null);
+        processorFilterService.create(CreateProcessFilterRequest.builder()
+                .pipeline(otherPipeline)
+                .queryData(QueryData.builder()
+                        .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                        .expression(ExpressionOperator.builder()
+                                .addIdTerm(MetaFields.ID, Condition.EQUALS, task.getMetaId())
+                                .build())
+                        .build())
+                .priority(1)
+                .build());
+        processorTaskTestHelper.createAndQueueTasks();
+        final ProcessorTask other = assign();
+        assertThat(other.getMetaId()).isEqualTo(task.getMetaId());
+        assertThat(other.getProcessorFilter().getProcessor().getPipelineUuid()).isEqualTo(otherPipeline.getUuid());
+        assertThat(other.getId()).isGreaterThan(task.getId());
+        commonTranslationTestHelper.process(other);
+        assertThat(getTask(other).getStatus()).isEqualTo(TaskStatus.COMPLETE);
+        final List<Meta> otherOutput = findOutput(other);
+        assertThat(otherOutput).isNotEmpty();
+
+        commonTranslationTestHelper.process(task);
+
+        assertThat(getTask(task).getStatus()).isEqualTo(TaskStatus.COMPLETE);
+        assertThat(getStatus(old)).isEqualTo(Status.DELETED);
+        assertThat(findOutput(task))
+                .isNotEmpty()
+                .allSatisfy(output -> assertThat(output.getPipelineUuid()).isEqualTo(pipelineUuid));
+        // The other pipeline's output is no business of this task's.
+        assertThat(findOutput(other)).containsExactlyElementsOf(otherOutput);
     }
 
     @Test

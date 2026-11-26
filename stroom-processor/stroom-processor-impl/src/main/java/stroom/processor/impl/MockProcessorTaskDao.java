@@ -234,8 +234,29 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
-    public int putBackTasks(final Collection<ProcessorTask> tasks, final Set<TaskStatus> currentStatuses) {
-        return 0;
+    public synchronized int putBackTasks(final Collection<ProcessorTask> tasks,
+                                         final Set<TaskStatus> currentStatuses,
+                                         final String reason) {
+        int count = 0;
+        for (final ProcessorTask task : tasks) {
+            final ProcessorTask stored = dao.getMap().get((int) task.getId());
+            if (stored != null
+                && currentStatuses.contains(stored.getStatus())
+                && Objects.equals(stored.getVersion(), task.getVersion())) {
+                dao.getMap().put((int) task.getId(), stored.copy()
+                        .status(TaskStatus.CREATED)
+                        .statusTimeMs(System.currentTimeMillis())
+                        .nodeName(null)
+                        .startTimeMs(null)
+                        .endTimeMs(null)
+                        .reason(stored.getReason() == null
+                                ? reason
+                                : stored.getReason())
+                        .build());
+                count++;
+            }
+        }
+        return count;
     }
 
     @Override

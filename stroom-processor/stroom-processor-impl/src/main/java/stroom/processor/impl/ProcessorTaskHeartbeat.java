@@ -23,6 +23,7 @@ import stroom.task.api.TerminationCause;
 import stroom.task.shared.TaskId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -296,7 +297,13 @@ public class ProcessorTaskHeartbeat {
         // Done every time, in case it failed before.
         final Optional<TaskId> stroomTaskId = run.getStroomTaskIdToTerminate();
         if (stroomTaskId.isPresent()) {
-            taskManager.terminate(stroomTaskId.get(), run.getStopCause());
+            // A failure must not stop the other runs from being ended. This one is tried again next time.
+            try {
+                taskManager.terminate(stroomTaskId.get(), run.getStopCause());
+            } catch (final RuntimeException e) {
+                LOGGER.error(() -> LogUtil.message("Unable to end run {} of processor task {} - {}",
+                        key.runCount(), key.taskId(), LogUtil.exceptionMessage(e)), e);
+            }
         } else if (run.isRunning()) {
             // The processing context had no id, which is only the case in tests.
             LOGGER.error("Unable to end run {} of processor task {} as no stroom task id was registered for it",

@@ -220,12 +220,14 @@ public interface ProcessorTaskDao {
 
     /// Puts tasks back to [TaskStatus#CREATED], unowned, so that they can be run, but only those that have not
     /// changed since the caller knew them. A task that has just been started, or put back by something else, is left
-    /// alone. They keep their reason.
+    /// alone. A task that has a reason keeps it, as it says why the task was last put back, or the last fault it hit,
+    /// and being taken back without being run doesn't change that.
     ///
     /// @param tasks           The tasks as the caller knows them.
     /// @param currentStatuses The statuses that they may have.
+    /// @param reason          Why they are put back, which is given to those that have no reason.
     /// @return The number of tasks that were put back.
-    int putBackTasks(Collection<ProcessorTask> tasks, Set<TaskStatus> currentStatuses);
+    int putBackTasks(Collection<ProcessorTask> tasks, Set<TaskStatus> currentStatuses, String reason);
 
     /// Puts back a task that a run tried to start, when it can't be told whether it was started. It is put back if
     /// it is still [TaskStatus#QUEUED] as the run knew it, or if it is [TaskStatus#PROCESSING] for this node on the

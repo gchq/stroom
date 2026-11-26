@@ -131,9 +131,9 @@ class ProcessorTaskOutputCleaner {
             return;
         }
 
-        // Tasks of every processor, so that a task of another processor that uses the same pipeline isn't taken for
-        // one that has finished.
-        final Map<Long, ProcessorTask> tasks = findTasks(meta);
+        // Tasks of every processor that uses the same pipeline, so that a task of another of them isn't taken for one
+        // that has finished, but not those of other pipelines, as their output is no business of this one.
+        final Map<Long, ProcessorTask> tasks = findTasks(meta, processor);
         final long newestId = tasks
                 .values()
                 .stream()
@@ -172,9 +172,10 @@ class ProcessorTaskOutputCleaner {
         return output.getProcessorTaskId() != null && output.getProcessorTaskId() == task.getId();
     }
 
-    private Map<Long, ProcessorTask> findTasks(final Meta meta) {
+    private Map<Long, ProcessorTask> findTasks(final Meta meta, final Processor processor) {
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addIdTerm(ProcessorTaskFields.META_ID, Condition.EQUALS, meta.getId())
+                .addDocRefTerm(ProcessorTaskFields.PIPELINE, Condition.IS_DOC_REF, processor.getPipeline())
                 .build();
         return processorTaskDao.find(new ExpressionCriteria(expression))
                 .stream()

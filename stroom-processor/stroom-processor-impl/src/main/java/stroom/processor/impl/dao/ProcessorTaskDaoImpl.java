@@ -437,7 +437,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                     .set(PROCESSOR_TASK.START_TIME_MS, now)
                                     .setNull(PROCESSOR_TASK.END_TIME_MS)
                                     .set(PROCESSOR_TASK.RUN_COUNT, PROCESSOR_TASK.RUN_COUNT.plus(1))
-                                    .setNull(PROCESSOR_TASK.REASON)
+                                    // The reason is kept, as a claim may be given back without being run. The run
+                                    // sets its own when it ends.
                                     .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
                                     .where(PROCESSOR_TASK.ID.in(ids))
                                     .execute();
@@ -812,7 +813,10 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     @Override
-    public int putBackTasks(final Collection<ProcessorTask> tasks, final Set<TaskStatus> currentStatuses) {
+    public int putBackTasks(final Collection<ProcessorTask> tasks,
+                            final Set<TaskStatus> currentStatuses,
+                            final String reason) {
+        final Field<String> reasonField = DSL.coalesce(PROCESSOR_TASK.REASON, DSL.val(truncateReason(reason)));
         final List<ProcessorTask> remaining = List.copyOf(tasks);
         final List<Byte> statuses = currentStatuses.stream().map(TaskStatus::getPrimitiveValue).toList();
         int count = 0;
@@ -829,7 +833,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     null,
                     TaskStatus.CREATED,
                     System.currentTimeMillis(),
-                    PROCESSOR_TASK.REASON,
+                    reasonField,
                     condition));
         }
         return count;

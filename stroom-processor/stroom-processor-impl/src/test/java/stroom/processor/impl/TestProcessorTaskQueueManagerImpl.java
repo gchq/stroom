@@ -186,7 +186,7 @@ class TestProcessorTaskQueueManagerImpl {
             return ids.stream().sorted().map(tasksById::get).toList();
         });
         // Releasing moves tasks back to CREATED so they can be queued again.
-        when(processorTaskDao.putBackTasks(any(), any())).thenAnswer(invocation -> {
+        when(processorTaskDao.putBackTasks(any(), any(), any())).thenAnswer(invocation -> {
             final Collection<ProcessorTask> tasks = invocation.getArgument(0);
             final Set<Long> ids = tasks.stream().map(ProcessorTask::getId).collect(Collectors.toSet());
             queuedTaskIds.removeAll(ids);
@@ -517,7 +517,8 @@ class TestProcessorTaskQueueManagerImpl {
         when(processorProfileCache.getProfile(NODE, PROFILE)).thenReturn(NONE);
         queueManager.exec();
         assertThat(queueManager.getTaskQueueSize()).isZero();
-        verify(processorTaskDao).putBackTasks(any(), eq(Set.of(TaskStatus.QUEUED)));
+        verify(processorTaskDao).putBackTasks(
+                any(), eq(Set.of(TaskStatus.QUEUED)), eq(ProcessorTaskQueueManagerImpl.REASON_PROFILE_ALLOWS_NONE));
 
         // Move back into a period where it allows them again.
         when(processorProfileCache.getProfile(NODE, PROFILE)).thenReturn(UNLIMITED);
@@ -554,7 +555,8 @@ class TestProcessorTaskQueueManagerImpl {
                 .findExistingCreatedTasks(anyLong(), eq(limited.getId()), anyInt());
         // But its queued tasks have still been released.
         assertThat(queuedTaskIds).doesNotContainAnyElementsOf(limitedIds);
-        verify(processorTaskDao).putBackTasks(any(), eq(Set.of(TaskStatus.QUEUED)));
+        verify(processorTaskDao).putBackTasks(
+                any(), eq(Set.of(TaskStatus.QUEUED)), eq(ProcessorTaskQueueManagerImpl.REASON_PROFILE_ALLOWS_NONE));
     }
 
     @Test
@@ -570,7 +572,8 @@ class TestProcessorTaskQueueManagerImpl {
         queueManager.exec();
 
         assertThat(queueManager.getTaskQueueSize()).isZero();
-        verify(processorTaskDao).putBackTasks(any(), eq(Set.of(TaskStatus.QUEUED)));
+        verify(processorTaskDao).putBackTasks(
+                any(), eq(Set.of(TaskStatus.QUEUED)), eq(ProcessorTaskQueueManagerImpl.REASON_FILTER_NOT_ENABLED));
     }
 
     @Test
@@ -624,14 +627,16 @@ class TestProcessorTaskQueueManagerImpl {
         assertThat(queueManager.putBackLostTasks(NODE, now)).isOne();
 
         final ArgumentCaptor<Collection<ProcessorTask>> captor = ArgumentCaptor.forClass(Collection.class);
-        verify(processorTaskDao).putBackTasks(captor.capture(), eq(Set.of(TaskStatus.QUEUED)));
+        verify(processorTaskDao).putBackTasks(captor.capture(), eq(Set.of(TaskStatus.QUEUED)),
+                eq(ProcessorTaskQueueManagerImpl.REASON_HANDED_OUT_NOT_STARTED));
         assertThat(captor.getValue()).containsExactly(lost);
 
         // Once the lease timeout has passed, those that were handed out and not started are put back too.
         clearInvocations(processorTaskDao);
         queueManager.putBackLostTasks(NODE, now.plus(new ProcessorConfig().getTaskLeaseTimeout().getDuration())
                 .plusSeconds(1));
-        verify(processorTaskDao).putBackTasks(captor.capture(), eq(Set.of(TaskStatus.QUEUED)));
+        verify(processorTaskDao).putBackTasks(captor.capture(), eq(Set.of(TaskStatus.QUEUED)),
+                eq(ProcessorTaskQueueManagerImpl.REASON_HANDED_OUT_NOT_STARTED));
         assertThat(captor.getValue())
                 .extracting(ProcessorTask::getId)
                 .containsExactlyInAnyOrderElementsOf(Stream.concat(handedOutIds.stream(), Stream.of(1_000L)).toList());
@@ -655,7 +660,8 @@ class TestProcessorTaskQueueManagerImpl {
 
         assertThat(queueManager.putBackLostTasks(NODE, Instant.now())).isOne();
 
-        verify(processorTaskDao).putBackTasks(eq(List.of(lost)), eq(Set.of(TaskStatus.QUEUED)));
+        verify(processorTaskDao).putBackTasks(eq(List.of(lost)), eq(Set.of(TaskStatus.QUEUED)),
+                eq(ProcessorTaskQueueManagerImpl.REASON_HANDED_OUT_NOT_STARTED));
     }
 
     @Test
@@ -673,7 +679,8 @@ class TestProcessorTaskQueueManagerImpl {
         assertThat(queueManager.getTaskQueueSize()).isZero();
         assertThat(queuedTaskIds).isEmpty();
         // An old master that is still active has nothing else to put back what it handed out and wasn't started.
-        verify(processorTaskDao).putBackTasks(eq(List.of(lost)), eq(Set.of(TaskStatus.QUEUED)));
+        verify(processorTaskDao).putBackTasks(eq(List.of(lost)), eq(Set.of(TaskStatus.QUEUED)),
+                eq(ProcessorTaskQueueManagerImpl.REASON_HANDED_OUT_NOT_STARTED));
     }
 
     @Test
@@ -690,7 +697,8 @@ class TestProcessorTaskQueueManagerImpl {
         queueManager.releaseOldQueuedTasks();
 
         assertThat(queueManager.getTaskQueueSize()).isEqualTo(10);
-        verify(processorTaskDao).putBackTasks(eq(List.of(lost)), eq(Set.of(TaskStatus.QUEUED)));
+        verify(processorTaskDao).putBackTasks(eq(List.of(lost)), eq(Set.of(TaskStatus.QUEUED)),
+                eq(ProcessorTaskQueueManagerImpl.REASON_HANDED_OUT_NOT_STARTED));
     }
 
     @Test
@@ -730,7 +738,8 @@ class TestProcessorTaskQueueManagerImpl {
 
         assertThat(queueManager.abandonTasks(new ProcessorTaskList(OTHER_NODE, List.of(task)))).isTrue();
 
-        verify(processorTaskDao).putBackTasks(eq(List.of(task)), eq(Set.of(TaskStatus.QUEUED)));
+        verify(processorTaskDao).putBackTasks(
+                eq(List.of(task)), eq(Set.of(TaskStatus.QUEUED)), eq(DataProcessorTaskFactory.REASON_GIVEN_BACK));
     }
 
     @Test
@@ -739,7 +748,7 @@ class TestProcessorTaskQueueManagerImpl {
 
         assertThat(queueManager.putBackLostTasks(NODE, Instant.now())).isZero();
 
-        verify(processorTaskDao, never()).putBackTasks(any(), any());
+        verify(processorTaskDao, never()).putBackTasks(any(), any(), any());
     }
 
     // --------------------------------------------------------------------------------

@@ -112,6 +112,29 @@ class TestProcessorTaskHeartbeat extends AbstractProcessorTest {
     }
 
     @Test
+    void selfFenceEndsEveryRunEvenIfOneCannotBeEnded() {
+        final ProcessorTaskHeartbeat heartbeat = heartbeat();
+        final long leaseTimeoutMs = new ProcessorConfig().getTaskLeaseTimeout().toMillis();
+        final Processor processor = createProcessor();
+        final ProcessorFilter filter = createProcessorFilter(processor);
+        final long first = createProcessorTask(filter, TaskStatus.PROCESSING, NODE1, FEED, SEED_TIME);
+        final long second = createProcessorTask(filter, TaskStatus.PROCESSING, NODE1, FEED, SEED_TIME);
+        final TaskId firstTaskId = new TaskId("first", null);
+        final TaskId secondTaskId = new TaskId("second", null);
+        heartbeat.registerStart(task(first), filter.getId(), firstTaskId);
+        heartbeat.registerStart(task(second), filter.getId(), secondTaskId);
+        Mockito.doThrow(new RuntimeException("Expected"))
+                .when(taskManager).terminate(Mockito.any(), Mockito.any());
+        final long t0 = 1_000_000;
+        heartbeat.renew(t0);
+
+        heartbeat.fenceIfRenewalOverdue(t0 + leaseTimeoutMs + 1);
+
+        Mockito.verify(taskManager).terminate(firstTaskId, TerminationCause.HEARTBEAT_OVERDUE);
+        Mockito.verify(taskManager).terminate(secondTaskId, TerminationCause.HEARTBEAT_OVERDUE);
+    }
+
+    @Test
     void selfFenceTerminatesInFlightTasksWhenRenewalOverdue() {
         final ProcessorTaskHeartbeat heartbeat = heartbeat();
         final long leaseTimeoutMs = new ProcessorConfig().getTaskLeaseTimeout().toMillis();

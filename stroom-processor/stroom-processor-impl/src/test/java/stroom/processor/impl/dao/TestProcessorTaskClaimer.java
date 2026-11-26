@@ -151,7 +151,8 @@ class TestProcessorTaskClaimer extends AbstractProcessorTest {
                 .isEmpty();
 
         // Those two are done with, which the registry knows about the moment it happens.
-        processorTaskDao.putBackTasks(running.stream().map(this::task).toList(), Set.of(TaskStatus.PROCESSING));
+        processorTaskDao.putBackTasks(
+                running.stream().map(this::task).toList(), Set.of(TaskStatus.PROCESSING), "Expected");
         running.forEach(taskId -> heartbeat.deregister(task(taskId)));
 
         assertThat(claimer.claimTasks(2))
@@ -175,7 +176,7 @@ class TestProcessorTaskClaimer extends AbstractProcessorTest {
         // has to be taken on the same side of that, or this node's one task is subtracted twice.
         final ProcessorTaskDao dao = Mockito.spy(processorTaskDao);
         Mockito.doAnswer(invocation -> {
-            processorTaskDao.putBackTasks(List.of(task(running)), Set.of(TaskStatus.PROCESSING));
+            processorTaskDao.putBackTasks(List.of(task(running)), Set.of(TaskStatus.PROCESSING), "Expected");
             heartbeat.deregister(task(running));
             return invocation.callRealMethod();
         }).when(dao).countTasksForFilter(filter.getId(), TaskStatus.PROCESSING);

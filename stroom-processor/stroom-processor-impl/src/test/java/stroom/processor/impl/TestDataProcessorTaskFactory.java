@@ -131,7 +131,7 @@ class TestDataProcessorTaskFactory {
     @Test
     void queueModePutsBackLocallyRatherThanViaTheMaster() throws Exception {
         processorConfig.setClaimTasksOnWorker(false);
-        Mockito.when(processorTaskDao.putBackTasks(Mockito.any(), Mockito.any())).thenReturn(1);
+        Mockito.when(processorTaskDao.putBackTasks(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(1);
 
         final DataProcessorTaskFactory factory = factory();
         final List<DistributedTask> tasks = distributedTasks(factory, task(1));
@@ -139,7 +139,10 @@ class TestDataProcessorTaskFactory {
         assertThat(factory.abandon(THIS_NODE, tasks)).isTrue();
 
         final ArgumentCaptor<Collection<ProcessorTask>> captor = ArgumentCaptor.forClass(Collection.class);
-        Mockito.verify(processorTaskDao).putBackTasks(captor.capture(), Mockito.eq(Set.of(TaskStatus.QUEUED)));
+        Mockito.verify(processorTaskDao).putBackTasks(
+                captor.capture(),
+                Mockito.eq(Set.of(TaskStatus.QUEUED)),
+                Mockito.eq(DataProcessorTaskFactory.REASON_GIVEN_BACK));
         assertThat(captor.getValue())
                 .extracting(ProcessorTask::getId)
                 .containsExactly(1L);
@@ -155,7 +158,7 @@ class TestDataProcessorTaskFactory {
         final List<DistributedTask> claimed = distributedTasks(factory, task(1));
         processorConfig.setClaimTasksOnWorker(false);
         final List<DistributedTask> queued = distributedTasks(factory, task(2));
-        Mockito.when(processorTaskDao.putBackTasks(Mockito.any(), Mockito.any())).thenReturn(1);
+        Mockito.when(processorTaskDao.putBackTasks(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(1);
 
         // Fetched with the master queue, and given back after the setting has changed to claiming.
         processorConfig.setClaimTasksOnWorker(true);
@@ -167,7 +170,10 @@ class TestDataProcessorTaskFactory {
                 .extracting(ProcessorTask::getId)
                 .containsExactly(1L);
         final ArgumentCaptor<Collection<ProcessorTask>> queuedCaptor = ArgumentCaptor.forClass(Collection.class);
-        Mockito.verify(processorTaskDao).putBackTasks(queuedCaptor.capture(), Mockito.eq(Set.of(TaskStatus.QUEUED)));
+        Mockito.verify(processorTaskDao).putBackTasks(
+                queuedCaptor.capture(),
+                Mockito.eq(Set.of(TaskStatus.QUEUED)),
+                Mockito.eq(DataProcessorTaskFactory.REASON_GIVEN_BACK));
         assertThat(queuedCaptor.getValue())
                 .extracting(ProcessorTask::getId)
                 .containsExactly(2L);
@@ -176,7 +182,7 @@ class TestDataProcessorTaskFactory {
     @Test
     void failedPutBackIsReportedAsFailure() throws Exception {
         processorConfig.setClaimTasksOnWorker(false);
-        Mockito.when(processorTaskDao.putBackTasks(Mockito.any(), Mockito.any()))
+        Mockito.when(processorTaskDao.putBackTasks(Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenThrow(new RuntimeException("Database is down"));
 
         final DataProcessorTaskFactory factory = factory();

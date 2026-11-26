@@ -22,6 +22,7 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
+import stroom.processor.api.ErrorStreamException;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.api.ProcessorResultImpl;
 import stroom.processor.api.ProcessorTaskExecutor;
@@ -1025,6 +1026,17 @@ class TestDataProcessorTaskHandler {
         handler.exec(task(0), false);
 
         Mockito.verifyNoInteractions(listener);
+    }
+
+    @Test
+    void errorStreamThatCannotBeWrittenIsNotCounted() {
+        givenExecutorThrows(new ErrorStreamException("Unable to write the error stream - IOException 'Full'",
+                new IOException("Full")));
+
+        handler.exec(task(2), true);
+
+        // Not Aborted, though it is the third fault, as every task would hit it while the volume is full.
+        verifyOnlyStatus(TaskStatus.RETRY, NODE, false, "Unable to write the error stream - IOException 'Full'");
     }
 
     @Test

@@ -86,6 +86,10 @@ public class ProcessorTaskClaimer {
      */
     private static final long CLUSTER_COUNT_CACHE_MS = 1_000;
 
+    // Why claimed tasks are put back, which is only given to those that have no reason already.
+    static final String REASON_STREAM_LOCKED = "Put back as its stream was still locked";
+    static final String REASON_CLAIM_GIVEN_UP = "Put back as the node that claimed it will not run it";
+
     private final ProcessorTaskAvailability processorTaskAvailability;
     private final ProcessorTaskDao processorTaskDao;
     private final ProcessorProfileCache processorProfileCache;
@@ -223,7 +227,8 @@ public class ProcessorTaskClaimer {
         final Map<Boolean, List<ProcessorTask>> byLocked = tasks
                 .stream()
                 .collect(Collectors.partitioningBy(task -> lockedMetaIds.contains(task.getMetaId())));
-        final int released = processorTaskDao.putBackTasks(byLocked.get(true), Set.of(TaskStatus.PROCESSING));
+        final int released = processorTaskDao.putBackTasks(
+                byLocked.get(true), Set.of(TaskStatus.PROCESSING), REASON_STREAM_LOCKED);
         lockedMetaReleases.addAndGet(released);
         LOGGER.debug(() -> LogUtil.message("releaseLockedMeta() - released {}/{} tasks claimed for {} "
                                            + "whose meta is still locked",
@@ -326,7 +331,7 @@ public class ProcessorTaskClaimer {
             return 0;
         }
         // Only those that have not changed since they were claimed, e.g. by the reaper, are put back.
-        final int released = processorTaskDao.putBackTasks(tasks, Set.of(TaskStatus.PROCESSING));
+        final int released = processorTaskDao.putBackTasks(tasks, Set.of(TaskStatus.PROCESSING), REASON_CLAIM_GIVEN_UP);
         tasks.forEach(processorTaskHeartbeat::deregister);
         LOGGER.debug(() -> LogUtil.message("abandonTasks() - released {}/{} claimed tasks",
                 released, tasks.size()));

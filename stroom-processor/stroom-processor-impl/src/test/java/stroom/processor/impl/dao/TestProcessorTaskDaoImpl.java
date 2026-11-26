@@ -248,7 +248,7 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         processorFilter1a = createProcessorFilter(processor1);
         final long taskId = createProcessorTask(processorFilter1a, TaskStatus.CREATED, null, FEED);
         final ProcessorTask queued = processorTaskDao.queueTasks(Set.of(taskId), NODE1).getFirst();
-        assertThat(processorTaskDao.putBackTasks(List.of(queued), Set.of(TaskStatus.QUEUED))).isOne();
+        assertThat(processorTaskDao.putBackTasks(List.of(queued), Set.of(TaskStatus.QUEUED), "Expected")).isOne();
 
         assertThat(processorTaskDao.changeTaskStatus(queued, NODE1, TaskStatus.PROCESSING, 1L, null))
                 .isEqualTo(TaskStatusChange.lost());
@@ -402,13 +402,29 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         final List<ProcessorTask> tasks = processorTaskDao.find(new ExpressionCriteria()).getValues();
         processorTaskDao.changeTaskStatus(findTask(started), NODE1, TaskStatus.PROCESSING, 1L, null);
 
-        assertThat(processorTaskDao.putBackTasks(tasks, Set.of(TaskStatus.QUEUED, TaskStatus.PROCESSING))).isOne();
+        assertThat(processorTaskDao.putBackTasks(tasks, Set.of(TaskStatus.QUEUED, TaskStatus.PROCESSING), "Expected"))
+                .isOne();
 
         assertThat(getTaskStatus(unchanged)).isEqualTo(TaskStatus.CREATED);
         assertThat(getTaskNodeId(unchanged)).isNull();
         assertThat(getTaskStatus(started)).isEqualTo(TaskStatus.PROCESSING);
         assertThat(getTaskStatus(otherStatus)).isEqualTo(TaskStatus.COMPLETE);
-        assertThat(processorTaskDao.putBackTasks(List.of(), Set.of(TaskStatus.QUEUED))).isZero();
+        assertThat(processorTaskDao.putBackTasks(List.of(), Set.of(TaskStatus.QUEUED), "Expected")).isZero();
+    }
+
+    @Test
+    void testPutBackTasksGiveTheirReasonOnlyToTasksThatHaveNone() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final long withReason = createTaskWithReason(processorFilter1a);
+        processorTaskDao.putBackRetryTasks(processorFilter1a.getId(), Instant.now().plusSeconds(1), 10);
+        final long withoutReason = createProcessorTask(processorFilter1a, TaskStatus.CREATED, null, FEED);
+        final List<ProcessorTask> queued = processorTaskDao.queueTasks(Set.of(withReason, withoutReason), NODE1);
+
+        assertThat(processorTaskDao.putBackTasks(queued, Set.of(TaskStatus.QUEUED), "Master stopped")).isEqualTo(2);
+
+        assertThat(getTaskReason(withReason)).isEqualTo("Broken");
+        assertThat(getTaskReason(withoutReason)).isEqualTo("Master stopped");
     }
 
     @Test
@@ -420,7 +436,7 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         }
         final List<ProcessorTask> tasks = processorTaskDao.find(new ExpressionCriteria()).getValues();
 
-        assertThat(processorTaskDao.putBackTasks(tasks, Set.of(TaskStatus.QUEUED))).isEqualTo(1_001);
+        assertThat(processorTaskDao.putBackTasks(tasks, Set.of(TaskStatus.QUEUED), "Expected")).isEqualTo(1_001);
     }
 
     @Test
@@ -458,7 +474,7 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         processorFilter1a = createProcessorFilter(processor1);
         final long taskId = createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE2, FEED);
         final ProcessorTask handedOut = findTask(taskId);
-        processorTaskDao.putBackTasks(List.of(handedOut), Set.of(TaskStatus.QUEUED));
+        processorTaskDao.putBackTasks(List.of(handedOut), Set.of(TaskStatus.QUEUED), "Expected");
 
         assertThat(processorTaskDao.changeTaskStatus(handedOut, NODE1, TaskStatus.PROCESSING, 1L, null))
                 .isEqualTo(TaskStatusChange.lost());
@@ -691,19 +707,30 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
                         ProcessorTaskDaoImpl.REASON_LEFT_QUEUED,
                         ProcessorTaskDaoImpl.REASON_NODE_STARTED);
         assertThat(processorTaskDao.putBackTasks(
-                processorTaskDao.queueTasks(Set.of(swept, owned), NODE1), Set.of(TaskStatus.QUEUED))).isZero();
+                processorTaskDao.queueTasks(Set.of(swept, owned), NODE1), Set.of(TaskStatus.QUEUED), "Expected"))
+                .isZero();
         assertThat(processorTaskDao.putBackTasks(
                 processorTaskDao.find(new ExpressionCriteria())
                         .stream()
                         .filter(task -> Set.of(swept, owned).contains(task.getId()))
                         .toList(),
-                Set.of(TaskStatus.QUEUED))).isEqualTo(2);
+                Set.of(TaskStatus.QUEUED), "Expected")).isEqualTo(2);
         assertThat(getTaskReason(swept)).isEqualTo(ProcessorTaskDaoImpl.REASON_LEFT_QUEUED);
         assertThat(getTaskReason(owned)).isEqualTo(ProcessorTaskDaoImpl.REASON_NODE_STARTED);
 
-        assertThat(processorTaskDao.claimTasks(processorFilter1a.getId(), NODE1, 3))
-                .hasSize(3)
-                .allSatisfy(task -> assertThat(task.getReason()).isNull());
+        // A claim may be given back without being run, so it keeps the reason too.
+        final List<ProcessorTask> claimed = processorTaskDao.claimTasks(processorFilter1a.getId(), NODE1, 3);
+        assertThat(claimed).hasSize(3).allSatisfy(task -> assertThat(task.getReason()).isNotNull());
+        assertThat(processorTaskDao.putBackTasks(claimed, Set.of(TaskStatus.PROCESSING), "Given up")).isEqualTo(3);
+        assertThat(getTaskReason(reaped)).isEqualTo(ProcessorTaskDaoImpl.REASON_NO_HEARTBEAT);
+
+        // The run sets its own when it ends.
+        final ProcessorTask run = processorTaskDao.claimTasks(processorFilter1a.getId(), NODE1, 3)
+                .stream()
+                .filter(task -> task.getId() == reaped)
+                .findFirst()
+                .orElseThrow();
+        processorTaskDao.changeTaskStatus(run, NODE1, TaskStatus.COMPLETE, 1L, 2L, null, false);
         assertThat(getTaskReason(reaped)).isNull();
     }
 

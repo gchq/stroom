@@ -41,6 +41,7 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.SearchIdHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
+import stroom.processor.api.ErrorStreamException;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.api.RunIndexing;
 import stroom.processor.api.RunOutput;
@@ -124,14 +125,20 @@ class TestStandardProcessorTaskExecutor {
     void errorStreamThatCannotBeOpenedIsAFault() {
         Mockito.when(store.openTarget(Mockito.any(), Mockito.any())).thenThrow(new RuntimeException("Expected"));
 
-        assertThatThrownBy(this::exec).hasMessageContaining(MESSAGE).hasMessageContaining("Expected");
+        assertThatThrownBy(this::exec)
+                .isInstanceOf(ErrorStreamException.class)
+                .hasMessageContaining(MESSAGE)
+                .hasMessageContaining("Expected");
     }
 
     @Test
     void errorStreamThatCannotBeWrittenToIsAFault() throws IOException {
         Mockito.doThrow(new IOException("Expected")).when(outputStream).write(Mockito.any(byte[].class));
 
-        assertThatThrownBy(this::exec).hasMessageContaining(MESSAGE).hasMessageContaining("Expected");
+        assertThatThrownBy(this::exec)
+                .isInstanceOf(ErrorStreamException.class)
+                .hasMessageContaining(MESSAGE)
+                .hasMessageContaining("Expected");
         // It is still closed.
         Mockito.verify(target).close();
     }
@@ -140,7 +147,10 @@ class TestStandardProcessorTaskExecutor {
     void errorStreamWhoseLastWriteFailsIsAFault() throws IOException {
         Mockito.doThrow(new IOException("Expected")).when(outputStream).flush();
 
-        assertThatThrownBy(this::exec).hasMessageContaining(MESSAGE).hasMessageContaining("Expected");
+        assertThatThrownBy(this::exec)
+                .isInstanceOf(ErrorStreamException.class)
+                .hasMessageContaining(MESSAGE)
+                .hasMessageContaining("Expected");
         Mockito.verify(target).close();
     }
 
@@ -148,7 +158,10 @@ class TestStandardProcessorTaskExecutor {
     void errorStreamThatCannotBeClosedIsAFault() throws IOException {
         Mockito.doThrow(new RuntimeException("Expected")).when(target).close();
 
-        assertThatThrownBy(this::exec).hasMessageContaining(MESSAGE).hasMessageContaining("Expected");
+        assertThatThrownBy(this::exec)
+                .isInstanceOf(ErrorStreamException.class)
+                .hasMessageContaining(MESSAGE)
+                .hasMessageContaining("Expected");
     }
 
     @Test

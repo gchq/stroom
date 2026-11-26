@@ -22,6 +22,7 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
+import stroom.processor.api.ErrorStreamException;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.api.ProcessorResultImpl;
 import stroom.processor.api.ProcessorTaskExecutor;
@@ -218,6 +219,9 @@ public class DataProcessorTaskHandler {
                         run.result = processorTaskExecutor
                                 .exec(taskContext, processor, processorFilter, run.task, source, run.output,
                                         run.indexing);
+                    } catch (final ErrorStreamException e) {
+                        // Almost always because of where it is written, e.g. a full volume, so every task would hit it.
+                        throw new Fault("Unable to write the error stream", e.getCause(), false);
                     } catch (final RuntimeException e) {
                         throw new Fault("Processing failed", e, true);
                     }

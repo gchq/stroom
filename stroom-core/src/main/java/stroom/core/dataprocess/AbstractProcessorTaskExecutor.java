@@ -39,7 +39,6 @@ import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.errorhandler.LoggedException;
-import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.errorhandler.RecordErrorReceiver;
 import stroom.pipeline.factory.AbstractElement;
 import stroom.pipeline.factory.Pipeline;
@@ -58,6 +57,7 @@ import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.pipeline.task.ProcessStatisticsFactory;
 import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
 import stroom.pipeline.task.StreamMetaDataProvider;
+import stroom.processor.api.ErrorStreamException;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.InclusiveRanges.InclusiveRange;
 import stroom.processor.api.ProcessorResult;
@@ -260,7 +260,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
         // there had been any.
         final Exception failure = errorStreamFailure.get();
         if (failure != null) {
-            throw ProcessException.create(
+            throw new ErrorStreamException(
                     "Unable to write the error stream - " + LogUtil.exceptionMessage(failure), failure);
         }
 

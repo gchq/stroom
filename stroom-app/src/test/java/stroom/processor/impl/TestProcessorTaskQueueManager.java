@@ -318,7 +318,7 @@ class TestProcessorTaskQueueManager extends AbstractCoreIntegrationTest {
         final List<ProcessorTask> handedOut = processorTaskTestHelper.assignTasks(2);
 
         // What the node they were handed to does, without asking the master.
-        assertThat(processorTaskDao.putBackTasks(handedOut, Set.of(TaskStatus.QUEUED))).isEqualTo(2);
+        assertThat(processorTaskDao.putBackTasks(handedOut, Set.of(TaskStatus.QUEUED), "Expected")).isEqualTo(2);
 
         handedOut.forEach(task -> assertThat(getTask(task).getStatus()).isEqualTo(TaskStatus.CREATED));
     }

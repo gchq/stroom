@@ -55,6 +55,9 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataProcessorTaskFactory.class);
     private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Data Processor#", 1);
 
+    // Only given to tasks that have no reason already.
+    static final String REASON_GIVEN_BACK = "Put back as the node it was given to will not run it";
+
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
 
     private final TargetNodeSetFactory targetNodeSetFactory;
@@ -196,7 +199,8 @@ public class DataProcessorTaskFactory implements DistributedTaskFactory {
         try {
             // They are put back here rather than by the master, which may be what has gone. They are still queued,
             // as only a run moves them on, and only those that have not changed since are put back.
-            final int count = processorTaskDao.putBackTasks(processorTasks, Set.of(TaskStatus.QUEUED));
+            final int count = processorTaskDao.putBackTasks(
+                    processorTasks, Set.of(TaskStatus.QUEUED), REASON_GIVEN_BACK);
             LOGGER.info("Put back {} of {} tasks that were handed to this node and will not be run",
                     count, processorTasks.size());
             return true;

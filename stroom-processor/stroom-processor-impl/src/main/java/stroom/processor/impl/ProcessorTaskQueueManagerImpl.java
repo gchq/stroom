@@ -90,6 +90,14 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
     private static final long HANDED_OUT_PRUNE_INTERVAL_MS = 60_000;
     private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Fill Task Store", 3);
 
+    // Why queued tasks are put back, which is only given to those that have no reason already.
+    static final String REASON_MASTER_STOPPED = "Put back as the master node that queued it was stopped";
+    static final String REASON_NO_LONGER_MASTER = "Put back as the node that queued it is no longer the master";
+    static final String REASON_CLAIMING = "Put back as tasks are now claimed by the nodes that run them";
+    static final String REASON_FILTER_NOT_ENABLED = "Put back as its processor filter is not enabled";
+    static final String REASON_PROFILE_ALLOWS_NONE = "Put back as its processing profile allows no tasks at the moment";
+    static final String REASON_HANDED_OUT_NOT_STARTED = "Put back as it was handed out and not started";
+
     private final ProcessorTaskDao processorTaskDao;
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
@@ -203,7 +211,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             stopped = true;
             // Put back what has been queued, or it would wait for the reaper on another node, or for this node to
             // start again.
-            final long count = releaseAll();
+            final long count = releaseAll(REASON_MASTER_STOPPED);
             if (count > 0) {
                 LOGGER.info("Put back {} queued tasks as this node is stopping", count);
             }
@@ -560,7 +568,10 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             try {
                 LOGGER.warn("abandon() - {}", processorTaskList);
                 // Only those that have not changed since they were handed out are put back.
-                processorTaskDao.putBackTasks(processorTaskList.getList(), Set.of(TaskStatus.QUEUED));
+                processorTaskDao.putBackTasks(
+                        processorTaskList.getList(),
+                        Set.of(TaskStatus.QUEUED),
+                        DataProcessorTaskFactory.REASON_GIVEN_BACK);
 
             } catch (final RuntimeException e) {
                 LOGGER.error("abandon() - {}", processorTaskList, e);
@@ -570,16 +581,16 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         return true;
     }
 
-    private long releaseAll() {
+    private long releaseAll(final String reason) {
         long total = 0;
         for (final Entry<ProcessorFilter, ProcessorTaskQueue> entry : queueMap.entrySet()) {
             final ProcessorFilter filter = entry.getKey();
-            total += releaseQueuedFilterTasks(filter);
+            total += releaseQueuedFilterTasks(filter, reason);
         }
         return total;
     }
 
-    private long releaseQueuedFilterTasks(final ProcessorFilter filter) {
+    private long releaseQueuedFilterTasks(final ProcessorFilter filter, final String reason) {
         if (filter != null) {
             return LOGGER.logDurationIfDebugEnabled(() -> {
                 long totalReleased = 0;
@@ -590,13 +601,13 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                     while (processorTask != null) {
                         tasks.add(processorTask);
                         if (tasks.size() >= BATCH_SIZE) {
-                            totalReleased += releaseQueuedTasks(tasks);
+                            totalReleased += releaseQueuedTasks(tasks, reason);
                             tasks.clear();
                         }
                         processorTask = queue.poll();
                     }
                 }
-                totalReleased += releaseQueuedTasks(tasks);
+                totalReleased += releaseQueuedTasks(tasks, reason);
                 return totalReleased;
             }, () -> "Released tasks for filter " + filter.getFilterInfo());
         }
@@ -604,10 +615,10 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
     }
 
     // Returns the number put back. Those that have changed since they were queued are left alone.
-    private int releaseQueuedTasks(final List<ProcessorTask> tasks) {
+    private int releaseQueuedTasks(final List<ProcessorTask> tasks, final String reason) {
         if (!tasks.isEmpty()) {
             try {
-                return processorTaskDao.putBackTasks(tasks, Set.of(TaskStatus.QUEUED));
+                return processorTaskDao.putBackTasks(tasks, Set.of(TaskStatus.QUEUED), reason);
             } catch (final RuntimeException e) {
                 LOGGER.error(() -> LogUtil.message("release() - {} tasks", tasks.size()), e);
             }
@@ -642,7 +653,9 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             final boolean claimTasksOnWorker = processorConfigProvider.get().isClaimTasksOnWorker();
             if (!queueMap.isEmpty() && (claimTasksOnWorker || !isMaster(node))) {
                 final DurationTimer durationTimer = DurationTimer.start();
-                final long count = releaseAll();
+                final long count = releaseAll(claimTasksOnWorker
+                        ? REASON_CLAIMING
+                        : REASON_NO_LONGER_MASTER);
                 if (count > 0) {
                     LOGGER.info("Released All Queued Tasks (count = {}) in {}", count, durationTimer);
                 }
@@ -697,7 +710,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                         .filter(task -> !kept.contains(task.getId()))
                         .toList();
                 if (!lost.isEmpty()) {
-                    count += processorTaskDao.putBackTasks(lost, Set.of(TaskStatus.QUEUED));
+                    count += processorTaskDao.putBackTasks(
+                            lost, Set.of(TaskStatus.QUEUED), REASON_HANDED_OUT_NOT_STARTED);
                 }
             }
         } while (page.size() == BATCH_SIZE);
@@ -828,7 +842,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             if (!enabledFilterSet.contains(filter)) {
                 final int initialQueueSize = queue.size();
                 final DurationTimer durationTimer = DurationTimer.start();
-                final long count = releaseQueuedFilterTasks(filter);
+                final long count = releaseQueuedFilterTasks(filter, REASON_FILTER_NOT_ENABLED);
                 final FilterProgressMonitor filterProgressMonitor =
                         progressMonitor.logFilter(filter, initialQueueSize);
                 filterProgressMonitor.logPhase(Phase.RELEASE_TASKS_FOR_DISABLED_FILTERS, durationTimer, count);
@@ -862,7 +876,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
             if (getMaxConcurrentTasks(filter) <= 0) {
                 final int initialQueueSize = queue.size();
                 final DurationTimer durationTimer = DurationTimer.start();
-                final long released = releaseQueuedFilterTasks(filter);
+                final long released = releaseQueuedFilterTasks(filter, REASON_PROFILE_ALLOWS_NONE);
                 final FilterProgressMonitor filterProgressMonitor =
                         progressMonitor.logFilter(filter, initialQueueSize);
                 filterProgressMonitor.logPhase(Phase.RELEASE_TASKS_FOR_INACTIVE_PROFILES, durationTimer, released);
@@ -973,7 +987,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                     // they would remain owned by this node and unable to be processed until it allows them
                     // again, which could be a long time for a profile that only processes overnight etc.
                     final DurationTimer durationTimer = DurationTimer.start();
-                    final long released = releaseQueuedFilterTasks(filter);
+                    final long released = releaseQueuedFilterTasks(filter, REASON_PROFILE_ALLOWS_NONE);
                     filterProgressMonitor.logPhase(
                             Phase.RELEASE_TASKS_FOR_INACTIVE_PROFILES, durationTimer, released);
                     filterProgressMonitor.complete();

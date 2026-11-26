@@ -24,6 +24,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.TaskStatus;
 import stroom.util.shared.ResultPage;
 
@@ -263,7 +264,10 @@ class TestProcessorTaskOutputCleaner {
         assertThat(getDeleted()).isEmpty();
         final ArgumentCaptor<ExpressionCriteria> captor = ArgumentCaptor.forClass(ExpressionCriteria.class);
         Mockito.verify(processorTaskDao).find(captor.capture());
-        assertThat(captor.getValue().getExpression().toString()).doesNotContain("Processor");
+        assertThat(captor.getValue().getExpression().toString())
+                .doesNotContain("Processor")
+                .contains(ProcessorTaskFields.PIPELINE.getFldName())
+                .contains(processor.getPipelineUuid());
     }
 
     @Test
