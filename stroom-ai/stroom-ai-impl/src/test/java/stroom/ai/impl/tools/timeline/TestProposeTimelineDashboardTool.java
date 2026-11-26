@@ -260,8 +260,8 @@ class TestProposeTimelineDashboardTool {
     @Test
     void anEmptyActivitiesTableSaysHowToFillIt() {
         timeline(CSV);
-        workspace.write(WorkspacePath.parse("/outputs/timelines/jsmith/activities.csv"),
-                String.join(",", TimelineTables.ACTIVITY_COLUMNS) + "\r\n", null);
+        workspace.write(WorkspacePath.parse("/outputs/timelines/jsmith/activity-levels.csv"),
+                String.join(",", TimelineTables.LEVEL_COLUMNS) + "\r\n", null);
 
         final ToolResult result = run(Map.of("entity", "jsmith", "table", "activities", "folder", FOLDER_PATH));
 

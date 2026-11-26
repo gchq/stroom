@@ -279,11 +279,11 @@ class TestActivityTimelineTool {
                 arguments(Map.of("timeZone", "UTC", "view", "both")), false)), ToolCalls.inChat(CHAT,
                 files.workspace())).text();
 
-        assertThat(text).contains("the chart of " + FOLDER + "activities.csv is drawn at the end of this result, "
+        assertThat(text).contains("the chart of " + FOLDER + "activity-levels.csv is drawn at the end of this result, "
                                   + "ready for your reply; draw the other in the chat with gantt_chart: path "
                                   + FOLDER + "spans.csv, start start, end end, label label, lane lane, startEvent "
                                   + "start_event, endEvent end_event, title")
-                .contains("The chart of " + FOLDER + "activities.csv:\n");
+                .contains("The chart of " + FOLDER + "activity-levels.csv:\n");
         assertThat(text).containsOnlyOnce("```mermaid");
     }
 

@@ -317,7 +317,7 @@ final class ActivityCharacterisation {
         return new Characterised(withTotals, sessionPlacements, textPlacements, items, classified.cache(),
                 classified.asked(), classified.calls(), classified.skipped(), Leiden.modularity(ids, links,
                 clusters), notes, new Counts(items.size() - loose.size(), classified.reused(), classified.failed(),
-                classified.failedWhy()), worded);
+                classified.failedWhy()), worded, modelAsked && sideCalls.available());
     }
 
     // ------------------------------------------------------------------------------------------------
@@ -1579,6 +1579,8 @@ final class ActivityCharacterisation {
     /// @param counts     How the items were placed, and how many calls failed.
     /// @param worded     The periods' descriptions by the model, checked ([PeriodWording]); none where it wasn't
     ///                   asked.
+    /// @param modelAgreed True if the model was asked (the user agreed, or there was nothing to ask): the timeline's
+    ///                   other side calls (its thematic spans) are made under the same choice.
     record Characterised(List<Activity> activities,
                          Map<String, Placement> sessions,
                          Map<String, Placement> items,
@@ -1590,7 +1592,8 @@ final class ActivityCharacterisation {
                          double modularity,
                          List<String> notes,
                          Counts counts,
-                         PeriodWording.Worded worded) {
+                         PeriodWording.Worded worded,
+                         boolean modelAgreed) {
 
         /// A null `counts` is none, as is a null `worded`.
         Characterised {
@@ -1627,7 +1630,7 @@ final class ActivityCharacterisation {
                       final List<String> notes,
                       final Counts counts) {
             this(activities, sessions, items, allItems, cache, asked, calls, skipped, modularity, notes, counts,
-                    null);
+                    null, false);
         }
     }
 

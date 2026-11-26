@@ -54,11 +54,14 @@ class TestTimelineDataConnection {
     void theActivitiesDayStaysTextAsItIsALanesName() {
         final List<DataColumn> columns = TimelineDataConnection.columns(TimelineDataConnection.ACTIVITIES);
 
-        assertThat(columns).extracting(DataColumn::getName).isEqualTo(TimelineTables.ACTIVITY_COLUMNS);
+        // Every level of the activities view, its level a number the dashboard's level input filters by.
+        assertThat(columns).extracting(DataColumn::getName).isEqualTo(TimelineTables.LEVEL_COLUMNS);
         assertThat(columns).filteredOn(column -> column.getType() != DataColumnType.TEXT)
                 .extracting(DataColumn::getName, DataColumn::getType)
-                .containsExactly(tuple("start", DataColumnType.DATE), tuple("end", DataColumnType.DATE),
-                        tuple("active_minutes", DataColumnType.DOUBLE));
+                .containsExactly(tuple("level", DataColumnType.LONG), tuple("start", DataColumnType.DATE),
+                        tuple("end", DataColumnType.DATE), tuple("events", DataColumnType.LONG));
+        assertThat(TimelineDataConnection.file(TimelineDataConnection.ACTIVITIES))
+                .isEqualTo(ActivityTimelineTool.LEVELS_FILE);
     }
 
     @Test

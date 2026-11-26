@@ -39,12 +39,14 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /// The tables a timeline writes to the chat's workspace under `/outputs/timelines/<entity>/`, every run: the focus
@@ -65,6 +67,15 @@ final class TimelineTables {
             "end_seen", "label", "description", "lane", "host", "source", "events", "start_event", "end_event");
     /// A period's kind in `spans.csv`.
     static final String PERIOD_KIND = "period";
+    /// The columns of `activity-levels.csv`: every level of the activities view, each row with its id, level and
+    /// parent, how its members were chosen and how many events it holds.
+    static final List<String> LEVEL_COLUMNS = List.of("id", "level", "parent", "activity", "activity_label", "day",
+            "start", "end", "bar_label", "lane", "how", "events", "evidence", "start_event", "end_event");
+    /// The membership columns of `events.csv`: each event's detail spans, its thematic span or run, its activity,
+    /// and the periods it fell in.
+    static final List<String> MEMBERSHIP_COLUMNS = List.of("span", "merged", "activity", "periods");
+    /// The lane of a level's row in no activity.
+    static final String NO_ACTIVITY = "(no activity)";
     /// The columns of `activities.csv`.
     static final List<String> ACTIVITY_COLUMNS = List.of("activity", "activity_label", "day", "start", "end",
             "active_minutes", "spans", "actions", "lanes", "evidence", "start_event", "end_event", "bar_label");
@@ -131,12 +142,14 @@ final class TimelineTables {
         ToolTables.write(workspace, actionsPath, List.of("time", "host", "process", "kind", "object", "session", "by",
                 "source", "StreamId", "EventId", "role"), actionRows, sourceDoc);
 
+        final Membership membership = Membership.of(run, characterised);
         final List<List<String>> eventRows = new ArrayList<>();
         for (final Event event : run.byId().values().stream()
                 .sorted(Comparator.comparingLong(Event::time))
                 .toList()) {
             final Classified c = run.classification().byId().get(event.id());
-            eventRows.add(List.of(iso(event.time()), run.sourceName(event.source()), event.role().argName(),
+            final List<String> eventRow = new ArrayList<>(List.of(iso(event.time()), run.sourceName(event.source()),
+                    event.role().argName(),
                     NullSafe.string(event.kind()), NullSafe.string(event.host()), NullSafe.string(event.process()),
                     NullSafe.string(event.title()), NullSafe.string(event.object()),
                     NullSafe.string(event.streamId()), NullSafe.string(event.eventId()), c == null
@@ -144,10 +157,14 @@ final class TimelineTables {
                             : NullSafe.string(c.type()), c == null
                             ? EventXmlClassifier.Route.ROLES.description()
                             : c.route().description()));
+            eventRow.addAll(membership.of(event));
+            eventRows.add(eventRow);
         }
         final WorkspacePath eventsPath = path(folder, ActivityTimelineTool.EVENTS_FILE);
-        ToolTables.write(workspace, eventsPath, List.of("time", "source", "role", "kind", "host", "process", "title",
-                "object", "StreamId", "EventId", "type", "classified_by"), eventRows, sourceDoc);
+        final List<String> eventColumns = new ArrayList<>(List.of("time", "source", "role", "kind", "host",
+                "process", "title", "object", "StreamId", "EventId", "type", "classified_by"));
+        eventColumns.addAll(MEMBERSHIP_COLUMNS);
+        ToolTables.write(workspace, eventsPath, eventColumns, eventRows, sourceDoc);
 
         final List<List<String>> dailyRows = new ArrayList<>();
         for (final Daily daily : run.built().combined().daily()) {
@@ -231,6 +248,12 @@ final class TimelineTables {
         final WorkspacePath activitiesPath = path(folder, ActivityTimelineTool.ACTIVITIES_FILE);
         ToolTables.write(workspace, activitiesPath, ACTIVITY_COLUMNS, activityRows, sourceDoc);
 
+        final List<List<String>> levelRows = characterised == null
+                ? List.of()
+                : levelRows(run, rolledUp, membership, labels);
+        final WorkspacePath levelsPath = path(folder, ActivityTimelineTool.LEVELS_FILE);
+        ToolTables.write(workspace, levelsPath, LEVEL_COLUMNS, levelRows, sourceDoc);
+
         final List<List<String>> periodRows = new ArrayList<>();
         for (final TimelinePeriods.Period period : NullSafe.list(run.periods())) {
             periodRows.add(List.of(period.id(), period.kind(), period.keyText(), iso(period.start()),
@@ -268,7 +291,8 @@ final class TimelineTables {
                     "how", "confidence", "reason"), itemRows, sourceDoc);
         }
         return new Files(sessionsPath, actionsPath, eventsPath, dailyPath, windowsPath, qualityPath, spansPath,
-                activitiesPath, itemsPath, periodsPath, spanRows.size(), activityRows.size(),
+                activitiesPath, itemsPath, periodsPath, levelsPath, levelRows.size(), spanRows.size(),
+                activityRows.size(),
                 distinct(spanRows, SPAN_LANE), distinct(activityRows, 2), distinct(activityRows, 1),
                 distinct(spanRows, SPAN_SOURCE));
     }
@@ -380,6 +404,94 @@ final class TimelineTables {
         return placement == null
                 ? ""
                 : placement.activity();
+    }
+
+    // Every level's rows of the activities view: the activities and period bands (1), the thematic spans and runs
+    // (2), the finest spans and the runs' events (3), each naming its parent and how many events it holds.
+    private static List<List<String>> levelRows(final TimelineRun run,
+                                                final List<ActivityRow> rolledUp,
+                                                final Membership membership,
+                                                final Map<String, String> labels) {
+        final ZoneId zone = run.zone().zone();
+        final Map<String, Span> spansById = new HashMap<>();
+        run.built().spans().forEach(span -> spansById.put(span.id(), span));
+        final List<List<String>> rows = new ArrayList<>();
+        for (final ActivityRow row : rolledUp) {
+            final int events = row.activity().startsWith("pr")
+                    ? NullSafe.list(run.periods()).stream().filter(period -> period.id().equals(row.activity()))
+                    .mapToInt(period -> period.eventIds().size()).sum()
+                    : row.spans().stream().map(spansById::get).filter(Objects::nonNull)
+                    .mapToInt(span -> span.eventIds().size()).sum();
+            rows.add(List.of(row.activity(), String.valueOf(ThematicSpans.THEMES), "", row.activity(), row.label(),
+                    row.day().toString(), iso(row.start()), row.marker()
+                            ? iso(row.start())
+                            : iso(row.end()), row.barLabel(), String.join("; ", row.lanes()),
+                    row.activity().startsWith("pr")
+                            ? "period"
+                            : "characterisation", String.valueOf(events), String.join("; ", row.evidence()),
+                    NullSafe.string(row.startEvent()), NullSafe.string(row.endEvent())));
+        }
+        for (final ThematicSpans.Unit unit : membership.units()) {
+            final String activity = NullSafe.string(unit.activity());
+            final String label = activity.isEmpty()
+                    ? NO_ACTIVITY
+                    : labels.getOrDefault(activity, activity);
+            final List<String> evidence = ThematicSpans.Unit.RUN.equals(unit.kind())
+                    ? unit.eventIds().stream().limit(3).map(id -> run.byId().get(id)).filter(Objects::nonNull)
+                    .map(Event::ref).toList()
+                    : unit.spans().stream().limit(3).map(spansById::get).filter(Objects::nonNull)
+                    .map(Span::shownLabel).toList();
+            rows.add(List.of(unit.id(), String.valueOf(ThematicSpans.MERGED), activity, activity, label,
+                    day(unit.start(), zone), iso(unit.start()), iso(unit.end()), unit.label(), unit.lane(),
+                    unit.how(), String.valueOf(membership.eventsOf(unit).size()), String.join("; ", evidence), "",
+                    ""));
+        }
+        for (final Span span : run.built().spans()) {
+            if (!ThematicSpans.isFinest(span)) {
+                continue;
+            }
+            final String activity = membership.activityOf(span);
+            final String unit = membership.unitOf(span);
+            rows.add(List.of(span.id(), String.valueOf(ThematicSpans.FINEST), unit.isEmpty()
+                            ? activity
+                            : unit, activity, activity.isEmpty()
+                            ? NO_ACTIVITY
+                            : labels.getOrDefault(activity, activity), day(span.start(), zone), iso(span.start()),
+                    iso(span.end()), span.shownLabel(), span.lane(), span.how(),
+                    String.valueOf(span.eventIds().size()), "", NullSafe.string(span.startEvent()),
+                    NullSafe.string(span.endEvent())));
+        }
+        for (final ThematicSpans.Unit unit : membership.units()) {
+            if (!ThematicSpans.Unit.RUN.equals(unit.kind())) {
+                continue;
+            }
+            final String activity = NullSafe.string(unit.activity());
+            for (final String id : unit.eventIds()) {
+                final Event event = run.byId().get(id);
+                if (event == null) {
+                    continue;
+                }
+                rows.add(List.of(event.ref(), String.valueOf(ThematicSpans.FINEST), unit.id(), activity,
+                        activity.isEmpty()
+                                ? NO_ACTIVITY
+                                : labels.getOrDefault(activity, activity), day(event.time(), zone),
+                        iso(event.time()), iso(event.time()), eventLabel(event), NullSafe.nonBlankStringElse(
+                                event.host(), run.sourceName(event.source())), "event of the run", "1", event.ref(),
+                        "", ""));
+            }
+        }
+        rows.sort(Comparator.comparing((List<String> row) -> row.get(1)).thenComparing(row -> row.get(6)));
+        return rows;
+    }
+
+    // A run's event as its marker is labelled: its text, else what it touched, else its kind, cut short.
+    private static String eventLabel(final Event event) {
+        return ActivityCharacterisation.excerpt(NullSafe.nonBlankStringElse(event.text(),
+                NullSafe.nonBlankStringElse(event.object(), NullSafe.string(event.kind()))), 60);
+    }
+
+    private static String day(final long ms, final ZoneId zone) {
+        return Instant.ofEpochMilli(ms).atZone(zone).toLocalDate().toString();
     }
 
     /// The periods as rows of the activities' table: a band each, split at midnight in the user's zone as the
@@ -514,6 +626,8 @@ final class TimelineTables {
     /// @param activities     The activities rolled up.
     /// @param items          The characterisation's items, or null.
     /// @param periods        The periods.
+    /// @param levels         Every level of the activities view.
+    /// @param levelRows      Its rows.
     /// @param spanRows       The detail spans' rows.
     /// @param activityRows   The activities' rows.
     /// @param hostLanes      The detail spans' lanes (hosts, else sources).
@@ -530,6 +644,8 @@ final class TimelineTables {
                  WorkspacePath activities,
                  WorkspacePath items,
                  WorkspacePath periods,
+                 WorkspacePath levels,
+                 int levelRows,
                  int spanRows,
                  int activityRows,
                  int hostLanes,
@@ -537,6 +653,105 @@ final class TimelineTables {
                  int activityNames,
                  int sourceLanes) {
 
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // Which spans, thematic spans, runs, activity and periods each event belongs to; and each unit placed in its
+    // activity.
+    private static final class Membership {
+
+        private final Map<String, List<String>> spans = new HashMap<>();
+        private final Map<String, String> merged = new HashMap<>();
+        private final Map<String, String> activities = new HashMap<>();
+        private final Map<String, String> spanActivities = new HashMap<>();
+        private final Map<String, String> spanUnits = new HashMap<>();
+        private final Map<String, List<String>> unitEvents = new HashMap<>();
+        private final List<ThematicSpans.Unit> units = new ArrayList<>();
+        private final List<TimelinePeriods.Period> periods;
+
+        private Membership(final List<TimelinePeriods.Period> periods) {
+            this.periods = periods;
+        }
+
+        static Membership of(final TimelineRun run, final Characterised characterised) {
+            final Membership membership = new Membership(NullSafe.list(run.periods()));
+            final Map<String, Span> byId = new HashMap<>();
+            for (final Span span : run.built().spans()) {
+                byId.put(span.id(), span);
+                span.eventIds().forEach(id -> membership.spans.computeIfAbsent(id, k -> new ArrayList<>())
+                        .add(span.id()));
+                final String activity = TimelineTables.activityOf(characterised, span);
+                if (!activity.isEmpty() && activity.startsWith("a")) {
+                    membership.spanActivities.put(span.id(), activity);
+                    span.eventIds().forEach(id -> membership.activities.putIfAbsent(id, activity));
+                }
+            }
+            if (characterised != null) {
+                characterised.items().forEach((id, placement) -> {
+                    if (placement.activity() != null && placement.activity().startsWith("a")) {
+                        membership.activities.putIfAbsent(id, placement.activity());
+                    }
+                });
+            }
+            final ThematicSpans.Levels levels = run.levels() == null
+                    ? ThematicSpans.Levels.NONE
+                    : run.levels();
+            for (final ThematicSpans.Unit unit : levels.units()) {
+                final List<String> events = new ArrayList<>();
+                final Map<String, Integer> votes = new LinkedHashMap<>();
+                if (ThematicSpans.Unit.RUN.equals(unit.kind())) {
+                    events.addAll(unit.eventIds());
+                    events.forEach(id -> NullSafe.consume(membership.activities.get(id), activity ->
+                            votes.merge(activity, 1, Integer::sum)));
+                } else {
+                    for (final String spanId : unit.spans()) {
+                        membership.spanUnits.put(spanId, unit.id());
+                        NullSafe.consume(byId.get(spanId), span -> events.addAll(span.eventIds()));
+                        NullSafe.consume(membership.spanActivities.get(spanId), activity -> votes.merge(activity,
+                                1, Integer::sum));
+                    }
+                }
+                events.forEach(id -> membership.merged.putIfAbsent(id, unit.id()));
+                membership.unitEvents.put(unit.id(), List.copyOf(new LinkedHashSet<>(events)));
+                final String activity = votes.entrySet().stream()
+                        .max(Map.Entry.comparingByValue())
+                        .map(Map.Entry::getKey)
+                        .orElse(null);
+                membership.units.add(unit.placed(activity, null));
+            }
+            return membership;
+        }
+
+        List<ThematicSpans.Unit> units() {
+            return units;
+        }
+
+        List<String> eventsOf(final ThematicSpans.Unit unit) {
+            return unitEvents.getOrDefault(unit.id(), List.of());
+        }
+
+        String activityOf(final Span span) {
+            return spanActivities.getOrDefault(span.id(), "");
+        }
+
+        String unitOf(final Span span) {
+            return spanUnits.getOrDefault(span.id(), "");
+        }
+
+        // An event's membership columns, as MEMBERSHIP_COLUMNS names them.
+        List<String> of(final Event event) {
+            final List<String> in = periods.stream()
+                    .filter(period -> period.eventIds().contains(event.id())
+                                      || (period.start() <= event.time() && event.time() <= period.end()))
+                    .map(TimelinePeriods.Period::id)
+                    .toList();
+            return List.of(String.join(" ", spans.getOrDefault(event.id(), List.of())),
+                    merged.getOrDefault(event.id(), ""), activities.getOrDefault(event.id(), ""),
+                    String.join(" ", in));
+        }
     }
 
 

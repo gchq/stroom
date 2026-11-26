@@ -41,7 +41,8 @@ public final class TimelineDataConnection {
 
     /// The detail spans' table (`spans.csv`).
     public static final String SPANS = "spans";
-    /// The activities' table (`activities.csv`).
+    /// The activities' table: every level of it (`activity-levels.csv`), drawn a level at a time by the dashboard's
+    /// level input.
     public static final String ACTIVITIES = "activities";
     /// The tables that can be written.
     public static final List<String> TABLES = List.of(SPANS, ACTIVITIES);
@@ -58,7 +59,8 @@ public final class TimelineDataConnection {
     private static final Map<String, DataColumnType> ACTIVITY_TYPES = Map.of(
             "start", DataColumnType.DATE,
             "end", DataColumnType.DATE,
-            "active_minutes", DataColumnType.DOUBLE);
+            "level", DataColumnType.LONG,
+            "events", DataColumnType.LONG);
 
     private TimelineDataConnection() {
         // Static only.
@@ -69,7 +71,7 @@ public final class TimelineDataConnection {
     public static String file(final String table) {
         return SPANS.equals(table)
                 ? ActivityTimelineTool.SPANS_FILE
-                : ActivityTimelineTool.ACTIVITIES_FILE;
+                : ActivityTimelineTool.LEVELS_FILE;
     }
 
     /// The table's columns, typed: its start and end Date (ISO 8601 instants, as the table has them), its counts
@@ -81,7 +83,7 @@ public final class TimelineDataConnection {
         final boolean spans = SPANS.equals(table);
         final List<String> names = spans
                 ? TimelineTables.SPAN_COLUMNS
-                : TimelineTables.ACTIVITY_COLUMNS;
+                : TimelineTables.LEVEL_COLUMNS;
         final Map<String, DataColumnType> types = spans
                 ? SPAN_TYPES
                 : ACTIVITY_TYPES;

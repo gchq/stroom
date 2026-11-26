@@ -61,6 +61,7 @@ import java.util.Map;
 /// @param periods        The periods ([TimelinePeriods]), in time order, each with the model's description where it
 ///                       has one.
 /// @param noise          The noise proposed and the exclusions applied ([TimelineNoise]).
+/// @param levels         The activities view's middle level ([ThematicSpans]); none for the detail view.
 record TimelineRun(String entity,
                    Period period,
                    long capMs,
@@ -84,7 +85,8 @@ record TimelineRun(String entity,
                    String hostLanes,
                    TimelineReading reading,
                    List<TimelinePeriods.Period> periods,
-                   TimelineNoise.Outcome noise) {
+                   TimelineNoise.Outcome noise,
+                   ThematicSpans.Levels levels) {
 
     /// @param source A source, by its place.
     /// @return Its name.

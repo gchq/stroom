@@ -57,6 +57,10 @@ final class TimelineResult {
 
     /// The sessions and activities shown in the result; the rest are in the tables.
     static final int SHOWN = 15;
+    /// Which table answers "which events make up a span": one line in the result.
+    static final String MEMBERSHIP = "Which events make up a span, run, activity or period: events.csv's span, merged, "
+                                     + "activity and periods columns give each event's ids, with its StreamId and "
+                                     + "EventId.";
     /// The most periods the JSON result lists.
     static final int PERIODS_LISTED = 20;
     /// The most periods the chat's result lists.
@@ -190,6 +194,9 @@ final class TimelineResult {
         if (!NullSafe.list(run.periods()).isEmpty()) {
             map.put("periods", periods(run, files));
         }
+        if (files.levelRows() > 0) {
+            map.put("levels", levels(run, files));
+        }
         if (!run.borderline().isEmpty()) {
             map.put("borderline_pairs", run.borderline().stream().map(candidate -> borderline(run, candidate))
                     .toList());
@@ -219,6 +226,10 @@ final class TimelineResult {
             written.put("items", files.items().toString());
         }
         written.put("periods", files.periods().toString());
+        if (files.levelRows() > 0) {
+            written.put("levels", files.levels().toString());
+        }
+        written.put("membership", MEMBERSHIP);
         map.put("files", written);
         map.put("gantt", Map.of("path", files.sessions().toString(), "start", "start", "end", "end", "label",
                 "process", "lane", "host"));
@@ -536,8 +547,12 @@ final class TimelineResult {
         return null;
     }
 
+    // The activities' chart: of every level where there are levels (the chat draws them a level at a time, from the
+    // broadest), else of the activities.
     private static Map<String, Object> activitiesChart(final TimelineRun run, final Files files) {
-        return chart(files.activities().toString(), "bar_label", "activity".equals(run.lanes())
+        return chart((files.levelRows() > 0
+                ? files.levels()
+                : files.activities()).toString(), "bar_label", "activity".equals(run.lanes())
                 ? "activity_label"
                 : "day", run.entity() + ": activities by " + ("activity".equals(run.lanes())
                 ? "activity"
@@ -887,7 +902,10 @@ final class TimelineResult {
                 .append(files.actions()).append(" (actions, with where each was attached), ").append(files.daily())
                 .append(" (per day), ").append(files.windows()).append(" (window lifetimes), ").append(files.events())
                 .append(" (the events, with their StreamId and EventId and how each was classified), ")
-                .append(files.quality()).append(" (data quality).\n");
+                .append(files.quality()).append(" (data quality), ").append(files.periods()).append(" (periods)")
+                .append(files.levelRows() > 0
+                        ? ", " + files.levels() + " (every level of the activities view, each row's id and parent)"
+                        : "").append(".\n").append(MEMBERSHIP).append('\n');
         final Map<String, Object> views = views(run, files);
         final List<?> charts = ((List<?>) views.get("gantt_charts")).stream()
                 .filter(chart -> readyChart == null || !chart.equals(ready))
@@ -970,6 +988,23 @@ final class TimelineResult {
             map.put("descriptions_rejected", run.characterised().worded().rejected());
         }
         map.put("table", files.periods().toString());
+        return map;
+    }
+
+    // The activities view's levels: how many rows of each, and what the model did for the middle level.
+    private static Map<String, Object> levels(final TimelineRun run, final Files files) {
+        final Map<String, Object> map = new LinkedHashMap<>();
+        map.put("table", files.levels().toString());
+        map.put("rows", files.levelRows());
+        final ThematicSpans.Levels levels = run.levels();
+        if (levels != null) {
+            map.put("thematic_spans_and_runs", levels.units().size());
+            map.put("model_calls", levels.calls());
+            if (levels.rejected() > 0) {
+                map.put("answers_rejected", levels.rejected());
+            }
+            NullSafe.consume(levels.note(), note -> map.put("note", note));
+        }
         return map;
     }
 

@@ -21,6 +21,7 @@ import stroom.ai.impl.vis.ChartKind;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.dashboard.shared.DashboardConfig;
+import stroom.dashboard.shared.ListInputComponentSettings;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dashboard.shared.SplitLayoutConfig;
 import stroom.dashboard.shared.TabConfig;
@@ -116,6 +117,27 @@ class TestTimelineDashboardConfig {
     }
 
     @Test
+    void theActivitiesHaveALevelInputTheQueryFiltersByOpeningAtTheBroadest() {
+        final DashboardConfig config = TimelineDashboardConfig.build(DATA_CONNECTION, VISUALISATION,
+                new TimelineDashboardPlan("jsmith", TimelineDataConnection.ACTIVITIES, "/a.csv", "hash", 10, FROM,
+                        TO, "A snapshot.", TimelineDashboardConfig.mappings(TimelineDataConnection.ACTIVITIES, null,
+                        true), null, null));
+
+        final ListInputComponentSettings input = (ListInputComponentSettings) component(config, "list-input")
+                .getSettings();
+        assertThat(input.getKey()).isEqualTo(TimelineDashboardConfig.LEVEL_PARAM);
+        assertThat(input.getValues()).containsExactly("1", "2", "3");
+        assertThat(input.getValue()).isEqualTo("1");
+        final QueryComponentSettings query = (QueryComponentSettings) component(config, "query").getSettings();
+        assertThat(query.getExpression().getChildren()).singleElement().isEqualTo(ExpressionTerm.builder()
+                .field("level").condition(Condition.LESS_THAN_OR_EQUAL_TO).value("${level}").build());
+        // The spans have neither.
+        assertThat(build().getComponents()).extracting(ComponentConfig::getType).doesNotContain("list-input");
+        assertThat(((QueryComponentSettings) component(build(), "query").getSettings()).getExpression()
+                .getChildren()).isNullOrEmpty();
+    }
+
+    @Test
     void theChartDrawsItsOwnUnfilteredTableWithEachRolesColumnItsLaneAxisTitledByWhatTheLanesAre() {
         final DashboardConfig config = build();
         final VisComponentSettings chart = (VisComponentSettings) component(config, "vis").getSettings();
@@ -152,7 +174,7 @@ class TestTimelineDashboardConfig {
     @Test
     void theActivitiesChartsTooltipGivesTheirActionsAndActiveTime() {
         assertThat(TimelineDashboardConfig.detailExpression(TimelineDataConnection.ACTIVITIES))
-                .isEqualTo("concat(${actions}, ' · ', ${active_minutes}, ' active minutes')");
+                .isEqualTo("concat(${how}, ' · ', ${events}, ' event(s)')");
         assertThat(TimelineDashboardConfig.chartStyle(new TimelineDashboardPlan("jsmith",
                 TimelineDataConnection.ACTIVITIES, "/a.csv", "hash", 1, FROM, TO, "A snapshot.",
                 TimelineDashboardConfig.mappings(TimelineDataConnection.ACTIVITIES, null, true), null, null)))

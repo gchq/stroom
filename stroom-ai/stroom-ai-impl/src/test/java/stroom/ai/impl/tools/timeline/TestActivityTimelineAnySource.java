@@ -308,6 +308,86 @@ class TestActivityTimelineAnySource {
         assertThat(questions.forms).hasSize(forms);
     }
 
+    @Test
+    void theActivitiesViewHasThreeLevelsEachSpanNamingItsParentAndEveryEventItsSpans() {
+        week();
+        // Interleaved visits to two sites: an activity period each, merged in code by their domains.
+        web(at("13:00"), "pat", "https://a.example.com/x");
+        web(at("13:03"), "pat", "https://b.example.org/");
+        web(at("13:06"), "pat", "https://www.a.example.com/y");
+        web(at("13:09"), "pat", "https://b.example.org/2");
+
+        final Map<String, Object> result = json(mcp(), arguments(Map.of("view", "activities")));
+
+        final List<Map<String, String>> levels = csv(files.content(FOLDER + ActivityTimelineTool.LEVELS_FILE)
+                .orElseThrow());
+        assertThat(levels).extracting(row -> row.get("level")).contains("2", "3");
+        final List<Map<String, String>> merged = levels.stream()
+                .filter(row -> "2".equals(row.get("level")))
+                .toList();
+        assertThat(merged).extracting(row -> row.get("bar_label")).contains("example.com", "example.org");
+        assertThat(merged).allSatisfy(row -> assertThat(row.get("how")).startsWith("code: sharing "));
+        // Each finer row names its parent; each merged span's events are the events naming it, by count.
+        final List<Map<String, String>> events = csv(files.content(FOLDER + ActivityTimelineTool.EVENTS_FILE)
+                .orElseThrow());
+        for (final Map<String, String> row : merged) {
+            assertThat(levels).filteredOn(child -> row.get("id").equals(child.get("parent")))
+                    .hasSizeGreaterThanOrEqualTo(2)
+                    .allSatisfy(child -> assertThat(child.get("level")).isEqualTo("3"));
+            assertThat(events).filteredOn(event -> row.get("id").equals(event.get("merged")))
+                    .hasSize(Integer.parseInt(row.get("events")))
+                    .allSatisfy(event -> assertThat(event.get("StreamId")).isNotEmpty());
+        }
+        // Every finest span's event count is its member events'.
+        levels.stream().filter(row -> "3".equals(row.get("level")) && row.get("id").startsWith("s"))
+                .forEach(row -> assertThat(events).filteredOn(event -> List.of(event.get("span").split(" "))
+                        .contains(row.get("id"))).hasSize(Integer.parseInt(row.get("events"))));
+        assertThat(((Map<String, Object>) result.get("files")).get("membership"))
+                .isEqualTo(TimelineResult.MEMBERSHIP);
+    }
+
+    // A CSV table's rows by its header's names (no quoted commas in these tables' tested columns).
+    private static List<Map<String, String>> csv(final String text) {
+        final List<String> lines = text.lines().toList();
+        final List<String> header = splitCsv(lines.getFirst());
+        final List<Map<String, String>> rows = new ArrayList<>();
+        for (final String line : lines.subList(1, lines.size())) {
+            final List<String> cells = splitCsv(line);
+            final Map<String, String> row = new LinkedHashMap<>();
+            for (int i = 0; i < header.size(); i++) {
+                row.put(header.get(i), i < cells.size()
+                        ? cells.get(i)
+                        : "");
+            }
+            rows.add(row);
+        }
+        return rows;
+    }
+
+    private static List<String> splitCsv(final String line) {
+        final List<String> cells = new ArrayList<>();
+        final StringBuilder cell = new StringBuilder();
+        boolean quoted = false;
+        for (int i = 0; i < line.length(); i++) {
+            final char c = line.charAt(i);
+            if (c == '"') {
+                if (quoted && i + 1 < line.length() && line.charAt(i + 1) == '"') {
+                    cell.append('"');
+                    i++;
+                } else {
+                    quoted = !quoted;
+                }
+            } else if (c == ',' && !quoted) {
+                cells.add(cell.toString());
+                cell.setLength(0);
+            } else {
+                cell.append(c);
+            }
+        }
+        cells.add(cell.toString());
+        return cells;
+    }
+
     // The items sent to the model in the characterisation's batches.
     private static long items(final List<String> asked) {
         return asked.stream()
@@ -670,7 +750,7 @@ class TestActivityTimelineAnySource {
         final Map<String, Object> view = (Map<String, Object>) result.get("view");
         assertThat((List<Map<String, Object>>) view.get("gantt_charts")).extracting(chart -> chart.get("path"),
                 chart -> chart.get("label"), chart -> chart.get("lane")).containsExactly(
-                org.assertj.core.groups.Tuple.tuple(FOLDER + "activities.csv", "bar_label", "day"),
+                org.assertj.core.groups.Tuple.tuple(FOLDER + "activity-levels.csv", "bar_label", "day"),
                 org.assertj.core.groups.Tuple.tuple(FOLDER + "spans.csv", "label", "lane"));
         assertThat(result).containsKey("characterisation");
         assertThat(files.content(FOLDER + ActivityTimelineTool.ACTIVITIES_FILE).orElseThrow().lines().findFirst()

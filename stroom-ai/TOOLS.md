@@ -2023,6 +2023,22 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
   by the raw parent stream and EventId (`EventDedupe`; `duplicates_left_out`, `not_deduplicated`).
 * `logonForms` is shared with compare_activity and sequence_query (`PersonScope.logonForms`).
 
+**Periods, noise and levels (2026-11-26; DESIGN.md "Timeline periods").**
+* Roles `period_start <kind>` and `period_end <kind>` (optionally `by <key>`) in `typeRoles`, Event chains, AGENTS
+  `## Event types`, the catalogue (`timeline_role` with `timeline_period`, `timeline_period_key`) and the event-code
+  classification; Authenticate Connect and Reconnect start a `remote_session`, Disconnect ends it (`TimelineRoles`),
+  no longer active and idle. Periods (`TimelinePeriods`) imply no activity: in no session, pair, key span or
+  activity period. Paired by kind and key across hosts; unpaired marked `start not seen` or `end not seen`.
+  `periods.csv`, a `period` row each in `spans.csv` (its lane the kind's words) and a band each in `activities.csv`;
+  `periods` in the result. Worded by the model under the characterisation's choice (`PeriodWording`, checked: one
+  line, its key named, no times), given to the characterisation as `during`.
+* Noise (`TimelineNoise`, both views, before any span or model call): proposed in one form, all ticked
+  (`exclude`), or listed as `noise_proposed` over MCP; the answer kept in `/outputs/timelines/exclusions.json`
+  (the user's own workspace) and applied every run; `excluded` says what was left out.
+* Activities view: `activity-levels.csv` (`ThematicSpans`), levels 1 to 3 with `id`, `parent`, `how` and
+  `events`; drawn ready in the chat a level at a time (Less and More detail), on a dashboard by its level input.
+  `events.csv` gives each event's `span`, `merged`, `activity` and `periods` (`files.membership` says so).
+
 ### `propose_timeline_dashboard`
 
 Content · read-only · chat only · timelines group · Classes: `ProposeTimelineDashboardTool`,

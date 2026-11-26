@@ -62,6 +62,7 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.OffsetRange;
+import stroom.query.api.Param;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest.Fetch;
 import stroom.query.api.Row;
@@ -260,6 +261,62 @@ class TestAskStroomAiActivityTimeline extends AbstractAiIntegrationTest {
     }
 
     @Test
+    void theActivitiesDashboardDrawsALevelOfDetailAtATimeByItsLevelInputFromTheBroadest() {
+        final DocRef modelRef = asUser(user, this::fakeModel);
+        asUser(user, this::installECharts);
+        final ExplorerNode folder = asUser(user, () -> explorerService.ensureFolderPath(DocPath.fromParts(
+                        "Investigations", "Levels " + indexName), explorerNodeService.getRoot(),
+                PermissionInheritance.DESTINATION));
+        final String folderPath = "/Investigations/Levels " + indexName;
+        model.answeringSideRequests(TestAskStroomAiActivityTimeline::modelAnswer)
+                .callTool("activate_timelines", "{}")
+                .callTool("activity_timeline", JsonUtil.writeValueAsString(timeline(), false))
+                .callTool("propose_timeline_dashboard", JsonUtil.writeValueAsString(Map.of("entity", "jsmith",
+                        "table", "activities", "folder", folderPath), false))
+                .answer("Here is a button that puts jsmith's activities on a dashboard.");
+
+        final AiChat chat = asUser(user, () -> askStroomAIService.createChat());
+        asUser(user, () -> askStroomAIService.askStroomAi(new AskStroomAiRequest(chat,
+                AskStroomAiConfig.builder().modelRef(modelRef).build(), null,
+                "Put jsmith's activities for last week on a dashboard", AiAgentMode.AGENT)));
+        final List<AiChatMessage> messages = asUser(user, () -> answered(chat));
+        final AiChatMessage proposed = resultMessage(messages, "propose_timeline_dashboard");
+        final ToolResultRecord proposal = JsonUtil.readValue(proposed.getMessage(), ToolResultRecord.class);
+        assertThat(proposal.error()).as(proposal.text()).isFalse();
+        final UserActionRecord button = proposal.userActions().getFirst();
+        final AiUserActionResult clicked = asUser(user, () -> userActionService.doUserAction(chat.getId(),
+                proposed.getId(), button.id()));
+        assertThat(clicked.isDone()).as(clicked.getMessage()).isTrue();
+        final DocRef dataConnection = asUser(user, () -> explorerNodeService.getChildren(folder.getDocRef())
+                .stream().map(ExplorerNode::getDocRef)
+                .filter(doc -> DataConnectionDoc.TYPE.equals(doc.getType())).findFirst().orElseThrow());
+        final DataConnectionDoc doc = asUser(user, () -> dataConnectionStore.readDocument(dataConnection));
+        final List<String> lines = doc.getCsv().getData().lines().toList();
+        final int level = List.of(lines.getFirst().split(",")).indexOf("level");
+        final long broadest = lines.stream().skip(1).filter(line -> line.split(",")[level].equals("1")).count();
+        assertThat(broadest).isPositive().isLessThan(lines.size() - 1);
+
+        final DashboardConfig config = clicked.getCreateDashboardConfig();
+        final QueryComponentSettings query = (QueryComponentSettings) component(config, "query").getSettings();
+        final TableComponentSettings table = (TableComponentSettings) component(config, "table").getSettings();
+        final VisComponentSettings chart = (VisComponentSettings) component(config, "vis").getSettings();
+        final TableComponentSettings chartTable = (TableComponentSettings) config.getComponents().stream()
+                .filter(component -> TimelineDashboardConfig.CHART_TABLE_ID.equals(component.getId()))
+                .findFirst().orElseThrow().getSettings();
+        final TableSettings tableSettings = TableSettings.builder().columns(table.getColumns())
+                .maxResults(table.getMaxResults()).build();
+        final TableSettings chartSettings = TableSettings.builder().columns(chartTable.getColumns())
+                .maxResults(chartTable.getMaxResults()).build();
+        // The level input's first value opens it at the broadest; the finest shows every row.
+        final TableResult atOne = results(asUser(user, () -> dashboardSearch(config, query, tableSettings, chart,
+                chartSettings, List.of(new Param(TimelineDashboardConfig.LEVEL_PARAM, "1")))), TableResult.class);
+        final TableResult atThree = results(asUser(user, () -> dashboardSearch(config, query, tableSettings, chart,
+                chartSettings, List.of(new Param(TimelineDashboardConfig.LEVEL_PARAM, "3")))), TableResult.class);
+        assertThat(atOne.getTotalResults()).isEqualTo(broadest);
+        assertThat(atThree.getTotalResults()).isEqualTo((long) lines.size() - 1);
+    }
+
+    @Test
     void theTimelineIsPutOnADashboardAsACsvDataConnectionThatTheDashboardsTableAndChartQuery() {
         final DocRef modelRef = asUser(user, this::fakeModel);
         asUser(user, this::installECharts);
@@ -403,11 +460,22 @@ class TestAskStroomAiActivityTimeline extends AbstractAiIntegrationTest {
                                                     final TableSettings table,
                                                     final VisComponentSettings chart,
                                                     final TableSettings chartTable) {
+        return dashboardSearch(config, query, table, chart, chartTable, List.of());
+    }
+
+    // The dashboard's search with its inputs' parameters, as the browser sends them.
+    private DashboardSearchResponse dashboardSearch(final DashboardConfig config,
+                                                    final QueryComponentSettings query,
+                                                    final TableSettings table,
+                                                    final VisComponentSettings chart,
+                                                    final TableSettings chartTable,
+                                                    final List<Param> params) {
         final DashboardSearchRequest request = DashboardSearchRequest.builder()
                 .searchRequestSource(SearchRequestSource.builder().sourceType(SourceType.API).build())
                 .search(Search.builder()
                         .dataSourceRef(query.getDataSource())
                         .expression(query.getExpression())
+                        .params(params)
                         .timeRange(config.getTimeRange())
                         .incremental(false)
                         .build())

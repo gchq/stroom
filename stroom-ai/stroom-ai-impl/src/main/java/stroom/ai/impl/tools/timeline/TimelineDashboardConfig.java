@@ -27,6 +27,7 @@ import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.Dimension;
 import stroom.dashboard.shared.LayoutConfig;
+import stroom.dashboard.shared.ListInputComponentSettings;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dashboard.shared.Size;
 import stroom.dashboard.shared.SplitLayoutConfig;
@@ -40,6 +41,8 @@ import stroom.dataconnection.shared.DataConnectionDoc;
 import stroom.docref.DocRef;
 import stroom.query.api.Column;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.Format;
 import stroom.query.api.Sort;
 import stroom.query.api.Sort.SortDirection;
@@ -75,6 +78,12 @@ public final class TimelineDashboardConfig {
     public static final String CHART_ID = "vis-1";
     /// The chart's own table, unfiltered, in a hidden tab behind it.
     public static final String CHART_TABLE_ID = "table-2";
+    /// The activities' level input's component id.
+    public static final String LEVEL_INPUT_ID = "input-1";
+    /// The parameter the level input sets, which the activities' query filters by.
+    public static final String LEVEL_PARAM = "level";
+    /// The levels the input offers, the broadest first; the dashboard opens at the first.
+    public static final List<String> LEVELS = List.of("1", "2", "3");
     /// The chart's tooltip column, in its own table: what happened in each bar.
     public static final String DETAIL = "detail";
     // The versions of the settings that the browser's components write, so they don't upgrade what is built here.
@@ -145,11 +154,26 @@ public final class TimelineDashboardConfig {
                 .name("Query")
                 .settings(QueryComponentSettings.builder()
                         .dataSource(dataConnection)
-                        .expression(ExpressionOperator.builder().build())
+                        .expression(expression(plan))
                         // Runs when the dashboard opens: the rows are a snapshot, so there is nothing to wait for.
                         .automate(Automate.builder().open(true).build())
                         .build())
                 .build());
+        final boolean levels = !TimelineDataConnection.SPANS.equals(plan.table());
+        if (levels) {
+            // Less or more detail: a level the query filters the activities by, from the broadest (decided with the
+            // user 2026-11-26: an input Stroom's dashboards have, no new dashboard code).
+            components.add(ComponentConfig.builder()
+                    .type("list-input")
+                    .id(LEVEL_INPUT_ID)
+                    .name("Level of detail")
+                    .settings(ListInputComponentSettings.builder()
+                            .key(LEVEL_PARAM)
+                            .value(LEVELS.getFirst())
+                            .values(LEVELS)
+                            .build())
+                    .build());
+        }
         components.add(ComponentConfig.builder()
                 .type("vis")
                 .id(CHART_ID)
@@ -193,11 +217,31 @@ public final class TimelineDashboardConfig {
                 .layout(SplitLayoutConfig.builder()
                         .preferredSize(new Size(200, 200))
                         .dimension(Dimension.Y)
-                        .children(List.<LayoutConfig>of(pane(QUERY_ID, 120), chartPane(),
-                                pane(TABLE_ID, 350)))
+                        .children(levels
+                                ? List.<LayoutConfig>of(pane(QUERY_ID, 120), pane(LEVEL_INPUT_ID, 60), chartPane(),
+                                pane(TABLE_ID, 350))
+                                : List.<LayoutConfig>of(pane(QUERY_ID, 120), chartPane(), pane(TABLE_ID, 350)))
                         .build())
                 .designMode(false)
                 .modelVersion(DASHBOARD_MODEL_VERSION)
+                .build();
+    }
+
+    /// The query's expression: for the activities, the rows of the level the input gives and broader
+    /// (`level <= ${level}`); for the spans, every row.
+    ///
+    /// @param plan What the button writes.
+    /// @return The expression.
+    static ExpressionOperator expression(final TimelineDashboardPlan plan) {
+        if (TimelineDataConnection.SPANS.equals(plan.table())) {
+            return ExpressionOperator.builder().build();
+        }
+        return ExpressionOperator.builder()
+                .addTerm(ExpressionTerm.builder()
+                        .field(LEVEL_PARAM)
+                        .condition(Condition.LESS_THAN_OR_EQUAL_TO)
+                        .value("${" + LEVEL_PARAM + "}")
+                        .build())
                 .build();
     }
 
@@ -238,14 +282,15 @@ public final class TimelineDashboardConfig {
     }
 
     /// The expression of the chart's tooltip column ([#DETAIL]): for a span, what happened and its events (e.g.
-    /// `Focus-Window to Unfocus-Window · 2 event(s)`); for an activity, its actions and active minutes.
+    /// `Focus-Window to Unfocus-Window · 2 event(s)`); for a row of the activities' levels, how its members were
+    /// chosen and its events (e.g. `code: sharing example.com · 4 event(s)`).
     ///
     /// @param table [TimelineDataConnection#SPANS] or [TimelineDataConnection#ACTIVITIES].
     /// @return The expression.
     static String detailExpression(final String table) {
         return TimelineDataConnection.SPANS.equals(table)
                 ? "concat(${action}, ' · ', ${events}, ' event(s)')"
-                : "concat(${actions}, ' · ', ${active_minutes}, ' active minutes')";
+                : "concat(${how}, ' · ', ${events}, ' event(s)')";
     }
 
     // The chart's settings on the dashboard: its columns by role, and its style.

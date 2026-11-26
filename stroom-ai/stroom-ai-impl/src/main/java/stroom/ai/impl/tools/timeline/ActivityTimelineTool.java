@@ -25,6 +25,7 @@ import stroom.ai.impl.AiAuditLog;
 import stroom.ai.impl.AiWorkspaceConfig;
 import stroom.ai.impl.McpElicitations;
 import stroom.ai.impl.tools.AbstractWorkspaceTool;
+import stroom.ai.impl.tools.ModelSideCalls;
 import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.ToolDefinition;
@@ -256,9 +257,13 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     static final String ITEMS_FILE = "items.csv";
     /// The periods' table.
     static final String PERIODS_FILE = "periods.csv";
+    /// The activities view's every level: activities, thematic spans and runs, the finest spans and events.
+    static final String LEVELS_FILE = "activity-levels.csv";
     static final String OVERVIEW_FILE = "overview.csv";
     static final String CORRECTIONS_FILE = "corrections.json";
     static final String CACHE_FILE = "characterisation-cache.json";
+    /// The cache of the thematic spans' model answers, in the timeline's folder.
+    static final String THEMES_CACHE_FILE = "themes-cache.json";
     /// The form's key for characterising with the model, asked before the model is called at all.
     static final String BEYOND_FORM = "classify";
     static final String CLASSIFY = "Characterise";
@@ -742,6 +747,11 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final Characterised characterised = characterising
                 ? characterise(request, context, workspace, config, built, byId, names, folder, zone, periods)
                 : null;
+        // The activities view's middle level: thematic spans and runs, the model asked under the characterisation's
+        // choice.
+        final ThematicSpans.Levels levels = characterised == null
+                ? ThematicSpans.Levels.NONE
+                : themes(context, workspace, folder, built, classification, names, capMs, characterised);
         // The model's descriptions of the periods, where it was asked; their plain labels otherwise.
         final List<TimelinePeriods.Period> described = characterised == null
                 ? periods
@@ -763,7 +773,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                         field));
         final TimelineRun run = new TimelineRun(entity, period, capMs, sources, plan.notes(), plan.chosen(), read,
                 classification, xml.summary(), timeline, built, byId, inferred.borderline(), characterised, view,
-                lanes, learned, zone, ranges, targets, hostLanes, reading, described, noise);
+                lanes, learned, zone, ranges, targets, hostLanes, reading, described, noise, levels);
         final Files files = TimelineTables.write(workspace, folder, run);
         // So its tables can be written elsewhere later, as they are (propose_timeline_dashboard).
         TimelineSnapshot.of(run, now).write(workspace, folder);
@@ -2165,6 +2175,36 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             out.put(source.getKey(), kept);
         }
         return out;
+    }
+
+    // ------------------------------------------------------------------------------------------------
+    // Thematic spans
+
+    // The middle level, its model answers cached beside the characterisation's.
+    private static ThematicSpans.Levels themes(final ToolCallContext context,
+                                               final SessionWorkspace workspace,
+                                               final String folder,
+                                               final Built built,
+                                               final TimelineClassification.Result classification,
+                                               final List<String> names,
+                                               final long capMs,
+                                               final Characterised characterised) {
+        final WorkspacePath cachePath = WorkspacePath.parse(folder + THEMES_CACHE_FILE);
+        final Map<String, Map<String, Object>> cache = new LinkedHashMap<>(readCache(workspace, cachePath));
+        final int before = cache.size();
+        final Map<String, List<String>> titles = new LinkedHashMap<>();
+        built.combined().sessions().forEach(session -> titles.put(session.id(), session.titles()));
+        final Map<String, Event> events = new LinkedHashMap<>();
+        built.actions().forEach(action -> events.put(action.event().id(), action.event()));
+        classification.events().forEach(event -> events.putIfAbsent(event.id(), event));
+        final ThematicSpans.Levels levels = ThematicSpans.build(built.spans(), titles, events, classification.byId(),
+                names, capMs, characterised.modelAgreed()
+                        ? context.sideCalls()
+                        : ModelSideCalls.NONE, cache);
+        if (cache.size() > before) {
+            workspace.write(cachePath, JsonUtil.writeValueAsString(cache, false), null);
+        }
+        return levels;
     }
 
     // ------------------------------------------------------------------------------------------------
