@@ -223,11 +223,7 @@ public class ProcessorTaskClaimer {
         final Map<Boolean, List<ProcessorTask>> byLocked = tasks
                 .stream()
                 .collect(Collectors.partitioningBy(task -> lockedMetaIds.contains(task.getMetaId())));
-        final Set<Long> lockedTaskIds = byLocked.get(true)
-                .stream()
-                .map(ProcessorTask::getId)
-                .collect(Collectors.toSet());
-        final int released = processorTaskDao.releaseTasks(lockedTaskIds, TaskStatus.PROCESSING);
+        final int released = processorTaskDao.putBackTasks(byLocked.get(true), Set.of(TaskStatus.PROCESSING));
         lockedMetaReleases.addAndGet(released);
         LOGGER.debug(() -> LogUtil.message("releaseLockedMeta() - released {}/{} tasks claimed for {} "
                                            + "whose meta is still locked",
@@ -329,8 +325,8 @@ public class ProcessorTaskClaimer {
         if (tasks.isEmpty()) {
             return 0;
         }
-        final Set<Long> taskIds = tasks.stream().map(ProcessorTask::getId).collect(Collectors.toSet());
-        final int released = processorTaskDao.releaseTasks(taskIds, TaskStatus.PROCESSING);
+        // Only those that have not changed since they were claimed, e.g. by the reaper, are put back.
+        final int released = processorTaskDao.putBackTasks(tasks, Set.of(TaskStatus.PROCESSING));
         tasks.forEach(processorTaskHeartbeat::deregister);
         LOGGER.debug(() -> LogUtil.message("abandonTasks() - released {}/{} claimed tasks",
                 released, tasks.size()));

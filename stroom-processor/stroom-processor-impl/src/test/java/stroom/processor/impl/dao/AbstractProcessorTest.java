@@ -18,6 +18,7 @@ package stroom.processor.impl.dao;
 
 import stroom.cache.impl.CacheModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
+import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
@@ -125,6 +126,7 @@ class AbstractProcessorTest {
                         Mockito.when(bindMock(ExpressionMapperFactory.class).create())
                                 .thenReturn(mockExpressionMapper);
                         bindMock(NodeInfo.class);
+                        bindMock(TargetNodeSetFactory.class);
                         bindMock(ProcessorTaskQueueManager.class);
                         bindMock(DocumentEventLog.class);
                         bindMock(DocumentPermissionService.class);

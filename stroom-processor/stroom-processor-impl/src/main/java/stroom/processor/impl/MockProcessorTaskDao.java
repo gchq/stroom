@@ -232,7 +232,26 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
-    public int releaseTasks(final Set<Long> idSet, final TaskStatus currentStatus) {
+    public int putBackTasks(final Collection<ProcessorTask> tasks, final Set<TaskStatus> currentStatuses) {
+        return 0;
+    }
+
+    @Override
+    public boolean putBackUnstarted(final ProcessorTask task, final String nodeName) {
+        return false;
+    }
+
+    @Override
+    public List<ProcessorTask> findQueuedTasks(final String nodeName,
+                                               final Instant statusOlderThan,
+                                               final long afterId,
+                                               final int limit) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public long sweepQueuedTasksOfInactiveNodes(final Instant statusOlderThan,
+                                                final Set<String> activeNodeNames) {
         return 0;
     }
 

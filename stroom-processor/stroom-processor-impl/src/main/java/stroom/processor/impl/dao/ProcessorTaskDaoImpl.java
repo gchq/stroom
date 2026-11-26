@@ -80,6 +80,7 @@ import org.jooq.Record1;
 import org.jooq.Record2;
 import org.jooq.Record6;
 import org.jooq.Result;
+import org.jooq.Row2;
 import org.jooq.SelectJoinStep;
 import org.jooq.UpdateConditionStep;
 import org.jooq.exception.DataAccessException;
@@ -102,6 +103,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFeed.PROCESSOR_FEED;
@@ -153,6 +155,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     static final String REASON_NODE_STARTED = "Put back when the node that had it was started";
     static final String REASON_NO_HEARTBEAT = "Put back as the node that had it sent no heartbeat";
     static final String REASON_LEFT_QUEUED = "Put back as the master task queue left it queued";
+    static final String REASON_NOT_STARTED = "Put back as its run could not tell whether it had started";
+    static final String REASON_MASTER_GONE = "Put back as it was left queued by a node that is not active";
 
     private static final Field<Integer> COUNT = DSL.count();
 
@@ -806,23 +810,124 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     @Override
-    public int releaseTasks(final Set<Long> idSet, final TaskStatus currentStatus) {
-        final long now = System.currentTimeMillis();
+    public int putBackTasks(final Collection<ProcessorTask> tasks, final Set<TaskStatus> currentStatuses) {
+        final List<ProcessorTask> remaining = List.copyOf(tasks);
+        final List<Byte> statuses = currentStatuses.stream().map(TaskStatus::getPrimitiveValue).toList();
+        int count = 0;
+        for (int from = 0; from < remaining.size(); from += BATCH_SIZE) {
+            final List<Row2<Long, Integer>> rows = remaining
+                    .subList(from, Math.min(from + BATCH_SIZE, remaining.size()))
+                    .stream()
+                    .map(task -> DSL.row(task.getId(), task.getVersion()))
+                    .toList();
+            final Condition condition = DSL.row(PROCESSOR_TASK.ID, PROCESSOR_TASK.VERSION).in(rows)
+                    .and(PROCESSOR_TASK.STATUS.in(statuses));
+            count += JooqUtil.contextResult(processorDbConnProvider, context -> changeStatus(
+                    context,
+                    null,
+                    TaskStatus.CREATED,
+                    System.currentTimeMillis(),
+                    PROCESSOR_TASK.REASON,
+                    condition));
+        }
+        return count;
+    }
 
-        final Condition statusCondition = PROCESSOR_TASK.STATUS.eq(currentStatus.getPrimitiveValue());
-        final Condition condition = PROCESSOR_TASK.ID.in(idSet).and(statusCondition);
+    @Override
+    public boolean putBackUnstarted(final ProcessorTask task, final String nodeName) {
+        final Integer nodeId = processorNodeCache.getOrCreate(nodeName);
+        final Condition notStarted = PROCESSOR_TASK.STATUS.eq(TaskStatus.QUEUED.getPrimitiveValue())
+                .and(PROCESSOR_TASK.VERSION.eq(task.getVersion()));
+        final Condition started = PROCESSOR_TASK.STATUS.eq(TaskStatus.PROCESSING.getPrimitiveValue())
+                .and(PROCESSOR_TASK.VERSION.eq(task.getVersion() + 1))
+                .and(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId))
+                .and(PROCESSOR_TASK.RUN_COUNT.eq(task.getRunCount() + 1));
+        return JooqUtil.contextResult(processorDbConnProvider, context -> changeStatus(
+                context,
+                null,
+                TaskStatus.CREATED,
+                System.currentTimeMillis(),
+                DSL.val(REASON_NOT_STARTED),
+                PROCESSOR_TASK.ID.eq(task.getId()).and(notStarted.or(started)))) == 1;
+    }
 
-        return JooqUtil.contextResult(
-                processorDbConnProvider, context -> {
-                    // Update the records.
-                    return changeStatus(
-                            context,
-                            null,
-                            TaskStatus.CREATED,
-                            now,
-                            PROCESSOR_TASK.REASON,
-                            condition);
-                });
+    @Override
+    public List<ProcessorTask> findQueuedTasks(final String nodeName,
+                                               final Instant statusOlderThan,
+                                               final long afterId,
+                                               final int limit) {
+        final Integer nodeId = processorNodeCache.getOrCreate(nodeName);
+        return JooqUtil.contextResult(processorDbConnProvider, context -> context
+                        .select(PROCESSOR_TASK.ID, PROCESSOR_TASK.VERSION)
+                        .from(PROCESSOR_TASK)
+                        .where(PROCESSOR_TASK.STATUS.eq(TaskStatus.QUEUED.getPrimitiveValue()))
+                        .and(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId))
+                        .and(PROCESSOR_TASK.STATUS_TIME_MS.lt(statusOlderThan.toEpochMilli()))
+                        .and(PROCESSOR_TASK.ID.gt(afterId))
+                        .orderBy(PROCESSOR_TASK.ID)
+                        .limit(limit)
+                        .fetch())
+                .map(record -> ProcessorTask.builder()
+                        .id(record.get(PROCESSOR_TASK.ID))
+                        .version(record.get(PROCESSOR_TASK.VERSION))
+                        .status(TaskStatus.QUEUED)
+                        .build());
+    }
+
+    @Override
+    public long sweepQueuedTasksOfInactiveNodes(final Instant statusOlderThan,
+                                                final Set<String> activeNodeNames) {
+        final Set<Integer> activeNodeIds = activeNodeNames
+                .stream()
+                .map(processorNodeCache::getOrCreate)
+                .collect(Collectors.toSet());
+        long count = 0;
+        while (true) {
+            // Found first, and then put back by id and version, so that one that has just been started is never put
+            // back.
+            final List<ProcessorTask> tasks = JooqUtil.contextResult(processorDbConnProvider, context -> context
+                            .select(PROCESSOR_TASK.ID, PROCESSOR_TASK.VERSION)
+                            .from(PROCESSOR_TASK)
+                            .where(PROCESSOR_TASK.STATUS.eq(TaskStatus.QUEUED.getPrimitiveValue()))
+                            .and(PROCESSOR_TASK.STATUS_TIME_MS.lt(statusOlderThan.toEpochMilli()))
+                            .and(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.isNull()
+                                    .or(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.notIn(activeNodeIds)))
+                            .orderBy(PROCESSOR_TASK.ID)
+                            .limit(BATCH_SIZE)
+                            .fetch())
+                    .map(record -> ProcessorTask.builder()
+                            .id(record.get(PROCESSOR_TASK.ID))
+                            .version(record.get(PROCESSOR_TASK.VERSION))
+                            .build());
+            if (tasks.isEmpty()) {
+                break;
+            }
+            final int putBack = changeStatusOfQueued(tasks, REASON_MASTER_GONE);
+            count += putBack;
+            if (putBack == 0) {
+                // They have all changed since they were found, so will not be found again.
+                break;
+            }
+        }
+        if (count > 0) {
+            LOGGER.warn("Put back {} tasks left queued by a node that is not active", count);
+        }
+        return count;
+    }
+
+    private int changeStatusOfQueued(final List<ProcessorTask> tasks, final String reason) {
+        final List<Row2<Long, Integer>> rows = tasks
+                .stream()
+                .map(task -> DSL.row(task.getId(), task.getVersion()))
+                .toList();
+        return JooqUtil.contextResult(processorDbConnProvider, context -> changeStatus(
+                context,
+                null,
+                TaskStatus.CREATED,
+                System.currentTimeMillis(),
+                DSL.val(reason),
+                DSL.row(PROCESSOR_TASK.ID, PROCESSOR_TASK.VERSION).in(rows)
+                        .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.QUEUED.getPrimitiveValue()))));
     }
 
     /**
@@ -1361,6 +1466,10 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     "changeTaskStatus({}) - Abandoning status change, task does not exist, " +
                     "task may have been physically deleted {}",
                     newStatus, processorTask));
+        } else if (TaskStatus.PROCESSING.equals(newStatus)) {
+            // Nothing has been done, so nothing can be duplicated.
+            LOGGER.warn("changeTaskStatus({}) - Not starting task as it has changed since it was handed out {}",
+                    newStatus, processorTask);
         } else if (TaskStatus.DELETED.equals(reloaded.getStatus())
                    || TaskStatus.ABORTED.equals(reloaded.getStatus())) {
             LOGGER.warn(() -> LogUtil.message(

@@ -17,6 +17,8 @@
 package stroom.processor.impl.dao;
 
 import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.task.api.NullClusterStateException;
+import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProcessorTaskReaper;
@@ -32,6 +34,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -41,6 +44,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * boundary behaviour lives in {@code TestProcessorTaskDaoImpl.testReapDeadTasks}.
  */
 class TestProcessorTaskReaper extends AbstractProcessorTest {
+
+    private final TargetNodeSetFactory targetNodeSetFactory = Mockito.mock(TargetNodeSetFactory.class);
 
     @Test
     void reapRecoversTasksPastTheLeaseTimeout() {
@@ -119,6 +124,65 @@ class TestProcessorTaskReaper extends AbstractProcessorTest {
         assertThat(processorTaskDao.countDeadTasks(leaseExpiry))
                 .describedAs("a working reaper keeps this at zero, which is what makes it a signal")
                 .isZero();
+    }
+
+    @Test
+    void tasksLeftQueuedByANodeThatIsNoLongerTheMasterArePutBack() throws Exception {
+        final ProcessorFilter filter = createProcessorFilter(createProcessor());
+        final Instant now = Instant.now();
+        final long oldMasters = createProcessorTask(
+                filter, TaskStatus.QUEUED, NODE2, FEED, now.minus(Duration.ofMinutes(11)));
+        final long masters = createProcessorTask(
+                filter, TaskStatus.QUEUED, NODE1, FEED, now.minus(Duration.ofMinutes(11)));
+        Mockito.when(targetNodeSetFactory.getMasterNode()).thenReturn(NODE1);
+        Mockito.when(targetNodeSetFactory.getEnabledActiveTargetNodeSet()).thenReturn(Set.of(NODE1));
+
+        reaper(true).reap(now);
+        assertThat(getTaskStatus(oldMasters))
+                .describedAs("in claiming mode this is the sweep's job, which puts back all of them")
+                .isEqualTo(TaskStatus.CREATED);
+        assertThat(getTaskStatus(masters)).isEqualTo(TaskStatus.CREATED);
+
+        final long oldMasters2 = createProcessorTask(
+                filter, TaskStatus.QUEUED, NODE2, FEED, now.minus(Duration.ofMinutes(11)));
+        final long masters2 = createProcessorTask(
+                filter, TaskStatus.QUEUED, NODE1, FEED, now.minus(Duration.ofMinutes(11)));
+        reaper(false).reap(now);
+        assertThat(getTaskStatus(oldMasters2)).isEqualTo(TaskStatus.CREATED);
+        assertThat(getTaskStatus(masters2))
+                .describedAs("the master puts back its own")
+                .isEqualTo(TaskStatus.QUEUED);
+    }
+
+    @Test
+    void tasksQueuedByANodeThatIsActiveAreLeftAloneWhoeverIsTheMaster() throws Exception {
+        final ProcessorFilter filter = createProcessorFilter(createProcessor());
+        final Instant now = Instant.now();
+        final long queued = createProcessorTask(
+                filter, TaskStatus.QUEUED, NODE2, FEED, now.minus(Duration.ofMinutes(11)));
+        // This node thinks the master is NODE1, but NODE2 is active, so may be the master really.
+        Mockito.when(targetNodeSetFactory.getMasterNode()).thenReturn(NODE1);
+        Mockito.when(targetNodeSetFactory.getEnabledActiveTargetNodeSet()).thenReturn(Set.of(NODE1, NODE2));
+
+        reaper(false).reap(now);
+
+        assertThat(getTaskStatus(queued)).isEqualTo(TaskStatus.QUEUED);
+    }
+
+    @Test
+    void tasksLeftQueuedAreLeftAloneIfTheMasterIsNotKnown() throws Exception {
+        final ProcessorFilter filter = createProcessorFilter(createProcessor());
+        final Instant now = Instant.now();
+        final long queued = createProcessorTask(
+                filter, TaskStatus.QUEUED, NODE2, FEED, now.minus(Duration.ofMinutes(11)));
+        final long dead = createProcessorTask(
+                filter, TaskStatus.PROCESSING, NODE2, FEED, now.minus(Duration.ofMinutes(11)));
+        Mockito.when(targetNodeSetFactory.getMasterNode()).thenThrow(new NullClusterStateException());
+
+        reaper(false).reap(now);
+
+        assertThat(getTaskStatus(queued)).isEqualTo(TaskStatus.QUEUED);
+        assertThat(getTaskStatus(dead)).isEqualTo(TaskStatus.CREATED);
     }
 
     @Test
@@ -201,6 +265,7 @@ class TestProcessorTaskReaper extends AbstractProcessorTest {
         Mockito.when(processorConfig.isClaimTasksOnWorker()).thenReturn(claimTasksOnWorker);
         return new ProcessorTaskReaper(
                 getInjector().getInstance(ClusterLockService.class),
+                targetNodeSetFactory,
                 dao,
                 () -> processorConfig);
     }

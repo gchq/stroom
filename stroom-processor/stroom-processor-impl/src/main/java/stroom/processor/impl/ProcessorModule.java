@@ -106,8 +106,10 @@ public class ProcessorModule extends AbstractModule {
                         .frequencySchedule("1m"))
                 .bindJobTo(ProcessorTaskManagerReleaseOldQueuedTasks.class, builder -> builder
                         .name("Processor Task Manager Release Old Queued Tasks")
-                        .description("Release queued tasks from old master nodes. Only does anything when "
-                                     + "stroom.processor.claimTasksOnWorker is false")
+                        .description("Put back the queue of a node that is no longer the master, or of any node "
+                                     + "when stroom.processor.claimTasksOnWorker is true. Otherwise also put back "
+                                     + "tasks that this node queued and handed out more than "
+                                     + "stroom.processor.taskLeaseTimeout ago that were not started")
                         .frequencySchedule("1m"))
                 .bindJobTo(ProcessorTaskRetention.class, builder -> builder
                         .name(PROCESSOR_TASK_RETENTION_JOB_NAME)

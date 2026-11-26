@@ -65,6 +65,25 @@ class TaskStatusTraceLog {
         }
     }
 
+    /// Records that a worker has put back tasks that it was handed and will not run.
+    ///
+    /// @param clazz       The class that put them back.
+    /// @param streamTasks The tasks.
+    /// @param nodeName    The worker.
+    void putBackTasks(final Class<?> clazz, final List<ProcessorTask> streamTasks, final String nodeName) {
+        if (LOGGER.isTraceEnabled() && !streamTasks.isEmpty()) {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("Worker ");
+            sb.append(nodeName);
+            sb.append(" put back ");
+            sb.append(streamTasks.size());
+            sb.append(" stream tasks");
+            appendStreamTaskList(sb, streamTasks);
+            appendClass(sb, clazz);
+            LOGGER.trace(sb.toString());
+        }
+    }
+
     private void appendStreamTaskList(final StringBuilder sb, final List<ProcessorTask> streamTasks) {
         sb.append(" ( ");
         for (final ProcessorTask task : streamTasks) {

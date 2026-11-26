@@ -151,7 +151,7 @@ class TestProcessorTaskClaimer extends AbstractProcessorTest {
                 .isEmpty();
 
         // Those two are done with, which the registry knows about the moment it happens.
-        processorTaskDao.releaseTasks(Set.copyOf(running), TaskStatus.PROCESSING);
+        processorTaskDao.putBackTasks(running.stream().map(this::task).toList(), Set.of(TaskStatus.PROCESSING));
         running.forEach(taskId -> heartbeat.deregister(task(taskId)));
 
         assertThat(claimer.claimTasks(2))
@@ -175,7 +175,7 @@ class TestProcessorTaskClaimer extends AbstractProcessorTest {
         // has to be taken on the same side of that, or this node's one task is subtracted twice.
         final ProcessorTaskDao dao = Mockito.spy(processorTaskDao);
         Mockito.doAnswer(invocation -> {
-            processorTaskDao.releaseTasks(Set.of(running), TaskStatus.PROCESSING);
+            processorTaskDao.putBackTasks(List.of(task(running)), Set.of(TaskStatus.PROCESSING));
             heartbeat.deregister(task(running));
             return invocation.callRealMethod();
         }).when(dao).countTasksForFilter(filter.getId(), TaskStatus.PROCESSING);
@@ -221,6 +221,21 @@ class TestProcessorTaskClaimer extends AbstractProcessorTest {
                 .isZero();
         claimer.abandonTasks(claimed);
         assertThat(heartbeat.size()).isZero();
+    }
+
+    @Test
+    void abandonedTasksThatHaveBeenReapedAndClaimedAgainAreLeftAlone() {
+        final Processor processor = createProcessor();
+        final ProcessorFilter filter = createProcessorFilter(processor);
+        createTasks(filter, 1);
+        final ProcessorTaskClaimer claimer = claimer(List.of(filter));
+        final List<ProcessorTask> claimed = claimer.claimTasks(1);
+        processorTaskDao.reapDeadTasks(Instant.now().plusSeconds(1));
+        processorTaskDao.claimTasks(filter.getId(), NODE2, 1);
+
+        assertThat(claimer.abandonTasks(claimed)).isZero();
+
+        assertThat(getTaskStatus(claimed.getFirst().getId())).isEqualTo(TaskStatus.PROCESSING);
     }
 
     @Test

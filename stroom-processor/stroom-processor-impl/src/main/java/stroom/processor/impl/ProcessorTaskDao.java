@@ -152,6 +152,15 @@ public interface ProcessorTaskDao {
      */
     long sweepQueuedTasks(Instant statusOlderThan);
 
+    /// Puts back tasks queued by nodes that are not active, which can only have been left by an earlier master that
+    /// died or was removed, as nothing else will put them back. A node that is active puts back its own. Each is put
+    /// back by id and version.
+    ///
+    /// @param statusOlderThan Only put back tasks that have been queued since before this.
+    /// @param activeNodeNames The nodes that are active, whose tasks are left alone.
+    /// @return The number of tasks put back.
+    long sweepQueuedTasksOfInactiveNodes(Instant statusOlderThan, Set<String> activeNodeNames);
+
     /**
      * Count the current number of tasks for a filter matching the specified status.
      *
@@ -208,14 +217,33 @@ public interface ProcessorTaskDao {
     List<ProcessorTask> queueTasks(Set<Long> idSet,
                                    String thisNodeName);
 
-    /**
-     * Release ownership for a set of tasks and abandon processing.
-     *
-     * @param idSet         The ids of the tasks to release.
-     * @param currentStatus The current status of tasks to release.
-     * @return The number of tasks changed.
-     */
-    int releaseTasks(Set<Long> idSet, TaskStatus currentStatus);
+    /// Puts tasks back to [TaskStatus#CREATED], unowned, so that they can be run, but only those that have not
+    /// changed since the caller knew them. A task that has just been started, or put back by something else, is left
+    /// alone. They keep their reason.
+    ///
+    /// @param tasks           The tasks as the caller knows them.
+    /// @param currentStatuses The statuses that they may have.
+    /// @return The number of tasks that were put back.
+    int putBackTasks(Collection<ProcessorTask> tasks, Set<TaskStatus> currentStatuses);
+
+    /// Puts back a task that a run tried to start, when it can't be told whether it was started. It is put back if
+    /// it is still [TaskStatus#QUEUED] as the run knew it, or if it is [TaskStatus#PROCESSING] for this node on the
+    /// run that the run would have started.
+    ///
+    /// @param task     The task as the run knew it before trying to start it.
+    /// @param nodeName The node the run is on.
+    /// @return True if it was put back.
+    boolean putBackUnstarted(ProcessorTask task, String nodeName);
+
+    /// Finds tasks that a node has queued and that have been waiting longer than they should, so that those which
+    /// have been lost can be put back.
+    ///
+    /// @param nodeName        The node that queued them.
+    /// @param statusOlderThan Only find tasks that have been queued since before this.
+    /// @param afterId         Only find tasks with a higher id than this, to find the next page.
+    /// @param limit           The most tasks to find.
+    /// @return The tasks, with their ids and versions, in order of id.
+    List<ProcessorTask> findQueuedTasks(String nodeName, Instant statusOlderThan, long afterId, int limit);
 
     /// Finds which tasks are being processed by a node, and the versions they have. A run still has its task only if
     /// the task is one of these and has the version that the run knows it by.

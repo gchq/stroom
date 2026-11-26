@@ -33,6 +33,7 @@ import jakarta.inject.Singleton;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -211,9 +212,9 @@ public class DistributedTaskFetcher {
                                 nodeName,
                                 totalTaskLimit);
                         info(taskContext, () -> "Executing " + tasks.size() + " new tasks");
-                        handleResult(nodeName, jobName, tasks);
-                        executingTaskCount += tasks.size();
-                        totalTaskLimit -= tasks.size();
+                        final int startedCount = handleResult(nodeName, jobName, distributedTaskFactory, tasks);
+                        executingTaskCount += startedCount;
+                        totalTaskLimit -= startedCount;
                     }
                 }
             }
@@ -221,10 +222,20 @@ public class DistributedTaskFetcher {
         return executingTaskCount;
     }
 
-    private void handleResult(
+    /// Starts the tasks that this node has been given, and gives back those that it doesn't start, e.g. as it is
+    /// stopping, so that they don't have to wait to be found. Not private so that a test can call it.
+    ///
+    /// @param nodeName               This node.
+    /// @param jobName                The job that the tasks are for.
+    /// @param distributedTaskFactory What the tasks came from, and are given back to.
+    /// @param tasks                  The tasks.
+    /// @return The number of tasks started.
+    int handleResult(
             final String nodeName,
             final String jobName,
+            final DistributedTaskFactory distributedTaskFactory,
             final List<DistributedTask> tasks) {
+        final Set<DistributedTask> started = Collections.newSetFromMap(new IdentityHashMap<>());
         try {
             LOGGER.debug(() -> LogUtil.message("Task response: node=\"{}\"", nodeName));
             LOGGER.trace(() -> LogUtil.message("\nTask response: node=\"{}\"\n{}", nodeName, tasks));
@@ -236,32 +247,65 @@ public class DistributedTaskFetcher {
             final JobNodeTrackers trackers = jobNodeTrackerCache.getTrackers();
             taskStatusTraceLog.receiveOnWorkerNode(DistributedTaskFetcher.class, tasks, jobName);
 
-            if (!stopping.get()) {
-                // Get the latest local tracker.
-                final JobNodeTracker tracker = trackers.getTrackerForJobName(jobName);
-                // Try and get more tasks.
-                tasks.forEach(task -> {
-                    runningTasks.add(task);
-                    tracker.incrementTaskCount();
-                    tracker.setLastExecutedTime(now);
-
-                    if (!stopping.get()) {
-                        final Executor executor = executorProvider.get(task.getThreadPool());
-                        CompletableFuture
-                                .runAsync(task.getRunnable(), executor)
-                                .whenComplete((r, t) -> {
-                                    runningTasks.remove(task);
-                                    tracker.decrementTaskCount();
-                                    signal();
-                                });
-                    } else {
-                        runningTasks.remove(task);
-                        tracker.decrementTaskCount();
-                    }
-                });
+            // Get the latest local tracker.
+            final JobNodeTracker tracker = trackers.getTrackerForJobName(jobName);
+            for (final DistributedTask task : tasks) {
+                if (stopping.get()) {
+                    break;
+                }
+                if (start(task, tracker, now)) {
+                    started.add(task);
+                }
             }
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
+        } finally {
+            // Whatever went wrong, every task that wasn't started is given back.
+            giveBack(nodeName, distributedTaskFactory, tasks
+                    .stream()
+                    .filter(task -> !started.contains(task))
+                    .toList());
+        }
+        return started.size();
+    }
+
+    // Returns true if the task was started.
+    private boolean start(final DistributedTask task, final JobNodeTracker tracker, final long now) {
+        runningTasks.add(task);
+        tracker.incrementTaskCount();
+        tracker.setLastExecutedTime(now);
+        try {
+            final Executor executor = executorProvider.get(task.getThreadPool());
+            CompletableFuture
+                    .runAsync(task.getRunnable(), executor)
+                    .whenComplete((r, t) -> {
+                        runningTasks.remove(task);
+                        tracker.decrementTaskCount();
+                        signal();
+                    });
+            return true;
+        } catch (final RuntimeException e) {
+            // E.g. the executor has been shut down.
+            LOGGER.error(e::getMessage, e);
+            runningTasks.remove(task);
+            tracker.decrementTaskCount();
+            return false;
+        }
+    }
+
+    private void giveBack(final String nodeName,
+                          final DistributedTaskFactory distributedTaskFactory,
+                          final List<DistributedTask> tasks) {
+        if (!tasks.isEmpty()) {
+            LOGGER.info(() -> LogUtil.message("Giving back {} tasks that will not be run",
+                    tasks.size()));
+            try {
+                if (!Boolean.TRUE.equals(distributedTaskFactory.abandon(nodeName, tasks))) {
+                    LOGGER.error(() -> LogUtil.message("Unable to give back {} tasks", tasks.size()));
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+            }
         }
     }
 

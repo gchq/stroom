@@ -256,11 +256,30 @@ public class DataProcessorTaskHandler {
                         "Not processing task {} as its status could not be changed ({}). It may have been " +
                         "logically/physically deleted.", run.task.getId(), change.result()));
                 run.notStarted = true;
+                if (TaskStatusChange.Result.UNKNOWN.equals(change.result())) {
+                    putBackUnstarted(run.task);
+                }
                 return false;
             }
             run.task = change.task();
         }
         return true;
+    }
+
+    // If this fails too then the master puts it back if it is still queued, or the reaper if it was started.
+    private void putBackUnstarted(final ProcessorTask task) {
+        try {
+            final boolean putBack = securityContext.asProcessingUserResult(() ->
+                    processorTaskDao.putBackUnstarted(task, nodeInfo.getThisNodeName()));
+            LOGGER.info(() -> LogUtil.message("{} processor task {} as it could not be told whether it had started",
+                    putBack
+                            ? "Put back"
+                            : "Unable to put back",
+                    task.getId()));
+        } catch (final RuntimeException e) {
+            LOGGER.error(() -> LogUtil.message("Unable to put back processor task {} - {}",
+                    task.getId(), LogUtil.exceptionMessage(e)), e);
+        }
     }
 
     // Returns false if the run has to end without doing anything. What it has been given says why.

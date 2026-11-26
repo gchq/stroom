@@ -57,6 +57,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -86,6 +87,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
 
     private static final int BATCH_SIZE = 1000;
     private static final int MAX_ASSIGNMENT_ATTEMPTS = 10;
+    private static final long HANDED_OUT_PRUNE_INTERVAL_MS = 60_000;
     private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Fill Task Store", 3);
 
     private final ProcessorTaskDao processorTaskDao;
@@ -107,6 +109,12 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
      * Our queue.
      */
     private final ConcurrentHashMap<ProcessorFilter, ProcessorTaskQueue> queueMap = new ConcurrentHashMap<>();
+    // When tasks were last handed out, by task id, for as long as the lease timeout, so that tasks that have been
+    // handed out and not started can be told apart from those that may still start.
+    private final Map<Long, Long> handedOut = new ConcurrentHashMap<>();
+    // Held while a task is taken from a queue and recorded as handed out.
+    private final Object handOutLock = new Object();
+    private final AtomicLong lastHandedOutPruneMs = new AtomicLong();
     private final AtomicBoolean fillingQueue = new AtomicBoolean();
     /**
      * Incremented every time the queue is filled, however the fill was requested, so that a request waiting to
@@ -126,6 +134,10 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
      * run startup() and has not run shutdown().
      */
     private volatile boolean allowTaskQueueFill = false;
+    // Set when this node stops, and cleared when it starts, so that a fill that was asked for before it stopped,
+    // and runs after it has put back its queue, queues nothing. Unlike allowTaskQueueFill, a node that has never
+    // been started can still be filled directly, e.g. by a test.
+    private boolean stopped = false;
 
 
     @Inject
@@ -177,6 +189,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         }
 
         // Allow task queueing.
+        stopped = false;
         allowTaskQueueFill = true;
     }
 
@@ -185,7 +198,15 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         // It shouldn't be possible to queue tasks during shutdown.
         try {
             allowTaskQueueFill = false;
-            clearTaskStore();
+            // Held under the same lock as a fill, so a fill either finishes before the queue is put back or queues
+            // nothing.
+            stopped = true;
+            // Put back what has been queued, or it would wait for the reaper on another node, or for this node to
+            // start again.
+            final long count = releaseAll();
+            if (count > 0) {
+                LOGGER.info("Put back {} queued tasks as this node is stopping", count);
+            }
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -343,13 +364,13 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
 
                         if (maxFilterTasks > 0) {
                             // Add as many tasks as we can for this filter.
-                            ProcessorTask streamTask = queue.poll();
+                            ProcessorTask streamTask = handOut(queue);
                             while (streamTask != null) {
                                 assignedStreamTasks.add(streamTask);
                                 filterTasksAssigned++;
 
                                 if (assignedStreamTasks.size() < count && filterTasksAssigned < maxFilterTasks) {
-                                    streamTask = queue.poll();
+                                    streamTask = handOut(queue);
                                 } else {
                                     streamTask = null;
                                 }
@@ -406,6 +427,30 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         }
 
         return new ProcessorTaskList(nodeName, assignedStreamTasks);
+    }
+
+    // Takes the next task from a queue, and records that it has been handed out, so that it is always one or the
+    // other when the lost tasks are looked for.
+    private ProcessorTask handOut(final ProcessorTaskQueue queue) {
+        final long now = System.currentTimeMillis();
+        pruneHandedOut(now);
+        synchronized (handOutLock) {
+            final ProcessorTask task = queue.poll();
+            if (task != null) {
+                handedOut.put(task.getId(), now);
+            }
+            return task;
+        }
+    }
+
+    // Forgets tasks that were handed out more than the lease timeout ago, at most once a minute, so that what is
+    // remembered can't grow without limit, even if lost tasks are not looked for.
+    private void pruneHandedOut(final long now) {
+        final long lastPruned = lastHandedOutPruneMs.get();
+        if (now - lastPruned >= HANDED_OUT_PRUNE_INTERVAL_MS && lastHandedOutPruneMs.compareAndSet(lastPruned, now)) {
+            final long leaseExpiryMs = now - processorConfigProvider.get().getTaskLeaseTimeout().toMillis();
+            handedOut.values().removeIf(handedOutMs -> handedOutMs < leaseExpiryMs);
+        }
     }
 
     /**
@@ -514,12 +559,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         if (!processorTaskList.getList().isEmpty()) {
             try {
                 LOGGER.warn("abandon() - {}", processorTaskList);
-                final Set<Long> idSet = processorTaskList
-                        .getList()
-                        .stream()
-                        .map(ProcessorTask::getId)
-                        .collect(Collectors.toSet());
-                processorTaskDao.releaseTasks(idSet, TaskStatus.PROCESSING);
+                // Only those that have not changed since they were handed out are put back.
+                processorTaskDao.putBackTasks(processorTaskList.getList(), Set.of(TaskStatus.QUEUED));
 
             } catch (final RuntimeException e) {
                 LOGGER.error("abandon() - {}", processorTaskList, e);
@@ -542,51 +583,36 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         if (filter != null) {
             return LOGGER.logDurationIfDebugEnabled(() -> {
                 long totalReleased = 0;
-                final Set<Long> taskIdSet = new HashSet<>();
+                final List<ProcessorTask> tasks = new ArrayList<>();
                 final ProcessorTaskQueue queue = queueMap.remove(filter);
                 if (queue != null) {
                     ProcessorTask processorTask = queue.poll();
                     while (processorTask != null) {
-                        taskIdSet.add(processorTask.getId());
-                        if (taskIdSet.size() >= BATCH_SIZE) {
-                            releaseQueuedTask(taskIdSet);
-                            totalReleased += taskIdSet.size();
-                            taskIdSet.clear();
+                        tasks.add(processorTask);
+                        if (tasks.size() >= BATCH_SIZE) {
+                            totalReleased += releaseQueuedTasks(tasks);
+                            tasks.clear();
                         }
                         processorTask = queue.poll();
                     }
                 }
-                releaseQueuedTask(taskIdSet);
-                totalReleased += taskIdSet.size();
+                totalReleased += releaseQueuedTasks(tasks);
                 return totalReleased;
             }, () -> "Released tasks for filter " + filter.getFilterInfo());
         }
         return 0;
     }
 
-    private void releaseQueuedTask(final Set<Long> taskIdSet) {
-        if (!taskIdSet.isEmpty()) {
+    // Returns the number put back. Those that have changed since they were queued are left alone.
+    private int releaseQueuedTasks(final List<ProcessorTask> tasks) {
+        if (!tasks.isEmpty()) {
             try {
-                processorTaskDao.releaseTasks(taskIdSet, TaskStatus.QUEUED);
+                return processorTaskDao.putBackTasks(tasks, Set.of(TaskStatus.QUEUED));
             } catch (final RuntimeException e) {
-                LOGGER.error("release() - {}", taskIdSet, e);
+                LOGGER.error(() -> LogUtil.message("release() - {} tasks", tasks.size()), e);
             }
         }
-    }
-
-    private synchronized void clearTaskStore() {
-        for (final Entry<ProcessorFilter, ProcessorTaskQueue> entry : queueMap.entrySet()) {
-            final ProcessorFilter filter = entry.getKey();
-            if (filter != null) {
-                final ProcessorTaskQueue queue = queueMap.remove(filter);
-                if (queue != null) {
-                    ProcessorTask streamTask = queue.poll();
-                    while (streamTask != null) {
-                        streamTask = queue.poll();
-                    }
-                }
-            }
-        }
+        return 0;
     }
 
     @Override
@@ -601,28 +627,86 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         return size;
     }
 
+    /// Puts back queued tasks that have been lost. If this node is not the master, or tasks are claimed by the
+    /// workers, then it puts back all the tasks in its queue. With the master queue in use, it then puts back those
+    /// it queued that are not in its queue and have not been handed out within the lease timeout, as the node they
+    /// were handed out to didn't start them. This is done whether or not it is still the master, as a node that was
+    /// the master and is still active has nothing else to put them back.
     public synchronized void releaseOldQueuedTasks() {
-        LOGGER.trace(() -> "releaseOldQueuedTasks()");
-        if (!queueMap.isEmpty()) {
-            try {
-                final String node = nodeInfo.getThisNodeName();
-                final String masterNode = targetNodeSetFactory.getMasterNode();
-                if (node != null && !node.equals(masterNode)) {
-                    // This is no longer the master node so release all tasks.
-                    final DurationTimer durationTimer = DurationTimer.start();
-                    final long count = releaseAll();
-                    if (count > 0) {
-                        LOGGER.info(() ->
-                                "Released All Queued Tasks (count = " +
-                                count +
-                                ") in " +
-                                durationTimer.get());
-                    }
-                }
-            } catch (final RuntimeException | NodeNotFoundException | NullClusterStateException e) {
-                LOGGER.debug(e.getMessage(), e);
+        LOGGER.trace("releaseOldQueuedTasks()");
+        try {
+            final String node = nodeInfo.getThisNodeName();
+            if (node == null) {
+                return;
             }
+            final boolean claimTasksOnWorker = processorConfigProvider.get().isClaimTasksOnWorker();
+            if (!queueMap.isEmpty() && (claimTasksOnWorker || !isMaster(node))) {
+                final DurationTimer durationTimer = DurationTimer.start();
+                final long count = releaseAll();
+                if (count > 0) {
+                    LOGGER.info("Released All Queued Tasks (count = {}) in {}", count, durationTimer);
+                }
+            }
+            // With tasks claimed by the workers, the reaper puts back every task left queued.
+            if (!claimTasksOnWorker) {
+                putBackLostTasks(node, Instant.now());
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
         }
+    }
+
+    // A node that can't tell which node is the master keeps its queue until it can.
+    private boolean isMaster(final String node) {
+        try {
+            return node.equals(targetNodeSetFactory.getMasterNode());
+        } catch (final NodeNotFoundException | NullClusterStateException e) {
+            LOGGER.debug(e.getMessage(), e);
+            return true;
+        }
+    }
+
+    /// Puts back tasks that this node queued, that are not in its queue and that have not been handed out within
+    /// the lease timeout. Factored with "now" as a parameter for testing.
+    ///
+    /// @param nodeName This node.
+    /// @param now      The time now.
+    /// @return The number of tasks put back.
+    int putBackLostTasks(final String nodeName, final Instant now) {
+        final Instant leaseExpiry = now.minus(processorConfigProvider.get().getTaskLeaseTimeout().getDuration());
+        handedOut.values().removeIf(handedOutMs -> handedOutMs < leaseExpiry.toEpochMilli());
+
+        // What is queued and handed out is looked at once, before any tasks are found. A task that is in neither now
+        // can't be handed out later, as it can't get back into the queue while it is queued, and one that is taken
+        // from the queue in the meantime is kept, as it was in the queue.
+        final Set<Long> kept = new HashSet<>();
+        synchronized (handOutLock) {
+            queueMap.values().forEach(queue -> queue.forEach(task -> kept.add(task.getId())));
+            kept.addAll(handedOut.keySet());
+        }
+
+        int count = 0;
+        long afterId = -1;
+        List<ProcessorTask> page;
+        do {
+            page = processorTaskDao.findQueuedTasks(nodeName, leaseExpiry, afterId, BATCH_SIZE);
+            if (!page.isEmpty()) {
+                afterId = page.getLast().getId();
+                final List<ProcessorTask> lost = page
+                        .stream()
+                        .filter(task -> !kept.contains(task.getId()))
+                        .toList();
+                if (!lost.isEmpty()) {
+                    count += processorTaskDao.putBackTasks(lost, Set.of(TaskStatus.QUEUED));
+                }
+            }
+        } while (page.size() == BATCH_SIZE);
+
+        if (count > 0) {
+            LOGGER.warn("Put back {} tasks that were handed out more than the lease timeout ago and were not started",
+                    count);
+        }
+        return count;
     }
 
     public void exec() {
@@ -639,6 +723,10 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         // try to assign again rather than giving up, as the failure may well be transient.
         boolean addedTasks = true;
         try {
+            if (stopped) {
+                addedTasks = false;
+                return 0;
+            }
             final int totalAdded = doQueueNewTasks(taskContext, isEmptyReportRequired);
             addedTasks = totalAdded > 0;
             return totalAdded;

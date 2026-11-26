@@ -250,12 +250,38 @@ class TestDataProcessorTaskHandler {
     }
 
     @Test
-    void taskThatMayNotHaveBeenStartedIsLeftAlone() {
+    void taskThatMayNotHaveBeenStartedIsPutBack() {
         givenStatusCannotBeChanged(TaskStatusChange.unknown());
+        Mockito.when(processorTaskDao.putBackUnstarted(Mockito.any(), Mockito.any())).thenAnswer(invocation -> {
+            assertThat(asProcessingUser.get()).isTrue();
+            return true;
+        });
 
         handler.exec(task(0), false);
 
         verifyOnlyStartTried();
+        Mockito.verify(processorTaskDao).putBackUnstarted(Mockito.argThat(task -> task.getVersion() == 1),
+                Mockito.eq(NODE));
+    }
+
+    @Test
+    void taskThatMayNotHaveBeenStartedAndCannotBePutBack() {
+        givenStatusCannotBeChanged(TaskStatusChange.unknown());
+        Mockito.when(processorTaskDao.putBackUnstarted(Mockito.any(), Mockito.any()))
+                .thenThrow(new RuntimeException("Expected"));
+
+        assertThat(handler.exec(task(0), false).getWritten()).isZero();
+
+        verifyOnlyStartTried();
+    }
+
+    @Test
+    void taskThatIsNoLongerOursIsNotPutBack() {
+        givenStatusCannotBeChanged(TaskStatusChange.lost());
+
+        handler.exec(task(0), false);
+
+        Mockito.verify(processorTaskDao, Mockito.never()).putBackUnstarted(Mockito.any(), Mockito.any());
     }
 
     @Test

@@ -17,6 +17,9 @@
 package stroom.processor.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.task.api.NodeNotFoundException;
+import stroom.cluster.task.api.NullClusterStateException;
+import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.time.StroomDuration;
@@ -28,7 +31,9 @@ import jakarta.inject.Singleton;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * gh-5699. Returns dead tasks - PROCESSING rows whose heartbeat ({@code status_time_ms}, renewed
@@ -85,6 +90,7 @@ public class ProcessorTaskReaper {
     private static final Duration RETRY_WARNING_INTERVAL = Duration.ofHours(1);
 
     private final ClusterLockService clusterLockService;
+    private final TargetNodeSetFactory targetNodeSetFactory;
     private final ProcessorTaskDao processorTaskDao;
     private final Provider<ProcessorConfig> processorConfigProvider;
 
@@ -94,9 +100,11 @@ public class ProcessorTaskReaper {
 
     @Inject
     public ProcessorTaskReaper(final ClusterLockService clusterLockService,
+                               final TargetNodeSetFactory targetNodeSetFactory,
                                final ProcessorTaskDao processorTaskDao,
                                final Provider<ProcessorConfig> processorConfigProvider) {
         this.clusterLockService = clusterLockService;
+        this.targetNodeSetFactory = targetNodeSetFactory;
         this.processorTaskDao = processorTaskDao;
         this.processorConfigProvider = processorConfigProvider;
     }
@@ -130,6 +138,8 @@ public class ProcessorTaskReaper {
                     // state one indexed probe that finds nothing.
                     LOGGER.debug(() -> "Sweeping QUEUED/ASSIGNED tasks not touched since " + statusOlderThan);
                     processorTaskDao.sweepQueuedTasks(statusOlderThan);
+                } else {
+                    sweepQueuedTasksOfInactiveNodes(statusOlderThan);
                 }
 
                 final Map<Integer, Integer> retryTasks = processorTaskDao.countRetryTasksByFilter();
@@ -152,6 +162,26 @@ public class ProcessorTaskReaper {
             }
         } catch (final RuntimeException e) {
             // This must not stop those of other filters from being put back.
+            LOGGER.error(e::getMessage, e);
+        }
+    }
+
+    // With the master queue in use, tasks left queued by a master that has died or been removed have nothing else
+    // to put them back. A node that is active puts back its own, so whichever node this one thinks is the master,
+    // the queue of a live master is never swept.
+    private void sweepQueuedTasksOfInactiveNodes(final Instant statusOlderThan) {
+        try {
+            final Set<String> activeNodes = new HashSet<>(targetNodeSetFactory.getEnabledActiveTargetNodeSet());
+            activeNodes.add(targetNodeSetFactory.getMasterNode());
+            activeNodes.remove(null);
+            if (!activeNodes.isEmpty()) {
+                processorTaskDao.sweepQueuedTasksOfInactiveNodes(statusOlderThan, activeNodes);
+            }
+        } catch (final NodeNotFoundException | NullClusterStateException e) {
+            // Without knowing which nodes are active nothing can be done. Tasks are left until it is known.
+            LOGGER.debug(e::getMessage, e);
+        } catch (final RuntimeException e) {
+            // This must not stop tasks from being put back to be tried again.
             LOGGER.error(e::getMessage, e);
         }
     }
