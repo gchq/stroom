@@ -344,6 +344,38 @@ class TestSurveyFeedTool {
         assertThat(result.get("coverage")).isEqualTo("covered: every part read to its end");
     }
 
+    // Found in review (2026-11-27): a stream read to its 8th record, then (the user choosing to read to the end)
+    // deeper to its 10th, was "covered: every part read to its end" with records_read 10, but its per_stream entry
+    // still said 8 records, read only in part (head_only), and it was among the streams read in part.
+    @Test
+    @SuppressWarnings("unchecked")
+    void aStreamReadDeeperIsCountedAsReadInItsPerStreamEntry() {
+        sampleFeedInABuild();
+        stream(7, "ACME-VPN", 0, logins(10), true);
+        Mockito.when(streamReader.partSize(7L, 0)).thenReturn(30_000L);
+        Mockito.when(streamReader.rawRecords(eq(7L), eq(0), any(), anyBoolean(), eq(8L), anyInt(), anyInt()))
+                .thenReturn(new RecordStream.Read(null, List.of(
+                        "time=2026-10-01T11:00:00Z action=login user=u4",
+                        "time=2026-10-01T23:59:00Z action=csrf_block user=u5"), 10, true, false, false));
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "Read to the end"));
+
+        final Map<String, Object> result = json(call("{\"stream_ids\": [7], \"max_streams\": 1, "
+                                                     + "\"max_records_per_stream\": 10, \"build\": \"acme-v1\"}",
+                user.context()));
+
+        assertThat(result.get("coverage")).isEqualTo("covered: every part read to its end");
+        assertThat(result.get("records_read")).isEqualTo(10);
+        assertThat(result).as("streams said read in part, of a survey covered to every part's end")
+                .doesNotContainKey(SurveyDoc.STREAMS_IN_PART);
+        final List<Map<String, Object>> perStream = (List<Map<String, Object>>) result.get("per_stream");
+        assertThat(perStream).filteredOn(entry -> entry.containsKey("records")).singleElement()
+                .satisfies(entry -> {
+                    assertThat(entry.get("records")).as("per_stream records vs records_read").isEqualTo(10);
+                    assertThat(entry.get("head_only")).as("per_stream head_only of a part read to its end")
+                            .isEqualTo(false);
+                });
+    }
+
     @Test
     void theUserChoosingToStopSettlesTheCoverageAndIsntAskedAgain() {
         sampleFeedInABuild();

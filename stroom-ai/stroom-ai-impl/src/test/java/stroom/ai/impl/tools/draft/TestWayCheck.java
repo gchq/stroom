@@ -66,6 +66,23 @@ class TestWayCheck extends DraftFixtures {
         assertThat(check.recognises(login, record)).isFalse();
     }
 
+    // A condition that can't be told here (a dictionary) places a way as if it held, but counts as unknown.
+    @Test
+    void aConditionNotToldHereIsTakenAsHoldingToPlaceAWayButIsUnknownToCountIt() {
+        final WayCheck check = WayCheck.of(DRAFT_MAPPING);
+        final List<Condition> admins = conditions("[{\"field\": \"act\", \"equals\": \"login\"},"
+                                                  + " {\"field\": \"user\", \"in_dictionary\": \"Admins\"}]");
+        final Map<String, Object> login = record("user=alice act=login", "a");
+        final Map<String, Object> logout = record("user=alice act=logout", "b");
+
+        assertThat(check.recognises(admins, login)).isTrue();
+        assertThat(check.verdict(admins, login)).isEqualTo(Verdict.UNKNOWN);
+        assertThat(check.verdict(admins, logout)).as("one condition fails: it doesn't hold, whatever the other")
+                .isEqualTo(Verdict.DOESNT);
+        assertThat(check.verdict(conditions("[{\"field\": \"act\", \"equals\": \"login\"}]"), login))
+                .isEqualTo(Verdict.HOLDS);
+    }
+
     private static Map<String, Object> record(final String msg, final String id) {
         final Map<String, Object> record = new LinkedHashMap<>();
         record.put("id", id);

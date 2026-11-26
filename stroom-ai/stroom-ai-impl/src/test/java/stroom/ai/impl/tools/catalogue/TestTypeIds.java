@@ -98,6 +98,14 @@ class TestTypeIds {
         assertThat(TypeIds.dropProblem("a".repeat(TypeIds.MAX_DROP_LENGTH + 1))).contains("at most 60");
     }
 
+    // Found in review (2026-11-27): a drop rule labelled Unknown had its count overwritten by the uncatalogued
+    // records', which go by that label.
+    @ParameterizedTest
+    @ValueSource(strings = {"Unknown", "unknown", "UNKNOWN", "Uncatalogued records", "uncatalogued Records"})
+    void aDropRuleMayNotTakeTheLabelTheUncataloguedRecordsGoBy(final String label) {
+        assertThat(TypeIds.dropProblem(label)).contains("is what the uncatalogued records go by");
+    }
+
     @Test
     void anEventTypeThatIsNoDropRuleIsStillVerbObject() {
         final EventType kept = type("Update", null, "Operational logging", null).withTypeId("Operational logging");

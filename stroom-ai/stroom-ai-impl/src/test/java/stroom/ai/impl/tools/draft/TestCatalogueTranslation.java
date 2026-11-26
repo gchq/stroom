@@ -19,6 +19,8 @@ package stroom.ai.impl.tools.draft;
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.catalogue.CatalogueCheck;
+import stroom.ai.impl.tools.catalogue.CatalogueCheckResult;
+import stroom.ai.impl.tools.catalogue.CatalogueSample;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.SplitterSpec;
@@ -30,8 +32,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -248,6 +252,27 @@ class TestCatalogueTranslation extends DraftFixtures {
                 .get("events")).getFirst();
         assertThat(fields(ticket).get("EventDetail/Description")).containsEntry("field", "comment")
                 .doesNotContainKey("value");
+    }
+
+    @Test
+    void aFreeTextFieldSomeOfTheWaysRecordsLackIsTheDescriptionWithTheTypesOwnTextAsItsDefault() {
+        // Eval case 42 (cause verified 2026-11-27): the free-text field moved to EventDetail/Description with no
+        // default, so the records with it empty were written with no Description (70 of 300 events).
+        final String tickets = """
+                time,host,op,user,comment
+                2026-10-01T08:00:00Z,a,close,alice,fixed the printer
+                2026-10-01T08:01:00Z,a,close,bob,
+                2026-10-01T08:02:00Z,a,open,bob,printer broken
+                """;
+        final Map<String, Object> closed = type("Update-Ticket", "Ticket closed", "Update", "Modify", null,
+                way(eq("op", "close")));
+        closed.put("description", "A ticket is closed");
+
+        final Map<String, Object> ticket = JsonValues.maps(mappingOf(draft(tickets, notes(List.of(closed), true)))
+                .get("events")).getFirst();
+
+        assertThat(fields(ticket).get("EventDetail/Description")).containsEntry("field", "comment")
+                .containsEntry("default", "A ticket is closed");
     }
 
     @Test
@@ -946,6 +971,182 @@ class TestCatalogueTranslation extends DraftFixtures {
     }
 
     // SearchQuery recognised three ways: prod, the second way's env (QA, say), and dev.
+    // Found in review (2026-11-27): an event type recognised by a condition the check can't evaluate (a
+    // dictionary). The check counted none of its records, and the catch-all form said they became Unknown; the
+    // translation took the condition as holding. Both now count them apart, as may be.
+    @Test
+    void aConditionNotCheckedCountsTheSameUncataloguedRecordsInTheCheckAndTheTranslation() {
+        final List<Map<String, Object>> records = countedRecords("4624", "4624", "4624", "7777");
+        final Map<String, Object> dictionary = new LinkedHashMap<>(Map.of("field", "usr", "in_dictionary",
+                "Admins"));
+        final Catalogue catalogue = SourceNotes.catalogue(notes(List.of(type("Authenticate-Logon", "Logon",
+                "Authenticate", "Logon", "true", way(eq("evt", "4624"), dictionary))), true));
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue, countedSample(records), null);
+        final Map<String, Object> applied = applyCounted(countedMapping(List.of()), catalogue, records);
+
+        assertThat(check.notChecked()).isNotEmpty();
+        assertThat(check.uncatalogued().unknown())
+                .as("check's Unknown (catch-all form) vs translation's uncatalogued")
+                .isEqualTo(applied.get("uncatalogued"))
+                .isEqualTo(1);
+        assertThat(check.counts().get("Authenticate-Logon").mayBe()).isEqualTo(3);
+        assertThat(check.uncatalogued().mayBe()).singleElement()
+                .satisfies(mayBe -> assertThat(mayBe.said())
+                        .isEqualTo("3 may be Authenticate-Logon (a condition on usr can't be checked here)"));
+    }
+
+    // Found in review (2026-11-27): a draft drop rule with a condition the check can't evaluate dropped nothing in
+    // the check (so the catch-all form said its records became Unknown), and every record it tests in the
+    // translation's count. Both now count them apart, as may be dropped.
+    @Test
+    void aDropRuleNotCheckedCountsTheSameDroppedRecordsInTheCheckAndTheTranslation() {
+        final List<Map<String, Object>> records = countedRecords("4624", "1102", "1102", "1102", "7777");
+        final Map<String, Object> dictionary = new LinkedHashMap<>(Map.of("field", "usr", "in_dictionary",
+                "ServiceAccounts"));
+        final List<Map<String, Object>> drops = List.of(Map.of("reason", "service heartbeats", "when",
+                List.of(eq("evt", "1102"), dictionary)));
+        final Catalogue catalogue = SourceNotes.catalogue(notes(List.of(type("Authenticate-Logon", "Logon",
+                "Authenticate", "Logon", "true", way(eq("evt", "4624")))), true));
+        final Map<String, Object> mapping = countedMapping(drops);
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue, countedSample(records), null,
+                CatalogueCheck.Drafted.of(mapping));
+        final Map<String, Object> applied = applyCounted(mapping, catalogue, records);
+
+        assertThat(check.uncatalogued().records()).isEqualTo(4);
+        assertThat(check.uncatalogued().dropped())
+                .as("check's dropped by the mapping (catch-all form) vs translation's uncatalogued_dropped")
+                .isEqualTo(applied.getOrDefault("uncatalogued_dropped", 0));
+        assertThat(check.uncatalogued().mayBeDropped()).isEqualTo(3)
+                .isEqualTo(applied.get("uncatalogued_may_be_dropped"));
+        assertThat(check.uncatalogued().unknown())
+                .as("check's Unknown (catch-all form) vs translation's uncatalogued")
+                .isEqualTo(applied.get("uncatalogued"));
+    }
+
+    // Found in review (2026-11-27): a draft drop rule testing past processing's string cut (a body over 10,000
+    // characters, its marker after the cut). The check reads the records cut, as processing does, and drops
+    // nothing; the translation read them whole and counted it as dropped.
+    @Test
+    void aDropRulePastTheCutCountsTheSameDroppedRecordsInTheCheckAndTheTranslation() {
+        final List<Map<String, Object>> records = countedRecords("4624", "7777", "7777");
+        records.get(1).put("body", "p".repeat(10_050) + "HEARTBEAT");
+        records.get(2).put("body", "short");
+        final Map<String, Object> marker = new LinkedHashMap<>(Map.of("field", "body", "contains", "HEARTBEAT"));
+        final List<Map<String, Object>> drops = List.of(Map.of("reason", "heartbeats", "when", List.of(marker)));
+        final Catalogue catalogue = SourceNotes.catalogue(notes(List.of(type("Authenticate-Logon", "Logon",
+                "Authenticate", "Logon", "true", way(eq("evt", "4624")))), true));
+        final Map<String, Object> mapping = countedMapping(drops);
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue, countedSample(records), null,
+                CatalogueCheck.Drafted.of(mapping));
+        final Map<String, Object> applied = applyCounted(mapping, catalogue, records);
+
+        assertThat(check.uncatalogued().records()).isEqualTo(2);
+        assertThat(check.uncatalogued().dropped())
+                .as("check's dropped by the mapping (cut, as processing) vs translation's uncatalogued_dropped")
+                .isEqualTo(applied.getOrDefault("uncatalogued_dropped", 0));
+    }
+
+    // Found in review (2026-11-27): a record whose held JSON doesn't parse (its 'event' text is broken) was left
+    // out of the check's uncatalogued records, so the catch-all form never counted it; no rule recognises it, so
+    // processing (and the translation's count) writes it as Unknown.
+    @Test
+    void aRecordWhoseHeldJsonDoesntParseIsCountedAsUnknownInTheCheckAsInTheTranslation() {
+        final List<Map<String, Object>> records = new ArrayList<>();
+        records.add(new LinkedHashMap<>(Map.of("host", "a", "event", "{\"logger\":\"Security\",\"n\":1}")));
+        records.add(new LinkedHashMap<>(Map.of("host", "a", "event", "{\"logger\":\"Security\",\"n\":2}")));
+        records.add(new LinkedHashMap<>(Map.of("host", "a", "event", "{\"logger\":\"Audit\",\"n\":3}")));
+        records.add(new LinkedHashMap<>(Map.of("host", "a", "event", "{\"logger\":\"Security\",\"n\":")));
+        final Catalogue catalogue = SourceNotes.catalogue(notes(List.of(type("Process-Security", "Security",
+                "Process", null, null, way(eq("event.logger", "Security")))), true));
+        final Map<String, Object> mapping = countedMapping(List.of());
+        mapping.put("json_fields", new ArrayList<>(List.of("event")));
+        final TranslationMapping reading = CatalogueSample.reading("json", null, null, List.of("event"), null, null,
+                null);
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue, countedSample(reading, records), null);
+        final Map<String, Object> applied = applyCounted(mapping, catalogue, records);
+
+        assertThat(check.counts().get("Process-Security").records()).isEqualTo(2);
+        assertThat(check.unparsed().records()).isEqualTo(1);
+        assertThat(check.uncatalogued().unparsed()).isEqualTo(1);
+        assertThat(check.uncatalogued().unknown())
+                .as("check's Unknown (catch-all form, unparsed among them) vs translation's uncatalogued")
+                .isEqualTo(applied.get("uncatalogued"))
+                .isEqualTo(2);
+    }
+
+    // S1 (found in review, 2026-11-27): the mapping's own drop_when runs before the event rules in the generated
+    // XSLT, so the records it drops are never an event type's; the check counted them as the type's.
+    @Test
+    void theRecordsTheMappingsDropWhenDropsFirstAreNotAnEventTypesCount() {
+        final List<Map<String, Object>> records = countedRecords("4624", "4624", "4624", "7777");
+        records.get(2).put("usr", "svc-backup");
+        final List<Map<String, Object>> drops = List.of(Map.of("reason", "service accounts", "when",
+                List.of(eq("usr", "svc-backup"))));
+        final Catalogue catalogue = SourceNotes.catalogue(notes(List.of(type("Authenticate-Logon", "Logon",
+                "Authenticate", "Logon", "true", way(eq("evt", "4624")))), true));
+
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue, countedSample(records), null,
+                CatalogueCheck.Drafted.of(countedMapping(drops)));
+
+        final CatalogueCheckResult.Count logon = check.counts().get("Authenticate-Logon");
+        assertThat(logon.records()).as("the records the type's rule takes in processing").isEqualTo(2);
+        assertThat(logon.byWay()).containsExactly(2);
+        assertThat(logon.droppedFirst()).isEqualTo(1);
+        assertThat(logon.droppedFirstBy()).isEqualTo("drop_when 'service accounts'");
+    }
+
+    private static Map<String, Object> applyCounted(final Map<String, Object> mapping,
+                                                    final Catalogue catalogue,
+                                                    final List<Map<String, Object>> records) {
+        final Set<String> names = new LinkedHashSet<>();
+        final Map<String, List<String>> values = new LinkedHashMap<>();
+        for (final Map<String, Object> record : records) {
+            record.forEach((name, value) -> {
+                names.add(name);
+                final List<String> held = values.computeIfAbsent(name, key -> new ArrayList<>());
+                if (!held.contains(String.valueOf(value))) {
+                    held.add(String.valueOf(value));
+                }
+            });
+        }
+        return CatalogueTranslation.apply(mapping, new ArrayList<>(names), values, catalogue, null, List.of(),
+                null, records, PairMatches.create(), Map.of(), List.of());
+    }
+
+    private static Map<String, Object> countedMapping(final List<Map<String, Object>> drops) {
+        final Map<String, Object> mapping = new LinkedHashMap<>();
+        mapping.put("input", "json");
+        mapping.put("common", new ArrayList<>());
+        mapping.put("events", new ArrayList<>());
+        if (!drops.isEmpty()) {
+            mapping.put("drop_when", new ArrayList<>(drops));
+        }
+        return mapping;
+    }
+
+    private static CatalogueSample countedSample(final List<Map<String, Object>> records) {
+        return countedSample(CatalogueSample.reading("json", null, null, null, null, null, null), records);
+    }
+
+    private static CatalogueSample countedSample(final TranslationMapping reading,
+                                                 final List<Map<String, Object>> records) {
+        final List<String> lines = new ArrayList<>();
+        records.forEach(record -> lines.add(ToolJson.dumps(record)));
+        return CatalogueSample.read(reading, String.join("\n", lines), null, LocalCheck.JSON_PARSER_CUT, null);
+    }
+
+    private static List<Map<String, Object>> countedRecords(final String... codes) {
+        final List<Map<String, Object>> out = new ArrayList<>();
+        for (final String code : codes) {
+            out.add(new LinkedHashMap<>(Map.of("evt", code, "usr", "alice")));
+        }
+        return out;
+    }
+
     private static Map<String, Object> searchWays(final Map<String, Object> second) {
         return type("SearchQuery", "Search", "Search", null, null,
                 way(eq("action", "search"), eq("env", "prod")),

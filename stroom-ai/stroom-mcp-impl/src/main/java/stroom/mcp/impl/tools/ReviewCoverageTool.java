@@ -63,6 +63,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -351,6 +352,10 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
 
         final Map<List<Object>, Map<String, Object>> byKey = new LinkedHashMap<>();
         final Map<Long, Long> raws = new LinkedHashMap<>();
+        // Every raw stream each group was logged in, its raw_streams list kept short (to 50) for the result: the
+        // streams to process again are read from these (found in review, 2026-11-27: read from the short lists, the
+        // affected count stopped at 50 and the list to process again was cut short).
+        final Map<Map<String, Object>, Set<Long>> rawsOfGroup = new IdentityHashMap<>();
         for (final CoverageReads.Logged entry : logged.records()) {
             raws.putIfAbsent(entry.raw(), entry.created());
             final List<List<String>> pairs = new ArrayList<>();
@@ -364,6 +369,7 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
                 // A kept-Unknown kind is logged once a stream: its streams are counted, not its records.
                 group.put("streams", (int) group.get("streams") + 1);
             }
+            rawsOfGroup.computeIfAbsent(group, k -> new LinkedHashSet<>()).add(entry.raw());
             if (!rawStreams.contains(entry.raw()) && rawStreams.size() < 50) {
                 rawStreams.add(entry.raw());
             }
@@ -420,12 +426,16 @@ class ReviewCoverageTool extends AbstractBuiltInTool {
         if (judged.isPresent() && (!judged.get().passedOver().isEmpty() || !judged.get().otherGroups().isEmpty())) {
             // Only the raw streams of the kinds missed within what the pipeline translates need processing again.
             affectedIds.clear();
-            groups.forEach(group -> JsonValues.listOrEmpty(group.get("raw_streams")).forEach(id -> affectedIds.add(
-                    ((Number) id).longValue())));
+            groups.forEach(group -> affectedIds.addAll(rawsOfGroup.getOrDefault(group, Set.of())));
         }
         affectedIds.addAll(sampled);
         final List<Long> affectedList = List.copyOf(affectedIds);
-        final List<Long> created = raws.values().stream().filter(Objects::nonNull).toList();
+        // The affected streams' own time range: not that of every logged stream, those passed over among them. A
+        // sampled stream logged nothing, so its creation isn't known here.
+        final List<Long> created = affectedList.stream()
+                .map(raws::get)
+                .filter(Objects::nonNull)
+                .toList();
         final Map<String, Object> affected = new LinkedHashMap<>();
         affected.put("count", affectedList.size());
         affected.put("first_id", affectedList.isEmpty()

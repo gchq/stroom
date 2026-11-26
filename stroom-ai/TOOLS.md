@@ -4256,7 +4256,8 @@ end`) or the user chose to stop it (`covered as far as the user chose: ...`). Wh
 agent asks in the chat and passes the answer as `read_deeper`. A window or a deeper read of a mixed-lines part is
 split a record a line whatever formats it holds (`RecordSplitter.splitAs`), as a run of one format's lines would
 otherwise read as that format and be skipped. The streams read only in part are kept in the survey doc
-(`streams_in_part`) until a later call reads them whole: a call with no streams left to pick says the survey is
+(`streams_in_part`, and each stream's `per_stream` entry with its records read deeper and `head_only`) until a
+later call reads them whole: a call with no streams left to pick says the survey is
 complete only once each is settled (read to its end, or the user chose to stop); otherwise it is `NOT COVERED` and
 the hint names the `stream_ids` to read further (seen in testing: a mixed-lines stream read to its 10,000th record was
 never offered deeper, a later call said the survey was complete, and its rarest kinds were found only at processing).
@@ -4778,17 +4779,24 @@ whole catalogue is checked; problems the proposals bring (not those it had alrea
 saved to the workspace as `/outputs/catalogue/<build>.json`, `listing`):
 
 * `counts`: records per event type and per way of recognising it (`by_way`); `not_in_sample` names a type no sampled
-  record has (one from documentation, kept and said in the review).
+  record has, nor may have (one from documentation, kept and said in the review). Every count reads a condition
+  three ways (`Verdict`: holds, doesn't, can't be told here; 2026-11-27): the records a condition can't be told on
+  (none failing) are counted apart as `may_be` with `may_be_because`, said "N may be (a condition on F can't be
+  checked here)", never 0 nor Unknown. The records the build's mapping's own `drop_when` drops first (it runs before
+  any event rule) are not a type's: `dropped_first` and `dropped_first_by`, said in the type's row.
 * `overlaps`: a record two event types recognise, refused: the record, its text, both TypeIds and `telling_fields`,
   the fields whose values tell their other records apart (`TellingFields`), so one can be tightened. Two ways of one
   type may overlap.
 * `uncatalogued`: records no event type recognises, by shape with examples; not refused (the catch-all translates
   them as Unknown), but counted and shown in the review. Those the build's mapping's own drop rules drop (the draft's
   and its latest mapping's `drop_when`, the catalogue's own aside, and events rules with `drop: true`) are counted
-  apart (`dropped_by_mapping`; 2026-11-26): the catch-all's summary and form say how many become Unknown, how many the
-  mapping drops, and how many the catalogue's drop rules take.
+  apart (`dropped_by_mapping`; 2026-11-26; `may_be_dropped_by_mapping` where a condition can't be told): the
+  catch-all's summary and form say how many become Unknown, how many the mapping drops, and how many the catalogue's
+  drop rules take; `may_be` lists the records no type surely recognises that one may, by type. The draft counts them
+  the same way, over the records cut at the build's `stringTruncateLength`.
 * `unparsed`: records whose held values, read by a condition, don't parse (a bad escape, a value cut short): counted
-  with why, not called uncatalogued.
+  with why, and among the uncatalogued records where no type recognises them (`held_values_unparsed`; processing
+  writes them as Unknown; 2026-11-27).
 * `several`: an event type whose records split by a field of their own (its conditions' fields aside) or come in
   clearly different shapes; blocking for the seed's (`basis: draft`) until it is split or says `one_type_because`.
 * `not_checked`: conditions the check can't evaluate here (an `xpath`, a dictionary, a record-scope test, a field an
@@ -7714,7 +7722,8 @@ is reported with its error, not allowed to hide the others.
   `stopped_early`); `uncatalogued` (the catch-all's records by shape, above); `missed` (groups, most records first:
   `found_as`, `kind` (the logged values), `records`,
   `raw_streams`, `examples` with `raw_stream`, `record` and `holds`); `affected_raw_streams` (`count`, `first_id`,
-  `last_id`, `from`, `to`) and `affected_raw_stream_ids` (at most 200); `tell_user`; `next` (show the kinds, add
+  `last_id`, `from`, `to`, over the affected streams only, every one of the missed kinds' however many each
+  `raw_streams` lists) and `affected_raw_stream_ids` (at most 200); `tell_user`; `next` (show the kinds, add
   rules with build_translation_xslt `changes=`, write_documentation with affected streams, how to reprocess; when
   every kind found was kept as Unknown, only to show them: kinds the user agreed to keep as Unknown need no rule);
   `counts_capped` (`raw_streams`, `count`, `note`) when an Error stream held as many log lines of a severity as

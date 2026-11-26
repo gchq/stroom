@@ -42,6 +42,10 @@ public final class TypeIds {
     public static final int MAX_DROP_LENGTH = 60;
     /// A drop rule's label when nothing else gives one.
     public static final String DEFAULT_DROP_LABEL = "Dropped records";
+    /// The labels the uncatalogued records go by (the catch-all's), which no drop rule may take (found in review,
+    /// 2026-11-27: a drop rule labelled Unknown had its count overwritten by the uncatalogued records'), compared
+    /// ignoring case.
+    public static final List<String> RESERVED_DROP_LABELS = List.of("Unknown", "Uncatalogued records");
     /// A drop rule's label: a letter or digit, then letters, digits, spaces and `_ . , ( ) / ' -`, no run of `-` (it
     /// is written in XSLT comments) and no `-` last.
     public static final Pattern DROP_LABEL = Pattern.compile("^[A-Za-z0-9](?:[A-Za-z0-9 _.,()/']|-(?!-))*(?<![- ])$");
@@ -93,7 +97,16 @@ public final class TypeIds {
             return "type_id '" + label + "' isn't a drop rule's short label: letters, digits and spaces (and "
                    + "_ . , ( ) / ' -), starting with a letter or digit, e.g. Operational logging";
         }
+        if (reservedDropLabel(label)) {
+            return "type_id '" + label + "' is what the uncatalogued records go by: give the drop rule a label of "
+                   + "its own, e.g. Operational logging";
+        }
         return null;
+    }
+
+    // True if a label is one the uncatalogued records go by.
+    private static boolean reservedDropLabel(final String label) {
+        return RESERVED_DROP_LABELS.stream().anyMatch(reserved -> reserved.equalsIgnoreCase(label.strip()));
     }
 
     /// @param type An event type.
@@ -128,7 +141,7 @@ public final class TypeIds {
     public static String defaultDropLabel(final EventType type) {
         for (final String candidate : Arrays.asList(type.title(), firstWords(type.description()))) {
             final String label = asLabel(candidate);
-            if (label != null) {
+            if (label != null && !reservedDropLabel(label)) {
                 return label;
             }
         }

@@ -76,12 +76,22 @@ class CatalogueCatchAll {
         details.put("uncatalogued records", check.uncatalogued().records() + " in the sample, of "
                                             + check.uncatalogued().shapes().size() + " shape(s), in the chat");
         final Catalogue.CatchAll.Translation own = catalogue.catchAll().translation();
-        if (check.uncatalogued().dropped() > 0) {
+        final CatalogueCheckResult.Uncatalogued uncatalogued = check.uncatalogued();
+        if (uncatalogued.dropped() > 0 || uncatalogued.mayBeDropped() > 0) {
             details.put(untranslatedBy != null && own == null
                     ? "left untranslated"
-                    : "kept as " + translatedAs(own), check.uncatalogued().unknown() + " of the uncatalogued records");
+                    : "kept as " + translatedAs(own), uncatalogued.unknown() + " of the uncatalogued records");
         }
         dropped(check, catalogue).ifPresent(said -> details.put("records dropped", said));
+        if (uncatalogued.unparsed() > 0) {
+            details.put("held values that don't parse", uncatalogued.unparsed() + " of the uncatalogued records "
+                                                        + "(held JSON or XML), written as the catch-all writes them");
+        }
+        if (!uncatalogued.mayBe().isEmpty()) {
+            details.put("not checked here", String.join("; ", uncatalogued.mayBe().stream()
+                    .map(CatalogueCheckResult.MayBe::said)
+                    .toList()));
+        }
         if (untranslatedBy != null && own == null) {
             return Consent.Request.confirmation(NAME, "Leave the uncatalogued records (those no event type "
                                                       + "recognises) untranslated (no Event), as '" + untranslatedBy
@@ -113,6 +123,10 @@ class CatalogueCatchAll {
         if (byMapping > 0) {
             parts.add(String.format("%,d", byMapping) + " of the uncatalogued records by the build's mapping's drop "
                       + "rules");
+        }
+        if (check.uncatalogued().mayBeDropped() > 0) {
+            parts.add(String.format("%,d", check.uncatalogued().mayBeDropped()) + " more may be ("
+                      + check.uncatalogued().mayBeDroppedBecause() + ")");
         }
         return parts.isEmpty()
                 ? Optional.empty()
@@ -170,12 +184,29 @@ class CatalogueCatchAll {
                 : "translated as " + translatedAs(catalogue.catchAll().translation()) + ", their fields kept as "
                   + "Data";
         final CatalogueCheckResult.Uncatalogued uncatalogued = check.uncatalogued();
+        final List<String> dropParts = new ArrayList<>();
+        if (uncatalogued.dropped() > 0) {
+            dropParts.add(uncatalogued.dropped() + " dropped by the build's mapping's drop rules");
+        }
+        if (uncatalogued.mayBeDropped() > 0) {
+            dropParts.add(uncatalogued.mayBeDropped() + " may be dropped by them ("
+                          + uncatalogued.mayBeDroppedBecause() + ")");
+        }
         final List<String> lines = new ArrayList<>(List.of("**Uncatalogued records**: " + uncatalogued.records()
                                                             + " of the sample's records no event type recognises"
-                                                            + (uncatalogued.dropped() == 0
+                                                            + (dropParts.isEmpty()
                 ? ", " + become + "."
-                : ": " + uncatalogued.unknown() + " " + become + "; " + uncatalogued.dropped() + " dropped by the "
-                  + "build's mapping's drop rules.")));
+                : ": " + uncatalogued.unknown() + " " + become + "; " + String.join("; ", dropParts) + ".")
+                                                            + (uncatalogued.unparsed() > 0
+                ? " " + uncatalogued.unparsed() + " of them have held JSON or XML that doesn't parse."
+                : "")));
+        if (!uncatalogued.mayBe().isEmpty()) {
+            // Neither recognised nor not: said so, never counted as 0 or as Unknown (found in review, 2026-11-27).
+            lines.add("");
+            lines.add("Not checked here: " + String.join("; ", uncatalogued.mayBe().stream()
+                    .map(CatalogueCheckResult.MayBe::said)
+                    .toList()) + ".");
+        }
         final List<String> shapes = CatalogueTables.uncataloguedShapes(check);
         if (!shapes.isEmpty()) {
             lines.add("");
@@ -222,9 +253,11 @@ class CatalogueCatchAll {
         final String become = (untranslatedBy != null && catalogue.catchAll().translation() == null
                 ? "left untranslated (no Event), as '" + untranslatedBy + "' leaves them"
                 : "translated as " + translatedAs(catalogue.catchAll().translation()))
-                              + (check.uncatalogued().dropped() > 0
+                              + (check.uncatalogued().dropped() > 0 || check.uncatalogued().mayBeDropped() > 0
                 ? " (" + check.uncatalogued().unknown() + " of them; the build's mapping's drop rules drop the other "
-                  + check.uncatalogued().dropped() + ")"
+                  + check.uncatalogued().dropped() + (check.uncatalogued().mayBeDropped() > 0
+                        ? ", and may drop " + check.uncatalogued().mayBeDropped()
+                        : "") + ")"
                 : "");
         if (notRecorded != null) {
             // Seen in testing: a drop proposal refused, the form shown again, declined, and the agent sent back to

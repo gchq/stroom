@@ -36,6 +36,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -797,6 +798,47 @@ class TestConsent {
         assertThat(Consent.firstLines(lines.subList(0, 2), "x")).isEqualTo("Row 1\nRow 2");
     }
 
+    // Found in review (2026-11-27): choose keyed its form on its question only, so the same question asked again
+    // with other options was given the first's answer back, which isn't one of its options. chooseEach puts each
+    // question's options in its key; choose does too.
+    @Test
+    void aChoiceOfOtherOptionsIsAnotherFormAsAChoiceOfEachIs() {
+        final Replaying questions = new Replaying();
+        final ToolCallContext context = questions.context();
+        final ToolCall call = new ToolCall("call-1", "a_tool", "{}");
+        final String question = "Which zone does the source write its times in?";
+
+        final Optional<String> first = consent.choose(call, context, "a_tool", question,
+                List.of("Europe/London", "UTC"), null);
+        final Optional<String> second = consent.choose(call, context, "a_tool", question,
+                List.of("field:tz", "UTC"), null);
+        consent.chooseEach(call, context, "a_tool", "Zones.", Map.of("zone",
+                new Consent.Question(question, List.of("Europe/London", "UTC"))));
+        consent.chooseEach(call, context, "a_tool", "Zones.", Map.of("zone",
+                new Consent.Question(question, List.of("field:tz", "UTC"))));
+
+        assertThat(first).contains("Europe/London");
+        assertThat(questions.callIds.get(3)).as("chooseEach: other options, another form")
+                .isNotEqualTo(questions.callIds.get(2));
+        assertThat(questions.callIds.get(1)).as("choose: other options, another form")
+                .isNotEqualTo(questions.callIds.get(0));
+        assertThat(second).as("the second choice's answer: one of its own options").contains("field:tz");
+    }
+
+    // The same choice asked again (the call made again once it is answered) is the same form, given its answer.
+    @Test
+    void theSameChoiceAskedAgainIsTheSameForm() {
+        final Replaying questions = new Replaying();
+        final ToolCallContext context = questions.context();
+        final ToolCall call = new ToolCall("call-1", "a_tool", "{}");
+        final String question = "Which zone does the source write its times in?";
+
+        consent.choose(call, context, "a_tool", question, List.of("Europe/London", "UTC"), null);
+        consent.choose(call, context, "a_tool", question, List.of("Europe/London", "UTC"), null);
+
+        assertThat(questions.callIds.get(1)).isEqualTo(questions.callIds.get(0));
+    }
+
     // The refusal's message.
     private static String refusal(final Runnable call) {
         try {
@@ -901,6 +943,49 @@ class TestConsent {
             callIds.add(callId);
             forms.add(form);
             return Optional.ofNullable(answer).orElseThrow();
+        }
+    }
+
+
+    // A chat as McpElicitations has it: a form id asked again is given the answer stored under it, without the
+    // user seeing the form; a new id is answered by a user choosing each field's first option.
+    private static final class Replaying implements UserQuestions {
+
+        private final Map<String, ElicitResult> stored = new HashMap<>();
+        private final List<String> callIds = new ArrayList<>();
+
+        private ToolCallContext context() {
+            return ToolCallContext.builder(SESSION).userQuestions(this).build();
+        }
+
+        @Override
+        public boolean canAsk() {
+            return true;
+        }
+
+        @Override
+        public ElicitResult ask(final String toolName,
+                                final String callId,
+                                final String intro,
+                                final Map<String, Object> form) {
+            callIds.add(callId);
+            return stored.computeIfAbsent(callId, id -> new ElicitResult(ElicitResult.Action.ACCEPT,
+                    firstOptions(form)));
+        }
+
+        // Each field's first option (enum) or suggested answer (examples).
+        private static Map<String, Object> firstOptions(final Map<String, Object> form) {
+            final Map<String, Object> answer = new HashMap<>();
+            ((Map<?, ?>) form.get("properties")).forEach((key, field) -> {
+                final Map<?, ?> spec = (Map<?, ?>) field;
+                final Object options = spec.containsKey("enum")
+                        ? spec.get("enum")
+                        : spec.get("examples");
+                if (options instanceof final List<?> list && !list.isEmpty()) {
+                    answer.put(String.valueOf(key), list.getFirst());
+                }
+            });
+            return answer;
         }
     }
 }

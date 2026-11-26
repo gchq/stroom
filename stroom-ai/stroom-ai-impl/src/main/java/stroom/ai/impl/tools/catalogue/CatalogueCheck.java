@@ -68,7 +68,11 @@ import java.util.regex.Pattern;
 ///   their other records apart ([TellingFields]). Two ways of recognising one type may overlap.
 /// * **Uncatalogued records** (no event type recognises them), by shape ([Shapes]' signatures), with examples that
 ///   differ most; not refused.
-/// * **Unparsed**: records whose held values, read by a condition, don't parse (counted, not uncatalogued).
+/// * **Unparsed**: records whose held values, read by a condition, don't parse (counted, and among the uncatalogued
+///   records where no event type recognises them, as processing writes them to the catch-all).
+/// * **May be**: records a condition can't be told on here (an xpath, a dictionary, a record-scope test, a field an
+///   extraction gives), none failing, counted apart from those recognised and those not
+///   ([stroom.ai.impl.tools.draft.Verdict]).
 /// * **May be several event types**: a type whose own records split by a field of their own ([KindFields] over
 ///   them, its conditions' fields aside) or come in clearly different shapes; blocking for the draft's seed unless
 ///   it says why it is one.
@@ -388,6 +392,9 @@ public final class CatalogueCheck {
         private final int size;
         private final List<List<BitSet>> byWay = new ArrayList<>();
         private final List<BitSet> byType = new ArrayList<>();
+        // The records each event type may recognise: those it surely does, and those a condition of its can't be
+        // told on here (none failing).
+        private final List<BitSet> byTypePossible = new ArrayList<>();
         private final List<String> keys = new ArrayList<>();
         // By condition, and whether it is a drop rule's (a cut is said of a drop rule's records as dropped or not).
         private final Map<Map.Entry<Condition, Boolean>, List<String>> conditionProblems = new HashMap<>();
@@ -414,17 +421,22 @@ public final class CatalogueCheck {
             final List<Problem> problems = new ArrayList<>(CatalogueValidation.problems(catalogue, schema));
             final List<Problem> notChecked = new ArrayList<>();
             final Map<String, Count> counts = new LinkedHashMap<>();
+            // The mapping's own drop_when drops records before any event rule takes them.
+            final DropSets dropsFirst = drops(Drafted.Drop::first);
             for (int t = 0; t < types.size(); t++) {
                 final EventType type = types.get(t);
                 final List<BitSet> ways = new ArrayList<>();
                 final BitSet all = new BitSet(size);
+                final BitSet possible = new BitSet(size);
                 if (type.recognisedBy().isEmpty()) {
                     all.set(0, size);
+                    possible.set(0, size);
                 }
                 for (int w = 0; w < type.recognisedBy().size(); w++) {
                     final BitSet way = way(type.recognisedBy().get(w));
                     ways.add(way);
                     all.or(way);
+                    possible.or(possible(type.recognisedBy().get(w)));
                     for (final Condition c : type.recognisedBy().get(w).when()) {
                         for (final String problem : conditionProblems(c, type.drop())) {
                             problems.add(new Problem(type.typeId(), w, problem));
@@ -437,9 +449,10 @@ public final class CatalogueCheck {
                 }
                 byWay.add(ways);
                 byType.add(all);
+                byTypePossible.add(possible);
                 final String key = key(type, t, counts);
                 keys.add(key);
-                counts.put(key, new Count(all.cardinality(), ways.stream().map(BitSet::cardinality).toList()));
+                counts.put(key, count(type, ways, all, possible, dropsFirst));
             }
             problems.addAll(soleOfLineFormat());
             problems.addAll(countsInDescriptions(counts));
@@ -456,6 +469,56 @@ public final class CatalogueCheck {
                     distinct(problems), distinct(notChecked),
                     CatalogueOrder.ordered(types).stream().map(EventType::typeId).toList(), distinct(unplaced),
                     typing, distinct(worthALook));
+        }
+
+        // An event type's count: the records it surely recognises, less those the mapping's own drop_when drops
+        // first (in processing it runs before any event rule: S1, found in review 2026-11-27, a type's count held
+        // records its draft's drop_when drops), and apart from them those it may recognise ([Verdict]: counted, and
+        // said as may be, never as recognised or not). A drop rule's own records are dropped either way.
+        private Count count(final EventType type,
+                            final List<BitSet> ways,
+                            final BitSet all,
+                            final BitSet possible,
+                            final DropSets dropsFirst) {
+            final BitSet dropped = new BitSet(size);
+            if (!type.drop()) {
+                dropped.or(all);
+                dropped.and(dropsFirst.sure());
+            }
+            final BitSet kept = (BitSet) all.clone();
+            kept.andNot(dropped);
+            final List<Integer> byWayKept = new ArrayList<>();
+            for (final BitSet way : ways) {
+                final BitSet one = (BitSet) way.clone();
+                one.andNot(dropped);
+                byWayKept.add(one.cardinality());
+            }
+            final BitSet mayBe = (BitSet) possible.clone();
+            mayBe.andNot(all);
+            if (!type.drop()) {
+                mayBe.andNot(dropsFirst.sure());
+            }
+            return new Count(kept.cardinality(), byWayKept, mayBe.cardinality(), mayBe.isEmpty()
+                    ? null
+                    : because(type.recognisedBy().stream().map(Way::when).toList(), mayBe),
+                    dropped.cardinality(), dropped.isEmpty()
+                    ? null
+                    : dropsFirst.namesOver(dropped));
+        }
+
+        // Why records may be recognised by conditions, in words: the first condition that can't be told on one of
+        // them (`a condition on usr can't be checked here`).
+        private String because(final List<List<Condition>> conditionSets, final BitSet records) {
+            for (final List<Condition> when : conditionSets) {
+                for (final Condition c : when) {
+                    if (!LocalCheck.evaluable(c) || index.unknown(c).intersects(records)) {
+                        return "a condition on " + (c.field() == null
+                                ? c.xpath()
+                                : c.field()) + " can't be checked here";
+                    }
+                }
+            }
+            return "a condition can't be checked here";
         }
 
         // A description holding a number that is the event type's record count in the sample or the scope's: a note
@@ -563,6 +626,35 @@ public final class CatalogueCheck {
             return out;
         }
 
+        // The records a way may recognise: no condition fails (each holds, or can't be told here). Its regexes last,
+        // none when one runs past its budget (refused as a problem).
+        private BitSet possible(final Way way) {
+            final BitSet out = new BitSet(size);
+            out.set(0, size);
+            final List<Condition> rest = new ArrayList<>();
+            final List<Condition> regexes = new ArrayList<>();
+            for (final Condition c : way.when()) {
+                if (RecordIndex.looksUp(c) || !LocalCheck.evaluable(c)) {
+                    out.and(index.possibleWithin(c, out));
+                } else if (c.matches() != null) {
+                    regexes.add(c);
+                } else {
+                    rest.add(c);
+                }
+            }
+            for (final Condition c : rest) {
+                out.and(index.possibleWithin(c, out));
+            }
+            for (final Condition c : regexes) {
+                if (index.overBudget(c)) {
+                    out.clear();
+                } else {
+                    out.and(index.possibleWithin(c, out));
+                }
+            }
+            return out;
+        }
+
         // What the records show of a condition, said once however many ways have it (a drop rule's apart).
         private List<String> conditionProblems(final Condition c, final boolean drop) {
             final Map.Entry<Condition, Boolean> key = Map.entry(c, drop);
@@ -600,19 +692,21 @@ public final class CatalogueCheck {
         }
 
         // Why a condition can't be checked against the records here (an xpath, a dictionary, a record-scope test, a
-        // field an extraction gives), so the records it recognises aren't counted: said, not refused (settled with the
-        // check and translation lanes, 2026-11-19), never silently skipped. Empty when it can be.
+        // field an extraction gives), so the records it may recognise are counted apart (may_be): said, not refused
+        // (settled with the check and translation lanes, 2026-11-19), never silently skipped. Empty when it can be.
         private Optional<String> notChecked(final Condition c) {
             final String field = c.field();
             if (!LocalCheck.evaluable(c)) {
                 return Optional.of("the condition on " + (field == null
                         ? c.xpath()
                         : field) + " can't be checked against the records here (an xpath, a dictionary or a "
-                                   + "record-scope field), so the records it recognises aren't counted");
+                                   + "record-scope field), so the records it may recognise are counted apart, as "
+                                   + "may be");
             }
             if (index.untold(field)) {
                 return Optional.of("the condition on " + field + ", a field an extraction gives, can't be checked "
-                                   + "against the records here, so the records it recognises aren't counted");
+                                   + "against the records here, so the records it may recognise are counted apart, "
+                                   + "as may be");
             }
             return Optional.empty();
         }
@@ -899,17 +993,25 @@ public final class CatalogueCheck {
                     : new Unparsed(into.cardinality(), List.copyOf(why));
         }
 
-        // The records no event type recognises (and whose held values parse), by shape, commonest first.
+        // The records no event type recognises, nor may, by shape, commonest first: those whose held values don't
+        // parse among them, as processing writes them to the catch-all (found in review, 2026-11-27: left out, the
+        // catch-all's form never counted them); and those an event type may recognise said apart, by type.
         private Uncatalogued uncatalogued(final BitSet unparsedRecords) {
             final BitSet left = new BitSet(size);
             left.set(0, size);
-            byType.forEach(left::andNot);
-            left.andNot(unparsedRecords);
-            if (left.isEmpty()) {
+            byTypePossible.forEach(left::andNot);
+            final List<CatalogueCheckResult.MayBe> mayBe = mayBe();
+            if (left.isEmpty() && mayBe.isEmpty()) {
                 return Uncatalogued.NONE;
             }
-            final BitSet dropped = droppedByMapping();
+            final DropSets drops = drops(drop -> true);
+            final BitSet dropped = (BitSet) drops.sure().clone();
             dropped.and(left);
+            final BitSet mayBeDropped = (BitSet) drops.possible().clone();
+            mayBeDropped.andNot(drops.sure());
+            mayBeDropped.and(left);
+            final BitSet unparsedLeft = (BitSet) unparsedRecords.clone();
+            unparsedLeft.and(left);
             final List<Integer> at = new ArrayList<>();
             final List<String> texts = new ArrayList<>();
             final List<Map<String, Object>> parsed = new ArrayList<>();
@@ -929,26 +1031,56 @@ public final class CatalogueCheck {
             bySignature.forEach((signature, members) -> shapes.add(new Shape(signature, members.size(),
                     examples(members).stream().map(index::recordText).toList())));
             shapes.sort(Comparator.comparingInt(Shape::records).reversed());
-            return new Uncatalogued(left.cardinality(), shapes, dropped.cardinality());
+            return new Uncatalogued(left.cardinality(), shapes, dropped.cardinality(), mayBeDropped.cardinality(),
+                    mayBeDropped.isEmpty()
+                            ? null
+                            : because(drafted.drops().stream().map(Drafted.Drop::when).toList(), mayBeDropped),
+                    unparsedLeft.cardinality(), mayBe);
         }
 
-        // The records the build's mapping's own drop rules drop: every condition of one of them holds (one that can't
-        // be told here drops nothing).
-        private BitSet droppedByMapping() {
-            final BitSet out = new BitSet(size);
-            for (final List<Condition> when : drafted.drops()) {
-                final BitSet all = new BitSet(size);
-                all.set(0, size);
-                for (final Condition c : when) {
-                    if (!LocalCheck.evaluable(c) || index.untold(c.field())) {
-                        all.clear();
-                        break;
-                    }
-                    all.and(index.verdicts(c).holds());
+        // The records no event type surely recognises that one may, by event type, in the catalogue's order.
+        private List<CatalogueCheckResult.MayBe> mayBe() {
+            final BitSet unsure = new BitSet(size);
+            unsure.set(0, size);
+            byType.forEach(unsure::andNot);
+            final List<CatalogueCheckResult.MayBe> out = new ArrayList<>();
+            for (int t = 0; t < types.size(); t++) {
+                final BitSet may = (BitSet) byTypePossible.get(t).clone();
+                may.and(unsure);
+                if (!may.isEmpty()) {
+                    out.add(new CatalogueCheckResult.MayBe(keys.get(t), may.cardinality(),
+                            because(types.get(t).recognisedBy().stream().map(Way::when).toList(), may)));
                 }
-                out.or(all);
             }
             return out;
+        }
+
+        // The records the build's mapping's own drop rules (those given) drop, and may drop: every condition of one
+        // of them holds, or none fails (one can't be told here), each rule's apart too.
+        private DropSets drops(final Predicate<Drafted.Drop> which) {
+            final BitSet sure = new BitSet(size);
+            final BitSet possible = new BitSet(size);
+            final List<Map.Entry<String, BitSet>> each = new ArrayList<>();
+            for (final Drafted.Drop drop : drafted.drops()) {
+                if (!which.test(drop)) {
+                    continue;
+                }
+                final BitSet holds = new BitSet(size);
+                holds.set(0, size);
+                final BitSet may = new BitSet(size);
+                may.set(0, size);
+                for (final Condition c : drop.when()) {
+                    final RecordIndex.Verdicts verdicts = index.verdicts(c);
+                    holds.and(verdicts.holds());
+                    final BitSet either = (BitSet) verdicts.holds().clone();
+                    either.or(verdicts.unknown());
+                    may.and(either);
+                }
+                sure.or(holds);
+                possible.or(may);
+                each.add(Map.entry(drop.name(), holds));
+            }
+            return new DropSets(sure, possible, each);
         }
 
         // A shape's examples: its first record, then each time the one that differs most from those chosen.
@@ -1097,6 +1229,25 @@ public final class CatalogueCheck {
                     ? 1
                     : (double) both / union.size();
         }
+
+
+        // --------------------------------------------------------------------------------
+
+
+        // The records drop rules drop (sure), and may drop (possible: those too), and each rule's own, by its name.
+        private record DropSets(BitSet sure, BitSet possible, List<Map.Entry<String, BitSet>> each) {
+
+            // The rules that drop any of some records, in words.
+            private String namesOver(final BitSet records) {
+                final Set<String> names = new LinkedHashSet<>();
+                each.forEach(rule -> {
+                    if (rule.getValue().intersects(records)) {
+                        names.add(rule.getKey());
+                    }
+                });
+                return String.join(", ", names);
+            }
+        }
     }
 
 
@@ -1143,16 +1294,17 @@ public final class CatalogueCheck {
     /// @param rules        The draft's own rules with conditions, in order.
     /// @param changeSides  The user's answers of which key of each old/new list holds the value before the change
     ///                     (2026-11-23, kept with the build), by the list; none where none were given.
-    /// @param drops        The conditions of the build's mapping's own drop rules (`drop_when`, and events rules with
-    ///                     `drop: true`), each rule's: the uncatalogued records they drop are counted apart from those
-    ///                     the catch-all writes as Unknown ([Uncatalogued#dropped]). The catalogue's own drop rules
-    ///                     aside (they are its event types with `drop: true`).
+    /// @param drops        The build's mapping's own drop rules (`drop_when`, and events rules with `drop: true`):
+    ///                     the uncatalogued records they drop are counted apart from those the catch-all writes as
+    ///                     Unknown ([Uncatalogued#dropped]), and the records `drop_when` drops first are not an event
+    ///                     type's ([Count#droppedFirst]). The catalogue's own drop rules aside (they are its event
+    ///                     types with `drop: true`).
     public record Drafted(Set<String> commonFields,
                           String commonUser,
                           List<String> commonPaths,
                           List<Rule> rules,
                           Map<String, String> changeSides,
-                          List<List<Condition>> drops) {
+                          List<Drop> drops) {
 
         /// Nothing drafted.
         public static final Drafted NONE = new Drafted(Set.of(), null, List.of(), List.of(), Map.of(), List.of());
@@ -1163,9 +1315,7 @@ public final class CatalogueCheck {
             commonPaths = List.copyOf(Objects.requireNonNullElse(commonPaths, List.of()));
             rules = List.copyOf(Objects.requireNonNullElse(rules, List.of()));
             changeSides = Map.copyOf(Objects.requireNonNullElse(changeSides, Map.of()));
-            drops = Objects.requireNonNullElse(drops, List.<List<Condition>>of()).stream()
-                    .map(List::copyOf)
-                    .toList();
+            drops = List.copyOf(Objects.requireNonNullElse(drops, List.of()));
         }
 
         /// What the draft writes, with no drop rules of its own.
@@ -1193,30 +1343,38 @@ public final class CatalogueCheck {
         }
 
         /// @param mapping Another mapping of the build (JSON; its latest, built or sent), or null.
-        /// @return It with that mapping's drop rules too ([#dropsOf]), each once.
+        /// @return It with that mapping's drop rules too ([#dropsOf]), each once (by its conditions and where it
+        /// runs).
         public Drafted withDropsOf(final Map<String, Object> mapping) {
-            final Set<List<Condition>> all = new LinkedHashSet<>(drops);
-            all.addAll(dropsOf(mapping));
-            return new Drafted(commonFields, commonUser, commonPaths, rules, changeSides, List.copyOf(all));
+            final List<Drop> all = new ArrayList<>(drops);
+            for (final Drop drop : dropsOf(mapping)) {
+                if (all.stream().noneMatch(one -> one.first() == drop.first() && one.when().equals(drop.when()))) {
+                    all.add(drop);
+                }
+            }
+            return new Drafted(commonFields, commonUser, commonPaths, rules, changeSides, all);
         }
 
-        /// The conditions of a mapping's own drop rules: each `drop_when` rule's but those the catalogue's drop
-        /// rules wrote (their reason [SourceNotes#DROPPED_REASON]'s: the catalogue holds them, as it now is), and
-        /// each events rule's with `drop: true`. A rule whose conditions don't read is left out.
+        /// A mapping's own drop rules: each `drop_when` rule but those the catalogue's drop rules wrote (their
+        /// reason [SourceNotes#DROPPED_REASON]'s: the catalogue holds them, as it now is), and each events rule with
+        /// `drop: true`. A rule whose conditions don't read is left out.
         ///
         /// @param mapping A mapping (JSON), or null.
-        /// @return Each rule's conditions, in the mapping's order.
-        public static List<List<Condition>> dropsOf(final Map<String, Object> mapping) {
+        /// @return Each rule, in the mapping's order.
+        public static List<Drop> dropsOf(final Map<String, Object> mapping) {
             final Map<String, Object> json = NullSafe.map(mapping);
-            final List<List<Condition>> out = new ArrayList<>();
+            final List<Drop> out = new ArrayList<>();
             for (final Map<String, Object> drop : JsonValues.maps(json.get("drop_when"))) {
-                if (!ToolText.str(drop.get("reason")).startsWith(SourceNotes.DROPPED_REASON)) {
-                    conditionsOf(drop).ifPresent(out::add);
+                final String reason = ToolText.str(drop.get("reason"));
+                if (!reason.startsWith(SourceNotes.DROPPED_REASON)) {
+                    conditionsOf(drop).ifPresent(when -> out.add(new Drop("drop_when '" + reason + "'", true,
+                            when)));
                 }
             }
             for (final Map<String, Object> rule : JsonValues.maps(json.get("events"))) {
                 if (JsonValues.truthy(rule.get("drop"))) {
-                    conditionsOf(rule).ifPresent(out::add);
+                    conditionsOf(rule).ifPresent(when -> out.add(new Drop("rule '" + ToolText.str(rule.get("name"))
+                                                                          + "' (drop: true)", false, when)));
                 }
             }
             return out;
@@ -1285,6 +1443,25 @@ public final class CatalogueCheck {
             public Rule {
                 when = List.copyOf(when);
                 paths = List.copyOf(paths);
+            }
+        }
+
+
+        // --------------------------------------------------------------------------------
+
+
+        /// One of the build's mapping's own drop rules.
+        ///
+        /// @param name  It in words: `drop_when 'heartbeats'`, `rule 'noise' (drop: true)`.
+        /// @param first True for a `drop_when` rule, which drops records before any event rule takes them; false for
+        ///              an events rule with `drop: true`, which a draft from the catalogue puts after the event types'
+        ///              rules, so it drops only uncatalogued records.
+        /// @param when  Its conditions.
+        public record Drop(String name, boolean first, List<Condition> when) {
+
+            /// Copies the list.
+            public Drop {
+                when = List.copyOf(when);
             }
         }
     }

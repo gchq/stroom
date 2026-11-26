@@ -106,6 +106,10 @@ public final class SourceNotes {
     /// again itself. A re-draft from the catalogue keeps them ([CatalogueTranslation]). Put there by the draft's tool
     /// with [#EXISTING_RULES]; never in the user's documentation.
     public static final String EXISTING_DROPS = "existing_drops";
+    /// The notes' key for the pipeline's stringTruncateLength (the length processing cuts a JSON input's strings
+    /// at): a draft from the catalogue counts the records its own drop rules drop over them cut so, as the
+    /// catalogue's check does. Put there by the draft's tool ([#withStringCut]); never in the user's documentation.
+    public static final String STRING_CUT = "string_cut";
     private static final String EVENT_DETAIL = "EventDetail/";
 
     private SourceNotes() {
@@ -435,8 +439,28 @@ public final class SourceNotes {
         applied.put(CATALOGUED, true);
         applied.putAll(CatalogueTranslation.apply(mapping, names, values, catalogue, catchAllReason(notes, catalogue),
                 detailFields, detailCheck, records, matches, changeSides(notes),
-                JsonValues.maps(notes.get(EXISTING_RULES)), JsonValues.maps(notes.get(EXISTING_DROPS))));
+                JsonValues.maps(notes.get(EXISTING_RULES)), JsonValues.maps(notes.get(EXISTING_DROPS)),
+                stringCut(notes)));
         return applied;
+    }
+
+    /// @param notes The source notes, or null.
+    /// @param cut   The pipeline's stringTruncateLength.
+    /// @return A copy of them with it ([#STRING_CUT]), or null where there are none.
+    public static Map<String, Object> withStringCut(final Map<String, Object> notes, final int cut) {
+        if (notes == null) {
+            return null;
+        }
+        final Map<String, Object> out = new LinkedHashMap<>(notes);
+        out.put(STRING_CUT, cut);
+        return out;
+    }
+
+    // The stringTruncateLength the notes were given, else the JSONParser's default.
+    private static int stringCut(final Map<String, Object> notes) {
+        return notes.get(STRING_CUT) instanceof final Number cut
+                ? cut.intValue()
+                : LocalCheck.JSON_PARSER_CUT;
     }
 
     /// The source notes with the build's existing mapping's rules ([#EXISTING_RULES]) and own drops

@@ -19,6 +19,7 @@ package stroom.ai.impl.tools.catalogue;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.draft.CheckedRecords;
 import stroom.ai.impl.tools.draft.LocalCheck;
+import stroom.ai.impl.tools.draft.Verdict;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.EventRule;
 import stroom.ai.impl.tools.generation.FieldMapping;
@@ -32,6 +33,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.IntPredicate;
 
 /// How a mapping translates the catalogue's event types, by the records they take: each event type's sampled records
@@ -130,38 +132,27 @@ public final class CatalogueKept {
                                      final EventType type,
                                      final Object record,
                                      final Map<String, String> extracted) {
-        if (type.recognisedBy().isEmpty()) {
-            return true;
-        }
-        boolean untold = false;
-        for (final Way way : type.recognisedBy()) {
-            final Boolean holds = holds(mapping, way.when(), record, extracted);
-            if (Boolean.TRUE.equals(holds)) {
-                return true;
-            }
-            untold |= holds == null;
-        }
-        return untold
-                ? null
-                : false;
+        return anyWay(type, way -> Verdict.of(holds(mapping, way.when(), record, extracted))).toBoolean();
     }
 
     // Whether an event type recognises a record, as the other recognises tells it, each way's verdict kept.
     private static Boolean recognises(final CheckedRecords checked, final EventType type, final int n) {
-        if (type.recognisedBy().isEmpty()) {
-            return true;
-        }
-        boolean untold = false;
+        return anyWay(type, way -> Verdict.of(checked.holds(way.when(), n))).toBoolean();
+    }
+
+    // Whether one of an event type's ways recognises a record ([Verdict], as every count of records tells it): one
+    // that holds decides it, else one that can't be told; a sole event type (no way) recognises every record.
+    private static Verdict anyWay(final EventType type, final Function<Way, Verdict> verdict) {
+        Verdict out = type.recognisedBy().isEmpty()
+                ? Verdict.HOLDS
+                : Verdict.DOESNT;
         for (final Way way : type.recognisedBy()) {
-            final Boolean holds = checked.holds(way.when(), n);
-            if (Boolean.TRUE.equals(holds)) {
-                return true;
+            out = out.or(verdict.apply(way));
+            if (out == Verdict.HOLDS) {
+                break;
             }
-            untold |= holds == null;
         }
-        return untold
-                ? null
-                : false;
+        return out;
     }
 
     /// @param mapping   The mapping the conditions are read by.
@@ -173,17 +164,8 @@ public final class CatalogueKept {
                                 final List<Condition> when,
                                 final Object record,
                                 final Map<String, String> extracted) {
-        boolean untold = false;
-        for (final Condition condition : when) {
-            final Boolean one = LocalCheck.holds(mapping, condition, record, extracted);
-            if (Boolean.FALSE.equals(one)) {
-                return false;
-            }
-            untold |= one == null;
-        }
-        return untold
-                ? null
-                : true;
+        return Verdict.all(when, condition -> Verdict.of(LocalCheck.holds(mapping, condition, record, extracted)))
+                .toBoolean();
     }
 
     /// Why the catalogue's event types can't all be followed to the mapping's rules here, said rather than skipped:

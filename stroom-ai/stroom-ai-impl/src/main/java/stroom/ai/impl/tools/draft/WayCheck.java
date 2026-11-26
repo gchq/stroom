@@ -38,7 +38,9 @@ import java.util.Set;
 /// records as the draft reads them: for placing the catalogue's ways of recognising event types (which variant's
 /// records they recognise, which of the draft's own rules took those records, which fields they hold). The draft
 /// holds a JSON array as its text; it is read back as the array, so its items are compared as processing compares
-/// them. A condition that can't be told here (an xpath, a dictionary, a record-scope field) is taken as holding.
+/// them. For placing, a condition that can't be told here (an xpath, a dictionary, a record-scope field) is taken
+/// as holding ([#recognises]); for counting, it is unknown ([#verdict]), as every count of records by conditions
+/// tells it ([Verdict]).
 final class WayCheck {
 
     // The mapping keys that say how records are read, kept from the draft's mapping.
@@ -108,18 +110,26 @@ final class WayCheck {
         }
     }
 
+    /// Whether conditions recognise a record, for placing a way (which records it takes, which of the draft's rules
+    /// took them, which fields they hold) only: one that can't be told here is taken as holding. Never for counting
+    /// records ([#verdict]): a record such a condition tests may or may not be recognised.
+    ///
     /// @param when   Conditions (all must hold).
     /// @param record A record, as the draft reads them.
     /// @return Whether they all hold for it (one that can't be told here taken as holding).
     boolean recognises(final List<Condition> when, final Map<String, Object> record) {
+        return verdict(when, record) != Verdict.DOESNT;
+    }
+
+    /// Whether conditions recognise a record, for counting records.
+    ///
+    /// @param when   Conditions (all must hold).
+    /// @param record A record, as the draft reads them.
+    /// @return Their verdict: [Verdict#UNKNOWN] where one can't be told here and none fails.
+    Verdict verdict(final List<Condition> when, final Map<String, Object> record) {
         final Object read = asRead(record);
         final Map<String, String> values = extractedValues(read);
-        for (final Condition condition : when) {
-            if (Boolean.FALSE.equals(conditions.holds(condition, read, values))) {
-                return false;
-            }
-        }
-        return true;
+        return Verdict.all(when, condition -> Verdict.of(conditions.holds(condition, read, values)));
     }
 
     // A record's extracted values, as LocalCheck.extractedValues gives them (not to be changed); null without

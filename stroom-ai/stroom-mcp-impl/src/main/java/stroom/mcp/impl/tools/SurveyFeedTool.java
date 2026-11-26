@@ -1868,6 +1868,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 final SurveyDepth.Deeper deeper = SurveyDepth.readDeeper(streamReader, shapes, part,
                         SurveyFeedTool::timeIsUp);
                 reading.recordsRead += deeper.records();
+                reading.readDeeper.merge(part.stream(), deeper.records(), Long::sum);
                 out.add(deeper.part());
             } else {
                 out.add(part);
@@ -1887,6 +1888,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         }
         result.put(SurveyDepth.DEPTH, depth.stream().map(SurveyDepth.Part::toMap).toList());
         result.put("records_read", reading.recordsRead);
+        readDeeperPerStream(result, reading, depth);
         final Set<Long> deep = new TreeSet<>();
         depth.forEach(part -> deep.add(part.stream()));
         final boolean otherwiseInPart = reading.perStream.stream()
@@ -1923,6 +1925,44 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                   + "same streams and read_deeper=<what they said>."
                 : "Call survey_feed again with the same streams: it reads on from where it stopped, as far as the "
                   + "user asked.");
+    }
+
+    // Each stream read deeper in its per_stream entry: its records with those read deeper, and read in part no longer
+    // once every part of it read in part is read to its end (and nothing else keeps it in part: parts not read, the
+    // time running out); the streams said read in part with it (found in review, 2026-11-27: a stream read to its
+    // end was still said read in part, and the build's processor filter took it as read in part).
+    private static void readDeeperPerStream(final Map<String, Object> result,
+                                            final Reading reading,
+                                            final List<SurveyDepth.Part> depth) {
+        final Map<Long, List<SurveyDepth.Part>> byStream = new LinkedHashMap<>();
+        depth.forEach(part -> byStream.computeIfAbsent(part.stream(), key -> new ArrayList<>()).add(part));
+        for (final Map<String, Object> entry : reading.perStream) {
+            if (!(entry.get("stream") instanceof final Number number) || !(entry.get("records") instanceof Number)) {
+                continue;
+            }
+            final long stream = number.longValue();
+            final List<SurveyDepth.Part> parts = byStream.get(stream);
+            if (parts == null) {
+                continue;
+            }
+            final long added = reading.readDeeper.getOrDefault(stream, 0L);
+            if (added > 0) {
+                entry.put("records", ((Number) entry.get("records")).longValue() + added);
+            }
+            if (Boolean.TRUE.equals(entry.get("head_only")) && !entry.containsKey(NOT_READ_FURTHER)
+                && parts.stream().allMatch(SurveyDepth.Part::whole)) {
+                entry.put("head_only", false);
+            }
+        }
+        final List<Long> partly = reading.perStream.stream()
+                .filter(stream -> Boolean.TRUE.equals(stream.get("head_only")))
+                .map(stream -> ((Number) stream.get("stream")).longValue())
+                .toList();
+        if (partly.isEmpty()) {
+            result.remove(SurveyDoc.STREAMS_IN_PART);
+        } else {
+            result.put(SurveyDoc.STREAMS_IN_PART, partly);
+        }
     }
 
     // The shapes the survey knew that pruning gone streams left with no example.
@@ -3188,6 +3228,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         private final Set<Long> quotedNewlinesIn = new LinkedHashSet<>();
         // The parts of streams to be read whole that were read only in part, and can be read deeper.
         private final List<SurveyDepth.Part> partial = new ArrayList<>();
+        // The records read deeper in the call, by stream.
+        private final Map<Long, Long> readDeeper = new LinkedHashMap<>();
         // The first parts' heads read already (to choose the kind fields), by stream.
         private final Map<Long, RawHead> peeked = new LinkedHashMap<>();
         // What each stream is read for (a build's scope), or null.

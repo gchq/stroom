@@ -17,8 +17,13 @@
 package stroom.mcp.impl.tools;
 
 import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.catalogue.CatalogueCheck;
 import stroom.ai.impl.tools.catalogue.CatalogueCheckResult;
+import stroom.ai.impl.tools.catalogue.CatalogueSample;
 import stroom.ai.impl.tools.catalogue.EventType;
+import stroom.ai.impl.tools.draft.LocalCheck;
+import stroom.ai.impl.tools.draft.SourceNotes;
+import stroom.ai.impl.tools.sample.ToolJson;
 
 import org.junit.jupiter.api.Test;
 
@@ -102,6 +107,119 @@ class TestCatalogueTables {
                                                                          + "logging | Test | every record | 9 | drop "
                                                                          + "rule (not translated) |"));
         assertThat(CatalogueTables.translatedAs(operational)).isEqualTo("drop rule (not translated)");
+    }
+
+    // Found in review (2026-11-27): the notes' "Uncatalogued records" row said how many become "Unknown events"
+    // counting every uncatalogued record, those the build's mapping drops among them; the catch-all form, from the
+    // same check, said only the rest.
+    @Test
+    void theNotesUncataloguedRowCountsWhatTheCatchAllFormSaysBecomesUnknown() {
+        final List<Map<String, Object>> records = codes("4624", "1102", "1102", "1102", "7777");
+        final Catalogue catalogue = SourceNotes.catalogue(notes(List.of(coded("Authenticate-Logon", "4624"))));
+        final Map<String, Object> mapping = Map.of("drop_when", List.of(Map.of("reason", "heartbeats", "when",
+                List.of(eq("evt", "1102")))));
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue, sample(records), null,
+                CatalogueCheck.Drafted.of(mapping));
+
+        final String form = CatalogueCatchAll.catchAllShown(check, catalogue);
+        final String row = CatalogueTables.notesTable(catalogue, CatalogueTables.recordsOf(check)).stream()
+                .filter(line -> line.startsWith("| `Unknown` Uncatalogued records"))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(form).contains("1 translated as Unknown events").contains("3 dropped");
+        assertThat(row).as("notes' Uncatalogued records row")
+                .contains("| " + check.uncatalogued().unknown() + " (3 more dropped by the build's mapping's drop "
+                          + "rules) |");
+    }
+
+    // Found in review (2026-11-27): a drop rule labelled "Unknown" had its count kept under the same key as the
+    // uncatalogued records', and overwritten by theirs. The label is refused now (it is what the uncatalogued
+    // records go by), and the uncatalogued records are kept under a key of their own either way.
+    @Test
+    void aDropRuleLabelledUnknownIsRefusedAndKeepsItsOwnCountInTheNotes() {
+        final List<Map<String, Object>> records = codes("4624", "1102", "1102", "1102", "7777");
+        final Map<String, Object> drop = coded("Unknown", "1102");
+        drop.put("drop", true);
+        drop.put("basis", EventType.USER_CONFIRMED);
+        final Catalogue catalogue = SourceNotes.catalogue(notes(List.of(coded("Authenticate-Logon", "4624"),
+                drop)));
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue, sample(records), null);
+
+        // Adapted from the audit's expectation (no problem): the label is refused, as agreed for the fix.
+        assertThat(check.problems()).anySatisfy(problem -> assertThat(problem.problem())
+                .contains("is what the uncatalogued records go by"));
+        assertThat(check.counts().get("Unknown").records()).isEqualTo(3);
+        assertThat(check.uncatalogued().records()).isEqualTo(1);
+        assertThat(CatalogueTables.recordsOf(check).get("Unknown"))
+                .as("the drop rule's kept count")
+                .isEqualTo(3);
+        assertThat(CatalogueTables.recordsOf(check).get(CatalogueTables.UNCATALOGUED_KEY)).isEqualTo(1);
+    }
+
+    // Found in review (2026-11-27): an event type recognised by a condition the check can't evaluate (a
+    // dictionary) was counted 0, and the set's table said "0 (not in the sample)" (and not_in_sample listed it)
+    // though three sampled records have its code.
+    @Test
+    void anEventTypeWithAConditionNotCheckedIsNotSaidToBeOutOfTheSample() {
+        final List<Map<String, Object>> records = codes("4624", "4624", "4624", "7777");
+        final Map<String, Object> logon = coded("Authenticate-Logon", "4624");
+        final Map<String, Object> way = new LinkedHashMap<>();
+        way.put("when", List.of(eq("evt", "4624"), Map.of("field", "usr", "in_dictionary", "Admins")));
+        way.put("names", List.of());
+        logon.put("recognised_by", List.of(way));
+        final Catalogue catalogue = SourceNotes.catalogue(notes(List.of(logon)));
+        final CatalogueCheckResult check = CatalogueCheck.check(catalogue, sample(records), null);
+
+        assertThat(check.notChecked()).isNotEmpty();
+        assertThat(CatalogueTables.records(catalogue.eventTypes().getFirst(), check))
+                .as("the set table's Records cell")
+                .doesNotContain("not in the sample")
+                .isEqualTo("3 may be (a condition on usr can't be checked here)");
+        assertThat(CatalogueTables.notInSample(check)).isEmpty();
+        assertThat(CatalogueSummary.unusual(catalogue.eventTypes(), check))
+                .allSatisfy(one -> assertThat(one.why()).doesNotContain("no record of it in the sample"));
+    }
+
+    private static CatalogueSample sample(final List<Map<String, Object>> records) {
+        final List<String> lines = new ArrayList<>();
+        records.forEach(record -> lines.add(ToolJson.dumps(record)));
+        return CatalogueSample.read(CatalogueSample.reading("json", null, null, null, null, null, null),
+                String.join("\n", lines), null, LocalCheck.JSON_PARSER_CUT, null);
+    }
+
+    private static List<Map<String, Object>> codes(final String... codes) {
+        final List<Map<String, Object>> out = new ArrayList<>();
+        for (final String code : codes) {
+            out.add(new LinkedHashMap<>(Map.of("evt", code, "usr", "alice")));
+        }
+        return out;
+    }
+
+    private static Map<String, Object> coded(final String typeId, final String code) {
+        final Map<String, Object> type = new LinkedHashMap<>();
+        type.put("type_id", typeId);
+        type.put("title", typeId + " title");
+        type.put("event_detail", "Authenticate");
+        type.put("action", "Logon");
+        type.put("recognised_by", List.of(Map.of("when", List.of(eq("evt", code)), "names", List.of())));
+        type.put("basis", "documentation");
+        type.put("confidence", "high");
+        type.put("status", "confirmed");
+        return type;
+    }
+
+    private static Map<String, Object> eq(final String field, final String value) {
+        return Map.of("field", field, "equals", value);
+    }
+
+    private static Map<String, Object> notes(final List<Map<String, Object>> types) {
+        final Map<String, Object> notes = new LinkedHashMap<>();
+        notes.put("source", "Acme");
+        notes.put("fields", new ArrayList<>());
+        notes.put("event_types", types);
+        notes.put("catch_all", Map.of("status", "proposed"));
+        return notes;
     }
 
     private static EventType type(final String typeId,

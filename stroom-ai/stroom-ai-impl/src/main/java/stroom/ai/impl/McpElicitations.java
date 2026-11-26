@@ -65,6 +65,8 @@ public class McpElicitations {
     private static final Duration RUN_STOP_CHECK = Duration.ofMillis(50);
     // Who asks the questions of Stroom AI's own agent.
     private static final String STROOM_AI = "Stroom AI";
+    // The kind of form of a choice of one option (the tools' Consent.choose).
+    private static final String CHOICE_KIND = "choice";
     /// The key of an answer's meta that says Stroom's own form was put aside by a message the user sent instead,
     /// its value what they sent (see [#sentInstead]).
     public static final String SENT_INSTEAD = "stroom.ai/sentInstead";
@@ -500,9 +502,9 @@ public class McpElicitations {
         return new ElicitResult(Action.CANCEL, null, Map.of(SENT_INSTEAD, sent));
     }
 
-    // The questions a tool call asked, in a run that stopped to wait for the answers.
+    // The questions a tool call asked, in a run that stopped to wait for the answers: in the current turn only.
     private Optional<AiChatMessage> findForCall(final int chatId, final String callId) {
-        return aiDao.getMessages(chatId).stream()
+        return currentTurn(chatId).stream()
                 .filter(message -> message.getMessageType() == AiMessageType.ELICITATION)
                 .filter(message -> read(message).map(record -> callId.equals(record.callId())).orElse(false))
                 .reduce((first, second) -> second);
@@ -523,11 +525,12 @@ public class McpElicitations {
         }
         final String toolCallId = UserQuestions.toolCallId(callId);
         final List<String> titles = fieldTitles(schema);
-        return aiDao.getMessages(chatId).stream()
+        return currentTurn(chatId).stream()
                 .filter(message -> message.getMessageType() == AiMessageType.ELICITATION)
                 .filter(message -> read(message)
                         .filter(record -> record.status() == Status.SUPERSEDED
-                                          || record.status() == Status.PENDING)
+                                          || record.status() == Status.PENDING
+                                          || sameChoiceAnswered(kind, record, schema))
                         .filter(record -> record.callId() != null
                                           && toolCallId.equals(UserQuestions.toolCallId(record.callId()))
                                           && kind.equals(formKind(record.callId()))
@@ -535,6 +538,17 @@ public class McpElicitations {
                                           && titles.equals(fieldTitles(record.schema())))
                         .isPresent())
                 .reduce((first, second) -> second);
+    }
+
+    // True if a form is a choice answered as the one now asked, its options and all: the same form under the key a
+    // choice had before its options were part of it (2026-11-27), so its answer, given before the change, is found
+    // when the call is made again after it. Only a choice: any other form's key holds what its form doesn't show.
+    private static boolean sameChoiceAnswered(final String kind,
+                                              final ElicitationRecord record,
+                                              final Map<String, Object> schema) {
+        return CHOICE_KIND.equals(kind)
+               && (record.status() == Status.ACCEPTED || record.status() == Status.DECLINED)
+               && Objects.equals(schema, record.schema());
     }
 
     // True if a form of the same question under another key, still waiting, was closed (cancelled) to be replaced
@@ -552,6 +566,20 @@ public class McpElicitations {
                 JsonUtil.writeValueAsString(record.answered(Status.CANCELLED, null), false));
         LOGGER.debug(() -> "Form " + stale.getId() + " replaced by a fresh form of the same question: " + closed);
         return closed;
+    }
+
+    // The chat's messages since its latest question (USER_MESSAGE), the turn a call made again belongs to, as
+    // McpAgentChat.resumePending reads it; every message where there is none. A form of an earlier turn is never the
+    // answer to a call of this one: a provider that numbers its calls per response (call_0, call_1, ...) gives a later
+    // turn's call an earlier one's id (found in review, 2026-11-27: an earlier turn's yes to "Delete feed A?" was
+    // given to the next turn's call, never shown).
+    private List<AiChatMessage> currentTurn(final int chatId) {
+        final List<AiChatMessage> all = aiDao.getMessages(chatId);
+        int question = all.size() - 1;
+        while (question >= 0 && all.get(question).getMessageType() != AiMessageType.USER_MESSAGE) {
+            question--;
+        }
+        return all.subList(question + 1, all.size());
     }
 
     // The kind of form a form id names, its key up to the digest (e.g. 'answer' of 'call-1#form:answer-1a2b'), or

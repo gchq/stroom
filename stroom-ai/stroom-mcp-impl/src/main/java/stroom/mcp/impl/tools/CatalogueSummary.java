@@ -343,7 +343,7 @@ final class CatalogueSummary {
         final List<Unusual> out = new ArrayList<>();
         for (final EventType type : set) {
             final List<String> why = new ArrayList<>();
-            if (check != null && records(type, check) == 0) {
+            if (check != null && notInSample(type, check)) {
                 why.add("no record of it in the sample");
             }
             if (type.drop()) {
@@ -408,6 +408,13 @@ final class CatalogueSummary {
         return NullSafe.isBlankString(type.eventDetail())
                 ? NO_ELEMENT
                 : type.eventDetail();
+    }
+
+    // True if no sampled record is, or may be, of an event type (one a condition can't be checked on may be: found
+    // in review, 2026-11-27, said to be out of the sample).
+    private static boolean notInSample(final EventType type, final CatalogueCheckResult check) {
+        final CatalogueCheckResult.Count count = check.counts().get(type.typeId());
+        return count == null || count.none() && count.droppedFirst() == 0;
     }
 
     private static int records(final EventType type, final CatalogueCheckResult check) {

@@ -618,6 +618,72 @@ class TestMcpElicitations {
                 .hasMessageContaining("no longer waiting");
     }
 
+    // Found in review (2026-11-27): a provider that numbers its tool calls per response (call_0, call_1, ...)
+    // gives a later turn's call the id an earlier turn's call had. McpAgentChat.resumePending makes a call again
+    // only for forms of the current turn; the earlier turn's answer is never the later call's.
+    @Test
+    void aFormAnsweredInAnEarlierTurnIsNotTheAnswerToALaterTurnsCallOfTheSameId() {
+        final String formId = "call_0#form:confirmation-1a2b3c4d5e6f7a8b";
+        final Map<String, Object> form = Map.of("type", "object",
+                "properties", Map.of("value", Map.of("type", "boolean", "title", "Delete feed A")),
+                "required", List.of("value"));
+        final AiChatRun waiting = new AiChatRun(9, CHAT_ID, AiChatRunStatus.WAITING_FOR_USER,
+                AiChatRunStopReason.NEEDS_ANSWERS, 0L, null, false, null);
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+        aiDao.storeMessage(CHAT_ID, AiMessageType.USER_MESSAGE, "Delete feed A");
+        Mockito.when(runDao.getActive(CHAT_ID)).thenReturn(Optional.of(run));
+        assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "delete_feed", formId, "Delete feed A?", form))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        Mockito.when(runDao.getActive(CHAT_ID)).thenReturn(Optional.of(waiting));
+        elicitations.answer(CHAT_ID, cardFor(formId).getId(), "ACCEPT", Map.of("value", "true"));
+        assertThat(elicitations.askUser(CHAT_ID, "delete_feed", formId, "Delete feed A?", form).action())
+                .as("the call made again in its own turn")
+                .isEqualTo(Action.ACCEPT);
+
+        // A new turn: the user asks again (feed A has been re-created), the model's call has the same id.
+        Mockito.when(runDao.getActive(CHAT_ID)).thenReturn(Optional.of(run));
+        aiDao.storeMessage(CHAT_ID, AiMessageType.USER_MESSAGE, "Delete feed A again");
+
+        assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "delete_feed", formId, "Delete feed A?", form))
+                .as("asked afresh in the new turn")
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+    }
+
+    // A choice answered under the key it had before its options were part of it (2026-11-27) is still the answer to
+    // the same choice asked again; a choice of other options is another form.
+    @Test
+    void aChoiceAnsweredUnderItsEarlierKeyIsFoundByItsFormOptionsAndAll() {
+        final Map<String, Object> zones = choice(List.of("Europe/London", "UTC"));
+        question();
+        final ElicitationRecord answered = new ElicitationRecord(ElicitationRecord.KIND,
+                ElicitationRecord.Status.ACCEPTED, "Stroom AI", "draft_translation_mapping", "Which zone?", zones,
+                Long.MAX_VALUE, Map.of("choice", "UTC"), "c1#form:choice-0123456789abcdef");
+        aiDao.storeMessage(CHAT_ID, AiMessageType.ELICITATION, JsonUtil.writeValueAsString(answered, false));
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+
+        final ElicitResult same = elicitations.askUser(CHAT_ID, "draft_translation_mapping",
+                "c1#form:choice-fedcba9876543210", "Which zone?", choice(List.of("Europe/London", "UTC")));
+
+        assertThat(same.action()).isEqualTo(Action.ACCEPT);
+        assertThat(same.content()).isEqualTo(Map.of("choice", "UTC"));
+        assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "draft_translation_mapping",
+                "c1#form:choice-1111111111111111", "Which zone?", choice(List.of("field:tz", "UTC"))))
+                .as("other options: another form, asked")
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+    }
+
+    private static Map<String, Object> choice(final List<String> options) {
+        final Map<String, Object> field = new LinkedHashMap<>();
+        field.put("type", "string");
+        field.put("title", "Which zone?");
+        field.put("enum", options);
+        final Map<String, Object> schema = new LinkedHashMap<>();
+        schema.put("type", "object");
+        schema.put("required", List.of("choice"));
+        schema.put("properties", Map.of("choice", field));
+        return schema;
+    }
+
     // Adds a question from the user to the chat.
     private void question() {
         aiDao.storeMessage(CHAT_ID, AiMessageType.USER_MESSAGE, "Onboard this feed");

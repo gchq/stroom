@@ -538,8 +538,10 @@ public final class LocalCheck {
         }
     }
 
-    // A JSON value with each string longer than the cut cut to it, as Stroom's JSONParser cuts them.
-    private static Object cutStrings(final Object value, final int cut) {
+    /// @param value A JSON value (a record as the draft reads it, say).
+    /// @param cut   The JSONParser's stringTruncateLength.
+    /// @return It with each string longer than the cut cut to it, as Stroom's JSONParser cuts them.
+    static Object cutStrings(final Object value, final int cut) {
         if (value instanceof final Map<?, ?> map) {
             final Map<String, Object> out = new LinkedHashMap<>();
             map.forEach((key, inner) -> out.put(String.valueOf(key), cutStrings(inner, cut)));

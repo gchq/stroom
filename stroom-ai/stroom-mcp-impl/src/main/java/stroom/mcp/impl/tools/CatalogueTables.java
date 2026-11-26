@@ -44,6 +44,12 @@ final class CatalogueTables {
     private static final String NOTES_SEPARATOR = "| --- | --- | --- | --- | --- | --- |";
     /// The catch-all's row's TypeId (the uncatalogued records' events).
     static final String UNKNOWN = "Unknown";
+    /// The key the uncatalogued records the catch-all writes are kept under in the notes' records ([#recordsOf]):
+    /// none a TypeId or a drop rule's label can be (found in review, 2026-11-27: kept under [#UNKNOWN], a drop rule
+    /// labelled so had its count overwritten).
+    static final String UNCATALOGUED_KEY = "#uncatalogued";
+    /// The key the uncatalogued records the build's mapping's own drop rules drop are kept under.
+    static final String UNCATALOGUED_DROPPED_KEY = "#uncatalogued_dropped";
 
     // A value longer than this is shortened in words: a qualified name to its last part, any other cut.
     private static final int LONG_VALUE = 40;
@@ -96,9 +102,8 @@ final class CatalogueTables {
         final Catalogue.CatchAll catchAll = catalogue.catchAll();
         lines.addAll(List.of("### Uncatalogued records", "", NOTES_HEADER, NOTES_SEPARATOR));
         lines.add("| `" + UNKNOWN + "` Uncatalogued records | - | records no event type recognises | "
-                  + (records.get(UNKNOWN) instanceof final Number count
-                ? String.valueOf(count.longValue())
-                : "") + " | " + uncataloguedAs(catchAll) + ", their fields kept as Data | "
+                  + uncataloguedKept(catalogue, records) + " | " + uncataloguedAs(catchAll) + ", their fields kept as "
+                  + "Data | "
                   + cell(catchAll.confirmed()
                 ? "confirmed by the user" + (catchAll.allowUnknown() == null
                         ? ""
@@ -106,6 +111,22 @@ final class CatalogueTables {
                 : "proposed") + " |");
         lines.add("");
         return lines;
+    }
+
+    // The uncatalogued records the catch-all writes, as kept in the notes, with those the build's mapping drops;
+    // notes kept before the reserved key keep them under Unknown, unless an event type is labelled so.
+    private static String uncataloguedKept(final Catalogue catalogue, final Map<String, ?> records) {
+        Object count = records.get(UNCATALOGUED_KEY);
+        if (count == null && catalogue.eventTypes().stream().noneMatch(type -> UNKNOWN.equals(type.typeId()))) {
+            count = records.get(UNKNOWN);
+        }
+        if (!(count instanceof final Number number)) {
+            return "";
+        }
+        return number.longValue() + (records.get(UNCATALOGUED_DROPPED_KEY) instanceof final Number dropped
+                                     && dropped.longValue() > 0
+                ? " (" + dropped.longValue() + " more dropped by the build's mapping's drop rules)"
+                : "");
     }
 
     // A group's heading: its action element as it is, the others' words with a capital.
@@ -232,8 +253,12 @@ final class CatalogueTables {
         return "; typed: " + String.join("; ", type.placements().stream().map(Placement::said).toList());
     }
 
-    // A count kept in the notes, said as the set's table says it.
+    // A count kept in the notes, said as the set's table says it: a number, or the words kept where some records
+    // may be the type's or are dropped first.
     private static String recordsKept(final Object count) {
+        if (count instanceof final String said) {
+            return cell(said);
+        }
         if (!(count instanceof final Number number)) {
             return "";
         }
@@ -243,17 +268,26 @@ final class CatalogueTables {
     }
 
     /// @param check A check.
-    /// @return The records of the sample each event type recognises, by TypeId, and the uncatalogued ones' under
-    /// [#UNKNOWN]: as the source notes keep them for their table.
+    /// @return The records of the sample each event type recognises, by TypeId (a number, or in words where some may
+    /// be its or are dropped first: [#records(CatalogueCheckResult.Count)]), and the uncatalogued ones the catch-all
+    /// writes under [#UNCATALOGUED_KEY] (those the build's mapping drops under [#UNCATALOGUED_DROPPED_KEY]): as the
+    /// source notes keep them for their table.
     static Map<String, Object> recordsOf(final CatalogueCheckResult check) {
         final Map<String, Object> out = new LinkedHashMap<>();
         for (final String typeId : check.order()) {
             final CatalogueCheckResult.Count count = check.counts().get(typeId);
             if (count != null) {
-                out.put(typeId, count.records());
+                out.put(typeId, count.mayBe() == 0 && count.droppedFirst() == 0
+                        ? count.records()
+                        : records(count));
             }
         }
-        out.put(UNKNOWN, check.uncatalogued().records());
+        // The records the catch-all writes, as its form says (found in review, 2026-11-27: every uncatalogued
+        // record was kept, those the mapping drops among them).
+        out.put(UNCATALOGUED_KEY, check.uncatalogued().unknown());
+        if (check.uncatalogued().dropped() > 0) {
+            out.put(UNCATALOGUED_DROPPED_KEY, check.uncatalogued().dropped());
+        }
         return out;
     }
 
@@ -268,9 +302,29 @@ final class CatalogueTables {
         if (count == null) {
             return "";
         }
-        return count.records() == 0
-                ? "0 (not in the sample)"
-                : String.valueOf(count.records());
+        return cell(records(count));
+    }
+
+    /// @param count An event type's count.
+    /// @return It in words: `0 (not in the sample)` only where none is or may be its; those that may be said so
+    /// (`3 may be (a condition on usr can't be checked here)`), never as 0; those the build's mapping's drop_when
+    /// drops first after.
+    static String records(final CatalogueCheckResult.Count count) {
+        if (count.none() && count.droppedFirst() == 0) {
+            return "0 (not in the sample)";
+        }
+        final List<String> parts = new ArrayList<>();
+        if (count.mayBe() == 0) {
+            parts.add(String.valueOf(count.records()));
+        } else {
+            parts.add((count.records() == 0
+                    ? count.mayBe() + " may be"
+                    : count.records() + "; " + count.mayBe() + " more may be") + " (" + count.mayBeBecause() + ")");
+        }
+        if (count.droppedFirst() > 0) {
+            parts.add(count.droppedFirst() + " of its records are dropped first by " + count.droppedFirstBy());
+        }
+        return String.join("; ", parts);
     }
 
     // A value said: short ones as they are (quoted when they hold spaces), a long qualified name by its last part.
@@ -309,7 +363,7 @@ final class CatalogueTables {
         final List<String> out = new ArrayList<>();
         for (final String typeId : check.order()) {
             final CatalogueCheckResult.Count count = check.counts().get(typeId);
-            if (count != null && count.records() == 0) {
+            if (count != null && count.none() && count.droppedFirst() == 0) {
                 out.add(typeId);
             }
         }

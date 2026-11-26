@@ -317,7 +317,11 @@ public class Consent {
         if (NullSafe.isEmptyCollection(options) || !context.userQuestions().canAsk()) {
             return Optional.empty();
         }
-        final String key = "choice-" + XsltCode.sha256(action + "\n" + question).substring(0, 16);
+        // Keyed on its options too, as every other form is: the same question asked again with other options in the
+        // call (a time zone asked of another field, say) is another form, not given the first's answer, which isn't
+        // one of its options (found in review, 2026-11-27). A form waiting under the key it had before is found by
+        // its question (McpElicitations' same-question lookup) and asked afresh.
+        final String key = "choice-" + formDigest(action, question, options);
         final Map<String, Object> field = new LinkedHashMap<>();
         field.put("type", "string");
         field.put("title", heading(NullSafe.nonBlankStringElse(title, question)));

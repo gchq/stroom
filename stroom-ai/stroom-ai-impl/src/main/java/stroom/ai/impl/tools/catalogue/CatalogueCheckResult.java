@@ -265,19 +265,52 @@ public record CatalogueCheckResult(Map<String, Count> counts,
 
     /// The records an event type recognises.
     ///
-    /// @param records How many, by any of its ways.
-    /// @param byWay   How many each way recognises, in its order (ways may overlap).
-    public record Count(int records, List<Integer> byWay) {
+    /// @param records        How many, by any of its ways: those it surely recognises (every condition of a way
+    ///                       holds), less those the build's mapping's own `drop_when` drops first.
+    /// @param byWay          How many each way recognises, in its order (ways may overlap), counted so.
+    /// @param mayBe          How many more it may recognise: a condition of its can't be told on them here, and none
+    ///                       fails (counted apart, never as recognised or not).
+    /// @param mayBeBecause   Why, in words (`a condition on usr can't be checked here`), or null for none.
+    /// @param droppedFirst   How many records it recognises the build's mapping's own `drop_when` drops first, before
+    ///                       any event rule (they are not in [#records]).
+    /// @param droppedFirstBy The drop rules that drop them, in words, or null for none.
+    public record Count(int records,
+                        List<Integer> byWay,
+                        int mayBe,
+                        String mayBeBecause,
+                        int droppedFirst,
+                        String droppedFirstBy) {
 
         /// Copies the list.
         public Count {
             byWay = List.copyOf(byWay);
         }
 
+        /// The records an event type recognises, every one told.
+        ///
+        /// @param records How many, by any of its ways.
+        /// @param byWay   How many each way recognises, in its order.
+        public Count(final int records, final List<Integer> byWay) {
+            this(records, byWay, 0, null, 0, null);
+        }
+
+        /// @return True if no record is recognised, nor may be: the event type is not in the sample.
+        public boolean none() {
+            return records == 0 && mayBe == 0;
+        }
+
         Map<String, Object> toJson() {
             final Map<String, Object> out = new LinkedHashMap<>();
             out.put("records", records);
             out.put("by_way", byWay);
+            if (mayBe > 0) {
+                out.put("may_be", mayBe);
+                out.put("may_be_because", mayBeBecause);
+            }
+            if (droppedFirst > 0) {
+                out.put("dropped_first", droppedFirst);
+                out.put("dropped_first_by", droppedFirstBy);
+            }
             return out;
         }
     }
@@ -343,24 +376,38 @@ public record CatalogueCheckResult(Map<String, Count> counts,
     // --------------------------------------------------------------------------------
 
 
-    /// The records no event type recognises: the catch-all translates them, but those the build's mapping's own drop
-    /// rules drop.
+    /// The records no event type recognises, nor may: the catch-all translates them, but those the build's mapping's
+    /// own drop rules drop.
     ///
-    /// @param records How many.
-    /// @param shapes  Their shapes, commonest first.
-    /// @param dropped How many of them the build's mapping's own drop rules (`drop_when`, events rules with
-    ///                `drop: true`) drop: the rest become Unknown ([#unknown]).
-    public record Uncatalogued(int records, List<Shape> shapes, int dropped) {
+    /// @param records             How many: those whose held values don't parse among them, as processing writes
+    ///                            them to the catch-all too.
+    /// @param shapes              Their shapes, commonest first.
+    /// @param dropped             How many of them the build's mapping's own drop rules (`drop_when`, events rules
+    ///                            with `drop: true`) drop: the rest become Unknown ([#unknown]).
+    /// @param mayBeDropped        How many more of them those drop rules may drop: a condition of theirs can't be told
+    ///                            on them here.
+    /// @param mayBeDroppedBecause Why, in words, or null for none.
+    /// @param unparsed            How many of them have held values (JSON or XML a field holds) that don't parse.
+    /// @param mayBe               The records no event type surely recognises that some may (a condition of its can't
+    ///                            be told on them here), by event type: not among [#records].
+    public record Uncatalogued(int records,
+                               List<Shape> shapes,
+                               int dropped,
+                               int mayBeDropped,
+                               String mayBeDroppedBecause,
+                               int unparsed,
+                               List<MayBe> mayBe) {
 
         /// None.
         public static final Uncatalogued NONE = new Uncatalogued(0, List.of());
 
-        /// Copies the list.
+        /// Copies the lists.
         public Uncatalogued {
             shapes = List.copyOf(shapes);
+            mayBe = List.copyOf(Objects.requireNonNullElse(mayBe, List.of()));
         }
 
-        /// Records no event type recognises, none of them dropped by the build's mapping.
+        /// Records no event type recognises, every one told, none of them dropped by the build's mapping.
         ///
         /// @param records How many.
         /// @param shapes  Their shapes, commonest first.
@@ -368,10 +415,19 @@ public record CatalogueCheckResult(Map<String, Count> counts,
             this(records, shapes, 0);
         }
 
-        /// @return How many of them the catch-all writes (as Unknown, or as the event the user said): those the
-        /// build's mapping doesn't drop.
+        /// Records no event type recognises, every one told.
+        ///
+        /// @param records How many.
+        /// @param shapes  Their shapes, commonest first.
+        /// @param dropped How many of them the build's mapping's own drop rules drop.
+        public Uncatalogued(final int records, final List<Shape> shapes, final int dropped) {
+            this(records, shapes, dropped, 0, null, 0, List.of());
+        }
+
+        /// @return How many of them the catch-all surely writes (as Unknown, or as the event the user said): those
+        /// the build's mapping doesn't drop, nor may.
         public int unknown() {
-            return records - dropped;
+            return records - dropped - mayBeDropped;
         }
 
         Map<String, Object> toJson(final boolean full) {
@@ -379,6 +435,16 @@ public record CatalogueCheckResult(Map<String, Count> counts,
             out.put("records", records);
             if (dropped > 0) {
                 out.put("dropped_by_mapping", dropped);
+            }
+            if (mayBeDropped > 0) {
+                out.put("may_be_dropped_by_mapping", mayBeDropped);
+                out.put("may_be_dropped_because", mayBeDroppedBecause);
+            }
+            if (unparsed > 0) {
+                out.put("held_values_unparsed", unparsed);
+            }
+            if (!mayBe.isEmpty()) {
+                out.put("may_be", mayBe.stream().map(MayBe::toJson).toList());
             }
             out.put("shapes", shown(full).stream().map(shape -> shape.toJson(full)).toList());
             return out;
@@ -393,6 +459,32 @@ public record CatalogueCheckResult(Map<String, Count> counts,
             final List<Shape> out = new ArrayList<>(shapes.subList(0, SHAPES_SHOWN - RARE_SHAPES_SHOWN));
             out.addAll(shapes.subList(shapes.size() - RARE_SHAPES_SHOWN, shapes.size()));
             return out;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Records no event type surely recognises that one may: a condition of its can't be told on them here (an
+    /// xpath, a dictionary, a record-scope test, a field an extraction gives).
+    ///
+    /// @param typeId  The event type.
+    /// @param records How many.
+    /// @param because Why, in words: `a condition on usr can't be checked here`.
+    public record MayBe(String typeId, int records, String because) {
+
+        Map<String, Object> toJson() {
+            final Map<String, Object> out = new LinkedHashMap<>();
+            out.put("type_id", typeId);
+            out.put("records", records);
+            out.put("because", because);
+            return out;
+        }
+
+        /// @return It in words: `3 may be Authenticate-Logon (a condition on usr can't be checked here)`.
+        public String said() {
+            return records + " may be " + typeId + " (" + because + ")";
         }
     }
 

@@ -2797,6 +2797,10 @@ public final class DraftMapping {
                     notes.add(count + " more sampled record(s) no event type recognises are dropped by the "
                               + "mapping's own drop rules (drop_when).");
                 }
+                if (applied.get("uncatalogued_may_be_dropped") instanceof final Integer count && count > 0) {
+                    notes.add(count + " more sampled record(s) no event type recognises may be dropped by the "
+                              + "mapping's own drop rules: a condition of theirs can't be checked here.");
+                }
             }
             return left;
         }

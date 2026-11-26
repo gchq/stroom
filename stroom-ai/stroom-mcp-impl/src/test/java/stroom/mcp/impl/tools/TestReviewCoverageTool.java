@@ -70,6 +70,8 @@ class TestReviewCoverageTool {
             <Event><EventSource><User><Id>carol</Id></User></EventSource><EventDetail><TypeId>View</TypeId>
              <View><Resource><Type>Secret</Type><Name>Payroll</Name></Resource></View></EventDetail></Event>
             </Events>""";
+    // When the raw streams of the logged-records tests were created (from).
+    private static final long LOGGED_T0 = 1_790_000_000_000L;
 
     private final DocumentAccess documentAccess = Mockito.mock(DocumentAccess.class);
     private final KeptMappings keptMappings = Mockito.mock(KeptMappings.class);
@@ -441,6 +443,74 @@ class TestReviewCoverageTool {
     }
 
     // The pipeline's XSLT logs its Unknown records: none are sampled.
+    // Found in review (2026-11-27): one missed kind in 60 raw streams, and a kind of another source type (passed
+    // over) in one more. With the judgement, the streams to process again were read from the kind's raw_streams list,
+    // which keeps 50.
+    @Test
+    void theAffectedRawStreamsOfAJudgedFeedAreEveryStreamOfTheKindsMissed() {
+        loggedLogins(60);
+        judgedLoginMissed();
+
+        final Map<String, Object> result = reviewOfEv();
+
+        final Map<?, ?> affected = (Map<?, ?>) result.get("affected_raw_streams");
+        assertThat(affected.get("count")).as("affected raw streams of the missed kind").isEqualTo(60);
+        assertThat((List<?>) result.get("affected_raw_stream_ids")).hasSize(60);
+    }
+
+    // Found in review (2026-11-27): the passed-over stream created before every missed one gave the affected
+    // streams' time range its start.
+    @Test
+    void theAffectedRawStreamsTimeRangeIsTheirOwn() {
+        loggedLogins(3);
+        judgedLoginMissed();
+
+        final Map<String, Object> result = reviewOfEv();
+
+        final Map<?, ?> affected = (Map<?, ?>) result.get("affected_raw_streams");
+        assertThat(affected.get("count")).isEqualTo(3);
+        assertThat(affected.get("first_id")).isEqualTo(1L);
+        // Raw stream 1 was created at LOGGED_T0 + 1 day; the passed-over raw stream 900 at LOGGED_T0.
+        assertThat(affected.get("from")).as("from, of the affected streams").isEqualTo("2026-09-22T14:13:20Z");
+    }
+
+    // Raw streams 1..n each log one login record (the missed kind); raw stream 900, created first, one query.
+    private void loggedLogins(final int n) {
+        final List<CoverageReads.ErrorStream> errors = new ArrayList<>();
+        final List<CoverageReads.Logged> records = new ArrayList<>();
+        errors.add(new CoverageReads.ErrorStream(2_000, 900L, LOGGED_T0, Map.of()));
+        records.add(new CoverageReads.Logged(900, LOGGED_T0, 1, null, Map.of("action", "query")));
+        for (int i = 1; i <= n; i++) {
+            final long created = LOGGED_T0 + 86_400_000L + i;
+            errors.add(new CoverageReads.ErrorStream(1_000 + i, (long) i, created, Map.of()));
+            records.add(new CoverageReads.Logged(i, created, 1, null, Map.of("action", "login")));
+        }
+        Mockito.when(reads.errorBatch(any(), anyLong(), anyInt())).thenReturn(new CoverageReads.ErrorBatch(errors,
+                null));
+        Mockito.doReturn(new CoverageReads.LoggedRecords(records, errors.size())).when(reads).logged(any(), any());
+    }
+
+    // The login kind judged missed; every other kind passed over (another source type).
+    private void judgedLoginMissed() {
+        final SourceTypeScope scope = new SourceTypeScope("b", "sourcetype", List.of(), List.of("Security"));
+        Mockito.when(sourceTypes.judge(any(), any(), any(), any(), any(), any())).thenAnswer(inv -> {
+            final List<Map<String, Object>> groups = inv.getArgument(3);
+            final List<Map<String, Object>> missed = groups.stream()
+                    .filter(group -> String.valueOf(group.get("kind")).contains("login"))
+                    .toList();
+            final List<Map<String, Object>> passed = groups.stream().filter(group -> !missed.contains(group))
+                    .toList();
+            return Optional.of(new SourceTypeCoverage.Judged(missed, passed, List.of(), scope, null,
+                    Map.of("field", "sourcetype", "scope", Map.of("share_percent", 50.0), "passed_over",
+                            Map.of("Database", 1))));
+        });
+    }
+
+    private Map<String, Object> reviewOfEv() {
+        return tool.review(new SteppingWorld().context(), new ReviewCoverageTool.Request("ev", null, 500, List.of(),
+                false, null, List.of()));
+    }
+
     private void loggingXslt() {
         Mockito.when(keptMappings.keptXslt("ev")).thenReturn(Optional.of(new KeptMappings.KeptXslt(
                 new KeptMapping.Kept("index", Map.of()), "translationFilter",

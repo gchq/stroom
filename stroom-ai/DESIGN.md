@@ -4426,8 +4426,8 @@ per operator and per case below (`TestConditionParity`; through processing, `Tes
   `event.category equals '["authentication"]'` could never match). A condition about one item belongs to a repeated
   group (`for_each`, item scope).
 * **Held values that don't parse** (a bad escape, a value cut short): a condition inside them doesn't hold (a `not`
-  condition does, as XPath has it); the check counts and names such records (`unparsed`) rather than calling them
-  uncatalogued.
+  condition does, as XPath has it); the check counts and names such records (`unparsed`), and counts them among the
+  uncatalogued records where no type recognises them, as processing writes them to the catch-all (2026-11-27).
 * **Processing's string cut**: the JSONParser cuts a string at `stringTruncateLength` (10,000 by default) before
   `json-to-xml` reads a held value. The check reads each record as processing will (cut at the pipeline's setting) and
   whole; a condition depending on the cut is refused, naming the setting (tied to the profile's long-strings warning).
@@ -4491,7 +4491,9 @@ event types over thousands of records take about the records' reading), and retu
   alone, its conditions' fields excluded), or come in clearly different shapes. A warning (blocking for a seeded
   type): the agent splits it, or says why it is one (`one_type_because`, shown in the review).
 * **Not checked**: a condition the check can't evaluate (an `xpath`, a dictionary, a record-scope test, a field an
-  extraction gives) is listed as `not_checked` (said, not blocking), never silently skipped.
+  extraction gives) is listed as `not_checked` (said, not blocking), never silently skipped. Its records are counted
+  apart as may be (`Verdict`, the one three-state reading every count uses: the check, the translation's counts,
+  `CatalogueKept`; `WayCheck.recognises` takes it as holding only to place ways, never to count; 2026-11-27).
 * **Problems**: fields the records have (else the nearest names); XPath regex (no lookaround; `XPathRegex.problem`),
   at most 500 characters; capture names unique. **Regex guard** (lessons: no regex over whole long values,
   2026-11-12; a key=value regex's StackOverflow, 2026-11-06; Saxon's limits): each regex timed in Saxon's engine

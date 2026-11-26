@@ -1104,8 +1104,8 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                      + "by the field named, or say why it is one (op: change, one_type_because).");
         }
         if (!check.notChecked().isEmpty()) {
-            said.add("Some conditions can't be checked against the records here (check.not_checked): their records "
-                     + "aren't counted; tell them by a field's value where you can.");
+            said.add("Some conditions can't be checked against the records here (check.not_checked): the records "
+                     + "they test are counted apart (may_be); tell them by a field's value where you can.");
         }
         if (!check.unplaced().isEmpty()) {
             said.add(check.unplaced().size() + " element(s) the schema requires that nothing is placed at "

@@ -125,8 +125,10 @@ class TestE2eLoggerDropRules extends AbstractE2eTest {
         final List<String> rounds = catchAllDeclined(build);
         assertThat(rounds).as("the catch-all not held over the refused proposal")
                 .noneSatisfy(round -> assertThat(round).contains("isn't put to the user yet"));
+        // The 20 long records whose held event processing's cut leaves unreadable are uncatalogued too, as
+        // processing writes them to the catch-all (found in review, 2026-11-27: they were left out of the count).
         assertThat(rounds).anySatisfy(round -> assertThat(round).startsWith("FORM: ")
-                .contains("Uncatalogued records: 40"));
+                .contains("Uncatalogued records: 60", "Held values that don't parse: 20 of the uncatalogued records"));
         assertThat(rounds.getLast()).as("what the agent is told of the decline")
                 .contains("The user declined the catch-all", "Your latest proposals for them were not recorded",
                         "stringTruncateLength", "Correct those proposals", "rather than asking the user again");

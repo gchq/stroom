@@ -254,6 +254,25 @@ final class RecordIndex {
         return out;
     }
 
+    // Where a condition holds or can't be told among some records: where it may hold (a Verdict of HOLDS or
+    // UNKNOWN).
+    BitSet possibleWithin(final Condition c, final BitSet candidates) {
+        final Verdicts all = verdicts.get(c);
+        final BitSet out = new BitSet(size);
+        if (all != null) {
+            out.or(all.holds());
+            out.or(all.unknown());
+            out.and(candidates);
+            return out;
+        }
+        for (int n = candidates.nextSetBit(0); n >= 0; n = candidates.nextSetBit(n + 1)) {
+            if (!Boolean.FALSE.equals(holdsAt(c, n))) {
+                out.set(n);
+            }
+        }
+        return out;
+    }
+
     // Whether a condition holds on one record; null when it can't be told.
     Boolean holdsAt(final Condition c, final int n) {
         final Verdicts all = verdicts.get(c);

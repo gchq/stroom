@@ -276,7 +276,7 @@ class TestCatalogueCheck {
     }
 
     @Test
-    void recordsWhoseHeldValuesDontParseAreCountedWithWhyRatherThanUncatalogued() {
+    void recordsWhoseHeldValuesDontParseAreCountedWithWhyAndAmongTheUncatalogued() {
         final List<String> lines = new ArrayList<>(pegaLines());
         final Map<String, Object> outer = new LinkedHashMap<>();
         outer.put("time", 1795050001660L);
@@ -290,7 +290,10 @@ class TestCatalogueCheck {
 
         assertThat(check.unparsed().records()).isEqualTo(1);
         assertThat(check.unparsed().why()).singleElement().asString().startsWith("event: ");
-        assertThat(check.uncatalogued().records()).isEqualTo(28);
+        // Among the uncatalogued records, as processing writes them to the catch-all (found in review, 2026-11-27:
+        // left out of them, the catch-all's form never counted them).
+        assertThat(check.uncatalogued().records()).isEqualTo(29);
+        assertThat(check.uncatalogued().unparsed()).isEqualTo(1);
         assertThat(check.toJson().get("unparsed")).isEqualTo(Map.of("records", 1, "why", check.unparsed().why()));
     }
 

@@ -293,9 +293,13 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         // Drafted again from the catalogue, the rules the build already has keep their names in its existing mapping
         // (and so their templates' and documentation's); only rules new to the build are named afresh (decided by
         // the user 2026-11-26).
+        // The records the draft's own drop rules drop are counted as processing cuts them, as the catalogue's check
+        // counts them (its catch-all form).
         final Map<String, Object> sourceNotes = SourceNotes.catalogue(notesInBuild) == null
                 ? notesInBuild
-                : SourceNotes.withExistingRules(notesInBuild, builds.latestMapping(context, build).orElse(null));
+                : SourceNotes.withStringCut(SourceNotes.withExistingRules(notesInBuild,
+                        builds.latestMapping(context, build).orElse(null)), LongValues.cutLengthOrDefault(
+                        buildRecords, build));
         final SystemGiven system = system(call, build, groupScope);
         final Map<String, String> bySourceType = SourceTypeSystemNames.of(system.systemName(), groupScope);
         // The spec given, else the build's saved Data Splitter, as catalogue_event_types and the sample check read

@@ -117,6 +117,9 @@ final class CatalogueTranslation {
     private final Set<String> reserved = new HashSet<>();
     // The catch-all's name: the existing mapping's, else the default.
     private String catchAllName = CATCH_ALL_NAME;
+    // The pipeline's stringTruncateLength: the records' drops are counted over them cut so, as processing (and the
+    // catalogue's check) reads them.
+    private final int stringCut;
 
     @SuppressWarnings("checkstyle:ParameterNumber")
     private CatalogueTranslation(final Map<String, Object> mapping,
@@ -129,8 +132,10 @@ final class CatalogueTranslation {
                                  final PairMatches matches,
                                  final Map<String, String> changeSides,
                                  final List<Map<String, Object>> existingRules,
-                                 final List<Map<String, Object>> existingDrops) {
+                                 final List<Map<String, Object>> existingDrops,
+                                 final int stringCut) {
         this.mapping = mapping;
+        this.stringCut = stringCut;
         this.changeSides = Map.copyOf(changeSides);
         this.existingRules = NullSafe.list(existingRules);
         this.existingDrops = NullSafe.list(existingDrops);
@@ -213,8 +218,46 @@ final class CatalogueTranslation {
                                      final Map<String, String> changeSides,
                                      final List<Map<String, Object>> existingRules,
                                      final List<Map<String, Object>> existingDrops) {
+        return apply(mapping, names, values, catalogue, catchAllReason, detailFields, detailCheck, records, matches,
+                changeSides, existingRules, existingDrops, LocalCheck.JSON_PARSER_CUT);
+    }
+
+    /// As [#apply(Map, List, Map, Catalogue, String, List, Function, List, PairMatches, Map, List, List)], the
+    /// records the mapping's own drop rules drop counted over them cut at the pipeline's stringTruncateLength, as
+    /// processing reads them and as the catalogue's check counts them (found in review, 2026-11-27: a drop rule
+    /// testing past the cut was counted as dropping here, and as not dropping in the catch-all's form).
+    ///
+    /// @param mapping        The draft's mapping, changed in place.
+    /// @param names          The records' fields.
+    /// @param values         Each field's values.
+    /// @param catalogue      The catalogue.
+    /// @param catchAllReason Why the catch-all writes Unknown, or null.
+    /// @param detailFields   The notes' action element entries.
+    /// @param detailCheck    The schema's check of an action element.
+    /// @param records        The sample's records, as the draft reads them (whole).
+    /// @param matches        The call's regex matches.
+    /// @param changeSides    The user's answers of which key of each old/new list holds the value before.
+    /// @param existingRules  The build's existing mapping's `events` rules; none for a new build.
+    /// @param existingDrops  The build's existing mapping's own `drop_when` entries; none for a new build.
+    /// @param stringCut      The pipeline's stringTruncateLength ([LocalCheck#JSON_PARSER_CUT] by default); 0 or
+    ///                       less where nothing is cut.
+    /// @return What was done, as the other forms say.
+    @SuppressWarnings("checkstyle:ParameterNumber")
+    static Map<String, Object> apply(final Map<String, Object> mapping,
+                                     final List<String> names,
+                                     final Map<String, List<String>> values,
+                                     final Catalogue catalogue,
+                                     final String catchAllReason,
+                                     final List<Map<String, Object>> detailFields,
+                                     final Function<String, String> detailCheck,
+                                     final List<Map<String, Object>> records,
+                                     final PairMatches matches,
+                                     final Map<String, String> changeSides,
+                                     final List<Map<String, Object>> existingRules,
+                                     final List<Map<String, Object>> existingDrops,
+                                     final int stringCut) {
         return new CatalogueTranslation(mapping, names, values, catalogue, detailFields, detailCheck, records,
-                matches, changeSides, existingRules, existingDrops)
+                matches, changeSides, existingRules, existingDrops, stringCut)
                 .apply(catchAllReason);
     }
 
@@ -332,15 +375,31 @@ final class CatalogueTranslation {
         final Map<String, Object> applied = new LinkedHashMap<>();
         applied.put("events", said);
         applied.put("not_in_sample", notInSample);
+        // Uncatalogued: no event type's way recognises them, nor may (a condition that can't be told here); those
+        // the mapping's own drop rules drop, or may drop, counted apart, as the catalogue's check counts them.
         final List<Map<String, Object>> uncatalogued = sole
                 ? List.of()
                 : records.stream().filter(record -> !recognised.contains(record)).toList();
-        final int droppedByMapping = (int) uncatalogued.stream()
-                .filter(record -> ownDrops.stream().anyMatch(when -> check.recognises(when, record)))
-                .count();
-        applied.put("uncatalogued", uncatalogued.size() - droppedByMapping);
+        int droppedByMapping = 0;
+        int mayBeDropped = 0;
+        for (final Map<String, Object> record : uncatalogued) {
+            final Map<String, Object> asProcessed = asProcessed(record);
+            Verdict byOwnDrops = Verdict.DOESNT;
+            for (final List<Condition> when : ownDrops) {
+                byOwnDrops = byOwnDrops.or(check.verdict(when, asProcessed));
+            }
+            if (byOwnDrops == Verdict.HOLDS) {
+                droppedByMapping++;
+            } else if (byOwnDrops == Verdict.UNKNOWN) {
+                mayBeDropped++;
+            }
+        }
+        applied.put("uncatalogued", uncatalogued.size() - droppedByMapping - mayBeDropped);
         if (droppedByMapping > 0) {
             applied.put("uncatalogued_dropped", droppedByMapping);
+        }
+        if (mayBeDropped > 0) {
+            applied.put("uncatalogued_may_be_dropped", mayBeDropped);
         }
         applied.put("dropped", dropped);
         applied.put("unread_fields", unread);
@@ -348,6 +407,15 @@ final class CatalogueTranslation {
             applied.put("kept_drops", keptDrops);
         }
         return applied;
+    }
+
+    // A record as processing reads it: a JSON input's strings cut at the pipeline's stringTruncateLength.
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> asProcessed(final Map<String, Object> record) {
+        if (stringCut <= 0 || !"json".equals(mapping.get("input"))) {
+            return record;
+        }
+        return (Map<String, Object>) LocalCheck.cutStrings(record, stringCut);
     }
 
     // The draft's drop_when with the existing mapping's own drops: in the existing order, each of the draft's that
@@ -812,6 +880,12 @@ final class CatalogueTranslation {
             fields.removeIf(field -> freeText.equals(field.get(FIELD)));
             message.put(PATH, DESCRIPTION);
             message.remove(DATA_NAME);
+            if (NullSafe.isNonBlankString(type.description())
+                && own.stream().anyMatch(record -> !hasText(record.get(freeText)))) {
+                // Some of the way's records have it empty or missing: the type's own text where they do, as
+                // messageElseOwnText gives it (seen in eval case 42: 70 of 300 events with no Description).
+                message.put("default", type.description());
+            }
             put(fields, message);
         } else if (NullSafe.isNonBlankString(type.description())) {
             put(fields, entry(PATH, DESCRIPTION, VALUE, type.description()));
