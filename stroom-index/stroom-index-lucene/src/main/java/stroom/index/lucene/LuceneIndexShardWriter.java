@@ -557,6 +557,11 @@ class LuceneIndexShardWriter implements IndexShardWriter {
                     if (held) {
                         // Lucene refuses to close with a commit prepared but not finished.
                         indexWriter.commit();
+                        if (streamsDeleted) {
+                            // So that the count recorded as the shard closes follows what was purged.
+                            streamsDeleted = false;
+                            documentCount.set(indexWriter.getDocStats().numDocs);
+                        }
                         indexWriter.close();
                         closedCleanly = true;
                     } else {

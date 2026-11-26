@@ -26,11 +26,11 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /// Keeps the rows of `index_shard_task` for one run of a processor task. The node remembers which shards and
@@ -59,8 +59,10 @@ class TaskIndexRunTracker implements IndexRunTracker {
     // not wait for that, as it may be waiting for the same writer, and the run looks again once it has saved.
     private volatile boolean saving;
     private volatile boolean stopped;
-    // The row saved for each shard, with what it was before and whether the writer has had a document.
-    private final Map<Long, Saved> saved = new HashMap<>();
+    // The row saved for each shard, with what it was before and whether the writer has had a document. Read
+    // without the tracker's lock by purges on other threads, which may hold a writer's lock that the run is
+    // waiting for while it holds the tracker's.
+    private final Map<Long, Saved> saved = new ConcurrentHashMap<>();
     private boolean written;
 
     TaskIndexRunTracker(final IndexShardTaskDao taskDao,
@@ -137,19 +139,33 @@ class TaskIndexRunTracker implements IndexRunTracker {
         LOGGER.info("Stopped run {} of processor task {} as it has been replaced", run, taskId);
     }
 
+    /// Gets the id of the task this is a run of.
+    ///
+    /// @return The id.
     long getTaskId() {
         return taskId;
     }
 
+    /// Gets the task's run count for this run.
+    ///
+    /// @return The run count.
     int getRun() {
         return run;
     }
 
+    /// Gets the id of the stream the run indexes.
+    ///
+    /// @return The id.
     long getStreamId() {
         return streamId;
     }
 
-    synchronized boolean hasWrittenTo(final long indexShardId) {
+    /// Says whether the run has saved a row for a shard. Takes no lock, so that a purge holding a writer's
+    /// lock can ask without waiting for the run.
+    ///
+    /// @param indexShardId The id of the shard.
+    /// @return True if it has.
+    boolean hasWrittenTo(final long indexShardId) {
         return saved.containsKey(indexShardId);
     }
 
@@ -166,8 +182,10 @@ class TaskIndexRunTracker implements IndexRunTracker {
             }
             // Changed meanwhile by another node, e.g. a run that replaced this one, so look again.
         }
-        throw new RunStoppedException("Unable to record that index shard " + indexShardId
-                                      + " is being written to by processor task " + taskId);
+        // Not stopped, as how the run is to end has not been said. It is tried again, uncounted.
+        throw new IndexRunTrackingException("Unable to record that index shard " + indexShardId
+                                            + " is being written to by processor task " + taskId
+                                            + " as the record kept changing", null);
     }
 
     // Saves the row over one the task already has for the shard. Empty if that row changed meanwhile.

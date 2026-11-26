@@ -31,6 +31,13 @@ class IndexRunTrackerFactoryImpl implements IndexRunTrackerFactory {
     private final IndexShardPurger purger;
     private final IndexRunRegistry runRegistry;
 
+    /// Creates the factory.
+    ///
+    /// @param taskDao                  Reads and writes the runs' rows.
+    /// @param heldProcessorTaskService Reads the status of the tasks.
+    /// @param securityContext          Records as the processing user.
+    /// @param purger                   Purges a stream before a run first writes it to a shard.
+    /// @param runRegistry              Holds the runs on this node, so that replaced ones can be stopped.
     @Inject
     IndexRunTrackerFactoryImpl(final IndexShardTaskDao taskDao,
                                final HeldProcessorTaskService heldProcessorTaskService,

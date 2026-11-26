@@ -42,12 +42,20 @@ class IndexShardTaskListener implements ProcessorTaskListener {
 
     private final IndexShardTaskDao taskDao;
     private final IndexShardTaskCompletion completion;
+    private final IndexRunRegistry runRegistry;
 
+    /// Creates the listener.
+    ///
+    /// @param taskDao     Reads and changes the tasks' rows.
+    /// @param completion  Completes the tasks whose rows are all committed.
+    /// @param runRegistry The runs on this node, from which each is taken out as it ends.
     @Inject
     IndexShardTaskListener(final IndexShardTaskDao taskDao,
-                           final IndexShardTaskCompletion completion) {
+                           final IndexShardTaskCompletion completion,
+                           final IndexRunRegistry runRegistry) {
         this.taskDao = taskDao;
         this.completion = completion;
+        this.runRegistry = runRegistry;
     }
 
     /// Turns the rows of earlier runs into purges, so that what they wrote is deleted before the shards are
@@ -65,6 +73,7 @@ class IndexShardTaskListener implements ProcessorTaskListener {
     /// @param task The task, with the run's run count.
     @Override
     public void held(final ProcessorTask task) {
+        runRegistry.remove(task.getId(), task.getRunCount());
         for (int i = 1; i <= MAX_TRIES; i++) {
             try {
                 taskDao.markWritten(task.getId(), task.getRunCount());
@@ -90,6 +99,7 @@ class IndexShardTaskListener implements ProcessorTaskListener {
     /// @param status The status it has been set to.
     @Override
     public void ended(final ProcessorTask task, final TaskStatus status) {
+        runRegistry.remove(task.getId(), task.getRunCount());
         if (TaskStatus.ABORTED.equals(status)) {
             toPurges(task, row -> true);
         }
@@ -100,6 +110,7 @@ class IndexShardTaskListener implements ProcessorTaskListener {
     /// @param task The task, with the run's run count.
     @Override
     public void replaced(final ProcessorTask task) {
+        runRegistry.remove(task.getId(), task.getRunCount());
         toPurges(task, row -> row.run() == task.getRunCount());
     }
 
@@ -110,8 +121,8 @@ class IndexShardTaskListener implements ProcessorTaskListener {
                 .toList();
         if (!rows.isEmpty()) {
             final List<IndexShardTaskRow> purged = taskDao.toPurges(rows);
-            LOGGER.debug("Turned {} of {} rows of processor task {} into purges",
-                    purged.size(), rows.size(), task.getId());
+            LOGGER.debug(() -> LogUtil.message("Turned {} of {} rows of processor task {} into purges",
+                    purged.size(), rows.size(), task.getId()));
         }
     }
 }

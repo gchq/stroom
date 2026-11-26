@@ -219,6 +219,11 @@ public class ActiveShards {
                     // Lucene refused the document and its writer is fine. The fault is in the document, or in
                     // the shard if the type of a field has changed since it was made.
                     LOGGER.debug(e::getMessage, e);
+                    if (indexShardWriter.getDocumentCount() == 0) {
+                        // An empty shard holds no fields to differ from, so the fault is in the document, and
+                        // no other shard is made for it.
+                        throw new DocumentRefusedException("Unable to index a document: " + e.getMessage(), e);
+                    }
                     refusals.put(indexShard.getId(), e);
                     return false;
                 }

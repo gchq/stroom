@@ -31,6 +31,7 @@ import org.mockito.Mockito;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -265,6 +266,35 @@ class TestTaskIndexRunTracker {
         runThread.join(10_000);
         assertThat(runIndexing.isDocumentsLost()).isTrue();
         assertThatThrownBy(() -> tracker.beforeAdd(SHARD, writer)).isInstanceOf(RunStoppedException.class);
+    }
+
+    @Test
+    void testHasWrittenTo_answersWhileTheRunHoldsItsLock() throws Exception {
+        tracker.beforeAdd(SHARD, writer);
+        // As when the run is saving a row and waiting for a writer that a purge holds, while the purge asks it
+        // whether it has written to the shard.
+        final CountDownLatch locked = new CountDownLatch(1);
+        final CountDownLatch release = new CountDownLatch(1);
+        final Thread runThread = new Thread(() -> {
+            synchronized (tracker) {
+                locked.countDown();
+                try {
+                    release.await();
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        });
+        runThread.start();
+        assertThat(locked.await(10, TimeUnit.SECONDS)).isTrue();
+        try {
+            final CompletableFuture<Boolean> answer = CompletableFuture.supplyAsync(() -> tracker.hasWrittenTo(SHARD));
+
+            assertThat(answer.get(10, TimeUnit.SECONDS)).isTrue();
+        } finally {
+            release.countDown();
+            runThread.join();
+        }
     }
 
     @Test

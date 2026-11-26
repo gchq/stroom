@@ -41,6 +41,7 @@ class TestIndexShardTaskListener {
 
     private IndexShardTaskDao taskDao;
     private IndexShardTaskCompletion completion;
+    private IndexRunRegistry runRegistry;
     private IndexShardTaskListener listener;
     private ProcessorTask task;
 
@@ -49,7 +50,8 @@ class TestIndexShardTaskListener {
         taskDao = Mockito.mock(IndexShardTaskDao.class);
         completion = Mockito.mock(IndexShardTaskCompletion.class);
         Mockito.when(taskDao.findByTask(TASK)).thenReturn(List.of(earlierRun, olderRun, thisRun));
-        listener = new IndexShardTaskListener(taskDao, completion);
+        runRegistry = Mockito.mock(IndexRunRegistry.class);
+        listener = new IndexShardTaskListener(taskDao, completion, runRegistry);
         task = ProcessorTask.builder().id(TASK).metaId(100L).runCount(RUN).build();
     }
 
@@ -95,6 +97,15 @@ class TestIndexShardTaskListener {
         listener.ended(task, TaskStatus.COMPLETE);
 
         Mockito.verify(taskDao, Mockito.never()).toPurges(any());
+    }
+
+    @Test
+    void testRunIsTakenOutOfTheRegistryAsItEnds() {
+        listener.held(task);
+        listener.ended(task, TaskStatus.RETRY);
+        listener.replaced(task);
+
+        Mockito.verify(runRegistry, Mockito.times(3)).remove(TASK, RUN);
     }
 
     @Test

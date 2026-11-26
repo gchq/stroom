@@ -379,7 +379,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                 }
             }), waitMs, TimeUnit.MILLISECONDS);
         } catch (final RuntimeException e) {
-            LOGGER.error("Unable to try again to record the close of index shard {}", close.indexShardId(), e);
+            LOGGER.error(() -> LogUtil.message("Unable to try again to record the close of index shard {}",
+                    close.indexShardId()), e);
             giveUpClose(close);
             pendingCloses.remove(close.indexShardId(), close);
         }

@@ -39,11 +39,12 @@ public class IndexRunRegistry {
         runs.add(run);
     }
 
-    /// Takes out a run that has ended.
+    /// Takes out the run of a task that has ended.
     ///
-    /// @param run The run.
-    void remove(final TaskIndexRunTracker run) {
-        runs.remove(run);
+    /// @param taskId The id of the task.
+    /// @param run    The task's run count for the run.
+    void remove(final long taskId, final int run) {
+        runs.removeIf(tracker -> tracker.getTaskId() == taskId && tracker.getRun() == run);
     }
 
     /// Finds the runs that have written a stream to a shard.

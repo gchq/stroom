@@ -223,10 +223,17 @@ class TestActiveShards {
 
     @Test
     void testDocumentRefusedByEveryShard_atMostOneShardIsMadeForIt() {
-        // Lucene refuses the document, e.g. for an immense term, but its writer is fine.
+        // Lucene refuses the document, e.g. for an immense term, but its writer is fine. The existing shard has
+        // documents, so it may have refused it only because a field's type has changed.
         Mockito.doThrow(new IllegalArgumentException("immense term"))
                 .when(myIndexShardWriter).addDocument(any());
-        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong())).thenReturn(myIndexShardWriter);
+        Mockito.doThrow(new IllegalArgumentException("immense term"))
+                .when(anotherIndexShardWriter).addDocument(any());
+        Mockito.when(myIndexShardWriter.getDocumentCount()).thenReturn(10);
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong()))
+                .thenAnswer(invocation -> invocation.<Long>getArgument(0) == 1L
+                        ? myIndexShardWriter
+                        : anotherIndexShardWriter);
         final ActiveShards activeShards = createActiveShards();
 
         assertThatThrownBy(() -> activeShards.addDocument(new IndexDocument()))
@@ -234,6 +241,10 @@ class TestActiveShards {
                 .hasMessageContaining("immense term");
 
         // Even a new, empty shard refused it, so no more are made, and the writers stay in use.
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isEqualTo(2);
+        // The next such document is refused by the empty shard there now, so no other is made.
+        assertThatThrownBy(() -> activeShards.addDocument(new IndexDocument()))
+                .isInstanceOf(DocumentRefusedException.class);
         assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isEqualTo(2);
         Mockito.verify(indexShardWriterCache, never()).close(any());
     }
@@ -243,6 +254,7 @@ class TestActiveShards {
         // The existing shard holds a field of a type that has since changed.
         Mockito.doThrow(new IllegalArgumentException("Inconsistency of field data structures"))
                 .when(myIndexShardWriter).addDocument(any());
+        Mockito.when(myIndexShardWriter.getDocumentCount()).thenReturn(10);
         Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong()))
                 .thenAnswer(invocation -> invocation.<Long>getArgument(0) == 1L
                         ? myIndexShardWriter
@@ -290,6 +302,7 @@ class TestActiveShards {
         // The old shard holds a field of a type that has since changed, and no new shard can be opened.
         Mockito.doThrow(new IllegalArgumentException("Inconsistency of field data structures"))
                 .when(myIndexShardWriter).addDocument(any());
+        Mockito.when(myIndexShardWriter.getDocumentCount()).thenReturn(10);
         Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong())).thenAnswer(invocation -> {
             if (invocation.<Long>getArgument(0) == 1L) {
                 return myIndexShardWriter;

@@ -461,6 +461,24 @@ class TestIndexShardIO extends StroomUnitTest {
     }
 
     @Test
+    void testDeleteStreams_thenClose_countFollowsThePurge() throws IOException {
+        final IndexShard indexShard = createShardOn(VolumeType.LOCAL);
+        final IndexShardWriter writer = createWriter(indexShard);
+        for (long streamId = 1; streamId <= 2; streamId++) {
+            for (int i = 0; i < 10; i++) {
+                writer.addDocument(buildStreamDocument(streamId));
+            }
+        }
+        writer.flush();
+
+        writer.deleteStreams(List.of(1L));
+        writer.close();
+
+        assertThat(countCommittedDocuments(indexShard)).isEqualTo(10);
+        assertThat(writer.getDocumentCount()).isEqualTo(10);
+    }
+
+    @Test
     void testDeleteStreams_refusedWithoutTheLease() throws IOException {
         final AtomicBoolean leaseHeld = new AtomicBoolean(true);
         final IndexShard indexShard = createShardOn(VolumeType.SHARED);
