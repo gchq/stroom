@@ -80,6 +80,35 @@ public interface IndexShardDao {
      */
     boolean setStatus(Long id, IndexShard.IndexShardStatus status);
 
+    /// Marks a shard that is being opened for writing as open, and records the writer that has it open, which
+    /// is what the rows of `index_shard_task` that the writer is given are compared with.
+    ///
+    /// @param id       The database ID of the shard.
+    /// @param writerId The new writer's id.
+    /// @return True if the shard was being opened and is now open. False if it has been deleted meanwhile.
+    boolean markOpen(long id, String writerId);
+
+    /// Closes a writer, in one transaction: if the writer closed cleanly, every row of `index_shard_task` it
+    /// was given is marked *committed* and the purges it did are removed, as closing committed all it had;
+    /// then the shard is marked closed, its writer id is cleared and the lease is given up. Nothing is done
+    /// unless the shard still has that writer, which is checked with the shard's row locked, so a writer that
+    /// has lost its shard can't mark another writer's rows or close the shard under it.
+    ///
+    /// @param id                  The database ID of the shard.
+    /// @param writerId            The writer's id.
+    /// @param leaseInstanceId     The process holding the lease the writer wrote under, or null if it had
+    ///                            none, as for a shard on a local volume.
+    /// @param pruneCommitsDelayMs How long from now the shard's replaced commits must be kept for, or null if
+    ///                            the writer left none behind.
+    /// @param clean               True if the writer closed cleanly, so its rows and purges were committed.
+    /// @return The ids of the tasks whose *written* rows were marked *committed*, which may now be complete,
+    /// or empty if the shard no longer had that writer, so nothing was done.
+    Optional<Set<Long>> closeWriter(long id,
+                                    String writerId,
+                                    String leaseInstanceId,
+                                    Long pruneCommitsDelayMs,
+                                    boolean clean);
+
     /// Claims the lease on a shard on a shared volume and marks the shard as opening, in one update, so
     /// that of two nodes that try to open a shard for writing only one can succeed.
     ///

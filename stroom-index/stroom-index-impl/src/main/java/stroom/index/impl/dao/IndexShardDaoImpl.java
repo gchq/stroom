@@ -26,6 +26,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexShardDao;
+import stroom.index.impl.IndexShardTaskState;
 import stroom.index.impl.db.IndexDbConnProvider;
 import stroom.index.impl.db.jooq.tables.IndexVolumeGroup;
 import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
@@ -80,6 +81,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static stroom.index.impl.db.jooq.tables.IndexShard.INDEX_SHARD;
+import static stroom.index.impl.db.jooq.tables.IndexShardPurge.INDEX_SHARD_PURGE;
+import static stroom.index.impl.db.jooq.tables.IndexShardTask.INDEX_SHARD_TASK;
 import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
 import static stroom.index.impl.db.jooq.tables.IndexVolumeGroup.INDEX_VOLUME_GROUP;
 
@@ -363,6 +366,86 @@ class IndexShardDaoImpl implements IndexShardDao {
     }
 
     @Override
+    public boolean markOpen(final long id, final String writerId) {
+        Objects.requireNonNull(writerId);
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
+                .update(INDEX_SHARD)
+                .set(INDEX_SHARD.STATUS, IndexShardStatus.OPEN.getPrimitiveValue())
+                .set(INDEX_SHARD.WRITER_ID, writerId)
+                .where(INDEX_SHARD.ID.eq(id))
+                .and(INDEX_SHARD.STATUS.eq(IndexShardStatus.OPENING.getPrimitiveValue()))
+                .execute()) > 0;
+    }
+
+    @Override
+    public Optional<Set<Long>> closeWriter(final long id,
+                                           final String writerId,
+                                           final String leaseInstanceId,
+                                           final Long pruneCommitsDelayMs,
+                                           final boolean clean) {
+        Objects.requireNonNull(writerId);
+        final Field<Long> pruneCommitsAfterMs = pruneCommitsDelayMs == null
+                ? INDEX_SHARD.PRUNE_COMMITS_AFTER_MS
+                : DB_TIME_MS.plus(pruneCommitsDelayMs);
+        final Condition leaseCondition = leaseInstanceId == null
+                ? INDEX_SHARD.LEASE_INSTANCE_ID.isNull()
+                : INDEX_SHARD.LEASE_INSTANCE_ID.eq(leaseInstanceId);
+
+        return JooqUtil.transactionResult(indexDbConnProvider, context -> {
+            // Locked until the transaction ends, so the shard can't change hands while this is done.
+            final boolean ours = context
+                    .select(INDEX_SHARD.ID)
+                    .from(INDEX_SHARD)
+                    .where(INDEX_SHARD.ID.eq(id))
+                    .and(INDEX_SHARD.WRITER_ID.eq(writerId))
+                    .and(leaseCondition)
+                    .forUpdate()
+                    .fetchOptional()
+                    .isPresent();
+            if (!ours) {
+                return Optional.empty();
+            }
+
+            final Set<Long> taskIds;
+            if (clean) {
+                taskIds = new HashSet<>(context
+                        .select(INDEX_SHARD_TASK.TASK_ID)
+                        .from(INDEX_SHARD_TASK)
+                        .where(INDEX_SHARD_TASK.INDEX_SHARD_ID.eq(id))
+                        .and(INDEX_SHARD_TASK.WRITER_ID.eq(writerId))
+                        .and(INDEX_SHARD_TASK.STATE.eq(IndexShardTaskState.WRITTEN.getPrimitiveValue()))
+                        .fetch(INDEX_SHARD_TASK.TASK_ID));
+                // Rows of runs still going too, as nothing more can be added to this writer.
+                context.update(INDEX_SHARD_TASK)
+                        .set(INDEX_SHARD_TASK.STATE, IndexShardTaskState.COMMITTED.getPrimitiveValue())
+                        .set(INDEX_SHARD_TASK.UPDATE_TIME_MS, DB_TIME_MS)
+                        .where(INDEX_SHARD_TASK.INDEX_SHARD_ID.eq(id))
+                        .and(INDEX_SHARD_TASK.WRITER_ID.eq(writerId))
+                        .and(INDEX_SHARD_TASK.STATE.in(
+                                IndexShardTaskState.WRITING.getPrimitiveValue(),
+                                IndexShardTaskState.WRITTEN.getPrimitiveValue()))
+                        .execute();
+                context.deleteFrom(INDEX_SHARD_PURGE)
+                        .where(INDEX_SHARD_PURGE.INDEX_SHARD_ID.eq(id))
+                        .and(INDEX_SHARD_PURGE.WRITER_ID.eq(writerId))
+                        .execute();
+            } else {
+                taskIds = Set.of();
+            }
+
+            context.update(INDEX_SHARD)
+                    .set(INDEX_SHARD.STATUS, closedIfOpen())
+                    .setNull(INDEX_SHARD.WRITER_ID)
+                    .setNull(INDEX_SHARD.LEASE_INSTANCE_ID)
+                    .setNull(INDEX_SHARD.LEASE_EXPIRY_MS)
+                    .set(INDEX_SHARD.PRUNE_COMMITS_AFTER_MS, pruneCommitsAfterMs)
+                    .where(INDEX_SHARD.ID.eq(id))
+                    .execute();
+            return Optional.of(taskIds);
+        });
+    }
+
+    @Override
     public boolean claimLease(final long id,
                               final String nodeName,
                               final String instanceId,
@@ -413,6 +496,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                 .set(INDEX_SHARD.STATUS, closedIfOpen())
                 .setNull(INDEX_SHARD.LEASE_INSTANCE_ID)
                 .setNull(INDEX_SHARD.LEASE_EXPIRY_MS)
+                .setNull(INDEX_SHARD.WRITER_ID)
                 .set(INDEX_SHARD.PRUNE_COMMITS_AFTER_MS, pruneCommitsAfterMs)
                 .where(INDEX_SHARD.ID.eq(id))
                 .and(INDEX_SHARD.LEASE_INSTANCE_ID.eq(instanceId))
@@ -454,6 +538,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                     .set(INDEX_SHARD.STATUS, closedIfOpen())
                     .setNull(INDEX_SHARD.LEASE_INSTANCE_ID)
                     .setNull(INDEX_SHARD.LEASE_EXPIRY_MS)
+                    .setNull(INDEX_SHARD.WRITER_ID)
                     // The old writer may have been keeping commits it had replaced, which nothing recorded.
                     // Any time that is recorded is from an earlier close, so is too soon.
                     .set(INDEX_SHARD.PRUNE_COMMITS_AFTER_MS, DSL.greatest(
@@ -548,6 +633,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                 .update(INDEX_SHARD)
                 .setNull(INDEX_SHARD.LEASE_INSTANCE_ID)
                 .setNull(INDEX_SHARD.LEASE_EXPIRY_MS)
+                .setNull(INDEX_SHARD.WRITER_ID)
                 .where(INDEX_SHARD.NODE_NAME.eq(nodeName))
                 .and(INDEX_SHARD.LEASE_INSTANCE_ID.ne(instanceId))
                 .and(INDEX_SHARD.STATUS.in(
@@ -562,6 +648,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                 .set(INDEX_SHARD.STATUS, IndexShardStatus.CLOSED.getPrimitiveValue())
                 .setNull(INDEX_SHARD.LEASE_INSTANCE_ID)
                 .setNull(INDEX_SHARD.LEASE_EXPIRY_MS)
+                .setNull(INDEX_SHARD.WRITER_ID)
                 .set(INDEX_SHARD.PRUNE_COMMITS_AFTER_MS, pruneCommitsAfterMs)
                 .where(INDEX_SHARD.ID.eq(id))
                 .and(leaseCondition)

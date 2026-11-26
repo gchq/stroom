@@ -59,9 +59,12 @@ import java.util.function.LongConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 
 class TestIndexShardWriterCacheImpl {
 
@@ -86,6 +89,8 @@ class TestIndexShardWriterCacheImpl {
     private IndexShardWriter secondWriter;
     @Mock
     private IndexShardLeases indexShardLeases;
+    @Mock
+    private IndexShardCommitRecorder commitRecorder;
 
     private IndexShardWriterCacheImpl writerCache;
 
@@ -96,6 +101,9 @@ class TestIndexShardWriterCacheImpl {
 
         Mockito.when(indexShardDao.fetch(anyLong())).thenReturn(Optional.of(createShard(VolumeType.SHARED)));
         Mockito.when(indexShardDao.setStatus(anyLong(), any())).thenReturn(true);
+        Mockito.when(indexShardDao.markOpen(anyLong(), any())).thenReturn(true);
+        Mockito.when(indexShardDao.closeWriter(anyLong(), any(), any(), any(), anyBoolean()))
+                .thenReturn(Optional.of(Set.of()));
         Mockito.when(luceneIndexDocCache.get(any())).thenReturn(LuceneIndexDoc
                 .builder()
                 .uuid("index")
@@ -124,7 +132,8 @@ class TestIndexShardWriterCacheImpl {
                 pathCreator,
                 () -> luceneProviderFactory,
                 cacheManager,
-                indexShardLeases);
+                indexShardLeases,
+                commitRecorder);
     }
 
     @Test
@@ -310,7 +319,8 @@ class TestIndexShardWriterCacheImpl {
                     null,
                     () -> new LuceneProviderFactory(Set.of(luceneProvider)),
                     realCacheManager,
-                    indexShardLeases);
+                    indexShardLeases,
+                    commitRecorder);
 
             final ArgumentCaptor<LongConsumer> handlerCaptor = ArgumentCaptor.forClass(LongConsumer.class);
             Mockito.verify(indexShardLeases, Mockito.atLeastOnce()).setLostLeaseHandler(handlerCaptor.capture());
@@ -331,7 +341,7 @@ class TestIndexShardWriterCacheImpl {
 
             Mockito.verify(writer).close();
             assertThat(realWriterCache.getIfPresent(SHARD)).isEmpty();
-            Mockito.verify(indexShardDao).reset(SHARD);
+            verifyClosedInDatabase();
         }
 
         @Test
@@ -345,7 +355,7 @@ class TestIndexShardWriterCacheImpl {
 
             // Left open, it would keep Lucene's lock while the shard was recorded as closed.
             Mockito.verify(writer).close();
-            Mockito.verify(indexShardDao).reset(SHARD);
+            verifyClosedInDatabase();
         }
 
         @Test
@@ -364,7 +374,7 @@ class TestIndexShardWriterCacheImpl {
             Mockito.verify(newWriter, Mockito.never()).close();
             Mockito.verify(oldWriter).close();
             assertThat(realWriterCache.getOrOpenWriter(SHARD)).isSameAs(newWriter);
-            Mockito.verify(indexShardDao).reset(SHARD);
+            verifyClosedInDatabase();
 
             // The new writer can still be closed in its turn.
             realWriterCache.close(newWriter);
@@ -408,7 +418,7 @@ class TestIndexShardWriterCacheImpl {
 
             assertThat(realWriterCache.getIfPresent(SHARD)).isEmpty();
             Mockito.verify(writer).close();
-            Mockito.verify(indexShardDao).reset(SHARD);
+            verifyClosedInDatabase();
         }
 
         @Test
@@ -446,7 +456,7 @@ class TestIndexShardWriterCacheImpl {
 
         @Test
         void testOpen_statusCannotBeSet_writerIsClosed() {
-            Mockito.when(indexShardDao.setStatus(SHARD, IndexShardStatus.OPEN))
+            Mockito.when(indexShardDao.markOpen(eq(SHARD), any()))
                     .thenThrow(new RuntimeException("no database"))
                     .thenReturn(true);
 
@@ -514,7 +524,7 @@ class TestIndexShardWriterCacheImpl {
             runQueuedTask();
 
             Mockito.verify(writer).close();
-            Mockito.verify(indexShardDao).reset(SHARD);
+            verifyClosedInDatabase();
 
             // A writer that the new cache holds is left alone.
             final IndexShardWriter newWriter = realWriterCache.getOrOpenWriter(SHARD);
@@ -537,9 +547,92 @@ class TestIndexShardWriterCacheImpl {
             Mockito.verify(writer).close();
         }
 
+        @Test
+        void testOpen_eachOpeningHasAWriterIdOfItsOwn() throws InterruptedException {
+            final IndexShardWriter first = realWriterCache.getOrOpenWriter(SHARD);
+            realWriterCache.close(first);
+            runQueuedTask();
+            final IndexShardWriter second = realWriterCache.getOrOpenWriter(SHARD);
+
+            assertThat(first.getWriterId()).isNotNull();
+            assertThat(second.getWriterId()).isNotNull().isNotEqualTo(first.getWriterId());
+            Mockito.verify(indexShardDao).markOpen(SHARD, first.getWriterId());
+            Mockito.verify(indexShardDao).markOpen(SHARD, second.getWriterId());
+            Mockito.verify(commitRecorder).createListener(SHARD, first.getWriterId());
+        }
+
+        @Test
+        void testOpen_shardDeletedMeanwhile_writerIsClosed() {
+            Mockito.when(indexShardDao.markOpen(eq(SHARD), any())).thenReturn(false);
+
+            assertThatThrownBy(() -> realWriterCache.getOrOpenWriter(SHARD))
+                    .hasMessageContaining("no longer being opened");
+
+            Mockito.verify(writers.getFirst()).close();
+        }
+
+        @Test
+        void testClose_cleanClose_recordsItAndCompletesTasks() throws InterruptedException {
+            final IndexShardWriter writer = realWriterCache.getOrOpenWriter(SHARD);
+            final String writerId = writer.getWriterId();
+            Mockito.when(writer.isClosedCleanly()).thenReturn(true);
+            Mockito.when(indexShardDao.closeWriter(eq(SHARD), eq(writerId), any(), any(), eq(true)))
+                    .thenReturn(Optional.of(Set.of(7L)));
+
+            realWriterCache.close(writer);
+            runQueuedTask();
+
+            Mockito.verify(indexShardDao).closeWriter(SHARD, writerId, null, null, true);
+            Mockito.verify(commitRecorder).closed(Set.of(7L));
+            Mockito.verify(indexShardDao, Mockito.never()).reset(anyLong());
+        }
+
+        @Test
+        void testClose_shardTakenOverMeanwhile_leaseIsGivenUpAsBefore() throws InterruptedException {
+            volumeType = VolumeType.SHARED;
+            final IndexShardWriter writer = realWriterCache.getOrOpenWriter(SHARD);
+            Mockito.when(indexShardDao.closeWriter(anyLong(), any(), any(), any(), anyBoolean()))
+                    .thenReturn(Optional.empty());
+
+            realWriterCache.close(writer);
+            runQueuedTask();
+
+            Mockito.verify(indexShardDao).closeWriter(SHARD, writer.getWriterId(), INSTANCE_ID, null, false);
+            Mockito.verify(indexShardLeases).release(SHARD, null);
+            Mockito.verify(commitRecorder, Mockito.never()).closed(any());
+        }
+
+        @Test
+        void testClose_databaseUnavailable_isTriedAgain() throws InterruptedException {
+            volumeType = VolumeType.SHARED;
+            final IndexShardWriter writer = realWriterCache.getOrOpenWriter(SHARD);
+            Mockito.when(indexShardDao.closeWriter(anyLong(), any(), any(), any(), anyBoolean()))
+                    .thenThrow(new RuntimeException("no database"))
+                    .thenReturn(Optional.of(Set.of()));
+
+            realWriterCache.close(writer);
+            runQueuedTask();
+
+            Mockito.verify(indexShardDao, Mockito.times(2))
+                    .closeWriter(SHARD, writer.getWriterId(), INSTANCE_ID, null, false);
+            // Given up with the close, in the same transaction.
+            Mockito.verify(indexShardLeases).forget(SHARD);
+            Mockito.verify(indexShardLeases, Mockito.never()).release(anyLong(), any());
+        }
+
+        private void verifyClosedInDatabase() {
+            Mockito.verify(indexShardDao).closeWriter(eq(SHARD), any(), isNull(), any(), anyBoolean());
+        }
+
         private IndexShardWriter createWriter(final long indexShardId) {
             final IndexShardWriter writer = Mockito.mock(IndexShardWriter.class);
             Mockito.when(writer.getIndexShardId()).thenReturn(indexShardId);
+            final AtomicReference<String> writerId = new AtomicReference<>();
+            Mockito.doAnswer(invocation -> {
+                writerId.set(invocation.getArgument(0));
+                return null;
+            }).when(writer).setWriterId(any());
+            Mockito.when(writer.getWriterId()).thenAnswer(invocation -> writerId.get());
             Mockito.when(writer.isUnusable()).thenAnswer(invocation -> unusable.contains(writer));
             writers.add(writer);
             return writer;

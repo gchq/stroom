@@ -16,6 +16,7 @@
 
 package stroom.index.impl.dao;
 
+import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardPurge;
 import stroom.index.impl.IndexShardPurgeDao;
 import stroom.index.impl.IndexShardTaskDao;
@@ -34,6 +35,8 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,6 +56,8 @@ class TestIndexShardTaskDaoImpl {
     private IndexShardPurgeDao purgeDao;
     @Inject
     private IndexShardFixtures shards;
+    @Inject
+    private IndexShardDao indexShardDao;
 
     @TempDir
     private Path tempDir;
@@ -330,6 +335,113 @@ class TestIndexShardTaskDaoImpl {
 
         assertThat(taskDao.fetch(row.taskId(), shard)).isEmpty();
         assertThat(purgeDao.findByShard(shard)).isEmpty();
+    }
+
+    @Test
+    void testMarkOpen_recordsTheWriter() {
+        final long shard = shards.createCommittedShard(tempDir);
+        // Only a shard that is being opened.
+        assertThat(indexShardDao.markOpen(shard, WRITER_A)).isFalse();
+        indexShardDao.setStatus(shard, IndexShardStatus.OPENING);
+
+        assertThat(indexShardDao.markOpen(shard, WRITER_A)).isTrue();
+
+        assertThat(indexShardDao.fetch(shard).orElseThrow().getStatus()).isEqualTo(IndexShardStatus.OPEN);
+        // A row of that writer is not lost, as the shard still has it.
+        final IndexShardTaskRow row = insert(shard, 1, WRITER_A);
+        assertThat(findAllLost()).doesNotContain(row);
+    }
+
+    @Test
+    void testCloseWriter_cleanClose_marksAllTheWritersRowsAndPurgesAndClosesTheShard() {
+        final long shard = openShard(WRITER_A);
+        final IndexShardTaskRow writing = insert(shard, 1, WRITER_A);
+        final IndexShardTaskRow written = written(insert(shard, 1, WRITER_A));
+        final IndexShardTaskRow otherWriters = written(insert(shard, 1, WRITER_B));
+        final IndexShardPurge purge = deletedPurge(shard, 1, WRITER_A);
+        purgeDao.request(shard, 2);
+
+        final Optional<Set<Long>> taskIds = indexShardDao.closeWriter(shard, WRITER_A, null, null, true);
+
+        // Only tasks whose runs had ended may now be complete.
+        assertThat(taskIds).contains(Set.of(written.taskId()));
+        assertThat(state(writing)).isEqualTo(IndexShardTaskState.COMMITTED);
+        assertThat(state(written)).isEqualTo(IndexShardTaskState.COMMITTED);
+        assertThat(state(otherWriters)).isEqualTo(IndexShardTaskState.WRITTEN);
+        assertThat(purgeDao.fetch(shard, purge.streamId())).isEmpty();
+        assertThat(purgeDao.fetch(shard, 2)).isPresent();
+        assertThat(indexShardDao.fetch(shard).orElseThrow().getStatus()).isEqualTo(IndexShardStatus.CLOSED);
+        // Nothing has it open, so the other writer's row has lost its documents.
+        assertThat(findAllLost()).contains(otherWriters);
+    }
+
+    @Test
+    void testCloseWriter_uncleanClose_marksNothingButClosesTheShard() {
+        final long shard = openShard(WRITER_A);
+        final IndexShardTaskRow written = written(insert(shard, 1, WRITER_A));
+
+        assertThat(indexShardDao.closeWriter(shard, WRITER_A, null, null, false)).contains(Set.of());
+
+        assertThat(state(written)).isEqualTo(IndexShardTaskState.WRITTEN);
+        assertThat(indexShardDao.fetch(shard).orElseThrow().getStatus()).isEqualTo(IndexShardStatus.CLOSED);
+        assertThat(findAllLost()).contains(written);
+    }
+
+    @Test
+    void testCloseWriter_shardNoLongerTheWriters_doesNothing() {
+        final long shard = openShard(WRITER_B);
+        final IndexShardTaskRow written = written(insert(shard, 1, WRITER_A));
+
+        assertThat(indexShardDao.closeWriter(shard, WRITER_A, null, null, true)).isEmpty();
+
+        assertThat(state(written)).isEqualTo(IndexShardTaskState.WRITTEN);
+        assertThat(indexShardDao.fetch(shard).orElseThrow().getStatus()).isEqualTo(IndexShardStatus.OPEN);
+    }
+
+    @Test
+    void testCloseWriter_leaseLost_doesNothing() {
+        final long shard = shards.createCommittedShard(tempDir);
+        assertThat(indexShardDao.claimLease(shard, "node1", "processA", -60_000)).isTrue();
+        assertThat(indexShardDao.markOpen(shard, WRITER_A)).isTrue();
+        final IndexShardTaskRow written = written(insert(shard, 1, WRITER_A));
+        // Taken from the process meanwhile, as its lease lapsed.
+        indexShardDao.releaseLapsedLeases(0, 0);
+
+        assertThat(indexShardDao.closeWriter(shard, WRITER_A, "processA", null, true)).isEmpty();
+
+        assertThat(state(written)).isEqualTo(IndexShardTaskState.WRITTEN);
+    }
+
+    @Test
+    void testCloseWriter_withTheLease_givesItUp() {
+        final long shard = shards.createCommittedShard(tempDir);
+        assertThat(indexShardDao.claimLease(shard, "node1", "processA", 60_000)).isTrue();
+        assertThat(indexShardDao.markOpen(shard, WRITER_A)).isTrue();
+
+        assertThat(indexShardDao.closeWriter(shard, WRITER_A, "processA", null, true)).isPresent();
+
+        assertThat(indexShardDao.isLeased(shard)).isFalse();
+        assertThat(indexShardDao.claimLease(shard, "node2", "processB", 60_000)).isTrue();
+    }
+
+    @Test
+    void testWriterIdIsClearedWhenTheShardIsGivenUp() {
+        final long shard = shards.createCommittedShard(tempDir);
+        assertThat(indexShardDao.claimLease(shard, "node1", "processA", 60_000)).isTrue();
+        assertThat(indexShardDao.markOpen(shard, WRITER_A)).isTrue();
+        final IndexShardTaskRow row = insert(shard, 1, WRITER_A);
+        assertThat(findAllLost()).doesNotContain(row);
+
+        indexShardDao.releaseLease(shard, "processA", null);
+
+        assertThat(findAllLost()).contains(row);
+    }
+
+    private long openShard(final String writerId) {
+        final long shard = shards.createCommittedShard(tempDir);
+        indexShardDao.setStatus(shard, IndexShardStatus.OPENING);
+        assertThat(indexShardDao.markOpen(shard, writerId)).isTrue();
+        return shard;
     }
 
     private IndexShardTaskRow insert(final long shard, final int run, final String writerId) {

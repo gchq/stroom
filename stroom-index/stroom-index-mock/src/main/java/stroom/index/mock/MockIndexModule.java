@@ -23,6 +23,8 @@ import stroom.index.impl.IndexElementModule;
 import stroom.index.impl.IndexFieldCacheImpl;
 import stroom.index.impl.IndexFieldProvidersImpl;
 import stroom.index.impl.IndexFieldService;
+import stroom.index.impl.IndexRunTracker;
+import stroom.index.impl.IndexRunTrackerFactory;
 import stroom.index.impl.IndexShardCreator;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardWriterCache;
@@ -57,6 +59,8 @@ public class MockIndexModule extends AbstractModule {
         bind(IndexShardCreator.class).to(MockIndexShardCreator.class);
         bind(IndexFieldService.class).to(MockIndexFieldService.class);
         bind(Indexer.class).to(MockIndexer.class);
+        // No record is kept of what runs of processor tasks write.
+        bind(IndexRunTrackerFactory.class).toInstance((task, runIndexing) -> IndexRunTracker.NONE);
 
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(IndexStoreImpl.class);

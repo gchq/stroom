@@ -18,6 +18,7 @@ package stroom.index.lucene553;
 
 import stroom.index.impl.IndexConfig;
 import stroom.index.impl.IndexDocument;
+import stroom.index.impl.IndexShardCommitListener;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.IndexShardWriter;
@@ -117,6 +118,13 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
     private volatile BooleanSupplier leaseHeld = () -> true;
     // The process that holds the lease, or null if the shard has none.
     private volatile String leaseInstanceId;
+    private volatile String writerId;
+    // Told about each commit made while open. Null if nothing is to be told.
+    private volatile IndexShardCommitListener commitListener;
+    // Set as a close begins, after which no document can be added.
+    private volatile boolean closing;
+    // Set once a close has committed everything it was given while the lease was held.
+    private volatile boolean closedCleanly;
     // Set once this writer has found that the lease is no longer held. It then never writes again, even if
     // a late renewal makes the lease look held once more.
     private volatile boolean leaseLost;
@@ -308,6 +316,9 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
         }
         adding.incrementAndGet();
         try {
+            if (closing) {
+                throw new IndexException("Unable to add to index shard " + indexShardId + " as it is closing");
+            }
             // An Exception might be thrown here if the index
             // has been deleted. If this happens log the error
             // and return false so that the pool can return a
@@ -381,8 +392,10 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
     // visible long after the lease was last known to be held. Returns false if the lease had gone, when
     // the writer has been rolled back and closed.
     private boolean commit(final String action) throws IOException {
+        final Runnable afterCommit = beforeCommit();
         if (prepareCommit()) {
             indexWriter.commit();
+            afterCommit.run();
             return true;
         } else {
             abandon(action);
@@ -416,6 +429,48 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
         return true;
     }
 
+    // Notes what the commit about to be made will make safe. A failure to note it leaves it to a later commit.
+    private Runnable beforeCommit() {
+        final IndexShardCommitListener listener = commitListener;
+        if (listener != null) {
+            try {
+                final Runnable afterCommit = listener.beforeCommit();
+                return () -> {
+                    try {
+                        afterCommit.run();
+                    } catch (final RuntimeException e) {
+                        // Left for a later commit, or the close, to record.
+                        LOGGER.error(buildErrorMessage("Error recording what a commit made safe.", e), e);
+                    }
+                };
+            } catch (final RuntimeException e) {
+                LOGGER.error(buildErrorMessage("Error noting what a commit will make safe.", e), e);
+            }
+        }
+        return () -> {
+        };
+    }
+
+    @Override
+    public String getWriterId() {
+        return writerId;
+    }
+
+    @Override
+    public void setWriterId(final String writerId) {
+        this.writerId = writerId;
+    }
+
+    @Override
+    public void setCommitListener(final IndexShardCommitListener commitListener) {
+        this.commitListener = commitListener;
+    }
+
+    @Override
+    public boolean isClosedCleanly() {
+        return closedCleanly;
+    }
+
     @Override
     public boolean isUnusable() {
         return leaseLost || !open.get() || !indexWriter.isOpen();
@@ -437,6 +492,9 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
 
             try {
                 // Perform close.
+                // Nothing can be added from now on, so a commit made once the adds under way have finished
+                // holds everything this writer was given.
+                closing = true;
                 // Wait for us to stop adding docs.
                 try {
                     while (adding.get() > 0) {
@@ -459,6 +517,7 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
                         // Lucene refuses to close with a commit prepared but not finished.
                         indexWriter.commit();
                         indexWriter.close();
+                        closedCleanly = true;
                     } else {
                         discardUncommitted("close");
                     }

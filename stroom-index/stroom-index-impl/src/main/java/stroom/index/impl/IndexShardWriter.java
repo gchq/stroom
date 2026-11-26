@@ -36,6 +36,33 @@ public interface IndexShardWriter {
 
     long getCreationTime();
 
+    /// Gets the id of this opening of the shard, which is recorded on the shard and on every row of
+    /// `index_shard_task` that this writer is given documents for.
+    ///
+    /// @return The id, or null if none has been given, as for a writer that only prunes.
+    String getWriterId();
+
+    /// Sets the id of this opening of the shard, before it is given any documents.
+    ///
+    /// @param writerId The id.
+    void setWriterId(String writerId);
+
+    /// Gives the writer something to tell about each commit it makes while it is open.
+    ///
+    /// @param commitListener What to tell.
+    default void setCommitListener(final IndexShardCommitListener commitListener) {
+        // Writers that keep no record of what they commit have nothing to tell.
+    }
+
+    /// Says whether this writer closed cleanly: it took no document once its close began, and committed
+    /// everything it had been given while it still held any lease on the shard. Only then does the close make
+    /// safe the documents of runs that had not ended.
+    ///
+    /// @return True if it closed cleanly.
+    default boolean isClosedCleanly() {
+        return false;
+    }
+
     /// Says whether this writer can never be used again, because it has been closed, has given up its shard
     /// or has been closed by Lucene after an error it could not recover from. Such a writer must be taken
     /// out of use, or its shard can't be opened by anything else.

@@ -33,6 +33,7 @@ public class MockIndexShardWriter implements IndexShardWriter {
 
     private final int maxDocumentCount;
     private final AtomicInteger documentCount = new AtomicInteger();
+    private volatile String writerId;
 
     MockIndexShardWriter(final long indexShardId, final int maxDocumentCount) {
         this.indexShardId = indexShardId;
@@ -81,6 +82,16 @@ public class MockIndexShardWriter implements IndexShardWriter {
     @Override
     public long getIndexShardId() {
         return indexShardId;
+    }
+
+    @Override
+    public String getWriterId() {
+        return writerId;
+    }
+
+    @Override
+    public void setWriterId(final String writerId) {
+        this.writerId = writerId;
     }
 
     @Override

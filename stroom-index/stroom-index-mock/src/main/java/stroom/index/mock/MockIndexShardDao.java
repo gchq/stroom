@@ -44,6 +44,8 @@ public class MockIndexShardDao implements IndexShardDao {
     private final AtomicLong generatedId = new AtomicLong();
     // The process that holds the lease on each leased shard.
     private final Map<Long, String> leases = new HashMap<>();
+    // The writer that has each open shard open.
+    private final Map<Long, String> writers = new HashMap<>();
 
     @Override
     public Optional<IndexShard> fetch(final long id) {
@@ -119,6 +121,39 @@ public class MockIndexShardDao implements IndexShardDao {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public synchronized boolean markOpen(final long id, final String writerId) {
+        final IndexShard indexShard = map.get(id);
+        if (indexShard == null || !IndexShardStatus.OPENING.equals(indexShard.getStatus())) {
+            return false;
+        }
+        writers.put(id, writerId);
+        map.put(id, indexShard.copy().status(IndexShardStatus.OPEN).build());
+        return true;
+    }
+
+    @Override
+    public synchronized Optional<Set<Long>> closeWriter(final long id,
+                                                        final String writerId,
+                                                        final String leaseInstanceId,
+                                                        final Long pruneCommitsDelayMs,
+                                                        final boolean clean) {
+        if (!writerId.equals(writers.get(id)) || !Objects.equals(leaseInstanceId, leases.get(id))) {
+            return Optional.empty();
+        }
+        writers.remove(id);
+        leases.remove(id);
+        final IndexShard indexShard = map.get(id);
+        if (indexShard != null
+            && (IndexShardStatus.OPENING.equals(indexShard.getStatus())
+                || IndexShardStatus.OPEN.equals(indexShard.getStatus())
+                || IndexShardStatus.CLOSING.equals(indexShard.getStatus()))) {
+            map.put(id, indexShard.copy().status(IndexShardStatus.CLOSED).build());
+        }
+        // No record is kept of what tasks have written.
+        return Optional.of(Set.of());
     }
 
     @Override

@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ActiveShards {
@@ -89,33 +90,55 @@ public class ActiveShards {
     }
 
     public void addDocument(final IndexDocument document) {
+        addDocument(document, IndexRunTracker.NONE);
+    }
+
+    /// Adds a document to one of the shards.
+    ///
+    /// @param document The document.
+    /// @param tracker  Told of the shard and writer the document goes to, before and after it is added.
+    /// @throws DocumentRefusedException If the document can't be indexed because of what is in it.
+    /// @throws RunStoppedException      If the run adding it must add nothing more.
+    public void addDocument(final IndexDocument document, final IndexRunTracker tracker) {
         // Try and add the document silently without locking.
-        final boolean success = addDocument(document, false);
+        final boolean success = addDocument(document, tracker, new AtomicReference<>(), false);
 
         // Attempt under lock if we failed to add.
         if (!success) {
             LOGGER.debug("Trying again under lock");
             // If we failed then try under lock to make sure we get a new writer.
-            addDocumentUnderLock(document);
+            addDocumentUnderLock(document, tracker);
         }
     }
 
-    private void addDocumentUnderLock(final IndexDocument document) {
+    private void addDocumentUnderLock(final IndexDocument document, final IndexRunTracker tracker) {
         boolean success = false;
+        boolean shardAdded = false;
+        final AtomicReference<RuntimeException> refusal = new AtomicReference<>();
         lock.lock();
         try {
             for (int attempt = 0; !success && attempt < MAX_ATTEMPTS; attempt++) {
-                success = addDocument(document, false);
+                refusal.set(null);
+                success = addDocument(document, tracker, refusal, false);
                 if (!success) {
-                    // If we weren't successful then try adding a shard.
+                    if (shardAdded && refusal.get() != null) {
+                        // Even a new, empty shard refused it, so the fault is in the document itself, and no
+                        // more shards are made for it.
+                        throw new DocumentRefusedException(
+                                "Unable to index a document: " + refusal.get().getMessage(), refusal.get());
+                    }
+                    // If we weren't successful then try adding a shard. A shard that refuses the document
+                    // while its writer is fine may hold a field of a type that has since been changed, which a
+                    // new shard will take.
                     addActiveShard(indexShardKey);
+                    shardAdded = true;
                 }
             }
 
             // One final try that will throw an index exception if needed.
             if (!success) {
                 try {
-                    addDocument(document, true);
+                    addDocument(document, tracker, refusal, true);
                 } catch (final IndexException e) {
                     throw e;
                 } catch (final RuntimeException e) {
@@ -127,7 +150,10 @@ public class ActiveShards {
         }
     }
 
+    // A shard whose writer refuses the document, while staying usable, is passed over and the refusal kept.
     private boolean addDocument(final IndexDocument document,
+                                final IndexRunTracker tracker,
+                                final AtomicReference<RuntimeException> refusal,
                                 final boolean throwException) {
         final List<IndexShard> indexShards = getIndexShards();
         final int offset = sequence.getAndIncrement();
@@ -135,13 +161,13 @@ public class ActiveShards {
 
         for (int i = rem; i < indexShards.size(); i++) {
             final IndexShard indexShard = indexShards.get(i);
-            if (addDocument(document, indexShard, throwException)) {
+            if (addDocument(document, tracker, refusal, indexShard, throwException)) {
                 return true;
             }
         }
         for (int i = 0; i < rem; i++) {
             final IndexShard indexShard = indexShards.get(i);
-            if (addDocument(document, indexShard, throwException)) {
+            if (addDocument(document, tracker, refusal, indexShard, throwException)) {
                 return true;
             }
         }
@@ -149,31 +175,47 @@ public class ActiveShards {
     }
 
     private boolean addDocument(final IndexDocument document,
+                                final IndexRunTracker tracker,
+                                final AtomicReference<RuntimeException> refusal,
                                 final IndexShard indexShard,
                                 final boolean throwException) {
         try {
             final IndexShardWriter indexShardWriter = indexShardWriterCache.getOrOpenWriter(indexShard.getId());
+            // Recorded first, so that the shard never holds documents of the run that the record does not
+            // know about.
+            tracker.beforeAdd(indexShard.getId(), indexShardWriter.getWriterId());
             try {
                 indexShardWriter.addDocument(document);
+                tracker.added(indexShard.getId(), indexShardWriter.getWriterId());
                 return true;
 
             } catch (final IndexException | UncheckedIOException e) {
                 LOGGER.trace(e::getMessage, e);
+                tracker.addFailed(indexShard.getId(), indexShardWriter.getWriterId());
 
                 removeActiveShard(indexShard);
                 indexShardWriterCache.close(indexShardWriter);
 
             } catch (final RuntimeException e) {
-                if (indexShardWriter.isUnusable()) {
-                    // Close it or it would be used again for every document. The shard itself may be fine,
-                    // so it is not removed, and is opened again by the next attempt.
-                    indexShardWriterCache.close(indexShardWriter);
-                    if (indexShardWriter.isBrokenBy(e)) {
-                        // The document itself broke the writer. It would break every other writer it was
-                        // tried in, so it is not tried again.
-                        LOGGER.error(e::getMessage, e);
-                        throw new DocumentBrokeWriterException(indexShard.getId(), e);
+                tracker.addFailed(indexShard.getId(), indexShardWriter.getWriterId());
+                if (!indexShardWriter.isUnusable()) {
+                    // Lucene refused the document and its writer is fine. The fault is in the document, or in
+                    // the shard if the type of a field has changed since it was made.
+                    LOGGER.debug(e::getMessage, e);
+                    if (throwException) {
+                        throw new DocumentRefusedException("Unable to index a document: " + e.getMessage(), e);
                     }
+                    refusal.set(e);
+                    return false;
+                }
+                // Close it or it would be used again for every document. The shard itself may be fine, so it is
+                // not removed, and is opened again by the next attempt.
+                indexShardWriterCache.close(indexShardWriter);
+                if (indexShardWriter.isBrokenBy(e)) {
+                    // The document itself broke the writer. It would break every other writer it was tried in,
+                    // so it is not tried again.
+                    LOGGER.error(e::getMessage, e);
+                    throw new DocumentBrokeWriterException(indexShard.getId(), e);
                 }
                 if (throwException) {
                     LOGGER.error(e::getMessage, e);
@@ -182,7 +224,7 @@ public class ActiveShards {
                     LOGGER.debug(e::getMessage, e);
                 }
             }
-        } catch (final DocumentBrokeWriterException e) {
+        } catch (final DocumentRefusedException | RunStoppedException e) {
             throw e;
         } catch (final RuntimeException e) {
             if (throwException) {
@@ -318,7 +360,7 @@ public class ActiveShards {
 
 
     // Thrown when adding a document left the writer it was added to unusable.
-    private static class DocumentBrokeWriterException extends IndexException {
+    private static class DocumentBrokeWriterException extends DocumentRefusedException {
 
         private DocumentBrokeWriterException(final long indexShardId, final RuntimeException cause) {
             super("Adding a document broke the writer of index shard " + indexShardId + ": "

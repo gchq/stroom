@@ -194,6 +194,19 @@ public class IndexShardLeases {
         }
     }
 
+    /// Stops relying on and renewing the lease on a shard, which has been given up in the database by other
+    /// means, e.g. in the same transaction that closed the shard's writer, or is to be left to lapse.
+    ///
+    /// @param shardId The id of the shard.
+    public void forget(final long shardId) {
+        lock.lock();
+        try {
+            lastRenewed.remove(shardId);
+        } finally {
+            lock.unlock();
+        }
+    }
+
     private void releaseInDatabase(final long shardId, final FailedRelease release) {
         final boolean released = indexShardDao.releaseLease(shardId, instanceId, release.pruneCommitsDelayMs());
         LOGGER.debug("releaseInDatabase() - shardId: {}, released: {}", shardId, released);

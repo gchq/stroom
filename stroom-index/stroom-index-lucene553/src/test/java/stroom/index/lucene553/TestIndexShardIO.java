@@ -63,6 +63,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -328,6 +329,126 @@ class TestIndexShardIO extends StroomUnitTest {
         writer.flush();
         assertThat(countCommittedDocuments(indexShard)).isEqualTo(1);
         writer.close();
+    }
+
+    @Test
+    void testClose_cleanClose() throws IOException {
+        final IndexShardWriter writer = createWriter(createShardOn(VolumeType.LOCAL));
+        writer.addDocument(buildDocument(1));
+        assertThat(writer.isClosedCleanly()).isFalse();
+
+        writer.close();
+
+        assertThat(writer.isClosedCleanly()).isTrue();
+    }
+
+    @Test
+    void testClose_leaseLost_notClean() throws IOException {
+        final AtomicBoolean leaseHeld = new AtomicBoolean(true);
+        final IndexShardWriter writer = createWriter(createShardOn(VolumeType.SHARED));
+        writer.setLeaseCheck(INSTANCE, leaseHeld::get);
+        writer.addDocument(buildDocument(1));
+        leaseHeld.set(false);
+
+        writer.close();
+
+        assertThat(writer.isClosedCleanly()).isFalse();
+    }
+
+    @Test
+    void testClose_failedCommit_notClean() throws IOException {
+        final IndexShard indexShard = createShardOn(VolumeType.LOCAL);
+        final IndexShardWriter writer = createWriter(indexShard);
+        writer.addDocument(buildDocument(1));
+        obstructNextCommit(indexShard);
+
+        writer.close();
+
+        assertThat(writer.isClosedCleanly()).isFalse();
+    }
+
+    @Test
+    void testClose_whileAdding_everyDocumentTakenIsCommitted() throws Exception {
+        final IndexShard indexShard = createShardOn(VolumeType.LOCAL);
+        final IndexShardWriter writer = createWriter(indexShard);
+        final AtomicInteger added = new AtomicInteger();
+        final AtomicBoolean stop = new AtomicBoolean();
+        final Thread adder = new Thread(() -> {
+            while (!stop.get()) {
+                try {
+                    writer.addDocument(buildDocument(1));
+                    added.incrementAndGet();
+                } catch (final RuntimeException e) {
+                    // Refused once the close has begun.
+                    stop.set(true);
+                }
+            }
+        });
+        adder.start();
+        Thread.sleep(100);
+
+        writer.close();
+        stop.set(true);
+        adder.join();
+
+        assertThat(writer.isClosedCleanly()).isTrue();
+        assertThat(countCommittedDocuments(indexShard)).isEqualTo(added.get());
+    }
+
+    @Test
+    void testFlush_commitListenerToldBeforeAndAfter() throws IOException {
+        final IndexShard indexShard = createShardOn(VolumeType.LOCAL);
+        final IndexShardWriter writer = createWriter(indexShard);
+        final List<String> events = new ArrayList<>();
+        writer.setCommitListener(() -> {
+            events.add("before " + countCommittedDocumentsOrZero(indexShard));
+            return () -> events.add("after " + countCommittedDocumentsOrZero(indexShard));
+        });
+        writer.addDocument(buildDocument(1));
+
+        writer.flush();
+
+        assertThat(events).containsExactly("before 0", "after 1");
+        writer.close();
+        // Not told of the close's commit, which is recorded with the close.
+        assertThat(events).hasSize(2);
+    }
+
+    @Test
+    void testFlush_failedCommit_listenerNotToldAfter() throws IOException {
+        final IndexShard indexShard = createShardOn(VolumeType.LOCAL);
+        final IndexShardWriter writer = createWriter(indexShard);
+        final List<String> events = new ArrayList<>();
+        writer.setCommitListener(() -> {
+            events.add("before");
+            return () -> events.add("after");
+        });
+        writer.addDocument(buildDocument(1));
+        obstructNextCommit(indexShard);
+
+        writer.flush();
+
+        assertThat(events).containsExactly("before");
+        writer.close();
+    }
+
+    @Test
+    void testWriterId() throws IOException {
+        final IndexShardWriter writer = createWriter(createShardOn(VolumeType.LOCAL));
+        assertThat(writer.getWriterId()).isNull();
+
+        writer.setWriterId("writer");
+
+        assertThat(writer.getWriterId()).isEqualTo("writer");
+        writer.close();
+    }
+
+    private int countCommittedDocumentsOrZero(final IndexShard indexShard) {
+        try {
+            return countCommittedDocuments(indexShard);
+        } catch (final IOException | RuntimeException e) {
+            return 0;
+        }
     }
 
     @Test

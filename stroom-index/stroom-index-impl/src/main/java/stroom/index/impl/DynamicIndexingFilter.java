@@ -31,6 +31,7 @@ import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.query.api.datasource.IndexField;
 import stroom.search.extraction.AbstractFieldFilter;
 import stroom.search.extraction.FieldValue;
@@ -84,6 +85,9 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
     private final Map<Partition, IndexShardKey> indexShardKeyMap = new HashMap<>();
 
     private Locator locator;
+    private final StreamProcessorHolder streamProcessorHolder;
+    private final IndexRunTrackerFactory indexRunTrackerFactory;
+    private IndexRun indexRun;
 
     private Long currentEventTime;
     private Partition defaultPartition;
@@ -96,7 +100,9 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
                           final Indexer indexer,
                           final ErrorReceiverProxy errorReceiverProxy,
                           final IndexFieldService indexFieldService,
-                          final LuceneIndexDocCache luceneIndexDocCache) {
+                          final LuceneIndexDocCache luceneIndexDocCache,
+                          final StreamProcessorHolder streamProcessorHolder,
+                          final IndexRunTrackerFactory indexRunTrackerFactory) {
         super(locationFactory, errorReceiverProxy);
         this.metaHolder = metaHolder;
         this.locationFactory = locationFactory;
@@ -104,6 +110,8 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
         this.errorReceiverProxy = errorReceiverProxy;
         this.indexFieldService = indexFieldService;
         this.luceneIndexDocCache = luceneIndexDocCache;
+        this.streamProcessorHolder = streamProcessorHolder;
+        this.indexRunTrackerFactory = indexRunTrackerFactory;
     }
 
     /**
@@ -112,6 +120,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
     @Override
     public void startProcessing() {
         try {
+            indexRun = IndexRun.start(streamProcessorHolder, indexRunTrackerFactory);
             if (indexRef == null) {
                 log(Severity.FATAL_ERROR, "Index has not been set", null);
                 throw LoggedException.create("Index has not been set");
@@ -230,7 +239,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
                 final IndexShardKey indexShardKey =
                         indexShardKeyMap.computeIfAbsent(partition, k -> IndexShardKey.createKey(index, k));
 
-                indexer.addDocument(indexShardKey, document);
+                indexRun.addDocument(indexer, indexShardKey, document);
             } catch (final RuntimeException e) {
                 log(Severity.FATAL_ERROR, e.getMessage(), e);
                 // Terminate processing as this is a fatal error.

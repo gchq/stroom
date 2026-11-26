@@ -22,4 +22,14 @@ import stroom.index.shared.IndexShardKey;
 public interface Indexer {
 
     void addDocument(IndexShardKey key, IndexDocument document);
+
+    /// Adds a document to a shard of a partition of an index, for a run of a processor task that keeps a
+    /// record of the shards it writes to.
+    ///
+    /// @param key      Says which index and partition.
+    /// @param document The document.
+    /// @param tracker  Told of the shard and writer the document goes to, before and after it is added.
+    default void addDocument(final IndexShardKey key, final IndexDocument document, final IndexRunTracker tracker) {
+        addDocument(key, document);
+    }
 }

@@ -38,6 +38,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -221,15 +222,81 @@ class TestActiveShards {
     }
 
     @Test
-    void testDocumentRefused_usableWriterIsNotClosed() {
+    void testDocumentRefusedByEveryShard_atMostOneShardIsMadeForIt() {
+        // Lucene refuses the document, e.g. for an immense term, but its writer is fine.
         Mockito.doThrow(new IllegalArgumentException("immense term"))
-                .doNothing()
                 .when(myIndexShardWriter).addDocument(any());
         Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong())).thenReturn(myIndexShardWriter);
         final ActiveShards activeShards = createActiveShards();
 
+        assertThatThrownBy(() -> activeShards.addDocument(new IndexDocument()))
+                .isInstanceOf(DocumentRefusedException.class)
+                .hasMessageContaining("immense term");
+
+        // Even a new, empty shard refused it, so no more are made, and the writers stay in use.
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isEqualTo(2);
+        Mockito.verify(indexShardWriterCache, never()).close(any());
+    }
+
+    @Test
+    void testDocumentRefusedByAShardWhoseFieldTypeHasChanged_goesToANewShard() {
+        // The existing shard holds a field of a type that has since changed.
+        Mockito.doThrow(new IllegalArgumentException("Inconsistency of field data structures"))
+                .when(myIndexShardWriter).addDocument(any());
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong()))
+                .thenAnswer(invocation -> invocation.<Long>getArgument(0) == 1L
+                        ? myIndexShardWriter
+                        : anotherIndexShardWriter);
+        final ActiveShards activeShards = createActiveShards();
+
         activeShards.addDocument(new IndexDocument());
 
+        Mockito.verify(anotherIndexShardWriter).addDocument(any());
+        assertThat(indexShardDao.find(FindIndexShardCriteria.matchAll()).size()).isEqualTo(2);
+    }
+
+    @Test
+    void testRunTracker_toldOfEachDocumentAroundTheAdd() {
+        Mockito.when(myIndexShardWriter.getWriterId()).thenReturn("writer");
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong())).thenReturn(myIndexShardWriter);
+        final IndexRunTracker tracker = Mockito.mock(IndexRunTracker.class);
+        final ActiveShards activeShards = createActiveShards();
+
+        activeShards.addDocument(new IndexDocument(), tracker);
+
+        final InOrder inOrder = Mockito.inOrder(tracker, myIndexShardWriter);
+        inOrder.verify(tracker).beforeAdd(anyLong(), Mockito.eq("writer"));
+        inOrder.verify(myIndexShardWriter).addDocument(any());
+        inOrder.verify(tracker).added(anyLong(), Mockito.eq("writer"));
+    }
+
+    @Test
+    void testRunTracker_shardFull_toldTheAddFailed() {
+        Mockito.when(myIndexShardWriter.getWriterId()).thenReturn("writer");
+        Mockito.doThrow(new ShardFullException("full")).when(myIndexShardWriter).addDocument(any());
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong()))
+                .thenReturn(myIndexShardWriter)
+                .thenReturn(anotherIndexShardWriter);
+        final IndexRunTracker tracker = Mockito.mock(IndexRunTracker.class);
+        final ActiveShards activeShards = createActiveShards();
+
+        activeShards.addDocument(new IndexDocument(), tracker);
+
+        Mockito.verify(tracker).addFailed(anyLong(), Mockito.eq("writer"));
+        Mockito.verify(anotherIndexShardWriter).addDocument(any());
+    }
+
+    @Test
+    void testRunTracker_runStopped_documentIsNotAdded() {
+        Mockito.when(indexShardWriterCache.getOrOpenWriter(anyLong())).thenReturn(myIndexShardWriter);
+        final IndexRunTracker tracker = Mockito.mock(IndexRunTracker.class);
+        Mockito.doThrow(new RunStoppedException("replaced")).when(tracker).beforeAdd(anyLong(), any());
+        final ActiveShards activeShards = createActiveShards();
+
+        assertThatThrownBy(() -> activeShards.addDocument(new IndexDocument(), tracker))
+                .isInstanceOf(RunStoppedException.class);
+
+        Mockito.verify(myIndexShardWriter, never()).addDocument(any());
         Mockito.verify(indexShardWriterCache, never()).close(any());
     }
 
