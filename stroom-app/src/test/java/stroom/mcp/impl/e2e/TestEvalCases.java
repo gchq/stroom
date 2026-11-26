@@ -83,7 +83,7 @@ class TestEvalCases {
         assertThat(skills).hasSize(9).allSatisfy(id -> assertThat(id).matches("(8[89]|9[0-6])_skill_.*"));
         assertThat(instructions).hasSize(4).allSatisfy(id -> assertThat(id).matches("(98|99|100|101)_agents_.*"));
         // The timeline cases whose tool asks the user in its forms, or the chat's model in side calls.
-        assertThat(chats).containsExactly("114_timeline_thematic_span_property_sites");
+        assertThat(chats).containsExactly("114_timeline_thematic_span_property_sites", "115_timeline_message_and_command_runs");
         assertThat(chats).allSatisfy(id -> assertThat(EvalCases.isSkill(EvalCases.load(id))).isTrue());
         for (final String id : java.util.stream.Stream.of(skills, instructions, chats).flatMap(List::stream)
                 .toList()) {
@@ -583,6 +583,23 @@ class TestEvalCases {
         assertThat(records(themes, "lchen")).filteredOn(record -> sites.matcher(record.get("Object")).find())
                 .hasSize(27).extracting(record -> record.get("Category")).containsOnly("Real Estate");
         assertThat(theme).containsEntry("children_at_least", 9);
+    }
+
+    @Test
+    void theRunsCasesRunsAreTheGeneratorsThreadAndShellSession() {
+        // The runs' events: six messages a topic in one thread, then four commands.
+        final Map<String, Object> runs = EvalCases.load("115_timeline_message_and_command_runs");
+        final List<Map<String, String>> dmorgan = records(runs, "dmorgan");
+        for (final Map<String, Object> run : EvalCases.maps(EvalCases.map(EvalCases.map(runs.get("expected"))
+                .get("timeline")).get("runs"))) {
+            final Pattern text = Pattern.compile(String.valueOf(run.get("matches")),
+                    Pattern.CASE_INSENSITIVE);
+            assertThat(dmorgan).as(String.valueOf(run.get("matches")))
+                    .filteredOn(record -> text.matcher(record.get("Text")).find()).hasSize((Integer) run.get(
+                            "events"));
+        }
+        assertThat(dmorgan).filteredOn(record -> "chat.message".equals(record.get("EventCode")))
+                .extracting(record -> record.get("Thread")).containsOnly("chat:ops-team").hasSize(12);
     }
 
     // A timeline case's records of one user, in time order.
