@@ -167,12 +167,11 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     private static final String ASKED_BY = "asked_by";
     private static final String DIGEST = "digest";
     private static final String AMENDED = "amended";
-    // The proposals of the latest call that recorded nothing, and why: the catch-all isn't put to the user over a
-    // catalogue they would have changed (seen in testing: a drop proposal refused, the catch-all form showed the same
-    // records to become Unknown, the user declined, and the agent was sent back to the same proposal).
+    // The proposals of the latest call that recorded nothing, and why: a decline of the catch-all's form sends the
+    // agent to correct them (seen in testing: a drop proposal refused, the catch-all form showed the same records to
+    // become Unknown, the user declined, and the agent was sent back to the same proposal).
     private static final String NOT_RECORDED = "proposals_not_recorded";
     private static final String WHY = "why";
-    private static final String TOLD = "told";
     // What the agent is told of fields kept as Data whose meaning an element carries (asked for by the user
     // 2026-11-22: worded more strongly, with an example of the call; 2026-11-23, chat 187: one test, the element that
     // means it, as a setting's value was put in a Description the schema "had a home for").
@@ -992,7 +991,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         // records the check refuses, as seen): one naming no event type of the catalogue is said in refused alone.
         final boolean marked = !recorded && !brought.isEmpty();
         if (notRecordedWhy != null) {
-            // The catch-all held back only where it is marked so: proposals refused alone leave its form as it is.
+            // Marked, a decline of the catch-all's form says so too: proposals refused alone leave its form as it is.
             result.put("not_recorded", "Nothing was recorded: " + notRecordedWhy + ". The catalogue is as it was: "
                                        + "correct the proposals and send them again" + (marked
                     ? "; don't put the catch-all to the user over this catalogue (its records would still be "
@@ -1241,21 +1240,6 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         final Optional<Map<String, Object>> notRecorded = catchAll && catalogue.equals(calling.catalogue())
                 ? notRecorded(calling)
                 : Optional.empty();
-        if (notRecorded.isPresent() && !Boolean.TRUE.equals(notRecorded.get().get(TOLD))) {
-            // Shown now, the form would put the records the refused proposals were for to the user as before: the
-            // agent fixes the proposals first. Said once: a second confirm=true puts the catch-all to the user.
-            final Map<String, Object> marks = new LinkedHashMap<>(confirming);
-            final Map<String, Object> told = new LinkedHashMap<>(notRecorded.get());
-            told.put(TOLD, true);
-            marks.put(NOT_RECORDED, told);
-            notes.recordCatalogue(calling.context(), calling.build(), calling.source(), calling.catalogue(), marks);
-            throw new ToolRefusal("The catch-all isn't put to the user yet: your latest proposals were not "
-                                  + "recorded (" + notRecorded.get().get(WHY) + "), so the "
-                                  + check.uncatalogued().records() + " uncatalogued records are counted as before. "
-                                  + "Correct the proposals and send them again (" + NAME + " build="
-                                  + calling.build() + " proposals=...). Only if the user wants the catch-all as it "
-                                  + "is, call confirm=true again: its form is then shown.");
-        }
         final String untranslatedBy = untranslatedBy(calling, catalogue);
         final String shown = catchAll
                 ? CatalogueCatchAll.catchAllShown(check, catalogue, untranslatedBy)

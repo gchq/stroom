@@ -1029,7 +1029,7 @@ class TestCatalogueEventTypesTool {
     }
 
     @Test
-    void theCatchAllIsNotPutToTheUserOverProposalsThatRecordedNothing() {
+    void theCatchAllOverProposalsThatRecordedNothingIsShownAndItsDeclineSendsTheAgentToCorrectThem() {
         // Seen in testing: a drop proposal for the uncatalogued records was refused, the catch-all's form showed the
         // same records to become Unknown, the user declined, and the agent was sent back to the same proposal.
         propose(List.of(type("Authenticate-Logon", "Authenticate", "high", "login")));
@@ -1037,7 +1037,6 @@ class TestCatalogueEventTypesTool {
         call(Map.of("build", BUILD, "confirm", true), accepting.context());
         assertThat(String.valueOf(call(Map.of("build", BUILD, "confirm", true), accepting.context()).get("table")))
                 .contains("Uncatalogued records");
-        final int formsShown = accepting.shown().size();
 
         // Recognised by no condition, though not the only event type: a problem the proposal brings.
         final Map<String, Object> refused = propose(List.of(withKeys(type("Delete-Archives", "Delete", "high",
@@ -1049,22 +1048,19 @@ class TestCatalogueEventTypesTool {
                 .contains("correct the proposals and send them again")
                 .contains("don't put the catch-all to the user over this catalogue");
 
-        // The catch-all isn't put to the user over the catalogue as it was: the agent is told to fix the proposals.
-        assertThat(text(Map.of("build", BUILD, "confirm", true), accepting.context()))
-                .contains("The catch-all isn't put to the user yet", "not recorded", "bring problems",
-                        "Correct the proposals");
-        assertThat(accepting.shown()).hasSize(formsShown);
-        assertThat(SourceNotes.catalogue(notes()).catchAll().confirmed()).isFalse();
-
-        // Called again, the form is shown; declined, the agent is told the proposals were not recorded.
+        // confirm=true puts the catch-all to the user as ever; declined, the agent is told the proposals were not
+        // recorded, and to correct them rather than ask the user again.
         final BuildToolCalls.FormUser declining = BuildToolCalls.declining();
         String declined = text(Map.of("build", BUILD, "confirm", true), declining.context());
         if (!declined.contains("declined")) {
             declined = text(Map.of("build", BUILD, "confirm", true), declining.context());
         }
-        assertThat(declined).contains("The user declined the catch-all", "Your latest proposals for them were not "
-                                                                          + "recorded", "bring problems")
+        assertThat(declined).doesNotContain("isn't put to the user yet");
+        assertThat(declining.shown()).anySatisfy(message -> assertThat(message).contains("ncatalogued"));
+        assertThat(declined).contains("The user declined the catch-all",
+                "Your latest proposals for them were not recorded", "bring problems", "Correct those proposals")
                 .doesNotContain("Ask the user in the chat what those records should become");
+        assertThat(SourceNotes.catalogue(notes()).catchAll().confirmed()).isFalse();
     }
 
     @Test

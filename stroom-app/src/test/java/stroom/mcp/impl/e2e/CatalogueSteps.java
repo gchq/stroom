@@ -40,8 +40,6 @@ public final class CatalogueSteps {
     /// The tool that catalogues a source's event types.
     public static final String CATALOGUE = "catalogue_event_types";
 
-    // What catalogue_event_types says, once, holding the catch-all back over proposals that recorded nothing.
-    private static final String CATCH_ALL_HELD = "The catch-all isn't put to the user yet";
     // How many confirmation rounds a catalogue may take (sets of ten, then the catch-all).
     private static final int MAX_ROUNDS = 80;
 
@@ -90,32 +88,17 @@ public final class CatalogueSteps {
 
     /// Every set of the build's catalogue put to the user (`confirm=true`) until the catch-all is confirmed: each
     /// form answered by the client's user, a `needs_review` answered with its review id, the catch-all agreed with
-    /// a reason (asked only when some records are uncatalogued; with none, it stands with no form). Held back once
-    /// over proposals that recorded nothing, the catch-all is confirmed again, as the tool's refusal says to.
+    /// a reason (asked only when some records are uncatalogued; with none, it stands with no form).
     ///
     /// @param mcp   The client.
     /// @param build The build.
     /// @return The last answer.
     public static Map<String, Object> confirmedCatalogue(final McpTestClient mcp, final String build) {
         Object reviewed = null;
-        boolean held = false;
         for (int round = 0; round < MAX_ROUNDS; round++) {
-            final Map<String, Object> result;
-            try {
-                result = mcp.json(CATALOGUE, args("build", build, "confirm", true,
-                        "reviewed", reviewed, "catch_all", Map.of("allow_unknown",
-                                "E2E: records no event type recognises are kept as Unknown")));
-            } catch (final AssertionError e) {
-                // The catch-all held back once, as the seed's proposals recorded nothing (e.g. one with no
-                // event_detail): taken as the seed gave them, the catch-all is wanted as it is, so confirmed
-                // again, as a model told so does.
-                if (held || !String.valueOf(e.getMessage()).contains(CATCH_ALL_HELD)) {
-                    throw e;
-                }
-                LOGGER.info(() -> LogUtil.message("The catch-all of {} held back once: confirmed again", build));
-                held = true;
-                continue;
-            }
+            final Map<String, Object> result = mcp.json(CATALOGUE, args("build", build, "confirm", true,
+                    "reviewed", reviewed, "catch_all", Map.of("allow_unknown",
+                            "E2E: records no event type recognises are kept as Unknown")));
             final String status = String.valueOf(result.get("status"));
             reviewed = null;
             if ("needs_review".equals(status)) {
