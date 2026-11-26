@@ -101,7 +101,7 @@ RUN set -eu; \
     echo "user_name from passwd with id ${USER_ID}: [$user_name]"; \
     if [ -n "${user_name}" ]; then echo "Found user [${user_name}] with id ${USER_ID}"; fi; \
     if [ ! -n "${user_name}" ]; then echo "Creating user [builder] with id ${USER_ID}"; fi; \
-    if [ ! -n "${user_name}" ]; then useradd --uid "$USER_ID" --system --gid "$GROUP_ID" --shell /sbin/nologin --no-create-home builder; fi; \
+    if [ ! -n "${user_name}" ]; then useradd --uid "$USER_ID" --system --gid "$GROUP_ID" --home-dir /home/builder --create-home --shell /sbin/nologin builder; fi; \
     if [ ! -n "${user_name}" ]; then user_name="builder"; fi; \
     echo "user_name: [$user_name]"; \
     echo; \
@@ -122,6 +122,8 @@ RUN set -eu; \
     echo "docker_group_name: $docker_group_name"; \
     echo "Adding user [builder] to docker group [${docker_group_name}]"; \
     usermod --append --groups "${docker_group_name}" "${user_name}"; \
+    mkdir -p /home/builder; \
+    chown "$USER_ID:$GROUP_ID" /home/builder; \
     mkdir -p /builder/shared; \
     chown -R $USER_ID:$GROUP_ID /builder
 
