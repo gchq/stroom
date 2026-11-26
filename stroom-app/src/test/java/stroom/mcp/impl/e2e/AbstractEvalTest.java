@@ -29,6 +29,9 @@ import stroom.ai.impl.tools.sample.SourceTypeRegistry;
 import stroom.ai.impl.tools.sample.SourceTypeScope;
 import stroom.ai.impl.tools.skills.SkillCatalogue;
 import stroom.ai.impl.tools.skills.SkillDoc;
+import stroom.ai.impl.workspace.ChatWorkspace;
+import stroom.ai.impl.workspace.SessionWorkspace;
+import stroom.ai.impl.workspace.WorkspacePath;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiToolAccess;
@@ -449,9 +452,77 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                 calls.add(used);
             }
             score.scoreQuestion(evalCase, calls);
+            scoreQuestionTimeline(evalCase, score, calls);
         } finally {
             data.remove();
         }
+    }
+
+    /// Scores what a question's activity timeline wrote in the MCP session's workspace (`expected.timeline`,
+    /// [EvalScore#scoreTimeline]).
+    ///
+    /// @param evalCase The case.
+    /// @param score    Its score.
+    /// @param calls    The tool calls made, in order.
+    void scoreQuestionTimeline(final Map<String, Object> evalCase,
+                               final EvalScore score,
+                               final List<EvalScore.ToolUse> calls) {
+        score.scoreTimeline(evalCase, new EvalTimelineScore.Run(calls, this::mcpFile, null, null));
+    }
+
+    /// A file of the MCP session's workspace, read a page at a time as an agent would (`read_file`), without its
+    /// line numbers.
+    ///
+    /// @param path The file's path, e.g. `/outputs/timelines/jsmith/events.csv`.
+    /// @return Its text, or null if it can't be read.
+    String mcpFile(final String path) {
+        final StringBuilder sb = new StringBuilder();
+        int start = 1;
+        while (true) {
+            final CallToolResult result = client.call("read_file", Map.of("path", path, "startLine", start,
+                    "lineCount", 500));
+            if (Boolean.TRUE.equals(result.isError())) {
+                return start == 1
+                        ? null
+                        : sb.toString();
+            }
+            int last = -1;
+            for (final String line : McpTestClient.text(result).split("\n")) {
+                final int tab = line.indexOf('\t');
+                if (tab > 0 && line.substring(0, tab).strip().matches("\\d+")) {
+                    last = Integer.parseInt(line.substring(0, tab).strip());
+                    sb.append(line.substring(tab + 1)).append('\n');
+                }
+            }
+            if (last < start) {
+                return start == 1 && sb.isEmpty()
+                        ? null
+                        : sb.toString();
+            }
+            start = last + 1;
+        }
+    }
+
+    /// A file of a chat's workspace, as its user.
+    ///
+    /// @param setup The chat case's setup.
+    /// @param path  The file's path, e.g. `/outputs/timelines/jsmith/events.csv`.
+    /// @return Its text, or null if there is no such file.
+    String chatFile(final SkillSetup setup, final String path) {
+        final SessionWorkspace workspace = new SessionWorkspace(injector.getInstance(ChatWorkspace.class),
+                setup.chat().getId());
+        final WorkspacePath file = WorkspacePath.parse(path);
+        return asUser(setup.user(), () -> workspace.find(file).isEmpty()
+                ? null
+                : String.join("\n", workspace.readLines(file, 0, (int) Math.min(Integer.MAX_VALUE,
+                        workspace.lineCount(file)))) + "\n");
+    }
+
+    // A table call of a chat, as a question's is read: the path it read and its table's columns and rows.
+    private static EvalScore.ToolUse tableUse(final Map<String, Object> arguments, final String text) {
+        final Map<String, Object> json = new LinkedHashMap<>(markdownTable(text));
+        json.put("path", arguments.get("path"));
+        return new EvalScore.ToolUse("table", false, json, text);
     }
 
     /// A tool call of a question's answer, as [EvalScore#scoreQuestion] reads it: its JSON; for run_stroomql, which
@@ -532,10 +603,10 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         }
         final UserRef user = skillUser(evalCase, data, skillsDocs);
         skillCatalogue.clearCache();
-        final FakeModelServer scripted = startModelServer();
+        final FakeModelServer scripted = startModelServer().answeringSideRequests(sideAnswers(evalCase));
         final EvalChat chats = injector.getInstance(EvalChat.class);
         final SkillSetup setup = new SkillSetup(data, user, chats, scripted, chats.model(admin, user,
-                "Eval scripted model", scripted.baseUrl()), chats.create(user));
+                "Eval scripted model", scripted.baseUrl()), chats.create(user), new LinkedHashMap<>());
         for (final Map<String, Object> turn : EvalCases.maps(evalCase.get("chat"))) {
             final List<AiChatMessage> messages = scriptedTurn(setup, (String) turn.get("ask"), turn);
             if (Boolean.TRUE.equals(turn.get("apply"))) {
@@ -547,7 +618,99 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                 applyAndSave(setup, proposals.getLast());
             }
         }
+        // A timeline case's tables as the earlier turns left them, the baseline the turn scored is compared with.
+        final Object entity = EvalCases.map(EvalCases.map(evalCase.get("expected")).get("timeline")).get("entity");
+        if (entity != null) {
+            for (final String file : List.of(EvalTimelineScore.EVENTS, EvalTimelineScore.LEVELS,
+                    EvalTimelineScore.PERIODS)) {
+                final String path = EvalTimelineScore.FOLDER + entity + "/" + file;
+                NullSafe.consume(chatFile(setup, path), text -> setup.baseline().put(path, text));
+            }
+        }
         return setup;
+    }
+
+    /// The scripted model's answers to a chat case's side calls (a tool asking the chat's model outside the chat,
+    /// e.g. a timeline's characterisation): the reference's `side_answers`, the first whose `contains` texts the
+    /// request's body all holds: its `answer`, or with `classify` (rules, each `matches`, a regular expression, and
+    /// the activity's `name`) each item of the request's `Items:` list put in the activity of the first rule its
+    /// text or titles match ([#classified]); any other request has the scripted model's own short answer. Each
+    /// request's last message is logged, to write the answers from.
+    ///
+    /// @param evalCase The case.
+    /// @return Each side request's answer, or null for the short answer.
+    static Function<Map<String, Object>, String> sideAnswers(final Map<String, Object> evalCase) {
+        final List<Map<String, Object>> answers = EvalCases.maps(EvalCases.map(evalCase.get("reference"))
+                .get("side_answers"));
+        return request -> {
+            final String body = JsonUtil.writeValueAsString(request, false);
+            final List<?> messages = request.get("messages") instanceof final List<?> list
+                    ? list
+                    : List.of();
+            final Object last = messages.isEmpty()
+                    ? body
+                    : messages.getLast();
+            dump("side request", last);
+            final String asked = last instanceof final Map<?, ?> message
+                    ? String.valueOf(message.get("content"))
+                    : String.valueOf(last);
+            return answers.stream()
+                    .filter(answer -> EvalCases.strings(answer.get("contains")).stream().allMatch(body::contains))
+                    .map(answer -> answer.get("classify") != null
+                            ? classified(asked, EvalCases.maps(answer.get("classify")))
+                            : String.valueOf(answer.get("answer")).strip())
+                    .findFirst()
+                    .orElse(null);
+        };
+    }
+
+    /// A scripted classification of a characterisation's items (decided by rules, so the reference needn't know
+    /// the items' ids): each item of the request's `Items:` list in the activity of the first rule whose `matches`
+    /// its text or titles match (the activity listed by that `name`, else a new one so named), else unclear.
+    ///
+    /// @param asked The request's question: its `Activities:` and `Items:` lists.
+    /// @param rules The rules, in order.
+    /// @return The answer, as the model gives it.
+    static String classified(final String asked, final List<Map<String, Object>> rules) {
+        final int items = asked.indexOf("Items:");
+        if (items < 0) {
+            return "[]";
+        }
+        final List<Map<String, Object>> activities = asked.startsWith("Activities:")
+                ? EvalCases.maps(JsonUtil.readValue(asked.substring("Activities:".length(), items).strip(),
+                List.class))
+                : List.of();
+        final List<Map<String, Object>> answer = new ArrayList<>();
+        for (final Map<String, Object> item : EvalCases.maps(JsonUtil.readValue(asked.substring(items
+                                                                                                 + "Items:".length())
+                .strip(), List.class))) {
+            final String text = item.get("text") + " " + EvalCases.map(item.get("session")).get("titles");
+            final Map<String, Object> rule = rules.stream()
+                    .filter(one -> Pattern.compile(String.valueOf(one.get("matches")), Pattern.CASE_INSENSITIVE)
+                            .matcher(text).find())
+                    .findFirst()
+                    .orElse(null);
+            final Map<String, Object> one = new LinkedHashMap<>();
+            one.put("item", item.get("item"));
+            if (rule == null) {
+                one.put("activity", "unclear");
+            } else {
+                final String name = String.valueOf(rule.get("name"));
+                one.put("activity", activities.stream()
+                        .filter(activity -> activity.values().stream().anyMatch(value -> name.equalsIgnoreCase(
+                                String.valueOf(value))))
+                        .map(activity -> String.valueOf(activity.get("id")))
+                        .findFirst()
+                        .orElse("new"));
+                one.put("name", name);
+            }
+            one.put("confidence", "high");
+            one.put("reason", rule == null
+                    ? "No rule matches it."
+                    : "It matches " + rule.get("matches") + ".");
+            answer.add(one);
+        }
+        return JsonUtil.writeValueAsString(answer, false);
     }
 
     /// An index plan kept with the indexing XSLT of a pipeline feeding an index of the case (`index_plans`, each
@@ -634,6 +797,17 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         }
         score.scoreSkill(evalCase, new EvalScore.SkillRun(calls, String.join("\n\n", EvalChat.replies(messages)),
                 proposals, EvalChat.errors(messages)));
+        // A table call's Markdown table read as a question's is, so its rows are scored as an answer.
+        final List<EvalScore.ToolUse> uses = calls.stream()
+                .map(call -> "table".equals(call.tool()) && !call.error()
+                        ? tableUse(call.arguments(), call.text())
+                        : new EvalScore.ToolUse(call.tool(), call.error(), Map.of(), call.text()))
+                .toList();
+        final List<EvalTimelineScore.Form> forms = EvalChat.forms(messages).stream()
+                .map(form -> new EvalTimelineScore.Form(form.tool(), form.schema(), form.status(), form.content()))
+                .toList();
+        score.scoreTimeline(evalCase, new EvalTimelineScore.Run(uses, path -> chatFile(setup, path),
+                setup.baseline()::get, forms));
     }
 
     /// The user applies a proposal and saves the doc, as they would with its button and then Stroom's Save.
@@ -702,9 +876,12 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
             }
         });
         final Map<String, String> forms = new LinkedHashMap<>();
-        EvalCases.map(turn.get("forms")).forEach((field, value) -> forms.put(field, String.valueOf(value)));
+        EvalCases.map(turn.get("forms")).forEach((field, value) -> forms.put(field, formValue(value)));
+        final List<String> declined = EvalCases.strings(turn.get("forms_declined"));
         final List<AiChatMessage> messages = setup.chats().ask(setup.user(), setup.chat(), setup.scriptedModel(),
-                question, form -> scriptedForm(form, forms), Duration.ofMinutes(5));
+                question, form -> declines(form, declined)
+                        ? null
+                        : scriptedForm(form, forms), Duration.ofMinutes(5));
         if (!failed.isEmpty()) {
             throw new AssertionError("The scripted turn '" + question + "' failed: " + failed);
         }
@@ -724,11 +901,24 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                     content.put(name, answers.get(name));
                 } else if (field.getValue() instanceof final Map<?, ?> definition
                            && definition.get("default") != null) {
-                    content.put(name, String.valueOf(definition.get("default")));
+                    content.put(name, formValue(definition.get("default")));
                 }
             }
         }
         return content;
+    }
+
+    // A form's value as the chat takes it: a choice of several values as a JSON list of them, else its text.
+    private static String formValue(final Object value) {
+        return value instanceof final List<?> list
+                ? JsonUtil.writeValueAsString(list, false)
+                : String.valueOf(value);
+    }
+
+    // Whether the user declines a form: one with any of the fields a turn's forms_declined names.
+    private static boolean declines(final EvalChat.Form form, final List<String> declined) {
+        return form.schema() != null && form.schema().get("properties") instanceof final Map<?, ?> fields
+               && declined.stream().anyMatch(fields::containsKey);
     }
 
     // An argument with its placeholders worked out: <SKILLS /Hunts>, a folder's skills doc's UUID;
@@ -2502,12 +2692,14 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
     /// @param scripted      The scripted model's server, for the setup's turns and a reference's.
     /// @param scriptedModel The model doc of the scripted model.
     /// @param chat          The chat, holding the setup's turns.
+    /// @param baseline      A timeline case's tables as the setup's turns left them, by path ([EvalTimelineScore]).
     record SkillSetup(QuestionData data,
                       UserRef user,
                       EvalChat chats,
                       FakeModelServer scripted,
                       DocRef scriptedModel,
-                      AiChat chat) implements AutoCloseable {
+                      AiChat chat,
+                      Map<String, String> baseline) implements AutoCloseable {
 
         /// Stops the scripted model and removes the data Stroom doesn't remove between cases.
         @Override

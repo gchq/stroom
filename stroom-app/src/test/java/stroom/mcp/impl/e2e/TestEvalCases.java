@@ -68,7 +68,11 @@ class TestEvalCases {
     @Test
     void theSkillCasesRunInTheChatAndTheHandWrittenCaseStartsFromItsPipeline() {
         final List<String> skills = EvalCases.IDS.stream()
-                .filter(id -> EvalCases.isSkill(EvalCases.load(id)) && !EvalCases.isInstructions(EvalCases.load(id)))
+                .filter(id -> EvalCases.isSkill(EvalCases.load(id)) && !EvalCases.isInstructions(EvalCases.load(id))
+                              && !EvalCases.isChat(EvalCases.load(id)))
+                .toList();
+        final List<String> chats = EvalCases.IDS.stream()
+                .filter(id -> EvalCases.isChat(EvalCases.load(id)))
                 .toList();
         final List<String> instructions = EvalCases.IDS.stream()
                 .filter(id -> EvalCases.isInstructions(EvalCases.load(id)))
@@ -77,7 +81,11 @@ class TestEvalCases {
 
         assertThat(skills).hasSize(9).allSatisfy(id -> assertThat(id).matches("(8[89]|9[0-6])_skill_.*"));
         assertThat(instructions).hasSize(4).allSatisfy(id -> assertThat(id).matches("(98|99|100|101)_agents_.*"));
-        for (final String id : java.util.stream.Stream.concat(skills.stream(), instructions.stream()).toList()) {
+        // The cases whose tool asks the user in its forms, or the chat's model in side calls.
+        assertThat(chats).isEmpty();
+        assertThat(chats).allSatisfy(id -> assertThat(EvalCases.isSkill(EvalCases.load(id))).isTrue());
+        for (final String id : java.util.stream.Stream.of(skills, instructions, chats).flatMap(List::stream)
+                .toList()) {
             final Map<String, Object> evalCase = EvalCases.load(id);
             assertThat(evalCase).as(id).containsKeys("request", "expected", "reference");
             assertThat(EvalCases.isDrafted(evalCase)).as(id).isFalse();

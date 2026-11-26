@@ -104,6 +104,8 @@ final class EvalQuestionRecords {
     ///               `TargetPersonId` and `TargetUserName`), after the rest; with `noise: true`, the background
     ///               people's archives and personal cloud use ([InsiderDataset#noiseActs]), after those; with
     ///               `cdn: true`, everyone's content delivery network fetches ([InsiderDataset#cdnActs]), last.
+    ///             * `timeline_scenes`: the records of one of the timeline cases' `scene`s ([EvalTimelineScenes]),
+    ///               jittered by the `seed`.
     /// @return The records, each its values by column.
     static List<Map<String, String>> generate(final Map<String, Object> spec) {
         final String kind = String.valueOf(spec.get("kind"));
@@ -112,6 +114,7 @@ final class EvalQuestionRecords {
             case "staff_activity" -> staffActivity(spec, random, users(spec));
             case "hr_users" -> hrUsers(spec, random, users(spec));
             case "insider_events" -> insiderEvents(spec);
+            case "timeline_scenes" -> EvalTimelineScenes.generate(String.valueOf(spec.get("scene")), random);
             default -> throw new IllegalArgumentException("No question records generator " + kind);
         };
     }

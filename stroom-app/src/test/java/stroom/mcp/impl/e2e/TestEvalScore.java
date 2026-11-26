@@ -2165,6 +2165,255 @@ class TestEvalScore {
     }
 
     @Test
+    void aTimelinesPeriodsAreScoredByKindKeyTimesAndEndsSeenAndImplyNoActivity() {
+        final Map<String, Object> evalCase = timelineCase(Map.of(
+                "periods", List.of(
+                        Map.of("kind", "on_site", "key", "HQ, L2", "start", "2026-11-16T08:2", "end",
+                                "2026-11-16T17:1", "start_seen", "seen", "end_seen", "seen"),
+                        Map.of("kind", "on_site", "key", "HQ, L2", "end", "2026-11-17T07:5", "start_seen",
+                                "start not seen")),
+                "periods_by_kind", Map.of("on_site", 2, "remote_session", 1),
+                "periods_imply_no_activity", true,
+                "periods_within", List.of(Map.of("kind", "remote_session", "within", "on_site", "start",
+                        "2026-11-16")),
+                "no_activity_on", List.of("2026-11-17")));
+        final String periods = """
+                period,kind,key,start,end,start_seen,end_seen
+                pr1,on_site,"HQ, L2",2026-11-16T08:22:00Z,2026-11-16T17:12:00Z,seen,seen
+                pr2,remote_session,lt-01,2026-11-16T10:00:00Z,2026-11-16T11:00:00Z,seen,seen
+                pr3,on_site,"HQ, L2",2026-11-16T17:12:00Z,2026-11-17T07:52:00Z,start not seen,seen
+                """;
+        final String events = """
+                time,role,kind,span,merged,activity,periods,StreamId,EventId
+                2026-11-16T08:22:00Z,period_start,on_site,,,,pr1,1,1
+                2026-11-16T09:00:00Z,action,web.get,s1,,a1,pr1,1,2
+                2026-11-16T17:12:00Z,period_end,on_site,,,,pr1 pr3,1,3
+                2026-11-17T07:52:00Z,period_end,on_site,,,,pr3,1,4
+                """;
+
+        final EvalScore score = new EvalScore("t");
+        score.scoreTimeline(evalCase, timelineRun(List.of(), Map.of("periods.csv", periods, "events.csv", events)));
+        assertThat(score.passed()).as(score.summary()).isTrue();
+
+        // Paired by door, not by the zone: no key, and a period too many; a badge event in a span; Tuesday active.
+        final String byDoor = periods.replace("\"HQ, L2\"", "").replace("pr3,on_site,,", "pr3,on_site,,")
+                              + "pr4,on_site,,2026-11-17T08:00:00Z,2026-11-17T09:00:00Z,seen,seen\n";
+        final String inSpan = events.replace("period_end,on_site,,,,pr3", "period_end,on_site,s2,,a1,pr3");
+        final EvalScore wrong = new EvalScore("t");
+        wrong.scoreTimeline(evalCase, timelineRun(List.of(), Map.of("periods.csv", byDoor, "events.csv", inSpan)));
+        assertThat(wrong.passed()).isFalse();
+        assertThat(wrong.summary()).contains("no period matched")
+                .contains("the periods by kind were {on_site=3, remote_session=1}")
+                .contains("a period's events were taken as activity or are in no period: 1:4")
+                .contains("events of 2026-11-17 are activity: 1:4");
+
+        // No table written at all is said, not thrown.
+        final EvalScore none = new EvalScore("t");
+        none.scoreTimeline(evalCase, timelineRun(List.of(), Map.of()));
+        assertThat(none.summary()).contains("no periods.csv was written");
+    }
+
+    @Test
+    void aThemeIsTheLevelsRowHoldingItsEventsWithTheVisitsAsChildrenAndItsMembersAnAnswerListsExactly() {
+        final Map<String, Object> evalCase = timelineCase(Map.of(
+                "theme", Map.of("matches", "homes\\.example|rentals\\.example", "level", 2, "exactly", true,
+                        "children_at_least", 2),
+                "members_answer", true));
+        final String levels = """
+                id,level,parent,bar_label,how
+                a1,1,,Budget,characterisation
+                m1,2,a1,budget,code: sharing budget
+                t1,2,a2,viewed property listing sites,model (high): example.com.au
+                s1,3,m1,doc.edit,by: activity
+                s2,3,t1,web.get · homes.example.com.au,by: activity
+                s3,3,t1,web.get · rentals.example.org,by: activity
+                """;
+        final String events = """
+                time,object,StreamId,EventId,span,merged,activity
+                2026-11-18T09:00:00Z,\\\\fs01\\budget.xlsx,1,1,s1,m1,a1
+                2026-11-18T13:00:00Z,https://www.homes.example.com.au/1,1,2,s2,t1,a2
+                2026-11-18T13:01:00Z,https://www.homes.example.com.au/2,1,3,s2,t1,a2
+                2026-11-18T13:05:00Z,https://rentals.example.org/3,1,4,s3,t1,a2
+                """;
+        final EvalScore.ToolUse answer = new EvalScore.ToolUse("table", false, Map.of("path",
+                "/outputs/timelines/pat/events.csv", "columns", List.of("time", "StreamId", "EventId"), "rows",
+                List.of(List.of("13:00", "1", "2"), List.of("13:01", "1", "3"), List.of("13:05", "1", "4"))), "");
+
+        final EvalScore score = new EvalScore("t");
+        score.scoreTimeline(evalCase, timelineRun(List.of(answer), Map.of("activity-levels.csv", levels,
+                "events.csv", events)));
+        assertThat(score.passed()).as(score.summary()).isTrue();
+
+        // The document work taken into the theme; an answer by time, one event short.
+        final String widened = events.replace("budget.xlsx,1,1,s1,m1,a1", "budget.xlsx,1,1,s1,t1,a1");
+        final EvalScore.ToolUse short1 = new EvalScore.ToolUse("table", false, Map.of("path",
+                "/outputs/timelines/pat/events.csv", "columns", List.of("EventId"), "rows", List.of(List.of("2"),
+                        List.of("3"))), "");
+        final EvalScore wrong = new EvalScore("t");
+        wrong.scoreTimeline(evalCase, timelineRun(List.of(short1), Map.of("activity-levels.csv", levels,
+                "events.csv", widened)));
+        assertThat(wrong.passed()).isFalse();
+        assertThat(wrong.summary()).contains("no row at level 2 holds exactly the 3 events matching")
+                .contains("no theme to answer of");
+        final EvalScore shortAnswer = new EvalScore("t");
+        shortAnswer.scoreTimeline(evalCase, timelineRun(List.of(short1), Map.of("activity-levels.csv", levels,
+                "events.csv", events)));
+        assertThat(shortAnswer.summary()).contains("a table call returned 2 event(s), 1 of t1's missing and 0 not "
+                                                   + "of it");
+    }
+
+    @Test
+    void aSplitRunsPartsAreScoredByTheirEventsTheEvidenceEachCitesAndTheirParent() {
+        final Map<String, Object> evalCase = timelineCase(Map.of(
+                "runs", List.of(Map.of("matches", "rota", "events", 2), Map.of("matches", "certificate", "events", 2)),
+                "runs_total", 2,
+                "runs_described_with_evidence", true,
+                "runs_under_activity", true,
+                "runs_parent_rows", true));
+        final String levels = """
+                id,level,parent,activity,activity_label,bar_label,how
+                a1,1,,a1,Rota,Rota,characterisation
+                a2,1,,a2,Certificate,Certificate,characterisation
+                pr1,1,,pr1,remote session,remote session,period
+                r1-1,2,a1,a1,Rota,arranged the rota,"model (high): e1, e2"
+                r1-2,2,a2,a2,Certificate,renewed the certificate,model (high): e3
+                1:1,3,r1-1,a1,Rota,Can you cover the rota?,event of the run
+                1:2,3,r1-1,a1,Rota,"Rota sorted, thanks",event of the run
+                1:3,3,r1-2,a2,Certificate,The certificate expires,event of the run
+                1:4,3,r1-2,a2,Certificate,Certificate renewed,event of the run
+                """;
+        final String events = """
+                time,StreamId,EventId,span,merged,activity
+                2026-11-19T10:00:00Z,1,1,s1,r1-1,a1
+                2026-11-19T10:02:00Z,1,2,s1,r1-1,a1
+                2026-11-19T10:04:00Z,1,3,s1,r1-2,a2
+                2026-11-19T10:06:00Z,1,4,s1,r1-2,a2
+                """;
+
+        final EvalScore score = new EvalScore("t");
+        score.scoreTimeline(evalCase, timelineRun(List.of(), Map.of("activity-levels.csv", levels, "events.csv",
+                events)));
+        assertThat(score.passed()).as(score.summary()).isTrue();
+
+        // The first part citing the second's event, the second code's alone and under a period, and the first's
+        // activity no row of the table (an activity of the run's items alone).
+        final String wrongLevels = levels.replace("\"model (high): e1, e2\"", "\"model (high): e1, e3\"")
+                .replace("r1-2,2,a2,a2,Certificate,renewed the certificate,model (high): e3",
+                        "r1-2,2,pr1,pr1,remote session,renewed the certificate,code: a run by host within the idle "
+                        + "cap")
+                .replace("a1,1,,a1,Rota,Rota,characterisation\n", "");
+        final EvalScore wrong = new EvalScore("t");
+        wrong.scoreTimeline(evalCase, timelineRun(List.of(), Map.of("activity-levels.csv", wrongLevels,
+                "events.csv", events)));
+        assertThat(wrong.passed()).isFalse();
+        assertThat(wrong.summary()).contains("run r1-1 cites [e3], not events of its own")
+                .contains("run r1-2 wasn't described by the model")
+                .contains("run r1-2's parent is 'pr1', not an activity")
+                .contains("run r1-1's parent 'a1' is no level-1 row ([a2])");
+
+        // One run for the whole thread: neither topic's run is there.
+        final String unsplit = """
+                id,level,parent,activity,activity_label,bar_label,how
+                a1,1,,a1,Chat,Chat,characterisation
+                r1,2,a1,a1,Chat,chatted,"model (high): e1, e3"
+                1:1,3,r1,a1,Chat,Can you cover the rota?,event of the run
+                1:2,3,r1,a1,Chat,"Rota sorted, thanks",event of the run
+                1:3,3,r1,a1,Chat,The certificate expires,event of the run
+                1:4,3,r1,a1,Chat,Certificate renewed,event of the run
+                """;
+        final EvalScore whole = new EvalScore("t");
+        whole.scoreTimeline(evalCase, timelineRun(List.of(), Map.of("activity-levels.csv", unsplit, "events.csv",
+                events.replace("r1-1", "r1").replace("r1-2", "r1"))));
+        assertThat(whole.summary()).contains("1 run(s), expected 2")
+                .contains("no run of exactly 2 events all matching rota");
+    }
+
+    @Test
+    void theNoiseIsScoredByItsFormWhatWasLeftOutWhatWasKeptAndTheBaseline() {
+        final Map<String, Object> evalCase = timelineCase(Map.of("noise", Map.of(
+                "form", true,
+                "excluded_at_least", 100,
+                "remembered", true,
+                "gone", "telemetry",
+                "kept", "supplier",
+                "kept_at_least", 2,
+                "fewer_than_baseline", List.of("events.csv"))));
+        final Map<String, Object> schema = Map.of("type", "object", "properties", Map.of("exclude", Map.of("type",
+                "array", "items", Map.of("type", "string", "anyOf", List.of(Map.of("const", "noise-1"),
+                        Map.of("const", "noise-2"))))));
+        final EvalTimelineScore.Form accepted = new EvalTimelineScore.Form("activity_timeline", schema, "ACCEPTED",
+                Map.of("exclude", List.of("noise-1", "noise-2")));
+        final EvalScore.ToolUse first = new EvalScore.ToolUse("activity_timeline", false, Map.of(),
+                "Left out as noise, as the user chose (kept in /outputs/timelines/exclusions.json): 120 event(s): "
+                + "web.get at telemetry 100; process.start 20.");
+        final String events = """
+                time,object,StreamId,EventId
+                2026-11-17T09:35:00Z,https://www.supplier.example.com/1,1,1
+                2026-11-17T09:37:00Z,https://www.supplier.example.com/2,1,2
+                """;
+        final String baseline = events + "2026-11-17T09:38:00Z,https://telemetry.example.net/beacon,1,3\n";
+        final Map<String, String> files = Map.of("events.csv", events);
+
+        final EvalScore score = new EvalScore("t");
+        score.scoreTimeline(evalCase, new EvalTimelineScore.Run(List.of(first, first), path -> files.get(
+                path.substring(path.lastIndexOf('/') + 1)), path -> path.endsWith("events.csv")
+                ? baseline
+                : null, List.of(accepted)));
+        assertThat(score.passed()).as(score.summary()).isTrue();
+
+        // Unticked, the beacon kept, asked again on the re-run; and no baseline to compare with.
+        final EvalTimelineScore.Form unticked = new EvalTimelineScore.Form("activity_timeline", schema,
+                "ACCEPTED", Map.of("exclude", List.of("noise-2")));
+        final EvalScore.ToolUse kept = new EvalScore.ToolUse("activity_timeline", false, Map.of(), "No noise.");
+        final Map<String, String> noisy = Map.of("events.csv", baseline);
+        final EvalScore wrong = new EvalScore("t");
+        wrong.scoreTimeline(evalCase, new EvalTimelineScore.Run(List.of(kept, kept), path -> noisy.get(
+                path.substring(path.lastIndexOf('/') + 1)), null, List.of(unticked, unticked)));
+        assertThat(wrong.passed()).isFalse();
+        assertThat(wrong.summary()).contains("2 noise form(s); the first ACCEPTED leaving out [noise-2] of "
+                                             + "[noise-1, noise-2]")
+                .contains("they said [null, null]")
+                .contains("the later run asked again (2 noise forms)")
+                .contains("1 event(s) matching telemetry are still in the timeline")
+                .contains("the baseline none (no baseline)");
+
+        // Built once: remembering isn't checked, and said so.
+        final EvalScore once = new EvalScore("t");
+        once.scoreTimeline(evalCase, new EvalTimelineScore.Run(List.of(first), path -> files.get(
+                path.substring(path.lastIndexOf('/') + 1)), path -> path.endsWith("events.csv")
+                ? baseline
+                : null, List.of(accepted)));
+        assertThat(once.passed()).as(once.summary()).isTrue();
+        assertThat(once.summary()).contains("not re-run, so remembering wasn't checked");
+    }
+
+    @Test
+    void aTimelinesTablesAreReadWithTheirQuotedValuesWhole() {
+        assertThat(EvalTimelineScore.csv("a,b,c\n1,\"x, \"\"y\"\"\",\n")).containsExactly(Map.of("a", "1", "b",
+                "x, \"y\"", "c", ""));
+        assertThat(EvalTimelineScore.csv("")).isEmpty();
+        // A case without expected.timeline scores nothing of it.
+        final EvalScore none = new EvalScore("t");
+        none.scoreTimeline(Map.of("expected", Map.of()), timelineRun(List.of(), Map.of()));
+        assertThat((List<?>) none.toMap().getOrDefault("question_checks", List.of())).isEmpty();
+    }
+
+    // A timeline case of pat's, its expected.timeline the checks given.
+    private static Map<String, Object> timelineCase(final Map<String, Object> checks) {
+        final Map<String, Object> timeline = new LinkedHashMap<>(checks);
+        timeline.put("entity", "pat");
+        return Map.of("kind", "question", "expected", Map.of("timeline", timeline));
+    }
+
+    // A run whose timeline wrote the files given (by name, in pat's folder), with no baseline or forms.
+    private static EvalTimelineScore.Run timelineRun(final List<EvalScore.ToolUse> calls,
+                                                     final Map<String, String> files) {
+        return new EvalTimelineScore.Run(calls, path -> path.startsWith("/outputs/timelines/pat/")
+                ? files.get(path.substring("/outputs/timelines/pat/".length()))
+                : null, null, null);
+    }
+
+    @Test
     void aFindingMatchesOnEachKeyGiven() {
         final Map<String, Object> peers = finding("peers", "events_vs_peers", "2026-06-01 to 2026-06-26",
                 "46 events per day against a median of 2.7 for 5 peers in Organisation 'Finance'");

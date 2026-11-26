@@ -134,7 +134,18 @@ final class EvalCases {
     /// @param evalCase The case.
     /// @return True for a skill case.
     static boolean isSkill(final Map<String, Object> evalCase) {
-        return "skill".equals(evalCase.get("kind")) || isInstructions(evalCase);
+        return "skill".equals(evalCase.get("kind")) || isInstructions(evalCase) || isChat(evalCase);
+    }
+
+    /// Whether a case is a chat about a tool that asks the user in its own forms or asks the chat's model in side
+    /// calls (`kind: chat`, e.g. a timeline whose noise the user leaves out in a form): run as a skill case is
+    /// ([#isSkill], so it counts as one), with no skills docs, scored on its calls, forms and what its tools wrote
+    /// ([EvalScore#scoreSkill]).
+    ///
+    /// @param evalCase The case.
+    /// @return True if it is.
+    static boolean isChat(final Map<String, Object> evalCase) {
+        return "chat".equals(evalCase.get("kind"));
     }
 
     /// Whether a case is a chat about standing instructions (`kind: instructions`): run as a skill case is

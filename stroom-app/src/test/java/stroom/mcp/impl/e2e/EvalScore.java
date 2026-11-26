@@ -1523,6 +1523,31 @@ final class EvalScore {
         scoreWording(maps(expected.get("findings")), calls, reply);
     }
 
+    /// Scores what an activity timeline wrote and asked, as the case's `expected.timeline` says
+    /// ([EvalTimelineScore]): its periods, the activities view's levels and member events, and its noise; scored as
+    /// a question's checks are.
+    ///
+    /// @param evalCase The case.
+    /// @param run      What the run left: its calls, the workspace's files, the baseline's and the forms asked.
+    void scoreTimeline(final Map<String, Object> evalCase, final EvalTimelineScore.Run run) {
+        final Map<String, Object> expected = maps(maps(evalCase.get("expected")).get("timeline"));
+        if (expected.isEmpty()) {
+            return;
+        }
+        question = true;
+        EvalTimelineScore.score(expected, run, new EvalTimelineScore.Checks() {
+            @Override
+            public void check(final String check, final boolean passed, final String problem) {
+                questionCheck(check, passed, problem);
+            }
+
+            @Override
+            public void note(final String note) {
+                EvalScore.this.note(note);
+            }
+        });
+    }
+
     /// Scores what a hand-written case's build did besides its Events ([AbstractEvalTest#scoreHandWritten]):
     ///
     /// * `expected.route.calls_in_order`: the tools called hold these in this order (others may come between);

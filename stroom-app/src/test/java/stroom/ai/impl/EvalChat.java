@@ -22,6 +22,7 @@ import stroom.ai.shared.AiAgentMode;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatPollRequest;
+import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AiUserActionResult;
 import stroom.ai.shared.AnswerAiApprovalRequest;
@@ -67,6 +68,7 @@ public final class EvalChat {
     private final AiChatRunManager runManager;
     private final SecurityContext securityContext;
     private final DocumentPermissionService documentPermissionService;
+    private final AiChatRunDao runDao;
 
     @Inject
     EvalChat(final AskStroomAIService askStroomAIService,
@@ -75,7 +77,8 @@ public final class EvalChat {
              final UserActionService userActionService,
              final AiChatRunManager runManager,
              final SecurityContext securityContext,
-             final DocumentPermissionService documentPermissionService) {
+             final DocumentPermissionService documentPermissionService,
+             final AiChatRunDao runDao) {
         this.askStroomAIService = askStroomAIService;
         this.aiService = aiService;
         this.modelStore = modelStore;
@@ -83,6 +86,7 @@ public final class EvalChat {
         this.runManager = runManager;
         this.securityContext = securityContext;
         this.documentPermissionService = documentPermissionService;
+        this.runDao = runDao;
     }
 
     /// A model doc for a chat model at a base URL, with tools on, made by an administrator and usable by the user.
@@ -148,9 +152,16 @@ public final class EvalChat {
                     securityContext.asUser(user, () -> askStroomAIService.answerApproval(
                             new AnswerAiApprovalRequest(chat, message.getId(), true)));
                 }
-                if (message.getMessageType() == AiMessageType.ELICITATION && handled.add(message.getId())) {
+                if (message.getMessageType() == AiMessageType.ELICITATION && !handled.contains(message.getId())) {
                     final ElicitationRecord form = JsonUtil.readValue(message.getMessage(), ElicitationRecord.class);
-                    if (form.status() == ElicitationRecord.Status.PENDING) {
+                    // A tool's form is answered once its run waits for the user: the form is stored before the run
+                    // stops for it, and a form answered in between is cancelled as no longer waited for.
+                    final boolean ready = form.status() != ElicitationRecord.Status.PENDING || form.callId() != null
+                                          || waitingForUser(chat.getId());
+                    if (ready) {
+                        handled.add(message.getId());
+                    }
+                    if (ready && form.status() == ElicitationRecord.Status.PENDING) {
                         final Map<String, String> answer = forms.apply(new Form(message.getId(), form.tool(),
                                 form.message(), form.schema()));
                         securityContext.asUser(user, () -> askStroomAIService.answerElicitation(
@@ -233,6 +244,19 @@ public final class EvalChat {
     }
 
     /// @param messages Some messages.
+    /// @return The forms the chat's tools asked the user among them, in order, each as it ended (its status and the
+    /// user's answer).
+    public static List<AskedForm> forms(final List<AiChatMessage> messages) {
+        return messages.stream()
+                .filter(message -> message.getMessageType() == AiMessageType.ELICITATION)
+                .map(message -> JsonUtil.readValue(message.getMessage(), ElicitationRecord.class))
+                .map(form -> new AskedForm(form.tool(), form.schema(), form.status() == null
+                        ? null
+                        : form.status().name(), form.content()))
+                .toList();
+    }
+
+    /// @param messages Some messages.
     /// @return The model's replies among them, in order.
     public static List<String> replies(final List<AiChatMessage> messages) {
         return messages.stream()
@@ -249,6 +273,13 @@ public final class EvalChat {
                 .filter(message -> message.getMessageType() == AiMessageType.ERROR)
                 .map(AiChatMessage::getMessage)
                 .toList();
+    }
+
+    // Whether the chat's run has stopped to wait for the user.
+    private boolean waitingForUser(final int chatId) {
+        return runDao.getActive(chatId)
+                .filter(run -> run.getStatus() == AiChatRunStatus.WAITING_FOR_USER)
+                .isPresent();
     }
 
     private static long answers(final List<AiChatMessage> messages) {
@@ -278,6 +309,16 @@ public final class EvalChat {
     /// @param message   What it says.
     /// @param schema    Its fields, as a flat JSON schema.
     public record Form(int messageId, String tool, String message, Map<String, Object> schema) {
+
+    }
+
+    /// A form a tool asked the user, as it ended.
+    ///
+    /// @param tool    The tool that asked, if known.
+    /// @param schema  Its fields, as a flat JSON schema.
+    /// @param status  What became of it, e.g. `ACCEPTED`.
+    /// @param content The user's answer, once accepted; else null.
+    public record AskedForm(String tool, Map<String, Object> schema, String status, Map<String, Object> content) {
 
     }
 
