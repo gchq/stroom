@@ -16,11 +16,33 @@
 
 package stroom.util.client;
 
+import stroom.util.net.UrlUtils;
+
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRedirectUrlUtil {
+
+    @ParameterizedTest
+    @CsvSource({
+            "https://stroom.example:443/api/oauth2/v1/auth, https://stroom.example, true",
+            "http://stroom.example:80/api/oauth2/v1/auth, http://stroom.example, true",
+            "https://stroom.example:8443/api/oauth2/v1/auth, https://stroom.example:8443, true",
+            "https://stroom.example:8443/api/oauth2/v1/auth, https://stroom.example, false",
+            "http://stroom.example/api/oauth2/v1/auth, https://stroom.example, false",
+            "https://other.example/api/oauth2/v1/auth, https://stroom.example, false",
+            "/api/oauth2/v1/auth, https://stroom.example, true",
+            "//stroom.example/api/oauth2/v1/auth, https://stroom.example, false",
+            "https://[invalid]/, https://stroom.example, false",
+            ", https://stroom.example, false"
+    })
+    void checksRedirectOrigin(final String uri, final String pageUrl, final boolean expected) {
+        assertThat(RedirectUrlUtil.isSameOrigin(uri, UrlUtils.toOrigin(pageUrl), UrlUtils::toOrigin))
+                .isEqualTo(expected);
+    }
 
     @Test
     void allowsPlainRootRelativePaths() {
