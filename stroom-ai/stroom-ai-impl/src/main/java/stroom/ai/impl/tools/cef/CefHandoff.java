@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools.cef;
 
 import stroom.ai.impl.tools.validation.XmlTrees;
+import stroom.ai.impl.tools.validation.XsltChecks;
 import stroom.ai.impl.tools.validation.XsltVersionHistory;
 import stroom.util.shared.NullSafe;
 
@@ -63,8 +64,6 @@ public record CefHandoff(String namespace,
     /// The line put through the shared stage to check a form.
     static final String CHECK_LINE = "CEF:0|Vendor|Product|1.0|Id|Name|3|suser=check";
 
-    private static final Pattern XPATH_DEFAULT_NAMESPACE = Pattern.compile(
-            "xpath-default-namespace\\s*=\\s*[\"']([^\"']*)[\"']");
     private static final String NAME = "(?:[A-Za-z_*][\\w.\\-]*:)?[A-Za-z_*][\\w.\\-]*";
     // A step of a path: a name with predicates, an attribute, the context item, its parent or its text.
     private static final String STEP = "(?:" + NAME + "(?:\\[[^\\]]*\\])*|@" + NAME + "|\\.\\.|\\.|text\\(\\))";
@@ -98,11 +97,7 @@ public record CefHandoff(String namespace,
         if (root.isEmpty()) {
             return List.of();
         }
-        final Matcher defaults = XPATH_DEFAULT_NAMESPACE.matcher(text);
-        final String defaultNamespace = defaults.find()
-                ? defaults.group(1).strip()
-                : "";
-        final Walk walk = new Walk(defaultNamespace);
+        final Walk walk = new Walk();
         for (final Element template : XmlTrees.children(root.get())) {
             if (XmlTrees.isXsl(template, "template") && template.hasAttribute("match")) {
                 for (final String pattern : splitTopLevel(template.getAttribute("match"))) {
@@ -336,6 +331,7 @@ public record CefHandoff(String namespace,
         final String nameValue = item.predicateAttribute() == null
                 ? null
                 : NullSafe.nonBlankStringElse(item.predicateValue(), ANY_NAME);
+        final String namespace = namespaceOf(steps, itemAt);
         final List<CefHandoff> out = new ArrayList<>();
         for (final List<String> chain : chains) {
             if (chain.isEmpty() || chain.contains("*")) {
@@ -343,9 +339,21 @@ public record CefHandoff(String namespace,
             }
             final List<String> path = new ArrayList<>(chain);
             path.add(item.name());
-            out.add(new CefHandoff(item.namespace(), path, item.predicateAttribute(), nameValue, taken));
+            out.add(new CefHandoff(namespace, path, item.predicateAttribute(), nameValue, taken));
         }
         return out;
+    }
+
+    // The namespace of the form: the item's; for an item of any namespace (`*:data`), that of the nearest element
+    // above it whose namespace is known; else none.
+    private static String namespaceOf(final List<Step> steps, final int itemAt) {
+        for (int i = itemAt; i >= 0; i--) {
+            final Step step = steps.get(i);
+            if (!step.isAttribute() && !step.isGap() && step.namespace() != null) {
+                return step.namespace();
+            }
+        }
+        return "";
     }
 
     // A known prefix from the root, then what is known above the item, overlapping where the one ends as the other
@@ -459,8 +467,9 @@ public record CefHandoff(String namespace,
     // --------------------------------------------------------------------------------
 
 
-    // One step of a path: an element (its local name and namespace, and an attribute its predicate tests), an
-    // attribute (`@name`), or a gap (`**`: any elements, from `//` or a pattern that doesn't start at the root).
+    // One step of a path: an element (its local name and namespace, null for any (`*:name`), and an attribute its
+    // predicate tests), an attribute (`@name`), or a gap (`**`: any elements, from `//` or a pattern that doesn't
+    // start at the root).
     private record Step(String name, String namespace, String predicateAttribute, String predicateValue) {
 
         boolean isAttribute() {
@@ -510,13 +519,8 @@ public record CefHandoff(String namespace,
     // The walk over the XSLT's templates: what it takes, and the paths from the root it selects.
     private static final class Walk {
 
-        private final String defaultNamespace;
         private final List<Read> reads = new ArrayList<>();
         private final Set<List<String>> absolutes = new LinkedHashSet<>();
-
-        private Walk(final String defaultNamespace) {
-            this.defaultNamespace = defaultNamespace;
-        }
 
         private void body(final Element element, final Context context, final boolean inValue) {
             for (final Element child : XmlTrees.children(element)) {
@@ -654,14 +658,17 @@ public record CefHandoff(String namespace,
             return new Parsed(out, absolute);
         }
 
-        private String namespaceOf(final String qualified, final Element at) {
+        // The namespace of a name step: a bare name's is the xpath-default-namespace in force where it is read
+        // (the nearest declared on that element or its ancestors: an xsl:for-each, the template, the stylesheet);
+        // a prefixed name's is its prefix's; `*:name` is any namespace (null).
+        private static String namespaceOf(final String qualified, final Element at) {
             final int colon = qualified.indexOf(':');
             if (colon < 0) {
-                return defaultNamespace;
+                return NullSafe.string(XsltChecks.defaultNamespace(at)).strip();
             }
             final String prefix = qualified.substring(0, colon);
             if ("*".equals(prefix)) {
-                return defaultNamespace;
+                return null;
             }
             return NullSafe.string(XmlTrees.namespaces(at).get(prefix));
         }

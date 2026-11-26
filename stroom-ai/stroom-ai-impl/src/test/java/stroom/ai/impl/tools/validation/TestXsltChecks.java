@@ -168,6 +168,28 @@ class TestXsltChecks {
     }
 
     @Test
+    void testRecordsReadFromAnEarlierStageInAnEventsNamespaceAreSaidToBeInIt() {
+        // A CEF forwarder's stage after the flattener reads its records/data in event-logging:3 (the namespace the
+        // shared Kafka XSLT reads), not records:2.
+        final String sheet = "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                             + "xmlns=\"event-logging:3\" version=\"3.0\"><xsl:template match=\"/records\">"
+                             + "<CefEvent><xsl:value-of select=\"record/data/@value\"/></CefEvent>"
+                             + "</xsl:template></xsl:stylesheet>";
+        final Element root = XmlTrees.parse(sheet);
+        final String fork = "file://xml/schema/accounting/events";
+
+        assertThat(XsltChecks.namespaceProblems(root, "event-logging:3")).singleElement().asString()
+                .contains("those elements are in namespace event-logging:3 (the input's namespace")
+                .contains("Set xpath-default-namespace=\"event-logging:3\"")
+                .doesNotContain("records:2");
+        assertThat(XsltChecks.namespaceProblems(root, fork, List.of(fork))).singleElement().asString()
+                .contains("Set xpath-default-namespace=\"" + fork + "\"");
+        // With it declared, nothing.
+        assertThat(XsltChecks.namespaceProblems(XmlTrees.parse(sheet.replace("version=\"3.0\"",
+                "version=\"3.0\" xpath-default-namespace=\"event-logging:3\"")), "event-logging:3")).isEmpty();
+    }
+
+    @Test
     void testJsonToXmlWithoutAGuardIsAWarning() {
         // Seen in a test environment: "empty sequence", a fatal error that stopped processing.
         final String sheet = "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"3.0\">"
@@ -206,5 +228,23 @@ class TestXsltChecks {
                                             + "</xsl:stylesheet>");
         assertThat(XsltChecks.defaultNamespace(XmlTrees.children(root).getFirst())).isEqualTo("records:2");
         assertThat(XsltChecks.defaultNamespace(XmlTrees.parse("<a/>"))).isNull();
+    }
+
+    @Test
+    void testALiteralResultElementDeclaresTheDefaultNamespaceWithTheXslPrefix() {
+        // The nearest declaration wins: a literal's xsl:xpath-default-namespace over the stylesheet's; a literal's
+        // own unprefixed attribute is only an attribute it writes.
+        final Element root = XmlTrees.parse("<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                                            + "xpath-default-namespace=\"records:2\"><xsl:template match=\"/\">"
+                                            + "<out xsl:xpath-default-namespace=\"event-logging:3\"><xsl:value-of/>"
+                                            + "</out><other xpath-default-namespace=\"x\"><xsl:value-of/></other>"
+                                            + "</xsl:template></xsl:stylesheet>");
+        final Element template = XmlTrees.children(root).getFirst();
+        final List<Element> literals = XmlTrees.children(template);
+
+        assertThat(XsltChecks.defaultNamespace(XmlTrees.children(literals.get(0)).getFirst()))
+                .isEqualTo("event-logging:3");
+        assertThat(XsltChecks.defaultNamespace(XmlTrees.children(literals.get(1)).getFirst()))
+                .isEqualTo("records:2");
     }
 }

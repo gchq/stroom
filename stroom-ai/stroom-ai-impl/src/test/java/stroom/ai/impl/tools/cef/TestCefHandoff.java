@@ -76,6 +76,43 @@ class TestCefHandoff {
     }
 
     @Test
+    void anItemOfAnyNamespaceTakesItsWrappersNamespace() {
+        // `*:data` matches data in any namespace, not the default one (here none): the form is in the namespace
+        // its wrappers are read in.
+        final String shared = "<xsl:stylesheet " + XSL + " xmlns:evt=\"event-logging:3\" "
+                              + "xmlns=\"kafka-records:1\"><xsl:template match=\"/evt:records\"><kafkaRecords>"
+                              + "<xsl:for-each select=\"evt:record\"><kafkaRecord topic=\"t\"><value>"
+                              + "<xsl:value-of select=\"*:data[@name='cef']/@value\"/></value></kafkaRecord>"
+                              + "</xsl:for-each></kafkaRecords></xsl:template></xsl:stylesheet>";
+
+        final CefHandoff.Inferred inferred = CefHandoff.infer(shared).orElseThrow();
+
+        assertThat(inferred.checked()).isTrue();
+        assertThat(inferred.handoff()).isEqualTo(new CefHandoff("event-logging:3",
+                List.of("records", "record", "data"), "name", "cef", "value"));
+    }
+
+    @Test
+    void theDefaultNamespaceIsTheOneInForceWhereTheRecordsAreRead() {
+        // The stylesheet's xpath-default-namespace comes first in the text, but the template reading the records
+        // declares its own: that is the one its paths are read in.
+        final String onTemplate = SHARED.replace("xpath-default-namespace=\"" + FORK + "\" ",
+                        "xpath-default-namespace=\"records:2\" ")
+                .replace("<xsl:template match=\"/records\">",
+                        "<xsl:template match=\"/records\" xpath-default-namespace=\"" + FORK + "\">");
+
+        assertThat(CefHandoff.infer(onTemplate).orElseThrow().handoff()).isEqualTo(new CefHandoff(FORK,
+                List.of("records", "record", "data"), "name", "cef", "value"));
+        // Declared on the xsl:for-each over the records, and the root matched in no namespace.
+        final String onForEach = SHARED.replace("xpath-default-namespace=\"" + FORK + "\" ", "")
+                .replace("<xsl:template match=\"/records\">", "<xsl:template match=\"/*:records\">")
+                .replace("<xsl:for-each select=\"record\">",
+                        "<xsl:for-each select=\"record\" xpath-default-namespace=\"" + FORK + "\">");
+
+        assertThat(CefHandoff.infer(onForEach).orElseThrow().handoff().namespace()).isEqualTo(FORK);
+    }
+
+    @Test
     void aPredicateTestingOnlyThatTheItemIsNamedGetsAName() {
         final String shared = "<xsl:stylesheet " + XSL + " xmlns=\"kafka-records:1\"><xsl:template match=\"/out\">"
                               + "<kafkaRecords><xsl:for-each select=\"entry[@name]\"><kafkaRecord topic=\"t\">"

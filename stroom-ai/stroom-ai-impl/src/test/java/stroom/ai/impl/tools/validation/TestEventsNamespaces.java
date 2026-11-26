@@ -26,6 +26,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestEventsNamespaces {
 
     private static final String FORK = "file://xml/schema/accounting/events";
+    // The stage after a flattener: its pairs in event-logging:3 in, the flattened line in a CefEvent out.
+    static final String CEF_EVENT_STAGE = """
+            <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="event-logging:3"
+             xpath-default-namespace="event-logging:3" version="3.0">
+              <xsl:template match="/records"><CefEvent><xsl:value-of select="record/data/@value"/></CefEvent>\
+            </xsl:template>
+            </xsl:stylesheet>""";
 
     @Test
     void anEventsDocumentIsToldByItsShapeInAnyNamespace() {
@@ -83,6 +90,69 @@ class TestEventsNamespaces {
                 known)).isEmpty();
         assertThat(EventsNamespaces.writtenBy("<cut", known)).isEmpty();
         assertThat(EventsNamespaces.writtenBy(null, known)).isEmpty();
+    }
+
+    @Test
+    void anIntermediateStageInAnEventsNamespaceWritesNoEvents() {
+        // A CEF forwarder's stages mirror the namespace the shared Kafka XSLT reads: a flattener's pairs and a
+        // CefEvent wrapping the flattened line, both in event-logging:3, are not Events.
+        final List<String> known = List.of("event-logging:3", FORK);
+
+        assertThat(EventsNamespaces.writtenBy(flattener("event-logging:3"), known)).isEmpty();
+        assertThat(EventsNamespaces.writtenBy(flattener(FORK), known)).isEmpty();
+        assertThat(EventsNamespaces.writtenBy(CEF_EVENT_STAGE, known)).isEmpty();
+        assertThat(EventsNamespaces.writesEventsOrEvent(root(CEF_EVENT_STAGE))).isFalse();
+        assertThat(EventsNamespaces.readsEvents(root(CEF_EVENT_STAGE), known)).isTrue();
+    }
+
+    @Test
+    void theNamespaceOfTheEventsWrittenIsTakenOverOtherElements() {
+        // Another element in an Events namespace before the Event doesn't name the Events' namespace.
+        final String translation = "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
+                                   + "xpath-default-namespace=\"records:2\" version=\"3.0\">"
+                                   + "<xsl:template name=\"note\"><records xmlns=\"event-logging:3\"/>"
+                                   + "</xsl:template><xsl:template match=\"record\"><Event xmlns=\"" + FORK + "\">"
+                                   + "<EventTime/></Event></xsl:template></xsl:stylesheet>";
+
+        assertThat(EventsNamespaces.writtenBy(translation, List.of("event-logging:3", FORK))).contains(FORK);
+        // A decoration copying its Events still writes them.
+        final String decoration = "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" xmlns=\""
+                                  + FORK + "\" xpath-default-namespace=\"" + FORK + "\" version=\"3.0\">"
+                                  + "<xsl:template match=\"@*|node()\"><xsl:copy><xsl:apply-templates "
+                                  + "select=\"@*|node()\"/></xsl:copy></xsl:template>"
+                                  + "<xsl:template match=\"EventDetail\"><xsl:copy><xsl:apply-templates/><Extra/>"
+                                  + "</xsl:copy></xsl:template></xsl:stylesheet>";
+        assertThat(EventsNamespaces.writtenBy(decoration, List.of("event-logging:3", FORK))).contains(FORK);
+    }
+
+    @Test
+    void anEventsNamespaceIsReadWhereAnyElementDeclaresIt() {
+        final List<String> known = List.of("event-logging:3", FORK);
+
+        assertThat(EventsNamespaces.readsEvents(root("<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/"
+                                                     + "Transform\" version=\"3.0\"><xsl:template match=\"x\" "
+                                                     + "xpath-default-namespace=\"" + FORK + "\"/>"
+                                                     + "</xsl:stylesheet>"), known)).isTrue();
+        assertThat(EventsNamespaces.readsEvents(root("<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/"
+                                                     + "Transform\" xmlns:e=\"event-logging:3\" version=\"3.0\">"
+                                                     + "<xsl:template match=\"e:Event\"/></xsl:stylesheet>"), known))
+                .isTrue();
+        assertThat(EventsNamespaces.readsEvents(root("<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/"
+                                                     + "Transform\" xpath-default-namespace=\"records:2\" "
+                                                     + "version=\"3.0\"/>"), known)).isFalse();
+    }
+
+    // A flattener of Events in the namespace given: data pairs in that namespace, for the next XSLT.
+    static String flattener(final String namespace) {
+        return """
+                <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="%1$s"
+                 xpath-default-namespace="%1$s" version="3.0">
+                  <xsl:template match="/Events"><records><xsl:apply-templates select="Event"/></records>\
+                </xsl:template>
+                  <xsl:template match="Event">
+                    <record><data name="user" value="{EventSource/User/Id}"/></record>
+                  </xsl:template>
+                </xsl:stylesheet>""".formatted(namespace);
     }
 
     private static Element root(final String xml) {

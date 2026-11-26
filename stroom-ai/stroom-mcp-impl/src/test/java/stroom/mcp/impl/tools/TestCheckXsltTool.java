@@ -333,6 +333,28 @@ class TestCheckXsltTool {
 
     @Test
     @SuppressWarnings("unchecked")
+    void aFlattenerInAnotherEventsNamespaceThanItsImportMixesNoEvents() {
+        // A flattener reading the fork's Events hands its pairs on in event-logging:3, the namespace the shared
+        // Kafka XSLT reads; it imports a module writing the fork. Its pairs are no Events, so nothing is mixed.
+        holdingFork();
+        Mockito.when(docFinder.findByName(eq(XsltDoc.TYPE), eq("IP Lookup"), eq(false))).thenReturn(List.of(
+                new DocRef(XsltDoc.TYPE, "x1", "IP Lookup")));
+        Mockito.when(documentAccess.read(new DocRef(XsltDoc.TYPE, "x1", "IP Lookup"), XsltDoc.class))
+                .thenReturn(Optional.of(XsltDoc.builder().uuid("x1").name("IP Lookup").data("""
+                        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="3.0">
+                          <xsl:template name="source"><EventSource xmlns="%s"><Generator>g</Generator>\
+                        </EventSource></xsl:template>
+                        </xsl:stylesheet>""".formatted(FORK_NS)).build()));
+        final String flattener = flattener(FORK_NS)
+                .replace("xmlns=\"" + FORK_NS + "\"", "xmlns=\"event-logging:3\"")
+                .replace("version=\"3.0\">", "version=\"3.0\">\n  <xsl:import href=\"IP Lookup\"/>");
+
+        assertThat((List<String>) call(flattener).get("errors"))
+                .noneSatisfy(error -> assertThat(error).contains("writes Events elements"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void aFlattenerOfTheEventsIsNotCheckedForEventElementNames() {
         // Seen in a reference environment: a flattener reading the fork's Events and writing data pairs in the
         // fork's namespace, a hand-off to the next XSLT, was refused once per pair: "No element 'data' exists

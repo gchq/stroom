@@ -103,6 +103,25 @@ class TestEventChecks {
 
     @Test
     @SuppressWarnings("unchecked")
+    void testAnIntermediateStagesOutputInAnEventsNamespaceIsSaidNotToBeEvents() {
+        // A CEF forwarder's flattener writes its pairs, and the next stage its CefEvent, in event-logging:3 (the
+        // namespace the shared Kafka XSLT reads): not Events, and not a translation's input either.
+        for (final String output : List.of("<records xmlns=\"event-logging:3\"><record><data name=\"cef\" "
+                                           + "value=\"CEF:0|x\"/></record></records>",
+                "<CefEvent xmlns=\"event-logging:3\">CEF:0|x</CefEvent>")) {
+            final Map<String, Object> result = checks.validateEvents(output, null);
+
+            assertThat(result.get("valid")).isEqualTo(false);
+            assertThat(result.get("schema")).isNull();
+            assertThat((String) ((List<Map<String, Object>>) result.get("errors")).getFirst().get("message"))
+                    .contains("in namespace event-logging:3, an Events namespace, but no <Events> or <Event>")
+                    .contains("Only Events and Event elements are events")
+                    .doesNotContain("input to a translation");
+        }
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void testEventsInAForkedNamespaceAreValidatedAgainstTheirOwnSchema() {
         // Seen in testing: check_events refused Events in an environment's fork of the schema as "not an Events
         // document", so the agent couldn't validate them.

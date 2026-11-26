@@ -7609,6 +7609,16 @@ the line as the value; `chain_check`), with no topic or Kafka settings (`notes` 
 lines at the shared stage and the Events at the flattener's input. Kept plan output `chained` with its `handoff`.
 Single-stage forwarders as before. The shared XSLT is never changed.
 
+**Intermediate stages in an Events namespace (2026-11-26).** A chained forwarder's own stages (the flattener's
+`records`/`data`, a stage wrapping the line in an element of its own) are written in the namespace the shared XSLT
+reads, often `event-logging:3`: `CefHandoff` takes it from the `xpath-default-namespace` in force where the shared
+XSLT reads the records (the nearest on the template, `xsl:for-each` or stylesheet), and `*:data` matches any
+namespace. The checks treat only `Events`/`Event` elements (and what is under them) as events: such a stage
+writes no Events namespace (`EventsNamespaces.writtenBy`: no import mixing, fork or translation-namespace
+inference from it), is an output stage (`XsltStages`), isn't checked as Events when stepped or by `check_events`
+(which says it is a later stage's form), and `check_xslt` given `input_namespace` of an Events namespace says
+records read bare are in it, not records:2.
+
 ### `review_coverage`
 
 content · write in a build only (an aggregated feed's registry; read-only outside a build) · requires View Data;

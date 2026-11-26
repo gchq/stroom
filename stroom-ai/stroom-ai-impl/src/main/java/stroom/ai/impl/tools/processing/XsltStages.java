@@ -46,8 +46,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /// Which stage of processing each XSLT of a pipeline is (decided with the user, 2026-11-25), by what it reads and
 /// writes:
@@ -87,9 +85,6 @@ public class XsltStages {
     // the appenders.
     private static final List<String> OUTPUT_TYPE_ENDINGS = List.of("Producer", "Writer", "Appender");
     private static final String HTTP_POST_FILTER = "HttpPostFilter";
-    private static final Pattern QNAME_PREFIX = Pattern.compile("([A-Za-z_][\\w.\\-]*):[A-Za-z_*]");
-    private static final Pattern XPATH_DEFAULT_NAMESPACE = Pattern.compile(
-            "xpath-default-namespace\\s*=\\s*[\"']([^\"']*)[\"']");
 
     private final DocumentAccess documentAccess;
     private final HeldSchemas heldSchemas;
@@ -165,7 +160,7 @@ public class XsltStages {
     public static boolean isOutput(final String code, final Collection<String> namespaces) {
         final String text = XsltVersionHistory.strip(NullSafe.string(code));
         return XmlTrees.tryParse(text)
-                .map(root -> StageRules.isOutput(root, text, namespaces))
+                .map(root -> StageRules.isOutput(root, namespaces))
                 .orElse(false);
     }
 
@@ -378,8 +373,6 @@ public class XsltStages {
     /// The rules, apart from Stroom.
     static final class StageRules {
 
-        private static final Set<String> EVENTS_ELEMENTS = Set.of("Events", "Event");
-
         private StageRules() {
             // Static only.
         }
@@ -393,12 +386,12 @@ public class XsltStages {
             if (root.isEmpty()) {
                 return new Reading(false, false, false, How.CONTENT);
             }
-            // An output may write in an Events namespace (a flattener's pairs) without writing Events.
-            final boolean writesEvents = EventsNamespaces.writtenBy(text, namespaces).isPresent()
-                                         && !isOutput(root.get(), text, namespaces);
+            // An output may write in an Events namespace (a flattener's pairs) without writing Events: writtenBy
+            // gives none for one.
+            final boolean writesEvents = EventsNamespaces.writtenBy(text, namespaces).isPresent();
             final boolean writesOther = !writesEvents && XmlTrees.descendantsAndSelf(root.get()).stream()
                     .anyMatch(element -> !XmlTrees.XSL.equals(element.getNamespaceURI()));
-            return new Reading(readsEvents(root.get(), text, namespaces), writesEvents, writesOther, How.CONTENT);
+            return new Reading(readsEvents(root.get(), namespaces), writesEvents, writesOther, How.CONTENT);
         }
 
         /// @param types The types of the elements an element's output reaches.
@@ -415,58 +408,21 @@ public class XsltStages {
         }
 
         /// @param root       An XSLT's root element.
-        /// @param text       Its text.
         /// @param namespaces The Events namespaces.
         /// @return True if it reads Events and writes no `Events` or `Event` ([XsltStages#isOutput]).
-        static boolean isOutput(final Element root, final String text, final Collection<String> namespaces) {
-            return readsEvents(root, text, namespaces) && !writesEventsOrEvent(root);
+        static boolean isOutput(final Element root, final Collection<String> namespaces) {
+            return readsEvents(root, namespaces) && !writesEventsOrEvent(root);
         }
 
-        // A literal Events or Event in any namespace, an xsl:element named one, or an xsl:copy (of what it reads,
-        // Events: a decoration's identity template).
+        // A literal Events or Event in any namespace, an xsl:element named one, or an xsl:copy.
         static boolean writesEventsOrEvent(final Element root) {
-            for (final Element element : XmlTrees.descendantsAndSelf(root)) {
-                if (!XmlTrees.XSL.equals(element.getNamespaceURI())) {
-                    if (EVENTS_ELEMENTS.contains(element.getLocalName())) {
-                        return true;
-                    }
-                } else if (XmlTrees.isXsl(element, "copy")) {
-                    return true;
-                } else if (XmlTrees.isXsl(element, "element")) {
-                    final String name = element.getAttribute("name").strip();
-                    final String local = name.substring(name.indexOf(':') + 1);
-                    if (EVENTS_ELEMENTS.contains(local)) {
-                        return true;
-                    }
-                }
-            }
-            return false;
+            return EventsNamespaces.writesEventsOrEvent(root);
         }
 
         // Its xpath-default-namespace (on any element) is an Events namespace, or a template matches an element
         // whose prefix is bound to one.
-        private static boolean readsEvents(final Element root,
-                                           final String text,
-                                           final Collection<String> namespaces) {
-            final Matcher defaults = XPATH_DEFAULT_NAMESPACE.matcher(text);
-            while (defaults.find()) {
-                if (namespaces.contains(defaults.group(1).strip())) {
-                    return true;
-                }
-            }
-            for (final Element element : XmlTrees.descendantsAndSelf(root)) {
-                if (!XmlTrees.isXsl(element, "template") || !element.hasAttribute("match")) {
-                    continue;
-                }
-                final Map<String, String> bound = XmlTrees.namespaces(element);
-                final Matcher prefix = QNAME_PREFIX.matcher(element.getAttribute("match"));
-                while (prefix.find()) {
-                    if (namespaces.contains(bound.get(prefix.group(1)))) {
-                        return true;
-                    }
-                }
-            }
-            return false;
+        private static boolean readsEvents(final Element root, final Collection<String> namespaces) {
+            return EventsNamespaces.readsEvents(root, namespaces);
         }
 
         /// Classifies the XSLTs of a pipeline, in processing order.

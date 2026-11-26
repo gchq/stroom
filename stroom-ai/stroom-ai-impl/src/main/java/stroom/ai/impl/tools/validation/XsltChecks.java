@@ -67,6 +67,7 @@ public final class XsltChecks {
             "plan-b-lookup", "pointIsInsideXYPolygon", "put", "random", "record-no", "search-id", "source",
             "source-id", "split-document", "stream-id", "to-unixTime");
 
+    private static final String XPATH_DEFAULT_NAMESPACE = "xpath-default-namespace";
     private static final Pattern STROOM_CALL = Pattern.compile("\\bstroom:([A-Za-z][A-Za-z0-9-]*)\\s*\\(");
     // Element names that, in a pipeline, only ever come from one parser or stream type, each in its own namespace.
     // Written bare in a match or select with no xpath-default-namespace they select nothing: the XSLT's output is
@@ -152,12 +153,18 @@ public final class XsltChecks {
     }
 
     /// @param node An element of an XSLT.
-    /// @return The xpath-default-namespace in force at it, or null when none is declared.
+    /// @return The xpath-default-namespace in force at it (the nearest declared on it or an ancestor: an XSLT
+    /// element's `xpath-default-namespace`, a literal result element's `xsl:xpath-default-namespace`), or null when
+    /// none is declared.
     public static String defaultNamespace(final Element node) {
         Node current = node;
         while (current instanceof final Element element) {
-            if (element.hasAttribute("xpath-default-namespace")) {
-                return element.getAttribute("xpath-default-namespace");
+            if (XmlTrees.XSL.equals(element.getNamespaceURI())) {
+                if (element.hasAttribute(XPATH_DEFAULT_NAMESPACE)) {
+                    return element.getAttribute(XPATH_DEFAULT_NAMESPACE);
+                }
+            } else if (element.hasAttributeNS(XmlTrees.XSL, XPATH_DEFAULT_NAMESPACE)) {
+                return element.getAttributeNS(XmlTrees.XSL, XPATH_DEFAULT_NAMESPACE);
             }
             current = element.getParentNode();
         }
@@ -216,30 +223,46 @@ public final class XsltChecks {
         if (inputNamespace != null && forks.contains(inputNamespace) && found.containsKey(EVT)) {
             found.put(inputNamespace, found.remove(EVT));
         }
+        // Records read from an earlier stage's output in an Events namespace (a CEF forwarder's flattener hands its
+        // records/data on in the namespace the shared Kafka XSLT reads) are in that namespace, not records:2.
+        final boolean recordsInEvents = inputNamespace != null && found.containsKey(RECORDS_NS)
+                                        && (EVT.equals(inputNamespace) || forks.contains(inputNamespace));
+        if (recordsInEvents) {
+            found.computeIfAbsent(inputNamespace, k -> new ArrayList<>()).addAll(found.remove(RECORDS_NS));
+        }
         final List<String> problems = new ArrayList<>();
         found.forEach((namespace, where) -> {
             final String shown = String.join(", ", where.subList(0, Math.min(3, where.size())))
                                  + (where.size() > 3
                     ? " and " + (where.size() - 3) + " more"
                     : "");
-            final String note = JSON_NS.equals(namespace)
-                    ? " (the JSONParser's output; json-to-xml() output is in " + FN_NS + ")"
-                    : RECORDS_NS.equals(namespace)
-                            ? " (a Data Splitter's output, or XML that declares records:2)"
-                            : EVT.equals(namespace) && !forks.isEmpty()
-                                    ? " (an Events stream; one written in the environment's fork of the "
-                                      + "event-logging schema is in " + String.join(" or ", forks)
-                                      + " instead, so use that for one)"
-                                    : forks.contains(namespace)
-                                            ? " (an Events stream in the environment's fork of the event-logging "
-                                              + "schema)"
-                                            : " (an Events stream)";
+            final String note = recordsInEvents && namespace.equals(inputNamespace)
+                    ? " (the input's namespace: an earlier stage's output, e.g. a flattener's records, in an Events "
+                      + "namespace)"
+                    : namespaceNote(namespace, forks);
             problems.add(shown + " select nothing: those elements are in namespace " + namespace + note + ", and no "
                          + "xpath-default-namespace is declared. Set xpath-default-namespace=\"" + namespace
                          + "\" on xsl:stylesheet, or bind a prefix to it. If the input really has no namespace, "
                          + "declare xpath-default-namespace=\"\" to say so.");
         });
         return problems;
+    }
+
+    // What the elements of an input namespace are read from.
+    private static String namespaceNote(final String namespace, final Collection<String> forks) {
+        if (JSON_NS.equals(namespace)) {
+            return " (the JSONParser's output; json-to-xml() output is in " + FN_NS + ")";
+        }
+        if (RECORDS_NS.equals(namespace)) {
+            return " (a Data Splitter's output, or XML that declares records:2)";
+        }
+        if (EVT.equals(namespace) && !forks.isEmpty()) {
+            return " (an Events stream; one written in the environment's fork of the event-logging schema is in "
+                   + String.join(" or ", forks) + " instead, so use that for one)";
+        }
+        return forks.contains(namespace)
+                ? " (an Events stream in the environment's fork of the event-logging schema)"
+                : " (an Events stream)";
     }
 
     /// @param node An element of an XSLT.

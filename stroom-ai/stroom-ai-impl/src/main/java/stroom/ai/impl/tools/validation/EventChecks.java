@@ -100,12 +100,7 @@ public class EventChecks {
             final Map<String, Object> error = new LinkedHashMap<>();
             error.put("line", null);
             error.put("path", "/" + name);
-            error.put("message", "Not an Events document: its root is <" + name + "> in " + (namespace != null
-                    ? "namespace " + namespace
-                    : "no namespace") + ", neither Events (event-logging:3, or an environment's fork of it) nor "
-                                 + "records:2 records. A source's own "
-                                 + "XML (records of its own, say) is the input to a translation: validate what the "
-                                 + "translation writes (step_pipeline's output).");
+            error.put("message", notEventsMessage(name, namespace));
             result.put("valid", false);
             result.put("schema", null);
             result.put("error_count", 1);
@@ -267,6 +262,27 @@ public class EventChecks {
     }
 
     // The system id to validate against.
+    // Why a document isn't Events. One in an Events namespace with another root is a later stage's own form; seen
+    // with a CEF forwarder: its flattener's pairs, in the namespace the shared Kafka XSLT reads, are no Events and
+    // no translation's input.
+    private String notEventsMessage(final String name, final String namespace) {
+        final boolean eventsNamespace = namespace != null
+                                        && (EventsNamespaces.isStandard(namespace)
+                                            || !heldSchemas.forksIn(namespace).isEmpty());
+        if (eventsNamespace) {
+            return "Not an Events document: its root is <" + name + "> in namespace " + namespace + ", an Events "
+                   + "namespace, but no <Events> or <Event>: a later stage's own form (e.g. a flattener's output "
+                   + "for the next XSLT, in the namespace that XSLT reads), not Events. Only Events and Event "
+                   + "elements are events: validate the translation's Events (step_pipeline's output of the "
+                   + "translation).";
+        }
+        return "Not an Events document: its root is <" + name + "> in " + (namespace != null
+                ? "namespace " + namespace
+                : "no namespace") + ", neither Events (event-logging:3, or an environment's fork of it) nor "
+               + "records:2 records. A source's own XML (records of its own, say) is the input to a translation: "
+               + "validate what the translation writes (step_pipeline's output).";
+    }
+
     private String systemId(final String eventsXml, final Element root, final String schemaVersion) {
         final String declared = HeldSchemas.declaredSystemId(eventsXml);
         if (HeldSchemas.RECORDS_NS.equals(root.getNamespaceURI())) {

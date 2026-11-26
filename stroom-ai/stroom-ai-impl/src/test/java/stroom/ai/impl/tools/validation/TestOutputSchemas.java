@@ -122,6 +122,13 @@ class TestOutputSchemas {
         // Not Events, Events in a namespace that is no fork, or not well-formed: not checked here.
         assertThat(events.checkEvents("<records xmlns=\"records:2\"><entry/></records>")).isEmpty();
         assertThat(events.checkEvents("<Events xmlns=\"urn:other\"><Junk/></Events>")).isEmpty();
+        // An intermediate stage's output in an Events namespace (a CEF forwarder's, mirroring the shared Kafka
+        // XSLT's namespace) is not Events, and not checked as records:2 either.
+        final String pairs = "<records xmlns=\"event-logging:3\"><record><data name=\"cef\" value=\"CEF:0|x\"/>"
+                             + "</record></records>";
+        assertThat(events.checkEvents(pairs)).isEmpty();
+        assertThat(events.check(pairs)).isEmpty();
+        assertThat(events.checkEvents("<CefEvent xmlns=\"event-logging:3\">CEF:0|x</CefEvent>")).isEmpty();
         assertThat(events.checkEvents("<Events xmlns=\"event-logging:3\">")).isEmpty();
         assertThat(events.checkEvents(null)).isEmpty();
         // No event-logging schema held: nothing to check against.

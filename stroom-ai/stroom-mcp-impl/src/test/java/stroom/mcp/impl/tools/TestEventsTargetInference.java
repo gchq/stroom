@@ -116,6 +116,35 @@ class TestEventsTargetInference {
     }
 
     @Test
+    void aTemplatesFlattenerInAnEventsNamespaceWritesNoEvents() {
+        // A forwarding template's flattener reads Events and hands data pairs on in event-logging:3 (the namespace
+        // the shared Kafka XSLT reads): that is not the namespace translations write, so the next candidate's is.
+        holdingFork();
+        Mockito.when(pipelineTemplates.find(InstructionRules.TRANSLATION)).thenReturn(Map.of("candidates",
+                List.of(Map.of("uuid", "forwarding"), Map.of("uuid", "environment"))));
+        final DocRef flattener = new DocRef(XsltDoc.TYPE, "x0", "CEF-Flattener");
+        final DocRef ref = new DocRef(XsltDoc.TYPE, "x1", "Fork-Header");
+        Mockito.when(pipelineIndex.read()).thenReturn(Map.of(
+                "forwarding", new PipelineIndex.Entry("forwarding", "CEF Forwarding", "/T", null,
+                        settingXslt(flattener)),
+                "environment", new PipelineIndex.Entry("environment", "Fork Events Template", "/T", null,
+                        settingXslt(ref))));
+        Mockito.when(documentAccess.read(flattener, XsltDoc.class)).thenReturn(Optional.of(xslt("CEF-Flattener", """
+                <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="event-logging:3"
+                 xpath-default-namespace="%s" version="3.0">
+                  <xsl:template match="/Events"><records><xsl:for-each select="Event"><record>\
+                <data name="cef" value="{EventSource/User/Id}"/></record></xsl:for-each></records></xsl:template>
+                </xsl:stylesheet>""".formatted(FORK_NS))));
+        Mockito.when(documentAccess.read(ref, XsltDoc.class)).thenReturn(Optional.of(xslt("Fork-Header",
+                WRITES_FORK)));
+
+        assertThat(inference.infer(null, "b1")).hasValueSatisfying(inferred -> {
+            assertThat(inferred.namespace()).isEqualTo(FORK_NS);
+            assertThat(inferred.why()).contains("'Fork-Header'");
+        });
+    }
+
+    @Test
     void anImportWritingEventLoggingSettlesItToo() {
         holdingFork();
         Mockito.when(requiredImports.requiredFor(null, InstructionRules.TRANSLATION, "b1", List.of()))

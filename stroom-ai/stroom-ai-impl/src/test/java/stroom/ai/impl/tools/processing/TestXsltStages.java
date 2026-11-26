@@ -248,6 +248,31 @@ class TestXsltStages {
     }
 
     @Test
+    void intermediateStagesMirroringTheSharedXsltsNamespaceAreOutputs() {
+        // A translation to the fork, then a flattener and a CefEvent stage both in event-logging:3 (the namespace the
+        // shared Kafka XSLT reads): neither writes Events, so neither decorates.
+        forkHeld();
+        xslt("forked", "Forked translation", TRANSLATION.replace(EVENTS, FORK), true);
+        xslt("flat", "Flattener", FLATTENER.replace(FORK, EVENTS), true);
+        xslt("cef", "CEF line", "<xsl:stylesheet " + XSL + " xpath-default-namespace=\"" + EVENTS + "\" xmlns=\""
+                                + EVENTS + "\"><xsl:template match=\"/records\"><CefEvent><xsl:value-of "
+                                + "select=\"record/data/@value\"/></CefEvent></xsl:template></xsl:stylesheet>",
+                true);
+        xslt("kafka", "Kafka records", KAFKA.replace(FORK, EVENTS), true);
+        pipeline(CHILD, null, List.of("translationFilter", "flattenFilter", "cefFilter", "kafkaOutputFilter",
+                        "kafkaProducer"),
+                Map.of("translationFilter", "forked", "flattenFilter", "flat", "cefFilter", "cef",
+                        "kafkaOutputFilter", "kafka"));
+
+        assertThat(stages.classify(merged("p")))
+                .extracting(StagedXslt::element, StagedXslt::stage)
+                .containsExactly(tuple("translationFilter", Stage.TRANSLATION),
+                        tuple("flattenFilter", Stage.OUTPUT),
+                        tuple("cefFilter", Stage.OUTPUT),
+                        tuple("kafkaOutputFilter", Stage.OUTPUT));
+    }
+
+    @Test
     void theLastXsltBeforeAKafkaProducerIsAnOutputNotIndexing() {
         // Regression: the last XSLT not writing Events was always the indexing stage, so the shared XSLT writing
         // Kafka records (inherited from a forwarding template) was called an indexing XSLT.
