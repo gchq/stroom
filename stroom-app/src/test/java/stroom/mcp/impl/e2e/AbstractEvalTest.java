@@ -43,6 +43,7 @@ import stroom.dataconnection.shared.DataConnectionType;
 import stroom.docref.DocRef;
 import stroom.documentation.impl.DocumentationStore;
 import stroom.documentation.shared.DocumentationDoc;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.feed.shared.FeedDoc;
@@ -59,6 +60,8 @@ import stroom.mcp.impl.McpTestClient;
 import stroom.mcp.impl.tools.BuildRecords;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
@@ -1916,8 +1919,30 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         }
         final Long passedOver = registry == null || group == null || list(gate, "streams").isEmpty()
                 ? null
-                : passedOver(registry, group, raws);
+                : passedOver(registry, group, coveredByFilters(raws));
         score.scoreSourceTypes(evalCase, registry, passedOver, errorLines);
+    }
+
+    /// The raw streams of a build's that its processor filters cover ([EvalScore#theBuildsRaws]): those some
+    /// processor filter in Stroom (not deleted) selects, every case starting from an empty Stroom; all of them when
+    /// no filter selects any.
+    ///
+    /// @param raws The raw streams found in the build's feeds.
+    /// @return The raw streams to score the build's raw-stream checks on.
+    List<Long> coveredByFilters(final List<Long> raws) {
+        final Set<Long> covered = new HashSet<>();
+        final List<ExpressionOperator> expressions = asUser(admin, () -> processorFilterService.find(
+                        new ExpressionCriteria(ExpressionOperator.builder().build())).getValues().stream()
+                .filter(filter -> !filter.isDeleted() && filter.getQueryData() != null
+                                  && filter.getQueryData().getExpression() != null)
+                .map(filter -> filter.getQueryData().getExpression())
+                .toList());
+        for (final ExpressionOperator expression : expressions) {
+            asUser(admin, () -> metaService.find(new FindMetaCriteria(expression)).getValues()).stream()
+                    .map(Meta::getId)
+                    .forEach(covered::add);
+        }
+        return EvalScore.theBuildsRaws(raws, covered);
     }
 
     // The raw records of source types outside the group, by the registry's source type field and rows (the first

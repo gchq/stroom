@@ -1187,6 +1187,21 @@ final class EvalScore {
         return stage1;
     }
 
+    /// The raw streams a build's raw-stream checks are scored on (the records passed over, each raw stream's Events
+    /// stream): those its processor filters cover, as raw streams outside them aren't the build's (seen in case 66:
+    /// the sample uploaded twice, the build scoped to one stream and the user asked to delete the other, which was
+    /// then counted as passed over and as having no Events stream). With no filter covering any of them, every one.
+    ///
+    /// @param raws    The raw streams found in the build's feeds, in order.
+    /// @param covered The streams the processor filters select.
+    /// @return The raw streams to score, in their order.
+    static List<Long> theBuildsRaws(final List<Long> raws, final Set<Long> covered) {
+        final List<Long> inFilters = raws.stream().filter(covered::contains).toList();
+        return inFilters.isEmpty()
+                ? List.copyOf(raws)
+                : inFilters;
+    }
+
     /// @return How many events there are (all of the Events streams', if only some were read).
     int events() {
         return events;

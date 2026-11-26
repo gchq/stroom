@@ -26,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -112,6 +113,18 @@ class TestEvalScore {
                 List.of()));
         assertThat((List<String>) none.toMap().get("problems")).contains(
                 "no pipeline of the build inherits the template", "step_sample's verdict is null");
+    }
+
+    @Test
+    void onlyTheRawStreamsTheBuildsFiltersCoverAreScored() {
+        // Case 66: the sample uploaded twice (streams 10 and 11), the build's filter on 10 alone.
+        assertThat(EvalScore.theBuildsRaws(List.of(10L, 11L), Set.of(10L, 12L))).containsExactly(10L);
+        // A filter on the feed covers both.
+        assertThat(EvalScore.theBuildsRaws(List.of(10L, 11L), Set.of(10L, 11L))).containsExactly(10L, 11L);
+        // No filter covers either (none made, or a filter on other streams): every raw stream, as before.
+        assertThat(EvalScore.theBuildsRaws(List.of(10L, 11L), Set.of())).containsExactly(10L, 11L);
+        assertThat(EvalScore.theBuildsRaws(List.of(10L, 11L), Set.of(7L))).containsExactly(10L, 11L);
+        assertThat(EvalScore.theBuildsRaws(List.of(), Set.of(10L))).isEmpty();
     }
 
     @Test
