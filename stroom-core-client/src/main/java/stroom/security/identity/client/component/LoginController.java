@@ -126,25 +126,11 @@ public class LoginController extends AbstractSignInPageController {
 
     private void afterLogin() {
         final String uri = Window.Location.getParameter("redirect_uri");
-        if (uri == null) {
-            Window.Location.replace("");
-        } else if (isSameOrigin(uri)) {
+        if (RedirectUrlUtil.isSameOrigin(uri)) {
             Window.Location.replace(uri);
         } else {
-            // Only ever redirect back into stroom itself, so ignore an off-origin target and reload here.
             Window.Location.replace("");
         }
-    }
-
-    // Whether a post-login redirect target stays on this application's origin. A safe
-    // root-relative path is fine; a protocol-relative //host or an absolute URL to any other
-    // origin is not.
-    private boolean isSameOrigin(final String uri) {
-        if (RedirectUrlUtil.isSafeRootRelativePath(uri)) {
-            return true;
-        }
-        final String origin = Window.Location.getProtocol() + "//" + Window.Location.getHost();
-        return uri.equals(origin) || uri.startsWith(origin + "/");
     }
 
     @Override
