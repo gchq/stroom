@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.SplitterSpec;
+import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.ai.impl.tools.validation.EventSchema;
 import stroom.ai.impl.tools.validation.HeldSchemasWorld;
 
@@ -137,8 +138,8 @@ class TestCatalogueTranslation extends DraftFixtures {
 
         final List<Map<String, Object>> rules = JsonValues.maps(mappingOf(draft).get("events"));
         // More specific first (more conditions), ties in the catalogue's order; each way its own rule.
-        assertThat(rules).extracting(rule -> rule.get("name")).containsExactly("authenticate_logonfailed",
-                "authenticate_logon", "authenticate_logoff", "authenticate_logoff_2", "uncatalogued");
+        assertThat(rules).extracting(rule -> rule.get("name")).containsExactly("authenticate_logon_failed",
+                "authenticate_logon", "authenticate_logoff", "authenticate_logoff_4647", "uncatalogued");
         assertThat(rules.get(3).get("when")).isEqualTo(List.of(Map.of("field", "evt", "equals", "4647")));
         // TypeId fixed, the event type's; none read from a field for every record.
         assertThat(fields(rules.get(1)).get("EventDetail/TypeId")).isEqualTo(map("path", "EventDetail/TypeId",
@@ -421,7 +422,7 @@ class TestCatalogueTranslation extends DraftFixtures {
                 .noneMatch(note -> note.contains("no event type recognises"));
         final List<Map<String, Object>> rules = JsonValues.maps(mapping.get("events"));
         assertThat(rules).extracting(rule -> rule.get("name")).containsExactly("alert_malware", "alert_phishing",
-                "alert_policyviolation", "uncatalogued");
+                "alert_policy_violation", "uncatalogued");
         // Conditions and fields relative to the item; the batch's own fields read with scope record.
         assertThat(rules.getFirst().get("when")).isEqualTo(List.of(Map.of("field", "tags", "equals", "malware")));
         final List<Map<String, Object>> entries = new ArrayList<>(JsonValues.maps(mapping.get("common")));
@@ -443,8 +444,8 @@ class TestCatalogueTranslation extends DraftFixtures {
                 taken.add(LocalCheck.ruleOf(parsed, item, null));
             }
         }
-        assertThat(taken).containsExactly("alert_malware", "alert_phishing", "alert_policyviolation",
-                "alert_malware", "alert_phishing", "alert_policyviolation", "alert_phishing");
+        assertThat(taken).containsExactly("alert_malware", "alert_phishing", "alert_policy_violation",
+                "alert_malware", "alert_phishing", "alert_policy_violation", "alert_phishing");
         // Generated: what is left is the schema's to fill (the device, the alert's type), nothing unreadable.
         assertThat(generate(mapping).problems()).as("generates")
                 .allMatch(problem -> problem.endsWith("is required by the schema; map it"));
@@ -534,7 +535,7 @@ class TestCatalogueTranslation extends DraftFixtures {
                         "also_data", true)));
         final Map<String, Object> draft = draft(RULES, notes(List.of(create), true));
 
-        final List<Map<String, Object>> fields = JsonValues.maps(rules(draft).get("create_inboxrule").get("fields"));
+        final List<Map<String, Object>> fields = JsonValues.maps(rules(draft).get("create_inbox_rule").get("fields"));
         final Map<String, Object> keys = Map.of("list", "event.Parameters", "name", "Name", "name_key", "Name",
                 "value_key", "Value");
         assertThat(fields).anySatisfy(field -> assertThat(field)
@@ -543,7 +544,7 @@ class TestCatalogueTranslation extends DraftFixtures {
                 .containsEntry("pair", Map.of("list", "event.Parameters", "name_key", "Name", "value_key", "Value")));
         assertThat(fields).anySatisfy(field -> assertThat(field).containsEntry("path", "EventDetail/Create/Data")
                 .containsEntry("data_name", "From"));
-        assertThat(dataNames(rules(draft).get("create_inboxrule"))).doesNotContain("event.Parameters");
+        assertThat(dataNames(rules(draft).get("create_inbox_rule"))).doesNotContain("event.Parameters");
         assertThat(generate(mappingOf(draft)).problems()).as("generates")
                 .allMatch(problem -> problem.contains("EventSource/Device is required"));
     }
@@ -738,6 +739,99 @@ class TestCatalogueTranslation extends DraftFixtures {
 
         // Three dropped by the mapping's own drop rule, one left to the catch-all as Unknown.
         assertThat(applied).containsEntry("uncatalogued", 1).containsEntry("uncatalogued_dropped", 3);
+    }
+
+    // Seen in testing: a single-source JSON feed, event.original an escaped JSON string whose details is JSON text
+    // again; details' query_text, placed as Query/Raw by an xpath, was kept as Data too.
+    @Test
+    void aKeyOfJsonHeldInAKeyOfHeldJsonIsAFieldOfItsOwn() {
+        final Map<String, Object> draft = draft(searches(), notes(List.of(searchType(null)), true));
+
+        assertThat(mappingOf(draft).get("json_fields")).isEqualTo(List.of("event.original",
+                "event.original.details"));
+        assertThat(String.valueOf(rules(draft))).contains("event.original.details.query_text");
+    }
+
+    @Test
+    void aFieldAPlacementsXpathReadsIsNotKeptAsDataToo() {
+        final String xpath = "json-to-xml(json-to-xml(*[@key='event']/*[@key='original'])/*/*[@key='details'])"
+                             + "/*/*[@key='query_text']";
+        final Map<String, Object> draft = draft(searches(), notes(List.of(searchType(Map.of("path", "Query/Raw",
+                "xpath", xpath))), true));
+
+        // The event type's rule, whatever its name.
+        final Map<String, Object> rule = rules(draft).values().iterator().next();
+        assertThat(fields(rule).get("EventDetail/TypeId")).containsEntry("value", "SearchQuery");
+        assertThat(fields(rule).get("EventDetail/Search/Query/Raw")).containsEntry("xpath", xpath);
+        assertThat(JsonValues.maps(rule.get("fields")))
+                .noneMatch(field -> "event.original.details.query_text".equals(field.get("field")));
+        // The held JSON's other keys are Data, the text holding them isn't.
+        assertThat(dataNames(rule)).contains("event.original.details.scope", "event.original.client")
+                .doesNotContain("event.original", "event.original.details");
+    }
+
+    @Test
+    void aPlacedVendorCodeIsNotDataUnlessAlsoData() {
+        final Map<String, Object> placed = type("View-Report", "Report viewed", "View", null, null,
+                way(eq("evt", "4624")));
+        placed.put("placements", List.of(Map.of("path", "Document/Id", "field", "evt")));
+        final Map<String, Object> rule = rules(draft(CODES, notes(List.of(placed), true))).get("view_report");
+        assertThat(fields(rule).get("EventDetail/View/Document/Id")).containsEntry("field", "evt");
+        assertThat(dataNames(rule)).doesNotContain("evt");
+
+        final Map<String, Object> kept = type("View-Report", "Report viewed", "View", null, null,
+                way(eq("evt", "4624")));
+        kept.put("placements", List.of(Map.of("path", "Document/Id", "field", "evt", "also_data", true)));
+        assertThat(dataNames(rules(draft(CODES, notes(List.of(kept), true))).get("view_report")))
+                .containsOnlyOnce("evt");
+    }
+
+    @Test
+    void aLaterWayIsNamedByWhatTellsItApartElseByItsNumber() {
+        final Map<String, Object> draft = draft(searches(), notes(List.of(type("SearchQuery", "Search", "Search",
+                null, null, way(eq("action", "search"), eq("env", "prod")),
+                way(eq("action", "search"), eq("env", "QA")),
+                way(eq("action", "search"), Map.of("field", "env", "matches", "^dev")))), true));
+
+        assertThat(rules(draft).keySet()).containsExactly("search_query", "search_query_qa", "search_query_3",
+                "uncatalogued");
+        assertThat(CatalogueTranslation.slug("Authenticate-LogonFailed")).isEqualTo("authenticate_logon_failed");
+        assertThat(CatalogueTranslation.slug("HTTPRequest")).isEqualTo("http_request");
+        assertThat(CatalogueTranslation.slug("Win32Process")).isEqualTo("win32_process");
+        assertThat(CatalogueTranslation.slug("search_query")).isEqualTo("search_query");
+    }
+
+    // JSON lines: event.original JSON text holding details as JSON text again.
+    private static String searches() {
+        final StringBuilder out = new StringBuilder();
+        final String[][] rows = {{"cats", "web", "alice", "prod"}, {"dogs", "web", "bob", "prod"},
+                {"invoices", "QA", "carol", "QA"}, {"fish", "web", "dave", "dev1"}};
+        int n = 0;
+        for (final String[] row : rows) {
+            final Map<String, Object> details = new LinkedHashMap<>();
+            details.put("query_text", row[0]);
+            details.put("scope", row[1]);
+            final Map<String, Object> original = new LinkedHashMap<>();
+            original.put("client", "console-" + n);
+            original.put("details", ToolJson.dumps(details));
+            final Map<String, Object> record = new LinkedHashMap<>();
+            record.put("@timestamp", "2026-11-25T10:0" + n++ + ":00Z");
+            record.put("action", "search");
+            record.put("env", row[3]);
+            record.put("usr", row[2]);
+            record.put("event", Map.of("original", ToolJson.dumps(original)));
+            out.append(ToolJson.dumps(record)).append('\n');
+        }
+        return out.toString();
+    }
+
+    private static Map<String, Object> searchType(final Map<String, Object> placement) {
+        final Map<String, Object> type = type("SearchQuery", "Search", "Search", null, null,
+                way(eq("action", "search")));
+        if (placement != null) {
+            type.put("placements", List.of(placement));
+        }
+        return type;
     }
 
     private static Map<String, Object> draft(final String sample, final Map<String, Object> notes) {

@@ -1238,8 +1238,13 @@ final class PlacementCheck {
             return null;
         }
         final Set<String> typed = new LinkedHashSet<>();
+        // Those placed and not kept as Data too: a vendor code among them isn't Data either.
+        final Set<String> placedOnly = new HashSet<>();
         type.allPlacements().forEach(placement -> {
-            typed.addAll(placement.inputs());
+            typed.addAll(placement.reads());
+            if (!placement.alsoData()) {
+                placedOnly.addAll(placement.reads());
+            }
             if (placement.pair() != null) {
                 // One pair of a list typed: counted as a field typed, the list's other pairs still Data.
                 typed.add(placement.pair().get("list") + " (" + placement.pair().get("name") + ")");
@@ -1261,7 +1266,8 @@ final class PlacementCheck {
         final Set<String> names = index.fieldNames();
         final Set<String> data = new LinkedHashSet<>();
         for (final String name : names) {
-            if (typed.contains(name) && !codes.contains(name) || common.contains(name) || parent(name, names)) {
+            if (typed.contains(name) && (!codes.contains(name) || placedOnly.contains(name)) || common.contains(name)
+                || parent(name, names)) {
                 continue;
             }
             if (filled(name, recognised) > 0) {

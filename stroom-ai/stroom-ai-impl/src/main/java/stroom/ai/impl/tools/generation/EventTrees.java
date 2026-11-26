@@ -588,21 +588,35 @@ final class EventTrees {
         entries.addAll(rule.fields());
         final Map<String, String> elements = new LinkedHashMap<>();
         for (final FieldMapping entry : entries) {
-            if (!isSet(entry.dataName()) && isSet(entry.field()) && asItIs(entry)
+            final String read = plainRead(entry);
+            if (!isSet(entry.dataName()) && read != null && asItIs(entry)
                 && !"EventDetail/TypeId".equals(entry.strippedPath())) {
-                elements.putIfAbsent(entry.field(), entry.strippedPath());
+                elements.putIfAbsent(read, entry.strippedPath() + (isSet(entry.field())
+                        ? ""
+                        : " (by its xpath)"));
             }
         }
         for (final FieldMapping entry : rule.fields()) {
-            if (isSet(entry.dataName()) && isSet(entry.field()) && asItIs(entry)
-                && elements.containsKey(entry.field())) {
-                note(warnings, "[" + rule.name() + "] '" + entry.field() + "' is written as "
-                               + elements.get(entry.field()) + " and as Data '" + entry.dataKey() + "' ("
+            final String read = plainRead(entry);
+            if (isSet(entry.dataName()) && read != null && asItIs(entry) && elements.containsKey(read)) {
+                note(warnings, "[" + rule.name() + "] '" + read + "' is written as "
+                               + elements.get(read) + " and as Data '" + entry.dataKey() + "' ("
                                + entry.strippedPath() + "): the element holds it, so the Data entry says it again. "
                                + "Remove the Data entry, unless it is kept on purpose (the same Data across event "
                                + "types that don't all have the element).");
             }
         }
+    }
+
+    // The field an entry reads as it is: its field, or the one its xpath gives as it is (a key of the JSON a field
+    // holds, read through json-to-xml(): seen in testing, such a placement kept as Data as well); else null.
+    private static String plainRead(final FieldMapping entry) {
+        if (isSet(entry.field())) {
+            return entry.field();
+        }
+        return isSet(entry.xpath())
+                ? XPathFieldReads.plainField(entry.xpath())
+                : null;
     }
 
     // Written as the input has it: no transform, map, time format, lookup or dictionary between.

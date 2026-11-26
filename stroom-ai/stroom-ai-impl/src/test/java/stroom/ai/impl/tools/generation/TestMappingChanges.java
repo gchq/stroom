@@ -362,6 +362,36 @@ class TestMappingChanges {
         assertThat(applied.done()).noneMatch(done -> done.contains("were removed"));
     }
 
+    // The Data copy named apart from its field (the data_names styling, a vendor code's short name), and a field
+    // placed by an xpath reading a key of the JSON a field holds: still copies, removed.
+    @Test
+    void aDataCopyNamedApartOrAFieldPlacedByAnXpathIsStillACopy() {
+        final Map<String, Object> base = json("""
+                {"common": [],
+                 "events": [{"name": "search", "fields": [
+                     {"path": "EventDetail/Search/Data", "data_name": "HostName", "field": "host_name"},
+                     {"path": "EventDetail/Search/Data", "data_name": "query_text",
+                      "field": "event.original.query_text"},
+                     {"path": "EventDetail/Search/Data", "data_name": "host_name", "field": "other"}]}]}
+                """);
+
+        final MappingChanges.Applied applied = MappingChanges.applyChanges(base, json("""
+                {"events": [{"name": "search", "fields": [
+                    {"path": "EventSource/Device/HostName", "field": "host_name"},
+                    {"path": "EventDetail/Search/Query/Raw",
+                     "xpath": "json-to-xml(*[@key='event']/*[@key='original'])/*/*[@key='query_text']"}]}]}"""));
+
+        final String fields = ToolJson.dumps(list(applied.merged().get("events")).getFirst());
+        assertThat(fields).doesNotContain("\"data_name\": \"HostName\"")
+                .doesNotContain("\"data_name\": \"query_text\"")
+                // Named as the placed field, but reading another: not a copy.
+                .contains("\"data_name\": \"host_name\"");
+        assertThat(applied.done()).anyMatch(done -> done.startsWith("'host_name' is written as "
+                                                                    + "EventSource/Device/HostName"))
+                .anyMatch(done -> done.startsWith("'event.original.query_text' is written as "
+                                                  + "EventDetail/Search/Query/Raw"));
+    }
+
     @ParameterizedTest
     @MethodSource("refused")
     void changesThatCannotApplyAreRefused(final String changes, final String message) {

@@ -13,7 +13,7 @@ Every event type writes these, from the same source.
 
 ### Event types
 
-#### logon
+#### Logon
 
 When `concat(action, '-', a/b)` = login-x. Below the action element: 3 typed, 1 kept as Data.
 

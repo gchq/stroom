@@ -29,6 +29,8 @@ import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.ListChange;
 import stroom.ai.impl.tools.generation.MappingFacts;
+import stroom.ai.impl.tools.generation.XPathFieldReads;
+import stroom.ai.impl.tools.sample.JsonFieldNames;
 import stroom.ai.impl.tools.sample.NameValueLists;
 import stroom.ai.impl.tools.sample.NameValueLists.ChangeList;
 import stroom.util.shared.NullSafe;
@@ -91,6 +93,10 @@ final class CatalogueTranslation {
     private static final String WHEN = "when";
     private static final String NAME = "name";
     private static final Pattern NOT_NAME = Pattern.compile("[^A-Za-z0-9]+");
+    // Where a word starts inside a name written in camel case (SearchQuery, HTTPRequest, Win32Process).
+    private static final Pattern WORD_START = Pattern.compile("(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])");
+    // The longest a rule name's part telling one of a type's ways apart is.
+    private static final int MAX_TOLD_APART = 24;
 
     private final Map<String, Object> mapping;
     private final List<String> names;
@@ -216,7 +222,7 @@ final class CatalogueTranslation {
                 continue;
             }
             final Map<String, Object> rule = rule(type, typeId, wayOf.way(), own, common, rest);
-            rule.put(NAME, unique(ruleName(typeId, wayOf.index()), ruleNames));
+            rule.put(NAME, unique(ruleName(typeId, type, wayOf.index(), ruleNames), ruleNames));
             if (wayOf.way().when().isEmpty()) {
                 sole = true;
                 rule.remove(WHEN);
@@ -350,6 +356,10 @@ final class CatalogueTranslation {
         final Set<String> read = readBy(fields);
         read.addAll(placed);
         for (final String code : vendorCodeFields(way)) {
+            if (placed.contains(code)) {
+                // Placed (written to an element, not also_data): the element holds it, searched there.
+                continue;
+            }
             final String dataName = vendorCodeName(code, "json".equals(mapping.get("input"))
                                                           || MappingFacts.heldJsonField(
                     JsonValues.strings(mapping.get("json_fields")), code) != null);
@@ -406,7 +416,8 @@ final class CatalogueTranslation {
         }
         final int fixed = fields.size();
         for (final String name : names) {
-            if (!inCommon.contains(name) && !NullSafe.isEmptyCollection(values.get(name)) && !emptyEverywhere(name)) {
+            if (!inCommon.contains(name) && !NullSafe.isEmptyCollection(values.get(name)) && !heldText(name)
+                && !emptyEverywhere(name)) {
                 fields.add(entry(PATH, data, DATA_NAME, name, FIELD, name));
             }
         }
@@ -478,7 +489,9 @@ final class CatalogueTranslation {
             }
             final Set<String> paths = new HashSet<>();
             entries.forEach(entry -> paths.add(ToolText.str(entry.get(PATH))));
-            final Set<String> inputs = placement.inputs();
+            // What it reads, an xpath's fields too (seen in testing: a key of JSON held in a field, placed by an
+            // xpath, kept as Data as well).
+            final Set<String> inputs = placement.reads();
             // Another placement of the same field is kept: a field may be typed in two places.
             fields.removeIf(existing -> {
                 final String path = ToolText.str(existing.get(PATH));
@@ -587,7 +600,7 @@ final class CatalogueTranslation {
 
     // Whether a placement of the event type names the field.
     private static boolean placedByType(final EventType type, final String field) {
-        return type.allPlacements().stream().anyMatch(placement -> placement.inputs().contains(field));
+        return type.allPlacements().stream().anyMatch(placement -> placement.reads().contains(field));
     }
 
     // Whether the field is empty in every sampled record (no value, or only the mapping's nil_values): left out of the
@@ -727,8 +740,20 @@ final class CatalogueTranslation {
         final Set<String> taken = readBy(common);
         detailFields.forEach(entry -> taken.add(ToolText.str(entry.get(FIELD))));
         return names.stream()
-                .filter(name -> !taken.contains(name) && !NullSafe.isEmptyCollection(values.get(name)))
+                .filter(name -> !taken.contains(name) && !NullSafe.isEmptyCollection(values.get(name))
+                                && !heldText(name))
                 .toList();
+    }
+
+    // Whether a field is text holding JSON or XML whose keys or elements are fields of their own (json_fields,
+    // xml_fields): those are the Data, not the text again (seen in testing: a JSON line's held event.original kept
+    // whole as Data beside its keys, a placed one among them).
+    private boolean heldText(final String name) {
+        if (JsonValues.strings(mapping.get("json_fields")).contains(name)) {
+            return names.stream().anyMatch(other -> JsonFieldNames.below(name, other) != null);
+        }
+        return JsonValues.strings(mapping.get("xml_fields")).contains(name)
+               && names.stream().anyMatch(other -> other.startsWith(name + "/"));
     }
 
     // The fields a way tests for a code (equals, one_of; not a not), but the source type field.
@@ -778,14 +803,58 @@ final class CatalogueTranslation {
                 : TypeIds.defaultFor(type);
     }
 
-    private static String ruleName(final String typeId, final int way) {
-        final String name = ToolText.strip(NOT_NAME.matcher(typeId).replaceAll("_"), "_").toLowerCase(Locale.ROOT);
+    // A rule's name: its TypeId's words in snake case (SearchQuery, Search-Query: search_query), and for a second
+    // or later way of the type, what tells the way apart from the type's other ways (the values its equals and one_of
+    // conditions test that no other way of the type tests: search_query_qa), else its number (search_query_2), as
+    // also where that would be another rule's name. Seen in testing: a rule searchquery_2, named nowhere else, read
+    // as an event type of its own in the documentation.
+    static String ruleName(final String typeId, final EventType type, final int way, final Set<String> taken) {
+        final String name = slug(typeId);
         final String base = name.isEmpty()
                 ? "event"
                 : name;
-        return way == 0
-                ? base
-                : base + "_" + (way + 1);
+        if (way == 0) {
+            return base;
+        }
+        final String told = toldApartBy(type, way);
+        final String named = base + "_" + told;
+        return told.isEmpty() || taken.contains(named) || CATCH_ALL_NAME.equals(named)
+                ? base + "_" + (way + 1)
+                : named;
+    }
+
+    // What tells one of an event type's ways apart, as a name's part: the values its equals and one_of conditions
+    // test that none of the type's other ways tests, in snake case and cut short; "" when there are none.
+    private static String toldApartBy(final EventType type, final int way) {
+        final List<Way> ways = type.recognisedBy();
+        if (way < 0 || way >= ways.size()) {
+            return "";
+        }
+        final List<String> values = new ArrayList<>();
+        for (final Condition condition : ways.get(way).when()) {
+            final boolean sharedWithAnother = ways.stream()
+                    .filter(other -> other != ways.get(way))
+                    .anyMatch(other -> other.when().contains(condition));
+            if (condition.not() || sharedWithAnother) {
+                continue;
+            }
+            if (condition.equalTo() != null) {
+                values.add(condition.equalTo());
+            } else if (condition.oneOf() != null) {
+                values.addAll(condition.oneOf());
+            }
+        }
+        final String told = slug(String.join(" ", values));
+        return told.length() <= MAX_TOLD_APART
+                ? told
+                : ToolText.strip(told.substring(0, MAX_TOLD_APART), "_");
+    }
+
+    // A text as a rule name's part: its words lower case, joined by _ (a lower case letter or digit followed by a
+    // capital, and the last of a run of capitals followed by a lower case letter, start a word).
+    static String slug(final String text) {
+        final String words = WORD_START.matcher(text).replaceAll("_");
+        return ToolText.strip(NOT_NAME.matcher(words).replaceAll("_"), "_").toLowerCase(Locale.ROOT);
     }
 
     private static String unique(final String name, final Set<String> taken) {
@@ -802,7 +871,7 @@ final class CatalogueTranslation {
                 .toList());
     }
 
-    // The fields entries read: as a field, or as Data under that name.
+    // The fields entries read: as a field, or as Data under that name, the first of any_of's, or by an xpath.
     private static Set<String> readBy(final List<Map<String, Object>> entries) {
         final Set<String> read = new LinkedHashSet<>();
         for (final Map<String, Object> entry : entries) {
@@ -816,6 +885,9 @@ final class CatalogueTranslation {
                 read.add(ToolText.str(entry.get(DATA_NAME)));
             }
             JsonValues.strings(entry.get("any_of")).forEach(read::add);
+            if (entry.get("xpath") instanceof final String xpath) {
+                read.addAll(XPathFieldReads.fields(xpath));
+            }
         }
         return read;
     }

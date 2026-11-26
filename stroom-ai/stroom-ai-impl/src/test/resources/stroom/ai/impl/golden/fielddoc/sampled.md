@@ -13,9 +13,9 @@ Every event type writes these, from the same source. Sample values are what the 
 
 ### Event types
 
-#### logon, logoff
+#### Logon
 
-When `action` = login (logon): 1 of the sample's 3 events. When `action` = logout (logoff): none in the sample. Below the action element: logon 3 typed, 1 kept as Data; logoff 3 typed, 1 kept as Data.
+When `action` = login (rule logon): 1 of the sample's 3 events. When `action` = logout (rule logoff): none in the sample. Below the action element: logon 3 typed, 1 kept as Data; logoff 3 typed, 1 kept as Data.
 
 | XPath | Description | From | Sample values |
 | --- | --- | --- | --- |

@@ -237,10 +237,10 @@ class TestDraftMixedLines {
                 .toList();
         // The format's condition once: within names the format, which the format's rules test already.
         assertThat(rules).as("%s", rules).anySatisfy(rule -> assertThat(rule)
-                .startsWith("linux_authenticate_failedpassword")
+                .startsWith("linux_authenticate_failed_password")
                 .containsOnlyOnce("equals=linux").contains("matches=^sshd: Failed password for"));
         assertThat(rules).noneMatch(rule -> rule.startsWith("gw_") && rule.contains("matches"));
-        assertThat(rules.indexOf(rules.stream().filter(rule -> rule.startsWith("linux_authenticate_failedpassword"))
+        assertThat(rules.indexOf(rules.stream().filter(rule -> rule.startsWith("linux_authenticate_failed_password"))
                 .findFirst().orElseThrow()))
                 .isLessThan(rules.indexOf(rules.stream().filter(rule -> rule.startsWith("linux_uncatalogued"))
                         .findFirst().orElseThrow()));

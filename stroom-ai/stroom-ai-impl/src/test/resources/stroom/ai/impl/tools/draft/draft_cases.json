@@ -23564,7 +23564,7 @@
       ]
      },
      {
-      "name": "authenticate_logonfailed",
+      "name": "authenticate_logon_failed",
       "when": [
        {
         "field": "evt",

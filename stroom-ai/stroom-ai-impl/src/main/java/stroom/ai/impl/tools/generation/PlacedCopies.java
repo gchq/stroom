@@ -35,7 +35,9 @@ import java.util.Set;
 /// entry.
 /// Only plain entries count, the field read as it is: a placement that changes the value (a format, a map, a
 /// default, a transform) leaves the original worth keeping, and a Data entry given in the same changes is kept on
-/// purpose.
+/// purpose. An xpath giving one field as it is ([XPathFieldReads#plainField(String)], a key of the JSON a field
+/// holds) places that field. A copy is a Data entry reading the same field, whatever its Data is named (the
+/// data_names styling, or a vendor code's short name).
 final class PlacedCopies {
 
     private static final String COMMON = "common";
@@ -47,7 +49,9 @@ final class PlacedCopies {
     private static final String FIELD = "field";
     private static final String DATA_NAME = "data_name";
     private static final String TYPE_ID = "EventDetail/TypeId";
+    private static final String XPATH = "xpath";
     private static final Set<String> PLACEMENT_KEYS = Set.of(PATH, FIELD);
+    private static final Set<String> XPATH_PLACEMENT_KEYS = Set.of(PATH, XPATH);
     private static final Set<String> COPY_KEYS = Set.of(PATH, FIELD, DATA_NAME, "data_parent");
 
     private PlacedCopies() {
@@ -89,10 +93,16 @@ final class PlacedCopies {
             return;
         }
         if (entry.get(FIELD) instanceof final String field && !field.isEmpty()) {
-            if (plainPlacement(entry)) {
+            if (plainPlacement(entry, PLACEMENT_KEYS)) {
                 placements.add(new Placement(rule, field, stripped(entry)));
             } else if (JsonValues.truthy(entry.get(DATA_NAME))) {
                 kept.add(List.of(Objects.requireNonNullElse(rule, COMMON), field));
+            }
+        } else if (entry.get(XPATH) instanceof final String xpath && plainPlacement(entry, XPATH_PLACEMENT_KEYS)) {
+            // A field read as it is by an xpath (a key of the JSON a field holds, read through json-to-xml()).
+            final String field = XPathFieldReads.plainField(xpath);
+            if (field != null) {
+                placements.add(new Placement(rule, field, stripped(entry)));
             }
         }
     }
@@ -155,18 +165,30 @@ final class PlacedCopies {
     private static boolean writesOtherwise(final Map<String, Object> rule, final Placement placement) {
         return JsonValues.maps(rule.get(FIELDS)).stream()
                 .anyMatch(entry -> !JsonValues.truthy(entry.get(DATA_NAME)) && placement.path().equals(
-                        stripped(entry)) && !placement.field().equals(entry.get(FIELD)));
+                        stripped(entry)) && !placement.field().equals(plainRead(entry)));
     }
 
-    private static boolean plainPlacement(final Map<String, Object> entry) {
+    private static boolean plainPlacement(final Map<String, Object> entry, final Set<String> keys) {
         final String path = stripped(entry);
         return !JsonValues.truthy(entry.get(DATA_NAME)) && !path.isEmpty() && !path.endsWith("/Data")
-               && !TYPE_ID.equals(path) && PLACEMENT_KEYS.containsAll(entry.keySet());
+               && !TYPE_ID.equals(path) && keys.containsAll(entry.keySet());
     }
 
+    // A Data entry reading the field as it is, whatever its Data is named (the draft's data_names styling, or a
+    // vendor code's short name, names it apart from the field).
     private static boolean copyOf(final Map<?, ?> entry, final String field) {
-        return field.equals(entry.get(FIELD)) && field.equals(entry.get(DATA_NAME))
+        return field.equals(entry.get(FIELD)) && JsonValues.truthy(entry.get(DATA_NAME))
                && COPY_KEYS.containsAll(entry.keySet());
+    }
+
+    // The field an entry reads as it is: its field, or the one its xpath gives as it is; else null.
+    private static String plainRead(final Map<String, Object> entry) {
+        if (entry.get(FIELD) instanceof final String field) {
+            return field;
+        }
+        return entry.get(XPATH) instanceof final String xpath
+                ? XPathFieldReads.plainField(xpath)
+                : null;
     }
 
     private static String stripped(final Map<?, ?> entry) {

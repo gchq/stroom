@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /// The Field mapping section of an events pipeline's documentation, from its translation mapping: both halves of
@@ -60,6 +61,9 @@ public final class EventFieldDocs {
     private static final List<String> DETAIL = List.of("EventDetail");
     private static final String TYPE_ID = "EventDetail/TypeId";
     private static final Set<String> TYPE_AND_DESCRIPTION = Set.of(TYPE_ID, "EventDetail/Description");
+    // What keys a rule's own section (a rule whose TypeId isn't fixed), apart from a TypeId's.
+    private static final String RULE_KEY = "rule:";
+    private static final String TYPE_KEY = "type:";
     private static final String NOT_MAPPED = "not in the mapping (added by hand, or by a later step)";
     private static final Comparator<FieldKey> BY_PATH_AND_NAME = Comparator.comparing(FieldKey::path)
             .thenComparing(k -> Objects.requireNonNullElse(k.name(), ""));
@@ -390,8 +394,33 @@ public final class EventFieldDocs {
                     .map(k -> FieldDocs.comparedPath(k.xpath(), c.schema()))
                     .collect(Collectors.toCollection(LinkedHashSet::new)));
         });
-        for (final List<String> names : FieldDocs.similarGroups(signatures)) {
-            lines.addAll(eventTypeSection(c, names, own, head));
+        // A section per event type (its TypeId), not per rule: an event type recognised in several ways has a rule
+        // per way, each listed under it with what recognises it (seen in testing: a second way's rule,
+        // searchquery_2, named nowhere else, read as an event type of its own). Event types with roughly the same
+        // fields share a section, as their rules did.
+        final Map<String, String> typeOf = new LinkedHashMap<>();
+        final Map<String, String> typeNames = new LinkedHashMap<>();
+        final Map<String, Set<String>> typeSignatures = new LinkedHashMap<>();
+        signatures.forEach((name, fields) -> {
+            final String typeId = fixedTypeId(c, name);
+            // A rule whose TypeId isn't fixed (read from the record) is a section of its own name.
+            final String key = typeId == null
+                    ? RULE_KEY + name
+                    : TYPE_KEY + typeId;
+            typeOf.put(name, key);
+            typeNames.putIfAbsent(key, typeId == null
+                    ? name
+                    : typeId);
+            typeSignatures.computeIfAbsent(key, x -> new LinkedHashSet<>()).addAll(fields);
+        });
+        for (final List<String> types : FieldDocs.similarGroups(typeSignatures)) {
+            final List<String> names = typeOf.keySet().stream()
+                    .filter(name -> types.contains(typeOf.get(name)))
+                    .toList();
+            lines.addAll(eventTypeSection(c, types.stream().map(typeNames::get).toList(), names,
+                    types.size() > 1
+                            ? name -> fixedTypeId(c, name)
+                            : name -> null, own, head));
         }
         for (final String name : summarised) {
             final EventRule rule = c.rules().stream().filter(r -> r.name().equals(name)).findFirst().orElseThrow();
@@ -411,9 +440,21 @@ public final class EventFieldDocs {
         return lines;
     }
 
-    // One heading for event types with roughly the same fields: when each applies, and a row per field.
+    // The TypeId a rule writes as a constant, or null when it reads it from the record (or writes none).
+    private static String fixedTypeId(final Context c, final String rule) {
+        final FieldMapping entry = c.effective().get(rule).get(new FieldKey(TYPE_ID, null));
+        return entry == null || NullSafe.isBlankString(entry.value())
+                ? null
+                : entry.value();
+    }
+
+    // One heading for event types with roughly the same fields, by their TypeIds: each of their rules (one a way
+    // of recognising an event type) with when it applies, named where there are several (with its event type's
+    // TypeId, typeOfRule's, where the section has several), and a row per field.
     private static List<String> eventTypeSection(final Context c,
+                                                 final List<String> types,
                                                  final List<String> names,
+                                                 final Function<String, String> typeOfRule,
                                                  final Map<String, List<FieldKey>> own,
                                                  final List<String> head) {
         final Sample sample = c.sample();
@@ -421,12 +462,17 @@ public final class EventFieldDocs {
         for (final String name : names) {
             final EventRule rule = c.rules().stream().filter(r -> r.name().equals(name)).findFirst().orElseThrow();
             final String conditions = FieldDocs.conditionsText(rule.when());
-            String line = (!conditions.isEmpty()
+            final String when = !conditions.isEmpty()
                     ? "When " + conditions
                     : c.rules().size() > 1
                             ? "Any other record"
-                            : "Every record") + (names.size() > 1
-                    ? " (" + name + ")"
+                            : "Every record";
+            final String typeId = typeOfRule.apply(name);
+            String line = (typeId == null
+                    ? when
+                    : MarkdownHtml.text(typeId) + ": " + Character.toLowerCase(when.charAt(0))
+                      + when.substring(1)) + (names.size() > 1
+                    ? " (rule " + name + ")"
                     : "");
             if (sample.sampled()) {
                 final List<XmlElement> events = sample.eventsOf(name);
@@ -437,7 +483,7 @@ public final class EventFieldDocs {
             said.add(line + ".");
         }
         said.add(typedAndData(names, own));
-        final List<String> lines = new ArrayList<>(List.of("#### " + MarkdownHtml.text(String.join(", ", names)), "",
+        final List<String> lines = new ArrayList<>(List.of("#### " + MarkdownHtml.text(String.join(", ", types)), "",
                 String.join(" ", said), ""));
         lines.addAll(FieldDocs.head(head));
         // One row per field, the groups' own paths and sources together.

@@ -187,10 +187,10 @@ class TestEventFieldDocs {
         // Written by one event type only (logoff's IP), or differently by each: the event type's own.
         assertThat(common).doesNotContain("EventSource/Client/IPAddress", "EventDetail");
         // logon and logoff write roughly the same fields: one section, both named (asked for by the user).
-        final String both = types.split("#### logon, logoff")[1].split("####")[0];
+        final String both = types.split("#### Logon\n")[1].split("####")[0];
         final String other = types.split("#### other")[1].split("####")[0];
-        assertThat(both).contains("When `action` = login (logon): 1 of the sample's 2 events. When `action` = logout "
-                                  + "(logoff): none in the sample.");
+        assertThat(both).contains("When `action` = login (rule logon): 1 of the sample's 2 events. When `action` = "
+                                  + "logout (rule logoff): none in the sample.");
         assertThat(both.lines().filter(r -> r.startsWith("| `")).map(r -> r.split(" \\| ")[0]).limit(2).toList())
                 .containsExactly("| `EventDetail/TypeId`", "| `EventDetail/Description`");
         // Each one's source, where they differ; written by one of them: named.
@@ -354,7 +354,7 @@ class TestEventFieldDocs {
                 .childElements(FieldDocs.EVT, "Event");
         final Descriptions asking = Descriptions.asking(true);
         final String section = EventFieldDocs.fieldMappingMarkdown(mapping, SCHEMA, events, FieldDocs.BY_EVENT_TYPE,
-                asking).split("#### uncatalogued", 2)[1];
+                asking).split("#### Unknown", 2)[1];
         assertThat(section).contains("| `EventDetail/Unknown/Data[@Name='colour']/@Value` |").contains("`red`")
                 .doesNotContain("not listed one by one");
         assertThat(asking.wanted().keySet()).anyMatch(key -> key.contains("colour"));
@@ -363,7 +363,7 @@ class TestEventFieldDocs {
     @Test
     void withoutASampleACatchAllKeepsItsTable() {
         final String text = EventFieldDocs.fieldMappingMarkdown(catchAllMapping(), SCHEMA);
-        assertThat(text.split("#### uncatalogued", 2)[1]).contains("Data[@Name='colour']")
+        assertThat(text.split("#### Unknown", 2)[1]).contains("Data[@Name='colour']")
                 .doesNotContain("not listed one by one");
     }
 
@@ -419,12 +419,18 @@ class TestEventFieldDocs {
 
         final String text = EventFieldDocs.fieldMappingMarkdown(mapping, SCHEMA);
 
-        assertThat(typeIdRow(text, "#### send")).endsWith("| event type Send-Item, recognised by `Operation` = Send |");
+        assertThat(typeIdRow(text, "#### Send-Item"))
+                .endsWith("| event type Send-Item, recognised by `Operation` = Send |");
         // Rows of several rules merged: each event type with its ways joined by "or", and its rules named.
-        assertThat(typeIdRow(text, "#### login, login_2, logoff")).endsWith("| event type Logon, recognised by "
+        assertThat(typeIdRow(text, "#### Logon, Logoff")).endsWith("| event type Logon, recognised by "
                 + "`Operation` = UserLoggedIn or `Operation` = SignIn (login, login_2)<br>event type Logoff, "
                 + "recognised by `Operation` = UserLoggedOff (logoff) |");
-        assertThat(typeIdRow(text, "#### uncatalogued")).endsWith("| event type Unknown, for the records no event "
+        // A section per event type (its TypeId), each of its rules a way of recognising it, said with what does.
+        assertThat(text).contains("#### Logon, Logoff\n\nLogon: when `Operation` = UserLoggedIn (rule login). "
+                                  + "Logon: when `Operation` = SignIn (rule login_2). Logoff: when `Operation` = "
+                                  + "UserLoggedOff (rule logoff).");
+        assertThat(text.lines().filter(line -> line.startsWith("#### "))).doesNotContain("#### login_2");
+        assertThat(typeIdRow(text, "#### Unknown")).endsWith("| event type Unknown, for the records no event "
                                                                   + "type recognises |");
     }
 
@@ -441,7 +447,7 @@ class TestEventFieldDocs {
                              "fields": [{"path": "EventDetail/TypeId", "value": "Logon"},
                                         {"path": "EventDetail/Authenticate/Action", "value": "Logon"}]}]}"""));
 
-        assertThat(typeIdRow(EventFieldDocs.fieldMappingMarkdown(mapping, SCHEMA), "#### login"))
+        assertThat(typeIdRow(EventFieldDocs.fieldMappingMarkdown(mapping, SCHEMA), "#### Logon"))
                 .endsWith("| event type Logon |");
     }
 

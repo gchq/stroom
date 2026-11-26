@@ -6373,14 +6373,19 @@ catalogue_event_types has confirmed every event type and the catch-all, the draf
 then the catch-all's rule for uncatalogued records (`uncatalogued`, TypeId `Unknown`, their fields kept as Data,
 flagged `catch_all: true` with the user's agreement as its `allow_unknown`), left out after a sole event type, which
 takes every record; an event type the user dropped is a `drop_when` rule per way. The catalogue comes first and the
-XSLT follows from it. Each rule starts from the draft's rule that took the way's records in the sample (severity,
-names, addresses kept), then takes what the catalogue says:
+XSLT follows from it. Each rule is named after its TypeId in snake case (`SearchQuery` is `search_query`); a second or
+later way of an event type adds what tells it apart, the values of its `equals`/`one_of` conditions no other way of the
+type tests (`search_query_qa`), else its number (`search_query_3`) (2026-11-26: a rule `searchquery_2`, named nowhere
+else, read as an event type of its own). A kept mapping keeps its rules' names: its rules are matched to event types by
+the records they take (`CatalogueKept`), never by name. Each rule starts from the draft's rule that took the way's
+records in the sample (severity, names, addresses kept), then takes what the catalogue says:
 
 * **TypeId** fixed: the event type's (Verb-Object), else the default (`TypeIds.defaultTypeId`).
 * **The vendor's code as Data**: every `equals`/`one_of` field of the way but the source type field, named after the
   field's last segment (`System/EventID` is `EventID`; a bracketed key's last key as written), under the action
   element (`EventDetail/<Action>/Data`, Network's own child), so searching by the code still works. A field another
-  event type tests for its code is still Data of this one's records.
+  event type tests for its code is still Data of this one's records; one a placement places (not `also_data`) isn't
+  Data too, the element holds it.
 * **Description**: the record's own message, alone, where the records carry one; else the event type's description
   (the vendor documentation's text, or the agent's) as fixed text.
 * The action element's Action and outcome, who acted (a field naming a person, not an address), the type's
@@ -6388,7 +6393,11 @@ names, addresses kept), then takes what the catalogue says:
   in `unread_fields`; one in EventSource at its path from the root, left out and named there when the common entries
   write it), the user authenticating for Authenticate; then the fields left over that the way's own records
   hold, as Data of the action element. Each field once: the draft rule's entries below the action element reading a
-  placed field are taken out, and a placed field is Data too only with `also_data` (the vendor's code is always Data).
+  placed field are taken out, and a placed field is Data too only with `also_data`. A placement's (or a common
+  entry's) `xpath` reads the fields it names as the records spell them (`XPathFieldReads`, 2026-11-26: a JSON key
+  `*[@key='a']/*[@key='b']` is `a.b`, a key of held JSON through `json-to-xml(...)/*/*[@key='k']` is `<field>.k`, a
+  Data Splitter's `data[@name='n']`, an XML path as it is); an xpath read no other way reads nothing here. The text of
+  a `json_fields`/`xml_fields` field whose keys are fields isn't Data again, its keys are.
 * A field empty in every sampled record is left out of every rule (typed and Data alike, unless a placement names
   it), listed in `unread_fields` as "empty in every sampled record" and in a note (2026-11-21, chat 182).
 
@@ -6581,8 +6590,9 @@ through the model. A call runs in this order:
    before it (seen in testing: refused changes became the base, and the agent's next changes, written against the
    mapping before them, were refused as removing what "the mapping does not have"). One that parses but fails its
    checks is remembered, for `changes` to fix. A field a change writes as it is to an element (`{path, field}` and
-   nothing else, not Data) takes its Data copies with it (`PlacedCopies`): its `{path, field, data_name}` entries
-   named after it, and its place in a rule's `data`, from every rule a common entry reaches (not one writing the element
+   nothing else, not Data; or `{path, xpath}` whose xpath gives one field as it is) takes its Data copies with it
+   (`PlacedCopies`): its `{path, field, data_name}` entries reading it, however the Data is named (the data_names
+   styling, a vendor code's short name), and its place in a rule's `data`, from every rule a common entry reaches (not one writing the element
    from another field) or the rule of a rule's entry, and from common for a common entry; a Data entry given in the
    same changes is kept on purpose, and `changes_applied` says what was removed (chat 194: `prefix2` placed at
    Device/HostName stayed Data in all 12 rules, and took four more builds to remove).
@@ -9072,7 +9082,11 @@ translation generator (its mapping records, `XsltComments`, `StyledXslt`, `Mappi
     instruction (`ruleOf`); events no rule wrote are reported rather than dropped. `sampledEvents` reads Events
     from stepped output; `runningEvents` takes a hand-edited XSLT's own events and marks each with the rule the
     marked XSLT gave the same record's event in the same place, leaving a record unmarked where the two give
-    different numbers of events. How event types are grouped into sections:
+    different numbers of events. A section is headed by its event types' TypeIds (a rule whose TypeId isn't fixed by
+    its name), each rule under it a way of recognising one, said with what recognises it and named where there are
+    several (`Logon: when ... (rule login_2)`); 2026-11-26, seen in testing: a second way's rule, `searchquery_2`,
+    listed as an event type of its own. The rules of one TypeId are always in one section. How event types are
+    grouped into sections:
     * On what they write besides TypeId, Description and their Data, as Data is what a kind of event carries, not
       what it is (seen with Data counted: SecretServer rules with the same Data entries, an Alert's and Process
       ones, in one section). A rule that writes only Data (an Unknown one) is judged on its Data.

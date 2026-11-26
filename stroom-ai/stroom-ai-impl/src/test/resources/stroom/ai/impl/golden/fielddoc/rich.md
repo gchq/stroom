@@ -29,7 +29,7 @@ Every event type writes these, from the same source.
 
 Left untranslated on purpose: `nothing` (`what` empty).
 
-#### logon
+#### Logon
 
 When `what` in dictionary `Logons` and `ok` present. Below the action element: 4 typed, 1 kept as Data.
 

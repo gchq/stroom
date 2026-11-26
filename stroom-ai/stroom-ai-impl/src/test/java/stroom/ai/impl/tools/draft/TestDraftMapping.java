@@ -925,8 +925,8 @@ class TestDraftMapping extends DraftFixtures {
         assertThat(common.get("EventSource/User/Id").get("field")).isEqualTo("usr");
         assertThat(common.get("EventSource/Client/IPAddress").get("field")).isEqualTo("src");
         final Map<String, Map<String, Object>> rules = rules(draft);
-        final Map<String, Map<String, Object>> failed = fields(rules.get("authenticate_logonfailed"));
-        assertThat(rules.get("authenticate_logonfailed").get("when"))
+        final Map<String, Map<String, Object>> failed = fields(rules.get("authenticate_logon_failed"));
+        assertThat(rules.get("authenticate_logon_failed").get("when"))
                 .isEqualTo(json("[{\"field\": \"evt\", \"equals\": \"4625\"}]"));
         assertThat(failed.get("EventDetail/TypeId").get("value")).isEqualTo("Authenticate-LogonFailed");
         assertThat(failed.get("EventDetail/Authenticate/Action").get("value")).isEqualTo("Logon");

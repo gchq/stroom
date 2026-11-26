@@ -13,7 +13,7 @@ Every event type writes these, from the same source. Sample values are what the 
 
 ### Event types
 
-#### logon
+#### Logon
 
 When `action` = login: 1 of the sample's 2 events. Below the action element: 3 typed, 1 kept as Data.
 

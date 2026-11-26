@@ -10,7 +10,7 @@ Every event type writes these, from the same source.
 
 #### login, checkout
 
-When `a` = login (login). When `a` = checkout (checkout). Below the action element: login 2 typed, 1 kept as Data; checkout 2 typed, 1 kept as Data.
+When `a` = login (rule login). When `a` = checkout (rule checkout). Below the action element: login 2 typed, 1 kept as Data; checkout 2 typed, 1 kept as Data.
 
 | XPath | Description | From |
 | --- | --- | --- |

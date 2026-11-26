@@ -85,6 +85,8 @@ public final class DraftMapping {
     // kinds (event id, type, action), so up to 200 (asked for by the user: a source of a hundred event types; until
     // 2026-11-07, 12, when a domain controller's 40 event ids were drafted as no kinds at all; then 64).
     private static final int MAX_KINDS = 200;
+    // How deep JSON held in held JSON is read for keys of its own: JSON text in JSON text in JSON text.
+    private static final int MAX_HELD_JSON_LEVELS = 3;
     // The records a naming field's values must each be in one of, a value a record, for it to read as an
     // identifier rather than kinds.
     private static final int EACH_ONCE_RECORDS = 5;
@@ -1260,19 +1262,30 @@ public final class DraftMapping {
         // and the text itself is never mapped into an element. Seen: a whole JSON line written into TypeId.
         // An object only: a JSON array in the record (seen: "tags": ["vpn"]) is the record's own, not text holding
         // JSON.
+        // JSON held in a key of held JSON (a JSON string inside the JSON text, encoded again) is held JSON too, its
+        // keys fields of their own (<field>.<key>.<inner key>), each level listed after the one holding it, as the
+        // XSLT reads it through each in turn. Seen in testing: a key of an event's original JSON held a JSON
+        // object as text, so its keys, one of them placed, were never fields and stayed in one Data.
         private List<String> heldJson() {
-            final List<String> jsonFields = names.stream()
-                    .filter(n -> "embedded json".equals(types.get(n))
-                                 && values.get(n).stream().anyMatch(DraftMapping::jsonObject))
-                    .toList();
+            final List<String> jsonFields = new ArrayList<>();
+            for (int level = 0; level < MAX_HELD_JSON_LEVELS; level++) {
+                final List<String> found = names.stream()
+                        .filter(n -> !jsonFields.contains(n) && "embedded json".equals(types.get(n))
+                                     && values.get(n).stream().anyMatch(DraftMapping::jsonObject))
+                        .toList();
+                if (found.isEmpty()) {
+                    break;
+                }
+                LocalCheck.withJsonFields(new ArrayList<>(records), found);
+                survey();
+                jsonFields.addAll(found);
+            }
             if (jsonFields.isEmpty()) {
                 return new ArrayList<>();
             }
-            LocalCheck.withJsonFields(new ArrayList<>(records), jsonFields);
-            survey();
             mapping.put("json_fields", new ArrayList<>(jsonFields));
             final List<String> inside = names.stream()
-                    .filter(n -> jsonFields.stream().anyMatch(j -> n.startsWith(j + ".")))
+                    .filter(n -> !jsonFields.contains(n) && jsonFields.stream().anyMatch(j -> n.startsWith(j + ".")))
                     .limit(4)
                     .toList();
             notes.add(reprs(jsonFields) + " " + (jsonFields.size() == 1
