@@ -89,6 +89,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -143,6 +144,13 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     private static final Set<String> LINES_UNLESS_SEEN = Set.of(SampleProfiler.MIXED_LINES,
             SampleProfiler.SYSLOG_3164_FORMAT, SampleProfiler.SYSLOG_5424_FORMAT);
     static final String MAX_PARTS_ARG = "max_parts_per_stream";
+    /// The most streams the source type candidates are read from by default: the first of those picked, spread over
+    /// the feed's life (newest, oldest, the middle...), so sources that write only now and then are seen.
+    static final int CANDIDATE_STREAMS = 5;
+    /// The most records the source type candidates are read from by default, shared by their streams: the records a
+    /// feed's stream head was split into for them before (FeedSampling.FEED_RECORDS times SPLIT_MORE), a quick look
+    /// before the question, now spread over the streams.
+    static final int CANDIDATE_RECORDS = FeedSampling.FEED_RECORDS * SPLIT_MORE;
     /// Why a stream read only in part can't be read further, in its `per_stream` entry.
     static final String NOT_READ_FURTHER = "not_read_further";
     /// The parts of a stream of several read, in its `per_stream` entry.
@@ -448,11 +456,12 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     private Request request(final ToolCall call) {
         final Integer maxChars = bounded(call, MAX_CHARS_ARG, 1000, MAX_CHARS);
         final Integer maxRecords = bounded(call, MAX_RECORDS_ARG, 10, FeedSampling.SAMPLE_RECORDS);
+        final Integer maxStreams = bounded(call, MAX_STREAMS_ARG, 1, 100);
         return new Request(
                 stringArg(call, FEED_ARG),
                 NullSafe.nonBlankStringElse(stringArg(call, STREAM_TYPE_ARG), StreamTypeNames.RAW_EVENTS),
                 StartOnboardingTool.streamIds(call, STREAM_IDS_ARG),
-                orDefault(bounded(call, MAX_STREAMS_ARG, 1, 100), FeedSampling.SURVEY_STREAMS),
+                orDefault(maxStreams, FeedSampling.SURVEY_STREAMS),
                 StartOnboardingTool.streamIds(call, SKIP_STREAM_IDS_ARG),
                 stringListArg(call, KNOWN_SIGNATURES_ARG),
                 maxChars,
@@ -467,7 +476,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 "true".equalsIgnoreCase(NullSafe.string(stringArg(call, AGGREGATED_ARG)).strip()),
                 NullSafe.isBlankString(stringArg(call, FIND_ARG))
                         ? null
-                        : stringArg(call, FIND_ARG).strip());
+                        : stringArg(call, FIND_ARG).strip(),
+                maxStreams != null);
     }
 
     // The streams named, by id.
@@ -732,14 +742,15 @@ class SurveyFeedTool extends AbstractBuiltInTool {
             throw new ToolRefusal("No " + request.streamType() + " streams in feed '" + feed + "'");
         }
         final Shapes shapes = new Shapes(new ArrayList<>(known), request.examples());
-        // The first stream's head, read to choose the source type and kind fields, read once: the survey reads on
-        // from it.
+        // The heads of the first streams picked (spread over the feed's life), read to choose the source type and
+        // kind fields, each read once: the survey reads on from them.
         final Map<Long, RawHead> peeked = new LinkedHashMap<>();
         // A pipeline described in place whose translation a pre-processor feeds: each stream read where the
         // translation reads it, its records stepped there, as the head the survey reads.
         peeked.putAll(translationInputHeads(context, build, streams));
-        final Heads heads = new Heads(() -> peekRecords(streams.getFirst(), limits, peeked),
-                streams.getFirst().getId(), isNewest(streams.getFirst(), streams));
+        final CandidateRead candidateRead = candidateRead(request, streams, chosen.isEmpty(),
+                chosen.isEmpty() && !exhausted);
+        final Heads heads = new Heads(reading -> peekRecords(reading, limits, peeked), candidateRead, streams);
         // An aggregated feed's source type field first: the kinds of event are told apart within its source types.
         final PartAttributes attributes = new PartAttributes(streamReader);
         final SourceDecision sources = decideSources(call, context, request, feed, keptSources, heads,
@@ -1219,11 +1230,15 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                 .map(SourceTypeFields.Candidate::label)
                 .toList());
         options.add(SourceTypeFields.NOT_AGGREGATED);
+        if (heads.read().widened()) {
+            // Read wider than by default, as the user asked: the form they put aside to ask for it is shown again.
+            consent.showAgain(context, NAME, SOURCE_FIELD_QUESTION);
+        }
         final Optional<String> answer = consent.answer(call, context, NAME, sourceIntro(feed, candidates,
-                heads.said()), SOURCE_FIELD_QUESTION, options);
+                heads.said(), heads.canReadMore()), SOURCE_FIELD_QUESTION, options, heads.readMore());
         if (answer.isEmpty()) {
             return new SourceDecision(null, null, needsSourceTypeField(consent.whyInChat(context, NAME,
-                    SOURCE_FIELD_QUESTION), feed, candidates, heads.said()), false);
+                    SOURCE_FIELD_QUESTION), feed, candidates, heads), false);
         }
         final String said = answer.get().strip();
         // An option, or a field's name (or a reading into held values), said whole: anything else (seen in testing:
@@ -1242,7 +1257,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                                                                                + "whether the feed is one source), "
                                                                                + "and call " + NAME + " again with "
                                                                                + SOURCE_TYPE_FIELD_ARG + " as they "
-                                                                               + "say ('none' for one source).");
+                                                                               + "say ('none' for one source). "
+                                                                               + heads.readMore());
         }
         return new SourceDecision(SourceTypeReadings.withRowsProposed(sourcesChosen(field.get(), "user"),
                 field.get(), heads.get(), taken.orElse(null)), field.get(), null, false);
@@ -1295,32 +1311,65 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     // from (seen in testing: asked how many streams had been surveyed, the agent couldn't say).
     private static String sourceIntro(final String feed,
                                       final List<SourceTypeFields.Candidate> candidates,
-                                      final String read) {
+                                      final String read,
+                                      final boolean more) {
         final List<String> lines = new ArrayList<>();
         candidates.forEach(candidate -> lines.add(SourceTypeReadings.said(candidate)));
         return "Feed '" + feed + "' looks like it aggregates several sources: the records of each value of this "
                + "field differ in their fields or messages, and each holds kinds of event of its own:\n"
-               + String.join("\n", lines) + "\nRead from " + read + " so far. Confirmed, the survey profiles each "
-               + "source type, and the build's source types step lists them for you to choose the source types of "
-               + "this build's group.";
+               + String.join("\n", lines) + "\nRead from " + read + " so far" + (more
+                ? ": you can ask for more streams or records to be read before answering"
+                : "") + ". Confirmed, the survey profiles each source type, and the build's source types step "
+               + "lists them for you to choose the source types of this build's group.";
     }
 
-    /// @param records  The records read from the head of the stream.
-    /// @param streamId The stream.
-    /// @param newest   True when it is the newest of the streams picked.
+    /// @param records The records read from the heads of the streams.
+    /// @param streams The streams read.
+    /// @param spread  True when they were picked spread over the feed's life (not named by id).
+    /// @param picked  Every stream the call picked, the newest among them.
     /// @return What the source type candidates were read from, in plain words, e.g. `the first 1,000 records of 1
-    /// stream (the newest, 42)`.
-    static String readSaid(final int records, final long streamId, final boolean newest) {
-        return "the first " + String.format(Locale.ROOT, "%,d", records) + " record" + (records == 1
+    /// stream (the newest, 42)`, or `the first records of 5 streams spread over the feed's life (4,000 records)`.
+    static String readSaid(final int records,
+                           final List<Meta> streams,
+                           final boolean spread,
+                           final List<Meta> picked) {
+        final String count = String.format(Locale.ROOT, "%,d", records) + " record" + (records == 1
                 ? ""
-                : "s") + " of 1 stream (" + (newest
-                ? "the newest, "
-                : "") + streamId + ")";
+                : "s");
+        if (streams.size() == 1) {
+            final Meta stream = streams.getFirst();
+            final boolean newest = picked.stream().allMatch(other -> other.getCreateMs() <= stream.getCreateMs());
+            return "the first " + count + " of 1 stream (" + (newest
+                    ? "the newest, "
+                    : "") + stream.getId() + ")";
+        }
+        return "the first records of " + (spread
+                ? streams.size() + " streams spread over the feed's life"
+                : "streams " + streams.stream().map(meta -> String.valueOf(meta.getId()))
+                        .collect(Collectors.joining(", "))) + " (" + count + ")";
     }
 
-    // True when the stream is the newest of those picked (as FeedSampling.pickSpread picks them, the first).
-    private static boolean isNewest(final Meta stream, final List<Meta> streams) {
-        return streams.stream().allMatch(other -> other.getCreateMs() <= stream.getCreateMs());
+    // The streams the source type and kind fields are chosen from, and the records read from each one's head. By
+    // default the first CANDIDATE_STREAMS of those picked (spread over the feed's life: FeedSampling.pickSpread),
+    // sharing CANDIDATE_RECORDS between them (seen in testing: an aggregated feed's newest stream alone offered a
+    // source field with 2 of its 5 values). Wider as the call's max_streams (the records still shared) and
+    // max_records_per_stream (each stream's) say: the user asked for more to be read before answering.
+    private static CandidateRead candidateRead(final Request request,
+                                               final List<Meta> streams,
+                                               final boolean spread,
+                                               final boolean moreStreams) {
+        final int most = request.maxStreamsGiven()
+                ? request.maxStreams()
+                : CANDIDATE_STREAMS;
+        final List<Meta> read = List.copyOf(streams.subList(0, Math.min(most, streams.size())));
+        final int byDefault = Math.max(1, CANDIDATE_RECORDS / Math.max(1, Math.min(CANDIDATE_STREAMS,
+                streams.size())));
+        final int perStream = request.maxRecords() != null
+                ? request.maxRecords()
+                : Math.max(1, CANDIDATE_RECORDS / Math.max(1, read.size()));
+        final boolean widened = read.size() > CANDIDATE_STREAMS || request.maxRecords() != null
+                                                                   && request.maxRecords() > byDefault;
+        return new CandidateRead(read, perStream, spread, widened, moreStreams || read.size() < streams.size());
     }
 
     // With no form shown: the agent asks the user which field, in the chat (why: no form can be shown, the form
@@ -1328,12 +1377,12 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     private static Map<String, Object> needsSourceTypeField(final String why,
                                                             final String feed,
                                                             final List<SourceTypeFields.Candidate> candidates,
-                                                            final String read) {
+                                                            final Heads heads) {
         final Map<String, Object> result = new LinkedHashMap<>();
         result.put("feed", feed);
         result.put("status", "needs_source_type_field");
         result.put("candidates", candidates.stream().map(SourceTypeReadings::json).toList());
-        result.put("candidates_read_from", read);
+        result.put("candidates_read_from", heads.said());
         SourceTypeReadings.heldHint(candidates).ifPresent(hint -> result.put("held", hint));
         result.put("hint", why + ". Nothing was surveyed yet. The feed looks like it aggregates several sources: the "
                            + "records "
@@ -1341,7 +1390,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                            + "chat which field says each record's source (show them the candidates and their "
                            + "values), or whether the feed is one source, then call " + NAME + " again with "
                            + SOURCE_TYPE_FIELD_ARG + " as they said ('none' for one source). Don't choose for "
-                           + "them.");
+                           + "them. " + heads.readMore());
         return result;
     }
 
@@ -1476,18 +1525,40 @@ class SurveyFeedTool extends AbstractBuiltInTool {
         return heads;
     }
 
-    // The first stream's start, its records parsed, when they are structured (delimited, JSON, key=value); none for
-    // text, or when it can't be read.
-    private List<Map<String, Object>> peekRecords(final Meta first,
+    // The starts of the streams the candidates are read from, their records parsed and put together, each kept for
+    // the survey to read on from (a head read already is surveyed, however late, so the call's time ends the reading
+    // after the first); each stream read added to those given.
+    private List<Map<String, Object>> peekRecords(final Heads heads,
+                                                  final Limits limits,
+                                                  final Map<Long, RawHead> peeked) {
+        final List<Map<String, Object>> records = new ArrayList<>();
+        final int perStream = heads.read().perStream();
+        for (final Meta stream : heads.read().streams()) {
+            if (Thread.currentThread().isInterrupted() || !heads.readFrom.isEmpty() && timeIsUp()) {
+                break;
+            }
+            final List<Map<String, Object>> parsed = peekRecords(stream, perStream, limits, peeked);
+            records.addAll(parsed);
+            heads.readFrom.add(stream);
+            if (parsed.size() >= perStream || NullSafe.test(peeked.get(stream.getId()), RawHead::truncated)) {
+                heads.cut();
+            }
+        }
+        return records;
+    }
+
+    // A stream's start, its records parsed, when they are structured (delimited, JSON, key=value); none for text, or
+    // when it can't be read.
+    private List<Map<String, Object>> peekRecords(final Meta stream,
+                                                  final int maxRecords,
                                                   final Limits limits,
                                                   final Map<Long, RawHead> peeked) {
         try {
-            final RawHead head = peeked.containsKey(first.getId())
-                    ? peeked.get(first.getId())
-                    : streamReader.readHead(first.getId(), 0, limits.maxChars());
-            peeked.put(first.getId(), head);
-            final RecordSplitter.Chunk chunk = RecordSplitter.split(head.text(), limits.maxRecords() * SPLIT_MORE,
-                    head.truncated());
+            final RawHead head = peeked.containsKey(stream.getId())
+                    ? peeked.get(stream.getId())
+                    : streamReader.readHead(stream.getId(), 0, limits.maxChars());
+            peeked.put(stream.getId(), head);
+            final RecordSplitter.Chunk chunk = RecordSplitter.split(head.text(), maxRecords, head.truncated());
             final List<Map<String, Object>> parsed = NullSafe.list(chunk.parsed()).stream()
                     .filter(Objects::nonNull)
                     .toList();
@@ -1495,7 +1566,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                     ? List.of()
                     : parsed;
         } catch (final RuntimeException e) {
-            LOGGER.debug(() -> LogUtil.message("No kind fields from stream {}: {}", first.getId(), e.getMessage()));
+            LOGGER.debug(() -> LogUtil.message("No kind fields from stream {}: {}", stream.getId(), e.getMessage()));
             return List.of();
         }
     }
@@ -2870,6 +2941,7 @@ class SurveyFeedTool extends AbstractBuiltInTool {
     /// @param sourceTypeField The source type field the user gave (or `none`), or null.
     /// @param aggregated      True when the user said the feed aggregates sources.
     /// @param find            The registry row whose records are looked for, or null.
+    /// @param maxStreamsGiven True when the call gave max_streams (not the default).
     private record Request(String feed,
                            String streamType,
                            List<Long> streamIds,
@@ -2886,7 +2958,8 @@ class SurveyFeedTool extends AbstractBuiltInTool {
                            String acceptAsIs,
                            String sourceTypeField,
                            boolean aggregated,
-                           String find) {
+                           String find,
+                           boolean maxStreamsGiven) {
 
     }
 
@@ -2958,30 +3031,77 @@ class SurveyFeedTool extends AbstractBuiltInTool {
 
     }
 
-    // The first stream's head, parsed, read when first asked for.
+    /// The streams the source type candidates are read from, and how.
+    ///
+    /// @param streams     The streams, in the order picked.
+    /// @param perStream   The most records read from each one's head.
+    /// @param spread      True when they were picked spread over the feed's life (not named by id).
+    /// @param widened     True when the call reads more than by default: the user asked for it.
+    /// @param moreStreams True when a call could read the candidates from more streams.
+    record CandidateRead(List<Meta> streams, int perStream, boolean spread, boolean widened, boolean moreStreams) {
+
+    }
+
+    // The heads of the streams the candidates are read from, parsed and put together, read when first asked for.
     private static final class Heads {
 
-        private final Supplier<List<Map<String, Object>>> reader;
-        private final long streamId;
-        private final boolean newest;
+        private final Function<Heads, List<Map<String, Object>>> reader;
+        private final CandidateRead read;
+        // The streams read, as far as the call's time let them be.
+        private final List<Meta> readFrom = new ArrayList<>();
+        private final List<Meta> picked;
         private List<Map<String, Object>> records;
+        private boolean cut;
 
-        private Heads(final Supplier<List<Map<String, Object>>> reader, final long streamId, final boolean newest) {
+        private Heads(final Function<Heads, List<Map<String, Object>>> reader,
+                      final CandidateRead read,
+                      final List<Meta> picked) {
             this.reader = reader;
-            this.streamId = streamId;
-            this.newest = newest;
+            this.read = read;
+            this.picked = picked;
         }
 
-        // What the head is, as the form and the agent are told it.
+        // What the heads are, as the form and the agent are told it: the streams read, as far as the call's time
+        // let them be.
         private String said() {
-            return readSaid(get().size(), streamId, newest);
+            final int count = get().size();
+            return readSaid(count, readFrom, read.spread(), picked);
+        }
+
+        // True when a call could read more for the candidates: more streams, or further into those read.
+        private boolean canReadMore() {
+            get();
+            return read.moreStreams() || readFrom.size() < read.streams().size() || cut;
+        }
+
+        // How the agent has more read before the user answers, in a sentence; blank when there is no more.
+        private String readMore() {
+            if (!canReadMore()) {
+                return "";
+            }
+            // Never fewer than a call's streams: that is the user's to confirm in a form of its own.
+            final String records = MAX_RECORDS_ARG + " over " + read.perStream() + " (records from each stream)";
+            return "To read more before they answer, call " + NAME + " again with " + (read.moreStreams()
+                    ? MAX_STREAMS_ARG + " of " + Math.max(FeedSampling.SURVEY_STREAMS, read.streams().size() + 1)
+                      + " or more (streams), or " + records
+                    : records + ", every stream being read already") + ": the form is shown again over the wider "
+                   + "reading.";
+        }
+
+        private CandidateRead read() {
+            return read;
         }
 
         private List<Map<String, Object>> get() {
             if (records == null) {
-                records = reader.get();
+                records = reader.apply(this);
             }
             return records;
+        }
+
+        // Notes that a stream's head held more than was read of it.
+        private void cut() {
+            cut = true;
         }
 
         private boolean peekedAlready() {

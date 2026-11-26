@@ -4185,7 +4185,7 @@ saying plainly whether the feed is covered yet.
 **Kind fields.** A hint for the survey's own coverage only (its shapes, saturation and depth): the source's event
 types are catalogued by `catalogue_event_types`, which never takes them as its conditions, and the draft no longer
 makes its rules by them. For structured records (delimited, JSON, key=value) the fields that tell the shapes apart are
-chosen once for the survey (`KindFields`), from the first stream's head, and kept in the survey state as `kind_fields`
+chosen once for the survey (`KindFields`), from the heads the source type candidates are read from, and kept in the survey state as `kind_fields`
 (`fields`, `by`: `user` or `tool`); every part is then signed by them, rather than by the columns each part's names or
 values suggest (seen in testing: a CSV mail log's `msg_act`, chosen afresh in each part, 16 kinds from 3, never
 covered). A field named like a kind field (`type`, `action`, `event_id`...) whose values aren't one a record, nor
@@ -4318,8 +4318,10 @@ kept still reads (see `SurveyDoc` under "Sample analysis").
   audited. A delimited field may be any length (seen: one 250,000-character URL query stopped a whole part being
   surveyed).
 
-**Aggregated feeds.** With a build, the first stream's head is also read for a source type field
-(`SourceTypeFields`): one field (at any depth, e.g. `event.Workload`) whose values tell apart records that differ in
+**Aggregated feeds.** With a build, the heads of the first 5 streams picked (spread over the feed's life) are also
+read for a source type field, 4,000 records between them by default (`max_streams` and `max_records_per_stream`
+read more, as the user asks; the form, shown again over the wider reading, and `candidates_read_from` say what was
+read) (`SourceTypeFields`): one field (at any depth, e.g. `event.Workload`) whose values tell apart records that differ in
 their fields or their message's format or template, each value holding kinds of event of its own (a kind field's
 values are each one shape, so a kind field isn't taken); hosts, users, sessions and messages never, addresses and
 times by their values. Chosen by values and shapes alone, never by a product's names. A candidate is put to the user
@@ -7606,7 +7608,10 @@ to a producer, writer or appender and which writes no Events): only the flattene
 shared XSLT reads (`CefHandoff`, read from its templates and checked by running it locally: kafkaRecords, a topic,
 the line as the value; `chain_check`), with no topic or Kafka settings (`notes` names any given); review reads the
 lines at the shared stage and the Events at the flattener's input. Kept plan output `chained` with its `handoff`.
-Single-stage forwarders as before. The shared XSLT is never changed.
+Single-stage forwarders as before. The shared XSLT is never changed. A template may run several shared XSLTs in
+turn before the output (e.g. one wrapping each line, the next writing the records): the chain holds them in order
+(`shared_stages`), the form is read from the first, and `chain_check` runs the draft through each, the last
+writing kafkaRecords; one that can't be read or run locally leaves it to stepping.
 
 **Intermediate stages in an Events namespace (2026-11-26).** A chained forwarder's own stages (the flattener's
 `records`/`data`, a stage wrapping the line in an element of its own) are written in the namespace the shared XSLT

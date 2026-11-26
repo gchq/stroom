@@ -68,6 +68,7 @@ class TestAskStroomAiMessageInsteadOfForm extends AbstractAiIntegrationTest {
     // The source type field form's message says so.
     private static final String SOURCE_FORM = "aggregates several sources";
     private static final String TYPED = "What's the difference between the app and source fields?";
+    private static final String READ_MORE = "Read further into the stream before I answer";
     // The catalogue form's message says so ("Accept all N event types, or type your amendments").
     private static final String CATALOGUE_FORM = "event types";
     private static final String CATALOGUE = "catalogue_event_types";
@@ -90,8 +91,9 @@ class TestAskStroomAiMessageInsteadOfForm extends AbstractAiIntegrationTest {
     private FakeModelServer model;
     private UserRef user;
     private McpTestClient client;
-    // The forms the user was shown of the kind they type a message instead of answering.
+    // The forms the user was shown of the kind they type a message instead of answering, and their messages.
     private int sourceFormsShown;
+    private final List<String> sourceForms = new ArrayList<>();
     // The kind of form (part of its message) the user types a message instead of answering, and that message.
     private String typedInsteadOf = SOURCE_FORM;
     private String typedMessage = TYPED;
@@ -160,6 +162,45 @@ class TestAskStroomAiMessageInsteadOfForm extends AbstractAiIntegrationTest {
         assertThat(later.subList(1, later.size() - 1)).as("calls without the user's answer, of %s", later)
                 .allSatisfy(text -> assertThat(text).contains("needs_source_type_field")
                         .contains("source_type_field"));
+    }
+
+    // The user asks for more to be read before answering the source type field form: the agent, told how, calls
+    // survey_feed again reading deeper, and the form is shown again over the wider reading, then answered.
+    @Test
+    void askedToReadMoreInsteadOfAnsweringTheSourceFormTheAgentReadsDeeperAndTheFormIsShownAgain() {
+        typedMessage = READ_MORE;
+        // More records than the candidates are read from by default (4,000).
+        final String build = sampleInABuild(sample(4_200));
+        final DocRef modelRef = asUser(user, this::fakeModel);
+        final AiChat chat = asUser(user, () -> askStroomAIService.createChat());
+        final String arguments = JsonUtil.writeValueAsString(Map.of("feed", FEED, "build", build), false);
+        final String deeper = JsonUtil.writeValueAsString(Map.of("feed", FEED, "build", build,
+                "max_records_per_stream", 10_000), false);
+        model.callTool("survey_feed", arguments)
+                .callTool("survey_feed", arguments)
+                .callTool("survey_feed", deeper)
+                .answer("Surveyed, reading deeper.");
+
+        ask(chat, modelRef, "Survey the feed.");
+
+        assertThat(sourceForms).as("the source type field form, then again over the wider reading").hasSize(2);
+        assertThat(sourceForms.getFirst()).contains("the first 4,000 records of 1 stream", "so far: you can ask for "
+                                                    + "more streams or records to be read before answering");
+        assertThat(sourceForms.getLast()).contains("the first 4,200 records of 1 stream");
+        final Map<String, Object> after = model.agentRequests().stream()
+                .filter(request -> JsonUtil.writeValueAsString(request.get("messages"), false).contains(READ_MORE))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("The model was never given the user's message: "
+                                                      + model.agentRequests()));
+        final List<Map<String, Object>> messages = messages(after);
+        assertThat(String.valueOf(messages.get(lastIndexOf(messages, "tool")).get("content")))
+                .as("what the re-made survey_feed call tells the agent")
+                .containsIgnoringCase("sent a message instead")
+                .contains("call survey_feed again with max_records_per_stream over 4000");
+        final List<Map<String, Object>> last = messages(model.agentRequests().getLast());
+        assertThat(String.valueOf(last.get(lastIndexOf(last, "tool")).get("content")))
+                .as("the deeper call, its form answered, surveyed the feed by the field chosen")
+                .contains("\"step\":\"source_types\"").doesNotContain("needs_source_type_field");
     }
 
     // The catalogue form ("Accept all N event types, or type your amendments") is a choice the user may amend in the
@@ -296,7 +337,11 @@ class TestAskStroomAiMessageInsteadOfForm extends AbstractAiIntegrationTest {
     // The build, its feed, and a sample of an application's log, JSON lines naming the component that wrote
     // each record, uploaded to it, made through the real tools. Returns the build's name.
     private String sampleInABuild() {
-        final String sample = sample();
+        return sampleInABuild(sample(60));
+    }
+
+    // As above, with the sample given.
+    private String sampleInABuild(final String sample) {
         final Map<String, Object> started = client.json("start_onboarding", Map.of("source_name", SOURCE,
                 "samples", List.of(sample)));
         final String build = (String) started.get("build");
@@ -352,6 +397,7 @@ class TestAskStroomAiMessageInsteadOfForm extends AbstractAiIntegrationTest {
         final boolean sourceForm = String.valueOf(form.message()).contains(typedInsteadOf);
         if (sourceForm) {
             sourceFormsShown++;
+            sourceForms.add(String.valueOf(form.message()));
         }
         if (sourceForm && typedAfterId == 0) {
             typedAfterId = message.getId();
@@ -404,9 +450,9 @@ class TestAskStroomAiMessageInsteadOfForm extends AbstractAiIntegrationTest {
 
     // JSON lines of an application, each naming the component that wrote it, each component's messages in a
     // format of its own.
-    private static String sample() {
+    private static String sample(final int records) {
         final StringBuilder out = new StringBuilder();
-        for (int i = 0; i < 60; i++) {
+        for (int i = 0; i < records; i++) {
             final String message = switch (i % 3) {
                 case 0 -> "{\\\"eventType\\\": \\\"" + (i % 2 == 0
                         ? "login"

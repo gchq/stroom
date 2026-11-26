@@ -206,6 +206,21 @@ public class Consent {
         return unshownFor(context.session(), topic(action, question) + ASKED_IN_CHAT) != null;
     }
 
+    /// Shows a question's form again where the user put it aside for the chat (a message sent instead, or words
+    /// that are none of its answers: [#wroteInstead]), the call now asking it over more than before: e.g. a survey's
+    /// candidates read from more streams at the user's asking. Nothing changes for a form not put aside.
+    ///
+    /// @param context  The call's context.
+    /// @param action   The tool.
+    /// @param question The question, as for [#takesChatAnswer(ToolCallContext, String, String)].
+    public void showAgain(final ToolCallContext context, final String action, final String question) {
+        final String topic = topic(action, question);
+        if (isPutAside(context.session(), topic)) {
+            forget(context.session(), topic);
+            forget(context.session(), topic + ASKED_IN_CHAT);
+        }
+    }
+
     /// The answer the user wrote in a form, as one of the answers it takes: matched whole, ignoring case and the
     /// spaces around it, never by a word it holds (seen in testing: a question in the form's own-words box taken
     /// for "use these patterns" as it said "pattern").
@@ -733,6 +748,30 @@ public class Consent {
                                    final String intro,
                                    final String question,
                                    final List<String> suggested) {
+        return answer(call, context, action, intro, question, suggested, null);
+    }
+
+    /// As [#answer(ToolCall, ToolCallContext, String, String, String, List)], with what else the agent may do
+    /// where the user sends a message in the chat instead of answering: e.g. read more before asking again.
+    ///
+    /// @param call      The call asking.
+    /// @param context   The call's context.
+    /// @param action    The tool asking, e.g. `survey_feed`.
+    /// @param intro     What the form is about, its message.
+    /// @param question  The question, its field's title.
+    /// @param suggested The answers suggested, in the order shown.
+    /// @param instead   What else the agent may do once the user has replied, added to what it is told where they
+    ///                  sent a message instead; null for nothing more.
+    /// @return The answer, trimmed: one suggested, or the user's own words; empty when the session can't show a
+    /// form now, or the form would be too large to show (the agent then asks the user).
+    /// @throws ToolRefusal if the user declined the form or gave no answer.
+    public Optional<String> answer(final ToolCall call,
+                                   final ToolCallContext context,
+                                   final String action,
+                                   final String intro,
+                                   final String question,
+                                   final List<String> suggested,
+                                   final String instead) {
         if (!context.userQuestions().canAsk()) {
             return Optional.empty();
         }
@@ -747,7 +786,7 @@ public class Consent {
         schema.put("properties", Map.of("answer", field));
         final String digest = formDigest(action, question, suggested);
         final Optional<ElicitResult> asked = askShown(call, context, action, question, "answer-" + digest, intro,
-                schema);
+                schema, instead);
         if (asked.isEmpty()) {
             return Optional.empty();
         }
@@ -804,6 +843,18 @@ public class Consent {
                                             final String key,
                                             final String message,
                                             final Map<String, Object> schema) {
+        return askShown(call, context, action, question, key, message, schema, null);
+    }
+
+    // As above, with what else the agent may do where the user sent a message instead (null for nothing more).
+    private Optional<ElicitResult> askShown(final ToolCall call,
+                                            final ToolCallContext context,
+                                            final String action,
+                                            final String question,
+                                            final String key,
+                                            final String message,
+                                            final Map<String, Object> schema,
+                                            final String instead) {
         final String topic = topic(action, question);
         if (isPutAside(context.session(), topic)) {
             // Answered in the chat from now on: the form isn't shown again.
@@ -834,7 +885,9 @@ public class Consent {
             putAside(context.session(), topic);
             throw new ToolRefusal(McpElicitations.sentInsteadText(heading(question), action, sent.get(),
                     "Their answer to it is said in the chat now: once they've given it, call " + action + " again, "
-                    + "which says how to pass it (its form isn't shown again)."));
+                    + "which says how to pass it (its form isn't shown again)." + (instead == null
+                            ? ""
+                            : " " + instead.strip())));
         }
         return Optional.of(answer);
     }

@@ -438,6 +438,38 @@ class TestConsent {
     }
 
     @Test
+    void aQuestionPutAsideToHaveMoreReadIsShownAgainWhenTheToolAsksItOverMore() {
+        // survey_feed's source type field form: the user asks for more to be read before answering. The agent is
+        // told how; the call reading more shows the form again (its own call, a fresh form), not the chat answer.
+        final ChatForms chat = new ChatForms(7);
+        final ToolCallContext context = chat.context();
+        final ToolCall call = new ToolCall("call-1", "survey_feed", "{}");
+        final List<String> options = List.of("event.app", "Not aggregated");
+        final String more = "To read more first, call survey_feed again with a larger max_streams.";
+        assertThatThrownBy(() -> consent.answer(call, context, "survey_feed", "Intro", SOURCE_QUESTION, options,
+                more)).isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        chat.userSendsInstead("Read more streams first");
+
+        final String told = toldTheAgent(() -> consent.answer(call, context, "survey_feed", "Intro",
+                SOURCE_QUESTION, options, more));
+
+        assertThat(told).contains("Read more streams first", more);
+        final int formsShown = forms(chat);
+        consent.showAgain(context, "survey_feed", "Another question?");
+        assertThat(consent.takesChatAnswer(context, "survey_feed", SOURCE_QUESTION))
+                .as("still put aside: another question was shown again").isTrue();
+
+        final ToolCall wider = new ToolCall("call-2", "survey_feed", "{\"max_streams\": 20}");
+        consent.showAgain(context, "survey_feed", SOURCE_QUESTION);
+
+        assertThat(consent.takesChatAnswer(context, "survey_feed", SOURCE_QUESTION)).isFalse();
+        assertThat(consent.wasAskedInChat(context, "survey_feed", SOURCE_QUESTION)).isFalse();
+        assertThatThrownBy(() -> consent.answer(wider, context, "survey_feed", "Intro, read wider",
+                SOURCE_QUESTION, options, more)).isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        assertThat(forms(chat)).as("forms shown").isEqualTo(formsShown + 1);
+    }
+
+    @Test
     void aConfirmationPutAsideByAMessageIsNeverTakenFromTheChatButAskedInItsFormAgain() {
         // A confirmation is only ever given in a form (the agent could otherwise agree for the user).
         final ChatForms chat = new ChatForms(7);

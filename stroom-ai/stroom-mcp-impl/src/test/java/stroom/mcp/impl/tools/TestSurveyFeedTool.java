@@ -52,10 +52,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -1215,6 +1217,21 @@ class TestSurveyFeedTool {
         return Map.of("name", name, "match", match, "value", value);
     }
 
+    // JSON lines of an application naming the source that wrote each, the sources taking turns, each source's
+    // messages of two shapes of its own.
+    private static String sourcedLines(final int count, final String... sources) {
+        return IntStream.range(0, count)
+                .mapToObj(i -> {
+                    final String source = sources[i % sources.length];
+                    final String key = source.toLowerCase(Locale.ROOT) + (i / sources.length % 2 == 0
+                            ? "Started"
+                            : "Stopped");
+                    return "{\"app\": \"acme\", \"source\": \"" + source + "\", \"message\": \"{\\\"" + key
+                           + "\\\": " + i + "}\"}\n";
+                })
+                .collect(Collectors.joining());
+    }
+
     // JSON lines with a source field, the sources taking turns.
     private static String sourceLines(final int count, final String... sources) {
         return IntStream.range(0, count)
@@ -1655,6 +1672,93 @@ class TestSurveyFeedTool {
         assertThat(user.shown()).as("forms shown").hasSize(1);
         assertThat((Map<String, Object>) given.get("source_types")).containsEntry("field", "source")
                 .containsEntry("by", "user");
+    }
+
+    // The source type candidates, read from streams spread over the feed's life: seen in testing, an aggregated
+    // feed's form offered a field with 2 values, read from its newest stream alone, where the feed held about 5.
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void theSourceTypeCandidatesAreReadFromStreamsSpreadOverTheFeedsLife() {
+        sampleFeedInABuild();
+        newestFirst(3, 2, 1);
+        stream(3, "ACME-VPN", 3_000, sourcedLines(40, "Security", "Database"), false);
+        stream(2, "ACME-VPN", 2_000, sourcedLines(40, "Integration", "Security"), false);
+        stream(1, "ACME-VPN", 1_000, sourcedLines(40, "Audit", "Mail"), false);
+
+        final Map<String, Object> asking = json(call("{\"feed\": \"ACME-VPN\", \"build\": \"acme-v1\"}"));
+
+        assertThat(asking).containsEntry("status", "needs_source_type_field");
+        final Map<String, Object> source = ((List<Map<String, Object>>) asking.get("candidates")).stream()
+                .filter(candidate -> "source".equals(candidate.get("field")))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No source candidate: " + asking));
+        assertThat(String.valueOf(source)).contains("Security", "Database", "Integration", "Audit", "Mail");
+        assertThat(asking.get("candidates_read_from")).isEqualTo("the first records of 3 streams spread over the "
+                                                                  + "feed's life (120 records)");
+        // Every record of every stream read: no more to read, so nothing said of reading more.
+        assertThat(String.valueOf(asking.get("hint"))).doesNotContain("To read more");
+
+        // In a form: the reading said.
+        final BuildToolCalls.FormUser user = BuildToolCalls.user(Map.of("answer", "source"));
+        json(call("{\"feed\": \"ACME-VPN\", \"build\": \"acme-v1\"}", user.context()));
+        assertThat(user.shown()).first().asString().contains("Read from the first records of 3 streams spread over "
+                                                             + "the feed's life (120 records) so far. Confirmed")
+                .doesNotContain("you can ask");
+    }
+
+    @Test
+    void theSourceTypeCandidatesReadAtMostTheirRecordsFromTheFirstStreamsPicked() {
+        // A feed of more streams than a call reads: its candidates from the first 5 picked, 800 records each (4,000,
+        // as one stream's head was read to before), never more.
+        sampleFeedInABuild();
+        final long[] ids = LongStream.rangeClosed(1, 12).toArray();
+        newestFirst(ids);
+        for (final long id : ids) {
+            stream(id, "ACME-VPN", id * 1_000, sourcedLines(2_000, "Security", "Database", "Mail"), false);
+        }
+
+        final Map<String, Object> asking = json(call("{\"feed\": \"ACME-VPN\", \"build\": \"acme-v1\"}"));
+
+        assertThat(asking.get("candidates_read_from")).isEqualTo("the first records of 5 streams spread over the "
+                                                                  + "feed's life (4,000 records)");
+        Mockito.verify(streamReader, Mockito.times(5)).readHead(anyLong(), anyInt(), anyInt());
+        assertThat(String.valueOf(asking.get("hint"))).contains("call survey_feed again with max_streams of 10 or "
+                                                                + "more (streams), or max_records_per_stream over "
+                                                                + "800 (records from each stream)");
+    }
+
+    @Test
+    void theUserMayHaveMoreReadForTheSourceTypeCandidatesAndIsAskedAgainOverTheWiderReading() {
+        sampleFeedInABuild();
+        final long[] ids = LongStream.rangeClosed(1, 12).toArray();
+        newestFirst(ids);
+        for (final long id : ids) {
+            stream(id, "ACME-VPN", id * 1_000, sourcedLines(2_000, "Security", "Database", "Mail"), false);
+        }
+        final String args = "{\"feed\": \"ACME-VPN\", \"build\": \"acme-v1\"";
+        // The user writes in the form, told they can ask for more to be read: put to the agent, saying how.
+        final BuildToolCalls.FormUser asking = BuildToolCalls.user(Map.of("answer", "Read more streams first"));
+        final ToolResult wrote = call(args + "}", asking.context());
+        assertThat(asking.shown()).first().asString().contains("(4,000 records) so far: you can ask for more "
+                                                               + "streams or records to be read before answering.");
+        assertThat(wrote.isError()).isTrue();
+        assertThat(wrote.text()).contains("Read more streams first", "call survey_feed again with max_streams of "
+                                                                     + "10 or more");
+        // The same reading again: its form put aside, not shown again.
+        assertThat(json(call(args + "}", asking.context()))).containsEntry("status", "needs_source_type_field");
+        assertThat(asking.shown()).hasSize(1);
+
+        // Deeper: more streams (the records shared over them), said in the form shown again; or more records from
+        // each stream.
+        final ToolResult wider = call(args + ", \"max_streams\": 10}", asking.context());
+        assertThat(asking.shown()).as("forms shown").hasSize(2);
+        assertThat(asking.shown().getLast()).contains("Read from the first records of 10 streams spread over the "
+                                                      + "feed's life (4,000 records) so far");
+        assertThat(wider.text()).as("asked again, the user wrote in it again").contains("Read more streams first");
+        final Map<String, Object> deeper = json(call(args + ", \"max_records_per_stream\": 1500}"));
+        assertThat(deeper.get("candidates_read_from")).isEqualTo("the first records of 5 streams spread over the "
+                                                                 + "feed's life (7,500 records)");
     }
 
     @Test
