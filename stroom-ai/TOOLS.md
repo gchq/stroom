@@ -2039,7 +2039,8 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
   `periods` in the result. Worded by the model under the characterisation's choice (`PeriodWording`, checked: one
   line, its key named, no times), given to the characterisation as `during`.
 * Noise (`TimelineNoise`, both views, before any span or model call): proposed in one form, all ticked
-  (`exclude`), or listed as `noise_proposed` over MCP; the answer kept in `/outputs/timelines/exclusions.json`
+  (`exclude`), or listed as `noise_proposed` over MCP (and in the chat after the form was declined, saying a call
+  again asks again); the answer kept in `/outputs/timelines/exclusions.json`
   (the user's own workspace) and applied every run; `excluded` says what was left out.
 * Activities view: `activity-levels.csv` (`ThematicSpans`), levels 1 to 3 with `id`, `parent`, `how` and
   `events` (an activity of loose items alone a level-1 row over its items' times); merged in code by a fetched

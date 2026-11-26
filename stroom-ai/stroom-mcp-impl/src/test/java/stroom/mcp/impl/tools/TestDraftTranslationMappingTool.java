@@ -727,6 +727,23 @@ class TestDraftTranslationMappingTool {
     }
 
     @Test
+    void aCatalogueWithNoEventTypesYetDoesntHoldTheDraft() {
+        // Seen in eval case 112 (2026-11-27): the proposals refused for the JSON cut said to draft with
+        // long_values=whole; the draft was refused for the empty catalogue's catch-all, and the user was asked to
+        // keep every record as Unknown before any event type was catalogued.
+        final String uuid = world.inBuild("acme-v1", DocumentationDoc.TYPE, "Acme source notes").getUuid();
+        world.world.docs.put(uuid, DocumentationDoc.builder().uuid(uuid).name("Acme source notes").version("v0")
+                .data("# Acme source notes\n\n<!-- stroom-mcp source notes\n{\"source\": \"Acme\", \"fields\": [], "
+                      + "\"event_types\": [], \"catch_all\": {\"status\": \"proposed\"}}\n-->\n")
+                .build());
+
+        final Map<String, Object> draft = world.call(tool, Map.of("samples", Map.of("acme.csv", CSV),
+                "build", "acme-v1"));
+
+        assertThat(draft).doesNotContainKey("error").containsKey("mapping");
+    }
+
+    @Test
     void aConfirmedCatalogueIsTheDraftsRules() {
         notes("confirmed", "confirmed");
 

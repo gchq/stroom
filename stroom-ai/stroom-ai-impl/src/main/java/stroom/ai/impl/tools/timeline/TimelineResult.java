@@ -69,6 +69,9 @@ final class TimelineResult {
     static final int MAX_BARS = 200;
     /// The most lanes gantt_chart draws in one chart (as `GanttCharts` keeps).
     static final int MAX_LANES = 20;
+    /// What the noise the user declined to leave out says: the form is the only way to leave it out.
+    static final String DECLINED_NOISE = "the user declined the form: if they ask to leave it out, call again "
+                                         + "with the same sources and they're asked which";
 
     // Why a source's events weren't deduplicated.
     private static final String NOT_DEDUPLICATED = "its index has no StreamId and EventId, so an event read twice "
@@ -1026,8 +1029,9 @@ final class TimelineResult {
             final List<Map<String, Object>> proposed = new ArrayList<>();
             noise.proposed().forEach(found -> proposed.add(Map.of("pattern", found.said(), "examples",
                     found.examples())));
-            map.put("noise_proposed", Map.of("patterns", proposed, "how", "Not left out: the user wasn't asked. "
-                                                                          + "Ask whether to leave them out."));
+            map.put("noise_proposed", Map.of("patterns", proposed, "how", noise.declined()
+                    ? DECLINED_NOISE
+                    : "Not left out: the user wasn't asked. Ask whether to leave them out."));
         }
         return map;
     }
@@ -1047,7 +1051,9 @@ final class TimelineResult {
                     .append(".\n");
         }
         if (!noise.proposed().isEmpty()) {
-            sb.append("\nLooks like noise, not left out (ask the user):\n");
+            sb.append("\nLooks like noise, not left out (").append(noise.declined()
+                    ? DECLINED_NOISE
+                    : "ask the user").append("):\n");
             noise.proposed().forEach(found -> sb.append("- ").append(found.said()).append('\n'));
         }
         return sb.toString();

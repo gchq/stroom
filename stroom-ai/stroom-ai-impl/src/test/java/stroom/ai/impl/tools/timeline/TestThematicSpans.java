@@ -160,6 +160,35 @@ class TestThematicSpans {
         assertThat(levels.rejected()).isEqualTo(2);
     }
 
+    @Test
+    void aDescriptionPastTheLimitIsShortenedAtAWordAndTheLimitIsSaid() {
+        // As Haiku answered in eval case 115: a run split in two, each part's line longer than the limit.
+        for (int i = 0; i < 4; i++) {
+            message("10:0" + i, "ops", i < 2
+                    ? "Who covers the weekend on-call rota?"
+                    : "The VPN certificate expires next week");
+        }
+        final String longer = "Swapped weekend on-call shifts (Sam Saturday, user Sunday) and confirmed the phone "
+                              + "handover with the team";
+        final ModelSideCalls model = model(question -> JsonUtil.writeValueAsString(List.of(
+                Map.of("id", "r1", "description", "x", "confidence", "high", "evidence", List.of("e1"), "parts",
+                        List.of(Map.of("from", "e1", "description", longer, "evidence", List.of("e1", "e2")),
+                                Map.of("from", "e3", "description", "Renewed the VPN certificate", "evidence",
+                                        List.of("e3", "e4"))))), false));
+
+        final Levels levels = build(model);
+
+        assertThat(levels.units()).extracting(Unit::id).containsExactly("r1-1", "r1-2");
+        final String shortened = levels.units().getFirst().label();
+        assertThat(shortened).hasSizeLessThanOrEqualTo(ThematicSpans.MAX_DESCRIPTION_CHARS)
+                .startsWith("Swapped weekend on-call shifts")
+                .endsWith("…");
+        assertThat(longer).startsWith(shortened.substring(0, shortened.length() - 1).strip());
+        assertThat(levels.rejected()).isZero();
+        assertThat(asked.getFirst().system()).contains("at most " + ThematicSpans.MAX_DESCRIPTION_CHARS
+                                                       + " characters");
+    }
+
     // ------------------------------------------------------------------------------------------------
 
     private Levels build(final ModelSideCalls sideCalls) {

@@ -2281,7 +2281,7 @@ description and evidence.
 user agreed to the model for the characterisation; else the fallback labels). The facts are data: the periods'
 ids, kinds, keys, times, ends seen and their evidence events' types and key values (at most 8 a event, each cut to
 100 characters); the answer `{"<period id>": "<description>"}`. Checked in code: an id given, one line, at most 120
-characters, naming each key value, no clock time or date (the times are the code's); any other answer keeps the
+characters (said in the prompt; a longer line shortened at a word), naming each key value, no clock time or date (the times are the code's); any other answer keeps the
 fallback label, counted in the result. It can't add periods or change their kind, key or times: those are held by
 the code and shown beside the description, with the evidence. Cached in the characterisation's cache by the facts.
 
@@ -2339,7 +2339,9 @@ keeps the finer ones underneath, each naming its parent.
   domains and titles (data, never instructions) and the periods they fell in; each run answered
   `{"run": "<id>", "answer": "one" | "separate", "description": "...", "confidence": "...", "evidence": "..."}`.
   Checked in code: a run given; `one` only at high or medium confidence; a description of one line, at most 80
-  characters, with no clock time or date; evidence naming at least one of the run's labels or domains. A run made
+  characters (the limit said in the prompt; a longer line shortened at a word, not refused, so a run's split
+  stands: seen in eval case 115 on Haiku, both runs' parts lost to lines of 90 and 126 characters), with no clock
+  time or date; evidence naming at least one of the run's labels or domains. A run made
   one covers exactly its units' times; anything else leaves them separate. Cached by the run's facts.
 * **Output**: `activity-levels.csv`: every level's rows (the activities and period bands at 1, the thematic spans
   and runs at 2, the finest spans and point events at 3), each with its `id`, `level` and `parent`, labelled by its
@@ -5040,8 +5042,10 @@ reads them; output JSON):
 * The catch-all carries `allow_unknown`; a line format's catch-all is flagged with its variant condition alone; a
   catch-all after a sole event type is left out.
 * The vendor's code as Data sits under the action element, named after the field's last segment.
-* A draft before any catalogue keeps its own rules, the last flagged `catch_all`; with a catalogue still to confirm
-  it refuses.
+* A draft before any catalogue (or before its first event type) keeps its own rules, the last flagged `catch_all`;
+  with a catalogue still to confirm it refuses (an empty one's catch-all held it in eval case 112: the catalogue
+  said to draft with `long_values=whole`, and the user was asked to keep every record as Unknown). The save still
+  waits for the catch-all.
 * Records are read as the given `reading`, else the build's latest mapping, else a reading an earlier call gave,
   else the draft's own; `reading` takes a mapping's reading keys only, `for_each` among them (each item a record).
 * `rebuild_mapping` reads back hand edits of a generated translation; a wholly hand-written XSLT is not read.

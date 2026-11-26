@@ -392,6 +392,26 @@ class TestActivityTimelineAnySource {
     }
 
     @Test
+    void noiseTheUserDeclinedSaysACallAgainAsksAgain() {
+        week();
+        for (int i = 0; i < 240; i++) {
+            web(at("12:00") + i * 30_000L, "pat", "https://telemetry.example.net/ping");
+        }
+        final Questions questions = new Questions(Map.of(ActivityTimelineTool.BEYOND_FORM,
+                ActivityTimelineTool.CLASSIFY), ActivityTimelineTool.EXCLUDE);
+
+        final String text = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
+                arguments(Map.of("view", "activities")), false)), chat(questions, model(new ArrayList<>(), "[]")))
+                .text();
+
+        // As in eval case 116, the model told the noise is still in has the way to leave it out.
+        assertThat(text).contains("Looks like noise, not left out (" + TimelineResult.DECLINED_NOISE + "):")
+                .doesNotContain("Left out as noise");
+        assertThat(files.content(FOLDER + ActivityTimelineTool.EVENTS_FILE).orElseThrow())
+                .contains("telemetry.example.net");
+    }
+
+    @Test
     void theActivitiesViewHasThreeLevelsEachSpanNamingItsParentAndEveryEventItsSpans() {
         week();
         // Interleaved visits to two sites: an activity period each, merged in code by their domains.
@@ -1784,8 +1804,16 @@ class TestActivityTimelineAnySource {
         private final List<Map<String, Object>> forms = new ArrayList<>();
         private final List<String> intros = new ArrayList<>();
 
+        private final String declined;
+
         Questions(final Map<String, Object> answers) {
+            this(answers, null);
+        }
+
+        // Declining any form holding the given key.
+        Questions(final Map<String, Object> answers, final String declined) {
             this.answers = answers;
+            this.declined = declined;
         }
 
         @Override
@@ -1800,6 +1828,9 @@ class TestActivityTimelineAnySource {
                                 final Map<String, Object> form) {
             forms.add(form);
             intros.add(intro);
+            if (declined != null && ((Map<String, Object>) form.get("properties")).containsKey(declined)) {
+                return new ElicitResult(ElicitResult.Action.DECLINE, null);
+            }
             final Map<String, Object> content = new LinkedHashMap<>();
             ((Map<String, Object>) form.get("properties")).keySet().forEach(key -> {
                 if (answers.containsKey(key)) {

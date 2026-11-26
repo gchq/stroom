@@ -605,11 +605,14 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
 
     // A catalogue of event types still to confirm: the translation follows the catalogue, so the draft waits for it
     // (seen in chat 169: the agent drafted with eight kinds still to confirm, then searched its own history for 20
-    // calls to find why the plan said classify). A build with no catalogue yet is drafted from the draft's own
-    // guesses, to be catalogued before building.
+    // calls to find why the plan said classify). A build with no catalogue yet, or one with no event type yet, is
+    // drafted from the draft's own guesses, to be catalogued before building (seen in eval case 112: the proposals
+    // refused for the JSON cut said to draft with long_values=whole, the draft was refused for the empty catalogue's
+    // catch-all, and the user was asked to keep every record as Unknown before any event type was catalogued). The
+    // save still waits for the catch-all.
     static void awaitingConfirmation(final Map<String, Object> sourceNotes) {
         final Catalogue catalogue = SourceNotes.catalogue(sourceNotes);
-        if (catalogue == null) {
+        if (catalogue == null || catalogue.eventTypes().isEmpty()) {
             return;
         }
         final long waiting = catalogue.eventTypes().stream().filter(type -> !type.confirmed()).count();

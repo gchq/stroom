@@ -2288,16 +2288,19 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final List<TimelineNoise.Exclusion> decided = new ArrayList<>(TimelineNoise.kept(keptIn));
         List<TimelineNoise.Noise> proposed = TimelineNoise.find(classification.events(), classification.byId(),
                 names, decided, capMs);
+        boolean declined = false;
         if (!proposed.isEmpty() && context.session().isChat() && context.userQuestions().canAsk()) {
             final List<String> picked = askNoise(request, context, proposed);
             if (picked != null) {
                 proposed.forEach(found -> decided.add(found.decided(picked.contains(found.id()))));
                 TimelineNoise.keep(keptIn, decided);
                 proposed = List.of();
+            } else {
+                declined = true;
             }
         }
         return new TimelineNoise.Outcome(proposed, TimelineNoise.apply(classification.events(),
-                classification.byId(), names, decided), TimelineNoise.FILE);
+                classification.byId(), names, decided), TimelineNoise.FILE, declined);
     }
 
     // The noise the user picks to leave out, by id; null if they couldn't be asked or didn't answer.

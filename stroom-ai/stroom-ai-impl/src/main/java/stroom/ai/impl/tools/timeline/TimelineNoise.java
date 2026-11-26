@@ -561,7 +561,9 @@ final class TimelineNoise {
     /// @param proposed The noise found and not decided (listed in the result, not left out).
     /// @param applied  The exclusions applied.
     /// @param file     Where the exclusions are kept.
-    record Outcome(List<Noise> proposed, Applied applied, String file) {
+    /// @param declined True if the user was asked in the chat and declined or closed the form: a call again asks
+    ///                 again.
+    record Outcome(List<Noise> proposed, Applied applied, String file, boolean declined) {
 
         /// Copies the list.
         Outcome {

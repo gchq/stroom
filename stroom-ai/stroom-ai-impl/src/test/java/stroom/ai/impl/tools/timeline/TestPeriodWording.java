@@ -48,7 +48,12 @@ class TestPeriodWording {
         assertThat(PeriodWording.checked(REMOTE, "remote session from 203.0.113.7")).isNull();
         assertThat(PeriodWording.checked(REMOTE, "host01 from 09:00")).isNull();
         assertThat(PeriodWording.checked(REMOTE, "host01 on 2026-11-10")).isNull();
-        assertThat(PeriodWording.checked(REMOTE, "host01 " + "y".repeat(PeriodWording.MAX_CHARS))).isNull();
+        // A line past the limit is shortened at a word, not lost; the key must still be named in what is kept.
+        final String longer = "remote session on host01 via VPN " + "from the branch office ".repeat(6);
+        assertThat(PeriodWording.checked(REMOTE, longer)).hasSizeLessThanOrEqualTo(PeriodWording.MAX_CHARS)
+                .startsWith("remote session on host01 via VPN from the branch office").endsWith("…");
+        assertThat(PeriodWording.checked(REMOTE, "y".repeat(PeriodWording.MAX_CHARS) + " host01")).isNull();
+        assertThat(PeriodWording.SYSTEM).contains("at most " + PeriodWording.MAX_CHARS + " characters");
         assertThat(PeriodWording.checked(REMOTE, "  ")).isNull();
         assertThat(PeriodWording.checked(REMOTE, 42)).isNull();
     }
