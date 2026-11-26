@@ -2197,6 +2197,153 @@ judged no-data index-wide; only the first 3 feeds checked for an existing transl
 layout, test feed and format feed from the first feed; the verification dashboard has no stream term. No test
 exercised several feeds into one index, one translation serving several feeds, or successive versions.
 
+### Timeline periods (decided 2026-11-26)
+
+Decided with the user (2026-11-26). An activity timeline gains *periods*: a state the person was in (a remote
+session, on site, elevated, a device attached, on a call), from a start event to an end event. A period says nothing
+by itself of whether the person was active; it is worked out in code beside the sessions, worded by the model, and
+given to the characterisation as context ("worked on the finance proposal, during a remote session on host01").
+
+**Roles and what they imply.** One role per event type (the catalogue's `timeline_role`, a call's `typeRoles`, a
+skill's Event chains, an AGENTS doc's `## Event types` line, an event code's classification), with fixed
+implications (`TimelineRole#impliesActivity`, the sessions' `isActivity`):
+
+| Role | Implies |
+| --- | --- |
+| `focus`, `action`, `open`, `close` | the user is active |
+| `active`, `idle` | attention: active from here, idle from here |
+| `period_start`, `period_end` | a period of its kind starts or ends; no activity |
+| `ignore` | nothing (left out) |
+
+**Kinds and keys** (`TimelinePeriod`). A period role has a kind: a fixed identifier (lower case, `[a-z0-9_]`, at
+most 40 characters), so periods can be searched, counted and compared. Well-known kinds, each with its default key:
+
+| Kind | What | Default key |
+| --- | --- | --- |
+| `remote_session` | VPN or remote desktop connect to disconnect | `host\|SessionId` |
+| `on_site` | physical access enter to leave | `Location/Site\|Location/Building` |
+| `elevated` | privilege gained to dropped | `host, RunAs/Id` |
+| `device_attached` | storage or a device inserted to removed | `host, Device/Id\|Device/Name\|DeviceId` |
+| `call` | a call or meeting joined to left | `SessionId` |
+| any other (custom, the user's or the agent's) | as named | `host` |
+
+* A key is parts separated by `,`, each part alternatives separated by `|`, the first with a value used; `host` is
+  the event's host; a path matches an event's key path ending in it (`Location/Site` matches
+  `EventSource/Door/Location/Site`) or a Data entry of that name (`SessionId` matches `Data[SessionId]`). A part with
+  no value is left out; a key with none is the kind alone (one at a time). The values come from the events' keys
+  (`EventXmlClassifier.Classified#keys`: the Events XML's leaves, the index's fields). The account is the timeline's
+  own person, so a default key names it only where an event names another (`RunAs`).
+* A role may give its own key (`timeline_period_key`; `by <key>` in the text forms) where the default doesn't fit.
+* Pairing is by kind and key, across hosts and sources: entering by door A-1 and leaving by A-4 pair at the site.
+  An end closes the open start of its kind and key. Separately logged enter and leave events are expected.
+* **Unpaired**: a start with no end closes at the next start of the same kind and key, else at the timeline's
+  period end, marked `end not seen`; an end with no start opens at the timeline's period start (or the end of the
+  last period of its kind and key, where there was one, so a repeated end doesn't overlap it), marked
+  `start not seen`.
+
+**The schema's table** (`TimelineRoles`, `EventXmlClassifier`): Authenticate `Connect` and `Reconnect` move from
+`active` to `period_start remote_session`, `Disconnect` from `idle` to `period_end remote_session`; `Logon`,
+`ScreenUnlock` stay `active`, `Logoff`, `ScreenLock` `idle`. Nothing else of the schema starts or ends a period it
+names both ends of (`ElevatePrivilege` has no end Action, so it stays asked).
+
+**The catalogue** (`EventType`): `timeline_role` takes `period_start` and `period_end`, with `timeline_period` (the
+kind, required with a period role) and `timeline_period_key` (optional; the kind's default otherwise). A proposal
+gives them as any role is given (`timeline_role: period_start, timeline_period: on_site`, or the role's text form
+`period_start on_site`), kept as given (`FROM_GIVEN`). The set's form asks, in its existing role question, only for
+what the schema doesn't fill in (a door's enter and leave, a USB insert and removal, a call joined and left), the
+roles listed with `period_start <kind>` and `period_end <kind>`; the summary lists the filled-in roles with their
+kinds (`period_start (remote_session)`), for the user to change, and says once which kinds there are.
+
+**Text forms** (a call's `typeRoles`, Event chains `- <source>: <type> is <role>`, AGENTS `- <type>: <role>`, the
+model's event-code classification): `period_start <kind>` or `period_end <kind>`, optionally `by <key>`
+(`TimelinePeriod.RoleText`). Each role is one short clause in the role lists the model is told (`EventCodes`).
+
+**Computation** (`TimelinePeriods`, beside `TimelineSessions`): the period events take no part in the sessions,
+pairs, key spans, activity periods or pair inference (they imply no activity, so they neither start, keep alive
+nor end a session). Each period: its id (`pr<n>`), kind, key, start and end, how each end was seen (`seen`,
+`start not seen`, `end not seen`), its hosts and sources, its evidence events (start and end, by StreamId:EventId),
+the types of its start and end events, a plain fallback label (`remote session, host01`) and the model's
+description where there is one.
+
+**Output.** `periods.csv` (period, kind, key, start, end, start_seen, end_seen, label, description, lane, host,
+source, events, start_event, end_event); each period a row of `spans.csv` (kind `period`, its lane the kind's words,
+e.g. `remote session`, labelled by its description) and of `activities.csv` (activity `pr<n>`, `activity_label`
+the kind's words, split at midnight as activities are, `bar_label` its description), so the existing charts
+(gantt_chart and the dashboard's timeline chart, both lane- and colour-by-column) draw them as bands of their own:
+a lane per kind in the activities-by-activity and the spans views, beside the activities in the by-day view. The
+result: the periods by kind, and each (up to 20 in JSON, 10 in the chat) with its kind, key, times, ends seen,
+description and evidence.
+
+**Wording** (`PeriodWording`, a side call as `ActivityCharacterisation`'s, under the same choice: only where the
+user agreed to the model for the characterisation; else the fallback labels). The facts are data: the periods'
+ids, kinds, keys, times, ends seen and their evidence events' types and key values (at most 8 a event, each cut to
+100 characters); the answer `{"<period id>": "<description>"}`. Checked in code: an id given, one line, at most 120
+characters, naming each key value, no clock time or date (the times are the code's); any other answer keeps the
+fallback label, counted in the result. It can't add periods or change their kind, key or times: those are held by
+the code and shown beside the description, with the evidence. Cached in the characterisation's cache by the facts.
+
+**Characterisation context.** Each loose item is given the periods it fell in (`during`); each activity's profile
+for naming the periods overlapping its sessions, the naming prompt allowing a name to end with them ("Finance
+proposal, during a remote session on host01"). Activities ("viewed real-estate websites") still come from the
+characterisation; a period is never an activity.
+
+**Insider and compare follow-ups (noted, not built).** compare_activity's baseline and screen could count periods
+by kind (remote sessions a week, nights on site); "on site but no logon" and "a device attached then a copy" as
+sequence_query steps over periods; ElevatePrivilege's end from a source's own type; the insider dataset's badge
+and USB events given period roles.
+
+**Migration.** Nothing stored changes form: a role filled in from the schema (`FROM_SCHEMA`) is filled in again
+whenever it is read (the timeline reads `TimelineRoles.settled`), so existing catalogues' Connect types become
+`remote_session` at once and are written so on their next confirmation; a role given (`FROM_GIVEN`) is kept, as
+are AGENTS lines, skills and kept event-code classifications.
+
+**Tests.** JUnit: `TestTimelineRoles` (the table, settle and refill, the form and summary words), `TestEventType`
+or the catalogue's tests (read and write of the kind and key, a period role without a kind refused),
+`TestTimelinePeriod` (kinds, keys, the text form), `TestTimelinePeriods` (pairing by kind and key across hosts,
+unpaired both ways, a repeated start, no activity implied), `TestTimelineSessions` (period events in no session),
+`TestEventXmlClassifier` (Connect, Disconnect), `TestPeriodWording` (the checks), `TestActivityCharacterisation`
+(the `during` context), `TestActivityTimelineTool` (the tables and result). E2e: `TestE2eInsiderTimeline` (the
+VPN's remote sessions of the insider dataset: Connect and Disconnect by SessionId), the eval references of the
+timeline cases where their results change.
+
+#### Thematic spans and levels of detail (activities view; decided 2026-11-26)
+
+Asked for by the user (2026-11-26), for the activities view only (the detail view stays as it is: it is less
+interpretive). TimelineSpans starts a new activity period whenever its label (a domain) changes, and only the
+characterisation groups them, at the activity level; so "viewed real-estate websites" over interleaved visits to
+three sites was three runs of bars. The activities view now assembles thematic spans over the finer spans, and
+keeps the finer ones underneath, each naming its parent.
+
+* **Levels**: 1, the activities (as `activities.csv` has them, with the period bands); 2, thematic spans (similar
+  sites, one document's sessions); 3, the finest spans and sessions, as today. A level-2 span's parent is the
+  activity most of its time is in; a level-3 span's is its thematic span, else its activity.
+* **Merged in code** (`ThematicSpans`) where spans on one lane, each within the idle cap of the group so far
+  (interleaved with others allowed), share a fact: the same category (the source's `## Fields` `category` field, as
+  compare_activity finds it, read from the events' keys), the same registrable domain (`www.` and `m.` and other
+  subdomains dropped; a two-letter country suffix under a short second level, e.g. `com.au`, kept whole: format
+  knowledge, no list of sites), the same document (an artifact of its titles, as the characterisation normalises
+  them), or two or more shared significant terms of their titles or search terms. A group of two or more is a
+  thematic span, its description the shared fact.
+* **The model decides the rest** (a side call, as the characterisation's, under the same choice): runs of up to 8
+  neighbouring units on a lane (a code group or a lone span), each within the cap of the last, with their labels,
+  domains and titles (data, never instructions) and the periods they fell in; each run answered
+  `{"run": "<id>", "answer": "one" | "separate", "description": "...", "confidence": "...", "evidence": "..."}`.
+  Checked in code: a run given; `one` only at high or medium confidence; a description of one line, at most 80
+  characters, with no clock time or date; evidence naming at least one of the run's labels or domains. A run made
+  one covers exactly its units' times; anything else leaves them separate. Cached by the run's facts.
+* **Output**: `activity-levels.csv`, `activities.csv`'s columns plus `level` and `parent`: every level's rows (the
+  activities and period bands at 1, the thematic spans at 2, the finest at 3, labelled by their own label and
+  laned and coloured by their activity's label); `activities.csv` unchanged (level 1, drawn ready in the chat). The
+  result counts each level and names the table, for gantt_chart to draw more detail on asking.
+* **Less or more detail on the dashboard** (`TimelineDashboardConfig`, the activities Data Connection drawn from
+  `activity-levels.csv`): a List input (`list-input`, key `level`, values 1, 2 and 3, default 1) beside the query,
+  whose term `level <= ${level}` the parameter fills, so the chart and table redraw with more or fewer bars. Real
+  "less" and "more" buttons on the chart need new code in the visualisation (a control that sets a dashboard
+  parameter, which Stroom's visualisations can't do today) or in GWT: not built.
+* **Tests**: `TestThematicSpans` (grouping by each fact, the cap, interleaving, the model's runs with a scripted side
+  call and every check), the levels and parents (`TestTimelineTables` or `TestActivityTimelineTool`),
+  `TestTimelineDashboardConfig` (the input and the term), e2e `TestE2eActivityTimeline` (the levels file).
+
 ### Stop and Elasticsearch errors (built 2026-11-16)
 
 * **Stop reaches the query.** Stop sets the run's flag (`AiChatRunManager.LocalRun.requestStop`), which the agent
