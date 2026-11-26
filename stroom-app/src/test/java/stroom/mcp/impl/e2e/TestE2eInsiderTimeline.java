@@ -122,19 +122,27 @@ class TestE2eInsiderTimeline extends AbstractInsiderE2eTest {
         dump("activity_timeline, the leaver's week", result);
 
         final List<Map<String, Object>> pairs = (List<Map<String, Object>>) result.get("pairs");
-        // The VPN's sessions: a vendor's pair keyed only by a session id in Data, inferred.
-        assertThat(pairs).anySatisfy(pair -> assertThat(pair).containsEntry("start", "vpn.login")
-                .containsEntry("end", "vpn.logout").containsEntry("by", "Data[SessionId]")
-                .containsEntry("origin", "inferred").containsEntry("unpaired_starts", 0));
+        // The VPN's sessions: its login and logout are an Authenticate Connect and Disconnect, so a remote session's
+        // period by the schema (decided 2026-11-26), never a pair; each seen at both ends.
+        assertThat(pairs).noneSatisfy(pair -> assertThat(pair).containsEntry("start", "vpn.login"));
+        final Map<String, Object> periods = (Map<String, Object>) result.get("periods");
+        assertThat(periods).containsEntry("by_kind", Map.of("remote_session", 3)).containsEntry("end_not_seen", 0)
+                .containsEntry("start_not_seen", 0);
         // A window's focus to its loss, by its handle in Data.
         assertThat(pairs).anySatisfy(pair -> assertThat(pair).containsEntry("start", "focus.in")
                 .containsEntry("end", "focus.out").containsEntry("by", "Data[WindowHandle]"));
         final String folder = "/outputs/timelines/" + InsiderDataset.LEAVER + "/";
         final List<Map<String, String>> spans = rows(read(folder + "spans.csv"));
         final String activities = read(folder + "activities.csv");
-        // The VPN sessions are spans on the gateway's lane: the three of the week (a Friday, two evenings).
-        assertThat(spans).filteredOn(row -> "pair".equals(row.get("kind")) && row.get("lane").startsWith("ns-gw"))
-                .hasSize(3);
+        // The VPN sessions are periods on a lane of their own: the three of the week (a Friday, two evenings).
+        assertThat(spans).filteredOn(row -> "period".equals(row.get("kind")))
+                .hasSize(3).allSatisfy(row -> {
+                    assertThat(row.get("lane")).isEqualTo("remote session");
+                    assertThat(row.get("host")).startsWith("ns-gw");
+                });
+        // And bands beside the activities.
+        assertThat(rows(activities)).filteredOn(row -> row.get("activity").startsWith("pr"))
+                .isNotEmpty().allSatisfy(row -> assertThat(row.get("activity_label")).isEqualTo("remote session"));
         // Focus pairs placed in activities and rolled up with them, by their own ids; each says what happened.
         final List<Map<String, String>> placedFocus = spans.stream()
                 .filter(row -> "pair".equals(row.get("kind")) && row.get("how").contains("focus.in")

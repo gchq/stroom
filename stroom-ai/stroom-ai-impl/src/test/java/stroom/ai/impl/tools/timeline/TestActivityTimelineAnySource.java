@@ -229,6 +229,38 @@ class TestActivityTimelineAnySource {
     }
 
     @Test
+    void aConnectAndDisconnectAreARemoteSessionsPeriodImplyingNoActivityAndWrittenAsItsOwnLane() {
+        week();
+        event("11:00", "Authenticate", "Connect", null, Map.of(), null);
+        event("12:30", "Authenticate", "Disconnect", null, Map.of(), null);
+        // A second connect with no disconnect: closes at the period's end, its end not seen.
+        event("15:00", "Authenticate", "Connect", null, Map.of(), null);
+
+        final Map<String, Object> result = json(mcp(), arguments(Map.of()));
+
+        final Map<String, Object> periods = (Map<String, Object>) result.get("periods");
+        assertThat(periods).containsEntry("count", 2L).containsEntry("by_kind", Map.of("remote_session", 2L))
+                .containsEntry("end_not_seen", 1L).containsEntry("start_not_seen", 0L);
+        final List<Map<String, Object>> listed = (List<Map<String, Object>>) periods.get("list");
+        assertThat(listed.getFirst()).containsEntry("kind", "remote_session").containsEntry("key", "ws-09")
+                .containsEntry("start", "2026-11-10T11:00:00Z").containsEntry("end", "2026-11-10T12:30:00Z")
+                .containsEntry("description", "remote session, ws-09").containsEntry("described_by", "label")
+                .containsEntry("evidence", List.of(STREAM + ":12", STREAM + ":13"));
+        assertThat(listed.get(1)).containsEntry("end", "2026-11-10T18:00:00Z")
+                .containsEntry("end_seen", TimelinePeriods.END_NOT_SEEN);
+        // Its own lane in the spans, never a pair, an activity period or a session.
+        final String spans = files.content(FOLDER + ActivityTimelineTool.SPANS_FILE).orElseThrow();
+        assertThat(spans).contains("pr1,2026-11-10T11:00:00Z,2026-11-10T12:30:00Z,\"remote session, ws-09\","
+                                   + "Authenticate Connect to Authenticate Disconnect,remote session,period");
+        assertThat((List<Map<String, Object>>) result.get("pairs")).extracting(pair -> pair.get("start"))
+                .doesNotContain("Authenticate/Connect");
+        assertThat(files.content(FOLDER + ActivityTimelineTool.PERIODS_FILE).orElseThrow().lines().toList())
+                .hasSize(3).first().isEqualTo(String.join(",", TimelineTables.PERIOD_COLUMNS));
+        assertThat(files.content(FOLDER + ActivityTimelineTool.EVENTS_FILE).orElseThrow())
+                .contains(",period_start,remote_session,ws-09,");
+    }
+
+    @Test
     void theSchemaTakesASourceAsAnIndexsNameOrAnObject() {
         final ToolSchema sources = tool.definition().parameters().properties().get("sources");
 

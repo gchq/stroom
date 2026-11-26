@@ -60,6 +60,11 @@ final class TimelineTables {
     static final List<String> SPAN_COLUMNS = List.of("span", "start", "end", "label", "action", "lane", "kind",
             "activity", "activity_label", "host", "source", "events", "how", "uncertain", "role", "start_event",
             "end_event");
+    /// The columns of `periods.csv`.
+    static final List<String> PERIOD_COLUMNS = List.of("period", "kind", "key", "start", "end", "start_seen",
+            "end_seen", "label", "description", "lane", "host", "source", "events", "start_event", "end_event");
+    /// A period's kind in `spans.csv`.
+    static final String PERIOD_KIND = "period";
     /// The columns of `activities.csv`.
     static final List<String> ACTIVITY_COLUMNS = List.of("activity", "activity_label", "day", "start", "end",
             "active_minutes", "spans", "actions", "lanes", "evidence", "start_event", "end_event", "bar_label");
@@ -191,12 +196,25 @@ final class TimelineTables {
                     event.lane(), TimelineTargets.TARGET, "", "", NullSafe.string(event.host()), event.lane(), "1",
                     TimelineTargets.LANE, "", TimelineTargets.TARGET, "", ""));
         }
+        // Each period a span of its own, on its kind's lane (e.g. `remote session`), labelled by its description.
+        for (final TimelinePeriods.Period period : NullSafe.list(run.periods())) {
+            spanRows.add(List.of(period.id(), iso(period.start()), iso(period.end()), period.shown(),
+                    periodAction(period), period.words(), PERIOD_KIND, "", "", String.join("; ", period.hosts()),
+                    String.join("; ", period.sources()), String.valueOf(period.eventIds().size()), periodHow(period),
+                    periodMark(period), TimelineTargets.ACTOR, NullSafe.string(period.startEvent()),
+                    NullSafe.string(period.endEvent())));
+        }
         final WorkspacePath spansPath = path(folder, ActivityTimelineTool.SPANS_FILE);
         ToolTables.write(workspace, spansPath, SPAN_COLUMNS, spanRows, sourceDoc);
 
-        final List<ActivityRow> rolledUp = characterised == null
+        final List<ActivityRow> rolledUp = new ArrayList<>(characterised == null
                 ? List.of()
-                : rollUp(run.built().spans(), characterised, labels, run.capMs(), run.zone().zone());
+                : rollUp(run.built().spans(), characterised, labels, run.capMs(), run.zone().zone()));
+        if (characterised != null) {
+            // The periods as bands beside the activities, a lane and colour for each kind.
+            rolledUp.addAll(periodRows(NullSafe.list(run.periods()), run.zone().zone()));
+            rolledUp.sort(Comparator.comparingLong(ActivityRow::start).thenComparing(ActivityRow::activity));
+        }
         final List<List<String>> activityRows = new ArrayList<>();
         for (final ActivityRow row : rolledUp) {
             // A minor part's marker ends as it starts (gantt_chart and the dashboard's timeline chart both draw such
@@ -212,6 +230,17 @@ final class TimelineTables {
         }
         final WorkspacePath activitiesPath = path(folder, ActivityTimelineTool.ACTIVITIES_FILE);
         ToolTables.write(workspace, activitiesPath, ACTIVITY_COLUMNS, activityRows, sourceDoc);
+
+        final List<List<String>> periodRows = new ArrayList<>();
+        for (final TimelinePeriods.Period period : NullSafe.list(run.periods())) {
+            periodRows.add(List.of(period.id(), period.kind(), period.keyText(), iso(period.start()),
+                    iso(period.end()), period.startSeen(), period.endSeen(), period.label(),
+                    NullSafe.string(period.description()), period.words(), String.join("; ", period.hosts()),
+                    String.join("; ", period.sources()), String.join(" ", period.refs()),
+                    NullSafe.string(period.startEvent()), NullSafe.string(period.endEvent())));
+        }
+        final WorkspacePath periodsPath = path(folder, ActivityTimelineTool.PERIODS_FILE);
+        ToolTables.write(workspace, periodsPath, PERIOD_COLUMNS, periodRows, sourceDoc);
 
         WorkspacePath itemsPath = null;
         if (characterised != null) {
@@ -239,8 +268,9 @@ final class TimelineTables {
                     "how", "confidence", "reason"), itemRows, sourceDoc);
         }
         return new Files(sessionsPath, actionsPath, eventsPath, dailyPath, windowsPath, qualityPath, spansPath,
-                activitiesPath, itemsPath, spanRows.size(), activityRows.size(), distinct(spanRows, SPAN_LANE),
-                distinct(activityRows, 2), distinct(activityRows, 1), distinct(spanRows, SPAN_SOURCE));
+                activitiesPath, itemsPath, periodsPath, spanRows.size(), activityRows.size(),
+                distinct(spanRows, SPAN_LANE), distinct(activityRows, 2), distinct(activityRows, 1),
+                distinct(spanRows, SPAN_SOURCE));
     }
 
     /// The activities rolled up from their spans: an activity's spans following each other within the idle cap,
@@ -352,6 +382,56 @@ final class TimelineTables {
                 : placement.activity();
     }
 
+    /// The periods as rows of the activities' table: a band each, split at midnight in the user's zone as the
+    /// activities are, its lane and colour its kind's words, its bar labelled by its description.
+    ///
+    /// @param periods The periods.
+    /// @param zone    The user's zone.
+    /// @return Their rows, in time order.
+    static List<ActivityRow> periodRows(final List<TimelinePeriods.Period> periods, final ZoneId zone) {
+        final List<ActivityRow> rows = new ArrayList<>();
+        for (final TimelinePeriods.Period period : periods) {
+            long from = period.start();
+            do {
+                final LocalDate day = Instant.ofEpochMilli(from).atZone(zone).toLocalDate();
+                final long midnight = day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli();
+                final long to = Math.min(period.end(), midnight);
+                rows.add(new ActivityRow(period.id(), period.words(), day, from, to, to - from,
+                        List.of(period.id()), Map.of(), period.hosts(), period.refs(), from == period.start()
+                        ? period.startEvent()
+                        : null, to == period.end()
+                        ? period.endEvent()
+                        : null, period.shown(), false));
+                from = to;
+            } while (from < period.end());
+        }
+        return rows;
+    }
+
+    // What happened in a period, e.g. `Authenticate/Connect to Authenticate/Disconnect`.
+    private static String periodAction(final TimelinePeriods.Period period) {
+        return NullSafe.nonBlankStringElse(period.startEvent(), "(start not seen)") + " to "
+               + NullSafe.nonBlankStringElse(period.endEvent(), "(end not seen)");
+    }
+
+    private static String periodHow(final TimelinePeriods.Period period) {
+        return "period " + period.kind() + (period.key().isEmpty()
+                ? ""
+                : " by " + period.keyText());
+    }
+
+    // Why a period's start or end is uncertain, or empty.
+    private static String periodMark(final TimelinePeriods.Period period) {
+        final List<String> marks = new ArrayList<>();
+        if (!TimelinePeriods.SEEN.equals(period.startSeen())) {
+            marks.add(period.startSeen());
+        }
+        if (!TimelinePeriods.SEEN.equals(period.endSeen())) {
+            marks.add(period.endSeen());
+        }
+        return String.join("; ", marks);
+    }
+
     private static int distinct(final List<List<String>> rows, final int column) {
         final Set<String> values = new LinkedHashSet<>();
         rows.forEach(row -> values.add(row.get(column)));
@@ -433,6 +513,7 @@ final class TimelineTables {
     /// @param spans          The detail spans.
     /// @param activities     The activities rolled up.
     /// @param items          The characterisation's items, or null.
+    /// @param periods        The periods.
     /// @param spanRows       The detail spans' rows.
     /// @param activityRows   The activities' rows.
     /// @param hostLanes      The detail spans' lanes (hosts, else sources).
@@ -448,6 +529,7 @@ final class TimelineTables {
                  WorkspacePath spans,
                  WorkspacePath activities,
                  WorkspacePath items,
+                 WorkspacePath periods,
                  int spanRows,
                  int activityRows,
                  int hostLanes,

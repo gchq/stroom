@@ -58,6 +58,8 @@ import java.util.Map;
 ///                       ([TimelineLaneTitles#hosts]); null for lanes by source.
 /// @param reading        How the sources were read: the scans, each event's own pipeline's fields, the Events XML
 ///                       paths read, the `## Event types` lines to offer.
+/// @param periods        The periods ([TimelinePeriods]), in time order, each with the model's description where it
+///                       has one.
 record TimelineRun(String entity,
                    Period period,
                    long capMs,
@@ -79,7 +81,8 @@ record TimelineRun(String entity,
                    List<EventRange> ranges,
                    TimelineTargets.Asked targets,
                    String hostLanes,
-                   TimelineReading reading) {
+                   TimelineReading reading,
+                   List<TimelinePeriods.Period> periods) {
 
     /// @param source A source, by its place.
     /// @return Its name.

@@ -433,7 +433,69 @@ class TestActivityCharacterisation {
         assertThat(ActivityCharacterisation.terms("The Q3 numbers, please: 2026")).containsExactly("numbers");
     }
 
+    @Test
+    void thePeriodsAreTheItemsAndNamesContextAndAreWordedInTheSameChoiceTheirChecksKept() {
+        final TimelinePeriods.Period remote = period(1, "09:00", "11:00", List.of("host01"));
+        final TimelinePeriods.Period site = period(2, "13:00", "17:00", List.of("Canberra"));
+        final Settings settings = new Settings(500, 50, 1_000, false, 1, ZoneOffset.UTC, List.of(), Map.of(), null,
+                List.of(remote, site));
+
+        final Characterised result = characterise(settings, model(question -> {
+            if (question.system().equals(PeriodWording.SYSTEM)) {
+                // The second names no key value: refused, so it keeps its label.
+                return "{\"pr1\": \"remote session on host01 via VPN\", \"pr2\": \"in the office\", "
+                       + "\"pr9\": \"invented\"}";
+            }
+            if (question.system().startsWith(ActivityCharacterisation.NAMING)) {
+                return answers(new ModelSideCalls.Question(ActivityCharacterisation.NAMING, question.user(), 1));
+            }
+            return answers(question);
+        }));
+
+        // The items in a period are given it, as context.
+        final ModelSideCalls.Question items = asked.stream()
+                .filter(question -> question.system().equals(ActivityCharacterisation.SYSTEM))
+                .findFirst().orElseThrow();
+        assertThat(items.user()).contains("\"during\":[\"remote session, host01\"]");
+        // The names are asked with each activity's periods, and told how to use them.
+        final ModelSideCalls.Question naming = asked.stream()
+                .filter(question -> question.system().startsWith(ActivityCharacterisation.NAMING))
+                .findFirst().orElseThrow();
+        assertThat(naming.system()).endsWith(ActivityCharacterisation.NAMING_DURING);
+        assertThat(naming.user()).contains("\"during\":[\"remote session, host01\"");
+        // Worded, checked: an id not given is never a period, an answer without its key keeps the label.
+        assertThat(result.worded().descriptions()).containsOnly(Map.entry("pr1", "remote session on host01 via VPN"));
+        assertThat(result.worded().rejected()).isEqualTo(1);
+        assertThat(result.worded().applied(List.of(remote, site))).extracting(TimelinePeriods.Period::shown)
+                .containsExactly("remote session on host01 via VPN", "on site, Canberra");
+    }
+
+    @Test
+    void thePeriodsArentWordedWhenTheUserDeclinesTheModel() {
+        final Settings settings = new Settings(500, 50, 1_000, false, 1, ZoneOffset.UTC, List.of(), Map.of(),
+                (items, budget, calls) -> ActivityCharacterisation.Choice.NONE,
+                List.of(period(1, "09:00", "11:00", List.of("host01"))));
+
+        final Characterised result = characterise(settings, model(this::answers));
+
+        assertThat(asked).noneMatch(question -> question.system().equals(PeriodWording.SYSTEM));
+        assertThat(result.worded().descriptions()).isEmpty();
+    }
+
     // ------------------------------------------------------------------------------------------------
+
+    private static TimelinePeriods.Period period(final int number,
+                                                 final String from,
+                                                 final String to,
+                                                 final List<String> key) {
+        final String kind = number == 1
+                ? "remote_session"
+                : "on_site";
+        return new TimelinePeriods.Period(number, kind, key, at(from), at(to), TimelinePeriods.SEEN,
+                TimelinePeriods.SEEN, List.of("ws-01"), List.of("VPN"), List.of("e1", "e2"), List.of("7:1", "7:2"),
+                "Authenticate Connect", "Authenticate Disconnect", Map.of("EventSource/Client/IPAddress",
+                "203.0.113.7"), null);
+    }
 
     // The stubbed model's answers: by item, as a model might give them.
     private String answers(final ModelSideCalls.Question question) {

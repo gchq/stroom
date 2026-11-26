@@ -254,6 +254,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     static final String QUALITY_FILE = "quality.csv";
     static final String ACTIVITIES_FILE = "activities.csv";
     static final String ITEMS_FILE = "items.csv";
+    /// The periods' table.
+    static final String PERIODS_FILE = "periods.csv";
     static final String OVERVIEW_FILE = "overview.csv";
     static final String CORRECTIONS_FILE = "corrections.json";
     static final String CACHE_FILE = "characterisation-cache.json";
@@ -725,11 +727,18 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         }
         final Built built = TimelineSpans.build(timeline, classification.events(), classification.byId(), pairs,
                 keys, options);
+        // The periods, beside the sessions: a state the person was in, implying no activity.
+        final List<TimelinePeriods.Period> periods = TimelinePeriods.build(classification.events(),
+                classification.byId(), period.fromMs(), period.toMs(), options);
 
         final String folder = FOLDER + safe(entity) + "/";
         final Characterised characterised = characterising
-                ? characterise(request, context, workspace, config, built, byId, names, folder, zone)
+                ? characterise(request, context, workspace, config, built, byId, names, folder, zone, periods)
                 : null;
+        // The model's descriptions of the periods, where it was asked; their plain labels otherwise.
+        final List<TimelinePeriods.Period> described = characterised == null
+                ? periods
+                : characterised.worded().applied(periods);
         final Learned learned = TimelineLearning.learn(learnedEntries(request, sources, inferred, plan),
                 inferred.borderline().stream()
                         .map(candidate -> new NamedCandidate(sources.get(candidate.source()).doc().getName(),
@@ -747,7 +756,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                         field));
         final TimelineRun run = new TimelineRun(entity, period, capMs, sources, plan.notes(), plan.chosen(), read,
                 classification, xml.summary(), timeline, built, byId, inferred.borderline(), characterised, view,
-                lanes, learned, zone, ranges, targets, hostLanes, reading);
+                lanes, learned, zone, ranges, targets, hostLanes, reading, described);
         final Files files = TimelineTables.write(workspace, folder, run);
         // So its tables can be written elsewhere later, as they are (propose_timeline_dashboard).
         TimelineSnapshot.of(run, now).write(workspace, folder);
@@ -2712,7 +2721,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                                        final Map<String, Event> byId,
                                        final List<String> names,
                                        final String folder,
-                                       final ToolTimeZone zone) {
+                                       final ToolTimeZone zone,
+                                       final List<TimelinePeriods.Period> periods) {
         final WorkspacePath correctionsPath = WorkspacePath.parse(folder + CORRECTIONS_FILE);
         final WorkspacePath cachePath = WorkspacePath.parse(folder + CACHE_FILE);
         final List<Map<String, Object>> corrections = new ArrayList<>(readList(workspace, correctionsPath));
@@ -2729,7 +2739,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                 Math.max(1, config.getCharacteriseExcerptChars()), Math.max(1, config.getCharacteriseBatchItems()),
                 Math.max(0, config.getCharacteriseMaxItems()), runAnyway, Math.max(1, config.getCharacteriseWorkers()),
                 zone.zone(), corrections, readCache(workspace, cachePath),
-                (items, budget, calls) -> askClassify(request, context, items, budget, calls, runAnyway));
+                (items, budget, calls) -> askClassify(request, context, items, budget, calls, runAnyway), periods);
         final Characterised characterised = ActivityCharacterisation.characterise(timeline, byId, names,
                 built.spans().stream().filter(TimelineSpans.Span::isItem).toList(), settings, context.sideCalls());
         if (!characterised.cache().isEmpty()) {

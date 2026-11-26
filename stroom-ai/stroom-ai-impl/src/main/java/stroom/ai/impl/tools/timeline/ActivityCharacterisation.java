@@ -136,6 +136,12 @@ final class ActivityCharacterisation {
             Each artifact's share is of the activity's active time: name the activity for what most of its time went on.
 
             Answer with a JSON object and nothing else: {"<activity id>": "<a short name, at most six words>"}.""";
+    /// What a naming call is told of the periods an activity fell in, where any did.
+    static final String NAMING_DURING = """
+
+            An activity's during names the periods it fell in (a remote session, on site, a call): where one says \
+            something of the work, the name may end with it, e.g. "Finance proposal, during a remote session on \
+            host01". A period is never an activity of its own.""";
 
     private static final Pattern TOKEN = Pattern.compile("[\\p{L}\\p{N}]+");
     private static final Pattern EXTENSION = Pattern.compile("\\.[A-Za-z0-9]{1,5}$");
@@ -261,16 +267,25 @@ final class ActivityCharacterisation {
         // model is called at all, for the loose items and the activities' names; seen in chat 197, characterised
         // unasked over a year, 8,361 items, about 168 model calls).
         final List<String> notes = new ArrayList<>();
-        final Choice choice = choose(loose, activities, settings, sideCalls);
+        final Choice choice = choose(loose, activities, during(placements, sessions, settings.periods()), settings,
+                sideCalls);
         final Classified classified = classify(loose, activities, settings, choice, sideCalls, notes);
         itemPlacements.putAll(classified.placements());
         activities.addAll(classified.newActivities());
 
         // Names, from the evidence, by the model where there is one and the user agreed.
-        final Map<String, String> labels = labels(activities, classified.cache(), choice == Choice.NONE
-                                                                                   || choice == Choice.UNASKED
-                ? ModelSideCalls.NONE
-                : sideCalls, notes);
+        final boolean modelAsked = choice != Choice.NONE && choice != Choice.UNASKED;
+        final Map<String, Placement> placedSoFar = new LinkedHashMap<>(placements);
+        placedSoFar.putAll(classified.placements());
+        final Map<String, String> labels = labels(activities, during(placedSoFar, sessions, settings.periods()),
+                classified.cache(), modelAsked
+                        ? sideCalls
+                        : ModelSideCalls.NONE, notes);
+        // The periods worded by the model, under the same choice; their plain labels otherwise.
+        final PeriodWording.Worded worded = PeriodWording.word(settings.periods(), modelAsked
+                ? sideCalls
+                : ModelSideCalls.NONE, classified.cache());
+        NullSafe.consume(worded.note(), notes::add);
         if ((choice == Choice.NONE || choice == Choice.UNASKED) && !activities.isEmpty()) {
             notes.add("The activities are labelled from their evidence (their main artifacts and terms), not named "
                       + "by the model, as " + (choice == Choice.NONE
@@ -302,7 +317,7 @@ final class ActivityCharacterisation {
         return new Characterised(withTotals, sessionPlacements, textPlacements, items, classified.cache(),
                 classified.asked(), classified.calls(), classified.skipped(), Leiden.modularity(ids, links,
                 clusters), notes, new Counts(items.size() - loose.size(), classified.reused(), classified.failed(),
-                classified.failedWhy()));
+                classified.failedWhy()), worded);
     }
 
     // ------------------------------------------------------------------------------------------------
@@ -640,6 +655,7 @@ final class ActivityCharacterisation {
     // whose answers aren't cached, or activities whose names aren't. All where there is no model, or nothing to send.
     private static Choice choose(final List<Item> loose,
                                  final List<Activity> activities,
+                                 final Map<String, List<String>> during,
                                  final Settings settings,
                                  final ModelSideCalls sideCalls) {
         if (!sideCalls.available()) {
@@ -649,11 +665,15 @@ final class ActivityCharacterisation {
         final int toSend = (int) loose.stream()
                 .filter(item -> !settings.cache().containsKey(cacheKey(item, profileHash)))
                 .count();
-        final boolean naming = !activities.isEmpty() && !settings.cache().containsKey(labelsKey(activities));
-        if (toSend == 0 && !naming) {
+        final boolean naming = !activities.isEmpty() && !settings.cache().containsKey(labelsKey(activities,
+                during));
+        final boolean wording = !PeriodWording.cached(settings.periods(), settings.cache());
+        if (toSend == 0 && !naming && !wording) {
             return Choice.ALL;
         }
         final int calls = callsFor(toSend, settings.batchItems()) + (naming
+                ? 1
+                : 0) + (wording
                 ? 1
                 : 0);
         return settings.ask().choose(toSend, settings.maxItems(), calls);
@@ -898,8 +918,8 @@ final class ActivityCharacterisation {
                               final ModelSideCalls sideCalls,
                               final Map<String, Map<String, Object>> answers) {
         try {
-            final Answer answer = sideCalls.ask(new Question(SYSTEM, userText(items, profiles, settings.zone()),
-                    ANSWER_TOKENS));
+            final Answer answer = sideCalls.ask(new Question(SYSTEM, userText(items, profiles, settings.zone(),
+                    settings.periods()), ANSWER_TOKENS));
             final Map<String, Map<String, Object>> read = answered(answer.text(), items, activityIds);
             if (read == null) {
                 return "the model's answer couldn't be read as the list asked for";
@@ -1063,7 +1083,10 @@ final class ActivityCharacterisation {
                 : text;
     }
 
-    private static String userText(final List<Item> batch, final String profiles, final ZoneId zone) {
+    private static String userText(final List<Item> batch,
+                                   final String profiles,
+                                   final ZoneId zone,
+                                   final List<TimelinePeriods.Period> periods) {
         final List<Map<String, Object>> items = new ArrayList<>();
         for (final Item item : batch) {
             final Map<String, Object> map = new LinkedHashMap<>();
@@ -1074,6 +1097,13 @@ final class ActivityCharacterisation {
             map.put("text", item.text());
             map.put("session", sessionSummary(item.session()));
             map.put("session_before", sessionSummary(item.previous()));
+            // The periods it fell in (a remote session, on site), as context: never an activity.
+            final List<String> during = TimelinePeriods.during(periods, item.time(), item.time()).stream()
+                    .map(TimelinePeriods.Period::label)
+                    .toList();
+            if (!during.isEmpty()) {
+                map.put("during", during);
+            }
             items.add(map);
         }
         return "Activities:\n" + profiles + "\n\nItems:\n" + JsonUtil.writeValueAsString(items, false);
@@ -1128,13 +1158,14 @@ final class ActivityCharacterisation {
     // The activities' names from the model, cached with the answers; none (the names from the evidence kept)
     // without a model, or if its answer can't be read.
     private static Map<String, String> labels(final List<Activity> activities,
+                                              final Map<String, List<String>> during,
                                               final Map<String, Map<String, Object>> cache,
                                               final ModelSideCalls sideCalls,
                                               final List<String> notes) {
         if (activities.isEmpty()) {
             return Map.of();
         }
-        final String key = labelsKey(activities);
+        final String key = labelsKey(activities, during);
         final Map<String, String> labels = new LinkedHashMap<>();
         final Map<String, Object> cached = cache.get(key);
         if (cached != null) {
@@ -1147,7 +1178,9 @@ final class ActivityCharacterisation {
         final Set<String> ids = new LinkedHashSet<>();
         activities.forEach(activity -> ids.add(activity.id()));
         try {
-            final String text = sideCalls.ask(new Question(NAMING, profilesJson(activities), 1_000)).text();
+            final String text = sideCalls.ask(new Question(during.isEmpty()
+                    ? NAMING
+                    : NAMING + NAMING_DURING, namingJson(activities, during), 1_000)).text();
             final int start = text.indexOf('{');
             final int end = text.lastIndexOf('}');
             final Map<?, ?> read = start < 0 || end <= start
@@ -1179,7 +1212,64 @@ final class ActivityCharacterisation {
     /// @param activities The activities.
     /// @return The cache key of their labels, for [Characterised#cache()] to keep the model's names.
     static String labelsKey(final List<Activity> activities) {
-        return "labels:" + hash(profilesJson(activities));
+        return labelsKey(activities, Map.of());
+    }
+
+    // The cache key of the labels named with the periods the activities fell in.
+    private static String labelsKey(final List<Activity> activities, final Map<String, List<String>> during) {
+        return "labels:" + hash(namingJson(activities, during));
+    }
+
+    // The activities as a naming call is given them: their profiles, each with the periods it fell in where any
+    // did (none, the profiles as before).
+    private static String namingJson(final List<Activity> activities, final Map<String, List<String>> during) {
+        if (during.isEmpty()) {
+            return profilesJson(activities);
+        }
+        final List<Map<String, Object>> profiles = JsonUtil.readValue(profilesJson(activities), List.class);
+        for (final Map<String, Object> profile : profiles) {
+            final List<String> periods = during.get(String.valueOf(profile.get("id")));
+            if (periods != null) {
+                profile.put("during", periods);
+            }
+        }
+        return JsonUtil.writeValueAsString(profiles, false);
+    }
+
+    // Each activity's periods, by its id: the labels of those its sessions (as placed so far) fell in, the longest
+    // overlap first; an activity in none left out.
+    private static Map<String, List<String>> during(final Map<String, Placement> placed,
+                                                    final List<Session> sessions,
+                                                    final List<TimelinePeriods.Period> periods) {
+        final Map<String, List<String>> out = new LinkedHashMap<>();
+        if (periods.isEmpty()) {
+            return out;
+        }
+        final Map<String, List<Session>> byActivity = new LinkedHashMap<>();
+        for (final Session session : sessions) {
+            final Placement placement = placed.get(session.id());
+            if (placement != null && placement.activity() != null) {
+                byActivity.computeIfAbsent(placement.activity(), a -> new ArrayList<>()).add(session);
+            }
+        }
+        for (final Map.Entry<String, List<Session>> activity : byActivity.entrySet()) {
+            final Map<String, Long> overlap = new LinkedHashMap<>();
+            for (final Session session : activity.getValue()) {
+                for (final TimelinePeriods.Period period : TimelinePeriods.during(periods, session.start(),
+                        session.end())) {
+                    overlap.merge(period.label(), Math.min(session.end(), period.end())
+                                                  - Math.max(session.start(), period.start()), Long::sum);
+                }
+            }
+            if (!overlap.isEmpty()) {
+                out.put(activity.getKey(), overlap.entrySet().stream()
+                        .sorted((a, b) -> Long.compare(b.getValue(), a.getValue()))
+                        .limit(3)
+                        .map(Map.Entry::getKey)
+                        .toList());
+            }
+        }
+        return out;
     }
 
     // ------------------------------------------------------------------------------------------------
@@ -1311,6 +1401,8 @@ final class ActivityCharacterisation {
     /// @param corrections  The analyst's corrections, in the order given.
     /// @param cache        Answers from earlier runs, by item text and profiles.
     /// @param ask          Asks the user before any item goes to the model: all, up to the budget, or none.
+    /// @param periods      The timeline's periods ([TimelinePeriods]): context for the items and the names, and
+    ///                     worded by the model where it is asked.
     record Settings(int excerptChars,
                     int batchItems,
                     int maxItems,
@@ -1319,7 +1411,8 @@ final class ActivityCharacterisation {
                     ZoneId zone,
                     List<Map<String, Object>> corrections,
                     Map<String, Map<String, Object>> cache,
-                    Ask ask) {
+                    Ask ask,
+                    List<TimelinePeriods.Period> periods) {
 
         /// Copies the collections; a null `ask` chooses all where `beyondBudget`, else up to the budget.
         Settings {
@@ -1335,6 +1428,33 @@ final class ActivityCharacterisation {
             cache = cache == null
                     ? Map.of()
                     : Map.copyOf(cache);
+            periods = periods == null
+                    ? List.of()
+                    : List.copyOf(periods);
+        }
+
+        /// Settings with no periods.
+        ///
+        /// @param excerptChars The most characters of an item's text sent.
+        /// @param batchItems   The items a call.
+        /// @param maxItems     The most items asked about in a run without the user agreeing.
+        /// @param beyondBudget True if the user agreed to classify past the budget.
+        /// @param workers      The batches run at once.
+        /// @param zone         The user's zone.
+        /// @param corrections  The analyst's corrections.
+        /// @param cache        Answers from earlier runs.
+        /// @param ask          Asks the user before any item goes to the model.
+        Settings(final int excerptChars,
+                 final int batchItems,
+                 final int maxItems,
+                 final boolean beyondBudget,
+                 final int workers,
+                 final ZoneId zone,
+                 final List<Map<String, Object>> corrections,
+                 final Map<String, Map<String, Object>> cache,
+                 final Ask ask) {
+            this(excerptChars, batchItems, maxItems, beyondBudget, workers, zone, corrections, cache, ask,
+                    List.of());
         }
     }
 
@@ -1457,6 +1577,8 @@ final class ActivityCharacterisation {
     /// @param modularity How clear-cut the graph's clusters are.
     /// @param notes      What the result says of how it was done.
     /// @param counts     How the items were placed, and how many calls failed.
+    /// @param worded     The periods' descriptions by the model, checked ([PeriodWording]); none where it wasn't
+    ///                   asked.
     record Characterised(List<Activity> activities,
                          Map<String, Placement> sessions,
                          Map<String, Placement> items,
@@ -1467,13 +1589,45 @@ final class ActivityCharacterisation {
                          int skipped,
                          double modularity,
                          List<String> notes,
-                         Counts counts) {
+                         Counts counts,
+                         PeriodWording.Worded worded) {
 
-        /// A null `counts` is none.
+        /// A null `counts` is none, as is a null `worded`.
         Characterised {
             counts = counts == null
                     ? new Counts(0, 0, 0, null)
                     : counts;
+            worded = worded == null
+                    ? new PeriodWording.Worded(Map.of(), 0, 0, null)
+                    : worded;
+        }
+
+        /// A characterisation with no periods worded.
+        ///
+        /// @param activities The activities, with their totals.
+        /// @param sessions   Where each placed session went.
+        /// @param items      Where each placed item went.
+        /// @param allItems   Every item.
+        /// @param cache      The answers to keep for a re-run.
+        /// @param asked      The items asked about.
+        /// @param calls      The model calls made for them.
+        /// @param skipped    The items left unclassified.
+        /// @param modularity How clear-cut the graph's clusters are.
+        /// @param notes      What the result says of how it was done.
+        /// @param counts     How the items were placed.
+        Characterised(final List<Activity> activities,
+                      final Map<String, Placement> sessions,
+                      final Map<String, Placement> items,
+                      final List<Item> allItems,
+                      final Map<String, Map<String, Object>> cache,
+                      final int asked,
+                      final int calls,
+                      final int skipped,
+                      final double modularity,
+                      final List<String> notes,
+                      final Counts counts) {
+            this(activities, sessions, items, allItems, cache, asked, calls, skipped, modularity, notes, counts,
+                    null);
         }
     }
 

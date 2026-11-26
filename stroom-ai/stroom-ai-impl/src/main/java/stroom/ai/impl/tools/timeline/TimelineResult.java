@@ -57,6 +57,10 @@ final class TimelineResult {
 
     /// The sessions and activities shown in the result; the rest are in the tables.
     static final int SHOWN = 15;
+    /// The most periods the JSON result lists.
+    static final int PERIODS_LISTED = 20;
+    /// The most periods the chat's result lists.
+    static final int PERIODS_SHOWN = 10;
     /// The most bars gantt_chart draws in one chart (as `GanttCharts` keeps).
     static final int MAX_BARS = 200;
     /// The most lanes gantt_chart draws in one chart (as `GanttCharts` keeps).
@@ -182,6 +186,9 @@ final class TimelineResult {
             map.put("activity_periods_show", TimelineSpans.ACTIVITY_MEANS);
         }
         map.put("pairs", pairs(run));
+        if (!NullSafe.list(run.periods()).isEmpty()) {
+            map.put("periods", periods(run, files));
+        }
         if (!run.borderline().isEmpty()) {
             map.put("borderline_pairs", run.borderline().stream().map(candidate -> borderline(run, candidate))
                     .toList());
@@ -210,6 +217,7 @@ final class TimelineResult {
         if (files.items() != null) {
             written.put("items", files.items().toString());
         }
+        written.put("periods", files.periods().toString());
         map.put("files", written);
         map.put("gantt", Map.of("path", files.sessions().toString(), "start", "start", "end", "end", "label",
                 "process", "lane", "host"));
@@ -827,6 +835,7 @@ final class TimelineResult {
                     .append(pair.get("alternating_percent")).append("% alternating, ").append(pair.get("source"))
                     .append("): ").append(pair.get("spans")).append(" span(s)\n");
         }
+        sb.append(periodsText(run, files));
         if (!run.borderline().isEmpty()) {
             sb.append("Borderline pairs (not used; ask the user whether any is a real pair):\n");
             run.learned().borderline().forEach(line -> sb.append("- ").append(line).append('\n'));
@@ -915,6 +924,85 @@ final class TimelineResult {
                 .append(ActivityTimelineTool.DERIVED).append(' ').append(ActivityTimelineTool.CAVEAT);
         if (readyChart != null) {
             sb.append("\n\nThe chart of ").append(ready.get("path")).append(":\n").append(readyChart);
+        }
+        return sb.toString();
+    }
+
+    /// The periods as the JSON result gives them: how many of each kind, how many with an end not seen, and each
+    /// (up to [#PERIODS_LISTED]) with its facts, its description (the model's, checked, else its label) and its
+    /// evidence.
+    ///
+    /// @param run   The run.
+    /// @param files Its tables.
+    /// @return The periods' part of the result.
+    static Map<String, Object> periods(final TimelineRun run, final Files files) {
+        final List<TimelinePeriods.Period> periods = NullSafe.list(run.periods());
+        final Map<String, Object> map = new LinkedHashMap<>();
+        map.put("count", periods.size());
+        map.put("by_kind", byKind(periods));
+        map.put("start_not_seen", (int) periods.stream()
+                .filter(period -> !TimelinePeriods.SEEN.equals(period.startSeen())).count());
+        map.put("end_not_seen", (int) periods.stream()
+                .filter(period -> !TimelinePeriods.SEEN.equals(period.endSeen())).count());
+        map.put("means", TimelinePeriods.MEANS);
+        final List<Map<String, Object>> listed = new ArrayList<>();
+        for (final TimelinePeriods.Period period : periods.stream().limit(PERIODS_LISTED).toList()) {
+            final Map<String, Object> one = new LinkedHashMap<>();
+            one.put("id", period.id());
+            one.put("kind", period.kind());
+            one.put("key", period.keyText());
+            one.put("start", TimelineTables.iso(period.start()));
+            one.put("end", TimelineTables.iso(period.end()));
+            one.put("start_seen", period.startSeen());
+            one.put("end_seen", period.endSeen());
+            one.put("description", period.shown());
+            one.put("described_by", period.description() == null
+                    ? "label"
+                    : "model");
+            one.put("evidence", period.refs());
+            listed.add(one);
+        }
+        map.put("list", listed);
+        if (run.characterised() != null && run.characterised().worded().rejected() > 0) {
+            // Answers that failed the checks: those periods keep their labels.
+            map.put("descriptions_rejected", run.characterised().worded().rejected());
+        }
+        map.put("table", files.periods().toString());
+        return map;
+    }
+
+    // The periods' count by kind, in order of first seen.
+    private static Map<String, Integer> byKind(final List<TimelinePeriods.Period> periods) {
+        final Map<String, Integer> out = new LinkedHashMap<>();
+        periods.forEach(period -> out.merge(period.kind(), 1, Integer::sum));
+        return out;
+    }
+
+    // The chat's lines of the periods: by kind, then each up to [#PERIODS_SHOWN].
+    private static String periodsText(final TimelineRun run, final Files files) {
+        final List<TimelinePeriods.Period> periods = NullSafe.list(run.periods());
+        if (periods.isEmpty()) {
+            return "";
+        }
+        final ZoneId zone = run.zone().zone();
+        final List<String> kinds = new ArrayList<>();
+        byKind(periods).forEach((kind, count) -> kinds.add(kind + " " + count));
+        final StringBuilder sb = new StringBuilder("\nPeriods (").append(TimelinePeriods.MEANS).append("): ")
+                .append(String.join(", ", kinds)).append("; in ").append(files.periods()).append(".\n");
+        for (final TimelinePeriods.Period period : periods.stream().limit(PERIODS_SHOWN).toList()) {
+            sb.append("- ").append(period.id()).append(" ").append(period.shown()).append(", ")
+                    .append(local(period.start(), zone)).append(" to ").append(local(period.end(), zone));
+            if (period.uncertain()) {
+                sb.append(" (").append(TimelinePeriods.SEEN.equals(period.startSeen())
+                        ? period.endSeen()
+                        : TimelinePeriods.SEEN.equals(period.endSeen())
+                                ? period.startSeen()
+                                : period.startSeen() + ", " + period.endSeen()).append(")");
+            }
+            sb.append("; evidence ").append(String.join(", ", period.refs())).append('\n');
+        }
+        if (periods.size() > PERIODS_SHOWN) {
+            sb.append("- and ").append(periods.size() - PERIODS_SHOWN).append(" more\n");
         }
         return sb.toString();
     }
