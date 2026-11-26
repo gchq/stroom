@@ -411,21 +411,21 @@ class TestDataProcessorTaskHandler {
     }
 
     @Test
-    void sourceThatIsMissingIsAFault() {
+    void sourceThatIsMissingIsAFaultThatIsNotCounted() {
         Mockito.when(store.openSource(META_ID)).thenReturn(null);
 
         handler.exec(task(0), false);
 
-        verifyOnlyStatus(TaskStatus.RETRY, NODE, true, "Unable to open source stream 20");
+        verifyOnlyStatus(TaskStatus.RETRY, NODE, false, "Unable to open source stream 20");
     }
 
     @Test
-    void sourceThatCannotBeOpenedIsAFault() {
+    void sourceThatCannotBeOpenedIsAFaultThatIsNotCounted() {
         Mockito.when(store.openSource(META_ID)).thenThrow(new RuntimeException("Expected"));
 
         handler.exec(task(0), true);
 
-        verifyOnlyStatus(TaskStatus.RETRY, NODE, true,
+        verifyOnlyStatus(TaskStatus.RETRY, NODE, false,
                 "Unable to open source stream 20 - RuntimeException 'Expected'");
     }
 
@@ -465,7 +465,7 @@ class TestDataProcessorTaskHandler {
 
         handler.exec(task(0), false);
 
-        verifyOnlyStatus(TaskStatus.RETRY, NODE, true, "Unable to open source stream 20");
+        verifyOnlyStatus(TaskStatus.RETRY, NODE, false, "Unable to open source stream 20");
     }
 
     @Test
@@ -751,7 +751,7 @@ class TestDataProcessorTaskHandler {
 
         handler.exec(task(0).copy().runCount(3).build(), false);
 
-        verifyOnlyStatus(TaskStatus.RETRY, NODE, true,
+        verifyOnlyStatus(TaskStatus.RETRY, NODE, false,
                 "Unable to open source stream 20 - RuntimeException 'Expected'");
         // The run has the run count of the run before, which this node may still have.
         Mockito.verify(processorTaskHeartbeat, Mockito.never()).registerEnding(Mockito.any());
@@ -861,8 +861,9 @@ class TestDataProcessorTaskHandler {
         verifyOnlyStatus(TaskStatus.COMMITTING, NODE, false, null);
         Mockito.verify(listener).held(Mockito.argThat(task -> TaskStatus.COMMITTING.equals(task.getStatus())));
         Mockito.verify(listener, Mockito.never()).ended(Mockito.any(), Mockito.any());
-        // It finished well, so output it makes out of date is cleared, and its own is kept.
-        Mockito.verify(processorTaskOutputCleaner).clearSuperseded(Mockito.any(), Mockito.any(), Mockito.any());
+        // Its own output is kept, and so is what it makes out of date, until it is complete.
+        Mockito.verify(processorTaskOutputCleaner, Mockito.never())
+                .clearSuperseded(Mockito.any(), Mockito.any(), Mockito.any());
         verifyNoOutputDeleted();
     }
 
@@ -1050,7 +1051,6 @@ class TestDataProcessorTaskHandler {
         handler.exec(task(0), true);
 
         verifyOnlyStatus(TaskStatus.COMMITTING, NODE, false, null);
-        Mockito.verify(processorTaskOutputCleaner).clearSuperseded(Mockito.any(), Mockito.any(), Mockito.any());
     }
 
     private ProcessorTask task(final int faultCount) {

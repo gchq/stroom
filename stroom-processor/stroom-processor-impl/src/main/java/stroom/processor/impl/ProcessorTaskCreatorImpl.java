@@ -444,8 +444,12 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         if (checkTrackerTaskCount(filter, tracker, processorConfig)) {
             final int currentCreatedTasks = processorTaskDao.countTasksForFilter(filter.getId(), TaskStatus.CREATED);
             budgetUsed.add(currentCreatedTasks);
+            // Tasks waiting to be tried again count against this filter, so that one whose tasks keep failing, e.g.
+            // as its run as user is disabled, doesn't go on making more. They don't use up other filters' budget.
+            final int retryTasks = processorTaskDao.countTasksForFilter(filter.getId(), TaskStatus.RETRY);
+            final int waitingTasks = currentCreatedTasks + retryTasks;
 
-            int maxTasks = remaining - currentCreatedTasks;
+            int maxTasks = remaining - waitingTasks;
 
             // See if we are allowing tasks to be created eagerly beyond the process limit.
             if (!processorConfig.isCreateTasksBeyondProcessLimit()) {
@@ -460,7 +464,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                                               ", profileName=" +
                                                               filter.getProfileName() +
                                                               ")");
-                        maxTasks = Math.min(remaining, profileResult.maxClusterThreads()) - currentCreatedTasks;
+                        maxTasks = Math.min(remaining, profileResult.maxClusterThreads()) - waitingTasks;
                         usedProfile = true;
 
                     } catch (final RuntimeException e) {
@@ -475,14 +479,15 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 // We didn't find a profile to limit tasks so see if the filter has a direct limit.
                 if (!usedProfile && filter.isProcessingTaskCountBounded()) {
                     // The max concurrent tasks for this filter is bounded, so only create tasks up to that limit
-                    maxTasks = Math.min(remaining, filter.getMaxProcessingTasks()) - currentCreatedTasks;
+                    maxTasks = Math.min(remaining, filter.getMaxProcessingTasks()) - waitingTasks;
                 }
             }
 
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace("doCreateTasksForFilter() - maxTasks: {}, remaining: {}, currentCreatedTasks: {}, " +
+                             "retryTasks: {}, " +
                              "isProcessingTaskCountBounded: {}, isCreateTasksBeyondProcessLimit: {}",
-                        maxTasks, remaining, currentCreatedTasks, filter.isProcessingTaskCountBounded(),
+                        maxTasks, remaining, currentCreatedTasks, retryTasks, filter.isProcessingTaskCountBounded(),
                         processorConfig.isCreateTasksBeyondProcessLimit());
             }
 

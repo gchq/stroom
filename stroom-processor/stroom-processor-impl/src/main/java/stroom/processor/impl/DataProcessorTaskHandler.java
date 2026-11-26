@@ -239,7 +239,9 @@ public class DataProcessorTaskHandler {
             cause = e;
         }
         if (source == null) {
-            throw new Fault("Unable to open source stream " + task.getMetaId(), cause, true);
+            // Not counted, as it is almost always because of where the stream is stored, e.g. a volume or S3 store
+            // that can't be reached, so every task would hit it. A stream that has been deleted is completed instead.
+            throw new Fault("Unable to open source stream " + task.getMetaId(), cause, false);
         }
         return source;
     }
@@ -451,8 +453,15 @@ public class DataProcessorTaskHandler {
 
         } else if (run.fault != null && !isSourceDeleted(run)) {
             final Fault fault = run.fault;
-            LOGGER.error(() -> LogUtil.message("Processor task {} hit a fault - {}",
-                    run.task.getId(), fault.getReason()), fault);
+            if (fault.counted) {
+                LOGGER.error(() -> LogUtil.message("Processor task {} hit a fault - {}",
+                        run.task.getId(), fault.getReason()), fault);
+            } else {
+                // Every task may hit one of these, e.g. while a volume can't be reached, so they are only told of
+                // once an hour, by the reaper, rather than for each task.
+                LOGGER.debug(() -> LogUtil.message("Processor task {} hit a fault that isn't counted - {}",
+                        run.task.getId(), fault.getReason()), fault);
+            }
             final boolean abort = fault.counted && run.task.getFaultCount() + 1
                                                    >= processorConfigProvider.get().getMaxTaskFaults();
             return new Ending(
@@ -520,6 +529,10 @@ public class DataProcessorTaskHandler {
                                 if (!ending.countFault()) {
                                     processorTaskOutputCleaner.delete(run.output.getOutputIds());
                                 }
+                            }
+                            case COMMITTING -> {
+                                // The output it makes out of date is kept until it is complete, as it may yet be put
+                                // back.
                             }
                             default -> {
                                 if (run.processor != null) {

@@ -25,6 +25,7 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorFilterTrackerStatus;
+import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
@@ -184,6 +185,48 @@ class TestProcessorTaskCreatorImpl {
         taskCreator.exec();
 
         verify(processorFilterService).fetch(due.getId());
+    }
+
+    @Test
+    void filterWhoseTasksAreWaitingToBeTriedAgainMakesNoMore() {
+        final QueryData queryData = Mockito.mock(QueryData.class);
+        final ProcessorFilter failing = givenFilter(1, null).copy().queryData(queryData).build();
+        filtersById.put(failing.getId(), failing);
+        givenFilters(failing);
+        when(processorTaskDao.countTasksForFilter(eq(failing.getId()), eq(TaskStatus.RETRY)))
+                .thenReturn(processorConfig.getTasksToCreate());
+
+        taskCreator.exec();
+
+        // It is passed over before what it would make tasks for is looked at.
+        verify(queryData, never()).getDataSource();
+    }
+
+    @Test
+    void filterWithSomeTasksWaitingToBeTriedAgainStillMakesMore() {
+        final QueryData queryData = Mockito.mock(QueryData.class);
+        final ProcessorFilter filter = givenFilter(1, null).copy().queryData(queryData).build();
+        filtersById.put(filter.getId(), filter);
+        givenFilters(filter);
+        when(processorTaskDao.countTasksForFilter(eq(filter.getId()), eq(TaskStatus.RETRY)))
+                .thenReturn(processorConfig.getTasksToCreate() - 1);
+
+        taskCreator.exec();
+
+        verify(queryData, Mockito.atLeastOnce()).getDataSource();
+    }
+
+    @Test
+    void tasksWaitingToBeTriedAgainDoNotUseUpTheBudgetOfOtherFilters() {
+        final ProcessorFilter failing = givenFilter(1, PROFILE);
+        final ProcessorFilter other = givenFilter(2, PROFILE);
+        givenFilters(failing, other);
+        when(processorTaskDao.countTasksForFilter(eq(failing.getId()), eq(TaskStatus.RETRY)))
+                .thenReturn(processorConfig.getTasksToCreate());
+
+        taskCreator.exec();
+
+        verify(processorFilterService).fetch(other.getId());
     }
 
     @Test

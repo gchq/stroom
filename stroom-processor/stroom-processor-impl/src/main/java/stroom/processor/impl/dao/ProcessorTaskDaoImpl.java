@@ -66,6 +66,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
+import stroom.util.string.StringUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -1613,10 +1614,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     private String truncateReason(final String reason) {
-        final int maxLength = PROCESSOR_TASK.REASON.getDataType().length();
-        return reason != null && reason.length() > maxLength
-                ? reason.substring(0, maxLength)
-                : reason;
+        // Half of a character that takes two chars can't be stored, so one is never split.
+        return StringUtil.truncate(reason, PROCESSOR_TASK.REASON.getDataType().length());
     }
 
     private Optional<ProcessorTask> fetch(final ProcessorTask processorTask) {

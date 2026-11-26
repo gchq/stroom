@@ -35,9 +35,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TestHeldProcessorTaskServiceImpl {
 
     private final ProcessorTaskDao processorTaskDao = Mockito.mock(ProcessorTaskDao.class);
+    private final ProcessorTaskOutputCleaner processorTaskOutputCleaner =
+            Mockito.mock(ProcessorTaskOutputCleaner.class);
     private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
     private final HeldProcessorTaskServiceImpl service =
-            new HeldProcessorTaskServiceImpl(processorTaskDao, securityContext);
+            new HeldProcessorTaskServiceImpl(processorTaskDao, processorTaskOutputCleaner, securityContext);
 
     @Test
     void processingUserCanUseEveryCall() {
@@ -53,6 +55,35 @@ class TestHeldProcessorTaskServiceImpl {
         assertThat(service.putBack(1L, 2, "Lost")).isTrue();
         assertThat(service.getStates(List.of(1L))).containsExactly(Map.entry(1L, state));
         assertThat(service.findHeld(olderThan, 0, 10)).containsExactly(state);
+    }
+
+    @Test
+    void completeTaskClearsWhatItHasMadeOutOfDate() {
+        Mockito.when(securityContext.isProcessingUser()).thenReturn(true);
+        Mockito.when(processorTaskDao.completeHeld(1L, 2)).thenReturn(true);
+
+        assertThat(service.completeHeld(1L, 2)).isTrue();
+
+        Mockito.verify(processorTaskOutputCleaner).clearSuperseded(1L);
+    }
+
+    @Test
+    void taskThatIsNotCompletedClearsNothing() {
+        Mockito.when(securityContext.isProcessingUser()).thenReturn(true);
+        Mockito.when(processorTaskDao.completeHeld(1L, 2)).thenReturn(false);
+
+        assertThat(service.completeHeld(1L, 2)).isFalse();
+
+        Mockito.verifyNoInteractions(processorTaskOutputCleaner);
+    }
+
+    @Test
+    void taskIsCompleteEvenIfWhatItHasMadeOutOfDateCannotBeCleared() {
+        Mockito.when(securityContext.isProcessingUser()).thenReturn(true);
+        Mockito.when(processorTaskDao.completeHeld(1L, 2)).thenReturn(true);
+        Mockito.doThrow(new RuntimeException("Expected")).when(processorTaskOutputCleaner).clearSuperseded(1L);
+
+        assertThat(service.completeHeld(1L, 2)).isTrue();
     }
 
     @Test

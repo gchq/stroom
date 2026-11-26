@@ -421,4 +421,21 @@ class TestLogUtil {
                 .addCase(10, "[X1, X2, X3, X4, X5]")
                 .build();
     }
+
+    @Test
+    void truncate() {
+        assertThat(LogUtil.truncate(null, 3)).isNull();
+        assertThat(LogUtil.truncate("ab", 3)).isEqualTo("ab");
+        // Nothing is cut off, so there is no '...'.
+        assertThat(LogUtil.truncate("abc", 3)).isEqualTo("abc");
+        assertThat(LogUtil.truncate("abcd", 3)).isEqualTo("abc...");
+        assertThat(LogUtil.truncate("ab" + Character.toString(0x1F600), 3)).isEqualTo("ab...");
+    }
+
+    @Test
+    void truncateUnless() {
+        assertThat(LogUtil.truncateUnless("abc", 3, false)).isEqualTo("abc");
+        assertThat(LogUtil.truncateUnless("abcd", 3, false)).isEqualTo("abc...");
+        assertThat(LogUtil.truncateUnless("abcd", 3, true)).isEqualTo("abcd");
+    }
 }

@@ -21,6 +21,7 @@ import stroom.processor.api.ProcessorTaskState;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 
 import jakarta.inject.Inject;
@@ -36,12 +37,15 @@ class HeldProcessorTaskServiceImpl implements HeldProcessorTaskService {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HeldProcessorTaskServiceImpl.class);
 
     private final ProcessorTaskDao processorTaskDao;
+    private final ProcessorTaskOutputCleaner processorTaskOutputCleaner;
     private final SecurityContext securityContext;
 
     @Inject
     HeldProcessorTaskServiceImpl(final ProcessorTaskDao processorTaskDao,
+                                 final ProcessorTaskOutputCleaner processorTaskOutputCleaner,
                                  final SecurityContext securityContext) {
         this.processorTaskDao = processorTaskDao;
+        this.processorTaskOutputCleaner = processorTaskOutputCleaner;
         this.securityContext = securityContext;
     }
 
@@ -50,6 +54,15 @@ class HeldProcessorTaskServiceImpl implements HeldProcessorTaskService {
         checkProcessingUser();
         final boolean completed = processorTaskDao.completeHeld(taskId, runCount);
         LOGGER.debug("completeHeld() - task {}, run {}, completed {}", taskId, runCount, completed);
+        if (completed) {
+            // It is complete whether or not this can be done, so a failure is only logged.
+            try {
+                processorTaskOutputCleaner.clearSuperseded(taskId);
+            } catch (final RuntimeException e) {
+                LOGGER.error(() -> LogUtil.message("Unable to clear the output that processor task {} has made out "
+                                                   + "of date - {}", taskId, LogUtil.exceptionMessage(e)), e);
+            }
+        }
         return completed;
     }
 
