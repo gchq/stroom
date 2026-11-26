@@ -268,6 +268,8 @@ final class EvalScore {
                         : "") + " under " + data.get("at"));
             }
         }
+        // Values placed in their own element and not repeated as Data (a query text in Query/Raw, say).
+        final boolean repeated = scoreNotRepeatedAsData(expected, read);
         final boolean typeIdsHeld = scoreTypeIds(expected, read);
         final boolean described = scoreDescriptions(expected, read);
         final boolean fewUnknown = scoreUnknown(expected, read);
@@ -275,7 +277,56 @@ final class EvalScore {
         stage1 = counted == records1 && !validity.isEmpty() && validEvents == validity.size()
                  && missingTypes.isEmpty() && missingPaths.isEmpty() && !valuesMissing && !heldWrongly
                  && forbidden.isEmpty() && !misplaced && textsAbsent.isEmpty() && textsWrong.isEmpty()
-                 && typeIdsHeld && described && fewUnknown && typedHeld;
+                 && typeIdsHeld && described && fewUnknown && typedHeld && !repeated;
+    }
+
+    // expected.not_repeated_as_data: paths (from the event, alternatives a|b, * any one element) whose value, where
+    // an event has one, none of that event's Data Values equals (seen in the tester's chat, 2026-11-26: a search's
+    // query text placed in Query/Raw and kept as Data too). A Data Value holding it among more text (a held JSON
+    // text kept whole) doesn't repeat it. Whether any event repeats one.
+    private boolean scoreNotRepeatedAsData(final Map<String, Object> expected, final List<Element> read) {
+        boolean repeated = false;
+        for (final String path : strings(expected.get("not_repeated_as_data"))) {
+            final Set<String> names = new TreeSet<>();
+            int events = 0;
+            for (final Element event : read) {
+                final Set<String> placed = new LinkedHashSet<>();
+                for (final String alternative : path.split("\\|")) {
+                    for (final Element node : find(event, alternative)) {
+                        final String text = directText(node).strip();
+                        if (!text.isEmpty()) {
+                            placed.add(text);
+                        }
+                    }
+                }
+                final List<String> repeating = dataRepeating(event, placed);
+                if (!repeating.isEmpty()) {
+                    events++;
+                    names.addAll(repeating);
+                }
+            }
+            if (events > 0) {
+                repeated = true;
+                problems.add(events + " event(s) repeat " + path + "'s value as Data " + names);
+            }
+        }
+        return repeated;
+    }
+
+    // The Names of an event's Data elements whose Value is one of the texts.
+    private static List<String> dataRepeating(final Element event, final Set<String> texts) {
+        final List<String> names = new ArrayList<>();
+        if (texts.isEmpty()) {
+            return names;
+        }
+        final NodeList all = event.getElementsByTagNameNS("*", DATA);
+        for (int i = 0; i < all.getLength(); i++) {
+            final Element data = (Element) all.item(i);
+            if (texts.contains(data.getAttribute("Value").strip())) {
+                names.add(data.getAttribute("Name"));
+            }
+        }
+        return names;
     }
 
     // expected.typed and expected.data_share_at_most: what the events hold in the schema's own elements rather than
@@ -708,6 +759,11 @@ final class EvalScore {
     /// - `dropped`: each event type named is dropped.
     /// - `event_types_at_least`: the catalogue has at least so many event types that aren't dropped (one that grew
     ///   from a promoted build's, say).
+    /// - `drop_rules`: the catalogue's drop rules (event types with `drop: true`): `count`, exactly so many (one rule
+    ///   for what the user drops, not one per logger, say); `plain_label: true`, each labelled plainly, not
+    ///   Verb-Object, as a drop rule writes no event (seen in the tester's chat, 2026-11-26: Drop-OperationalLogs).
+    ///   Whether a drop rule reads what processing reads (a field outside a cut held JSON field, or the long values
+    ///   kept whole) shows in the Events, a case's `records` and `values` and `forbidden_values`, not here.
     ///
     /// @param evalCase  The case.
     /// @param catalogue The build's source notes, as their JSON block reads, or null for none.
@@ -790,11 +846,36 @@ final class EvalScore {
                                                                                          + "expected at least "
                                                                                          + least);
         }
+        scoreDropRules(maps(expected.get("drop_rules")), types);
         for (final String named : strings(expected.get("dropped"))) {
             final Map<String, Object> type = typeNamed(types, named);
             catalogueCheck(named + " dropped", type != null && Boolean.TRUE.equals(type.get("drop")), type == null
                     ? "no event type " + named + " in the catalogue"
                     : typeIdOf(type) + " is not dropped");
+        }
+    }
+
+    // drop_rules: how many drop rules there are, and that each is labelled plainly, not Verb-Object.
+    private void scoreDropRules(final Map<String, Object> expected, final List<Map<String, Object>> types) {
+        if (expected.isEmpty()) {
+            return;
+        }
+        final List<String> drops = types.stream()
+                .filter(type -> Boolean.TRUE.equals(type.get("drop")))
+                .map(EvalScore::typeIdOf)
+                .toList();
+        if (expected.get("count") instanceof final Number count) {
+            catalogueCheck(count + " drop rule(s)", drops.size() == count.intValue(), "the catalogue has "
+                                                                                     + drops.size() + " drop "
+                                                                                     + "rule(s) " + drops
+                                                                                     + ", expected " + count);
+        }
+        if (Boolean.TRUE.equals(expected.get("plain_label"))) {
+            final List<String> verbObject = drops.stream()
+                    .filter(label -> VERB_OBJECT_ID.matcher(label).matches())
+                    .toList();
+            catalogueCheck("drop rules labelled plainly", verbObject.isEmpty(), "drop rules labelled Verb-Object, "
+                                                                                + "not plainly: " + verbObject);
         }
     }
 
@@ -1037,9 +1118,10 @@ final class EvalScore {
     /// Scores the forms the user was shown in the build against the case's `expected.forms`: `asked`, each a form
     /// that must have been shown (its `message`, a regular expression found in the form's message), where an
     /// `answer` is given answered with a value starting with it, and where `at_most` is given shown no more times than
-    /// that (a form asked again and again is a loop); `not_asked`, each a regular expression no form's message may
-    /// hold, or a `message` and an `offering`, a regular expression none of such a form's options may match (a kind
-    /// field form offering a time field, say).
+    /// that (a form asked again and again is a loop), and where `required: false` is given it may not have been shown
+    /// at all (a catch-all form, shown only while records are left uncatalogued); `not_asked`, each a regular
+    /// expression no form's message may hold, or a `message` and an `offering`, a regular expression none of such a
+    /// form's options may match (a kind field form offering a time field, say).
     ///
     /// @param evalCase The case.
     /// @param forms    The forms shown, in order: each its `message`, the `content` it was answered with and the
@@ -1055,7 +1137,9 @@ final class EvalScore {
                     .toList();
             final boolean answered = answer == null || shown.stream().anyMatch(form -> maps(form.get("content"))
                     .values().stream().anyMatch(value -> String.valueOf(value).startsWith(answer)));
-            check("form " + message + " asked", !shown.isEmpty() && answered, shown.isEmpty()
+            // required: false, a form that may not be shown at all (its at_most still holds where it is).
+            final boolean mayBeUnshown = Boolean.FALSE.equals(asked.get("required")) && shown.isEmpty();
+            check("form " + message + " asked", mayBeUnshown || (!shown.isEmpty() && answered), shown.isEmpty()
                     ? "no form asked '" + message + "'"
                     : "the form '" + message + "' wasn't answered '" + answer + "…': " + shown.stream()
                             .map(form -> form.get("content"))
@@ -1185,6 +1269,32 @@ final class EvalScore {
     /// @return Whether the Events hold what the case expects.
     boolean stage1() {
         return stage1;
+    }
+
+    /// Scores the names the build's kept mapping gives its `events` rules against the case's `expected.rule_names`:
+    /// `forbidden`, regular expressions no rule's name may match (found anywhere in it), e.g. `_\d+$` for a way of
+    /// an event type named by a number (seen in the tester's chat, 2026-11-26: searchquery_2 for a search's QA console
+    /// way, rather than a name saying what tells it apart).
+    ///
+    /// @param evalCase The case.
+    /// @param names    The rules' names, in the mapping's order; null when the build keeps no mapping.
+    void scoreRuleNames(final Map<String, Object> evalCase, final List<String> names) {
+        final Map<String, Object> expected = maps(maps(evalCase.get("expected")).get("rule_names"));
+        if (expected.isEmpty()) {
+            return;
+        }
+        if (names == null) {
+            problems.add("rule names: the build keeps no mapping to read them from");
+            return;
+        }
+        notes.add("rule names: " + names);
+        for (final String forbidden : strings(expected.get("forbidden"))) {
+            final Pattern pattern = Pattern.compile(forbidden);
+            final List<String> matching = names.stream().filter(name -> pattern.matcher(name).find()).toList();
+            if (!matching.isEmpty()) {
+                problems.add("rules named " + matching + ", matching " + forbidden + ", which none should");
+            }
+        }
     }
 
     /// The raw streams a build's raw-stream checks are scored on (the records passed over, each raw stream's Events

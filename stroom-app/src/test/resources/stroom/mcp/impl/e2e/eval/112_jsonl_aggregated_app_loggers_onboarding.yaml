@@ -1,0 +1,160 @@
+name: A platform's loggers in one feed, its Tomcat logging dropped (JSON lines, the source type held in a JSON string's appender_ref)
+template: Event Data (JSON)
+capabilities: [aggregated_feeds, source_types, held_values, event_types, drops, long_values]
+# A tester's onboarding chat (2026-11-26), its records modelled by aggregated/app-loggers/app-loggers-generator.py: a
+# log shipper's JSON lines over seven streams (a week), each record's `event` a JSON string holding the platform's own
+# record, whose `appender_ref` is the source type (SECURITY, ALERT, APPLICATION, CATALINA, ACCESS). Each appender is
+# in only some streams, and the newest stream's first 40 lines are SECURITY's and CATALINA's only, so a survey of its
+# head finds two source types of five. SecurityEventLogger's logons and logoffs (eventType), 'DSM Alerts' alerts, and
+# SearchAuditLogger's searches, whose `original` is JSON text again, its `details` JSON text holding the search's
+# `type` ('search' or 'QA search') and `query_text`. Tomcat's loggers (org.apache.*) write to CATALINA and ACCESS, and
+# to APPLICATION beside the searches: the operational logging the user drops, so no appender tells it apart and the
+# drop is by logger_name, inside the held event. Tomcat's errors and the kiosk accounts' failed logons carry stack
+# traces past the JSONParser's stringTruncateLength, cutting the held event there unless the user keeps long values
+# whole; a drop rule on logger_name then misses the long Tomcat records, or, negated, drops the long logons.
+# The traps (the tester's chat): source types found from the newest stream's head alone; a drop rule on the appender
+# (the source type field) or on the cut held event; a drop rule named Verb-Object; the query text placed in
+# Query/Raw and repeated as Data; the search type's second way named search_query_2; the catch-all asked again and
+# again. The tester first asked, while the source type form was open, "how many streams have you surveyed to
+# determine the source types?": the agent harness answers forms as they come and can't send a message over one, so
+# that turn isn't played.
+request: >
+  Onboard our DSM platform's application logs: they are in Stroom already, in our feed, nothing to upload. The log
+  shipper sends one JSON object a line; the platform's own record is a JSON string in the event field, and its
+  appender_ref says which appender (log) it was written to. Put every appender in one group called "Platform", but
+  drop the Tomcat operational logging: we don't want those records translated. Index the group's events.
+user_knows: >
+  appender_ref, inside the JSON string in the event field, says which appender (source type) a record came from:
+  SECURITY, ALERT, APPLICATION, CATALINA and ACCESS, all five in one group called Platform. Not every stream has every
+  appender. logger_name says which logger wrote a record. The Tomcat operational logging is every record of a logger
+  whose name starts org.apache. (the catalina, coyote and access log valve loggers): it goes to CATALINA and ACCESS,
+  and to APPLICATION too, beside the SearchAuditLogger's searches, which are kept. Drop the Tomcat records with one
+  drop rule; every other record is translated, the long ones too. SecurityEventLogger's eventType says what happened
+  (Login, Logout), userid who, outcome whether it worked. DSM Alerts raises alerts (alert_id, severity). A search's
+  details say its type (search, or QA search from the QA console: the same kind of event) and its query_text.
+  @timestamp is when the event happened. String values longer than Stroom's JSON parser keeps (stack traces past
+  10,000 characters): keep them whole, not cut. The system is the DSM platform.
+expected:
+  # SecurityEventLogger's 113 records, the alerts' 77 and the searches' 66; Tomcat's 164 dropped. The count exact and
+  # no Tomcat logger among the events: no security record dropped in their place.
+  records: 256
+  event_types: [Authenticate, Alert, Search]
+  paths: [EventTime/TimeCreated, EventDetail/TypeId]
+  unknown_at_most: 0
+  forbidden_types: [Unknown]
+  values:
+    # The kiosk accounts' failed logons, each event longer than the parser keeps: kept, not dropped by a rule
+    # that can't read their cut held event.
+    EventSource/User/Id: [kiosk01, kiosk02, kiosk03]
+  forbidden_values:
+    EventSource/Generator: [org.apache.catalina.core.StandardWrapperValve, org.apache.catalina.startup.Catalina,
+                            org.apache.coyote.http11.Http11Processor, org.apache.catalina.valves.AccessLogValve]
+  forbidden_texts: [Server startup in, Error parsing HTTP request header, Servlet.service() for servlet]
+  type_ids: {min_distinct: 4}
+  # The query text placed in Search/Query/Raw, and no Data of a search repeating it.
+  typed:
+    - select: {action: Search}
+      paths: [Search/Query/Raw]
+  not_repeated_as_data: [EventDetail/Search/Query/Raw]
+  # The search type's ways named for what tells them apart, never by a number.
+  rule_names:
+    forbidden: ['_\d+$']
+  catalogue:
+    catch_all_confirmed: true
+    no_overlaps: true
+    no_condition_on_source_type_field: true
+    # One drop rule for Tomcat's records, labelled plainly (not Verb-Object).
+    drop_rules: {count: 1, plain_label: true}
+  forms:
+    asked:
+      # The catch-all put to the user at most once (the tester's run looped), if at all: none is shown with no
+      # record left uncatalogued.
+      - {message: "[Uu]ncatalogued", at_most: 1, required: false}
+  source_types:
+    field: event>appender_ref
+    group:
+      name: Platform
+      values: [SECURITY, ALERT, APPLICATION, CATALINA, ACCESS]
+    passed_over: 0
+streams: {resource: aggregated/app-loggers/app-loggers.json}
+reference:
+  # The user keeps long values whole: the parser's limit raised, so the drop rule reads every record's logger.
+  long_values: whole
+  source_types:
+    field: event>appender_ref
+    patterns: exact
+    system_name: DSM platform
+    group: Platform
+    source_types: [SECURITY, ALERT, APPLICATION, CATALINA, ACCESS]
+  catalogue:
+    drops: [Tomcat operational logging]
+  mapping:
+    input: json
+    json_layout: lines
+    json_fields: [event, event.original, event.original.details]
+    ignored_fields: [event, event.@timestamp, event.thread_name, event.level, event.appender_ref, event.original,
+                     event.original.details, event.original.client, event.original.session]
+    drop_when:
+      - {reason: Tomcat operational logging, when: [{field: event.logger_name, matches: '^org\.apache\.'}]}
+    common:
+      - {path: EventTime/TimeCreated, field: '@timestamp', time_format: "yyyy-MM-dd'T'HH:mm:ss.SSSX"}
+      - {path: EventSource/System/Name, value: DSM platform}
+      - {path: EventSource/System/Environment, value: Eval}
+      - {path: EventSource/Generator, field: event.logger_name}
+      - {path: EventSource/Device/HostName, field: host}
+      - {path: EventDetail/Description, field: event.message}
+    events:
+      - name: logon
+        when: [{field: event.logger_name, equals: SecurityEventLogger}, {field: event.eventType, equals: Login}]
+        fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logon}
+          - {path: EventDetail/Authenticate/Data, data_name: logger_name, field: event.logger_name}
+          - {path: EventSource/User/Id, field: event.userid}
+          - {path: EventSource/Client/IPAddress, field: event.src_ip}
+          - {path: EventDetail/Authenticate/Data, data_name: eventType, field: event.eventType}
+          - {path: EventDetail/Authenticate/Action, value: Logon}
+          - {path: EventDetail/Authenticate/User/Id, field: event.userid}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: event.outcome,
+             map: {success: 'true', failure: 'false'}}
+      - name: logoff
+        when: [{field: event.logger_name, equals: SecurityEventLogger}, {field: event.eventType, equals: Logout}]
+        fields:
+          - {path: EventDetail/TypeId, value: Authenticate-Logoff}
+          - {path: EventDetail/Authenticate/Data, data_name: logger_name, field: event.logger_name}
+          - {path: EventSource/User/Id, field: event.userid}
+          - {path: EventSource/Client/IPAddress, field: event.src_ip}
+          - {path: EventDetail/Authenticate/Data, data_name: eventType, field: event.eventType}
+          - {path: EventDetail/Authenticate/Action, value: Logoff}
+          - {path: EventDetail/Authenticate/User/Id, field: event.userid}
+          - {path: EventDetail/Authenticate/Outcome/Success, field: event.outcome,
+             map: {success: 'true', failure: 'false'}}
+      - name: alert
+        when: [{field: event.logger_name, equals: DSM Alerts}]
+        fields:
+          - {path: EventDetail/TypeId, value: Raise-Alert}
+          - {path: EventDetail/Alert/Data, data_name: logger_name, field: event.logger_name}
+          - {path: EventDetail/Alert/Type, value: Other}
+          - {path: EventDetail/Alert/Severity, field: event.severity, map: {low: Minor, medium: Major, high: Critical}}
+          - {path: EventDetail/Alert/Subject, field: event.alert_id}
+          - {path: EventDetail/Alert/Data, data_name: alert_id, field: event.alert_id}
+      # One event type, a search, recognised two ways: from the console, and from the QA console.
+      - name: search_query
+        when: [{field: event.logger_name, equals: SearchAuditLogger},
+               {field: event.original.details.type, equals: search}]
+        fields:
+          - {path: EventDetail/TypeId, value: Search-Query}
+          - {path: EventDetail/Search/Data, data_name: logger_name, field: event.logger_name}
+          - {path: EventSource/User/Id, field: event.original.user}
+          - {path: EventDetail/Search/Query/Raw, field: event.original.details.query_text}
+          - {path: EventDetail/Search/Data, data_name: type, field: event.original.details.type}
+          - {path: EventDetail/Search/Data, data_name: results, field: event.original.details.results}
+      - name: search_query_qa
+        when: [{field: event.logger_name, equals: SearchAuditLogger},
+               {field: event.original.details.type, equals: QA search}]
+        fields:
+          - {path: EventDetail/TypeId, value: Search-Query}
+          - {path: EventDetail/Search/Data, data_name: logger_name, field: event.logger_name}
+          - {path: EventSource/User/Id, field: event.original.user}
+          - {path: EventDetail/Search/Query/Raw, field: event.original.details.query_text}
+          - {path: EventDetail/Search/Data, data_name: type, field: event.original.details.type}
+          - {path: EventDetail/Search/Data, data_name: results, field: event.original.details.results}

@@ -1587,6 +1587,18 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         final String splitterUuid = dataSplitter
                 ? saveConverter(build, feed, reference, samples)
                 : null;
+        if (reference.get("long_values") != null) {
+            // The user's choice for string values longer than the JSON parser keeps (cut or whole), recorded for the
+            // build as an agent would once the user said it (user test chat 182: "Cut them"): draft with long_values.
+            // Before the catalogue, which reads the records as processing will cut them (case 112's drop rule on a
+            // key of the held event holds on its long records only once they are kept whole).
+            final Map<String, Object> drafted = json("draft_translation_mapping", args("build", build, "stream_ids",
+                    raws, "splitter", splitter, "long_values", reference.get("long_values")));
+            if (drafted.get("long_values") == null) {
+                throw new AssertionError("long values not recorded: " + firstLines(String.valueOf(
+                        drafted.getOrDefault("error", drafted.get("notes")))));
+            }
+        }
         if (CATALOGUES) {
             confirmCatalogue(evalCase, score, build, raws, (Map<String, Object>) reference.get("mapping"));
         }
@@ -1603,16 +1615,6 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         final Map<String, Object> generated = agreed("build_translation_xslt", translation);
         if (!Boolean.TRUE.equals(generated.get("ok"))) {
             throw new AssertionError("mapping problems: " + generated.get("problems"));
-        }
-        if (reference.get("long_values") != null) {
-            // The user's choice for string values longer than the JSON parser keeps (cut or whole), recorded for the
-            // build as an agent would once the user said it (user test chat 182: "Cut them"): draft with long_values.
-            final Map<String, Object> drafted = json("draft_translation_mapping", args("build", build, "stream_ids",
-                    raws, "splitter", splitter, "long_values", reference.get("long_values")));
-            if (drafted.get("long_values") == null) {
-                throw new AssertionError("long values not recorded: " + firstLines(String.valueOf(
-                        drafted.getOrDefault("error", drafted.get("notes")))));
-            }
         }
         if (generated.get("sample_check") instanceof final Map<?, ?> check && check.get("warnings") != null
             && !((List<?>) check.get("warnings")).isEmpty()) {
@@ -1705,6 +1707,7 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                 : group == null && generated.get("saved") != null
                         ? uuidOf(map(generated, "saved"))
                         : null;
+        score.scoreRuleNames(evalCase, ruleNames(xslt));
         final Built built = new Built(List.copyOf(raws), group, pipeline, pipelineName, xslt, indexed);
         if (sourceTypes != null) {
             final Map<String, Object> registry = promotes(evalCase)
@@ -1725,6 +1728,26 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
         }
         score.scoreForms(evalCase, formsAnswered());
         return built;
+    }
+
+    /// The names the mapping an XSLT keeps (in its description) gives its `events` rules, for
+    /// [EvalScore#scoreRuleNames].
+    ///
+    /// @param xslt The XSLT's UUID, or null.
+    /// @return The rules' names, in order; null when there is no XSLT or it keeps no mapping.
+    @SuppressWarnings("unchecked")
+    List<String> ruleNames(final String xslt) {
+        if (xslt == null) {
+            return null;
+        }
+        return KeptMapping.readMapping(readXslt(xslt).getDescription())
+                .map(kept -> kept.payload().get("mapping") instanceof final Map<?, ?> mapping
+                             && mapping.get("events") instanceof final List<?> rules
+                        ? ((List<Map<String, Object>>) rules).stream()
+                                .map(rule -> String.valueOf(rule.get("name")))
+                                .toList()
+                        : List.<String>of())
+                .orElse(null);
     }
 
     // The case's own text converter saved in the build (once): its code as given, the CSV header splitter, or the

@@ -663,6 +663,102 @@ class TestEvalScore {
     }
 
     @Test
+    void theDropRulesAreCountedAndEachMustBeLabelledPlainly() {
+        // The fixture's one drop rule, Process-Heartbeat, is labelled Verb-Object.
+        final EvalScore verbObject = new EvalScore("c");
+        verbObject.scoreCatalogue(expecting(Map.of("catalogue", Map.of("drop_rules", Map.of("count", 1,
+                "plain_label", true)))), catalogue(), check(List.of()));
+        assertThat((List<String>) verbObject.toMap().get("problems"))
+                .containsExactly("drop rules labelled Verb-Object, not plainly: [Process-Heartbeat]");
+
+        final Map<String, Object> plain = catalogue();
+        final List<Map<String, Object>> types = new ArrayList<>((List<Map<String, Object>>) plain.get("event_types"));
+        types.removeLast();
+        types.add(eventType("Tomcat operational logging", "dropped", List.of(
+                Map.of("field", "event.logger_name", "matches", "^org\\.apache\\.")), "user_confirmed", true));
+        plain.put("event_types", types);
+        final EvalScore labelled = new EvalScore("c");
+        labelled.scoreCatalogue(expecting(Map.of("catalogue", Map.of("drop_rules", Map.of("count", 1,
+                "plain_label", true)))), plain, check(List.of()));
+        assertThat((List<String>) labelled.toMap().get("problems")).isEmpty();
+
+        // A rule per logger, where the user asked for one.
+        types.add(eventType("Tomcat access log", "dropped", List.of(
+                Map.of("field", "event.logger_name", "equals", "AccessLogValve")), "user_confirmed", true));
+        final EvalScore two = new EvalScore("c");
+        two.scoreCatalogue(expecting(Map.of("catalogue", Map.of("drop_rules", Map.of("count", 1)))), plain,
+                check(List.of()));
+        assertThat((List<String>) two.toMap().get("problems")).containsExactly(
+                "the catalogue has 2 drop rule(s) [Tomcat operational logging, Tomcat access log], expected 1");
+    }
+
+    @Test
+    void aFormNotRequiredMayBeUnshownButNotAskedTooOften() {
+        final Map<String, Object> evalCase = expecting(Map.of("forms", Map.of("asked", List.of(Map.of(
+                "message", "[Uu]ncatalogued", "at_most", 1, "required", false)))));
+        final Map<String, Object> catchAll = Map.of("message", "Uncatalogued records: 40. Accept the catch-all?");
+
+        final EvalScore unshown = new EvalScore("c");
+        unshown.scoreForms(evalCase, List.of());
+        assertThat((List<String>) unshown.toMap().get("problems")).isEmpty();
+
+        final EvalScore once = new EvalScore("c");
+        once.scoreForms(evalCase, List.of(catchAll));
+        assertThat((List<String>) once.toMap().get("problems")).isEmpty();
+
+        final EvalScore looped = new EvalScore("c");
+        looped.scoreForms(evalCase, List.of(catchAll, catchAll, catchAll));
+        assertThat((List<String>) looped.toMap().get("problems"))
+                .containsExactly("the form '[Uu]ncatalogued' was asked 3 times, at most 1 expected");
+    }
+
+    @Test
+    void aRuleNamedByANumberIsAProblem() {
+        final Map<String, Object> evalCase = expecting(Map.of("rule_names", Map.of("forbidden", List.of("_\\d+$"))));
+
+        final EvalScore described = new EvalScore("c");
+        described.scoreRuleNames(evalCase, List.of("logon", "search_query", "search_query_qa"));
+        assertThat((List<String>) described.toMap().get("problems")).isEmpty();
+
+        final EvalScore numbered = new EvalScore("c");
+        numbered.scoreRuleNames(evalCase, List.of("logon", "searchquery", "searchquery_2"));
+        assertThat((List<String>) numbered.toMap().get("problems"))
+                .containsExactly("rules named [searchquery_2], matching _\\d+$, which none should");
+
+        final EvalScore unkept = new EvalScore("c");
+        unkept.scoreRuleNames(evalCase, null);
+        assertThat((List<String>) unkept.toMap().get("problems"))
+                .containsExactly("rule names: the build keeps no mapping to read them from");
+
+        final EvalScore notExpected = new EvalScore("c");
+        notExpected.scoreRuleNames(expecting(Map.of("records", 1)), List.of("searchquery_2"));
+        assertThat((List<String>) notExpected.toMap().get("problems")).isEmpty();
+    }
+
+    @Test
+    void aValuePlacedInItsElementMustNotBeRepeatedAsData() {
+        final Map<String, Object> evalCase = expecting(Map.of("records", 1,
+                "not_repeated_as_data", List.of("EventDetail/Search/Query/Raw")));
+        final String placed = "<TypeId>Search-Query</TypeId><Search><Query><Raw>vpn users 7</Raw></Query>"
+                              + "<Data Name=\"type\" Value=\"search\"/>"
+                              // A held JSON text kept whole holds the query among more text: not a repeat.
+                              + "<Data Name=\"event.original.details\" Value=\"{&quot;query_text&quot;: "
+                              + "&quot;vpn users 7&quot;}\"/></Search>";
+        final EvalScore once = new EvalScore("c");
+        once.scoreEvents(evalCase, List.of(event("", placed)), List.of(true), null);
+        assertThat((List<String>) once.toMap().get("problems")).isEmpty();
+        assertThat(once.stage1()).isTrue();
+
+        final String repeated = placed.replace("</Search>", "<Data Name=\"query_text\" Value=\"vpn users 7\"/>"
+                                                            + "</Search>");
+        final EvalScore twice = new EvalScore("c");
+        twice.scoreEvents(evalCase, List.of(event("", repeated)), List.of(true), null);
+        assertThat((List<String>) twice.toMap().get("problems"))
+                .containsExactly("1 event(s) repeat EventDetail/Search/Query/Raw's value as Data [query_text]");
+        assertThat(twice.stage1()).isFalse();
+    }
+
+    @Test
     void noCatalogueOrNoCheckIsAProblemAndNoneExpectedIsNotScored() {
         final EvalScore none = new EvalScore("c");
         none.scoreCatalogue(expecting(Map.of("catalogue", Map.of("catch_all_confirmed", true))), null, null);

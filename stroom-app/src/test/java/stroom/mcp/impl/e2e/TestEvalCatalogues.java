@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.catalogue.Catalogue;
 import stroom.ai.impl.tools.catalogue.CatalogueCheck;
 import stroom.ai.impl.tools.catalogue.CatalogueCheckResult;
 import stroom.ai.impl.tools.catalogue.CatalogueSample;
+import stroom.ai.impl.tools.catalogue.TypeIds;
 import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.sample.SplitterSpec;
@@ -73,7 +74,10 @@ class TestEvalCatalogues {
             for (final Map<String, Object> type : types) {
                 final String typeId = (String) type.get("type_id");
                 assertThat(typeIds.add(typeId)).as("%s: %s is one event type", id, typeId).isTrue();
-                assertThat(typeId).as(id).matches(VERB_OBJECT);
+                // A drop rule writes no event: its TypeId is a plain label, as the catalogue has it.
+                assertThat(typeId).as(id).matches(Boolean.TRUE.equals(type.get("drop"))
+                        ? TypeIds.DROP_LABEL
+                        : VERB_OBJECT);
                 assertThat((String) type.get("description")).as("%s %s", id, typeId).isNotBlank();
                 assertThat(type).as("%s %s", id, typeId).containsEntry("status", "confirmed");
                 // Network's action element is its child (Network/Connect), as the schema has it.
