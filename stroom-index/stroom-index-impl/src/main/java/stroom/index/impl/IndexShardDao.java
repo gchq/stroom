@@ -27,6 +27,7 @@ import stroom.util.shared.ResultPage;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface IndexShardDao {
 
@@ -79,37 +80,100 @@ public interface IndexShardDao {
      */
     boolean setStatus(Long id, IndexShard.IndexShardStatus status);
 
-    /**
-     * Force the status of a shard to be deleted
-     */
-    void logicalDelete(Long id);
-
-    /// Marks a shard that was open as closed. A shard that is deleted or corrupt keeps that status, and any
-    /// time recorded for removing the shard's replaced commits is kept.
+    /// Claims the lease on a shard on a shared volume and marks the shard as opening, in one update, so
+    /// that of two nodes that try to open a shard for writing only one can succeed.
     ///
-    /// @param id The database ID of the shard.
-    void reset(Long id);
+    /// @param id              The database ID of the shard.
+    /// @param nodeName        The name of the node claiming the lease, which becomes the shard's node.
+    /// @param instanceId      The id of the process claiming the lease.
+    /// @param leaseDurationMs How long the lease lasts if it is not renewed.
+    /// @return True if the lease was claimed, false if the shard is not closed or is leased already.
+    boolean claimLease(long id, String nodeName, String instanceId, long leaseDurationMs);
 
-    /// Marks a shard that was open as closed, and records when the commits its writer had replaced, but was
-    /// still keeping for readers on other nodes, can be removed.
+    /// Extends every lease held by a process that has not yet expired. A lease that has expired is left
+    /// alone, as its holder must stop writing before it can have the shard again.
+    ///
+    /// @param instanceId      The id of the process holding the leases.
+    /// @param leaseDurationMs How long the leases last from now if they are not renewed again.
+    /// @return The number of leases extended.
+    int renewLeases(String instanceId, long leaseDurationMs);
+
+    /// Finds the shards a process holds an unexpired lease on.
+    ///
+    /// @param instanceId The id of the process holding the leases.
+    /// @return The database IDs of the shards.
+    Set<Long> findLeasedShardIds(String instanceId);
+
+    /// Gives up the lease on a shard, if the process still holds it, and marks the shard as closed if it
+    /// was open, in one update. The shard can then be claimed by any node.
     ///
     /// @param id                  The database ID of the shard.
+    /// @param instanceId          The id of the process holding the lease.
     /// @param pruneCommitsDelayMs How long from now the shard's replaced commits must be kept for, or null
-    ///                            if the writer left none behind, which leaves any time already recorded.
-    void reset(Long id, Long pruneCommitsDelayMs);
+    ///                            if the writer left none behind.
+    /// @return True if the lease was held by the process and has been given up.
+    boolean releaseLease(long id, String instanceId, Long pruneCommitsDelayMs);
 
-    /// Finds closed shards that a node owns on shared volumes whose replaced commits have been kept for long
+    /// Takes from their holders the leases that expired more than a grace period ago, which is how the
+    /// shards of a node that has died, or can no longer reach the database, become usable again. Each
+    /// shard is left closed and unleased. A shard that has been deleted or marked corrupt keeps that
+    /// status. One update, so a holder that renews
+    /// at the same moment either keeps its lease or loses it, never both.
+    ///
+    /// @param graceMs                   How long a lease must have been expired for. Treated as zero if
+    ///                                  negative, so that a lease which has not expired is never taken.
+    /// @param replacedCommitRetentionMs How long from now any commits the old writer had replaced must be
+    ///                                  kept for before they are pruned.
+    /// @return The number of shards taken.
+    int releaseLapsedLeases(long graceMs, long replacedCommitRetentionMs);
+
+    /// Finds closed, unleased shards of an index partition that are on shared volumes, which any node may
+    /// claim and write to.
+    ///
+    /// @param indexUuid      The UUID of the index.
+    /// @param partitionLabel The label of the partition.
+    /// @return The shards.
+    List<IndexShard> findUnleasedShardsOnSharedVolumes(String indexUuid, String partitionLabel);
+
+    /// Finds closed, unleased shards on shared volumes whose replaced commits have been kept for long
     /// enough and can now be removed.
     ///
-    /// @param nodeName The name of the node that owns the shards.
-    /// @param limit    The most shards to return.
+    /// @param limit The most shards to return.
     /// @return The shards.
-    List<IndexShard> findShardsWithCommitsToPrune(String nodeName, int limit);
+    List<IndexShard> findShardsWithCommitsToPrune(int limit);
 
     /// Records that a shard's replaced commits have been removed.
     ///
     /// @param id The database ID of the shard.
     void clearPruneCommitsTime(long id);
+
+    /**
+     * Force the status of a shard to be deleted
+     */
+    void logicalDelete(Long id);
+
+    /// Says whether any process holds a lease on a shard, whether or not the lease has expired.
+    ///
+    /// @param id The database ID of the shard.
+    /// @return True if the shard is leased.
+    boolean isLeased(long id);
+
+    /// Marks a shard that was open as closed. A shard that is leased is left alone, as only the process
+    /// holding the lease may close it, with [#releaseLease(long, String, Long)].
+    ///
+    /// @param id The database ID of the shard.
+    void reset(Long id);
+
+    /// Marks a shard that an earlier process on this node left open as closed, and clears the lease that
+    /// process held on it. For use on startup. Does nothing if the shard has since
+    /// been taken from this node and leased by another.
+    ///
+    /// @param id                  The database ID of the shard.
+    /// @param nodeName            The name of this node. Only a lease held under its name is cleared.
+    /// @param instanceId          The id of the process that is starting, whose own leases are left alone.
+    /// @param pruneCommitsDelayMs How long from now any commits the earlier process had replaced must be
+    ///                            kept for, or null if it can have left none behind.
+    void resetAfterRestart(Long id, String nodeName, String instanceId, Long pruneCommitsDelayMs);
 
     /**
      * Update the details of the contents of a shard

@@ -35,7 +35,10 @@ import stroom.util.shared.ResultPage;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -150,6 +153,7 @@ public class ActiveShards {
                                 final boolean throwException) {
         try {
             final IndexShardWriter indexShardWriter = indexShardWriterCache.getOrOpenWriter(indexShard.getId());
+            final boolean usableBefore = !indexShardWriter.isUnusable();
             try {
                 indexShardWriter.addDocument(document);
                 return true;
@@ -161,6 +165,17 @@ public class ActiveShards {
                 indexShardWriterCache.close(indexShardWriter);
 
             } catch (final RuntimeException e) {
+                if (indexShardWriter.isUnusable()) {
+                    // Close it or it would be used again for every document. The shard itself may be fine,
+                    // so it is not removed, and is opened again by the next attempt.
+                    indexShardWriterCache.close(indexShardWriter);
+                    if (usableBefore) {
+                        // The document itself broke a writer that was working. It would break every other
+                        // writer it was tried in, so it is not tried again.
+                        LOGGER.error(e::getMessage, e);
+                        throw new DocumentBrokeWriterException(indexShard.getId(), e);
+                    }
+                }
                 if (throwException) {
                     LOGGER.error(e::getMessage, e);
                     throw e;
@@ -168,6 +183,8 @@ public class ActiveShards {
                     LOGGER.debug(e::getMessage, e);
                 }
             }
+        } catch (final DocumentBrokeWriterException e) {
+            throw e;
         } catch (final RuntimeException e) {
             if (throwException) {
                 LOGGER.error(e::getMessage, e);
@@ -235,7 +252,20 @@ public class ActiveShards {
                 "getExistingShards(), found {} un-filtered shards, maxDocsPerShard: {}",
                 NullSafe.getOrElse(indexShardResultPage, ResultPage::size, 0),
                 maxDocsPerShard));
-        for (final IndexShard indexShard : indexShardResultPage.getValues()) {
+
+        // A closed shard on a shared volume belongs to no node, so use one that has room, whichever node
+        // wrote it, before creating another. Otherwise every restart and scale-up would add shards. The
+        // shard only becomes this node's when its lease is claimed on opening it, which another node may
+        // do first.
+        final Map<Long, IndexShard> candidates = new LinkedHashMap<>();
+        indexShardResultPage.getValues().forEach(indexShard -> candidates.put(indexShard.getId(), indexShard));
+        final Set<Long> ownShardIds = Set.copyOf(candidates.keySet());
+        NullSafe.list(indexShardDao.findUnleasedShardsOnSharedVolumes(
+                        indexShardKey.getIndexUuid(),
+                        indexShardKey.getPartition().getLabel()))
+                .forEach(indexShard -> candidates.putIfAbsent(indexShard.getId(), indexShard));
+
+        for (final IndexShard indexShard : candidates.values()) {
             // Look for non deleted, non-full, non-corrupt index shards.
             final IndexShardStatus status = indexShard.getStatus();
             final boolean isVolumeFull = indexShard.getVolume().getCapacityInfo().isFull();
@@ -250,7 +280,14 @@ public class ActiveShards {
                 LOGGER.debug(e::getMessage, e);
             }
 
-            if (status != null
+            // Take no more of the shards other nodes wrote than are needed to make up the number wanted.
+            // Every shard in the list gets opened, so taking them all would have one node hold every
+            // closed shard of the partition and leave the other nodes to create new ones.
+            final boolean wanted = ownShardIds.contains(indexShard.getId())
+                                   || indexShards.size() < shardsPerPartition;
+
+            if (wanted
+                && status != null
                 && REQUIRED_SHARD_STATES.contains(status)
                 && indexShard.getDocumentCount() < maxDocsPerShard
                 && !isVolumeFull
@@ -276,5 +313,17 @@ public class ActiveShards {
         LOGGER.debug("Creating shard for key {} on {}", indexShardKey, thisNodeName);
         return indexShardCreator.createIndexShard(indexShardKey, thisNodeName);
     }
-}
 
+
+    // --------------------------------------------------------------------------------
+
+
+    // Thrown when adding a document left the writer it was added to unusable.
+    private static class DocumentBrokeWriterException extends IndexException {
+
+        private DocumentBrokeWriterException(final long indexShardId, final RuntimeException cause) {
+            super("Adding a document broke the writer of index shard " + indexShardId + ": "
+                  + cause.getMessage(), cause);
+        }
+    }
+}

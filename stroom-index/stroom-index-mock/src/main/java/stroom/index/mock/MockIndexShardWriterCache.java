@@ -71,8 +71,10 @@ public class MockIndexShardWriterCache implements IndexShardWriterCache {
     }
 
     public void close(final IndexShardWriter indexShardWriter) {
-        indexShardWriter.close();
-        openWritersByShardId.remove(indexShardWriter.getIndexShardId());
+        // Only the writer in use for its shard, as the real cache does.
+        if (openWritersByShardId.remove(indexShardWriter.getIndexShardId(), indexShardWriter)) {
+            indexShardWriter.close();
+        }
     }
 
     @Override

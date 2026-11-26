@@ -94,6 +94,11 @@ public class IndexModule extends AbstractModule {
                         .description("Job to set index shards to have a status of deleted that have past their " +
                                      "retention period")
                         .frequencySchedule("10m"))
+                .bindJobTo(IndexShardStreamRecoveryJob.class, builder -> builder
+                        .name("Index Shard Stream Recovery")
+                        .description("Job to take index shards on shared volumes from nodes that have stopped " +
+                                     "renewing their leases on them")
+                        .frequencySchedule("1m"))
                 .bindJobTo(IndexWriterCacheSweep.class, builder -> builder
                         .name("Index Writer Cache Sweep")
                         .description("Job to remove old index shard writers from the cache")
@@ -137,6 +142,18 @@ public class IndexModule extends AbstractModule {
         @Inject
         IndexShardRetention(final IndexShardManager indexShardManager) {
             super(indexShardManager::checkRetention);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class IndexShardStreamRecoveryJob extends RunnableWrapper {
+
+        @Inject
+        IndexShardStreamRecoveryJob(final IndexShardStreamRecovery indexShardStreamRecovery) {
+            super(indexShardStreamRecovery::exec);
         }
     }
 

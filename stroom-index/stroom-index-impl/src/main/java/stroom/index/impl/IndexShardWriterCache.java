@@ -32,6 +32,10 @@ public interface IndexShardWriterCache {
 
     void sweep();
 
+    /// Takes a writer out of use and closes it. Does nothing if the writer is not the one in use for its
+    /// shard, as it has then been closed already, and the one that replaced it must be left alone.
+    ///
+    /// @param indexShardWriter The writer.
     void close(IndexShardWriter indexShardWriter);
 
     void shutdown();

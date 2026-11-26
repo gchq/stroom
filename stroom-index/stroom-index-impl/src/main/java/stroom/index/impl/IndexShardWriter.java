@@ -18,6 +18,8 @@ package stroom.index.impl;
 
 import stroom.index.shared.IndexException;
 
+import java.util.function.BooleanSupplier;
+
 public interface IndexShardWriter {
 
     void addDocument(IndexDocument document) throws IndexException;
@@ -33,6 +35,25 @@ public interface IndexShardWriter {
     long getIndexShardId();
 
     long getCreationTime();
+
+    /// Says whether this writer can never be used again, because it has been closed, has given up its shard
+    /// or has been closed by Lucene after an error it could not recover from. Such a writer must be taken
+    /// out of use, or its shard can't be opened by anything else.
+    ///
+    /// @return True if the writer can never be used again.
+    default boolean isUnusable() {
+        return false;
+    }
+
+    /// Gives the writer a way to check that this node still holds the lease on the shard. The writer must
+    /// then refuse to add documents or commit once the lease is no longer held, and discard what it has not
+    /// committed, because another node may by then be writing to the shard. A writer that is never given a
+    /// check, as for a shard on a local volume, always writes.
+    ///
+    /// @param leaseHeld Returns true while this node holds the lease on the shard.
+    default void setLeaseCheck(final BooleanSupplier leaseHeld) {
+        // Writers that can't be used on shared volumes need no lease.
+    }
 
     /// Says whether the shard holds commits that this writer has replaced but is keeping for a while, for
     /// the sake of readers on other nodes that may still be using them.

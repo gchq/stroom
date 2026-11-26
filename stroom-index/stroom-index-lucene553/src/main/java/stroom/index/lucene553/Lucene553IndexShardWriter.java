@@ -43,6 +43,8 @@ import stroom.util.time.StroomDuration;
 import org.apache.lucene553.analysis.Analyzer;
 import org.apache.lucene553.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene553.document.Document;
+import org.apache.lucene553.index.DirectoryReader;
+import org.apache.lucene553.index.IndexNotFoundException;
 import org.apache.lucene553.index.IndexWriter;
 import org.apache.lucene553.index.IndexWriterConfig;
 import org.apache.lucene553.index.LiveIndexWriterConfig;
@@ -58,10 +60,12 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BooleanSupplier;
 
 class Lucene553IndexShardWriter implements IndexShardWriter {
 
@@ -109,6 +113,11 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
     private final AtomicBoolean open = new AtomicBoolean();
     // Null unless the shard is on a shared volume, where replaced commits are kept for readers on other nodes.
     private final RetainReplacedCommitsDeletionPolicy replacedCommitsPolicy;
+    // Says whether this node still holds the lease on the shard. A shard on a local volume has no lease.
+    private volatile BooleanSupplier leaseHeld = () -> true;
+    // Set once this writer has found that the lease is no longer held. It then never writes again, even if
+    // a late renewal makes the lease look held once more.
+    private volatile boolean leaseLost;
     private final AtomicInteger adding = new AtomicInteger();
 
     /**
@@ -156,7 +165,9 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
             if (Files.isDirectory(dir)) {
                 final long count = FileUtil.count(dir);
                 LOGGER.debug(() -> dir + " exists, file count: " + count + " " + this);
-                if (count == 0) {
+                // The directory of a shard that nothing has been committed to can be empty, e.g. if its node
+                // died as it was being created, in which case there is nothing to find.
+                if (count == 0 && indexShard.getDocumentCount() > 0) {
                     throw new IndexException("Unable to find any index shard data in directory: " + path);
                 }
 
@@ -217,7 +228,10 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
             }
 
             // Create lucene directory object.
-            directory = new NIOFSDirectory(dir, Lucene553LockFactory.get());
+            // Lucene will refuse to change any file of the shard once the lease on it is no longer held.
+            directory = new LeaseCheckedDirectory(
+                    new NIOFSDirectory(dir, Lucene553LockFactory.get()),
+                    () -> !leaseLost && leaseHeld.getAsBoolean());
 
             // IndexWriter to use for adding data to the index.
             final IndexWriter indexWriter = new IndexWriter(directory, luceneIndexWriterConfig);
@@ -285,6 +299,11 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
     }
 
     private void addDocument(final Document document) throws IndexException {
+        if (leaseLost || !leaseHeld.getAsBoolean()) {
+            // Another node may be about to write to the shard, so this writer must add nothing more to it.
+            throw new IndexException("Unable to add to index shard " + indexShardId
+                                     + " as this node no longer holds the lease on it");
+        }
         adding.incrementAndGet();
         try {
             // An Exception might be thrown here if the index
@@ -339,15 +358,13 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
             LOGGER.debug(() -> "Starting flush " + this);
 
             try {
-                // Perform commit
-                indexWriter.commit();
-
+                if (commit("commit")) {
+                    // Only once committed, as the count includes every document added so far.
+                    updateShardInfo(startTime);
+                }
             } catch (final IOException | RuntimeException e) {
+                // Nothing is recorded, as the shard holds no more than it did at the last commit.
                 LOGGER.error(buildErrorMessage("Error while committing writer.", e), e);
-
-            } finally {
-                // Update the shard info
-                updateShardInfo(startTime);
             }
 
             LOGGER.debug(() ->
@@ -355,6 +372,43 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
                     ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime) +
                     ") " + this);
         }
+    }
+
+    // Commits in two steps. The first writes and syncs the files, which can be slow. The second makes the
+    // commit visible and is quick. The lease is checked between the two, so that a commit never becomes
+    // visible long after the lease was last known to be held. Returns false if the lease had gone, when
+    // the writer has been rolled back and closed.
+    private boolean commit(final String action) throws IOException {
+        if (prepareCommit()) {
+            indexWriter.commit();
+            return true;
+        } else {
+            abandon(action);
+            return false;
+        }
+    }
+
+    // The first step of a commit. Returns false if the lease was not held, or was lost while the files
+    // were being written. Lucene is stopped from changing files as soon as the lease has gone, so losing it
+    // part way through shows up as a failure to write.
+    private boolean prepareCommit() throws IOException {
+        if (!leaseHeld.getAsBoolean()) {
+            return false;
+        }
+        try {
+            indexWriter.prepareCommit();
+        } catch (final IOException | RuntimeException e) {
+            if (leaseHeld.getAsBoolean()) {
+                throw e;
+            }
+            LOGGER.debug(() -> "Index shard " + indexShardId + " not committed: " + e.getMessage(), e);
+        }
+        return leaseHeld.getAsBoolean();
+    }
+
+    @Override
+    public boolean isUnusable() {
+        return leaseLost || !open.get() || !indexWriter.isOpen();
     }
 
     @Override
@@ -380,9 +434,20 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
                 }
 
                 try {
-                    indexWriter.close();
+                    // Commit in two steps as when flushing, with the lease checked again after the slow
+                    // one, so that the commit never becomes visible long after the lease was last known to
+                    // be held.
+                    final boolean held = leaseHeld.getAsBoolean() && prepareCommit();
+                    if (held) {
+                        // Lucene refuses to close with a commit prepared but not finished.
+                        indexWriter.commit();
+                        indexWriter.close();
+                    } else {
+                        discardUncommitted("close");
+                    }
                 } catch (final IOException | RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
+                    rollBackAfterFailedClose();
                 } finally {
                     try {
                         if (directory != null) {
@@ -409,6 +474,79 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
         }
     }
 
+    // Stops this writer being used once the lease on its shard is no longer held. Whatever it has not
+    // committed is discarded, as another node may by now be writing to the shard.
+    private void abandon(final String action) throws IOException {
+        try {
+            discardUncommitted(action);
+        } finally {
+            try {
+                if (directory != null) {
+                    directory.close();
+                }
+            } finally {
+                open.set(false);
+            }
+        }
+    }
+
+    private void discardUncommitted(final String action) throws IOException {
+        leaseLost = true;
+        final int documentCountBefore = documentCount.get();
+        // Rolling back also closes the Lucene writer. It would delete every file in the shard that this
+        // writer does not know about, which may now include files written by another node. The directory
+        // stops it, so if there is anything it wants to delete it fails, having still closed the writer.
+        // The files this writer leaves behind are removed by the next writer to open the shard.
+        final int committedDocumentCount = rollBack(true);
+        LOGGER.error(() -> "Unable to " + action + " index shard " + indexShardId
+                           + " as this node no longer holds the lease on it. Discarded about "
+                           + Math.max(0, documentCountBefore - committedDocumentCount)
+                           + " documents that had not been committed. " + this);
+    }
+
+    // Has Lucene let go of the shard when it could not be closed normally. Until it does it keeps its lock,
+    // and this process can't open the shard again. Does nothing if Lucene has already closed its writer.
+    private void rollBackAfterFailedClose() {
+        try {
+            rollBack(false);
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.error(buildErrorMessage("Error rolling back writer.", e), e);
+        }
+    }
+
+    // Discards whatever has not been committed and closes the Lucene writer. Returns the number of documents
+    // that are left in the shard. A rollback is expected to fail once the lease has gone, as the directory
+    // then refuses to delete anything.
+    private int rollBack(final boolean failureExpected) throws IOException {
+        try {
+            indexWriter.rollback();
+        } catch (final IOException | RuntimeException e) {
+            if (failureExpected) {
+                LOGGER.debug(() -> "Index shard " + indexShardId + " left as it is: " + e.getMessage(), e);
+            } else {
+                LOGGER.error(buildErrorMessage("Error rolling back writer.", e), e);
+            }
+        }
+        final int committedDocumentCount = countCommittedDocuments();
+        documentCount.set(committedDocumentCount);
+        return committedDocumentCount;
+    }
+
+    // What is really in the shard, read from its latest commit.
+    private int countCommittedDocuments() throws IOException {
+        try (final DirectoryReader reader = DirectoryReader.open(directory)) {
+            return reader.numDocs();
+        } catch (final IndexNotFoundException e) {
+            // Nothing was ever committed.
+            return 0;
+        }
+    }
+
+    @Override
+    public void setLeaseCheck(final BooleanSupplier leaseHeld) {
+        this.leaseHeld = Objects.requireNonNull(leaseHeld);
+    }
+
     @Override
     public boolean hasReplacedCommits() {
         return replacedCommitsPolicy != null && replacedCommitsPolicy.getRetainedCommitCount() > 0;
@@ -428,6 +566,11 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
     }
 
     private synchronized void updateShardInfo(final long startTime) {
+        if (leaseLost || !leaseHeld.getAsBoolean()) {
+            // The shard's row is no longer this node's to change, or soon may not be, e.g. after a close that
+            // failed for want of the lease.
+            return;
+        }
         try {
             // If the index is closed we can be sure no additional documents were added successfully.
             final Integer lastDocumentCount = documentCount.get();
