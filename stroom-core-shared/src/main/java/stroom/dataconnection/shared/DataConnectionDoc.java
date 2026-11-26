@@ -37,10 +37,10 @@ import java.util.Objects;
 /// become the query's fields. For an LDAP directory each query carries its own search filter there,
 /// and the attributes the document lists are the fields. For CSV and Excel the document holds the data
 /// itself, and its columns are the fields.
-@Description(
-        "Defines data from outside Stroom that queries can use: a JDBC database or Amazon Athena, " +
-        "queried with SQL given in each query, an LDAP directory, searched with a filter given in each " +
-        "query, or CSV or an Excel workbook held in this document.")
+@Description("""
+        Defines data from outside Stroom that queries can use: a JDBC database or _Amazon Athena_, \
+        queried with SQL given in each query, an LDAP directory, searched with a filter given in each \
+        query, or CSV or an _Excel_ workbook held in this document.""")
 @JsonPropertyOrder({
         "type",
         "uuid",

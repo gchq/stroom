@@ -32,7 +32,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @Description("""
-        A Query Document defines a {{< glossary "StroomQL" >}} query and is used to execute that query \
+        A Query Document defines a _StroomQL_ query and is used to execute that query \
         and view its results.
         A Query can query main types of data source including Views, Lucene Indexes and Searchables.""")
 @JsonPropertyOrder({

@@ -26,7 +26,6 @@ import stroom.util.logging.LogUtil;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.regex.Pattern;
@@ -38,7 +37,7 @@ class TestAbstractDoc {
     private static final Class<Description> DOCUMENTATION_CLASS = Description.class;
     private static final Pattern MARKDOWN_LINK = Pattern.compile("\\[[^\\[]+]([^(]+)");
 
-    @Disabled // Enable this once all the docs have documentation
+    //    @Disabled // Enable this once all the docs have documentation
     @Test
     void checkDocDocumentation() {
         SoftAssertions.assertSoftly(softly -> {
