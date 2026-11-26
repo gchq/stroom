@@ -4844,6 +4844,204 @@ names its event fields one way (for now: no per-way fields); a promoted catalogu
 description optional; an `equals` or `one_of` on values unique to their records refused with a pattern suggested; a
 list of values written one Data a value; the reading an earlier call gave wins over the latest mapping's.
 
+### Drops: one definition (shelved 2026-11-26)
+
+Shelved by the user (2026-11-26) in favour of targeted fixes of the audit's findings; kept as the plan to return to
+if drops drift apart again. Nothing here is built. **Why.** In user testing (2026-11-26, an aggregated JSON
+feed whose `event` held JSON) dropping Tomcat's operational records took several turns. The catalogue refused the
+drop rule, as `event` is cut at stringTruncateLength (10,000) on long records and its keys can't be read there. The
+catch-all form looped (fixed in 81c610b97d and f170575997). A hand-written `drop_when` "didn't fire": a positive
+condition on a key inside the cut held JSON is false in Stroom and a negated one is true, so long security records
+were dropped. A `drop: true` rule was then told "use drop_when" (fixed in 08a8125fdc). The rules had to be put in
+order by hand (fixed in 8b657e66b6). Those fixes treated symptoms. The cause is that a drop can be defined in three
+places, each checked and counted its own way. An edge-case audit (2026-11-26) proved four disagreements with failing
+tests (`AuditCatalogueCounts`, `AuditCatalogueTables`, `AuditJsonParity`), which become this work's regression tests.
+
+#### Today
+
+| Where a drop is defined | Written by | Checked and counted by | Records read | A condition it can't evaluate |
+| --- | --- | --- | --- | --- |
+| **Catalogue drop rule**: an event type with `drop: true`, a plain label (`TypeIds.dropProblem`) | `catalogue_event_types` (the user's word only, `CatalogueValidation`), `CatalogueSeed` (from a draft's `drop: true` rule), `CatalogueFromMapping` (from `drop_when` entries with the catalogue's reason) | `CatalogueCheck` (counts, overlaps, `cutProblem` refuses a condition the cut changes); `CatalogueSummary`/`CatalogueCatchAll` ("Drop rules (not translated)"); `ConfirmedEventTypes.undropped` at build | As processing reads them (cut, `RecordIndex`) | Recognises nothing (`way()`), listed as `not_checked` |
+| **`drop_when`** | `CatalogueTranslation` from each dropped type's ways (reason `SourceNotes.DROPPED_REASON + ": " + typeId`); `VariantDrafts.headed` (a splitter's header line); the agent by hand (`build_translation_xslt` `mapping=`/`changes=`: `MappingChanges` replaces the key whole; the guides suggest it for malformed lines and empty records) | `CatalogueCheck.Drafted.dropsOf` (all but the catalogue's, the draft's and the latest mapping's, `withDropsOf`, `CatalogueEventTypesTool.check`), only over **uncatalogued** records (`droppedByMapping`); `CatalogueTranslation`'s `ownDrops` by `WayCheck`; `MappingSampleCheck` by `LocalCheck.ruleOf`; `CutHeldDrops` | Check: cut. `WayCheck` and `ruleOf`: whole | Check: drops nothing. `WayCheck`: holds, so drops. `ruleOf`: null, not checked |
+| **Events rule `drop: true`** (`EventRule.drop`) | The agent by hand; `MappingRebuild` reading back a branch that writes no Event; kept by `CatalogueTranslation.keptDropRules` ahead of the catch-all (742c0c7bc1) | As `drop_when`, plus `ConfirmedEventTypes.drops` and `CatalogueKept`; `KeptRuleNames` skips it | As above | As above |
+
+The generator writes every `drop_when` entry first, as `EventRule`s named `drop: <reason>` (`XsltGenerator`
+2339-2342). `drop: true` rules stay where they are among the events rules. Processing therefore drops before it
+recognises any event type. The checks do not:
+
+* `droppedByMapping` is ANDed with the uncatalogued records, so an event type's count includes the records the
+  mapping's own drops remove first. That was suspected and is confirmed by the code.
+* The catch-all form counts the latest mapping's own drops (`withDropsOf`). A fresh draft does not carry them over:
+  `SourceNotes.withExistingRules` passes only `events` on for naming, `KeptRuleNames.existingRules` skips
+  `drop: true`, and `CatalogueTranslation` keeps only the fresh draft's own `drop_when` and `drop: true` rules. Also
+  suspected, also confirmed.
+* `CatalogueFromMapping` reads back a `drop_when` entry only if it carries the catalogue's reason. Its own copy of the
+  prefix (`DROPPED`) duplicates `SourceNotes.DROPPED_REASON`. A `drop: true` rule, or any other `drop_when` entry, is
+  reported as `not_read`.
+* `set_shape_handling` (`handling: drop` in the survey doc) is a fourth record of the same intent. It writes no rule;
+  its guide text says "`drop_when` is how the mapping carries it out", which leaves the agent to write it by hand.
+
+#### The target
+
+**One definition.** In a catalogued build, a record is dropped only by a **drop rule** in the catalogue. The
+mapping's `drop_when` holds two kinds of entry and nothing else:
+
+1. **Format drops**: records that only exist because of how the data is read, which the draft writes itself (today
+   only `VariantDrafts.headed`). They get a reserved reason prefix (`SourceNotes.FORMAT_REASON`, "the format: ..."),
+   come first, and are never read back into the catalogue. The proposal said "always generated from the catalogue";
+   that does not hold here. A header line is not something the user chose to drop, and it has to stay with the
+   splitter that produces it.
+2. **Catalogue drops**: one entry per way a drop rule is recognised, in catalogue order. Each has the reason
+   `SourceNotes.DROPPED_REASON + ": " + <label>`, and `CatalogueFromMapping` uses that same constant. The label is
+   the stable key. A drop rule writes no template (`XsltGenerator` names templates only for rules that write an
+   event), so `KeptRuleNames` has nothing to keep for it. KeptRuleNames still names only the event rules, and a
+   migrated `drop: true` rule's name survives only as its label (below).
+
+No events rule carries `drop: true` in a catalogued build. `CatalogueTranslation` stops carrying the draft's own
+drops (`keptDropRules`, and copying non-format `drop_when` entries). Those reach the catalogue through read-back
+instead.
+
+**One evaluator.** A new class, `DropVerdicts` (stroom-ai-impl `draft`, beside `CheckedRecords` and `CutHeldDrops`).
+It takes the drop rules in processing order (format drops, then catalogue drops) and a tri-state source of condition
+verdicts. Two sources implement that: `RecordIndex.holdsAt` for the catalogue check, and `CheckedRecords.holds` for
+the build. Both already return null for "can't tell". For each record it returns one verdict:
+
+* **dropped**, by the first rule all of whose conditions hold;
+* **kept**: every rule has a condition that fails;
+* **unknown**, at the first rule that has no failing condition but has one it can't evaluate (an `xpath`,
+  `in_dictionary`, a record-scope field, a field an extraction gives). One verdict, said one way everywhere: "may be
+  dropped by <label>: its condition on <field> can't be checked here".
+
+Records are read **as processing reads them**: cut at `LongValues.cutLength`, the build's choice. When a whole
+reading exists (JSON input with strings past the cut, as `CatalogueSample.whole`), `DropVerdicts` also returns the
+records whose verdict the cut changes, whether the field is top level or inside held JSON. That gives one cut warning
+in place of `CutHeldDrops` and the drop wording of `CatalogueCheck.cutProblem`. `cutProblem` stays for event types.
+`WayCheck` keeps treating a condition it can't evaluate as holding, but only for placing ways (variants, the draft
+rule whose fields a way starts from). Its javadoc should say it never counts.
+
+**Processing order in every count.** `CatalogueCheck.Run` works out the drop verdicts first and removes the dropped
+records from every event type's records (`byType`). An event type whose ways recognise records a format drop takes
+has that said in its row. Records with an unknown drop verdict stay in the type's count and are said as
+`may_be_dropped`. The same tri-state applies to an event type's own ways: a way with a condition the check can't
+evaluate counts its records as `may_be`, not 0, so it is never called "not in the sample" (`AuditCatalogueTables`'s
+third test). An overlap between a drop rule and an event type is still refused, and its text now says the drop rule
+takes the record in processing. Records the catalogue's drop rules take are counted where they are today. The
+catch-all's `dropped_by_mapping` counts format drops only. `CatalogueOrder`'s doc says catalogue order is processing's
+fallback; it should add that drop rules always come first.
+
+**One count.** `draft_translation_mapping` no longer counts with `WayCheck`. Its `uncatalogued`, `dropped` and notes
+come from the check's counting pass (`CatalogueCheck` without placements or problems), run over the records
+`CatalogueReading` reads, the same records and cut as the catch-all form. The cost is one reading of the scope's
+records per draft. That is the only way the draft and the form can't drift apart again.
+
+#### Each tool after
+
+| Tool | After |
+| --- | --- |
+| `catalogue_event_types` | The only place a drop is defined. Counts in processing order, with `may_be_dropped`/`may_be` from `DropVerdicts`. `withDropsOf` goes; the latest mapping's own drops are read back instead (Migration). A drop rule whose verdict the cut changes is still refused, with the cut field and both fixes (`long_values=whole`, or a field outside the held one). A drop label equal to `Unknown` or "Uncatalogued records", ignoring case, is refused (`TypeIds.dropProblem`). `CatalogueTables.recordsOf` keys the catch-all where no label can. |
+| `draft_translation_mapping` | Writes `drop_when` from the catalogue plus the format drops, with no `drop: true` rules. Its counts are the check's. Its notes name each drop rule by label with its count and `may_be_dropped`. |
+| `build_translation_xslt` (`mapping=`, `changes=`) | For a catalogued build it refuses a `drop_when` entry that is neither a format drop nor a catalogue drop as derived (a changed condition included), and any events rule with `drop: true`. The refusal says: "Records are left untranslated by drop rules in the build's catalogue, so every count and the catch-all agree: propose one with catalogue_event_types (op: add, drop: true, a short label as type_id, recognised_by; on the user's word), then draft_translation_mapping." The `sample:` warnings take the cut warning from `DropVerdicts` (G2-1). `ConfirmedEventTypes.undropped` stays as the guard against a hand-edited XSLT. |
+| `rebuild_mapping` | A branch writing no Event is still read as `drop: true` (`MappingRebuild`), and `CatalogueFromMapping` reads it back as a proposed drop rule (Migration), not `not_read`. |
+| `set_shape_handling` | Unchanged in the survey. For a catalogued build, its `next` names a `catalogue_event_types` drop proposal for those shapes, not `drop_when`. A shape signature isn't a condition, so it can't make the rule itself. |
+| `review_coverage` | Unchanged. Drops log nothing in processing, so it can't count them, and the counts stay the sample's. |
+| Guides | `mapping.md`'s `drop_when` and `drop: true` rows, `xslt.md`'s `drop_when` bullet, `json-input.md` (empty records) and `data-splitter.md` (malformed lines) each say in one line: in a catalogued build a drop is a catalogue drop rule, and the mapping's `drop_when` is written from it. A fact, not steps. TOOLS.md follows. `server-instructions.md` doesn't change, and no tool description grows. The refusal text carries the redirect. |
+
+#### Migration
+
+* **A kept mapping's own drops** are read back into the catalogue on the next `catalogue_event_types` call or
+  `draft_translation_mapping` of the build. That means each `drop_when` entry that isn't a format or catalogue drop,
+  and each `drop: true` rule, taken from the build's latest mapping, or from a promoted one carried into a next
+  version. Each becomes a drop rule with `status: proposed` and a new `basis: kept_mapping`. `CatalogueValidation`
+  accepts that basis for a drop while it is proposed; the agent's own proposals still need the user's word. The
+  label comes from the reason or rule name (`TypeIds.defaultDropLabel`), and `doubt` says "read back from the
+  translation's own drop rule '<name>'". Conditions already in the catalogue are not read again. The conditions read
+  back are recorded in the source notes, so a drop the user declined is never read back again from a mapping not yet
+  redrafted.
+* **Until it is confirmed, it keeps dropping.** It is derived into `drop_when` like any drop rule, so processing
+  doesn't change silently between drafts, which is today's second suspected fault. The set's "Drop rules (not
+  translated)" section lists it as worth a look. Confirming it turns its basis to `user_confirmed`. If the user
+  says to translate those records, it is removed, and the records go to their event types or the catch-all.
+* **A `drop: true` events rule** in a kept mapping becomes a `drop_when` entry on the next draft. The XSLT's comment
+  and the documentation then give its label instead of its rule name. That is an ordinary regenerate with no
+  template renamed.
+* **A read-back drop that overlaps an event type** is shown as an overlap with telling fields, and the catalogue is
+  refused until it is settled. That is processing's truth: today processing drops those records while the event
+  type counts them.
+* **Builds without a catalogue** keep today's behaviour. The draft writes format drops only and says the source is
+  to be catalogued. The agent adds `drop_when` entries or `drop: true` rules through `build_translation_xslt`
+  (`MappingChanges`; new rules go before the catch-all), with no redirect. `MappingSampleCheck` takes rules by
+  `LocalCheck.ruleOf` on records read whole. A build with no build id (a chat XSLT) behaves the same way. One change
+  here departs from the proposal: the cut warning comes from `DropVerdicts`, so G2-1 is fixed for these builds too.
+  When such a build is catalogued, its drops are read back as above.
+
+#### Findings resolved
+
+| Finding | Resolved by |
+| --- | --- |
+| G3-2: a mapping drop rule with a condition it can't evaluate; the check drops nothing, the translation drops | One evaluator: "unknown" in both, said as `may_be_dropped`; the draft's counts are the check's |
+| G3-7: a mapping drop rule past the cut; the check reads cut, the translation whole | Both read cut (`LongValues.cutLength`); the cut warning names the changed records |
+| G2-1: `CutHeldDrops` warns only of keys inside held JSON | `DropVerdicts` compares cut and whole readings of any field |
+| G3-9: a drop rule labelled "Unknown" overwritten by the catch-all's count | Label refused; `recordsOf` keys the catch-all apart |
+| Notes' Uncatalogued row counts mapping-dropped records as Unknown (`AuditCatalogueTables`, first test) | The row takes `uncatalogued().unknown()`, as the form does |
+| Suspected: an event type's count includes records processing drops first | Processing order in `CatalogueCheck.Run` (confirmed in the code) |
+| Suspected: the form counts the latest mapping's drops, a fresh draft loses them | Read-back makes them drop rules that keep dropping (confirmed in the code) |
+| An event type with a condition it can't evaluate said not in the sample (`AuditCatalogueTables`, third; `AuditCatalogueCounts`, first) | The same tri-state for ways (`may_be`) |
+| User: the catalogue refused the drop | Stays refused (the drop can't see long records), with the fix named; open question 4 |
+| User: the catch-all form looped; "use drop_when"; ordering by hand | Fixed already (f170575997, 08a8125fdc, 8b657e66b6); with one definition, the agent is no longer sent between tools |
+| User: `drop_when` "didn't fire", long security records dropped | No hand `drop_when` in a catalogued build; the catalogue checks the negated condition against the cut reading and says the long records drop |
+
+`AuditCatalogueCounts`' fourth test (a record whose held JSON doesn't parse is left out of uncatalogued, though
+processing writes it as Unknown) is next to this work, not part of it. The evaluator gives such a record "kept".
+Whether the catch-all form should count it is for phase 1 to decide with its test.
+
+#### Risks and open questions
+
+1. **Hand-edited `drop_when` in a catalogued build: refuse, or allow with a warning?** Recommended: refuse with the
+   redirect. A warning was the state this design replaces, and in testing warnings were acted on wrongly.
+2. **What read-back asks the user.** Recommended: no question of its own. Read-back drops appear in the next set's
+   drop rules section, "Read back from the translation: <label> (<when in words>), <n> records. Keep dropping, or
+   translate them?", inside the existing form.
+3. **Unknown drop verdicts: block or say?** Recommended: say, counted, never block. That matches `not_checked`
+   (settled 2026-11-19); an `xpath` drop rule may be exactly right.
+4. **A drop rule whose verdict the cut changes** stays refused, as in testing. Should the user be able to accept it
+   (the long records then kept), or is raising the cut or another field the only way through?
+5. **Aggregated feeds.** A build is one source type group, with one catalogue and one mapping per group. The common
+   module carries no `drop_when` (`SourceTypeGroups` strips it), and one group's drop rules never touch another's.
+   Dropping a whole source type is the registry's `dropped=`, not a drop rule (a condition on the source type field
+   is refused). Confirm that this split is what the user expects.
+6. **Malformed lines and empty records** (`json-input.md`, `data-splitter.md`). Under the catalogue, a bad JSON line
+   is an unparsed record, and how `present: false` behaves inside held JSON that doesn't parse needs a test. Should
+   these be format drops the draft writes once the user agrees, or catalogue drop rules?
+7. **`set_shape_handling`**: should its `drop` seed catalogue proposals itself, or only point to them, as above?
+8. **Cost**: the draft's counting pass reads the scope's records once more per draft. That is measured in phase 3.
+
+#### Build order
+
+Each phase is committed with its tests. The audit tests are moved in as regression tests, failing before and
+passing after.
+
+1. **`DropVerdicts` and processing order in the check.** Add the evaluator; `CatalogueCheck.Run` drops first and
+   counts `may_be_dropped`/`may_be`. Tests: `TestDropVerdicts` (holds, fails, unknown, first rule wins, cut and whole
+   on top-level and held JSON), `TestCatalogueCheck` (an event type's count without what a format drop takes),
+   `AuditCatalogueTables`' three tests into `TestCatalogueTables` and `TestTypeIds` (G3-9).
+2. **Build warnings.** `build_translation_xslt` takes the cut warning from `DropVerdicts`, for builds with and
+   without a catalogue, and `CutHeldDrops` folds into it. Tests: `AuditJsonParity`'s
+   `aDropRuleOnALongTopLevelStringIsWarnedOfAsOneOnHeldJsonIs` (G2-1) into `TestCutHeldDrops`' successor;
+   `TestBuildTranslationXsltTool`.
+3. **One count in the draft.** `draft_translation_mapping` reports the check's counts; `WayCheck` places only.
+   Tests: `AuditCatalogueCounts`' first three (G3-2, G3-7) into `TestCatalogueTranslation`/`TestDraftTranslationMappingTool`;
+   `TestDraftCases` goldens regenerated for the intended diffs only, with the whole stroom-ai-impl suite run.
+4. **Derivation and redirect.** `SourceNotes.FORMAT_REASON`; one `DROPPED_REASON`; `keptDropRules` removed;
+   `build_translation_xslt` refuses hand-added drops in a catalogued build. Tests: `TestCatalogueTranslation` (only
+   format and catalogue drops written), `TestMappingChanges`/`TestBuildTranslationXsltTool` (refusal text; a
+   no-catalogue build unchanged), `TestDraftMixedLines` (the header drop's reason).
+5. **Read-back.** `basis: kept_mapping`; `CatalogueFromMapping` and the catalogue's read of the latest mapping;
+   the source notes' record of what was read back; the set's drop rules section. Tests: `TestCatalogueFromMapping`
+   (a `drop: true` rule and a plain `drop_when` read back as proposed; format drops not), `TestCatalogueEventTypesTool`
+   (a declined read-back drop not read again; overlaps shown), `TestCatalogueSummary`; an e2e case from the testing
+   above (JSON whose held `event` is cut, Tomcat's operational records dropped by a rule on a field outside it).
+6. **Guides, TOOLS.md, this doc**: one line each, as in the table above. Then eval cases rerun on the user's say-so.
+
 ### Generation (built)
 
 * `XsltGenerator` writes the XSLT from the mapping. `XsltReader` reads it back. Golden files fix both.
