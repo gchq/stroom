@@ -16,6 +16,8 @@ import stroom.index.impl.db.jooq.tables.IndexField;
 import stroom.index.impl.db.jooq.tables.IndexFieldSource;
 import stroom.index.impl.db.jooq.tables.IndexShard;
 import stroom.index.impl.db.jooq.tables.IndexShardPendingStream;
+import stroom.index.impl.db.jooq.tables.IndexShardPurge;
+import stroom.index.impl.db.jooq.tables.IndexShardTask;
 import stroom.index.impl.db.jooq.tables.IndexVolume;
 import stroom.index.impl.db.jooq.tables.IndexVolumeGroup;
 
@@ -54,6 +56,16 @@ public class Stroom extends SchemaImpl {
     public final IndexShardPendingStream INDEX_SHARD_PENDING_STREAM = IndexShardPendingStream.INDEX_SHARD_PENDING_STREAM;
 
     /**
+     * The table <code>stroom.index_shard_purge</code>.
+     */
+    public final IndexShardPurge INDEX_SHARD_PURGE = IndexShardPurge.INDEX_SHARD_PURGE;
+
+    /**
+     * The table <code>stroom.index_shard_task</code>.
+     */
+    public final IndexShardTask INDEX_SHARD_TASK = IndexShardTask.INDEX_SHARD_TASK;
+
+    /**
      * The table <code>stroom.index_volume</code>.
      */
     public final IndexVolume INDEX_VOLUME = IndexVolume.INDEX_VOLUME;
@@ -83,6 +95,8 @@ public class Stroom extends SchemaImpl {
             IndexFieldSource.INDEX_FIELD_SOURCE,
             IndexShard.INDEX_SHARD,
             IndexShardPendingStream.INDEX_SHARD_PENDING_STREAM,
+            IndexShardPurge.INDEX_SHARD_PURGE,
+            IndexShardTask.INDEX_SHARD_TASK,
             IndexVolume.INDEX_VOLUME,
             IndexVolumeGroup.INDEX_VOLUME_GROUP
         );

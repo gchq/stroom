@@ -283,6 +283,8 @@
       stroom.index.impl.db.jooq.tables.IndexFieldSource.*,
       stroom.index.impl.db.jooq.tables.IndexShard.*,
       stroom.index.impl.db.jooq.tables.IndexShardPendingStream.*,
+      stroom.index.impl.db.jooq.tables.IndexShardPurge.*,
+      stroom.index.impl.db.jooq.tables.IndexShardTask.*,
       stroom.index.impl.db.jooq.tables.IndexVolume.*,
       stroom.index.impl.db.jooq.tables.IndexVolumeGroup.*,
       stroom.job.impl.db.jooq.tables.Job.*,

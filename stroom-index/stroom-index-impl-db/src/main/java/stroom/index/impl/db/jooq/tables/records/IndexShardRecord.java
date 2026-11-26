@@ -270,6 +270,20 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> {
         return (Byte) get(17);
     }
 
+    /**
+     * Setter for <code>stroom.index_shard.writer_id</code>.
+     */
+    public void setWriterId(String value) {
+        set(18, value);
+    }
+
+    /**
+     * Getter for <code>stroom.index_shard.writer_id</code>.
+     */
+    public String getWriterId() {
+        return (String) get(18);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -293,7 +307,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> {
     /**
      * Create a detached, initialised IndexShardRecord
      */
-    public IndexShardRecord(Long id, String nodeName, Integer fkVolumeId, String indexUuid, Integer commitDocumentCount, Long commitDurationMs, Long commitMs, Integer documentCount, Long fileSize, Byte status, String indexVersion, String partitionName, Long partitionFromMs, Long partitionToMs, String leaseInstanceId, Long leaseExpiryMs, Long pruneCommitsAfterMs, Byte recoverPendingStreams) {
+    public IndexShardRecord(Long id, String nodeName, Integer fkVolumeId, String indexUuid, Integer commitDocumentCount, Long commitDurationMs, Long commitMs, Integer documentCount, Long fileSize, Byte status, String indexVersion, String partitionName, Long partitionFromMs, Long partitionToMs, String leaseInstanceId, Long leaseExpiryMs, Long pruneCommitsAfterMs, Byte recoverPendingStreams, String writerId) {
         super(IndexShard.INDEX_SHARD);
 
         setId(id);
@@ -314,6 +328,7 @@ public class IndexShardRecord extends UpdatableRecordImpl<IndexShardRecord> {
         setLeaseExpiryMs(leaseExpiryMs);
         setPruneCommitsAfterMs(pruneCommitsAfterMs);
         setRecoverPendingStreams(recoverPendingStreams);
+        setWriterId(writerId);
         resetTouchedOnNotNull();
     }
 }

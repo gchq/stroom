@@ -11,6 +11,8 @@ import org.jooq.impl.Internal;
 
 import stroom.index.impl.db.jooq.tables.IndexShard;
 import stroom.index.impl.db.jooq.tables.IndexShardPendingStream;
+import stroom.index.impl.db.jooq.tables.IndexShardPurge;
+import stroom.index.impl.db.jooq.tables.IndexShardTask;
 
 
 /**
@@ -27,4 +29,8 @@ public class Indexes {
     public static final Index INDEX_SHARD_INDEX_SHARD_LEASE_INSTANCE_ID = Internal.createIndex(DSL.name("index_shard_lease_instance_id"), IndexShard.INDEX_SHARD, new OrderField[] { IndexShard.INDEX_SHARD.LEASE_INSTANCE_ID }, false);
     public static final Index INDEX_SHARD_PENDING_STREAM_INDEX_SHARD_PENDING_STREAM_STATE = Internal.createIndex(DSL.name("index_shard_pending_stream_state"), IndexShardPendingStream.INDEX_SHARD_PENDING_STREAM, new OrderField[] { IndexShardPendingStream.INDEX_SHARD_PENDING_STREAM.STATE }, false);
     public static final Index INDEX_SHARD_PENDING_STREAM_INDEX_SHARD_PENDING_STREAM_STREAM_TASK = Internal.createIndex(DSL.name("index_shard_pending_stream_stream_task"), IndexShardPendingStream.INDEX_SHARD_PENDING_STREAM, new OrderField[] { IndexShardPendingStream.INDEX_SHARD_PENDING_STREAM.STREAM_ID, IndexShardPendingStream.INDEX_SHARD_PENDING_STREAM.TASK_ID }, false);
+    public static final Index INDEX_SHARD_PURGE_INDEX_SHARD_PURGE_CREATE_TIME = Internal.createIndex(DSL.name("index_shard_purge_create_time"), IndexShardPurge.INDEX_SHARD_PURGE, new OrderField[] { IndexShardPurge.INDEX_SHARD_PURGE.CREATE_TIME_MS }, false);
+    public static final Index INDEX_SHARD_TASK_INDEX_SHARD_TASK_SHARD_STREAM = Internal.createIndex(DSL.name("index_shard_task_shard_stream"), IndexShardTask.INDEX_SHARD_TASK, new OrderField[] { IndexShardTask.INDEX_SHARD_TASK.INDEX_SHARD_ID, IndexShardTask.INDEX_SHARD_TASK.STREAM_ID }, false);
+    public static final Index INDEX_SHARD_TASK_INDEX_SHARD_TASK_SHARD_WRITER = Internal.createIndex(DSL.name("index_shard_task_shard_writer"), IndexShardTask.INDEX_SHARD_TASK, new OrderField[] { IndexShardTask.INDEX_SHARD_TASK.INDEX_SHARD_ID, IndexShardTask.INDEX_SHARD_TASK.WRITER_ID, IndexShardTask.INDEX_SHARD_TASK.STATE }, false);
+    public static final Index INDEX_SHARD_TASK_INDEX_SHARD_TASK_STATE_UPDATE_TIME = Internal.createIndex(DSL.name("index_shard_task_state_update_time"), IndexShardTask.INDEX_SHARD_TASK, new OrderField[] { IndexShardTask.INDEX_SHARD_TASK.STATE, IndexShardTask.INDEX_SHARD_TASK.UPDATE_TIME_MS }, false);
 }

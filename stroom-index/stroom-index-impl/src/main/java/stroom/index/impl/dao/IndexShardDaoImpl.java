@@ -88,11 +88,8 @@ class IndexShardDaoImpl implements IndexShardDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardDaoImpl.class);
 
-    // The database's clock, so that lease times do not depend on the clocks of the nodes agreeing. Taken
-    // from UTC so that it does not depend on the session's time zone and never jumps when the clocks change.
-    private static final Field<Long> DB_TIME_MS = DSL.field(
-            "CAST(TIMESTAMPDIFF(MICROSECOND, '1970-01-01 00:00:00', UTC_TIMESTAMP(3)) DIV 1000 AS SIGNED)",
-            Long.class);
+    // The database's clock, so that lease times do not depend on the clocks of the nodes agreeing.
+    private static final Field<Long> DB_TIME_MS = DbTime.NOW_MS;
 
     private static final Function<Record, IndexShard> RECORD_TO_INDEX_SHARD_MAPPER = record -> IndexShard
             .builder()
