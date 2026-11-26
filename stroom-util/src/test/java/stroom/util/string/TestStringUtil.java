@@ -39,6 +39,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 // Auto formatter keeps putting trailing spaces in the text blocks, which CS doesn't like
 @SuppressWarnings("checkstyle:RegexpSingleline")
@@ -621,5 +622,31 @@ class TestStringUtil {
                 .addCase(" \n foo \n \n \n bar \n ", " foo \n bar ")
                 .addCase(" \n  \n foo \n \n \n bar \n \n ", " foo \n bar ")
                 .build();
+    }
+
+    @Test
+    void truncate() {
+        assertThat(StringUtil.truncate(null, 3)).isNull();
+        assertThat(StringUtil.truncate("", 0)).isEmpty();
+        assertThat(StringUtil.truncate("abc", 0)).isEmpty();
+        assertThat(StringUtil.truncate("ab", 3)).isEqualTo("ab");
+        assertThat(StringUtil.truncate("abc", 3)).isEqualTo("abc");
+        assertThat(StringUtil.truncate("abcd", 3)).isEqualTo("abc");
+    }
+
+    @Test
+    void truncateNeverSplitsACharacter() {
+        // The face takes two chars, so it is dropped whole rather than half of it being kept.
+        final String face = Character.toString(0x1F600);
+        assertThat(StringUtil.truncate("ab" + face, 3)).isEqualTo("ab");
+        assertThat(StringUtil.truncate("ab" + face, 4)).isEqualTo("ab" + face);
+        assertThat(StringUtil.truncate(face + "ab", 1)).isEmpty();
+        assertThat(StringUtil.truncate(face + "ab", 2)).isEqualTo(face);
+    }
+
+    @Test
+    void truncateToANegativeLengthIsRefused() {
+        assertThatThrownBy(() -> StringUtil.truncate("abc", -1))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 }

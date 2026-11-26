@@ -23,6 +23,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.TaskStatus;
@@ -32,6 +33,7 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 
 import jakarta.inject.Inject;
@@ -53,13 +55,13 @@ class ProcessorTaskOutputCleaner {
 
     private static final int BATCH_SIZE = 1_000;
 
-    // The statuses of tasks that finished well, of which the newest one's output is kept.
-    private static final Set<TaskStatus> KEPT = EnumSet.of(TaskStatus.COMPLETE, TaskStatus.COMMITTING);
+    // The statuses of tasks that finished well, of which the newest one's output is kept. The output of a held task
+    // is kept too, but it doesn't make any other out of date until it is complete, as it may yet be put back.
+    private static final Set<TaskStatus> KEPT = EnumSet.of(TaskStatus.COMPLETE);
     // The statuses of tasks that won't write any more output. A task waiting to be tried again isn't one of them, as
     // it clears its own output when it is.
     private static final Set<TaskStatus> FINISHED = EnumSet.of(
             TaskStatus.COMPLETE,
-            TaskStatus.COMMITTING,
             TaskStatus.ABORTED,
             TaskStatus.DELETED);
 
@@ -165,6 +167,29 @@ class ProcessorTaskOutputCleaner {
         if (!superseded.isEmpty()) {
             LOGGER.info(() -> LogUtil.message("Deleted {} out of date streams of stream {} when processor task {} "
                                               + "finished", superseded.size(), meta.getId(), task.getId()));
+        }
+    }
+
+    /// Deletes the output that a task that was held has made out of date, now that it is complete.
+    ///
+    /// @param taskId The id of the task.
+    void clearSuperseded(final long taskId) {
+        final ExpressionOperator expression = ExpressionOperator.builder()
+                .addIdTerm(ProcessorTaskFields.TASK_ID, Condition.EQUALS, taskId)
+                .build();
+        final ProcessorTask task = processorTaskDao.find(new ExpressionCriteria(expression))
+                .stream()
+                .findFirst()
+                .orElse(null);
+        final Processor processor = NullSafe.get(
+                task, ProcessorTask::getProcessorFilter, ProcessorFilter::getProcessor);
+        final Meta meta = task == null
+                ? null
+                : metaService.getMeta(task.getMetaId(), true);
+        if (processor == null || meta == null) {
+            LOGGER.debug("clearSuperseded() - nothing to clear for task {}", taskId);
+        } else {
+            clearSuperseded(task, meta, processor);
         }
     }
 

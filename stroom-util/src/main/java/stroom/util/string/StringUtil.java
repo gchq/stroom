@@ -564,4 +564,24 @@ public class StringUtil {
                     .collect(Collectors.joining("\n"));
         }
     }
+
+    /// Shortens text so that it has no more than a number of `char`s. A character that takes two `char`s, e.g. an
+    /// emoji, is never split, as half of one is not valid text and may not be stored or shown, so the text may be one
+    /// `char` shorter than the most allowed.
+    ///
+    /// @param text      The text, which may be null.
+    /// @param maxLength The most `char`s that it may have, which must not be negative.
+    /// @return The text, or the start of it if it is longer than `maxLength`.
+    public static String truncate(final String text, final int maxLength) {
+        if (maxLength < 0) {
+            throw new IllegalArgumentException("maxLength must not be negative: " + maxLength);
+        }
+        if (text == null || text.length() <= maxLength) {
+            return text;
+        }
+        final int end = maxLength > 0 && Character.isHighSurrogate(text.charAt(maxLength - 1))
+                ? maxLength - 1
+                : maxLength;
+        return text.substring(0, end);
+    }
 }
