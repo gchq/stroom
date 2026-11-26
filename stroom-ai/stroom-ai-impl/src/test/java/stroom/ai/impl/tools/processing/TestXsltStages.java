@@ -249,14 +249,14 @@ class TestXsltStages {
 
     @Test
     void intermediateStagesMirroringTheSharedXsltsNamespaceAreOutputs() {
-        // A translation to the fork, then a flattener and a CefEvent stage both in event-logging:3 (the namespace the
-        // shared Kafka XSLT reads): neither writes Events, so neither decorates.
+        // A translation to the fork, then a flattener and a stage writing a Line both in event-logging:3 (the
+        // namespace the shared Kafka XSLT reads): neither writes Events, so neither decorates.
         forkHeld();
         xslt("forked", "Forked translation", TRANSLATION.replace(EVENTS, FORK), true);
         xslt("flat", "Flattener", FLATTENER.replace(FORK, EVENTS), true);
         xslt("cef", "CEF line", "<xsl:stylesheet " + XSL + " xpath-default-namespace=\"" + EVENTS + "\" xmlns=\""
-                                + EVENTS + "\"><xsl:template match=\"/records\"><CefEvent><xsl:value-of "
-                                + "select=\"record/data/@value\"/></CefEvent></xsl:template></xsl:stylesheet>",
+                                + EVENTS + "\"><xsl:template match=\"/records\"><Line><xsl:value-of "
+                                + "select=\"record/data/@value\"/></Line></xsl:template></xsl:stylesheet>",
                 true);
         xslt("kafka", "Kafka records", KAFKA.replace(FORK, EVENTS), true);
         pipeline(CHILD, null, List.of("translationFilter", "flattenFilter", "cefFilter", "kafkaOutputFilter",
@@ -459,6 +459,9 @@ class TestXsltStages {
         final XmlSchemaDoc fork = Mockito.mock(XmlSchemaDoc.class);
         Mockito.when(fork.getNamespaceURI()).thenReturn(FORK);
         Mockito.when(heldSchemas.forks()).thenReturn(List.of(fork));
+        // Some of the elements written inside an Event, as the Events schemas held give them.
+        Mockito.when(heldSchemas.eventElementNames()).thenReturn(Set.of("EventTime", "EventSource", "EventDetail",
+                "Location", "Device", "User"));
     }
 
     private void xslt(final String uuid, final String name, final String code, final boolean canView) {

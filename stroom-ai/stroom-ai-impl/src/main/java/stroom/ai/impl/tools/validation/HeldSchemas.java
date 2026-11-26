@@ -51,6 +51,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -367,6 +368,36 @@ public class HeldSchemas {
     /// @throws ToolRefusal if it can't be read as an Events schema.
     public EventSchema eventSchema(final XmlSchemaDoc doc) {
         return parsed(NullSafe.string(doc.getData()), doc.getSystemId().strip(), "'" + doc.getSystemId() + "'");
+    }
+
+    /// The names of the elements that may be written inside an Event, by the Events schemas this Stroom holds: the
+    /// newest event-logging version's and each fork's ([EventSchema#elementNames]). An XSLT writing only some of
+    /// them (a shared module's `<Location>`) writes parts of Events; one writing none in an Events namespace (a
+    /// flattener's `<records>`, a later stage's own element) writes no Events.
+    ///
+    /// @return The names; empty if this Stroom holds no Events schema the user may view, or none can be read.
+    public Set<String> eventElementNames() {
+        final Set<String> names = new HashSet<>();
+        final List<String> versions = heldEventVersions();
+        if (!versions.isEmpty()) {
+            addElementNames(names, versions.getFirst(), () -> eventSchema(versions.getFirst()));
+        }
+        for (final XmlSchemaDoc fork : forks()) {
+            addElementNames(names, fork.getSystemId(), () -> eventSchema(fork));
+        }
+        return Set.copyOf(names);
+    }
+
+    // The element names of a schema added; none where it can't be read (the rest still count).
+    private static void addElementNames(final Set<String> names,
+                                        final String which,
+                                        final Supplier<EventSchema> schema) {
+        try {
+            names.addAll(schema.get().elementNames());
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No element names read from Events schema {}: {}", which,
+                    e.getMessage()), e);
+        }
     }
 
     /// The forks of the event-logging schema this Stroom holds: XML schema documents in a schema group that holds

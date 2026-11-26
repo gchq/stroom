@@ -6396,8 +6396,7 @@ records in the sample (severity, names, addresses kept), then takes what the cat
   placed field are taken out, and a placed field is Data too only with `also_data`. A placement's (or a common
   entry's) `xpath` reads the fields it names as the records spell them (`XPathFieldReads`, 2026-11-26: a JSON key
   `*[@key='a']/*[@key='b']` is `a.b`, a key of held JSON through `json-to-xml(...)/*/*[@key='k']` is `<field>.k`, a
-  Data Splitter's `data[@name='n']`, an XML path as it is); an xpath read no other way reads nothing here. The text of
-  a `json_fields`/`xml_fields` field whose keys are fields isn't Data again, its keys are.
+  Data Splitter's `data[@name='n']`, an XML path as it is); an xpath read no other way reads nothing here.
 * A field empty in every sampled record is left out of every rule (typed and Data alike, unless a placement names
   it), listed in `unread_fields` as "empty in every sampled record" and in a note (2026-11-21, chat 182).
 

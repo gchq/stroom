@@ -2254,12 +2254,15 @@ class TestPromoteBuildTool {
 
 
     /// A user of a client that shows forms, answering each form in turn as given (the last answer again after the
-    /// rest), keeping each form's message and fields.
+    /// rest), keeping each form's message and fields. As the chat does (McpElicitations finds a call's form by its
+    /// id), a form asked again under an id already answered is given that answer again, unshown: a re-ask the
+    /// tool doesn't tell apart by its id never reaches the user.
     private static final class SequencedUser implements UserQuestions {
 
         private final List<BiFunction<Map<String, Object>, String, ElicitResult>> answers;
         private final List<String> intros = new ArrayList<>();
         private final List<Map<String, Object>> schemas = new ArrayList<>();
+        private final Map<String, ElicitResult> answeredById = new LinkedHashMap<>();
 
         private SequencedUser(final List<BiFunction<Map<String, Object>, String, ElicitResult>> answers) {
             this.answers = answers;
@@ -2283,9 +2286,16 @@ class TestPromoteBuildTool {
                                 final String callId,
                                 final String intro,
                                 final Map<String, Object> form) {
+            if (callId != null && answeredById.containsKey(callId)) {
+                return answeredById.get(callId);
+            }
             intros.add(intro);
             schemas.add(form);
-            return answers.get(Math.min(answers.size(), intros.size()) - 1).apply(form, intro);
+            final ElicitResult answer = answers.get(Math.min(answers.size(), intros.size()) - 1).apply(form, intro);
+            if (callId != null) {
+                answeredById.put(callId, answer);
+            }
+            return answer;
         }
     }
 }

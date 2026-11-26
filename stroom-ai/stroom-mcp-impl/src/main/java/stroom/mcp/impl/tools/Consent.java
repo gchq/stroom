@@ -416,6 +416,28 @@ public class Consent {
                                                           final String action,
                                                           final String intro,
                                                           final Map<String, OpenQuestion> questions) {
+        return chooseOrTypeEach(call, context, action, intro, questions, 1);
+    }
+
+    /// As [#chooseOrTypeEach(ToolCall, ToolCallContext, String, String, Map)], the same questions asked again in
+    /// the same call (its intro saying why, e.g. an answer that is no folder): each round is a form of its own, so
+    /// the answer to an earlier round is never taken for a later one. A form's key is worked out from what it asks,
+    /// not its intro, so without the round a re-ask would be the same form, given its first answer again.
+    ///
+    /// @param call      The call asking.
+    /// @param context   The call's context.
+    /// @param action    The tool asking, e.g. `promote_build`.
+    /// @param intro     What the questions are about, the form's message.
+    /// @param questions The questions by key, in the order asked.
+    /// @param round     Which time in the call the questions are asked: 1 the first, 2 the second, and so on.
+    /// @return As [#chooseOrTypeEach(ToolCall, ToolCallContext, String, String, Map)].
+    /// @throws ToolRefusal if the user declined the form or closed it unanswered.
+    public Optional<Map<String, String>> chooseOrTypeEach(final ToolCall call,
+                                                          final ToolCallContext context,
+                                                          final String action,
+                                                          final String intro,
+                                                          final Map<String, OpenQuestion> questions,
+                                                          final int round) {
         if (NullSafe.isEmptyMap(questions) || !context.userQuestions().canAsk()) {
             return Optional.empty();
         }
@@ -446,8 +468,8 @@ public class Consent {
         final String digest = formDigest(action, questions.keySet(), questions.values().stream()
                 .map(question -> question.text() + "=" + question.options() + "|" + question.other())
                 .toList());
-        final Optional<ElicitResult> asked = askShown(call, context, action, intro, "answers-" + digest, intro,
-                schema);
+        final Optional<ElicitResult> asked = askShown(call, context, action, intro,
+                inRound("answers-" + digest, round), intro, schema);
         if (asked.isEmpty()) {
             return Optional.empty();
         }
@@ -758,6 +780,15 @@ public class Consent {
             parts.add(String.valueOf(part));
         }
         return XsltCode.sha256(String.join("\n", parts)).substring(0, 16);
+    }
+
+    // A form's key in the round it is asked in within its call: the first round's key as it is (so a form asked
+    // before rounds were told apart is still found), a later round's its own. No '-' is added: the form's kind is
+    // its key up to the last one (McpElicitations.formKind).
+    private static String inRound(final String key, final int round) {
+        return round <= 1
+                ? key
+                : key + ".round" + round;
     }
 
     // The form asked, or empty where it can't be shown: too large (seen: a stand-ins form of a question for each of

@@ -30,7 +30,6 @@ import stroom.ai.impl.tools.generation.DumpMode;
 import stroom.ai.impl.tools.generation.ListChange;
 import stroom.ai.impl.tools.generation.MappingFacts;
 import stroom.ai.impl.tools.generation.XPathFieldReads;
-import stroom.ai.impl.tools.sample.JsonFieldNames;
 import stroom.ai.impl.tools.sample.NameValueLists;
 import stroom.ai.impl.tools.sample.NameValueLists.ChangeList;
 import stroom.util.shared.NullSafe;
@@ -188,9 +187,14 @@ final class CatalogueTranslation {
         final List<String> rest = rest(common);
         final List<Map<String, Object>> rules = new ArrayList<>();
         final List<Map<String, Object>> drops = new ArrayList<>(JsonValues.maps(mapping.get("drop_when")));
+        // The draft's events rules with drop: true, kept ahead of the catch-all (the events list is replaced): they
+        // drop the records no event type recognises, as they did, so the catch-all's count of what the mapping's
+        // drop rules drop is true (seen: a draft's drop: true rule was discarded, yet its records were said to be
+        // dropped, and the applied draft wrote them as Unknown).
+        final List<Map<String, Object>> keptDropRules = dropRules(JsonValues.maps(mapping.get("events")));
         // The mapping's own drop rules (the draft's), before the catalogue's are added: the uncatalogued records
         // they drop are counted apart from those the catch-all writes as Unknown.
-        final List<List<Condition>> ownDrops = drops.stream()
+        final List<List<Condition>> ownDrops = Stream.concat(drops.stream(), keptDropRules.stream())
                 .map(drop -> WayCheck.conditions(drop.get(WHEN)))
                 .filter(when -> when != null && !when.isEmpty())
                 .toList();
@@ -240,6 +244,11 @@ final class CatalogueTranslation {
             }
         }
         if (!sole) {
+            // After every event type's rules: only what none recognises is dropped, as before the catch-all.
+            keptDropRules.forEach(rule -> {
+                rule.put(NAME, unique(ToolText.str(rule.get(NAME)), ruleNames));
+                rules.add(rule);
+            });
             rules.add(catchAll(common, catchAllReason));
         }
         mapping.put("events", rules);
@@ -264,6 +273,25 @@ final class CatalogueTranslation {
         applied.put("dropped", dropped);
         applied.put("unread_fields", unread);
         return applied;
+    }
+
+    // The rules of an events list that drop their records (drop: true) by conditions that read, each a copy; one
+    // with no conditions (it would take every record) is left out, as the catalogue's rules settle those records.
+    private static List<Map<String, Object>> dropRules(final List<Map<String, Object>> events) {
+        final List<Map<String, Object>> out = new ArrayList<>();
+        for (final Map<String, Object> rule : events) {
+            final List<Condition> when = JsonValues.truthy(rule.get("drop"))
+                    ? WayCheck.conditions(rule.get(WHEN))
+                    : null;
+            if (when != null && !when.isEmpty()) {
+                final Map<String, Object> kept = new LinkedHashMap<>(rule);
+                if (NullSafe.isBlankString(ToolText.str(kept.get(NAME)))) {
+                    kept.put(NAME, "drop");
+                }
+                out.add(kept);
+            }
+        }
+        return out;
     }
 
     // Every way of recognising the event types, in the catalogue's order, then a sole event type's (recognised by
@@ -416,8 +444,7 @@ final class CatalogueTranslation {
         }
         final int fixed = fields.size();
         for (final String name : names) {
-            if (!inCommon.contains(name) && !NullSafe.isEmptyCollection(values.get(name)) && !heldText(name)
-                && !emptyEverywhere(name)) {
+            if (!inCommon.contains(name) && !NullSafe.isEmptyCollection(values.get(name)) && !emptyEverywhere(name)) {
                 fields.add(entry(PATH, data, DATA_NAME, name, FIELD, name));
             }
         }
@@ -740,20 +767,8 @@ final class CatalogueTranslation {
         final Set<String> taken = readBy(common);
         detailFields.forEach(entry -> taken.add(ToolText.str(entry.get(FIELD))));
         return names.stream()
-                .filter(name -> !taken.contains(name) && !NullSafe.isEmptyCollection(values.get(name))
-                                && !heldText(name))
+                .filter(name -> !taken.contains(name) && !NullSafe.isEmptyCollection(values.get(name)))
                 .toList();
-    }
-
-    // Whether a field is text holding JSON or XML whose keys or elements are fields of their own (json_fields,
-    // xml_fields): those are the Data, not the text again (seen in testing: a JSON line's held event.original kept
-    // whole as Data beside its keys, a placed one among them).
-    private boolean heldText(final String name) {
-        if (JsonValues.strings(mapping.get("json_fields")).contains(name)) {
-            return names.stream().anyMatch(other -> JsonFieldNames.below(name, other) != null);
-        }
-        return JsonValues.strings(mapping.get("xml_fields")).contains(name)
-               && names.stream().anyMatch(other -> other.startsWith(name + "/"));
     }
 
     // The fields a way tests for a code (equals, one_of; not a not), but the source type field.
@@ -803,11 +818,17 @@ final class CatalogueTranslation {
                 : TypeIds.defaultFor(type);
     }
 
-    // A rule's name: its TypeId's words in snake case (SearchQuery, Search-Query: search_query), and for a second
-    // or later way of the type, what tells the way apart from the type's other ways (the values its equals and one_of
-    // conditions test that no other way of the type tests: search_query_qa), else its number (search_query_2), as
-    // also where that would be another rule's name. Seen in testing: a rule searchquery_2, named nowhere else, read
-    // as an event type of its own in the documentation.
+    /// A rule's name: its TypeId's words in snake case (SearchQuery, Search-Query: search_query), and for a second
+    /// or later way of the type, what tells the way apart from the type's other ways (the values its equals and
+    /// one_of conditions test that no other way of the type tests: search_query_qa), else its number
+    /// (search_query_2), as also where that would be another rule's name. Seen in testing: a rule searchquery_2,
+    /// named nowhere else, read as an event type of its own in the documentation.
+    ///
+    /// @param typeId The event type's TypeId.
+    /// @param type   The event type.
+    /// @param way    Which of the type's ways the rule is for, 0 the first.
+    /// @param taken  The names of the rules named so far.
+    /// @return The rule's name (not yet made unique among the rules).
     static String ruleName(final String typeId, final EventType type, final int way, final Set<String> taken) {
         final String name = slug(typeId);
         final String base = name.isEmpty()
@@ -850,8 +871,11 @@ final class CatalogueTranslation {
                 : ToolText.strip(told.substring(0, MAX_TOLD_APART), "_");
     }
 
-    // A text as a rule name's part: its words lower case, joined by _ (a lower case letter or digit followed by a
-    // capital, and the last of a run of capitals followed by a lower case letter, start a word).
+    /// A text as a rule name's part: its words lower case, joined by _ (a lower case letter or digit followed by a
+    /// capital, and the last of a run of capitals followed by a lower case letter, start a word).
+    ///
+    /// @param text The text, e.g. a TypeId (`Search-Query`, `SearchQuery`).
+    /// @return Its words in snake case (`search_query`), "" if it has none.
     static String slug(final String text) {
         final String words = WORD_START.matcher(text).replaceAll("_");
         return ToolText.strip(NOT_NAME.matcher(words).replaceAll("_"), "_").toLowerCase(Locale.ROOT);

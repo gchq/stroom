@@ -29,6 +29,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
+import jakarta.inject.Provider;
+
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -188,6 +190,24 @@ final class LongValues {
             LOGGER.debug(() -> LogUtil.message("Couldn't read build {}'s long values choice: {}", build,
                     e.getMessage()));
             return Optional.empty();
+        }
+    }
+
+    /// As [#cutLength(BuildRecords, String)], where the build records may not be read (they are got from a provider,
+    /// and the user's choice read from them): the parser's default where they can't be, so a check of the records as
+    /// processing cuts them never fails the call it is part of.
+    ///
+    /// @param records The build records, or null.
+    /// @param build   The build, or null.
+    /// @return The length.
+    static int cutLengthOrDefault(final Provider<BuildRecords> records, final String build) {
+        try {
+            return cutLength(records == null
+                    ? null
+                    : records.get(), build);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No long values choice read for {}: {}", build, e.getMessage()));
+            return JsonStringValues.DEFAULT_TRUNCATE_LENGTH;
         }
     }
 

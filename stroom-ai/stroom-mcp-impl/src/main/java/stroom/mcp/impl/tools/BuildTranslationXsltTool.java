@@ -1170,9 +1170,7 @@ class BuildTranslationXsltTool extends AbstractBuiltInTool {
         if (b.earlierCheck != null) {
             // Drop rules on a key of a held JSON field that processing's string cut leaves unreadable: the check
             // reads the records whole.
-            final int cut = LongValues.cutLength(buildRecords == null
-                    ? null
-                    : buildRecords.get(), build);
+            final int cut = LongValues.cutLengthOrDefault(buildRecords, build);
             CutHeldDrops.warnings(b.earlierCheck.checked(), cut).forEach(warning -> warnings.add("sample: "
                                                                                                  + warning));
         }

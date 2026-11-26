@@ -35,13 +35,16 @@ import java.util.Set;
 /// counted, as it isn't written.
 public final class XPathFieldReads {
 
-    // The functions whose value is the text of the node they are given: a read of it.
     // The operators whose right side is read from their left side's nodes.
     private static final Set<String> PATH_OPERATORS = Set.of("/", "//", "!");
-    private static final Set<String> AS_IT_IS = Set.of("string", "data", "normalize-space");
+    // The functions whose value is the text of the node they are given: a read of it, as it is.
+    private static final Set<String> AS_IT_IS = Set.of("string", "data");
+    // The functions whose value is the text of the node they are given, changed: a read of it ([#fields]), but not
+    // the field as it is ([#plainField]); normalize-space() trims and folds its white space.
+    private static final Set<String> CHANGED = Set.of("normalize-space");
     private static final Set<String> JSON_CALLS = Set.of("json-to-xml", "fn:json-to-xml", "mcp:json-to-xml",
             "stroom:json-to-xml");
-    private static final Cursor RECORD = new Cursor(null, Mode.RECORD, Style.NONE);
+    private static final Cursor RECORD = new Cursor(null, Mode.RECORD, Style.NONE, true);
     // Where a path is at a field's value: not a document, a held JSON's top, nor a field's items.
     private static final Set<Mode> VALUES = Set.of(Mode.RECORD, Mode.HELD, Mode.END);
 
@@ -64,14 +67,15 @@ public final class XPathFieldReads {
 
     /// @param xpath An xpath of a mapping's entry (or null).
     /// @return The one field the whole xpath gives as it is (its text, its first value), or null: an xpath doing
-    /// anything else with it (a substring, a join, a condition) gives a value of its own.
+    /// anything else with it (a substring, a join, normalize-space(), a condition, a filter or a position other than
+    /// the first in a predicate beyond the step naming the field) gives a value of its own.
     public static String plainField(final String xpath) {
         final XPathNode node = parsed(xpath);
         if (node == null) {
             return null;
         }
         final Cursor cursor = resolve(node);
-        return cursor != null && cursor.field() != null && VALUES.contains(cursor.mode())
+        return cursor != null && cursor.plain() && cursor.field() != null && VALUES.contains(cursor.mode())
                 ? cursor.field()
                 : null;
     }
@@ -137,7 +141,7 @@ public final class XPathFieldReads {
                 final Cursor left = resolve(node.get(0));
                 return left == null
                         ? null
-                        : step(left, node.get(1));
+                        : changedIf(step(left, node.get(1)), !left.plain());
             }
             case "call" -> {
                 return called(node);
@@ -154,16 +158,16 @@ public final class XPathFieldReads {
             final Cursor held = resolve(node.get(0));
             return held == null || held.field() == null || !VALUES.contains(held.mode())
                     ? null
-                    : new Cursor(held.field(), Mode.DOCUMENT, Style.JSON);
+                    : new Cursor(held.field(), Mode.DOCUMENT, Style.JSON, held.plain());
         }
         final String local = name.startsWith("fn:")
                 ? name.substring(3)
                 : name;
-        if (AS_IT_IS.contains(local) && node.size() == 1) {
+        if ((AS_IT_IS.contains(local) || CHANGED.contains(local)) && node.size() == 1) {
             final Cursor read = resolve(node.get(0));
             return read == null || read.mode() == Mode.DOCUMENT
                     ? null
-                    : read;
+                    : changedIf(read, CHANGED.contains(local));
         }
         return null;
     }
@@ -189,20 +193,21 @@ public final class XPathFieldReads {
                     // A Windows event's EventData/Data by its Name, as XML records name it.
                     return elementStep(at, base.valueText() + "[@Name='" + named + "']");
                 }
-                // A position or a filter: the same field.
-                return at == RECORD
+                // A position or a filter: the same field read; as it is only for its first value ([1]), not for
+                // a filter (`[. != '']`) or another position, which may give other values than the field's.
+                return changedIf(at == RECORD
                         ? resolve(base)
-                        : step(at, base);
+                        : step(at, base), !isFirst(node.get(1)));
             }
             case "*" -> {
                 if (at.mode() == Mode.DOCUMENT) {
                     // The held JSON's own map (or array).
-                    return new Cursor(at.field(), Mode.HELD_TOP, Style.JSON);
+                    return new Cursor(at.field(), Mode.HELD_TOP, Style.JSON, at.plain());
                 }
                 // A field's items: the field read, nothing below it named.
                 return at.field() == null || at.mode() == Mode.END
                         ? null
-                        : new Cursor(at.field(), Mode.ITEMS, at.style());
+                        : new Cursor(at.field(), Mode.ITEMS, at.style(), at.plain());
             }
             case "(name)" -> {
                 return elementStep(at, node.valueText());
@@ -213,12 +218,12 @@ public final class XPathFieldReads {
                 }
                 final String attribute = node.get(0).valueText();
                 if (at.style() == Style.DATA && "value".equals(attribute) && at.mode() == Mode.RECORD) {
-                    return new Cursor(at.field(), Mode.END, Style.DATA);
+                    return new Cursor(at.field(), Mode.END, Style.DATA, at.plain());
                 }
                 if (at.mode() == Mode.RECORD && (at.style() == Style.NONE || at.style() == Style.XML)) {
                     return new Cursor(at.field() == null
                             ? "@" + attribute
-                            : at.field() + "/@" + attribute, Mode.END, Style.XML);
+                            : at.field() + "/@" + attribute, Mode.END, Style.XML, at.plain());
                 }
                 return null;
             }
@@ -230,12 +235,12 @@ public final class XPathFieldReads {
 
     private static Cursor keyStep(final Cursor at, final String key) {
         if (at.mode() == Mode.HELD || at.mode() == Mode.HELD_TOP) {
-            return new Cursor(JsonFieldNames.child(at.field(), key), Mode.HELD, Style.JSON);
+            return new Cursor(JsonFieldNames.child(at.field(), key), Mode.HELD, Style.JSON, at.plain());
         }
         if (at.mode() == Mode.RECORD && (at.style() == Style.NONE || at.style() == Style.JSON)) {
             return new Cursor(JsonFieldNames.child(at.field() == null
                     ? ""
-                    : at.field(), key), Mode.RECORD, Style.JSON);
+                    : at.field(), key), Mode.RECORD, Style.JSON, at.plain());
         }
         return null;
     }
@@ -244,7 +249,7 @@ public final class XPathFieldReads {
         if (at.mode() == Mode.RECORD && (at.style() == Style.NONE || at.style() == Style.DATA)) {
             return new Cursor(at.field() == null
                     ? name
-                    : at.field() + "/" + name, Mode.RECORD, Style.DATA);
+                    : at.field() + "/" + name, Mode.RECORD, Style.DATA, at.plain());
         }
         return null;
     }
@@ -253,9 +258,21 @@ public final class XPathFieldReads {
         if (at.mode() == Mode.RECORD && (at.style() == Style.NONE || at.style() == Style.XML)) {
             return new Cursor(at.field() == null
                     ? name
-                    : at.field() + "/" + name, Mode.RECORD, Style.XML);
+                    : at.field() + "/" + name, Mode.RECORD, Style.XML, at.plain());
         }
         return null;
+    }
+
+    // Whether a predicate is the position 1: a field's first value, as a value-of of the field gives it.
+    private static boolean isFirst(final XPathNode predicate) {
+        return "(integer)".equals(predicate.symbol()) && "1".equals(predicate.valueText());
+    }
+
+    // The cursor, no longer the field as it is where changed (null for none).
+    private static Cursor changedIf(final Cursor cursor, final boolean changed) {
+        return cursor == null || !changed || !cursor.plain()
+                ? cursor
+                : new Cursor(cursor.field(), cursor.mode(), cursor.style(), false);
     }
 
     // The value a predicate tests an attribute for (`@key = 'x'`, either way round), or null.
@@ -300,8 +317,9 @@ public final class XPathFieldReads {
         XML
     }
 
-    // A path's field so far (null for the record itself), where it is and how it names its fields.
-    private record Cursor(String field, Mode mode, Style style) {
+    // A path's field so far (null for the record itself), where it is, how it names its fields, and whether its
+    // value is still the field's as it is (no filter, position or changing function on the way).
+    private record Cursor(String field, Mode mode, Style style, boolean plain) {
 
     }
 }

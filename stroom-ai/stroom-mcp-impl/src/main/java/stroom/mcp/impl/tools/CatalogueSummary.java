@@ -244,7 +244,8 @@ final class CatalogueSummary {
         return lines;
     }
 
-    // A heading: its first letter a capital.
+    /// @param text A heading's text.
+    /// @return It with its first letter a capital ("" as it is).
     static String heading(final String text) {
         return text.isEmpty()
                 ? text

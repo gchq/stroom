@@ -26,12 +26,12 @@ import stroom.ai.impl.tools.sample.SampleProfiler;
 import stroom.ai.impl.tools.sample.ToolJson;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /// A mapping's drop rules (`drop_when`, and events rules with `drop: true`) whose conditions read a key of a held
 /// JSON field (`json_fields`) that processing's string cut leaves unreadable on some sample records: Stroom's
@@ -78,13 +78,12 @@ public final class CutHeldDrops {
                                                       final int cut,
                                                       final String name,
                                                       final List<Condition> when) {
-        final Set<String> held = new LinkedHashSet<>();
-        for (final Condition c : when) {
-            final String json = MappingFacts.heldJsonField(checked.mapping().jsonFields(), c.field());
-            if (json != null && !json.equals(c.field())) {
-                held.add(json);
-            }
-        }
+        // Every held field a condition's key is read through, the outermost first: with a.k held in a, a key of
+        // a.k is unreadable where a is cut, as well as where a.k is (RecordIndex.cutHeld reads them so too).
+        final List<String> held = new ArrayList<>(new LinkedHashSet<>(when.stream()
+                .flatMap(c -> MappingFacts.heldJsonFields(checked.mapping().jsonFields(), c.field()).stream())
+                .toList()));
+        held.sort(Comparator.comparingInt(String::length));
         if (held.isEmpty()) {
             return Optional.empty();
         }
@@ -95,9 +94,7 @@ public final class CutHeldDrops {
             if (!(checked.record(n) instanceof final Map<?, ?> record)) {
                 continue;
             }
-            final List<String> unreadable = held.stream()
-                    .filter(json -> unreadable(record.get(json), cut))
-                    .toList();
+            final List<String> unreadable = outermostUnreadable(record, held, cut);
             if (unreadable.isEmpty()) {
                 continue;
             }
@@ -122,6 +119,19 @@ public final class CutHeldDrops {
                 : "the rule keeps them read whole, but in processing drops them") + ". Raise the pipeline's "
                                      + "stringTruncateLength (long_values=whole), or test a field outside '"
                                      + cutField + "'");
+    }
+
+    // The held fields unreadable on a record once cut, each the outermost: one inside another unreadable isn't
+    // there at all in processing (nothing inside the cut text is), so it is left to the outer one.
+    private static List<String> outermostUnreadable(final Map<?, ?> record, final List<String> held, final int cut) {
+        final List<String> out = new ArrayList<>();
+        for (final String json : held) {
+            final boolean inside = out.stream().anyMatch(outer -> JsonFieldNames.below(outer, json) != null);
+            if (!inside && unreadable(record.get(json), cut)) {
+                out.add(json);
+            }
+        }
+        return out;
     }
 
     // Whether a held value is a string processing cuts into text that isn't JSON.

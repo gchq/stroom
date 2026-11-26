@@ -77,6 +77,32 @@ class TestCatalogueSeed {
     }
 
     @Test
+    void aRuleThatDropsItsRecordsSeedsADropRuleWithAPlainLabel() {
+        // Seeded as a Verb-Object event type, a draft's drop: true rule was put to the user as an event to
+        // translate, unlike a drop rule proposed or kept in the catalogue.
+        final Map<String, Object> draft = new LinkedHashMap<>();
+        draft.put("mapping", Map.of("events", List.of(
+                rule("a", List.of(Map.of("field", "op", "equals", "x.Save")), "EventDetail/Update/Action", "Modify"),
+                Map.of("name", "heartbeats", "when", List.of(Map.of("field", "kind", "equals", "hb")), "drop", true),
+                Map.of("name", "other", "fields", List.of(Map.of("path", "EventDetail/Unknown/Data", "data_name", "x",
+                        "field", "x"))))));
+
+        final List<EventType> seed = CatalogueSeed.fromDraft(draft);
+
+        assertThat(seed).hasSize(2);
+        assertThat(seed.get(1)).satisfies(drop -> {
+            assertThat(drop.drop()).isTrue();
+            assertThat(drop.typeId()).isEqualTo("heartbeats");
+            assertThat(TypeIds.dropProblem(drop.typeId())).isNull();
+            assertThat(drop.eventDetail()).isNull();
+            assertThat(drop.basis()).isEqualTo(EventType.DRAFT);
+            assertThat(drop.recognisedBy().getFirst().when()).containsExactly(
+                    Condition.fromJson(Map.of("field", "kind", "equals", "hb")));
+        });
+        assertThat(seed.getFirst().drop()).isFalse();
+    }
+
+    @Test
     void aDraftOfOneRuleForEveryRecordSeedsASoleEventType() {
         // stroom-ai/DESIGN.md, A sole event type: records all one event type (every record a logon, told by nothing
         // in it) are recognised by every record; seeded so, not left to the catch-all as Unknown.

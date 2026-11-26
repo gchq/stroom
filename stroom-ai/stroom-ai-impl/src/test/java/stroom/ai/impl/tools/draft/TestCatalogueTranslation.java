@@ -18,6 +18,7 @@ package stroom.ai.impl.tools.draft;
 
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.catalogue.Catalogue;
+import stroom.ai.impl.tools.catalogue.CatalogueCheck;
 import stroom.ai.impl.tools.generation.TranslationMapping;
 import stroom.ai.impl.tools.generation.XsltGenerator;
 import stroom.ai.impl.tools.sample.SplitterSpec;
@@ -741,6 +742,36 @@ class TestCatalogueTranslation extends DraftFixtures {
         assertThat(applied).containsEntry("uncatalogued", 1).containsEntry("uncatalogued_dropped", 3);
     }
 
+    // Seen in review: the draft's events rule with drop: true was discarded as the events list was replaced, yet
+    // its records were counted as dropped by the mapping; the applied draft wrote them as Unknown.
+    @Test
+    void aDraftsEventsRuleThatDropsIsKeptAheadOfTheCatchAllAndItsRecordsCountedAsDropped() {
+        final Map<String, Object> mapping = new LinkedHashMap<>();
+        mapping.put("input", "data_splitter");
+        mapping.put("common", new ArrayList<>());
+        mapping.put("events", new ArrayList<>(List.of(
+                new LinkedHashMap<>(Map.of("name", "heartbeats", "when", List.of(eq("evt", "1102")), "drop", true)),
+                new LinkedHashMap<>(Map.of("name", "everything", "fields", List.of())))));
+        final List<Map<String, Object>> records = new ArrayList<>();
+        for (final String evt : List.of("4624", "1102", "1102", "7777")) {
+            records.add(new LinkedHashMap<>(Map.of("evt", evt, "usr", "alice")));
+        }
+        final Catalogue catalogue = SourceNotes.catalogue(notes(List.of(type("Authenticate-Logon", "Logon",
+                "Authenticate", "Logon", "true", way(eq("evt", "4624")))), true));
+
+        final Map<String, Object> applied = CatalogueTranslation.apply(mapping, List.of("evt", "usr"),
+                Map.of("evt", List.of("4624", "1102", "7777"), "usr", List.of("alice")), catalogue, null, List.of(),
+                CHECK, records, PairMatches.create(), Map.of());
+
+        assertThat(applied).containsEntry("uncatalogued", 1).containsEntry("uncatalogued_dropped", 2);
+        final List<Map<String, Object>> events = JsonValues.maps(mapping.get("events"));
+        assertThat(events).extracting(rule -> rule.get("name"))
+                .containsExactly("authenticate_logon", "heartbeats", CatalogueTranslation.CATCH_ALL_NAME);
+        assertThat(events.get(1)).containsEntry("drop", true).containsEntry("when", List.of(eq("evt", "1102")));
+        // What the catch-all form counts as dropped by the mapping's drop rules is what the applied mapping drops.
+        assertThat(CatalogueCheck.Drafted.dropsOf(mapping)).hasSize(1);
+    }
+
     // Seen in testing: a single-source JSON feed, event.original an escaped JSON string whose details is JSON text
     // again; details' query_text, placed as Query/Raw by an xpath, was kept as Data too.
     @Test
@@ -765,9 +796,9 @@ class TestCatalogueTranslation extends DraftFixtures {
         assertThat(fields(rule).get("EventDetail/Search/Query/Raw")).containsEntry("xpath", xpath);
         assertThat(JsonValues.maps(rule.get("fields")))
                 .noneMatch(field -> "event.original.details.query_text".equals(field.get("field")));
-        // The held JSON's other keys are Data, the text holding them isn't.
-        assertThat(dataNames(rule)).contains("event.original.details.scope", "event.original.client")
-                .doesNotContain("event.original", "event.original.details");
+        // The held JSON's other keys are Data, and the texts holding them are kept as Data too.
+        assertThat(dataNames(rule)).contains("event.original.details.scope", "event.original.client",
+                "event.original", "event.original.details");
     }
 
     @Test

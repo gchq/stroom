@@ -616,6 +616,26 @@ class TestConsent {
     }
 
     @Test
+    void theSameQuestionsAskedAgainInALaterRoundOfACallAreAFormOfTheirOwn() {
+        // A form's key is worked out from what it asks, not its intro: re-asked with only the intro changed (an
+        // answer that was no folder), the same key was the same form, given the answer just refused again.
+        final Questions questions = new Questions(new ElicitResult(ElicitResult.Action.ACCEPT,
+                Map.of("a1", "Here")));
+        final ToolCallContext context = questions.context();
+        final Map<String, Consent.OpenQuestion> asked = Map.of("Events", new Consent.OpenQuestion("Where Events goes",
+                List.of("Here"), "Another folder", "The folder"));
+
+        consent.chooseOrTypeEach(CALL, context, "a_tool", "Where each goes.", asked);
+        consent.chooseOrTypeEach(CALL, context, "a_tool", "Where each goes, again.", asked, 1);
+        consent.chooseOrTypeEach(CALL, context, "a_tool", "Not a folder. Where each goes.", asked, 2);
+        consent.chooseOrTypeEach(CALL, context, "a_tool", "Not a folder. Where each goes.", asked, 3);
+
+        assertThat(questions.callIds.get(1)).as("round 1 is the form as first asked")
+                .isEqualTo(questions.callIds.get(0));
+        assertThat(questions.callIds.subList(1, 4)).doesNotHaveDuplicates();
+    }
+
+    @Test
     void valuesToEditTooManyForAFormAreShownInTheChatThenConfirmedInOneShortForm() {
         // A new version's names, a field each: past what a form holds, the form was never shown and the call could
         // never go on.

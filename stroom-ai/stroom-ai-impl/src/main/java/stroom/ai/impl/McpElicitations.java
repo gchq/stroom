@@ -40,12 +40,10 @@ import jakarta.inject.Singleton;
 
 import java.time.Duration;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -160,7 +158,8 @@ public class McpElicitations {
         }
         // Asked before the run stopped: the answer, if there is one now.
         final AiChatMessage askedMessage = findForCall(chatId, callId)
-                .or(() -> findSameQuestion(chatId, tool, callId, schema))
+                .or(() -> findSameQuestion(chatId, tool, callId, schema)
+                        .filter(stale -> !replacedIfPending(stale)))
                 .orElse(null);
         final ElicitationRecord asked = NullSafe.get(askedMessage, form -> read(form).orElse(null));
         if (asked != null) {
@@ -488,35 +487,6 @@ public class McpElicitations {
         return result;
     }
 
-    /// @param turn The messages of a chat's turn so far.
-    /// @return The tool calls of the turn whose form the user accepted (not declined, put aside by a message,
-    /// closed or run out), by the call's id.
-    static Set<String> acceptedCalls(final List<AiChatMessage> turn) {
-        final Set<String> accepted = new HashSet<>();
-        turn.stream()
-                .filter(message -> message.getMessageType() == AiMessageType.ELICITATION)
-                .map(message -> read(message).orElse(null))
-                .filter(record -> record != null && record.callId() != null && record.status() == Status.ACCEPTED)
-                .forEach(record -> accepted.add(UserQuestions.toolCallId(record.callId())));
-        return accepted;
-    }
-
-    /// @param turn The messages of a chat's turn so far.
-    /// @return True if the user sent a message after the turn's latest form or request for approval: they wrote
-    /// instead of answering it (or as well), so the run carries on to reply to them.
-    static boolean sentSinceAsked(final List<AiChatMessage> turn) {
-        boolean sent = false;
-        for (final AiChatMessage message : turn) {
-            final AiMessageType type = message.getMessageType();
-            if (type == AiMessageType.ELICITATION || type == AiMessageType.APPROVAL_REQUEST) {
-                sent = false;
-            } else if (type == AiMessageType.STEER_MESSAGE || AiChatRunManager.QUEUED_STEERS.contains(type)) {
-                sent = true;
-            }
-        }
-        return sent;
-    }
-
     // A form put aside by a message the user sent instead: a cancel, as for an MCP server, carrying what they sent,
     // the first message sent to the chat's run after the form was shown (AskStroomAIService stores it, then puts
     // the form aside).
@@ -538,11 +508,11 @@ public class McpElicitations {
                 .reduce((first, second) -> second);
     }
 
-    // A form of the same tool call put aside (or still waiting) that asked the same questions under another key: its
-    // key is worked out from what it asks, which may hold live counts that changed before the call was made again
-    // (seen: a survey's source type question, a new stream in between). Missed, a fresh form was shown, and the run
-    // stopped again rather than replying to the user's message. Only these: an answer is never given to a question
-    // that may have changed.
+    // A form of the same tool call put aside (or still waiting, to be replaced) that asked the same questions under
+    // another key: its key is worked out from what it asks, which may hold live counts that changed before the call
+    // was made again (seen: a survey's source type question, a new stream in between). Missed, a fresh form was
+    // shown, and the run stopped again rather than replying to the user's message. Only these: an answer is never
+    // given to a question that may have changed.
     private Optional<AiChatMessage> findSameQuestion(final int chatId,
                                                      final String tool,
                                                      final String callId,
@@ -565,6 +535,23 @@ public class McpElicitations {
                                           && titles.equals(fieldTitles(record.schema())))
                         .isPresent())
                 .reduce((first, second) -> second);
+    }
+
+    // True if a form of the same question under another key, still waiting, was closed (cancelled) to be replaced
+    // by the form now asked, which says it as it is now (its counts, its options): waited on as it was, the user
+    // answered the stale form, the call made again found no answer to the new key, and they were asked once more.
+    // False for a form put aside by a message, which is answered as one put aside, and where the stale form was
+    // answered as it was being closed (the run is then carried on by that answer, and the call made again asks the
+    // new form).
+    private boolean replacedIfPending(final AiChatMessage stale) {
+        final ElicitationRecord record = read(stale).orElse(null);
+        if (record == null || record.status() != Status.PENDING) {
+            return false;
+        }
+        final boolean closed = aiDao.compareAndSetMessageText(stale.getId(), stale.getMessage(),
+                JsonUtil.writeValueAsString(record.answered(Status.CANCELLED, null), false));
+        LOGGER.debug(() -> "Form " + stale.getId() + " replaced by a fresh form of the same question: " + closed);
+        return closed;
     }
 
     // The kind of form a form id names, its key up to the digest (e.g. 'answer' of 'call-1#form:answer-1a2b'), or

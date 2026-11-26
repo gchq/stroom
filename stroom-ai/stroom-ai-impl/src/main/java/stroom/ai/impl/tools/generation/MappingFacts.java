@@ -373,6 +373,21 @@ public final class MappingFacts {
                 .orElse(null);
     }
 
+    /// @param jsonFields The mapping's json_fields.
+    /// @param fieldName  A field's name.
+    /// @return Every one of the json_fields the field is a key of, the outermost first (`a`, then `a.k`, for
+    /// `a.k.x`): a key is read through each in turn, so one unreadable leaves nothing inside it readable. Empty if
+    /// none.
+    public static List<String> heldJsonFields(final List<String> jsonFields, final String fieldName) {
+        if (fieldName == null || jsonFields == null) {
+            return List.of();
+        }
+        return jsonFields.stream()
+                .filter(field -> JsonFieldNames.below(field, fieldName) != null)
+                .sorted(Comparator.comparingInt(String::length))
+                .toList();
+    }
+
     /// The transforms that decode a value a Data Splitter keeps as written (a CSV's doubled quote, key=value's
     /// backslash-escaped quote).
     public static final List<String> UNESCAPES = List.of("unescape_quotes", "unescape_backslashes");

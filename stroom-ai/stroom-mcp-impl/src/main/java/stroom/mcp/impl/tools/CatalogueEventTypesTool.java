@@ -988,16 +988,19 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
         final String notRecordedWhy = recorded
                 ? null
                 : notRecordedWhy(brought, applied);
-        if (notRecordedWhy != null) {
-            result.put("not_recorded", "Nothing was recorded: " + notRecordedWhy + ". The catalogue is as it was: "
-                                       + "correct the proposals and send them again; don't put the catch-all to "
-                                       + "the user over this catalogue (its records would still be counted as "
-                                       + "uncatalogued).");
-        }
         // Kept for the catch-all's turn only where the proposals bring problems (a proposal for the uncatalogued
         // records the check refuses, as seen): one naming no event type of the catalogue is said in refused alone.
+        final boolean marked = !recorded && !brought.isEmpty();
+        if (notRecordedWhy != null) {
+            // The catch-all held back only where it is marked so: proposals refused alone leave its form as it is.
+            result.put("not_recorded", "Nothing was recorded: " + notRecordedWhy + ". The catalogue is as it was: "
+                                       + "correct the proposals and send them again" + (marked
+                    ? "; don't put the catch-all to the user over this catalogue (its records would still be "
+                      + "counted as uncatalogued)."
+                    : "."));
+        }
         final Map<String, Object> refusalMarks = confirming(calling.notesNow());
-        if (!recorded && !brought.isEmpty()) {
+        if (marked) {
             final Map<String, Object> mark = new LinkedHashMap<>();
             mark.put(WHY, notRecordedWhy);
             mark.put(DIGEST, catalogueDigest(calling.catalogue()));

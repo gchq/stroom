@@ -348,7 +348,8 @@ public class EventVersions {
         }
         final Set<String> namespaces = new LinkedHashSet<>();
         forks.forEach(fork -> namespaces.add(NullSafe.string(fork.getNamespaceURI()).strip()));
-        final Optional<String> written = EventsNamespaces.writtenBy(code, namespaces);
+        final Optional<String> written = EventsNamespaces.writtenBy(code, namespaces,
+                heldSchemas.eventElementNames());
         if (written.isEmpty()) {
             return Optional.empty();
         }

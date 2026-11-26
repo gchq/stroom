@@ -78,6 +78,27 @@ class TestCutHeldDrops {
         assertThat(CutHeldDrops.warnings(noise, 20_000)).isEmpty();
     }
 
+    @Test
+    void aKeyOfJsonHeldInsideACutHeldFieldIsUnreadableThereToo() {
+        // event.inner is held in event: on the record whose event is cut, nothing inside it, event.inner's keys
+        // included, can be read, though event.inner itself is short.
+        final Map<String, Object> json = new LinkedHashMap<>();
+        json.put("input", "json");
+        json.put("json_fields", List.of("event", "event.inner"));
+        json.put("drop_when", List.of(Map.of("reason", "noise", "when", List.of(Map.of("field",
+                "event.inner.appender_ref", "equals", "NOISE")))));
+        json.put("events", List.of(Map.of("name", "rest", "catch_all", true, "allow_unknown", "the rest",
+                "fields", List.of(Map.of("path", "EventDetail/TypeId", "value", "Unknown")))));
+        final TranslationMapping mapping = TranslationMapping.parse(json);
+        final List<String> lines = List.of(nestedLine("SECURITY", ""), nestedLine("NOISE", "p".repeat(CUT + 50)));
+        final CheckedRecords checked = CheckedRecords.of(mapping, LocalCheck.sampleRecords(mapping,
+                String.join("\n", lines), null).records());
+
+        assertThat(CutHeldDrops.warnings(checked, CUT)).singleElement().asString()
+                .startsWith("drop rule drop_when 'noise': 'event' is longer than stringTruncateLength")
+                .contains("the rule drops them read whole, but in processing doesn't");
+    }
+
     // Three records, the last one's event longer than the cut, its appender NOISE.
     private static CheckedRecords checked(final List<Map<String, Object>> dropWhen,
                                           final List<Map<String, Object>> dropRules) {
@@ -103,6 +124,19 @@ class TestCutHeldDrops {
                 line(longAppender, "p".repeat(CUT + 50)));
         return CheckedRecords.of(mapping, LocalCheck.sampleRecords(mapping, String.join("\n", lines), null)
                 .records());
+    }
+
+    // A line whose event holds its padding and JSON text again (inner), which holds the appender.
+    private static String nestedLine(final String appender, final String padding) {
+        final Map<String, Object> inner = new LinkedHashMap<>();
+        inner.put("appender_ref", appender);
+        final Map<String, Object> event = new LinkedHashMap<>();
+        event.put("padding", padding);
+        event.put("inner", ToolJson.dumps(inner));
+        final Map<String, Object> outer = new LinkedHashMap<>();
+        outer.put("host", "web-1");
+        outer.put("event", ToolJson.dumps(event));
+        return ToolJson.dumps(outer);
     }
 
     private static String line(final String appender, final String padding) {

@@ -54,9 +54,10 @@ public final class CatalogueSeed {
     /// @return One proposed event type for each rule that tells records apart (has conditions), in the draft's
     /// order: its rule's conditions the one way it is recognised, its action element, Action, outcome and who acted
     /// as the rule writes them, its TypeId the rule's own fixed Verb-Object one or the default ([TypeIds]), made
-    /// unique. The rule for the rest of the records (no conditions) is the catch-all's, not an event type; but a
-    /// draft of that one rule alone seeds a sole event type, recognised by every record (stroom-ai/DESIGN.md, A sole
-    /// event type), for the agent to give the action element where the draft couldn't.
+    /// unique. A rule with `drop: true` seeds a drop rule, its label the plain one [TypeIds#defaultFor] gives. The
+    /// rule for the rest of the records (no conditions) is the catch-all's, not an event type; but a draft of that
+    /// one rule alone seeds a sole event type, recognised by every record (stroom-ai/DESIGN.md, A sole event type),
+    /// for the agent to give the action element where the draft couldn't.
     public static List<EventType> fromDraft(final Map<String, Object> draft) {
         final Map<?, ?> mapping = draft.get("mapping") instanceof final Map<?, ?> map
                 ? map
@@ -64,7 +65,8 @@ public final class CatalogueSeed {
         final List<EventType> out = new ArrayList<>();
         final Set<String> typeIds = new HashSet<>();
         final List<Map<String, Object>> rules = JsonValues.maps(mapping.get("events"));
-        if (rules.size() == 1 && JsonValues.maps(rules.getFirst().get("when")).isEmpty()) {
+        if (rules.size() == 1 && JsonValues.maps(rules.getFirst().get("when")).isEmpty()
+            && !JsonValues.truthy(rules.getFirst().get("drop"))) {
             final EventType sole = eventType(rules.getFirst(), List.of());
             final String typeId = fixedTypeId(rules.getFirst());
             out.add(sole.withTypeId(typeId != null
@@ -75,6 +77,15 @@ public final class CatalogueSeed {
         for (final Map<String, Object> rule : rules) {
             final List<Map<String, Object>> when = JsonValues.maps(rule.get("when"));
             if (when.isEmpty()) {
+                continue;
+            }
+            if (JsonValues.truthy(rule.get("drop"))) {
+                // A rule dropping its records is a drop rule, labelled plainly as the catalogue's are, never a
+                // Verb-Object event type.
+                final EventType drop = dropRule(rule, when);
+                final String label = unique(TypeIds.defaultFor(drop), typeIds);
+                typeIds.add(label.toLowerCase(Locale.ROOT));
+                out.add(drop.withTypeId(label));
                 continue;
             }
             final EventType type = eventType(rule, when);
@@ -114,6 +125,14 @@ public final class CatalogueSeed {
                         ? List.of()
                         : List.of(new Way(conditions, List.of())), false, EventType.DRAFT, "low", null,
                 EventType.PROPOSED);
+    }
+
+    // A drop rule from a rule with drop: true: its conditions the way it is recognised, its name its title; it
+    // writes nothing, so no action element, outcome or actor.
+    private static EventType dropRule(final Map<String, Object> rule, final List<Map<String, Object>> when) {
+        final List<Condition> conditions = when.stream().map(Condition::fromJson).toList();
+        return new EventType(null, ToolText.str(rule.get("name")), null, null, null, null, null, null, null,
+                List.of(new Way(conditions, List.of())), true, EventType.DRAFT, "low", null, EventType.PROPOSED);
     }
 
     // The action element a rule writes (Network's with its child: Network/Permit); null for Unknown, or none.

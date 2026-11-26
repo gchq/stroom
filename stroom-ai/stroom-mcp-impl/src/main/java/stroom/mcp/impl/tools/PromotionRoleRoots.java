@@ -275,8 +275,10 @@ class PromotionRoleRoots {
                 ? asked
                 : String.join(" ", dropped) + " " + asked;
         for (int n = 1; n <= MAX_ROLE_ASKS; n++) {
+            // Each round a form of its own: the same questions, only the intro changed, would be the same form,
+            // given the answer just refused again.
             final Optional<Map<String, String>> answered = consent.chooseOrTypeEach(call, context,
-                    PromoteBuildTool.NAME, intro, questions);
+                    PromoteBuildTool.NAME, intro, questions, n);
             if (answered.isEmpty()) {
                 return Map.of();
             }

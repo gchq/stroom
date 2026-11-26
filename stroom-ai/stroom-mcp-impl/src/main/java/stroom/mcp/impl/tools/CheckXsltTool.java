@@ -340,14 +340,15 @@ class CheckXsltTool extends AbstractBuiltInTool {
             return List.of();
         }
         final Set<String> known = eventsNamespaces(forks);
-        final Optional<String> own = EventsNamespaces.writtenBy(xslt, known);
+        final Set<String> eventElements = heldSchemas.eventElementNames();
+        final Optional<String> own = EventsNamespaces.writtenBy(xslt, known, eventElements);
         if (own.isEmpty()) {
             return List.of();
         }
         final List<String> problems = new ArrayList<>();
         for (final String href : imports) {
             final Optional<String> theirs = importedXslt(href).flatMap(text -> EventsNamespaces.writtenBy(text,
-                    known));
+                    known, eventElements));
             if (theirs.isPresent() && !theirs.get().equals(own.get())) {
                 problems.add("The import '" + href + "' writes Events elements in namespace " + theirs.get()
                              + ", but this XSLT writes them in " + own.get() + ": the output would mix the two, and "

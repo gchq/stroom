@@ -206,9 +206,21 @@ public class XsltStages {
         return namespaces;
     }
 
+    // The names of the elements written inside an Event, by the Events schemas this Stroom holds; none if they
+    // can't be read.
+    private Set<String> eventElementNames() {
+        try {
+            return heldSchemas.eventElementNames();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> LogUtil.message("No Events schema element names read: {}", e.getMessage()));
+            return Set.of();
+        }
+    }
+
     // Each XSLTFilter of the pipeline in processing order, with what is known of what it reads and writes.
     private List<Step> steps(final MergedPipeline pipeline, final SteppingResult stepped) {
         final Set<String> namespaces = eventsNamespaces();
+        final Set<String> eventElements = eventElementNames();
         final String self = NullSafe.get(pipeline.pipeline(), DocRef::getUuid);
         final Map<String, TranslationDoc> docs = new LinkedHashMap<>();
         pipeline.translationDocs(self).stream()
@@ -229,7 +241,7 @@ public class XsltStages {
                     : documentAccess.read(doc.doc(), XsltDoc.class).map(XsltDoc::getData).orElse(null);
             final Reading content = code == null
                     ? Reading.UNREAD
-                    : StageRules.byContent(code, namespaces);
+                    : StageRules.byContent(code, namespaces, eventElements);
             final Reading seen = stepped == null
                     ? null
                     : byStep(SteppingWalks.input(stepped, element), SteppingWalks.output(stepped, element));
@@ -377,18 +389,19 @@ public class XsltStages {
             // Static only.
         }
 
-        /// @param code       An XSLT's text.
-        /// @param namespaces The Events namespaces.
+        /// @param code          An XSLT's text.
+        /// @param namespaces    The Events namespaces.
+        /// @param eventElements The names of the elements written inside an Event, or empty if not known.
         /// @return What it reads and writes, by its content.
-        static Reading byContent(final String code, final Set<String> namespaces) {
+        static Reading byContent(final String code, final Set<String> namespaces, final Set<String> eventElements) {
             final String text = XsltVersionHistory.strip(NullSafe.string(code));
             final Optional<Element> root = XmlTrees.tryParse(text);
             if (root.isEmpty()) {
                 return new Reading(false, false, false, How.CONTENT);
             }
-            // An output may write in an Events namespace (a flattener's pairs) without writing Events: writtenBy
-            // gives none for one.
-            final boolean writesEvents = EventsNamespaces.writtenBy(text, namespaces).isPresent();
+            // An output may write in an Events namespace (a flattener's pairs, a later stage's own element) without
+            // writing Events: writtenBy gives none for one.
+            final boolean writesEvents = EventsNamespaces.writtenBy(text, namespaces, eventElements).isPresent();
             final boolean writesOther = !writesEvents && XmlTrees.descendantsAndSelf(root.get()).stream()
                     .anyMatch(element -> !XmlTrees.XSL.equals(element.getNamespaceURI()));
             return new Reading(readsEvents(root.get(), namespaces), writesEvents, writesOther, How.CONTENT);

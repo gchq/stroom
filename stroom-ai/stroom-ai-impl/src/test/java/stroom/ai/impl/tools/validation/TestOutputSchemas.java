@@ -128,7 +128,7 @@ class TestOutputSchemas {
                              + "</record></records>";
         assertThat(events.checkEvents(pairs)).isEmpty();
         assertThat(events.check(pairs)).isEmpty();
-        assertThat(events.checkEvents("<CefEvent xmlns=\"event-logging:3\">CEF:0|x</CefEvent>")).isEmpty();
+        assertThat(events.checkEvents("<Line xmlns=\"event-logging:3\">CEF:0|x</Line>")).isEmpty();
         assertThat(events.checkEvents("<Events xmlns=\"event-logging:3\">")).isEmpty();
         assertThat(events.checkEvents(null)).isEmpty();
         // No event-logging schema held: nothing to check against.

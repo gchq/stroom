@@ -50,4 +50,20 @@ class TestLongValues {
         assertThat(LongValues.cutLength(pipelines.world.records(), PipelineWorld.BUILD))
                 .isEqualTo(JsonStringValues.DEFAULT_TRUNCATE_LENGTH);
     }
+
+    @Test
+    void buildRecordsThatCantBeReadGiveTheParsersDefaultNotAFailure() {
+        // build_translation_xslt's check of the drop rules read the build records unguarded: a failure reading them
+        // failed the call, where the catalogue's reading fell back to the default.
+        pipelines.world.records().rememberLongValues(PipelineWorld.BUILD, Map.of("choice", "whole", "limit", 60_000,
+                "longest", 25_486, "fields", List.of("event"), "recorded", "2026-11-26"));
+
+        assertThat(LongValues.cutLengthOrDefault(() -> pipelines.world.records(), PipelineWorld.BUILD))
+                .isEqualTo(60_000);
+        assertThat(LongValues.cutLengthOrDefault(() -> {
+            throw new IllegalStateException("No build records here");
+        }, PipelineWorld.BUILD)).isEqualTo(JsonStringValues.DEFAULT_TRUNCATE_LENGTH);
+        assertThat(LongValues.cutLengthOrDefault(null, PipelineWorld.BUILD))
+                .isEqualTo(JsonStringValues.DEFAULT_TRUNCATE_LENGTH);
+    }
 }

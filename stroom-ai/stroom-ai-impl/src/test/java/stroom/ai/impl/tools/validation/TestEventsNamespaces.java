@@ -20,17 +20,19 @@ import org.junit.jupiter.api.Test;
 import org.w3c.dom.Element;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestEventsNamespaces {
 
     private static final String FORK = "file://xml/schema/accounting/events";
-    // The stage after a flattener: its pairs in event-logging:3 in, the flattened line in a CefEvent out.
-    static final String CEF_EVENT_STAGE = """
+    // The stage after a flattener: its pairs in event-logging:3 in, the flattened line in an element of its own
+    // (Line) out.
+    static final String LINE_STAGE = """
             <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="event-logging:3"
              xpath-default-namespace="event-logging:3" version="3.0">
-              <xsl:template match="/records"><CefEvent><xsl:value-of select="record/data/@value"/></CefEvent>\
+              <xsl:template match="/records"><Line><xsl:value-of select="record/data/@value"/></Line>\
             </xsl:template>
             </xsl:stylesheet>""";
 
@@ -95,14 +97,47 @@ class TestEventsNamespaces {
     @Test
     void anIntermediateStageInAnEventsNamespaceWritesNoEvents() {
         // A CEF forwarder's stages mirror the namespace the shared Kafka XSLT reads: a flattener's pairs and a
-        // CefEvent wrapping the flattened line, both in event-logging:3, are not Events.
+        // Line wrapping the flattened line, both in event-logging:3, are not Events.
         final List<String> known = List.of("event-logging:3", FORK);
 
         assertThat(EventsNamespaces.writtenBy(flattener("event-logging:3"), known)).isEmpty();
         assertThat(EventsNamespaces.writtenBy(flattener(FORK), known)).isEmpty();
-        assertThat(EventsNamespaces.writtenBy(CEF_EVENT_STAGE, known)).isEmpty();
-        assertThat(EventsNamespaces.writesEventsOrEvent(root(CEF_EVENT_STAGE))).isFalse();
-        assertThat(EventsNamespaces.readsEvents(root(CEF_EVENT_STAGE), known)).isTrue();
+        assertThat(EventsNamespaces.writtenBy(LINE_STAGE, known, Set.of("EventSource", "Location")))
+                .isEmpty();
+        assertThat(EventsNamespaces.writesEventsOrEvent(root(LINE_STAGE))).isFalse();
+        assertThat(EventsNamespaces.readsEvents(root(LINE_STAGE), known)).isTrue();
+    }
+
+    @Test
+    void whatAnXsltReadingEventsWritesOutermostSaysWhetherItWritesPartsOfEvents() {
+        // A decoration's shared module reads the Events (a template matching their EventSource) and writes only
+        // parts of an Event, never Events, Event nor xsl:copy: those parts are in the namespace its Events are. A
+        // flattener's records and a later stage's Line, in an Events namespace, are no part of one.
+        final HeldSchemas held = new HeldSchemasWorld()
+                .hold("file://event-logging-v4.1.0.xsd", "event-logging:3", HeldSchemasWorld.XSD_4_1_0, "EVENTS")
+                .hold(HeldSchemasWorld.FORK_SYSTEM_ID, HeldSchemasWorld.FORK_NS, HeldSchemasWorld.XSD_FORK,
+                        "EVENTS")
+                .heldSchemas();
+        final Set<String> elements = held.eventElementNames();
+        final List<String> known = List.of("event-logging:3", HeldSchemasWorld.FORK_NS);
+        final String module = """
+                <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="%1$s" xmlns:evt="%1$s"
+                 version="3.0">
+                  <xsl:template match="evt:EventSource" mode="location">
+                    <Location><Country>UK</Country></Location>
+                    <xsl:if test="evt:Device"><Device><Name>d</Name></Device></xsl:if>
+                  </xsl:template>
+                </xsl:stylesheet>""".formatted(HeldSchemasWorld.FORK_NS);
+
+        assertThat(elements).contains("EventSource", "Location", "Device").doesNotContain("Line", "records");
+        assertThat(EventsNamespaces.writtenBy(module, known, elements)).contains(HeldSchemasWorld.FORK_NS);
+        assertThat(EventsNamespaces.writtenBy(flattener("event-logging:3"), known, elements)).isEmpty();
+        assertThat(EventsNamespaces.writtenBy(flattener(HeldSchemasWorld.FORK_NS), known, elements)).isEmpty();
+        assertThat(EventsNamespaces.writtenBy(LINE_STAGE, known, elements)).isEmpty();
+        // The elements of an Event not known: only Stroom's records format is taken for no Events.
+        assertThat(EventsNamespaces.writtenBy(module, known)).contains(HeldSchemasWorld.FORK_NS);
+        assertThat(EventsNamespaces.writtenBy(flattener("event-logging:3"), known)).isEmpty();
+        assertThat(EventsNamespaces.writtenBy(LINE_STAGE, known)).contains("event-logging:3");
     }
 
     @Test

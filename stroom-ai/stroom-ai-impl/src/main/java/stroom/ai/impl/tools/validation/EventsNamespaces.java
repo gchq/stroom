@@ -52,6 +52,8 @@ public final class EventsNamespaces {
     private static final Set<String> NOT_EVENTS = Set.of(XmlTrees.XSL, "records:2", "reference-data:2",
             "kafka-records:1", "kafka-records:2", "http://www.w3.org/2005/xpath-functions",
             "http://www.w3.org/2013/XSL/json", "stroom");
+    // The elements of Stroom's records format, never Events in whatever namespace they are written.
+    private static final Set<String> RECORDS_FORMAT = Set.of("records", "record", "data");
     private static final String EVENTS = "Events";
     private static final String EVENT = "Event";
     private static final String XPATH_DEFAULT_NAMESPACE = "xpath-default-namespace";
@@ -91,18 +93,36 @@ public final class EventsNamespaces {
                 : namespace;
     }
 
-    /// The Events namespace an XSLT writes Events in. Where it writes an `Events` or `Event` element
-    /// ([#writesEventsOrEvent]), that of the first literal `Events` or `Event`, or element under one, in one of the
-    /// namespaces given. Where it writes neither, but reads Events ([#readsEvents]: an output, e.g. a flattener
-    /// handing `<records><record><data .../></record></records>` on to the next XSLT in the namespace that XSLT
-    /// reads), none: what it writes isn't Events, whatever namespace it is in. Otherwise that of its first literal
-    /// result element (any element not in the XSLT namespace) in one of the namespaces given: a shared XSLT may write
-    /// only part of an Event (`<EventSource>`, say) from records, so any element counts.
+    /// As [#writtenBy(String, Collection, Set)], the names of the elements written inside an Event not known (e.g.
+    /// no Events schema could be read): only Stroom's records format (`records`, `record`, `data`) is taken for no
+    /// Events.
     ///
     /// @param xslt       An XSLT's text.
     /// @param namespaces The Events namespaces to look for: `event-logging:3` and this Stroom's forks.
     /// @return The namespace, or empty if it writes Events in none of them (or isn't well-formed).
     public static Optional<String> writtenBy(final String xslt, final Collection<String> namespaces) {
+        return writtenBy(xslt, namespaces, Set.of());
+    }
+
+    /// The Events namespace an XSLT writes Events in. Where it writes an `Events` or `Event` element
+    /// ([#writesEventsOrEvent]), that of the first literal `Events` or `Event`, or element under one, in one of the
+    /// namespaces given. Where it writes neither, but reads Events ([#readsEvents]), and what it writes outermost (its
+    /// literal result elements in those namespaces with none above them) holds no element of an Event: none. That is
+    /// an output, e.g. a flattener handing `<records><record><data .../></record></records>` on to the next XSLT,
+    /// or a later stage's own element, in the namespace that XSLT reads: what it writes isn't Events, whatever
+    /// namespace it is in. Otherwise that of its first literal result element (any element not in the XSLT
+    /// namespace) in one of the namespaces given: a shared XSLT may write only part of an Event (`<EventSource>`,
+    /// or a decoration's `<Location>` for the Events it reads), so any element counts.
+    ///
+    /// @param xslt          An XSLT's text.
+    /// @param namespaces    The Events namespaces to look for: `event-logging:3` and this Stroom's forks.
+    /// @param eventElements The names of the elements that may be written inside an Event
+    ///                      ([HeldSchemas#eventElementNames]); empty if not known, when an outermost element is
+    ///                      taken for one unless it is of Stroom's records format.
+    /// @return The namespace, or empty if it writes Events in none of them (or isn't well-formed).
+    public static Optional<String> writtenBy(final String xslt,
+                                             final Collection<String> namespaces,
+                                             final Set<String> eventElements) {
         final Element root;
         try {
             root = XmlTrees.parse(XsltVersionHistory.strip(Objects.requireNonNullElse(xslt, "")));
@@ -122,7 +142,9 @@ public final class EventsNamespaces {
             if (inEvents.isPresent()) {
                 return inEvents;
             }
-        } else if (readsEvents(root, namespaces)) {
+        } else if (readsEvents(root, namespaces) && written.stream()
+                .filter(EventsNamespaces::isOutermost)
+                .noneMatch(element -> isEventPart(element, eventElements))) {
             return Optional.empty();
         }
         return written.stream()
@@ -218,6 +240,27 @@ public final class EventsNamespaces {
             node = parent.getParentNode();
         }
         return false;
+    }
+
+    // Whether a literal result element has no literal result element above it: what a template writes outermost.
+    private static boolean isOutermost(final Element element) {
+        Node node = element.getParentNode();
+        while (node instanceof final Element parent) {
+            if (!XmlTrees.XSL.equals(parent.getNamespaceURI())) {
+                return false;
+            }
+            node = parent.getParentNode();
+        }
+        return true;
+    }
+
+    // Whether an element written outermost may be part of an Event: one of the schemas' elements inside an Event,
+    // or, where those aren't known, any but Stroom's records format.
+    private static boolean isEventPart(final Element element, final Set<String> eventElements) {
+        final String name = element.getLocalName();
+        return eventElements.isEmpty()
+                ? !RECORDS_FORMAT.contains(name)
+                : eventElements.contains(name);
     }
 
     /// @param node   An element.

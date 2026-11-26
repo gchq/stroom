@@ -543,17 +543,33 @@ class TestMcpElicitations {
     }
 
     @Test
-    void aTurnSaysWhichCallsTheUserAcceptedAndWhetherTheyWroteSinceTheLatestForm() {
-        final AiChatMessage accepted = form(1, "c1#form:answer-a", ElicitationRecord.Status.ACCEPTED);
-        final AiChatMessage declined = form(2, "c2", ElicitationRecord.Status.DECLINED);
-        final AiChatMessage steer = new AiChatMessage(3, CHAT_ID, 0L, AiMessageType.STEER_MESSAGE, null, "Why?", 1,
-                null);
+    void aFormStillWaitingForTheSameQuestionUnderAnotherKeyIsReplacedByTheFreshOne() {
+        // The call made again while its form waits, the form's key changed (its counts did): the stale form was
+        // waited on, so the user answered it, the call found no answer to its new key and asked again.
+        final McpElicitations elicitations = elicitations(StroomDuration.ofMinutes(1), 5);
+        question();
+        final Map<String, Object> form = Map.of("type", "object",
+                "properties", Map.of("answer", Map.of("type", "string", "title", "Which field?")));
+        assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "survey_feed", "c1#form:answer-aaaa",
+                "4 values over 1,000 records", form))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+        final AiChatMessage stale = cardFor("c1#form:answer-aaaa");
 
-        assertThat(McpElicitations.acceptedCalls(List.of(accepted, declined))).containsExactly("c1");
-        assertThat(McpElicitations.sentSinceAsked(List.of(accepted, declined))).isFalse();
-        assertThat(McpElicitations.sentSinceAsked(List.of(accepted, steer))).isTrue();
-        // Written before the latest form: that form was answered since.
-        assertThat(McpElicitations.sentSinceAsked(List.of(steer, declined))).isFalse();
+        assertThatThrownBy(() -> elicitations.askUser(CHAT_ID, "survey_feed", "c1#form:answer-bbbb",
+                "5 values over 1,000 records", form))
+                .isInstanceOf(AiChatRunManager.WaitingForUserException.class);
+
+        assertThat(status(messages.get(stale.getId()))).isEqualTo(ElicitationRecord.Status.CANCELLED);
+        final AiChatMessage fresh = cardFor("c1#form:answer-bbbb");
+        assertThat(status(fresh)).isEqualTo(ElicitationRecord.Status.PENDING);
+        assertThat(JsonUtil.readValue(fresh.getMessage(), ElicitationRecord.class).message())
+                .isEqualTo("5 values over 1,000 records");
+        // The fresh form is the one answered, and given to the call made again.
+        Mockito.when(runDao.getActive(CHAT_ID)).thenReturn(Optional.of(new AiChatRun(9, CHAT_ID,
+                AiChatRunStatus.WAITING_FOR_USER, AiChatRunStopReason.NEEDS_ANSWERS, 0L, null, false, null)));
+        assertThat(elicitations.answer(CHAT_ID, fresh.getId(), "ACCEPT", Map.of("answer", "event.app"))).isTrue();
+        assertThat(elicitations.askUser(CHAT_ID, "survey_feed", "c1#form:answer-bbbb",
+                "5 values over 1,000 records", form).content()).isEqualTo(Map.of("answer", "event.app"));
     }
 
     @Test
@@ -600,12 +616,6 @@ class TestMcpElicitations {
 
         assertThatThrownBy(() -> elicitations.answer(CHAT_ID, card.getId(), "DECLINE", null))
                 .hasMessageContaining("no longer waiting");
-    }
-
-    private static AiChatMessage form(final int id, final String callId, final ElicitationRecord.Status status) {
-        return new AiChatMessage(id, CHAT_ID, 0L, AiMessageType.ELICITATION, null, JsonUtil.writeValueAsString(
-                new ElicitationRecord(ElicitationRecord.KIND, status, "Stroom AI", "ask_user", "Which?", FORM,
-                        Long.MAX_VALUE, null, callId), false), 1, null);
     }
 
     // Adds a question from the user to the chat.

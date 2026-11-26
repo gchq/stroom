@@ -92,21 +92,23 @@ class EventsTargetInference {
         }
         final Set<String> namespaces = new HashSet<>(forks);
         namespaces.add(EventsNamespaces.STANDARD);
-        final Optional<Inferred> fromImports = fromRequiredImports(session, build, namespaces);
+        final Set<String> eventElements = heldSchemas.eventElementNames();
+        final Optional<Inferred> fromImports = fromRequiredImports(session, build, namespaces, eventElements);
         return fromImports.isPresent()
                 ? fromImports
-                : fromTemplate(namespaces);
+                : fromTemplate(namespaces, eventElements);
     }
 
     // The namespace the first required import that writes Events elements writes them in.
     private Optional<Inferred> fromRequiredImports(final ToolSession session,
                                                    final String build,
-                                                   final Set<String> namespaces) {
+                                                   final Set<String> namespaces,
+                                                   final Set<String> eventElements) {
         final RequiredImports requiredImports = requiredImportsProvider.get();
         for (final RequiredImport required : requiredImports.requiredFor(session, InstructionRules.TRANSLATION,
                 build, List.of())) {
             final Optional<String> written = requiredImports.named(required.href())
-                    .flatMap(doc -> EventsNamespaces.writtenBy(doc.getData(), namespaces));
+                    .flatMap(doc -> EventsNamespaces.writtenBy(doc.getData(), namespaces, eventElements));
             if (written.isPresent()) {
                 return Optional.of(new Inferred(written.get(), "the import '" + required.href() + "' the standing "
                                                                + "instructions require of translations writes it"));
@@ -119,7 +121,7 @@ class EventsTargetInference {
     // write in. Candidates are taken in rank order, passing over those that write none: seen in testing, the
     // configured standard template (no XSLT of its own) outranked the environment's template, inherited by its
     // pipelines, whose XSLT writes the fork.
-    private Optional<Inferred> fromTemplate(final Set<String> namespaces) {
+    private Optional<Inferred> fromTemplate(final Set<String> namespaces, final Set<String> eventElements) {
         try {
             final Map<String, Object> found = pipelineTemplatesProvider.get().find(InstructionRules.TRANSLATION);
             if (!(found.get("candidates") instanceof final List<?> candidates)) {
@@ -129,7 +131,7 @@ class EventsTargetInference {
             for (final Object candidate : candidates) {
                 if (candidate instanceof final Map<?, ?> template) {
                     final Optional<Inferred> written = writtenByTemplate(index,
-                            Objects.toString(template.get("uuid"), null), namespaces);
+                            Objects.toString(template.get("uuid"), null), namespaces, eventElements);
                     if (written.isPresent()) {
                         return written;
                     }
@@ -144,14 +146,15 @@ class EventsTargetInference {
     // The namespace the XSLTs set on a template, or the nearest template it inherits from that sets one, write in.
     private Optional<Inferred> writtenByTemplate(final Map<String, PipelineIndex.Entry> index,
                                                  final String templateUuid,
-                                                 final Set<String> namespaces) {
+                                                 final Set<String> namespaces,
+                                                 final Set<String> eventElements) {
         final Set<String> seen = new HashSet<>();
         String uuid = templateUuid;
         while (uuid != null && seen.add(uuid) && index.containsKey(uuid)) {
             final PipelineIndex.Entry pipeline = index.get(uuid);
             for (final DocRef xslt : xslts(pipeline.own())) {
                 final Optional<String> written = documentAccess.read(xslt, XsltDoc.class)
-                        .flatMap(doc -> EventsNamespaces.writtenBy(doc.getData(), namespaces));
+                        .flatMap(doc -> EventsNamespaces.writtenBy(doc.getData(), namespaces, eventElements));
                 if (written.isPresent()) {
                     return Optional.of(new Inferred(written.get(), "the XSLT '" + xslt.getName() + "' set on "
                                                                    + "the translation template '"

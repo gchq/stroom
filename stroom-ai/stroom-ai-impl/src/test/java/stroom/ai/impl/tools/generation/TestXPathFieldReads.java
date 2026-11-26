@@ -71,6 +71,22 @@ class TestXPathFieldReads {
     }
 
     @Test
+    void aFieldTrimmedOrFilteredIsReadButNotAsItIs() {
+        // normalize-space() changes the value (trimmed, white space folded), and a filter may give none of it: a
+        // Data copy of the field would differ, so neither is the field as it is.
+        assertThat(XPathFieldReads.fields("normalize-space(*[@key='a'])")).containsExactly("a");
+        assertThat(XPathFieldReads.plainField("normalize-space(*[@key='a'])")).isNull();
+        assertThat(XPathFieldReads.plainField("normalize-space(data[@name='a']/@value)")).isNull();
+        assertThat(XPathFieldReads.fields("*[@key='a'][. != '']")).containsExactly("a");
+        assertThat(XPathFieldReads.plainField("*[@key='a'][. != '']")).isNull();
+        assertThat(XPathFieldReads.plainField("*[@key='a'][. != '']/*[@key='b']")).isNull();
+        assertThat(XPathFieldReads.plainField("string(*[@key='a'][2])")).isNull();
+        // Its first value, and string() of it, are as it is.
+        assertThat(XPathFieldReads.plainField("string(*[@key='a'][1])")).isEqualTo("a");
+        assertThat(XPathFieldReads.plainField("string(*[@key='a'])")).isEqualTo("a");
+    }
+
+    @Test
     void whatIsNotAPathTheRecordsNameReadsNothing() {
         assertThat(XPathFieldReads.fields(null)).isEmpty();
         assertThat(XPathFieldReads.fields("")).isEmpty();

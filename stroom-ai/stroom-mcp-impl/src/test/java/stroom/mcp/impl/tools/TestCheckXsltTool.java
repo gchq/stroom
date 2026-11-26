@@ -333,6 +333,29 @@ class TestCheckXsltTool {
 
     @Test
     @SuppressWarnings("unchecked")
+    void aDecorationModuleWritingPartsOfTheForksEventsIsMixedWithEventLogging() {
+        // A shared module a decoration imports: it reads the fork's Events (a template matching their EventSource)
+        // and writes only parts of an Event (a Location), never Events, Event nor xsl:copy. Its parts are the
+        // fork's, so an XSLT writing event-logging:3 mixes the two.
+        holdingFork();
+        Mockito.when(heldSchemas.eventElementNames()).thenReturn(EventSchema.parse(
+                TranslationWorld.resource("test-fork-events.xsd")).elementNames());
+        Mockito.when(docFinder.findByName(eq(XsltDoc.TYPE), eq("IP Lookup"), eq(false))).thenReturn(List.of(
+                new DocRef(XsltDoc.TYPE, "x1", "IP Lookup")));
+        Mockito.when(documentAccess.read(new DocRef(XsltDoc.TYPE, "x1", "IP Lookup"), XsltDoc.class))
+                .thenReturn(Optional.of(XsltDoc.builder().uuid("x1").name("IP Lookup").data("""
+                        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="%1$s"
+                         xmlns:evt="%1$s" version="3.0">
+                          <xsl:template match="evt:EventSource" mode="location"><Location><Country>UK</Country>\
+                        </Location></xsl:template>
+                        </xsl:stylesheet>""".formatted(FORK_NS)).build()));
+
+        assertThat((List<String>) call(XSLT).get("errors")).anySatisfy(error -> assertThat(error)
+                .contains("The import 'IP Lookup' writes Events elements in namespace " + FORK_NS));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void aFlattenerInAnotherEventsNamespaceThanItsImportMixesNoEvents() {
         // A flattener reading the fork's Events hands its pairs on in event-logging:3, the namespace the shared
         // Kafka XSLT reads; it imports a module writing the fork. Its pairs are no Events, so nothing is mixed.

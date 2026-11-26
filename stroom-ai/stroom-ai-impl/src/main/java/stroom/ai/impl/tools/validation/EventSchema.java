@@ -387,6 +387,12 @@ public final class EventSchema {
         return true;
     }
 
+    /// @return The names of the elements below Event (six levels down, as [#pathsNamed] knows them): what may be
+    /// written inside an Event, e.g. `EventSource`, `Location`, `Device`.
+    public Set<String> elementNames() {
+        return paths.keySet();
+    }
+
     /// @param name An element's name.
     /// @return The paths below Event whose last element is that name, shortest first.
     public List<String> pathsNamed(final String name) {

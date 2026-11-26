@@ -421,6 +421,11 @@ class TestCatalogueEventTypesTool {
                         why -> assertThat(why).contains("no event type 'Update-Nothing'"),
                         why -> assertThat(why).contains("basis user_confirmed is the user's"),
                         why -> assertThat(why).contains("op is one of add, change, remove"));
+        // Refused alone, the catch-all isn't held back (its form shows as it is): the agent isn't told it is.
+        assertThat(String.valueOf(refused.get("not_recorded"))).startsWith("Nothing was recorded: the proposals "
+                                                                           + "were refused: ")
+                .endsWith("correct the proposals and send them again.")
+                .doesNotContain("catch-all");
         assertThat(map(map(refused.get("check")).get("counts"))).containsOnlyKeys("Authenticate-Logoff");
 
         // Given no TypeId: the default, the event detail element and the first equals value, its first letter a
@@ -1041,7 +1046,8 @@ class TestCatalogueEventTypesTool {
         assertThat(refused).containsEntry("recorded", false);
         assertThat(String.valueOf(refused.get("not_recorded"))).startsWith("Nothing was recorded: the proposals "
                                                                            + "bring problems: ")
-                .contains("correct the proposals and send them again");
+                .contains("correct the proposals and send them again")
+                .contains("don't put the catch-all to the user over this catalogue");
 
         // The catch-all isn't put to the user over the catalogue as it was: the agent is told to fix the proposals.
         assertThat(text(Map.of("build", BUILD, "confirm", true), accepting.context()))

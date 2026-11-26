@@ -22,7 +22,6 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.catalogue.CatalogueSample;
 import stroom.ai.impl.tools.draft.DraftMapping;
-import stroom.ai.impl.tools.draft.LocalCheck;
 import stroom.ai.impl.tools.draft.PairMatches;
 import stroom.ai.impl.tools.generation.Extraction;
 import stroom.ai.impl.tools.generation.TranslationMapping;
@@ -177,14 +176,7 @@ class CatalogueReading {
     // Where processing cuts the build's JSON strings: past the longest where the user chose to keep them whole (the
     // parser's limit raised), else at the parser's default; a condition is checked against the records as cut there.
     private int cutLength(final String build) {
-        try {
-            return LongValues.cutLength(buildRecords == null
-                    ? null
-                    : buildRecords.get(), build);
-        } catch (final RuntimeException e) {
-            LOGGER.debug(() -> LogUtil.message("No long values choice read for {}: {}", build, e.getMessage()));
-            return LocalCheck.JSON_PARSER_CUT;
-        }
+        return LongValues.cutLengthOrDefault(buildRecords, build);
     }
 
     // Each stream's records at the translation's input, a text a stream ([TranslationInputs]).

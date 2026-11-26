@@ -104,11 +104,11 @@ class TestEventChecks {
     @Test
     @SuppressWarnings("unchecked")
     void testAnIntermediateStagesOutputInAnEventsNamespaceIsSaidNotToBeEvents() {
-        // A CEF forwarder's flattener writes its pairs, and the next stage its CefEvent, in event-logging:3 (the
+        // A CEF forwarder's flattener writes its pairs, and the next stage its Line, in event-logging:3 (the
         // namespace the shared Kafka XSLT reads): not Events, and not a translation's input either.
         for (final String output : List.of("<records xmlns=\"event-logging:3\"><record><data name=\"cef\" "
                                            + "value=\"CEF:0|x\"/></record></records>",
-                "<CefEvent xmlns=\"event-logging:3\">CEF:0|x</CefEvent>")) {
+                "<Line xmlns=\"event-logging:3\">CEF:0|x</Line>")) {
             final Map<String, Object> result = checks.validateEvents(output, null);
 
             assertThat(result.get("valid")).isEqualTo(false);

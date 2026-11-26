@@ -173,7 +173,7 @@ class TestXsltChecks {
         // shared Kafka XSLT reads), not records:2.
         final String sheet = "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" "
                              + "xmlns=\"event-logging:3\" version=\"3.0\"><xsl:template match=\"/records\">"
-                             + "<CefEvent><xsl:value-of select=\"record/data/@value\"/></CefEvent>"
+                             + "<Line><xsl:value-of select=\"record/data/@value\"/></Line>"
                              + "</xsl:template></xsl:stylesheet>";
         final Element root = XmlTrees.parse(sheet);
         final String fork = "file://xml/schema/accounting/events";
