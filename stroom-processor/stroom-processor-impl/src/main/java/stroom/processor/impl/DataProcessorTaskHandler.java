@@ -25,6 +25,8 @@ import stroom.node.api.NodeInfo;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.api.ProcessorResultImpl;
 import stroom.processor.api.ProcessorTaskExecutor;
+import stroom.processor.api.ProcessorTaskListener;
+import stroom.processor.api.RunIndexing;
 import stroom.processor.api.RunOutput;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
@@ -52,6 +54,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Consumer;
 
 public class DataProcessorTaskHandler {
 
@@ -60,6 +64,7 @@ public class DataProcessorTaskHandler {
     static final String REASON_NODE_STOPPED = "Put back as the node running it was stopped";
     static final String REASON_HEARTBEAT_OVERDUE = "Put back as the node running it could not renew its heartbeat";
     static final String REASON_EARLIER_RUN = "An earlier run of it was still going on the same node";
+    static final String REASON_DOCUMENTS_LOST = "Put back as documents it indexed were lost";
 
     // How long a run waits for an earlier run of the same task to stop. An earlier run is told to stop first, so this
     // only has to be long enough for it to notice.
@@ -76,6 +81,7 @@ public class DataProcessorTaskHandler {
     private final ProcessorTaskHeartbeat processorTaskHeartbeat;
     private final ProcessorTaskOutputCleaner processorTaskOutputCleaner;
     private final Provider<ProcessorConfig> processorConfigProvider;
+    private final Set<ProcessorTaskListener> listeners;
 
     @Inject
     DataProcessorTaskHandler(final Map<ProcessorType, Provider<ProcessorTaskExecutor>> executorProviders,
@@ -88,7 +94,8 @@ public class DataProcessorTaskHandler {
                              final TaskContextFactory taskContextFactory,
                              final ProcessorTaskHeartbeat processorTaskHeartbeat,
                              final ProcessorTaskOutputCleaner processorTaskOutputCleaner,
-                             final Provider<ProcessorConfig> processorConfigProvider) {
+                             final Provider<ProcessorConfig> processorConfigProvider,
+                             final Set<ProcessorTaskListener> listeners) {
         this.executorProviders = executorProviders;
         this.processorFilterCache = processorFilterCache;
         this.processorTaskDao = processorTaskDao;
@@ -100,6 +107,7 @@ public class DataProcessorTaskHandler {
         this.processorTaskHeartbeat = processorTaskHeartbeat;
         this.processorTaskOutputCleaner = processorTaskOutputCleaner;
         this.processorConfigProvider = processorConfigProvider;
+        this.listeners = listeners;
     }
 
     public ProcessorResult exec(final ProcessorTask task) {
@@ -208,7 +216,8 @@ public class DataProcessorTaskHandler {
                             executorProviders.get(processor.getProcessorType()).get();
                     try {
                         run.result = processorTaskExecutor
-                                .exec(taskContext, processor, processorFilter, run.task, source, run.output);
+                                .exec(taskContext, processor, processorFilter, run.task, source, run.output,
+                                        run.indexing);
                     } catch (final RuntimeException e) {
                         throw new Fault("Processing failed", e, true);
                     }
@@ -306,8 +315,21 @@ public class DataProcessorTaskHandler {
                 run.lost = true;
                 return false;
             }
+            beforeRerun(run);
         }
         return true;
+    }
+
+    // Lets the listeners, e.g. an index, get ready for the task to be run again, before anything of the run is open.
+    private void beforeRerun(final Run run) {
+        for (final ProcessorTaskListener listener : listeners) {
+            try {
+                securityContext.asProcessingUser(() -> listener.beforeRerun(run.task));
+            } catch (final RuntimeException e) {
+                // It has nothing to do with the stream.
+                throw new Fault("Unable to get ready for the task to be run again", e, false);
+            }
+        }
     }
 
     // Returns false if the run has lost its task.
@@ -341,16 +363,63 @@ public class DataProcessorTaskHandler {
         try {
             final Ending ending = decideEnding(run, terminationCause);
             final TaskStatusChange change = setFinalStatus(run, ending);
-            clearUp(run, ending, change);
+            // An interrupt must not stop these, so is put off until they have finished.
+            final boolean interrupted = Thread.interrupted();
+            try {
+                try {
+                    tellListeners(run, change);
+                } finally {
+                    // Even if a listener threw an error.
+                    clearUp(run, ending, change);
+                }
+            } finally {
+                if (interrupted) {
+                    // Continue to interrupt this thread.
+                    Thread.currentThread().interrupt();
+                }
+            }
         } catch (final RuntimeException e) {
             LOGGER.error(() -> LogUtil.message("Unable to end the run of processor task {} - {}",
                     run.task.getId(), LogUtil.exceptionMessage(e)), e);
         }
     }
 
+    // Tells the listeners how the run ended. If it isn't known whether the status was set then they aren't told, and
+    // have to find out for themselves.
+    private void tellListeners(final Run run, final TaskStatusChange change) {
+        switch (change.result()) {
+            case DONE -> {
+                final ProcessorTask task = change.task();
+                if (TaskStatus.COMMITTING.equals(task.getStatus())) {
+                    tellListeners(task, "held", listener -> listener.held(task));
+                } else {
+                    tellListeners(task, "ended", listener -> listener.ended(task, task.getStatus()));
+                }
+            }
+            case LOST -> tellListeners(run.task, "replaced", listener -> listener.replaced(run.task));
+            case UNKNOWN -> LOGGER.debug(() -> LogUtil.message(
+                    "Not telling listeners as the status may not have been set: {}", run.task.getId()));
+        }
+    }
+
+    // A listener that can't be told is left to find out for itself, so nothing else is changed.
+    private void tellListeners(final ProcessorTask task,
+                               final String call,
+                               final Consumer<ProcessorTaskListener> consumer) {
+        for (final ProcessorTaskListener listener : listeners) {
+            try {
+                securityContext.asProcessingUser(() -> consumer.accept(listener));
+            } catch (final RuntimeException e) {
+                LOGGER.error(() -> LogUtil.message("Unable to tell {} that processor task {} was {} - {}",
+                        listener.getClass().getSimpleName(), task.getId(), call, LogUtil.exceptionMessage(e)), e);
+            }
+        }
+    }
+
     // Decides how a run ended. The first of these that applies decides it, so the order matters, e.g. a run that was
     // terminated because its node is stopping is likely to have hit a fault too, which must not be counted.
     private Ending decideEnding(final Run run, final Optional<TerminationCause> terminationCause) {
+        run.fault = addIndexingFault(run.fault, run.indexing);
         if (run.lost) {
             return Ending.LOST;
 
@@ -372,6 +441,10 @@ public class DataProcessorTaskHandler {
             // As this node would otherwise claim it again straight away. It isn't a fault of the task's.
             return new Ending(TaskStatus.RETRY, REASON_EARLIER_RUN, false);
 
+        } else if (run.indexing.isDocumentsLost()) {
+            // It is to be run again anyway, so it isn't charged with any fault that it hit.
+            return Ending.putBack(REASON_DOCUMENTS_LOST);
+
         } else if (run.fault != null && !isSourceDeleted(run)) {
             final Fault fault = run.fault;
             LOGGER.error(() -> LogUtil.message("Processor task {} hit a fault - {}",
@@ -384,8 +457,27 @@ public class DataProcessorTaskHandler {
                             : TaskStatus.RETRY,
                     fault.getReason(),
                     fault.counted);
+
+        } else if (run.indexing.isHeld()) {
+            return new Ending(TaskStatus.COMMITTING, null, false);
         }
         return new Ending(TaskStatus.COMPLETE, null, false);
+    }
+
+    // A stream that could not be indexed is a fault. Once the index has said so, it decides whether the fault is
+    // counted and what the reason is, as it knows whether the cause is in the stream, and any exception the pipeline
+    // then threw is likely to be because of it. That exception is kept as the cause.
+    private static Fault addIndexingFault(final Fault fault, final RunIndexing indexing) {
+        final Optional<String> reason = indexing.getCouldNotIndexReason();
+        if (reason.isEmpty()) {
+            return fault;
+        }
+        return new Fault(
+                reason.get(),
+                fault == null
+                        ? null
+                        : fault.getCause(),
+                indexing.isCouldNotIndexCounted());
     }
 
     private TaskStatusChange setFinalStatus(final Run run, final Ending ending) {
@@ -412,8 +504,6 @@ public class DataProcessorTaskHandler {
     // Deletes output that must not be kept, now that the status has been set. If it isn't known whether it has been
     // then nothing is deleted, as the task may be complete. If it isn't then it will be run again, which clears up.
     private void clearUp(final Run run, final Ending ending, final TaskStatusChange change) {
-        // An interrupt must not stop this, so is put off until it has finished.
-        final boolean interrupted = Thread.interrupted();
         try {
             securityContext.asProcessingUser(() -> {
                 switch (change.result()) {
@@ -442,11 +532,6 @@ public class DataProcessorTaskHandler {
         } catch (final RuntimeException e) {
             LOGGER.error(() -> LogUtil.message("Unable to clear up after processor task {} - {}",
                     run.task.getId(), LogUtil.exceptionMessage(e)), e);
-        } finally {
-            if (interrupted) {
-                // Continue to interrupt this thread.
-                Thread.currentThread().interrupt();
-            }
         }
     }
 
@@ -525,6 +610,7 @@ public class DataProcessorTaskHandler {
         // Only set if the processor has been run.
         private Processor processor;
         private final RunOutput output = new RunOutput();
+        private final RunIndexing indexing = new RunIndexing();
         private Fault fault;
         private ProcessorResult result = new ProcessorResultImpl(0, 0, Collections.emptyMap());
 

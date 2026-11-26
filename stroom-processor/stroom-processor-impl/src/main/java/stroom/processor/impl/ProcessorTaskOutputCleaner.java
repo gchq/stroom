@@ -53,10 +53,10 @@ class ProcessorTaskOutputCleaner {
 
     private static final int BATCH_SIZE = 1_000;
 
-    // The statuses of tasks that won't write any more output. A task waiting to be tried again isn't one of them, as
-    // it clears its own output when it is.
     // The statuses of tasks that finished well, of which the newest one's output is kept.
     private static final Set<TaskStatus> KEPT = EnumSet.of(TaskStatus.COMPLETE, TaskStatus.COMMITTING);
+    // The statuses of tasks that won't write any more output. A task waiting to be tried again isn't one of them, as
+    // it clears its own output when it is.
     private static final Set<TaskStatus> FINISHED = EnumSet.of(
             TaskStatus.COMPLETE,
             TaskStatus.COMMITTING,

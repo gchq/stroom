@@ -19,6 +19,7 @@ package stroom.processor.impl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.Meta;
 import stroom.processor.api.InclusiveRanges;
+import stroom.processor.api.ProcessorTaskState;
 import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
@@ -46,6 +47,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 
 @Singleton
 public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
@@ -282,6 +284,65 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     @Override
     public int putBackRetryTasks(final int filterId, final Instant statusOlderThan, final int limit) {
         return 0;
+    }
+
+    @Override
+    public boolean completeHeld(final long taskId, final int runCount) {
+        return changeHeld(taskId, runCount, task -> task.copy()
+                .status(TaskStatus.COMPLETE)
+                .statusTimeMs(System.currentTimeMillis())
+                .build());
+    }
+
+    @Override
+    public boolean putBackHeld(final long taskId, final int runCount, final String reason) {
+        return changeHeld(taskId, runCount, task -> task.copy()
+                .status(TaskStatus.CREATED)
+                .statusTimeMs(System.currentTimeMillis())
+                .nodeName(null)
+                .startTimeMs(null)
+                .endTimeMs(null)
+                .reason(reason)
+                .build());
+    }
+
+    private synchronized boolean changeHeld(final long taskId,
+                                            final int runCount,
+                                            final UnaryOperator<ProcessorTask> change) {
+        final ProcessorTask task = dao.getMap().get((int) taskId);
+        if (task == null
+            || !TaskStatus.COMMITTING.equals(task.getStatus())
+            || task.getRunCount() != runCount) {
+            return false;
+        }
+        dao.getMap().put((int) taskId, change.apply(task));
+        return true;
+    }
+
+    @Override
+    public Map<Long, ProcessorTaskState> getStates(final Collection<Long> taskIds) {
+        final Map<Long, ProcessorTaskState> states = new HashMap<>();
+        taskIds.forEach(id -> {
+            final ProcessorTask task = dao.getMap().get(id.intValue());
+            states.put(id, task == null
+                    ? new ProcessorTaskState(id, TaskStatus.DELETED, 0)
+                    : new ProcessorTaskState(id, task.getStatus(), task.getRunCount()));
+        });
+        return states;
+    }
+
+    @Override
+    public List<ProcessorTaskState> findHeld(final Instant olderThan, final long afterId, final int limit) {
+        return dao.getMap()
+                .values()
+                .stream()
+                .filter(task -> TaskStatus.COMMITTING.equals(task.getStatus()))
+                .filter(task -> task.getStatusTimeMs() == null || task.getStatusTimeMs() < olderThan.toEpochMilli())
+                .filter(task -> task.getId() > afterId)
+                .sorted(Comparator.comparingLong(ProcessorTask::getId))
+                .limit(limit)
+                .map(task -> new ProcessorTaskState(task.getId(), task.getStatus(), task.getRunCount()))
+                .toList();
     }
 
     @Override

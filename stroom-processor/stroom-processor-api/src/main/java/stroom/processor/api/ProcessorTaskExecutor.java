@@ -32,11 +32,13 @@ public interface ProcessorTaskExecutor {
     /// @param processorTask   The task.
     /// @param source          The stream to process.
     /// @param runOutput       Has to be told of every stream that the run opens to write to.
+    /// @param runIndexing     What an index says of the run, which decides how it ends.
     /// @return What was done.
     ProcessorResult exec(TaskContext taskContext,
                          Processor processor,
                          ProcessorFilter processorFilter,
                          ProcessorTask processorTask,
                          Source source,
-                         RunOutput runOutput);
+                         RunOutput runOutput,
+                         RunIndexing runIndexing);
 }

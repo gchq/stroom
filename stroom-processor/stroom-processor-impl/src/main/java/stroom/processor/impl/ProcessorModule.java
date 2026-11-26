@@ -22,9 +22,11 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
+import stroom.processor.api.HeldProcessorTaskService;
 import stroom.processor.api.JobNames;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
+import stroom.processor.api.ProcessorTaskListener;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorFilterDoc;
 import stroom.processor.shared.ProcessorProfile;
@@ -56,6 +58,9 @@ public class ProcessorModule extends AbstractModule {
         bind(ProcessorResource.class).to(ProcessorResourceImpl.class);
         bind(ProcessorTaskResource.class).to(ProcessorTaskResourceImpl.class);
         bind(ProcessorTaskService.class).to(ProcessorTaskServiceImpl.class);
+        bind(HeldProcessorTaskService.class).to(HeldProcessorTaskServiceImpl.class);
+        // None until an index is told how runs go.
+        GuiceUtil.buildMultiBinder(binder(), ProcessorTaskListener.class);
         bind(ProcessorProfileService.class).to(ProcessorProfileServiceImpl.class);
 
         RestResourcesBinder.create(binder())

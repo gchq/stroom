@@ -17,6 +17,7 @@
 package stroom.processor.impl.dao;
 
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.processor.api.ProcessorTaskState;
 import stroom.processor.impl.ProgressMonitor;
 import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.impl.TaskStatusChange;
@@ -50,6 +51,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
@@ -813,6 +815,112 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
                 .doesNotContain(TaskStatus.ABORTED)
                 .containsAll(UNFINISHED_STATUSES)
                 .contains(TaskStatus.COMMITTING);
+    }
+
+    @Test
+    void testHeldTaskIsCompletedOnlyByTheRunThatHeldIt() {
+        final long taskId = createHeldTask();
+
+        assertThat(processorTaskDao.completeHeld(taskId, 2)).isFalse();
+        assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.COMMITTING);
+
+        assertThat(processorTaskDao.completeHeld(taskId, 1)).isTrue();
+        assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.COMPLETE);
+        assertThat(getTaskRunCount(taskId)).isOne();
+        // Its run is kept, as it is that run that has been completed.
+        final ProcessorTask task = findTask(taskId);
+        assertThat(task.getNodeName()).isEqualTo(NODE1);
+        assertThat(task.getStartTimeMs()).isEqualTo(1L);
+        assertThat(task.getEndTimeMs()).isEqualTo(2L);
+
+        // Not twice.
+        assertThat(processorTaskDao.completeHeld(taskId, 1)).isFalse();
+    }
+
+    @Test
+    void testHeldTaskIsPutBackOnlyByTheRunThatHeldIt() {
+        final long taskId = createHeldTask();
+
+        assertThat(processorTaskDao.putBackHeld(taskId, 2, "Lost")).isFalse();
+        assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.COMMITTING);
+
+        assertThat(processorTaskDao.putBackHeld(taskId, 1, "Lost")).isTrue();
+        assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.CREATED);
+        assertThat(getTaskReason(taskId)).isEqualTo("Lost");
+        assertThat(getTaskNodeId(taskId)).isNull();
+        assertThat(getTaskFaultCount(taskId)).isZero();
+
+        assertThat(processorTaskDao.putBackHeld(taskId, 1, "Lost")).isFalse();
+        assertThat(processorTaskDao.completeHeld(taskId, 1)).isFalse();
+    }
+
+    @Test
+    void testTaskThatIsNotHeldIsNeitherCompletedNorPutBack() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final long taskId = createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE1, FEED);
+        processorTaskDao.changeTaskStatus(findTask(taskId), NODE1, TaskStatus.PROCESSING, 1L, null);
+
+        assertThat(processorTaskDao.completeHeld(taskId, 1)).isFalse();
+        assertThat(processorTaskDao.putBackHeld(taskId, 1, "Lost")).isFalse();
+        assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.PROCESSING);
+    }
+
+    @Test
+    void testGetStates() {
+        final long held = createHeldTask();
+        final long created = createProcessorTask(processorFilter1a, TaskStatus.CREATED, null, FEED);
+        // More than fit in a batch, of which only two exist.
+        final List<Long> taskIds = LongStream.range(0, 2_500)
+                .map(i -> 1_000_000 + i)
+                .boxed()
+                .collect(Collectors.toCollection(ArrayList::new));
+        taskIds.add(held);
+        taskIds.add(created);
+        // The same task twice.
+        taskIds.add(held);
+
+        final Map<Long, ProcessorTaskState> states = processorTaskDao.getStates(taskIds);
+
+        assertThat(states).hasSize(2_502);
+        assertThat(states.get(held)).isEqualTo(new ProcessorTaskState(held, TaskStatus.COMMITTING, 1));
+        assertThat(states.get(created)).isEqualTo(new ProcessorTaskState(created, TaskStatus.CREATED, 0));
+        assertThat(states.get(1_000_000L)).isEqualTo(new ProcessorTaskState(1_000_000L, TaskStatus.DELETED, 0));
+        assertThat(processorTaskDao.getStates(List.of())).isEmpty();
+    }
+
+    @Test
+    void testFindHeld() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final Instant threshold = Instant.now().minus(10, ChronoUnit.MINUTES);
+        final Instant old = threshold.minusMillis(1);
+        final long first = createProcessorTask(processorFilter1a, TaskStatus.COMMITTING, NODE1, FEED, old);
+        createProcessorTask(processorFilter1a, TaskStatus.COMMITTING, NODE1, FEED, threshold);
+        createProcessorTask(processorFilter1a, TaskStatus.COMPLETE, NODE1, FEED, old);
+        createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED, old);
+        final long second = createProcessorTask(processorFilter1a, TaskStatus.COMMITTING, NODE2, FEED, old);
+
+        assertThat(processorTaskDao.findHeld(threshold, -1, 10))
+                .extracting(ProcessorTaskState::taskId)
+                .containsExactly(first, second);
+        assertThat(processorTaskDao.findHeld(threshold, -1, 1))
+                .extracting(ProcessorTaskState::taskId)
+                .containsExactly(first);
+        assertThat(processorTaskDao.findHeld(threshold, first, 10))
+                .containsExactly(new ProcessorTaskState(second, TaskStatus.COMMITTING, 0));
+    }
+
+    // A task that run 1 has held as COMMITTING, with a start time of 1 and an end time of 2.
+    private long createHeldTask() {
+        processor1 = createProcessor();
+        processorFilter1a = createProcessorFilter(processor1);
+        final long taskId = createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE1, FEED);
+        final ProcessorTask started = processorTaskDao.changeTaskStatus(
+                findTask(taskId), NODE1, TaskStatus.PROCESSING, 1L, null).task();
+        processorTaskDao.changeTaskStatus(started, NODE1, TaskStatus.COMMITTING, 1L, 2L, null, false);
+        assertThat(getTaskStatus(taskId)).isEqualTo(TaskStatus.COMMITTING);
+        return taskId;
     }
 
     private long createTaskWithReason(final ProcessorFilter filter) {

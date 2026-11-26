@@ -63,6 +63,7 @@ import stroom.processor.api.InclusiveRanges.InclusiveRange;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.api.ProcessorResultImpl;
 import stroom.processor.api.ProcessorTaskExecutor;
+import stroom.processor.api.RunIndexing;
 import stroom.processor.api.RunOutput;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
@@ -134,6 +135,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
     private ProcessorTask processorTask;
     private Source streamSource;
     private RunOutput runOutput;
+    private RunIndexing runIndexing;
 
     private long startTime;
 
@@ -188,12 +190,14 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                                 final ProcessorFilter processorFilter,
                                 final ProcessorTask processorTask,
                                 final Source streamSource,
-                                final RunOutput runOutput) {
+                                final RunOutput runOutput,
+                                final RunIndexing runIndexing) {
         this.processor = processor;
         this.processorFilter = processorFilter;
         this.processorTask = processorTask;
         this.streamSource = streamSource;
         this.runOutput = runOutput;
+        this.runIndexing = runIndexing;
 
         // Record when processing began so we know how long it took afterwards.
         startTime = System.currentTimeMillis();
@@ -338,7 +342,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             LOGGER.info(() -> processingInfo);
 
             // Hold the source and feed so the pipeline filters can get them.
-            streamProcessorHolder.setStreamProcessor(processor, processorTask, runOutput);
+            streamProcessorHolder.setStreamProcessor(processor, processorTask, runOutput, runIndexing);
 
             // Process the streams.
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);

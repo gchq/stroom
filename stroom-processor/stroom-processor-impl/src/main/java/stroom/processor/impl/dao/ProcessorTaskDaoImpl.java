@@ -29,6 +29,7 @@ import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.InclusiveRanges.InclusiveRange;
+import stroom.processor.api.ProcessorTaskState;
 import stroom.processor.impl.ExistingCreatedTask;
 import stroom.processor.impl.FilterPollBackoff;
 import stroom.processor.impl.ProcessorConfig;
@@ -78,6 +79,7 @@ import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.Record2;
+import org.jooq.Record3;
 import org.jooq.Record6;
 import org.jooq.Result;
 import org.jooq.Row2;
@@ -1428,6 +1430,77 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         LOGGER.debug(() -> LogUtil.message(
                 "putBackRetryTasks() - put back {} tasks of filter {}", count, filterId));
         return count;
+    }
+
+    @Override
+    public boolean completeHeld(final long taskId, final int runCount) {
+        // The times of the run are kept, as it is the run that was completed.
+        return JooqUtil.contextResult(processorDbConnProvider, context ->
+                JooqUtil.withDeadlockRetries(() -> context
+                                .update(PROCESSOR_TASK)
+                                .set(PROCESSOR_TASK.STATUS, TaskStatus.COMPLETE.getPrimitiveValue())
+                                .set(PROCESSOR_TASK.STATUS_TIME_MS, System.currentTimeMillis())
+                                .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))
+                                .where(heldBy(taskId, runCount))
+                                .execute(),
+                        () -> LogUtil.message("completeHeld - taskId: {}, runCount: {}", taskId, runCount))) == 1;
+    }
+
+    @Override
+    public boolean putBackHeld(final long taskId, final int runCount, final String reason) {
+        return JooqUtil.contextResult(processorDbConnProvider, context -> changeStatus(
+                context,
+                null,
+                TaskStatus.CREATED,
+                System.currentTimeMillis(),
+                DSL.val(truncateReason(reason)),
+                heldBy(taskId, runCount))) == 1;
+    }
+
+    private Condition heldBy(final long taskId, final int runCount) {
+        return PROCESSOR_TASK.ID.eq(taskId)
+                .and(PROCESSOR_TASK.STATUS.eq(TaskStatus.COMMITTING.getPrimitiveValue()))
+                .and(PROCESSOR_TASK.RUN_COUNT.eq(runCount));
+    }
+
+    @Override
+    public Map<Long, ProcessorTaskState> getStates(final Collection<Long> taskIds) {
+        final Map<Long, ProcessorTaskState> states = new HashMap<>();
+        final List<Long> ids = taskIds.stream().distinct().toList();
+        for (int from = 0; from < ids.size(); from += BATCH_SIZE) {
+            final List<Long> batch = ids.subList(from, Math.min(from + BATCH_SIZE, ids.size()));
+            JooqUtil.contextResult(processorDbConnProvider, context -> context
+                            .select(PROCESSOR_TASK.ID, PROCESSOR_TASK.STATUS, PROCESSOR_TASK.RUN_COUNT)
+                            .from(PROCESSOR_TASK)
+                            .where(PROCESSOR_TASK.ID.in(batch))
+                            .fetch())
+                    .forEach(record -> states.put(record.get(PROCESSOR_TASK.ID), toState(record)));
+        }
+        // Those that no longer exist.
+        ids.forEach(id -> states.computeIfAbsent(id, missing ->
+                new ProcessorTaskState(missing, TaskStatus.DELETED, 0)));
+        return states;
+    }
+
+    @Override
+    public List<ProcessorTaskState> findHeld(final Instant olderThan, final long afterId, final int limit) {
+        return JooqUtil.contextResult(processorDbConnProvider, context -> context
+                        .select(PROCESSOR_TASK.ID, PROCESSOR_TASK.STATUS, PROCESSOR_TASK.RUN_COUNT)
+                        .from(PROCESSOR_TASK)
+                        .where(PROCESSOR_TASK.STATUS.eq(TaskStatus.COMMITTING.getPrimitiveValue()))
+                        .and(PROCESSOR_TASK.STATUS_TIME_MS.lt(olderThan.toEpochMilli()))
+                        .and(PROCESSOR_TASK.ID.gt(afterId))
+                        .orderBy(PROCESSOR_TASK.ID)
+                        .limit(limit)
+                        .fetch())
+                .map(this::toState);
+    }
+
+    private ProcessorTaskState toState(final Record3<Long, Byte, Integer> record) {
+        return new ProcessorTaskState(
+                record.get(PROCESSOR_TASK.ID),
+                TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(PROCESSOR_TASK.STATUS)),
+                record.get(PROCESSOR_TASK.RUN_COUNT));
     }
 
     @Override

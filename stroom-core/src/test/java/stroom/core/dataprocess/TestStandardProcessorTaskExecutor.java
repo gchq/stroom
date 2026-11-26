@@ -42,6 +42,7 @@ import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.SearchIdHolder;
 import stroom.pipeline.state.StreamProcessorHolder;
 import stroom.processor.api.ProcessorResult;
+import stroom.processor.api.RunIndexing;
 import stroom.processor.api.RunOutput;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
@@ -195,6 +196,7 @@ class TestStandardProcessorTaskExecutor {
                 ProcessorFilter.builder().id(1).processor(processor).build(),
                 ProcessorTask.builder().id(1).build(),
                 source,
-                runOutput);
+                runOutput,
+                new RunIndexing());
     }
 }

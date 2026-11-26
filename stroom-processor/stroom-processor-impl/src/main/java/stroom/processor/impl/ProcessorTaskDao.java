@@ -19,6 +19,7 @@ package stroom.processor.impl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.Meta;
 import stroom.processor.api.InclusiveRanges;
+import stroom.processor.api.ProcessorTaskState;
 import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
@@ -306,6 +307,35 @@ public interface ProcessorTaskDao {
     ///
     /// @return The number of tasks for each filter that has any, by filter id.
     Map<Integer, Integer> countRetryTasksByFilter();
+
+    /// Sets a task that is `Committing` from a run to `Complete`.
+    ///
+    /// @param taskId   The id of the task.
+    /// @param runCount The run that held it.
+    /// @return False if it isn't `Committing` from that run.
+    boolean completeHeld(long taskId, int runCount);
+
+    /// Puts back a task that is `Committing` from a run, without counting a fault.
+    ///
+    /// @param taskId   The id of the task.
+    /// @param runCount The run that held it.
+    /// @param reason   Why it was put back.
+    /// @return False if it isn't `Committing` from that run.
+    boolean putBackHeld(long taskId, int runCount, String reason);
+
+    /// Gets the status of tasks, and the run each is on.
+    ///
+    /// @param taskIds The ids of the tasks, of which there can be any number.
+    /// @return The state of each, by its id. A task that no longer exists is `Deleted`, with a run count of zero.
+    Map<Long, ProcessorTaskState> getStates(Collection<Long> taskIds);
+
+    /// Finds tasks that are `Committing`.
+    ///
+    /// @param olderThan Only tasks that were set to `Committing` before this are found.
+    /// @param afterId   Only tasks with a higher id than this are found.
+    /// @param limit     The most to find.
+    /// @return The tasks, in order of their ids.
+    List<ProcessorTaskState> findHeld(Instant olderThan, long afterId, int limit);
 
     /// Finds the reason of the task of a filter that was the last to hit a fault, of those waiting to be tried again.
     ///

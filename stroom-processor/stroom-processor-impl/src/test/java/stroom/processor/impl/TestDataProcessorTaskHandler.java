@@ -25,6 +25,8 @@ import stroom.node.api.NodeInfo;
 import stroom.processor.api.ProcessorResult;
 import stroom.processor.api.ProcessorResultImpl;
 import stroom.processor.api.ProcessorTaskExecutor;
+import stroom.processor.api.ProcessorTaskListener;
+import stroom.processor.api.RunIndexing;
 import stroom.processor.api.RunOutput;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
@@ -58,6 +60,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
@@ -104,6 +107,8 @@ class TestDataProcessorTaskHandler {
     private ProcessorTaskOutputCleaner processorTaskOutputCleaner;
     @Mock
     private Source source;
+    @Mock
+    private ProcessorTaskListener listener;
 
     private final UserRef runAsUser = UserRef.builder().uuid("run-as").subjectId("run-as").build();
     private final Processor processor = Processor.builder()
@@ -133,7 +138,8 @@ class TestDataProcessorTaskHandler {
         Mockito.when(metaService.getMeta(META_ID, true)).thenAnswer(invocation -> meta.get());
         Mockito.when(processorFilterCache.get(FILTER_ID)).thenReturn(Optional.of(filter));
         Mockito.when(executor.exec(
-                        Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+                        Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
+                        Mockito.any()))
                 .thenReturn(RESULT);
 
         Mockito.doAnswer(invocation -> {
@@ -207,7 +213,8 @@ class TestDataProcessorTaskHandler {
                 taskContextFactory,
                 processorTaskHeartbeat,
                 processorTaskOutputCleaner,
-                ProcessorConfig::new);
+                ProcessorConfig::new,
+                Set.of(listener));
     }
 
     @Test
@@ -225,7 +232,8 @@ class TestDataProcessorTaskHandler {
                 Mockito.eq(FILTER_ID),
                 Mockito.eq(stroomTaskId));
         inOrder.verify(executor).exec(
-                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
+                        Mockito.any());
         inOrder.verify(processorTaskHeartbeat).registerEnding(Mockito.argThat(task -> task.getVersion() == 2));
         inOrder.verify(processorTaskDao).changeTaskStatus(
                 Mockito.argThat(task -> task.getVersion() == 2), Mockito.eq(NODE), Mockito.eq(TaskStatus.COMPLETE),
@@ -731,7 +739,8 @@ class TestDataProcessorTaskHandler {
         inOrder.verify(processorTaskOutputCleaner).clearEarlierRuns(
                 Mockito.argThat(task -> task.getId() == TASK_ID), Mockito.any());
         inOrder.verify(executor).exec(
-                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
+                        Mockito.any());
         verifyOnlyStatus(TaskStatus.COMPLETE, NODE, false, null);
     }
 
@@ -842,6 +851,196 @@ class TestDataProcessorTaskHandler {
         verifyTaskLeftAlone();
     }
 
+    @Test
+    void heldRunIsSetToCommittingAndTheListenerIsToldItIsHeld() {
+        givenIndexingSays(RunIndexing::hold);
+
+        handler.exec(task(0), true);
+
+        verifyOnlyStatus(TaskStatus.COMMITTING, NODE, false, null);
+        Mockito.verify(listener).held(Mockito.argThat(task -> TaskStatus.COMMITTING.equals(task.getStatus())));
+        Mockito.verify(listener, Mockito.never()).ended(Mockito.any(), Mockito.any());
+        // It finished well, so output it makes out of date is cleared, and its own is kept.
+        Mockito.verify(processorTaskOutputCleaner).clearSuperseded(Mockito.any(), Mockito.any(), Mockito.any());
+        verifyNoOutputDeleted();
+    }
+
+    @Test
+    void completeRunTellsTheListenerItEnded() {
+        handler.exec(task(0), true);
+
+        verifyOnlyStatus(TaskStatus.COMPLETE, NODE, false, null);
+        Mockito.verify(listener).ended(
+                Mockito.argThat(task -> task.getId() == TASK_ID), Mockito.eq(TaskStatus.COMPLETE));
+        Mockito.verify(listener, Mockito.never()).held(Mockito.any());
+        Mockito.verify(listener, Mockito.never()).beforeRerun(Mockito.any());
+    }
+
+    @Test
+    void lostDocumentsPutTheTaskBackWithoutCountingTheFaultItHit() {
+        givenIndexingSays(indexing -> {
+            indexing.hold();
+            indexing.couldNotIndex("Bad document", true);
+            indexing.documentsLost();
+        }, new RuntimeException("Expected"));
+
+        handler.exec(task(0), true);
+
+        verifyPutBack(DataProcessorTaskHandler.REASON_DOCUMENTS_LOST);
+        Mockito.verify(listener).ended(Mockito.any(), Mockito.eq(TaskStatus.CREATED));
+        verifyOnlyDeleted(OUTPUT_ID, ERROR_ID);
+    }
+
+    @Test
+    void nodeStoppingWinsOverLostDocuments() {
+        Mockito.when(executor.exec(
+                        Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
+                        Mockito.any()))
+                .thenAnswer(invocation -> {
+                    invocation.getArgument(6, RunIndexing.class).documentsLost();
+                    givenTerminated(TerminationCause.NODE_STOPPING);
+                    return RESULT;
+                });
+
+        handler.exec(task(0), true);
+
+        verifyPutBack(DataProcessorTaskHandler.REASON_NODE_STOPPED);
+    }
+
+    @Test
+    void streamThatCouldNotBeIndexedIsACountedFault() {
+        givenIndexingSays(indexing -> {
+            indexing.hold();
+            indexing.couldNotIndex("Bad document", true);
+        });
+
+        handler.exec(task(0), true);
+
+        verifyOnlyStatus(TaskStatus.RETRY, NODE, true, "Bad document");
+        Mockito.verify(listener).ended(Mockito.any(), Mockito.eq(TaskStatus.RETRY));
+    }
+
+    @Test
+    void indexThatCouldNotBeWrittenIsNotCounted() {
+        givenIndexingSays(indexing -> indexing.couldNotIndex("Index not writable", false));
+
+        handler.exec(task(0), true);
+
+        verifyOnlyStatus(TaskStatus.RETRY, NODE, false, "Index not writable");
+    }
+
+    @Test
+    void streamThatCouldNotBeIndexedOnTheLastTryAbortsTheTask() {
+        givenIndexingSays(indexing -> indexing.couldNotIndex("Bad document", true));
+
+        handler.exec(task(2), true);
+
+        verifyOnlyStatus(TaskStatus.ABORTED, NODE, true, "Bad document");
+        Mockito.verify(listener).ended(Mockito.any(), Mockito.eq(TaskStatus.ABORTED));
+    }
+
+    @Test
+    void indexThatCouldNotBeWrittenIsNotCountedEvenIfThePipelineThrows() {
+        givenIndexingSays(indexing -> indexing.couldNotIndex("Index not writable", false),
+                new RuntimeException("Expected"));
+
+        handler.exec(task(2), true);
+
+        // Not Aborted, though it is the third fault.
+        verifyOnlyStatus(TaskStatus.RETRY, NODE, false, "Index not writable - RuntimeException 'Expected'");
+    }
+
+    @Test
+    void streamThatCouldNotBeIndexedIsCountedWithTheIndexReasonIfThePipelineThrows() {
+        givenIndexingSays(indexing -> indexing.couldNotIndex("Bad document", true), new RuntimeException("Expected"));
+
+        handler.exec(task(0), true);
+
+        verifyOnlyStatus(TaskStatus.RETRY, NODE, true, "Bad document - RuntimeException 'Expected'");
+    }
+
+    @Test
+    void outputIsClearedUpEvenIfAListenerThrowsAnError() {
+        givenWritesOutput();
+        givenStatusCannotBeChanged(TaskStatusChange.lost());
+        Mockito.doThrow(new AssertionError("Expected")).when(listener).replaced(Mockito.any());
+
+        assertThatThrownBy(() -> handler.exec(task(0), true)).isInstanceOf(AssertionError.class);
+
+        verifyOnlyDeleted(OUTPUT_ID, ERROR_ID);
+    }
+
+    @Test
+    void listenerGetsReadyForALaterRunOnceEarlierOutputIsClearedAndBeforeItStarts() {
+        Mockito.doAnswer(invocation -> {
+            assertThat(asProcessingUser.get()).isTrue();
+            return null;
+        }).when(listener).beforeRerun(Mockito.any());
+
+        handler.exec(laterRun(), true);
+
+        final InOrder inOrder = Mockito.inOrder(processorTaskOutputCleaner, listener, executor);
+        inOrder.verify(processorTaskOutputCleaner).clearEarlierRuns(Mockito.any(), Mockito.any());
+        inOrder.verify(listener).beforeRerun(Mockito.argThat(task -> task.getRunCount() == 2));
+        inOrder.verify(executor).exec(
+                Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
+                Mockito.any());
+        verifyOnlyStatus(TaskStatus.COMPLETE, NODE, false, null);
+    }
+
+    @Test
+    void listenerThatCannotGetReadyForALaterRunIsAnUncountedFault() {
+        Mockito.doThrow(new RuntimeException("Expected")).when(listener).beforeRerun(Mockito.any());
+
+        handler.exec(laterRun(), true);
+
+        verifyNotExecuted();
+        verifyOnlyStatus(TaskStatus.RETRY, NODE, false,
+                "Unable to get ready for the task to be run again - RuntimeException 'Expected'");
+    }
+
+    @Test
+    void listenerIsToldThatARunThatLostItsTaskWasReplaced() {
+        givenStatusCannotBeChanged(TaskStatusChange.lost());
+
+        handler.exec(task(0), true);
+
+        Mockito.verify(listener).replaced(Mockito.argThat(task -> task.getId() == TASK_ID));
+        Mockito.verify(listener, Mockito.never()).ended(Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    void listenerIsNotToldIfTheStatusMayHaveBeenSet() {
+        givenStatusCannotBeChanged(TaskStatusChange.unknown());
+
+        handler.exec(task(0), true);
+
+        Mockito.verifyNoInteractions(listener);
+    }
+
+    @Test
+    void listenerIsNotToldOfATaskThatWasNotStarted() {
+        givenStatusCannotBeChanged(TaskStatusChange.lost());
+
+        handler.exec(task(0), false);
+
+        Mockito.verifyNoInteractions(listener);
+    }
+
+    @Test
+    void listenerThatCannotBeToldChangesNothing() {
+        givenIndexingSays(RunIndexing::hold);
+        Mockito.doAnswer(invocation -> {
+            assertThat(asProcessingUser.get()).isTrue();
+            throw new RuntimeException("Expected");
+        }).when(listener).held(Mockito.any());
+
+        handler.exec(task(0), true);
+
+        verifyOnlyStatus(TaskStatus.COMMITTING, NODE, false, null);
+        Mockito.verify(processorTaskOutputCleaner).clearSuperseded(Mockito.any(), Mockito.any(), Mockito.any());
+    }
+
     private ProcessorTask task(final int faultCount) {
         return ProcessorTask.builder()
                 .id(TASK_ID)
@@ -867,9 +1066,28 @@ class TestDataProcessorTaskHandler {
 
     private void givenWritesOutput() {
         Mockito.when(executor.exec(
-                        Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+                        Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
+                        Mockito.any()))
                 .thenAnswer(invocation -> {
                     writeOutput(invocation.getArgument(5));
+                    return RESULT;
+                });
+    }
+
+    private void givenIndexingSays(final Consumer<RunIndexing> says) {
+        givenIndexingSays(says, null);
+    }
+
+    private void givenIndexingSays(final Consumer<RunIndexing> says, final RuntimeException thenThrows) {
+        Mockito.when(executor.exec(
+                        Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
+                        Mockito.any()))
+                .thenAnswer(invocation -> {
+                    writeOutput(invocation.getArgument(5));
+                    says.accept(invocation.getArgument(6));
+                    if (thenThrows != null) {
+                        throw thenThrows;
+                    }
                     return RESULT;
                 });
     }
@@ -886,7 +1104,8 @@ class TestDataProcessorTaskHandler {
 
     private void givenTerminatedDuringRun(final TerminationCause cause, final boolean hitsFault) {
         Mockito.when(executor.exec(
-                        Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+                        Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
+                        Mockito.any()))
                 .thenAnswer(invocation -> {
                     writeOutput(invocation.getArgument(5));
                     givenTerminated(cause);
@@ -899,7 +1118,8 @@ class TestDataProcessorTaskHandler {
 
     private void givenExecutorThrows(final Throwable t) {
         Mockito.when(executor.exec(
-                        Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any()))
+                        Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),
+                        Mockito.any()))
                 .thenAnswer(invocation -> {
                     writeOutput(invocation.getArgument(5));
                     throw t;
