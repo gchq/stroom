@@ -486,6 +486,11 @@ public record FieldMapping(String path,
                    + "\", \"field\": \"<input field>\"}"
                    + (given.contains("field") && given.contains("any_of")
                     ? ": any_of alone lists the fields to try, first with a value wins"
+                    : "")
+                   + (dataName != null && given.contains("field") && given.contains("value")
+                    ? ". A Data entry is a constant, {\"path\": \"" + path + "\", \"data_name\": \"" + dataName
+                      + "\", \"value\": \"<the value>\"}, or a field's, {\"path\": \"" + path + "\", "
+                      + "\"data_name\": \"" + dataName + "\", \"field\": \"<input field>\"}: one entry each"
                     : "");
         }
         return problemBeyondSource();

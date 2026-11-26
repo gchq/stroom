@@ -74,7 +74,7 @@
  "result": {
   "ok": false,
   "problems": [
-   "[status] allow_unknown takes the reason no action element describes these records, as text (in the user's words), not true."
+   "[status] allow_unknown takes the reason no action element describes these records, as text (in the user's words), not true: e.g. \"allow_unknown\": \"the vendor logs no action for these records\"."
   ],
   "warnings": [
    "[status] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",

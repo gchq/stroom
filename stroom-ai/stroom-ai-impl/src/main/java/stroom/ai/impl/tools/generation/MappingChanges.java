@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolText;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -51,7 +52,8 @@ public final class MappingChanges {
     }
 
     /// @param base    The mapping, as JSON-like values (left as it is).
-    /// @param changes What changes: `events` (rules by name: added after the others, removed with `remove: true`,
+    /// @param changes What changes: `events` (rules by name: added after the others, or before the last rule where
+    ///                that takes every record left (no `when`: the catch-all), removed with `remove: true`,
     ///                replaced whole with `replace: true`, or else changed: each key given replaces the rule's own,
     ///                and its `fields` entries are each replaced, added or removed by path and Data name),
     ///                `common` (entries, each replacing the entry with its path and Data name, added, or removed),
@@ -232,8 +234,20 @@ public final class MappingChanges {
                     done.add("rule '" + str(name) + "' removed");
                 }
             } else if (at < 0) {
-                rules.add(withoutReplace(named));
-                done.add("rule '" + str(name) + "' added after the others");
+                final Object last = rules.isEmpty()
+                        ? null
+                        : rules.getLast();
+                if (takesTheRest(last) && !takesTheRest(named)) {
+                    // Added after it, the rule would never be reached (the XSLT writes no rule after one with no
+                    // conditions), and a catch_all not last is refused: seen in testing, the agent removed the
+                    // catch-all, added the rule, then added the catch-all back.
+                    rules.add(rules.size() - 1, withoutReplace(named));
+                    done.add("rule '" + str(name) + "' added before the catch-all '"
+                             + str(((Map<?, ?>) last).get("name")) + "'");
+                } else {
+                    rules.add(withoutReplace(named));
+                    done.add("rule '" + str(name) + "' added after the others");
+                }
             } else if (JsonValues.truthy(named.get("replace"))) {
                 rules.set(at, withoutReplace(named));
                 done.add("rule '" + str(name) + "' replaced whole");
@@ -241,6 +255,12 @@ public final class MappingChanges {
                 rules.set(at, changedRule((Map<?, ?>) rules.get(at), named, done));
             }
         }
+    }
+
+    // Whether a rule takes every record the rules before it leave: one with no conditions (when), the catch-all.
+    private static boolean takesTheRest(final Object rule) {
+        return rule instanceof final Map<?, ?> map
+               && (!(map.get("when") instanceof final Collection<?> when) || when.isEmpty());
     }
 
     // A rule with the keys given replacing its own, and its fields changed entry by entry.

@@ -234,6 +234,42 @@ class TestMappingChanges {
     }
 
     @Test
+    void aNewRuleIsAddedBeforeTheCatchAll() {
+        // Seen in testing: a new rule added after the catch-all was refused (catch_all not last), and the agent
+        // removed the catch-all, added the rule, then added the catch-all back.
+        final Map<String, Object> base = json("""
+                {"input": "json", "events": [
+                  {"name": "logon", "when": [{"field": "action", "equals": "login"}], "fields": []},
+                  {"name": "rest", "catch_all": true, "fields": []}]}""");
+
+        final MappingChanges.Applied applied = MappingChanges.applyChanges(base, json("""
+                {"events": [{"name": "usb", "when": [{"field": "action", "equals": "usb"}], "drop": true},
+                            {"name": "logoff", "when": [{"field": "action", "equals": "logout"}],
+                             "fields": []}]}"""));
+
+        assertThat(ruleNames(applied))
+                .containsExactly("logon", "usb", "logoff", "rest");
+        assertThat(applied.done()).containsExactly("rule 'usb' added before the catch-all 'rest'",
+                "rule 'logoff' added before the catch-all 'rest'");
+        assertThat(TranslationMapping.fromJson(applied.merged()).events().getLast().name()).isEqualTo("rest");
+    }
+
+    @Test
+    void aNewRuleIsAddedLastWhereNoRuleTakesTheRest() {
+        final Map<String, Object> base = json("""
+                {"input": "json", "events": [
+                  {"name": "logon", "when": [{"field": "action", "equals": "login"}], "fields": []}]}""");
+
+        final MappingChanges.Applied applied = MappingChanges.applyChanges(base, json("""
+                {"events": [{"name": "logoff", "when": [{"field": "action", "equals": "logout"}],
+                             "fields": []}]}"""));
+
+        assertThat(ruleNames(applied))
+                .containsExactly("logon", "logoff");
+        assertThat(applied.done()).containsExactly("rule 'logoff' added after the others");
+    }
+
+    @Test
     void extractEntriesAreChangedOneByOneByTheFieldsTheyExtract() {
         // Seen in testing: changes.extract replaced the whole list, so the few new entries an agent sent wiped the
         // rest (26 cut to 2), and every record fell to the rule for the rest.
@@ -342,6 +378,12 @@ class TestMappingChanges {
                 Arguments.of("{\"events\": [{\"name\": \"nope\", \"remove\": true}]}",
                         "removes rule 'nope', which the mapping does not have"),
                 Arguments.of("{\"common\": [{\"value\": \"x\"}]}", "needs its path"));
+    }
+
+    private static List<Object> ruleNames(final MappingChanges.Applied applied) {
+        return TestMappingChanges.<Map<String, Object>>list(applied.merged().get("events")).stream()
+                .map(rule -> rule.get("name"))
+                .toList();
     }
 
     @SuppressWarnings("unchecked")

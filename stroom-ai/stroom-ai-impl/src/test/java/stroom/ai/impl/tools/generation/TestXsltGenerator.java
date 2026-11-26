@@ -551,6 +551,18 @@ class TestXsltGenerator extends XsltRuns {
     }
 
     @Test
+    void aDataEntryGivenBothAFieldAndAValueIsShownBothForms() {
+        // Seen in testing: a Data entry given field and value was refused without saying how a constant one is
+        // written, and the agent tried again the same way.
+        assertThatThrownBy(() -> FieldMapping.fromJson(json("""
+                {"path": "EventDetail/Alert/Data", "data_name": "vendor", "field": "vendor", "value": "Acme"}""")))
+                .hasMessageContaining("A Data entry is a constant, {\"path\": \"EventDetail/Alert/Data\", "
+                                      + "\"data_name\": \"vendor\", \"value\": \"<the value>\"}, or a field's, "
+                                      + "{\"path\": \"EventDetail/Alert/Data\", \"data_name\": \"vendor\", "
+                                      + "\"field\": \"<input field>\"}");
+    }
+
+    @Test
     void eachFieldNeedsExactlyOneSource() {
         assertThatThrownBy(() -> mapping(with("common", json("""
                 [{"path": "EventSource/User/Id", "field": "user", "value": "x"}]"""))))

@@ -534,7 +534,8 @@ final class EventTrees {
         if (detail != null && detail.kids.containsKey("Unknown") && rule.allowUnknown() != null
             && ToolText.isBlank(rule.allowUnknown())) {
             note(problems, "[" + rule.name() + "] allow_unknown takes the reason no action element describes these "
-                           + "records, as text (in the user's words), not true.");
+                           + "records, as text (in the user's words), not true: e.g. \"allow_unknown\": \"the "
+                           + "vendor logs no action for these records\".");
         }
         if (!rule.when().isEmpty() && detail != null && detail.kids.containsKey("Unknown")
             && rule.allowUnknown() == null) {
