@@ -825,6 +825,45 @@ class TestConsent {
         assertThat(second).as("the second choice's answer: one of its own options").contains("field:tz");
     }
 
+    // Found in the audit of 2026-11-26: formDigest joined the parts with String.valueOf, so ["Stop, then read
+    // more"] and ["Stop", "then read more"] were one form, the second given the first's answer.
+    @Test
+    void suggestedAnswersHoldingTheListSeparatorAreAnotherFormThanTheSameWordsSplit() {
+        final Replaying questions = new Replaying();
+        final ToolCallContext context = questions.context();
+        final ToolCall call = new ToolCall("call-1", "a_tool", "{}");
+
+        consent.answer(call, context, "a_tool", "Intro", "How far?", List.of("Stop, then read more"));
+        consent.answer(call, context, "a_tool", "Intro", "How far?", List.of("Stop", "then read more"));
+        consent.chooseEach(call, context, "a_tool", "Zones.", Map.of("zone",
+                new Consent.Question("Which zone?", List.of("UTC, then local"))));
+        consent.chooseEach(call, context, "a_tool", "Zones.", Map.of("zone",
+                new Consent.Question("Which zone?", List.of("UTC", "then local"))));
+
+        assertThat(questions.callIds.get(1)).as("answer").isNotEqualTo(questions.callIds.get(0));
+        assertThat(questions.callIds.get(3)).as("chooseEach").isNotEqualTo(questions.callIds.get(2));
+    }
+
+    // A form whose items hold no ", " keeps the key it had before the change, so a form answered before it is still
+    // given its answer when the call is made again after it.
+    @Test
+    void aFormWithNoSeparatorInItsItemsKeepsItsKey() {
+        final Replaying questions = new Replaying();
+        final ToolCallContext context = questions.context();
+        final ToolCall call = new ToolCall("call-1", "a_tool", "{}");
+        final List<String> suggested = List.of("Stop", "Read more");
+
+        consent.answer(call, context, "a_tool", "Intro", "How far?", suggested);
+        consent.chooseEach(call, context, "a_tool", "Zones.", Map.of("zone",
+                new Consent.Question("Which zone?", List.of("Europe/London", "UTC"))));
+
+        final String before = XsltCode.sha256("a_tool\nHow far?\n" + suggested).substring(0, 16);
+        assertThat(questions.callIds.get(0)).endsWith("answer-" + before);
+        final String chosenBefore = XsltCode.sha256("a_tool\n[zone]\n[Which zone?=[Europe/London, UTC]]")
+                .substring(0, 16);
+        assertThat(questions.callIds.get(1)).endsWith("choices-" + chosenBefore);
+    }
+
     // The same choice asked again (the call made again once it is answered) is the same form, given its answer.
     @Test
     void theSameChoiceAskedAgainIsTheSameForm() {

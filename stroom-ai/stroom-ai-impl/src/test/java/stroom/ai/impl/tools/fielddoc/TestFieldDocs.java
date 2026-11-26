@@ -20,6 +20,7 @@ import stroom.ai.impl.GoldenFiles;
 import stroom.ai.impl.tools.ToolText;
 import stroom.ai.impl.tools.generation.Condition;
 import stroom.ai.impl.tools.generation.FieldMapping;
+import stroom.ai.impl.tools.generation.XPathFieldReads;
 
 import org.junit.jupiter.api.Test;
 
@@ -244,6 +245,33 @@ class TestFieldDocs {
         assertThat(ToolText.strip("  x \n")).isEqualTo("x");
         assertThat(ToolText.head("abc", 2)).isEqualTo("ab");
         assertThat(ToolText.split("a//b/", "/")).containsExactly("a", "", "b", "");
+    }
+
+    @Test
+    void aKeyHoldingADotIsDocumentedByTheFieldsOwnName() {
+        // Found in the audit of 2026-11-26: the documentation named `*[@key='log.level']` as the nested
+        // `log.level`, not as the records (XPathFieldReads, JsonFieldNames) spell it.
+        final String flat = "*[@key='log.level']";
+        final String nested = "*[@key='log']/*[@key='level']";
+
+        assertThat(XPathFieldReads.fields(flat)).containsExactly("['log.level']");
+        assertThat(XPathFieldReads.fields(nested)).containsExactly("log.level");
+        // Two different fields: the documentation must not give them one name.
+        assertThat(FieldDocs.readable(flat)).as("documented name of the flat key")
+                .isEqualTo(XPathFieldReads.fields(flat).iterator().next());
+        assertThat(FieldDocs.readable(nested)).as("documented name of the nested key").isEqualTo("log.level");
+        assertThat(FieldDocs.readable("normalize-space(*[@key='labels']/*[@key='app.name'])"))
+                .isEqualTo("normalize-space(labels['app.name'])");
+    }
+
+    @Test
+    void aKeyHoldingAQuoteIsDocumentedByTheFieldsOwnName() {
+        // The generator writes a quote in a key doubled in its literal (XPathText.literal).
+        final String xpath = "*[@key='o''neil']";
+
+        assertThat(XPathFieldReads.fields(xpath)).containsExactly("o'neil");
+        assertThat(FieldDocs.readable(xpath)).as("documented name").isEqualTo("o'neil");
+        assertThat(FieldDocs.readable("data[@name='o''neil']/@value")).isEqualTo("o'neil");
     }
 
     private static String compared(final String path) {

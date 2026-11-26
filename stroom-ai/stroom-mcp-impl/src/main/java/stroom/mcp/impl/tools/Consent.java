@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.WeakHashMap;
+import java.util.stream.Stream;
 
 /// Confirmations (key details) and approvals (risky actions) before a write tool acts, and choices the user makes in a
 /// form.
@@ -387,9 +388,11 @@ public class Consent {
         schema.put("type", "object");
         schema.put("required", List.copyOf(fieldKeys.keySet()));
         schema.put("properties", properties);
-        final String digest = formDigest(action, questions.keySet(), questions.values().stream()
-                .map(question -> question.text() + "=" + question.options())
-                .toList());
+        // The questions as one part, written as before: their options' own form holds ", ", so the list isn't
+        // listed's to judge; each question's options are.
+        final String digest = formDigest(action, questions.keySet(), String.valueOf(questions.values().stream()
+                .map(question -> question.text() + "=" + listed(question.options()))
+                .toList()));
         final Optional<ElicitResult> asked = askShown(call, context, action, intro, "choices-" + digest, intro,
                 schema);
         if (asked.isEmpty()) {
@@ -484,9 +487,11 @@ public class Consent {
         schema.put("type", "object");
         schema.put("required", required);
         schema.put("properties", properties);
-        final String digest = formDigest(action, questions.keySet(), questions.values().stream()
-                .map(question -> question.text() + "=" + question.options() + "|" + question.other())
-                .toList());
+        // The questions as one part, written as before: their options' own form holds ", ", so the list isn't
+        // listed's to judge; each question's options are.
+        final String digest = formDigest(action, questions.keySet(), String.valueOf(questions.values().stream()
+                .map(question -> question.text() + "=" + listed(question.options()) + "|" + question.other())
+                .toList()));
         final Optional<ElicitResult> asked = askShown(call, context, action, intro,
                 inRound("answers-" + digest, round), intro, schema);
         if (asked.isEmpty()) {
@@ -820,9 +825,29 @@ public class Consent {
         final List<String> parts = new ArrayList<>();
         parts.add(action);
         for (final Object part : asked) {
-            parts.add(String.valueOf(part));
+            parts.add(listed(part));
         }
         return XsltCode.sha256(String.join("\n", parts)).substring(0, 16);
+    }
+
+    // A part of a form's key: a list (or map) as JSON when an item holds the ", " its plain form joins items with
+    // (["Stop, then read more"] and ["Stop", "then read more"] were one key, found in the audit of 2026-11-26), else
+    // as before (String.valueOf), so a form asked and answered before the change is still found under its key.
+    private static String listed(final Object part) {
+        final Collection<?> items = part instanceof final Map<?, ?> map
+                ? map.entrySet().stream().flatMap(entry -> Stream.of(entry.getKey(), entry.getValue())).toList()
+                : part instanceof final Collection<?> collection
+                        ? collection
+                        : List.of();
+        final boolean ambiguous = items.stream().anyMatch(item -> String.valueOf(item).contains(", "));
+        if (!ambiguous) {
+            return String.valueOf(part);
+        }
+        final Object strings = part instanceof final Map<?, ?> map
+                ? map.entrySet().stream().map(entry -> List.of(String.valueOf(entry.getKey()),
+                        String.valueOf(entry.getValue()))).toList()
+                : items.stream().map(String::valueOf).toList();
+        return "json:" + ToolJson.dumpsSortedKeys(strings);
     }
 
     // A form's key in the round it is asked in within its call: the first round's key as it is (so a form asked

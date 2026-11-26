@@ -4599,8 +4599,8 @@ per operator and per case below (`TestConditionParity`; through processing, `Tes
   / `xml_fields`, up to three levels (double-escaped JSON, XML in JSON), spelt as a nested object's would be
   (`event.logger_name` whether `event` is an object or a JSON string); a splitter's fields; a variant; capture names.
   **Keys holding `.`, `/` or `['`** themselves (or starting `[`, or empty; an Elastic-style flat `"log.level"` beside
-  a nested `log.level`) are spelt in brackets everywhere fields are named (survey, draft, conditions):
-  `['log.level']`, `labels['app.kubernetes.io/name']`, `['']`, `'` doubled inside. A Data Splitter name holding `/`
+  a nested `log.level`) are spelt in brackets everywhere fields are named (survey, draft, conditions, the Field
+  mapping's sources): `['log.level']`, `labels['app.kubernetes.io/name']`, `['']`, `'` doubled inside. A Data Splitter name holding `/`
   (a CSV heading `src/ip`, or a keyed line's nested `SYSCALL/exe`) is read both ways, one data element so named or
   nested ones, as the mapping can't say which.
 * **JSON as Stroom's parsers present it**: records and held JSON are read with numbers as written (`1.50` stays

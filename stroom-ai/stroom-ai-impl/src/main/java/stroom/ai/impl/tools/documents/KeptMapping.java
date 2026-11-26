@@ -18,6 +18,7 @@ package stroom.ai.impl.tools.documents;
 
 import stroom.ai.impl.tools.JsonValues;
 import stroom.ai.impl.tools.ToolText;
+import stroom.ai.impl.tools.sample.JsonFieldNames;
 import stroom.ai.impl.tools.sample.ToolJson;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
@@ -31,6 +32,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -83,10 +85,13 @@ public final class KeptMapping {
     private static final Pattern DOC_MARK_PATTERN = Pattern.compile(
             "<!-- stroom-mcp field-mapping ([0-9a-f]{16}) -->");
     private static final Pattern NOTE_PATTERN = Pattern.compile("\\n*" + Pattern.quote(NOTE) + "\\n*");
-    private static final Pattern DATA_SPLITTER_FIELD = Pattern.compile("(?:data\\[@name='([^']*)'\\]/)+@value");
-    private static final Pattern DATA_NAME = Pattern.compile("data\\[@name='([^']*)'\\]");
-    private static final Pattern JSON_FIELD = Pattern.compile("\\*\\[@key='[^']*'\\](?:/\\*\\[@key='[^']*'\\])*");
-    private static final Pattern JSON_KEY = Pattern.compile("@key='([^']*)'");
+    // An xpath string literal as the generator writes it (XPathText.literal): a quote in it doubled.
+    private static final String LITERAL = "'((?:[^']|'')*)'";
+    private static final Pattern DATA_SPLITTER_FIELD = Pattern.compile("(?:data\\[@name=" + LITERAL + "\\]/)+@value");
+    private static final Pattern DATA_NAME = Pattern.compile("data\\[@name=" + LITERAL + "\\]");
+    private static final Pattern JSON_FIELD = Pattern.compile("\\*\\[@key=" + LITERAL + "\\](?:/\\*\\[@key="
+                                                              + LITERAL + "\\])*");
+    private static final Pattern JSON_KEY = Pattern.compile("@key=" + LITERAL);
 
     private KeptMapping() {
         // Static only.
@@ -415,21 +420,27 @@ public final class KeptMapping {
     /// @return It with its field selectors written as the field names, for a reader, e.g.
     /// `normalize-space(username)`.
     public static String readable(final String xpath) {
-        final String fields = replace(DATA_SPLITTER_FIELD, xpath, DATA_NAME, "/");
-        return replace(JSON_FIELD, fields, JSON_KEY, ".");
+        // The fields named as XPathFieldReads names them: a Data Splitter record's names joined by '/', a JSON
+        // record's keys as JsonFieldNames spells them (`*[@key='log.level']` is `['log.level']`, not the nested
+        // `log.level`), a quote doubled in a literal made one.
+        final String fields = replace(DATA_SPLITTER_FIELD, xpath, DATA_NAME, names -> String.join("/", names));
+        return replace(JSON_FIELD, fields, JSON_KEY, JsonFieldNames::of);
     }
 
     // Each match of the pattern replaced by the names its parts select, joined.
-    private static String replace(final Pattern pattern, final String text, final Pattern part, final String join) {
+    private static String replace(final Pattern pattern,
+                                  final String text,
+                                  final Pattern part,
+                                  final Function<List<String>, String> join) {
         final Matcher matcher = pattern.matcher(text);
         final StringBuilder sb = new StringBuilder();
         while (matcher.find()) {
             final List<String> names = new ArrayList<>();
             final Matcher nameMatcher = part.matcher(matcher.group(0));
             while (nameMatcher.find()) {
-                names.add(nameMatcher.group(1));
+                names.add(nameMatcher.group(1).replace("''", "'"));
             }
-            matcher.appendReplacement(sb, Matcher.quoteReplacement(String.join(join, names)));
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(join.apply(names)));
         }
         matcher.appendTail(sb);
         return sb.toString();
