@@ -83,7 +83,8 @@ class TestEvalCases {
         assertThat(skills).hasSize(9).allSatisfy(id -> assertThat(id).matches("(8[89]|9[0-6])_skill_.*"));
         assertThat(instructions).hasSize(4).allSatisfy(id -> assertThat(id).matches("(98|99|100|101)_agents_.*"));
         // The timeline cases whose tool asks the user in its forms, or the chat's model in side calls.
-        assertThat(chats).containsExactly("114_timeline_thematic_span_property_sites", "115_timeline_message_and_command_runs");
+        assertThat(chats).containsExactly("114_timeline_thematic_span_property_sites",
+                "115_timeline_message_and_command_runs", "116_timeline_noise_left_out");
         assertThat(chats).allSatisfy(id -> assertThat(EvalCases.isSkill(EvalCases.load(id))).isTrue());
         for (final String id : java.util.stream.Stream.of(skills, instructions, chats).flatMap(List::stream)
                 .toList()) {
@@ -600,6 +601,19 @@ class TestEvalCases {
         }
         assertThat(dmorgan).filteredOn(record -> "chat.message".equals(record.get("EventCode")))
                 .extracting(record -> record.get("Thread")).containsOnly("chat:ops-team").hasSize(12);
+    }
+
+    @Test
+    void theNoiseCasesNoiseIsTheGeneratorsBeaconAndScheduledScript() {
+        // The noise: a beacon every 30 seconds and a script every 5 minutes from 08:00 to 17:00, beside the
+        // person's own 18 events.
+        final Map<String, Object> noise = EvalCases.load("116_timeline_noise_left_out");
+        final List<Map<String, String>> sward = records(noise, "sward");
+        assertThat(sward).filteredOn(record -> record.get("Object").contains("telemetry")).hasSize(1080);
+        assertThat(sward).filteredOn(record -> "service".equals(record.get("AccountType"))).hasSize(108);
+        assertThat(sward).hasSize(1080 + 108 + 18);
+        assertThat(EvalCases.map(EvalCases.map(EvalCases.map(noise.get("expected")).get("timeline")).get("noise")))
+                .containsEntry("excluded_at_least", 1000).containsEntry("kept_at_least", 18);
     }
 
     // A timeline case's records of one user, in time order.
