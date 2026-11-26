@@ -38,7 +38,9 @@ import java.util.Optional;
 /// JSONParser cuts a string longer than its `stringTruncateLength` (10,000 characters by default), the cut text is no
 /// longer JSON, and the XSLT's `mcp:json-to-xml` of it gives nothing, so none of its keys are there. A condition on
 /// one then never holds and a negated one always does: the rule drops records it wouldn't read whole, or keeps those
-/// it would drop (seen in testing: a drop rule on `event.appender_ref` of an aggregated feed). The mapping's check
+/// it would drop (seen in testing: a drop rule on `event.appender_ref` of an aggregated feed). A condition on a long
+/// string field read as it is tests the cut text too, its first 10,000 characters (found in the audit of 2026-11-26:
+/// a negated `contains` on a long message dropped, in processing, the record the check kept). The mapping's check
 /// reads the records whole, so this compares the two.
 public final class CutHeldDrops {
 
@@ -47,7 +49,7 @@ public final class CutHeldDrops {
     }
 
     /// The warnings for a mapping's drop rules whose verdict on some sample record differs once a held JSON field
-    /// they read is cut at the length given.
+    /// they read, or a string field they test as it is, is cut at the length given.
     ///
     /// @param checked The mapping's records, read whole (their held JSON fields' keys added).
     /// @param cut     Where processing cuts JSON strings (the pipeline's `stringTruncateLength`).
@@ -56,7 +58,7 @@ public final class CutHeldDrops {
     public static List<String> warnings(final CheckedRecords checked, final int cut) {
         final TranslationMapping mapping = checked.mapping();
         final List<String> out = new ArrayList<>();
-        if (cut <= 0 || !"json".equals(mapping.input()) || mapping.jsonFields().isEmpty()) {
+        if (cut <= 0 || !"json".equals(mapping.input())) {
             return out;
         }
         final Map<String, List<Condition>> drops = new LinkedHashMap<>();
@@ -75,35 +77,46 @@ public final class CutHeldDrops {
     // The warning for one drop rule, or none when its verdict is the same on every record read as processing reads
     // it.
     private static Optional<String> warning(final CheckedRecords checked,
-                                                      final int cut,
-                                                      final String name,
-                                                      final List<Condition> when) {
+                                            final int cut,
+                                            final String name,
+                                            final List<Condition> when) {
         // Every held field a condition's key is read through, the outermost first: with a.k held in a, a key of
         // a.k is unreadable where a is cut, as well as where a.k is (RecordIndex.cutHeld reads them so too).
         final List<String> held = new ArrayList<>(new LinkedHashSet<>(when.stream()
                 .flatMap(c -> MappingFacts.heldJsonFields(checked.mapping().jsonFields(), c.field()).stream())
                 .toList()));
         held.sort(Comparator.comparingInt(String::length));
-        if (held.isEmpty()) {
+        // The fields tested as they are: their text cut, the first characters tested.
+        final List<String> plain = new ArrayList<>(new LinkedHashSet<>(when.stream()
+                .map(Condition::field)
+                .filter(field -> field != null
+                                 && MappingFacts.heldJsonFields(checked.mapping().jsonFields(), field).isEmpty())
+                .toList()));
+        if (held.isEmpty() && plain.isEmpty()) {
             return Optional.empty();
         }
         int changed = 0;
         String cutField = null;
+        boolean heldCut = false;
         boolean droppedWhole = false;
         for (int n = 0; n < checked.size(); n++) {
             if (!(checked.record(n) instanceof final Map<?, ?> record)) {
                 continue;
             }
             final List<String> unreadable = outermostUnreadable(record, held, cut);
-            if (unreadable.isEmpty()) {
+            final List<String> longFields = plain.stream().filter(field -> longText(record.get(field), cut)).toList();
+            if (unreadable.isEmpty() && longFields.isEmpty()) {
                 continue;
             }
             final Boolean whole = checked.holds(when, n);
-            final Boolean asCut = holds(checked, when, cutRecord(record, unreadable, cut), n);
+            final Boolean asCut = holds(checked, when, cutRecord(record, unreadable, longFields, cut), n);
             if (whole != null && asCut != null && !whole.equals(asCut)) {
                 changed++;
                 if (cutField == null) {
-                    cutField = unreadable.getFirst();
+                    heldCut = !unreadable.isEmpty();
+                    cutField = heldCut
+                            ? unreadable.getFirst()
+                            : longFields.getFirst();
                     droppedWhole = whole;
                 }
             }
@@ -112,13 +125,20 @@ public final class CutHeldDrops {
             return Optional.empty();
         }
         return Optional.of("drop rule " + name + ": '" + cutField + "' is longer than stringTruncateLength ("
-                                     + String.format("%,d", cut) + " characters) on " + changed + " sample "
-                                     + "record(s), so in processing none of its keys can be read there (the cut text "
-                                     + "isn't JSON): " + (droppedWhole
+                           + String.format("%,d", cut) + " characters) on " + changed + " sample record(s), so in "
+                           + "processing " + (heldCut
+                ? "none of its keys can be read there (the cut text isn't JSON): "
+                : "only its first " + String.format("%,d", cut) + " characters are tested: ") + (droppedWhole
                 ? "the rule drops them read whole, but in processing doesn't"
                 : "the rule keeps them read whole, but in processing drops them") + ". Raise the pipeline's "
-                                     + "stringTruncateLength (long_values=whole), or test a field outside '"
-                                     + cutField + "'");
+                           + "stringTruncateLength (long_values=whole), or test " + (heldCut
+                ? "a field outside '" + cutField + "'"
+                : "another field"));
+    }
+
+    // Whether a value is a string processing cuts.
+    private static boolean longText(final Object value, final int cut) {
+        return value instanceof final String text && text.length() > cut;
     }
 
     // The held fields unreadable on a record once cut, each the outermost: one inside another unreadable isn't
@@ -147,8 +167,12 @@ public final class CutHeldDrops {
         }
     }
 
-    // The record as processing reads it: each unreadable held field cut, none of its keys there.
-    private static Map<String, Object> cutRecord(final Map<?, ?> record, final List<String> unreadable, final int cut) {
+    // The record as processing reads it: each unreadable held field cut, none of its keys there, and each long field
+    // tested as it is cut.
+    private static Map<String, Object> cutRecord(final Map<?, ?> record,
+                                                 final List<String> unreadable,
+                                                 final List<String> longFields,
+                                                 final int cut) {
         final Map<String, Object> out = new LinkedHashMap<>();
         record.forEach((key, value) -> {
             final String name = String.valueOf(key);
@@ -157,6 +181,7 @@ public final class CutHeldDrops {
             }
         });
         unreadable.forEach(json -> out.put(json, ((String) record.get(json)).substring(0, cut)));
+        longFields.forEach(field -> out.put(field, ((String) record.get(field)).substring(0, cut)));
         return out;
     }
 

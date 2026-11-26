@@ -41,7 +41,8 @@ import java.util.regex.Pattern;
 ///   selects (XML's repeated elements), an element's text and its descendants' (unstripped), a JSON object's
 ///   members' text run together, as `*[@key='event']` gives it. A JSON array's values are its items, one by one
 ///   (the generated XPath's [XPathText#ITEMS_STEP]); an item that is an object or array is one value, its text run
-///   together.
+///   together. A JSON number is its text as written, and a key (or a Data Splitter name) given more than once has
+///   each of its values ([ToolJson.Repeated]), as Stroom's parsers write an element for each.
 /// * A value counts only when it has text and isn't one of the mapping's nil values (the XSLT's
 ///   `[normalize-space(.)]` and nil predicates); a `not` holds when no value that counts passes the test, so when
 ///   the field is missing.
@@ -210,9 +211,15 @@ final class ConditionValues {
     // the record) its members' text run together; NUL dropped.
     private static List<String> mapValues(final Map<?, ?> map, final String field, final boolean json) {
         if (map.containsKey(field)) {
-            return json
-                    ? items(map.get(field)).stream().map(item -> withoutNul(stringValue(item))).toList()
-                    : List.of(withoutNul(stringValue(map.get(field))));
+            final List<String> out = new ArrayList<>();
+            for (final Object value : repeats(map.get(field))) {
+                if (json) {
+                    items(value).forEach(item -> out.add(withoutNul(stringValue(item))));
+                } else {
+                    out.add(withoutNul(stringValue(value)));
+                }
+            }
+            return out;
         }
         if (!json) {
             return List.of();
@@ -235,6 +242,12 @@ final class ConditionValues {
     private static String stringValue(final Object value) {
         if (value == null) {
             return "";
+        }
+        if (value instanceof final ToolJson.Repeated repeated) {
+            // An object's repeated key: each value's text, as the object's own text holds each element's.
+            final StringBuilder out = new StringBuilder();
+            repeated.values().forEach(inner -> out.append(stringValue(inner)));
+            return out.toString();
         }
         if (value instanceof final Map<?, ?> map) {
             final StringBuilder out = new StringBuilder();
@@ -306,18 +319,32 @@ final class ConditionValues {
 
     // JSON held in a field, read as mcp:json-to-xml reads it, then its keys: their values' text.
     private static List<String> heldJsonValues(final String text, final List<String> keys) {
-        Object at = heldJson(text);
-        if (at == null) {
+        final Object held = heldJson(text);
+        if (held == null) {
             return List.of();
         }
+        // Every node a key's step selects: a key given more than once is each of its members.
+        List<Object> at = List.of(held);
         for (final String key : keys) {
-            if (!(at instanceof final Map<?, ?> map) || !map.containsKey(key)) {
-                return List.of();
+            final List<Object> next = new ArrayList<>();
+            for (final Object node : at) {
+                if (node instanceof final Map<?, ?> map && map.containsKey(key)) {
+                    next.addAll(repeats(map.get(key)));
+                }
             }
-            at = map.get(key);
+            at = next;
         }
-        return items(at).stream().map(item -> NOT_XML_10.matcher(stringValue(item)).replaceAll(REPLACEMENT))
-                .toList();
+        final List<String> out = new ArrayList<>();
+        at.forEach(node -> items(node).forEach(item -> out.add(NOT_XML_10.matcher(stringValue(item))
+                .replaceAll(REPLACEMENT))));
+        return out;
+    }
+
+    // A field's values: a repeated key's (or Data Splitter name's) each, any other value itself.
+    private static List<?> repeats(final Object value) {
+        return value instanceof final ToolJson.Repeated repeated
+                ? repeated.values()
+                : Collections.singletonList(value);
     }
 
     // A JSON value's values one by one, as the generated XPath's items step reads them: an array's items (each
@@ -328,16 +355,17 @@ final class ConditionValues {
                 : Collections.singletonList(value);
     }
 
-    // The JSON a field holds: nothing for an empty value, or one that doesn't parse; a JSON string whose text is an
-    // object or array read again, as often as it is one.
+    // The JSON a field holds: nothing for an empty value, or one that doesn't parse (NaN and Infinity aren't JSON to
+    // json-to-xml()); a JSON string whose text is an object or array read again, as often as it is one. Read as
+    // json-to-xml() reads it: numbers as written, a repeated key kept.
     private static Object heldJson(final String text) {
         if (normalizeSpace(text).isEmpty()) {
             return null;
         }
         try {
-            Object parsed = ToolJson.loads(text);
+            Object parsed = ToolJson.loadsAsWritten(text);
             while (parsed instanceof final String inner && JSON_TEXT.matcher(inner).find()) {
-                parsed = ToolJson.loads(inner);
+                parsed = ToolJson.loadsAsWritten(inner);
             }
             return parsed;
         } catch (final ToolJson.JsonDecodeException | StackOverflowError e) {

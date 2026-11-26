@@ -41,9 +41,10 @@ class TestDelimitedText {
 
     @Test
     void aQuoteAnywhereOpensAQuotedStretch() {
-        // Not only at a value's start: the delimiter inside the stretch is not a delimiter.
-        assertThat(DelimitedText.cells(List.of("x\"y,z\",w"), ',')).containsExactly(List.of("xy,z", "w"));
-        assertThat(DelimitedText.cells(List.of("\"ab\"c,d"), ',')).containsExactly(List.of("abc", "d"));
+        // Not only at a value's start: the delimiter inside the stretch is not a delimiter. Only a cell's first and
+        // last quote are taken off, as Stroom's Data Splitter takes them (the audit of 2026-11-26).
+        assertThat(DelimitedText.cells(List.of("x\"y,z\",w"), ',')).containsExactly(List.of("x\"y,z", "w"));
+        assertThat(DelimitedText.cells(List.of("\"ab\"c,d"), ',')).containsExactly(List.of("ab\"c", "d"));
         // An unclosed quote runs to the end of the record.
         assertThat(DelimitedText.cells(List.of("a,\"open,more"), ',')).containsExactly(List.of("a", "open,more"));
     }

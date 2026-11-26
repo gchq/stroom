@@ -174,7 +174,7 @@
           <xsl:if test="count($event_time_time_created) gt 1">
             <xsl:sequence select="stroom:log('WARN', concat('Several values (', count($event_time_time_created), ') for ', 'EventTime/TimeCreated, only the first written (repeat: true writes each): record ', stroom:record-no()))"/>
           </xsl:if>
-          <xsl:value-of select="stroom:format-date($event_time_time_created[1], 'yyyy MMM d HH:mm:ss', 'UTC')"/>
+          <xsl:value-of select="stroom:format-date(replace($event_time_time_created[1], '^\s+|\s+$', ''), 'yyyy MMM d HH:mm:ss', 'UTC')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>

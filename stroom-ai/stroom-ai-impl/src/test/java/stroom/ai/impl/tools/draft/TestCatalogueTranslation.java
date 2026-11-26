@@ -772,6 +772,38 @@ class TestCatalogueTranslation extends DraftFixtures {
         assertThat(CatalogueCheck.Drafted.dropsOf(mapping)).hasSize(1);
     }
 
+    // Found in review (2026-11-26): drafted again from the catalogue, the latest mapping's own drops were lost (only
+    // its rules' names were passed on), while the catalogue check counted them: processing changed between drafts.
+    @Test
+    void aReDraftFromTheCatalogueKeepsTheLatestMappingsOwnDrops() {
+        final Map<String, Object> handDrop = Map.of("reason", "noise", "when", List.of(eq("evt", "9999")));
+        final Map<String, Object> existing = new LinkedHashMap<>();
+        existing.put("input", "data_splitter");
+        existing.put("drop_when", List.of(
+                Map.of("reason", SourceNotes.DROPPED_REASON + ": Old-Type", "when", List.of(eq("evt", "5555"))),
+                handDrop));
+        existing.put("events", List.of(
+                Map.of("name", "logons", "when", List.of(eq("evt", "4624")), "fields", List.of(Map.of("path",
+                        "EventDetail/TypeId", "value", "Authenticate-Logon"))),
+                Map.of("name", "heartbeats", "when", List.of(eq("evt", "1102")), "drop", true),
+                Map.of("name", CatalogueTranslation.CATCH_ALL_NAME, "fields", List.of())));
+        final Map<String, Object> notes = SourceNotes.withExistingRules(notes(List.of(type("Authenticate-Logon",
+                "Logon", "Authenticate", "Logon", "true", way(eq("evt", "4624")))), true), existing);
+
+        final Map<String, Object> draft = draft(CODES, notes);
+
+        final Map<String, Object> mapping = mappingOf(draft);
+        // The catalogue's own drop (of an event type it no longer has) is the catalogue's to write: not kept.
+        assertThat(JsonValues.maps(mapping.get("drop_when"))).containsExactly(handDrop);
+        final List<Map<String, Object>> events = JsonValues.maps(mapping.get("events"));
+        assertThat(events).extracting(rule -> rule.get("name"))
+                .containsExactly("logons", "heartbeats", CatalogueTranslation.CATCH_ALL_NAME);
+        assertThat(events.get(1)).containsEntry("drop", true).containsEntry("when", List.of(eq("evt", "1102")));
+        assertThat(notes(draft)).anyMatch(note -> note.contains("Kept from the build's latest mapping")
+                                                  && note.contains("drop_when 'noise'")
+                                                  && note.contains("rule 'heartbeats' (drop: true)"));
+    }
+
     // Seen in testing: a single-source JSON feed, event.original an escaped JSON string whose details is JSON text
     // again; details' query_text, placed as Query/Raw by an xpath, was kept as Data too.
     @Test

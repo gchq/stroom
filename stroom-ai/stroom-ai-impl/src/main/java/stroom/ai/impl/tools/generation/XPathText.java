@@ -64,13 +64,20 @@ public final class XPathText {
 
     /// @param kind      The mapping's input: `data_splitter`, `json`, `xml` or `xml_fragments`.
     /// @param fieldName An input field.
-    /// @return The field as the parser presents it: a Data Splitter's data element (its value), a JSON key (a dotted
-    /// path of keys), or an XML path as given.
+    /// @return The field as the parser presents it: a Data Splitter's data element (its value; a name holding a slash
+    /// read as one element so named or as nested ones, whichever the record has), a JSON key (a dotted path of keys),
+    /// or an XML path as given.
     public static String fieldText(final String kind, final String fieldName) {
         if ("data_splitter".equals(kind)) {
-            return ToolText.split(fieldName, "/").stream()
-                           .map(part -> "data[@name=" + literal(part) + "]")
-                           .collect(Collectors.joining("/")) + "/@value";
+            final List<String> names = ToolText.split(fieldName, "/");
+            if (names.size() == 1) {
+                return nestedDataText(names) + "/@value";
+            }
+            // A name holding a slash: one data element so named (a CSV heading `src/ip`), or data nested in data
+            // (a keyed line's `SYSCALL/exe`, a hand-written converter's groups). The mapping doesn't say which, so
+            // both are read: only one is in a record (found in the audit of 2026-11-26: a heading's slash was read
+            // as nesting, and its value as nothing).
+            return "(data[@name=" + literal(fieldName) + "] | " + nestedDataText(names) + ")/@value";
         }
         if ("json".equals(kind)) {
             return JsonFieldNames.keys(fieldName).stream()
@@ -78,6 +85,14 @@ public final class XPathText {
                     .collect(Collectors.joining("/"));
         }
         return fieldName;
+    }
+
+    /// @param names A Data Splitter field's names, the outermost first.
+    /// @return The data element they name, each nested in the one before it.
+    public static String nestedDataText(final List<String> names) {
+        return names.stream()
+                .map(part -> "data[@name=" + literal(part) + "]")
+                .collect(Collectors.joining("/"));
     }
 
     /// @param source An input.
@@ -287,16 +302,34 @@ public final class XPathText {
     /// time a millisecond late). Stroom's format-date cuts a pattern's
     /// digits below the millisecond itself.
     public static String timeExpression(final String format, final String timezone, final String one) {
-        if ("epoch_ms".equals(format)) {
-            return "stroom:format-date(string(" + one + "))";
+        final String trimmed = trimmedText(one);
+        if (EPOCH_FORMATS.contains(format)) {
+            final String scaled = EPOCH_SCALE.containsKey(format)
+                    ? epochNumberText(trimmed) + " " + EPOCH_SCALE.get(format)
+                    : epochNumberText(trimmed);
+            return "stroom:format-date(string(xs:integer(floor(" + scaled + "))))";
         }
-        if (EPOCH_SCALE.containsKey(format)) {
-            return "stroom:format-date(string(xs:integer(floor(xs:decimal(" + one + ") " + EPOCH_SCALE.get(format)
-                   + "))))";
-        }
-        return "stroom:format-date(" + one + ", " + literal(format) + (timezone != null && !timezone.isEmpty()
+        return "stroom:format-date(" + trimmed + ", " + literal(format) + (timezone != null && !timezone.isEmpty()
                 ? ", " + literal(timezone)
                 : "") + ")";
+    }
+
+    /// @param one A value's expression.
+    /// @return The value without the white space round it (space, tab, new line, CR), as a time is read: Stroom's
+    /// format-date reads ` 2026-11-26` as nothing, and its epoch reading a number with a space before it as none
+    /// (found in the audit of 2026-11-26: the check stripped such values, and passed them).
+    public static String trimmedText(final String one) {
+        return "replace(" + one + ", '^\\s+|\\s+$', '')";
+    }
+
+    /// @param text A number's text.
+    /// @return The number, to scale an epoch time by: exact (xs:decimal) as written plainly, as a double where it
+    /// has an exponent (`1.7641512001E9`, as a Java or JavaScript writer writes a double), which xs:decimal refuses;
+    /// nothing for text that is neither, so format-date warns of it (as it did of any text before) rather than the
+    /// cast failing the stream.
+    public static String epochNumberText(final String text) {
+        return "(if (" + text + " castable as xs:decimal) then xs:decimal(" + text + ") else if (matches(" + text
+               + ", '^-?[0-9]+(\\.[0-9]+)?[eE][+-]?[0-9]{1,2}$')) then xs:double(" + text + ") else ())";
     }
 
     /// @param format   A time format with digits below the millisecond.

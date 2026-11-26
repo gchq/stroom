@@ -272,11 +272,14 @@ class TestXsltGenerator extends XsltRuns {
                  "timezone": "UTC"}"""));
         common.addAll(BASE.subList(1, BASE.size()));
         assertThat(generate(mapping(with("common", common))).xslt())
-                .contains("stroom:format-date((data[@name='time']/@value)[1], 'yyyy-MM-dd''T''HH:mm:ss', 'UTC')");
+                .contains("stroom:format-date(replace((data[@name='time']/@value)[1], '^\\s+|\\s+$', ''), "
+                          + "'yyyy-MM-dd''T''HH:mm:ss', 'UTC')");
         final List<Map<String, Object>> epoch = new ArrayList<>();
         epoch.add(json("{\"path\": \"EventTime/TimeCreated\", \"field\": \"time\", \"time_format\": \"epoch_s\"}"));
         epoch.addAll(BASE.subList(1, BASE.size()));
-        assertThat(generate(mapping(with("common", epoch))).xslt()).contains("xs:integer(floor(xs:decimal(");
+        // Read exactly as written, or as a double where written with an exponent.
+        assertThat(generate(mapping(with("common", epoch))).xslt()).contains("xs:integer(floor((if (")
+                .contains("castable as xs:decimal) then xs:decimal(").contains("then xs:double(");
     }
 
     @Test
@@ -295,8 +298,8 @@ class TestXsltGenerator extends XsltRuns {
                  "timezone": "UTC"}"""));
         common.addAll(BASE.subList(1, BASE.size()));
         final String xslt = generate(mapping(with("common", common))).xslt();
-        assertThat(xslt).contains("stroom:format-date((data[@name='time']/@value)[1], 'yyyy-MM-dd HH:mm:ss.SSSSSS', "
-                                  + "'UTC')")
+        assertThat(xslt).contains("stroom:format-date(replace((data[@name='time']/@value)[1], '^\\s+|\\s+$', ''), "
+                                  + "'yyyy-MM-dd HH:mm:ss.SSSSSS', 'UTC')")
                 .doesNotContain("mcp:time-ms");
     }
 
@@ -863,11 +866,12 @@ class TestXsltGenerator extends XsltRuns {
         assertThat(functions).hasSize(1);
         assertThat(functions.getFirst().get("name")).isEqualTo("mcp:parseTime");
         assertThat(functions.getFirst().childElements(XSL, "sequence").getFirst().get("select"))
-                .isEqualTo("stroom:format-date($value, 'dd/MM/yyyy HH:mm:ss', '+10:00')");
+                .isEqualTo("stroom:format-date(replace($value, '^\\s+|\\s+$', ''), 'dd/MM/yyyy HH:mm:ss', "
+                           + "'+10:00')");
         assertThat(count(result.xslt(), "mcp:parseTime(")).isEqualTo(2);
         assertThat(sheet.get("exclude-result-prefixes").split(" ")).contains("mcp");
         // Used once, epoch_ms stays inline.
-        assertThat(result.xslt()).contains("stroom:format-date(string(");
+        assertThat(result.xslt()).contains("stroom:format-date(string(xs:integer(floor(");
     }
 
     @Test

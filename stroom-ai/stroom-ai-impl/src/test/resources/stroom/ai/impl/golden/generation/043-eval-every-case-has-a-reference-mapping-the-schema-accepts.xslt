@@ -89,7 +89,7 @@
     <xsl:if test="exists(((data[@name='time']/@value, data[@name='timestamp']/@value)[normalize-space(.)][1])[normalize-space(.)])">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(((data[@name='time']/@value, data[@name='timestamp']/@value)[normalize-space(.)][1])[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+          <xsl:value-of select="stroom:format-date(replace(((data[@name='time']/@value, data[@name='timestamp']/@value)[normalize-space(.)][1])[1], '^\s+|\s+$', ''), 'yyyy-MM-dd''T''HH:mm:ssX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>

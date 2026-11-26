@@ -44,6 +44,9 @@ import java.util.regex.Pattern;
 /// records of the other formats were written with an empty time and failed the schema.
 final class VariantDrafts {
 
+    /// The reason of the drop_when entry leaving a header line untranslated (a format's own drop, drafted again with
+    /// the format).
+    static final String HEADER_LINE_REASON = "a header line: its date is the date of the lines after it";
     private static final String COMMON = "common";
     private static final String EVENTS = "events";
     private static final String FIELDS = "fields";
@@ -323,7 +326,7 @@ final class VariantDrafts {
     private static void headed(final Map<String, Object> mapping, final String field, final List<Object> notes) {
         final List<Object> drops = new ArrayList<>((List<Object>) mapping.getOrDefault("drop_when", List.of()));
         drops.add(Map.of("when", List.of(Map.of("field", field, "equals", SplitterDryRun.HEADER_VARIANT)),
-                "reason", "a header line: its date is the date of the lines after it"));
+                "reason", HEADER_LINE_REASON));
         mapping.put("drop_when", drops);
         notes.add(1, "A header line gives the date of the lines after it, whose times have none: it writes no Event "
                      + "(drop_when), the splitter writes its date on each record after it ('" + HEADER_DATE + "'), "

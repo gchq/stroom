@@ -102,10 +102,11 @@
   <!-- event_time: shared by the rules 'signed in', 'failed sign in', 'signed out' -->
   <xsl:template match="node()" mode="event_time">
     <xsl:variable name="eventtime_ms_parts" select="analyze-string(string((data[@name='eventtime']/@value)[1]), '^(\d{13})')"/>
-    <xsl:if test="$eventtime_ms_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
+    <xsl:variable name="eventtime_ms" select="$eventtime_ms_parts/fn:match//fn:group[@nr=1][normalize-space(.)]"/>
+    <xsl:if test="$eventtime_ms">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(string(($eventtime_ms_parts/fn:match//fn:group[@nr=1])[1]))"/>
+          <xsl:value-of select="stroom:format-date(string(xs:integer(floor((if (replace($eventtime_ms[1], '^\s+|\s+$', '') castable as xs:decimal) then xs:decimal(replace($eventtime_ms[1], '^\s+|\s+$', '')) else if (matches(replace($eventtime_ms[1], '^\s+|\s+$', ''), '^-?[0-9]+(\.[0-9]+)?[eE][+-]?[0-9]{1,2}$')) then xs:double(replace($eventtime_ms[1], '^\s+|\s+$', '')) else ())))))"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>

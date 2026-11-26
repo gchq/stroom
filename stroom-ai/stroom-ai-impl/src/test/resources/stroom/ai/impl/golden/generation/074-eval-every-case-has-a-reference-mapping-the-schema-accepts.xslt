@@ -117,7 +117,7 @@
     <xsl:if test="mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time'][normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date((mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time'])[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+          <xsl:value-of select="stroom:format-date(replace((mcp:json-to-xml((data[@name='json']/@value)[1])/*/*[@key='time'])[1], '^\s+|\s+$', ''), 'yyyy-MM-dd''T''HH:mm:ssX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>

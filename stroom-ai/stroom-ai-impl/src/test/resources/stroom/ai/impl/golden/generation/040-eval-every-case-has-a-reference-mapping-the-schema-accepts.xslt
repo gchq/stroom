@@ -90,7 +90,7 @@
     <xsl:if test="$ts_parts/fn:match//fn:group[@nr=1][normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(($ts_parts/fn:match//fn:group[@nr=1])[1], 'yyyy-MM-dd HH:mm:ss', 'UTC')"/>
+          <xsl:value-of select="stroom:format-date(replace(($ts_parts/fn:match//fn:group[@nr=1])[1], '^\s+|\s+$', ''), 'yyyy-MM-dd HH:mm:ss', 'UTC')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>

@@ -419,9 +419,10 @@ final class RecordIndex {
             return null;
         }
         try {
-            Object parsed = ToolJson.loads(text);
+            // As json-to-xml() reads it: NaN and Infinity aren't JSON.
+            Object parsed = ToolJson.loadsAsWritten(text);
             while (parsed instanceof final String inner && JSON_TEXT.matcher(inner).find()) {
-                parsed = ToolJson.loads(inner);
+                parsed = ToolJson.loadsAsWritten(inner);
             }
             return null;
         } catch (final ToolJson.JsonDecodeException e) {

@@ -25,6 +25,7 @@ import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -382,8 +383,11 @@ public final class SplitterDryRun {
         return "\\s*([^" + s + "]+)" + s + "([^" + d + "]+)(?:" + d + ")*";
     }
 
-    /// Splits a line at a delimiter, leaving it inside quotes alone; a doubled quote inside a quoted value stays
-    /// doubled, as Data Splitter leaves it (seen in Stroom: `"Said ""bye"""` is `Said ""bye""`).
+    /// Splits a line at a delimiter, leaving it inside quotes alone, as Stroom's Data Splitter `split` with the quote
+    /// as its container reads it: a doubled quote inside a quoted value stays doubled (seen in Stroom: `"Said
+    /// ""bye"""` is `Said ""bye""`), and only a cell's first and last quote are taken off, so a quote inside an
+    /// unquoted cell is kept (`say "hi"` is `say "hi`, its closing quote taken as the cell's), and an unclosed quote
+    /// runs to the line's end, delimiters and all (found in the audit of 2026-11-26: the tools dropped every quote).
     ///
     /// @param line      The line.
     /// @param delimiter The delimiter.
@@ -406,52 +410,125 @@ public final class SplitterDryRun {
                                            final String delimiter,
                                            final String quote,
                                            final String escape) {
-        final boolean escapes = escape != null && !escape.isEmpty() && line.contains(escape);
-        if (!escapes && (quote == null || quote.isEmpty() || !line.contains(quote))) {
+        final String q = quote == null || quote.isEmpty()
+                ? null
+                : quote;
+        final String e = escape == null || escape.isEmpty() || !line.contains(escape)
+                ? null
+                : escape;
+        if (e == null && (q == null || !line.contains(q))) {
             return ToolText.split(line, delimiter);
         }
         final List<String> out = new ArrayList<>();
-        final StringBuilder cell = new StringBuilder();
-        boolean inside = false;
-        int i = 0;
-        while (i < line.length()) {
-            if (escapes && line.startsWith(escape, i) && i + escape.length() < line.length()) {
-                i += escape.length();
-                cell.append(line.charAt(i));
-                i++;
-                continue;
-            }
-            if (quote == null || quote.isEmpty()) {
-                if (line.startsWith(delimiter, i)) {
-                    out.add(cell.toString());
-                    cell.setLength(0);
-                    i += delimiter.length();
+        int at = 0;
+        boolean afterDelimiter = false;
+        while (at < line.length()) {
+            // As Stroom's Split.find(): to the next delimiter outside a quoted run, an escape passing over what
+            // follows it.
+            int end = at;
+            int cellEnd = -1;
+            boolean inside = false;
+            boolean escaped = false;
+            while (end < line.length()) {
+                if (escaped) {
+                    end++;
+                    escaped = false;
+                } else if (!inside && line.startsWith(delimiter, end)) {
+                    cellEnd = end;
+                    end += delimiter.length();
+                    break;
+                } else if (e != null && line.startsWith(e, end)) {
+                    escaped = true;
+                    end += e.length();
+                } else if (q != null && line.startsWith(q, end)) {
+                    inside = !inside;
+                    end += q.length();
                 } else {
-                    cell.append(line.charAt(i));
-                    i++;
+                    end++;
                 }
-                continue;
             }
-            if (inside && line.startsWith(quote + quote, i)) {
-                // The mapping's unescape_quotes transform makes it one.
-                cell.append(quote).append(quote);
-                i += 2 * quote.length();
-                continue;
+            afterDelimiter = cellEnd >= 0;
+            out.add(cellText(line, at, cellEnd < 0
+                    ? end
+                    : cellEnd, q, e));
+            at = end;
+        }
+        if (afterDelimiter) {
+            // The cell after a last delimiter: Stroom reads the record with its new line, an empty cell.
+            out.add("");
+        }
+        return out;
+    }
+
+    /// @param spec   A spec.
+    /// @param sample A sample it reads.
+    /// @return The note for a delimited sample with cells holding a quote not in a quoted run of their own (`say
+    /// "hi"`, a quote left open): read as Stroom's Data Splitter reads them, quotes kept, an example given; null when
+    /// there are none.
+    public static String quotesInsideNote(final SplitterSpec spec, final String sample) {
+        if (!"delimited".equals(spec.kind()) || spec.quote() == null || spec.quote().isEmpty()
+            || sample == null || !sample.contains(spec.quote())) {
+            return null;
+        }
+        final String pair = spec.quote() + spec.quote();
+        for (final String line : ToolText.nonBlankLines(StroomInput.asSplit(sample))) {
+            for (final String cell : splitQuoted(line, spec.delimiter(), spec.quote(), spec.escape())) {
+                if (cell.replace(pair, "").contains(spec.quote())) {
+                    return "cells with quotes inside unquoted text are read as Stroom's Data Splitter reads them: "
+                           + ToolText.repr(ToolText.head(line, 120)) + " gives " + ToolText.repr(cell);
+                }
             }
-            if (line.startsWith(quote, i)) {
-                inside = !inside;
-            } else if (!inside && line.startsWith(delimiter, i)) {
-                out.add(cell.toString());
-                cell.setLength(0);
-                i += delimiter.length();
-                continue;
-            } else {
-                cell.append(line.charAt(i));
+        }
+        return null;
+    }
+
+    // A cell's text, as Stroom's split gives it ($1, or $2 with an escape): without the white space round it (any
+    // character up to a space), then its first quote and its last taken off, then the white space again.
+    private static String cellText(final String line,
+                                   final int from,
+                                   final int to,
+                                   final String quote,
+                                   final String escape) {
+        int start = from;
+        int end = to;
+        while (end > start && line.charAt(start) <= ' ') {
+            start++;
+        }
+        while (end > start && line.charAt(end - 1) <= ' ') {
+            end--;
+        }
+        if (quote != null && line.startsWith(quote, start)) {
+            start += quote.length();
+        }
+        if (quote != null && end - from > quote.length() && end - quote.length() >= start
+            && line.startsWith(quote, end - quote.length())) {
+            end -= quote.length();
+        }
+        while (end > start && line.charAt(start) <= ' ') {
+            start++;
+        }
+        while (end > start && line.charAt(end - 1) <= ' ') {
+            end--;
+        }
+        final String text = end > start
+                ? line.substring(start, end)
+                : "";
+        if (escape == null) {
+            return text;
+        }
+        final StringBuilder out = new StringBuilder();
+        int i = 0;
+        while (i < text.length()) {
+            if (text.startsWith(escape, i)) {
+                // The escape taken out, the character after it kept; one at the very end is dropped.
+                i += escape.length();
+            }
+            if (i < text.length()) {
+                out.append(text.charAt(i));
             }
             i++;
         }
-        out.add(cell.toString());
-        return out;
+        return out.toString();
     }
 
     /// One record's fields, as the generated Data Splitter would write them.
@@ -1600,7 +1677,9 @@ public final class SplitterDryRun {
             positions.add(n);
         }
         final List<Map<String, String>> records = new ArrayList<>();
+        final List<Map<String, List<String>>> repeats = new ArrayList<>();
         final List<String> unmatched = new ArrayList<>();
+        final Set<String> repeatedHeadings = repeatedNames(heading);
         for (final int position : spread(positions, maxRecords)) {
             final String line = lines.get(position);
             Map<String, String> fields = applyRecord(spec, line, heading);
@@ -1610,14 +1689,49 @@ public final class SplitterDryRun {
             }
             if (fields != null && !fields.isEmpty()) {
                 records.add(fields);
+                repeats.add(repeatedHeadings.isEmpty() || spec.body() != null || spec.continuation()
+                        ? Map.of()
+                        : repeatedCells(spec, line, heading, repeatedHeadings));
             } else if (spec.catchAll() && !spec.continuation() && !claimed(spec, line)) {
                 // Kept whole, as the converter's catch-all writes it.
                 records.add(Map.of(SplitterSpec.UNPARSED, ToolText.rstrip(line, "\n")));
+                repeats.add(Map.of());
             } else {
                 unmatched.add(ToolText.head(line, 200));
             }
         }
-        return new DryRun(records, unmatched, fieldNames(records), heading);
+        return new DryRun(records, unmatched, fieldNames(records), heading, repeats);
+    }
+
+    // The names a heading gives more than once (none for no heading).
+    private static Set<String> repeatedNames(final List<String> heading) {
+        final Set<String> seen = new HashSet<>();
+        final Set<String> repeated = new LinkedHashSet<>();
+        if (heading != null) {
+            heading.forEach(name -> {
+                if (!seen.add(name)) {
+                    repeated.add(name);
+                }
+            });
+        }
+        return repeated;
+    }
+
+    // A record's values of each heading given more than once, in order: Stroom writes a data element for each cell,
+    // so a condition holds on any, while the record (as a field reads it) holds the first.
+    private static Map<String, List<String>> repeatedCells(final SplitterSpec spec,
+                                                           final String line,
+                                                           final List<String> heading,
+                                                           final Set<String> repeated) {
+        final List<String> cells = splitQuoted(line, spec.delimiter(), spec.quote(), spec.escape());
+        final Map<String, List<String>> out = new LinkedHashMap<>();
+        for (int n = 0; n < Math.min(cells.size(), heading.size()); n++) {
+            if (repeated.contains(heading.get(n))) {
+                out.computeIfAbsent(heading.get(n), name -> new ArrayList<>()).add(ToolText.strip(cells.get(n)));
+            }
+        }
+        out.values().removeIf(values -> values.size() < 2);
+        return out;
     }
 
     // For an alternatives spec with a part carrying a field (a header's date), the carried values each record of the
@@ -1874,10 +1988,34 @@ public final class SplitterDryRun {
     /// @param unmatchedLines The lines (their first 200 characters) that matched nothing.
     /// @param fields         The field names seen, in order.
     /// @param heading        The column names a header line gave, or null.
+    /// @param repeats        Each record's values of a name its heading gives more than once (by position, as
+    ///                       records; empty where none), each value in order: `records` holds the first.
     public record DryRun(List<Map<String, String>> records,
                          List<String> unmatchedLines,
                          List<String> fields,
-                         List<String> heading) {
+                         List<String> heading,
+                         List<Map<String, List<String>>> repeats) {
+
+        /// A run whose records repeat no name.
+        ///
+        /// @param records        The records.
+        /// @param unmatchedLines The lines that matched nothing.
+        /// @param fields         The field names seen.
+        /// @param heading        The heading, or null.
+        public DryRun(final List<Map<String, String>> records,
+                      final List<String> unmatchedLines,
+                      final List<String> fields,
+                      final List<String> heading) {
+            this(records, unmatchedLines, fields, heading, List.of());
+        }
+
+        /// @param n A record's position.
+        /// @return Its repeated names' values ([#repeats()]); empty when none.
+        public Map<String, List<String>> repeatsOf(final int n) {
+            return n < repeats.size()
+                    ? repeats.get(n)
+                    : Map.of();
+        }
 
         /// @return It as JSON: `records`, `unmatched_lines`, `fields` and `heading`.
         public Map<String, Object> toMap() {

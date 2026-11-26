@@ -42,7 +42,7 @@
       <xsl:if test="data[@name='generated_time']/@value[normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="stroom:format-date((data[@name='generated_time']/@value)[1], 'yyyy/MM/dd HH:mm:ss', 'UTC')"/>
+            <xsl:value-of select="stroom:format-date(replace((data[@name='generated_time']/@value)[1], '^\s+|\s+$', ''), 'yyyy/MM/dd HH:mm:ss', 'UTC')"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>

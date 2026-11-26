@@ -828,6 +828,12 @@ final class MappingRebuild {
 
     // A key of the sentinel, as a field of the record is read.
     private String keyText(final ItemFrame frame, final String key) {
+        if ("data_splitter".equals(kind)) {
+            // Nested in the sentinel's data, as the reader's field shapes read it (not as a slashed name's read).
+            final List<String> names = new ArrayList<>(List.of(frame.sentinel()));
+            names.addAll(ToolText.split(key, "/"));
+            return XPathText.nestedDataText(names) + "/@value";
+        }
         return isXml()
                 ? frame.sentinel() + "/" + key
                 : XPathText.fieldText(kind, frame.sentinel() + ReadShapes.SEPARATOR.get(kind) + key);

@@ -101,10 +101,11 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'logon', 'logoff', 'disk' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="*[@key='timestamp'][normalize-space(.)]">
+    <xsl:variable name="timestamp" select="*[@key='timestamp'][normalize-space(.)]"/>
+    <xsl:if test="$timestamp">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(string(xs:integer(floor(xs:decimal((*[@key='timestamp'])[1]) * 1000))))"/>
+          <xsl:value-of select="stroom:format-date(string(xs:integer(floor((if (replace($timestamp[1], '^\s+|\s+$', '') castable as xs:decimal) then xs:decimal(replace($timestamp[1], '^\s+|\s+$', '')) else if (matches(replace($timestamp[1], '^\s+|\s+$', ''), '^-?[0-9]+(\.[0-9]+)?[eE][+-]?[0-9]{1,2}$')) then xs:double(replace($timestamp[1], '^\s+|\s+$', '')) else ()) * 1000))))"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>

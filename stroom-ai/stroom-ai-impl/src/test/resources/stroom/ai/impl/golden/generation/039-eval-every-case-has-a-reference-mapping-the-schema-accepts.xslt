@@ -60,7 +60,7 @@
     <xsl:if test="(@time)[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date((@time)[1], 'yyyy-MM-dd HH:mm:ss', 'UTC')"/>
+          <xsl:value-of select="stroom:format-date(replace((@time)[1], '^\s+|\s+$', ''), 'yyyy-MM-dd HH:mm:ss', 'UTC')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>

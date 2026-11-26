@@ -111,6 +111,8 @@ final class CatalogueTranslation {
     private final Map<String, String> changeSides;
     // The build's existing mapping's rules, whose names a rule it already has keeps.
     private final List<Map<String, Object>> existingRules;
+    // The build's existing mapping's own drop_when entries (not the catalogue's, nor a format's), kept as they are.
+    private final List<Map<String, Object>> existingDrops;
     // The names no rule new to the build is given: those kept, and the catch-all's.
     private final Set<String> reserved = new HashSet<>();
     // The catch-all's name: the existing mapping's, else the default.
@@ -126,10 +128,12 @@ final class CatalogueTranslation {
                                  final List<Map<String, Object>> records,
                                  final PairMatches matches,
                                  final Map<String, String> changeSides,
-                                 final List<Map<String, Object>> existingRules) {
+                                 final List<Map<String, Object>> existingRules,
+                                 final List<Map<String, Object>> existingDrops) {
         this.mapping = mapping;
         this.changeSides = Map.copyOf(changeSides);
         this.existingRules = NullSafe.list(existingRules);
+        this.existingDrops = NullSafe.list(existingDrops);
         this.names = new ArrayList<>(names);
         this.values = new LinkedHashMap<>(values);
         this.catalogue = catalogue;
@@ -172,8 +176,45 @@ final class CatalogueTranslation {
                                      final PairMatches matches,
                                      final Map<String, String> changeSides,
                                      final List<Map<String, Object>> existingRules) {
+        return apply(mapping, names, values, catalogue, catchAllReason, detailFields, detailCheck, records, matches,
+                changeSides, existingRules, List.of());
+    }
+
+    /// Replaces the draft's rules with the catalogue's, in place, as
+    /// [#apply(Map, List, Map, Catalogue, String, List, Function, List, PairMatches, Map, List)] does, keeping the
+    /// build's existing mapping's own drops: its `drop_when` entries given, and its `events` rules with `drop: true`
+    /// (among existingRules), each in its place and order. Found in review (2026-11-26): a fresh draft from the
+    /// catalogue lost them, so processing changed between drafts with no one told.
+    ///
+    /// @param mapping        The draft's mapping, changed in place.
+    /// @param names          The records' fields.
+    /// @param values         Each field's values.
+    /// @param catalogue      The catalogue.
+    /// @param catchAllReason Why the catch-all writes Unknown, or null.
+    /// @param detailFields   The notes' action element entries.
+    /// @param detailCheck    The schema's check of an action element.
+    /// @param records        The sample's records, as the draft reads them.
+    /// @param matches        The call's regex matches.
+    /// @param changeSides    The user's answers of which key of each old/new list holds the value before.
+    /// @param existingRules  The build's existing mapping's `events` rules; none for a new build.
+    /// @param existingDrops  The build's existing mapping's own `drop_when` entries ([SourceNotes#EXISTING_DROPS]);
+    ///                       none for a new build.
+    /// @return What was done, as the other form says, and `kept_drops`: the existing drops kept, said.
+    @SuppressWarnings("checkstyle:ParameterNumber")
+    static Map<String, Object> apply(final Map<String, Object> mapping,
+                                     final List<String> names,
+                                     final Map<String, List<String>> values,
+                                     final Catalogue catalogue,
+                                     final String catchAllReason,
+                                     final List<Map<String, Object>> detailFields,
+                                     final Function<String, String> detailCheck,
+                                     final List<Map<String, Object>> records,
+                                     final PairMatches matches,
+                                     final Map<String, String> changeSides,
+                                     final List<Map<String, Object>> existingRules,
+                                     final List<Map<String, Object>> existingDrops) {
         return new CatalogueTranslation(mapping, names, values, catalogue, detailFields, detailCheck, records,
-                matches, changeSides, existingRules)
+                matches, changeSides, existingRules, existingDrops)
                 .apply(catchAllReason);
     }
 
@@ -197,15 +238,21 @@ final class CatalogueTranslation {
         List.copyOf(names).forEach(this::emptyEverywhere);
         final List<String> rest = rest(common);
         final List<Map<String, Object>> rules = new ArrayList<>();
-        final List<Map<String, Object>> drops = new ArrayList<>(JsonValues.maps(mapping.get("drop_when")));
+        final List<String> keptDrops = new ArrayList<>();
+        final List<Map<String, Object>> drops = withExistingDrops(JsonValues.maps(mapping.get("drop_when")),
+                keptDrops);
         // The draft's events rules with drop: true, kept ahead of the catch-all (the events list is replaced): they
         // drop the records no event type recognises, as they did, so the catch-all's count of what the mapping's
         // drop rules drop is true (seen: a draft's drop: true rule was discarded, yet its records were said to be
         // dropped, and the applied draft wrote them as Unknown).
         final List<Map<String, Object>> keptDropRules = dropRules(JsonValues.maps(mapping.get("events")));
+        // The existing mapping's own drop: true rules the draft doesn't have, each kept where it was.
+        final List<Map.Entry<Integer, Map<String, Object>>> existingDropRules = existingDropRules(keptDropRules);
         // The mapping's own drop rules (the draft's), before the catalogue's are added: the uncatalogued records
         // they drop are counted apart from those the catch-all writes as Unknown.
-        final List<List<Condition>> ownDrops = Stream.concat(drops.stream(), keptDropRules.stream())
+        final List<List<Condition>> ownDrops = Stream.of(drops.stream(), keptDropRules.stream(),
+                        existingDropRules.stream().map(Map.Entry::getValue))
+                .flatMap(Function.identity())
                 .map(drop -> WayCheck.conditions(drop.get(WHEN)))
                 .filter(when -> when != null && !when.isEmpty())
                 .toList();
@@ -263,6 +310,17 @@ final class CatalogueTranslation {
                 rule.put(NAME, unique(ToolText.str(rule.get(NAME)), ruleNames));
                 rules.add(rule);
             });
+        }
+        for (final Map.Entry<Integer, Map<String, Object>> existing : existingDropRules) {
+            // In its place among the rules (before a sole rule taking every record, which would leave it unreached).
+            final Map<String, Object> rule = new LinkedHashMap<>(existing.getValue());
+            rule.put(NAME, unique(ToolText.str(rule.get(NAME)), ruleNames));
+            rules.add(Math.min(existing.getKey(), sole
+                    ? Math.max(0, rules.size() - 1)
+                    : rules.size()), rule);
+            keptDrops.add("rule '" + rule.get(NAME) + "' (drop: true)");
+        }
+        if (!sole) {
             rules.add(catchAll(common, catchAllReason));
         }
         mapping.put("events", rules);
@@ -286,7 +344,54 @@ final class CatalogueTranslation {
         }
         applied.put("dropped", dropped);
         applied.put("unread_fields", unread);
+        if (!keptDrops.isEmpty()) {
+            applied.put("kept_drops", keptDrops);
+        }
         return applied;
+    }
+
+    // The draft's drop_when with the existing mapping's own drops: in the existing order, each of the draft's that
+    // matches an existing one (by its reason or conditions) in that one's place, then the draft's others.
+    private List<Map<String, Object>> withExistingDrops(final List<Map<String, Object>> fresh,
+                                                        final List<String> kept) {
+        if (existingDrops.isEmpty()) {
+            return new ArrayList<>(fresh);
+        }
+        final List<Map<String, Object>> out = new ArrayList<>();
+        for (final Map<String, Object> existing : existingDrops) {
+            final Map<String, Object> same = fresh.stream()
+                    .filter(drop -> sameDrop(drop, existing))
+                    .findFirst()
+                    .orElse(null);
+            if (same == null) {
+                out.add(new LinkedHashMap<>(existing));
+                kept.add("drop_when '" + ToolText.str(existing.get("reason")) + "'");
+            } else if (!out.contains(same)) {
+                out.add(same);
+            }
+        }
+        fresh.stream().filter(drop -> !out.contains(drop)).forEach(out::add);
+        return out;
+    }
+
+    private static boolean sameDrop(final Map<String, Object> one, final Map<String, Object> other) {
+        return Objects.equals(one.get("reason"), other.get("reason")) || Objects.equals(one.get(WHEN),
+                other.get(WHEN));
+    }
+
+    // The existing mapping's drop: true rules (with conditions) that none of the draft's has the conditions of, each
+    // with its position among the existing rules.
+    private List<Map.Entry<Integer, Map<String, Object>>> existingDropRules(
+            final List<Map<String, Object>> fresh) {
+        final List<Map.Entry<Integer, Map<String, Object>>> out = new ArrayList<>();
+        for (int n = 0; n < existingRules.size(); n++) {
+            final Map<String, Object> rule = existingRules.get(n);
+            if (JsonValues.truthy(rule.get("drop")) && JsonValues.truthy(rule.get(WHEN))
+                && fresh.stream().noneMatch(own -> Objects.equals(own.get(WHEN), rule.get(WHEN)))) {
+                out.add(Map.entry(n, rule));
+            }
+        }
+        return out;
     }
 
     // The rules of an events list that drop their records (drop: true) by conditions that read, each a copy; one
@@ -339,7 +444,7 @@ final class CatalogueTranslation {
                     continue;
                 }
                 if (field.get(FIELD) instanceof final String read && emptyEverywhere(read)
-                    && !placedByType(type, read)) {
+                    && !placedByType(type, read, heldJson())) {
                     // Empty in every sampled record: nothing to write (seen in chat 182, a time field empty in all
                     // 1,547 records drafted into several rules, each then warned of and removed by hand).
                     continue;
@@ -532,7 +637,7 @@ final class CatalogueTranslation {
             entries.forEach(entry -> paths.add(ToolText.str(entry.get(PATH))));
             // What it reads, an xpath's fields too (seen in testing: a key of JSON held in a field, placed by an
             // xpath, kept as Data as well).
-            final Set<String> inputs = placement.reads();
+            final Set<String> inputs = placement.reads(heldJson());
             // Another placement of the same field is kept: a field may be typed in two places.
             fields.removeIf(existing -> {
                 final String path = ToolText.str(existing.get(PATH));
@@ -640,8 +745,13 @@ final class CatalogueTranslation {
     }
 
     // Whether a placement of the event type names the field.
-    private static boolean placedByType(final EventType type, final String field) {
-        return type.allPlacements().stream().anyMatch(placement -> placement.reads().contains(field));
+    private static boolean placedByType(final EventType type, final String field, final List<String> heldJson) {
+        return type.allPlacements().stream().anyMatch(placement -> placement.reads(heldJson).contains(field));
+    }
+
+    // The mapping's json_fields: fields holding JSON as text, whose keys an xpath reads only through json-to-xml.
+    private List<String> heldJson() {
+        return JsonValues.strings(mapping.get("json_fields"));
     }
 
     // Whether the field is empty in every sampled record (no value, or only the mapping's nil_values): left out of the
@@ -942,7 +1052,7 @@ final class CatalogueTranslation {
     }
 
     // The fields entries read: as a field, or as Data under that name, the first of any_of's, or by an xpath.
-    private static Set<String> readBy(final List<Map<String, Object>> entries) {
+    private Set<String> readBy(final List<Map<String, Object>> entries) {
         final Set<String> read = new LinkedHashSet<>();
         for (final Map<String, Object> entry : entries) {
             if (TYPE_ID.equals(entry.get(PATH))) {
@@ -956,7 +1066,7 @@ final class CatalogueTranslation {
             }
             JsonValues.strings(entry.get("any_of")).forEach(read::add);
             if (entry.get("xpath") instanceof final String xpath) {
-                read.addAll(XPathFieldReads.fields(xpath));
+                read.addAll(XPathFieldReads.fields(xpath, heldJson()));
             }
         }
         return read;

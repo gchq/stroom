@@ -80,7 +80,9 @@
             <Data Name="seen" Value="{mcp:parseTime($time[1])}"/>
           </xsl:if>
           <xsl:if test="$sid">
-            <Data Name="stamp" Value="{stroom:format-date(string($sid[1]))}"/>
+            <Data Name="stamp">
+              <xsl:attribute name="Value" select="stroom:format-date(string(xs:integer(floor((if (replace($sid[1], '^\s+|\s+$', '') castable as xs:decimal) then xs:decimal(replace($sid[1], '^\s+|\s+$', '')) else if (matches(replace($sid[1], '^\s+|\s+$', ''), '^-?[0-9]+(\.[0-9]+)?[eE][+-]?[0-9]{1,2}$')) then xs:double(replace($sid[1], '^\s+|\s+$', '')) else ())))))"/>
+            </Data>
           </xsl:if>
         </Authenticate>
       </EventDetail>
@@ -96,6 +98,6 @@
   </xsl:function>
   <xsl:function name="mcp:parseTime" as="xs:string?">
     <xsl:param name="value" as="item()?"/>
-    <xsl:sequence select="stroom:format-date($value, 'dd/MM/yyyy HH:mm:ss', '+10:00')"/>
+    <xsl:sequence select="stroom:format-date(replace($value, '^\s+|\s+$', ''), 'dd/MM/yyyy HH:mm:ss', '+10:00')"/>
   </xsl:function>
 </xsl:stylesheet>

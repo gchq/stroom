@@ -2281,7 +2281,7 @@
    "data_splitter",
    "a/b"
   ],
-  "result": "data[@name='a']/data[@name='b']/@value"
+  "result": "(data[@name='a/b'] | data[@name='a']/data[@name='b'])/@value"
  },
  {
   "call": "field_text",
@@ -2380,7 +2380,7 @@
    null,
    "$v[1]"
   ],
-  "result": "stroom:format-date(string($v[1]))"
+  "result": "stroom:format-date(string(xs:integer(floor((if (replace($v[1], '^\\s+|\\s+$', '') castable as xs:decimal) then xs:decimal(replace($v[1], '^\\s+|\\s+$', '')) else if (matches(replace($v[1], '^\\s+|\\s+$', ''), '^-?[0-9]+(\\.[0-9]+)?[eE][+-]?[0-9]{1,2}$')) then xs:double(replace($v[1], '^\\s+|\\s+$', '')) else ())))))"
  },
  {
   "call": "time_expr",
@@ -2389,7 +2389,7 @@
    null,
    "$v[1]"
   ],
-  "result": "stroom:format-date(string(xs:integer(floor(xs:decimal($v[1]) * 1000))))"
+  "result": "stroom:format-date(string(xs:integer(floor((if (replace($v[1], '^\\s+|\\s+$', '') castable as xs:decimal) then xs:decimal(replace($v[1], '^\\s+|\\s+$', '')) else if (matches(replace($v[1], '^\\s+|\\s+$', ''), '^-?[0-9]+(\\.[0-9]+)?[eE][+-]?[0-9]{1,2}$')) then xs:double(replace($v[1], '^\\s+|\\s+$', '')) else ()) * 1000))))"
  },
  {
   "call": "time_expr",
@@ -2398,7 +2398,7 @@
    "UTC",
    "$v[1]"
   ],
-  "result": "stroom:format-date(string(xs:integer(floor(xs:decimal($v[1]) div 1000))))"
+  "result": "stroom:format-date(string(xs:integer(floor((if (replace($v[1], '^\\s+|\\s+$', '') castable as xs:decimal) then xs:decimal(replace($v[1], '^\\s+|\\s+$', '')) else if (matches(replace($v[1], '^\\s+|\\s+$', ''), '^-?[0-9]+(\\.[0-9]+)?[eE][+-]?[0-9]{1,2}$')) then xs:double(replace($v[1], '^\\s+|\\s+$', '')) else ()) div 1000))))"
  },
  {
   "call": "time_expr",
@@ -2407,7 +2407,7 @@
    null,
    "$v[1]"
   ],
-  "result": "stroom:format-date(string(xs:integer(floor(xs:decimal($v[1]) div 1000000))))"
+  "result": "stroom:format-date(string(xs:integer(floor((if (replace($v[1], '^\\s+|\\s+$', '') castable as xs:decimal) then xs:decimal(replace($v[1], '^\\s+|\\s+$', '')) else if (matches(replace($v[1], '^\\s+|\\s+$', ''), '^-?[0-9]+(\\.[0-9]+)?[eE][+-]?[0-9]{1,2}$')) then xs:double(replace($v[1], '^\\s+|\\s+$', '')) else ()) div 1000000))))"
  },
  {
   "call": "time_expr",
@@ -2416,7 +2416,7 @@
    "UTC",
    "$v[1]"
   ],
-  "result": "stroom:format-date($v[1], 'yyyy-MM-dd''T''HH:mm:ss', 'UTC')"
+  "result": "stroom:format-date(replace($v[1], '^\\s+|\\s+$', ''), 'yyyy-MM-dd''T''HH:mm:ss', 'UTC')"
  },
  {
   "call": "time_expr",
@@ -2425,7 +2425,7 @@
    null,
    "$v[1]"
   ],
-  "result": "stroom:format-date($v[1], 'yyyy-MM-dd HH:mm:ss.SSSSSS')"
+  "result": "stroom:format-date(replace($v[1], '^\\s+|\\s+$', ''), 'yyyy-MM-dd HH:mm:ss.SSSSSS')"
  },
  {
   "call": "time_expr",
@@ -2434,7 +2434,7 @@
    "+10:00",
    "$v[1]"
   ],
-  "result": "stroom:format-date($v[1], 'yyyy-MM-dd HH:mm:ss.SSSSSS', '+10:00')"
+  "result": "stroom:format-date(replace($v[1], '^\\s+|\\s+$', ''), 'yyyy-MM-dd HH:mm:ss.SSSSSS', '+10:00')"
  },
  {
   "call": "time_expr",
@@ -2443,7 +2443,7 @@
    null,
    "$v[1]"
   ],
-  "result": "stroom:format-date($v[1], 'dd/MM/yyyy')"
+  "result": "stroom:format-date(replace($v[1], '^\\s+|\\s+$', ''), 'dd/MM/yyyy')"
  },
  {
   "call": "transform_expr",

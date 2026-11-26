@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.ToolText;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -102,6 +103,8 @@ public final class SampleProfiler {
     public static final int MALFORMED_SCAN = 5000;
     /// The most records profiled.
     public static final int MAX_RECORDS = 200;
+    /// The deepest an object is flattened into fields ([#flatten(Object)]): past it, a guard only.
+    public static final int MAX_FLATTEN_DEPTH = 32;
     /// The Data Splitter regex reading a JSON line whole: `[^\n]`, not `.`, which stops at `\u2028` and the like
     /// (seen: `^(.*)$` failed in Stroom at the first line whose string values held `\u2028`).
     public static final String JSON_LINE_PATTERN = "^" + SplitterDryRun.REST_OF_LINE;
@@ -603,27 +606,56 @@ public final class SampleProfiler {
         }
     }
 
-    /// A JSON value's fields, nested objects flattened into dotted names to four levels (a value that isn't an
-    /// object is the field `(value)`).
+    /// A JSON value's fields, nested objects flattened into dotted names (a value that isn't an object is the field
+    /// `(value)`). An object nested past [#MAX_FLATTEN_DEPTH] levels is left out rather than kept whole: kept, it
+    /// read as JSON held in a field's text, which the XSLT (reading the record's own tree) never finds. Seen in the
+    /// audit of 2026-11-26: a cap of four levels made a fifth-level key read as nothing.
     ///
     /// @param value A value read from JSON.
     /// @return Its fields by name.
     public static Map<String, Object> flatten(final Object value) {
         final Map<String, Object> out = new LinkedHashMap<>();
-        flatten(value, "", 0, out);
+        if (value instanceof final Map<?, ?> map) {
+            flatten(map, "", 0, out);
+        } else {
+            out.put("(value)", value);
+        }
         return out;
     }
 
-    private static void flatten(final Object value, final String prefix, final int depth,
+    private static void flatten(final Map<?, ?> map, final String prefix, final int depth,
                                 final Map<String, Object> out) {
-        if (value instanceof final Map<?, ?> map && depth < 4) {
-            map.forEach((key, inner) -> flatten(inner, JsonFieldNames.child(prefix, String.valueOf(key)), depth + 1,
-                    out));
+        map.forEach((key, inner) -> {
+            final String name = JsonFieldNames.child(prefix, String.valueOf(key));
+            // A key given more than once (ToolJson.loadsAsWritten): each value read in turn, as the XSLT selects
+            // each.
+            final List<?> each = inner instanceof final ToolJson.Repeated repeated
+                    ? repeated.values()
+                    : Collections.singletonList(inner);
+            for (final Object value : each) {
+                if (!(value instanceof final Map<?, ?> nested)) {
+                    putRepeated(out, name, value);
+                } else if (depth + 1 < MAX_FLATTEN_DEPTH) {
+                    flatten(nested, name, depth + 1, out);
+                }
+            }
+        });
+    }
+
+    // A field's value put, kept beside those it already has (a repeated key's): its values a Repeated.
+    private static void putRepeated(final Map<String, Object> out, final String name, final Object value) {
+        if (!out.containsKey(name)) {
+            out.put(name, value);
             return;
         }
-        out.put(prefix.isEmpty()
-                ? "(value)"
-                : prefix, value);
+        final List<Object> values = new ArrayList<>();
+        if (out.get(name) instanceof final ToolJson.Repeated repeated) {
+            values.addAll(repeated.values());
+        } else {
+            values.add(out.get(name));
+        }
+        values.add(value);
+        out.put(name, new ToolJson.Repeated(values));
     }
 
     /// Each field of the records: how often it has a value, how often a placeholder for none, its commonest type,

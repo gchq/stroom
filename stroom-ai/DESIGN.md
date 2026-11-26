@@ -2571,7 +2571,8 @@ Two helpers follow Stroom's rules instead, as what they check runs in Stroom:
   XSLT's `analyze-string()` compiles it, for its group count. (It was read in Python's `re` dialect, which refused
   `\p{L}` and let lookahead through.)
 * `DelimitedText`: a profile's delimited records split into cells as the generated Data Splitter splits them: a quote
-  opens or closes a quoted stretch wherever it is, a doubled quote stays doubled (for `unescape_quotes`), records end
+  opens or closes a quoted stretch wherever it is, only a cell's first and last quote are taken off (`say "hi"` is
+  `say "hi`, as Stroom's `split` reads it), a doubled quote stays doubled (for `unescape_quotes`), records end
   at a new line (outside quotes with `quoted_newlines`), no field size limit. Only its sniffer, which guesses the
   delimiter and whether there is a header, is a heuristic of Python's.
 
@@ -3392,7 +3393,8 @@ JSON in others, XML in others. Decided by the user:
    type. Free-text fields are never source type parts.
 2. **A reading** is a path to a value that may step into held strings: `event>payload.logger_name` (`>` steps into a
    held string's parsed content, `.` into an object or element), held values inside held values at most three deep.
-   Deep object paths are read by path, not by the survey's flattened names (which stop at four levels).
+   Deep object paths are read by path; the survey's flattened names go down to the leaves (32 levels at most; an
+   object deeper is left out, never taken as held text).
 3. **The held value's format is told per record**, with a reading per format (a JSON key, an XML element or
    attribute path or the root element's name, a key=value key). The same name in several formats is one reading
    (`logger_name` in JSON and `logger_name=` in key=value); where formats name it differently, the agent proposes the
@@ -4403,9 +4405,16 @@ per operator and per case below (`TestConditionParity`; through processing, `Tes
   elements slashed (`Event/Header/Op`), attributes `@name`; JSON or XML held in a string read through `json_fields`
   / `xml_fields`, up to three levels (double-escaped JSON, XML in JSON), spelt as a nested object's would be
   (`event.logger_name` whether `event` is an object or a JSON string); a splitter's fields; a variant; capture names.
-  **Keys holding `.` or `/`** themselves (or starting `[`; an Elastic-style flat `"log.level"` beside a nested
-  `log.level`) are spelt in brackets everywhere fields are named (survey, draft, conditions): `['log.level']`,
-  `labels['app.kubernetes.io/name']`, `'` doubled inside.
+  **Keys holding `.`, `/` or `['`** themselves (or starting `[`, or empty; an Elastic-style flat `"log.level"` beside
+  a nested `log.level`) are spelt in brackets everywhere fields are named (survey, draft, conditions):
+  `['log.level']`, `labels['app.kubernetes.io/name']`, `['']`, `'` doubled inside. A Data Splitter name holding `/`
+  (a CSV heading `src/ip`, or a keyed line's nested `SYSCALL/exe`) is read both ways, one data element so named or
+  nested ones, as the mapping can't say which.
+* **JSON as Stroom's parsers present it**: records and held JSON are read with numbers as written (`1.50` stays
+  `1.50`), a key given twice kept twice (a condition holds on either, the value written is the first, as `$x[1]`),
+  and NaN or Infinity refused (a record holding one is noted: Stroom's JSONParser fails the stream; held JSON
+  holding one gives nothing, as `json-to-xml()` does). A Data Splitter heading given twice is two values the same
+  way; a quote inside an unquoted cell is kept as Stroom's `split` keeps it, and noted.
 * **XML namespaces**: matched by local name, prefixed or not, as the draft reads them.
 * **Values are compared decoded**: JSON `\"`, `\\`, `\uXXXX`; XML entities and CDATA; CSV doubled quotes;
   backslash-escaped key=value quotes (`EscapedQuotes`). A Data Splitter keeps CSV `""` and key=value `\"` as written,
@@ -4422,6 +4431,13 @@ per operator and per case below (`TestConditionParity`; through processing, `Tes
 * **Processing's string cut**: the JSONParser cuts a string at `stringTruncateLength` (10,000 by default) before
   `json-to-xml` reads a held value. The check reads each record as processing will (cut at the pipeline's setting) and
   whole; a condition depending on the cut is refused, naming the setting (tied to the profile's long-strings warning).
+  A drop rule on a long top-level string (its first 10,000 characters tested in processing) is warned of the same
+  way as one on held JSON.
+* **Times**: the generated XSLT trims a time's value (XML white space) before `format-date` and the epoch
+  conversions, and reads an epoch number written with an exponent as a double (exactly as a decimal otherwise,
+  nothing for text that is neither). The check reads values trimmed, parses them as `format-date` does (resolved,
+  a missing year, month or day from the stream) and refuses what it can't make a time of (a month or hour out of
+  range) or loses the time of day of (`hh` without `a`).
 * **Characters XML can't hold** (NUL and others) are removed before comparing, as the splitter and XSLT remove them.
 
 #### The records the catalogue is of
@@ -6287,6 +6303,7 @@ behaviour; the settled ones are listed here with the section that records them.
 
 | Date | Decision | Section |
 | --- | --- | --- |
+| 2026-11-26 | Audit group 1 (data lost or wrongly dropped in the Events): the tools read JSON and Data Splitter records as Stroom's parsers present them (numbers as written, repeated keys and headings kept, NaN refused, DS3's quote handling), times are trimmed in the XSLT and resolved in the check, held arrays of objects are read in json-to-xml's namespace, field names quote empty and `['` keys and flatten to the leaves, slashed splitter names are read both ways, an xpath into held JSON without json-to-xml reads nothing, a long top-level string's drop rule is warned of, and a re-draft from the catalogue keeps the latest mapping's own drops (drop_when and drop: true rules, said in the notes). | Conditions |
 | 2026-11-26 | From testing (a JSON feed whose event.original held JSON text, its details JSON text again, details' query_text placed as Query/Raw by an xpath and kept as Data too; and a rule `searchquery_2` listed as an event type): JSON held in a key of held JSON is held JSON too (`json_fields` lists each level after the one holding it); the fields a mapping entry's xpath names are read (`XPathFieldReads`: JSON keys, Data Splitter names, XML paths, keys of held JSON through `json-to-xml()`; anything else reads nothing), so a field a placement's xpath writes isn't Data too, is warned of when it is, and takes its Data copies with it in mapping changes; a Data copy is one reading the field, however named; a placed vendor code isn't Data unless `also_data`. Catalogue rules are named after the TypeId in snake case, a later way by what tells it apart (`search_query_qa`) else its number; a kept mapping keeps its names (rules are matched to event types by records, never by name). The documentation's event type sections are headed by TypeId, their rules listed as ways | Builds and onboarding; TOOLS.md (draft_translation_mapping, build_translation_xslt, write_documentation) |
 | 2026-11-25 | Many feeds, shared translations and the timeline's reading decided with the user after an audit of single-feed assumptions: derive relationships live (no registry); a translation's mapping hidden in its XSLT and a hidden UUID link from it to its source notes (catalogue); provenance by stream; XSLT stages classified (pre-process, translation, decoration, indexing); every feeding pipeline's mapping read; several feeds per build surveyed each, shapes a union with differences shown, dormant feeds included, coverage per feed; promotion moves only the build's feeds, one filter of `Feed is` terms under OR, disabled where old filters overlap with the switch-over advised and linked, never done by the agent; induction writes without asking; timeline index-first with roles by type, one scan per source, XML only where unmapped, a per-day overview past the cap, capped sources over MCP; compare_activity by day across feeds | [Many feeds, shared translations and the timeline's reading](#many-feeds-shared-translations-and-the-timelines-reading-decided-2026-11-25) |
 | 2026-11-25 | Eval cases 77 and 78 as real models (Haiku, Sonnet, over a client that doesn't sample) call `activity_timeline`: a session starts only at a focus, never at an action on a process (a `process` field naming the source column gave a proxy-only user 8 sessions of `proxy`); a source whose events all hold one application has its activity periods labelled by the object's place; where nothing gives any of a source's event codes a role (no model to ask, no skill's or call's `typeRoles`) the call is refused with the codes and counts for the calling model to give `typeRoles` (one source over the whole index, no roles: every event an action, 11 sessions for 63); one user given alone and found as given is read with its close variants too (strip_domain, lowercase) where the index holds them, said in `user_transform` (the logons' `CORP\jsmith` were missed, so no lock ended a session); a date alone is a whole day as compare_activity reads it, an end date included (`CompareActivityTool.dateBound`). `TestE2eTimelineModelCalls` replays the models' calls | Activity timelines, streaming joins and skills; TOOLS.md (activity_timeline) |

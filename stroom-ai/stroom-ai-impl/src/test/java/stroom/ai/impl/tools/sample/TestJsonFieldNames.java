@@ -20,6 +20,7 @@ import stroom.ai.impl.tools.generation.XPathText;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -73,5 +74,30 @@ class TestJsonFieldNames {
         assertThat(XPathText.fieldText("json", "log.level")).isEqualTo("*[@key='log']/*[@key='level']");
         assertThat(XPathText.fieldText("json", "['log.level']")).isEqualTo("*[@key='log.level']");
         assertThat(XPathText.fieldText("json", "labels['a/b']")).isEqualTo("*[@key='labels']/*[@key='a/b']");
+    }
+
+    @Test
+    void aKeyHoldingBracketsButNoDotReadsBackAsItself() {
+        final List<String> keys = List.of("headers['host']");
+
+        assertThat(JsonFieldNames.keys(JsonFieldNames.of(keys))).isEqualTo(keys);
+    }
+
+    @Test
+    void anEmptyTopLevelKeysNameReadsBackAsTheKey() {
+        final Map<String, Object> flat = SampleProfiler.flatten(Map.of("", "v"));
+        final String name = flat.keySet().iterator().next();
+
+        assertThat(JsonFieldNames.keys(name)).as("keys of '" + name + "'").isEqualTo(List.of(""));
+    }
+
+    @Test
+    void anEmptyTopLevelKeyHoldingAnObjectIsNotNamedAsTheTopLevelKey() {
+        // {"": {"x": "inner"}, "x": "outer"}: two fields, one name.
+        final Map<String, Object> record = new LinkedHashMap<>();
+        record.put("", Map.of("x", "inner"));
+        record.put("x", "outer");
+
+        assertThat(SampleProfiler.flatten(record)).hasSize(2);
     }
 }

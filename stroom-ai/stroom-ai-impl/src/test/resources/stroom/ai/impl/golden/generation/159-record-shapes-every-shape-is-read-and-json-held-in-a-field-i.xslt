@@ -136,7 +136,7 @@
     <xsl:if test="exists(((*[@key='timestamp'], *[@key='@timestamp'])[normalize-space(.)][1])[normalize-space(.)])">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(((*[@key='timestamp'], *[@key='@timestamp'])[normalize-space(.)][1])[1], 'yyyy-MM-dd''T''HH:mm:ssX')"/>
+          <xsl:value-of select="stroom:format-date(replace(((*[@key='timestamp'], *[@key='@timestamp'])[normalize-space(.)][1])[1], '^\s+|\s+$', ''), 'yyyy-MM-dd''T''HH:mm:ssX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>

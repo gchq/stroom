@@ -20,9 +20,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /// The one spelling of a JSON field's name: its keys from the top, dotted (`event.app`); a key that itself holds a
-/// dot or a slash (an Elastic-style flat `"log.level"`, a label `app.kubernetes.io/name`), or starts with `[`, is
-/// written in brackets and quotes, a quote in it doubled (`['log.level']`, `labels['app.kubernetes.io/name']`), so
-/// the flat key is never misread as the nested `log.level`, nor its slash as a path into held XML.
+/// dot or a slash (an Elastic-style flat `"log.level"`, a label `app.kubernetes.io/name`), holds `['`, starts with
+/// `[` or is empty (`['']`), is written in brackets and quotes, a quote in it doubled (`['log.level']`,
+/// `labels['app.kubernetes.io/name']`), so the flat key is never misread as the nested `log.level`, nor its slash
+/// as a path into held XML.
 public final class JsonFieldNames {
 
     private static final String OPEN = "['";
@@ -127,9 +128,11 @@ public final class JsonFieldNames {
                 : null;
     }
 
-    // Whether a key is written in brackets: one holding a dot or slash, or that starts with a bracket.
+    // Whether a key is written in brackets: one that is empty, holds a dot, a slash or a bracketed key's opening,
+    // or starts with a bracket. Empty: "" alone named nothing, and a "" holding {"x": ..} named its x as the top's.
     private static boolean quoted(final String key) {
-        return key.indexOf('.') >= 0 || key.indexOf('/') >= 0 || key.startsWith("[");
+        return key.isEmpty() || key.indexOf('.') >= 0 || key.indexOf('/') >= 0 || key.startsWith("[")
+               || key.contains(OPEN);
     }
 
     // Where a bracketed key's closing quote and bracket are, a doubled quote passed over; -1 when there's none.

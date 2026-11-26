@@ -41,6 +41,9 @@ public final class ReadShapes {
     /// An input field, one to six levels deep (fieldText): its names, joined as the mapping writes them; by kind.
     public static final Map<String, List<XPathNode>> FIELDS = Map.of("data_splitter", fields("data_splitter", "/"),
             "json", fields("json", "."));
+    /// A Data Splitter name holding a slash as the generator reads it ([XPathText#fieldText(String, String)]),
+    /// two to six names deep: the whole name (the slot after the names) as one data element, or its names nested.
+    public static final List<XPathNode> SPLITTER_SLASHED = splitterSlashed();
     /// What a field's names are joined with, by kind.
     public static final Map<String, String> SEPARATOR = Map.of("data_splitter", "/", "json", ".");
 
@@ -101,6 +104,16 @@ public final class ReadShapes {
                                                + "[1]) " + XPathText.EPOCH_SCALE.get(epoch) + "))))"));
         }
         out.put("time, ms", shape(XPathText.timeMsText(text(1), text(2), expr(1) + "[1]")));
+        // Before a time's value was trimmed and an epoch number read with an exponent too (2026-11-26): still the
+        // same formats, read from XSLTs saved then.
+        out.put("time, untrimmed", shape("stroom:format-date(" + expr(1) + "[1], " + text(1) + ")"));
+        out.put("time, zone, untrimmed", shape("stroom:format-date(" + expr(1) + "[1], " + text(1) + ", " + text(2)
+                                               + ")"));
+        out.put("epoch_ms, untrimmed", shape("stroom:format-date(string(" + expr(1) + "[1]))"));
+        for (final Map.Entry<String, String> epoch : XPathText.EPOCH_SCALE.entrySet()) {
+            out.put(epoch.getKey() + ", untrimmed", shape("stroom:format-date(string(xs:integer(floor(xs:decimal("
+                                                          + expr(1) + "[1]) " + epoch.getValue() + "))))"));
+        }
         // A group's items (XsltGenerator): a split's pieces, a JSON array's members, a zip's positions.
         out.put("pieces", shape(XsltGenerator.pieces(expr(1), text(1))));
         out.put("json members", shape(XsltGenerator.jsonMembers(expr(1))));
@@ -140,7 +153,24 @@ public final class ReadShapes {
             for (int n = 1; n <= depth; n++) {
                 names.add(text(n));
             }
-            out.add(shape(XPathText.fieldText(kind, String.join(separator, names))));
+            // A Data Splitter's nested names (as hand-written and earlier XSLTs read them): the slot's names as
+            // nested data, the generator's own read of a slashed name being read by SPLITTER_SLASHED.
+            out.add(shape("data_splitter".equals(kind)
+                    ? XPathText.nestedDataText(names) + "/@value"
+                    : XPathText.fieldText(kind, String.join(separator, names))));
+        }
+        return List.copyOf(out);
+    }
+
+    private static List<XPathNode> splitterSlashed() {
+        final List<XPathNode> out = new ArrayList<>();
+        for (int depth = 2; depth <= 6; depth++) {
+            final List<String> names = new ArrayList<>();
+            for (int n = 1; n <= depth; n++) {
+                names.add(text(n));
+            }
+            out.add(shape("(data[@name=" + text(depth + 1) + "] | " + XPathText.nestedDataText(names)
+                          + ")/@value"));
         }
         return List.copyOf(out);
     }

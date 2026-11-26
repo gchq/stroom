@@ -22,11 +22,14 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.ParsePosition;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalQueries;
 import java.util.ArrayList;
@@ -87,6 +90,14 @@ public final class TimePatterns {
     private static final Pattern MONTH_NAME_DATE = ToolText.re("[A-Za-z]+\\s+(\\d{1,2})(?:,?\\s+(\\d{4}))?");
     private static final Pattern BRACKETED_ZONE = ToolText.re("\\[([A-Z][a-z]+/[A-Z][A-Za-z_]+)\\]");
     private static final Pattern OFFSET = ToolText.re("[+-]\\d{2}:?\\d{2}");
+    // A number written with an exponent, as a Java or JavaScript writer writes a double (1.7641512001E9).
+    private static final Pattern EXPONENT_NUMBER = ToolText.re("-?\\d+(\\.\\d+)?[eE][+-]?\\d+");
+    // The white space the generated XSLT trims from a time's value before reading it (XPathText.trimmedText).
+    private static final String XML_SPACE = " \t\n\r";
+    // The time of day's fields: a value naming one, read as a date alone, has lost its time.
+    private static final List<ChronoField> TIME_FIELDS = List.of(ChronoField.HOUR_OF_DAY,
+            ChronoField.CLOCK_HOUR_OF_DAY, ChronoField.HOUR_OF_AMPM, ChronoField.CLOCK_HOUR_OF_AMPM,
+            ChronoField.MINUTE_OF_HOUR, ChronoField.SECOND_OF_MINUTE);
 
     private TimePatterns() {
         // Static methods only.
@@ -255,7 +266,7 @@ public final class TimePatterns {
             final Pattern regex = ToolText.re(allowed);
             final List<String> bad = new ArrayList<>();
             for (final String value : values) {
-                if (!ToolText.isBlank(value) && !ToolText.fullmatch(regex, ToolText.strip(value))) {
+                if (!ToolText.isBlank(value) && !ToolText.fullmatch(regex, epochText(trimmed(value)))) {
                     bad.add(value);
                 }
             }
@@ -271,7 +282,7 @@ public final class TimePatterns {
         }
         final List<String> bad = misfits(formatter, values);
         if (bad.isEmpty()) {
-            return null;
+            return unresolved(pattern, formatter, values);
         }
         final String inferred = inferTimePattern(bad.getFirst());
         // Only where the pattern reads some values: where it reads none, the values' own pattern is the advice.
@@ -310,6 +321,7 @@ public final class TimePatterns {
                 : distinct.stream().map(pattern -> "[" + pattern + "]").collect(Collectors.joining());
         final DateTimeFormatter formatter = stroomFormatter(format);
         return formatter != null && misfits(formatter, values).isEmpty()
+               && unresolved(format, formatter, values) == null
                 ? format
                 : null;
     }
@@ -392,15 +404,102 @@ public final class TimePatterns {
         }
     }
 
-    // The values the parser doesn't read whole (blank ones aside).
+    // The values the parser doesn't read whole (blank ones aside), each trimmed as the XSLT trims it.
     private static List<String> misfits(final DateTimeFormatter formatter, final List<String> values) {
         final List<String> bad = new ArrayList<>();
         for (final String value : values) {
-            if (!ToolText.isBlank(value) && !reads(formatter, ToolText.strip(value))) {
+            if (!ToolText.isBlank(value) && !reads(formatter, trimmed(value))) {
                 bad.add(value);
             }
         }
         return bad;
+    }
+
+    // A value as the generated XSLT passes it to format-date: without XML's white space round it.
+    private static String trimmed(final String value) {
+        return ToolText.strip(value, XML_SPACE);
+    }
+
+    // An epoch number's text as the XSLT reads it: one with an exponent (read as a double there) written out
+    // plainly, so its digits are checked as a plain number's are.
+    private static String epochText(final String text) {
+        if (!ToolText.fullmatch(EXPONENT_NUMBER, text)) {
+            return text;
+        }
+        try {
+            return new BigDecimal(text).stripTrailingZeros().toPlainString();
+        } catch (final NumberFormatException e) {
+            return text;
+        }
+    }
+
+    // Why Stroom's format-date makes no time (or the wrong one) of values whose text the pattern reads, or null
+    // when it makes each one's: each parsed as FormatDate parses it (a zoned or local date-time, else a date, with a
+    // missing year, month or day taken from the stream, here today), so a month or hour out of range gives none,
+    // and a time of day that doesn't resolve (a 12-hour clock's hour without am/pm) is lost: the date's midnight.
+    // Found in the audit of 2026-11-26, the check having read the text only. Week-based patterns are left to the
+    // text's reading.
+    private static String unresolved(final String pattern,
+                                     final DateTimeFormatter formatter,
+                                     final List<String> values) {
+        final String fields = formatter.toString();
+        if (fields.contains("Week") || (fields.contains("(DayOfWeek,") && !fields.contains("(DayOfMonth,"))) {
+            return null;
+        }
+        final DateTimeFormatter full = fullFormatter(pattern, fields);
+        final List<String> outOfRange = new ArrayList<>();
+        final List<String> timeLost = new ArrayList<>();
+        for (final String value : values) {
+            if (ToolText.isBlank(value)) {
+                continue;
+            }
+            final String text = trimmed(value);
+            final TemporalAccessor best;
+            try {
+                best = full.parseBest(text, ZonedDateTime::from, LocalDateTime::from, LocalDate::from);
+            } catch (final RuntimeException e) {
+                outOfRange.add(value);
+                continue;
+            }
+            if (best instanceof LocalDate && namesTime(formatter, text)) {
+                timeLost.add(value);
+            }
+        }
+        if (!timeLost.isEmpty()) {
+            return "time_format " + ToolText.repr(pattern) + " reads the time of day of none of "
+                   + ToolText.repr(timeLost.subList(0, Math.min(3, timeLost.size()))) + ": Stroom's format-date "
+                   + "writes the date's midnight" + (pattern.contains("h") && !pattern.contains("a")
+                    ? " ('h' is the 12-hour clock, which needs 'a' for am/pm; 'H' is the 24-hour clock)"
+                    : "");
+        }
+        return outOfRange.isEmpty()
+                ? null
+                : "time_format " + ToolText.repr(pattern) + " reads the text of "
+                  + ToolText.repr(outOfRange.subList(0, Math.min(3, outOfRange.size())))
+                  + ", but it names no time (a month, day or hour out of range): Stroom's format-date gives none";
+    }
+
+    // The parser as FormatDate builds its regular one: the year, month and day defaulted (from the stream there,
+    // today here) where the pattern lacks one of them.
+    private static DateTimeFormatter fullFormatter(final String pattern, final String fields) {
+        final DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder()
+                .parseLenient()
+                .parseCaseInsensitive()
+                .appendPattern(pattern);
+        final boolean year = fields.contains("(YearOfEra,") || fields.contains("(Year,");
+        if (!(year && fields.contains("(MonthOfYear,") && fields.contains("(DayOfMonth,"))) {
+            final LocalDate today = LocalDate.now(ZoneOffset.UTC);
+            builder.parseDefaulting(ChronoField.YEAR_OF_ERA, today.getYear())
+                    .parseDefaulting(ChronoField.MONTH_OF_YEAR, today.getMonthValue())
+                    .parseDefaulting(ChronoField.DAY_OF_MONTH, today.getDayOfMonth());
+        }
+        return builder.toFormatter(Locale.ENGLISH);
+    }
+
+    // Whether the value's text, read by the pattern, names a time of day.
+    private static boolean namesTime(final DateTimeFormatter formatter, final String text) {
+        final TemporalAccessor parsed = formatter.parseUnresolved(text, new ParsePosition(0));
+        return parsed != null && TIME_FIELDS.stream().anyMatch(parsed::isSupported);
     }
 
     // Whether the parser reads the whole value: its text, not whether the date it names is complete (Stroom fills a
@@ -438,7 +537,8 @@ public final class TimePatterns {
         }
         for (final String candidate : candidates) {
             final DateTimeFormatter formatter = stroomFormatter(candidate);
-            if (formatter != null && misfits(formatter, values).isEmpty()) {
+            if (formatter != null && misfits(formatter, values).isEmpty()
+                && unresolved(candidate, formatter, values) == null) {
                 return candidate;
             }
         }

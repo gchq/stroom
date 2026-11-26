@@ -359,7 +359,18 @@ public final class DraftMapping {
             return VariantDrafts.draft(read, formats.get(), (variant, records) -> new Drafting(records, source, matches)
                     .draft(systemName, environment, sourceNotes, detailCheck));
         }
-        return new Drafting(read, source, matches).draft(systemName, environment, sourceNotes, detailCheck);
+        final Map<String, Object> drafted = new Drafting(read, source, matches).draft(systemName, environment,
+                sourceNotes, detailCheck);
+        final String quotes = read.spec() == null
+                ? null
+                : named.values().stream().map(text -> SplitterDryRun.quotesInsideNote(read.spec(), text))
+                        .filter(Objects::nonNull).findFirst().orElse(null);
+        if (quotes != null && drafted.get("notes") instanceof final List<?> notes) {
+            final List<Object> withQuotes = new ArrayList<>(notes);
+            withQuotes.add(quotes);
+            drafted.put("notes", withQuotes);
+        }
+        return drafted;
     }
 
     /// The sample's records as the draft reads them.
@@ -2776,6 +2787,11 @@ public final class DraftMapping {
                 if (applied.get("uncatalogued") instanceof final Integer count && count > 0) {
                     notes.add(count + " sampled record(s) no event type recognises: the catch-all translates them "
                               + "as Unknown (uncatalogued records).");
+                }
+                final List<String> keptDrops = (List<String>) applied.getOrDefault("kept_drops", List.of());
+                if (!keptDrops.isEmpty()) {
+                    notes.add("Kept from the build's latest mapping, as they were: its own drop rules "
+                              + String.join(", ", keptDrops) + ".");
                 }
                 if (applied.get("uncatalogued_dropped") instanceof final Integer count && count > 0) {
                     notes.add(count + " more sampled record(s) no event type recognises are dropped by the "

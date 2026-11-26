@@ -134,11 +134,13 @@ public final class JsonValues {
     }
 
     /// @param value A value read from JSON.
-    /// @return It as text: a string as it is, anything else as `json.dumps` writes it.
+    /// @return It as text: a string as it is, a number read as written as written, a repeated key's first value
+    /// ([ToolJson#first(Object)]), anything else as `json.dumps` writes it.
     public static String jsonText(final Object value) {
-        return value instanceof final String string
+        final Object first = ToolJson.first(value);
+        return first instanceof final String string
                 ? string
-                : ToolJson.dumps(value);
+                : ToolJson.dumps(first);
     }
 
     /// @param value  A value.

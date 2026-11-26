@@ -22,6 +22,7 @@ import stroom.ai.impl.tools.generation.ModelReader;
 import stroom.ai.impl.tools.generation.XPathFieldReads;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -368,14 +369,24 @@ public record Placement(Map<String, Object> entry) {
     /// that the sample's records don't have as fields), so only [#inputs()] are; these say which fields the
     /// placement writes, so none is kept as Data too.
     public Set<String> reads() {
+        return reads(Set.of());
+    }
+
+    /// @param heldJson The mapping's json_fields: fields holding JSON as text.
+    /// @return The fields it reads, as [#reads()] says, an xpath stepping into a held field's JSON without
+    /// json-to-xml reading none of it ([XPathFieldReads#fields(String, Collection)]).
+    public Set<String> reads(final Collection<String> heldJson) {
         final Set<String> out = new LinkedHashSet<>(inputs());
-        xpathReads(entry, true, out);
+        xpathReads(entry, true, heldJson, out);
         return out;
     }
 
-    private static void xpathReads(final Map<String, Object> entry, final boolean top, final Set<String> out) {
+    private static void xpathReads(final Map<String, Object> entry,
+                                   final boolean top,
+                                   final Collection<String> heldJson,
+                                   final Set<String> out) {
         if (entry.containsKey(FOR_EACH)) {
-            JsonValues.maps(entry.get(FIELDS)).forEach(field -> xpathReads(field, false, out));
+            JsonValues.maps(entry.get(FIELDS)).forEach(field -> xpathReads(field, false, heldJson, out));
             return;
         }
         if (!top && !"record".equals(entry.get("scope"))) {
@@ -383,10 +394,10 @@ public record Placement(Map<String, Object> entry) {
             return;
         }
         if (entry.get(XPATH) instanceof final String xpath) {
-            out.addAll(XPathFieldReads.fields(xpath));
+            out.addAll(XPathFieldReads.fields(xpath, heldJson));
         }
         if (JsonValues.mapOrEmpty(entry.get(LOOKUP)).get(XPATH) instanceof final String xpath) {
-            out.addAll(XPathFieldReads.fields(xpath));
+            out.addAll(XPathFieldReads.fields(xpath, heldJson));
         }
     }
 

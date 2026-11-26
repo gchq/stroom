@@ -61,7 +61,9 @@ final class ReadIdioms {
     private static final Pattern XML_ITEM_PATH = Pattern.compile(ITEM_SENTINEL
                                                                  + "\\d+(/@?[A-Za-z_][A-Za-z0-9_.-]*)*");
     private static final List<String> TIMES = List.of("time, zone", "time", "time, ms", "epoch_ms", "epoch_s",
-            "epoch_us", "epoch_ns", "windows_filetime", "epoch_s, truncated", "epoch_s, rounded", "epoch_us, rounded",
+            "epoch_us", "epoch_ns", "windows_filetime", "time, zone, untrimmed", "time, untrimmed",
+            "epoch_ms, untrimmed", "epoch_s, untrimmed", "epoch_us, untrimmed", "epoch_ns, untrimmed",
+            "windows_filetime, untrimmed", "epoch_s, truncated", "epoch_s, rounded", "epoch_us, rounded",
             "epoch_ns, rounded");
 
     private final XsltReading reading;
@@ -118,6 +120,21 @@ final class ReadIdioms {
         final XPathNode node = XsltReader.truthy(first)
                 ? first
                 : normal;
+        if ("data_splitter".equals(kind)) {
+            for (int depth = 2; depth < ReadShapes.SPLITTER_SLASHED.size() + 2; depth++) {
+                final XPathMatch match = unify(ReadShapes.SPLITTER_SLASHED.get(depth - 2), node);
+                if (match != null) {
+                    final List<String> names = new ArrayList<>();
+                    for (int n = 1; n <= depth; n++) {
+                        names.add(match.string(n));
+                    }
+                    final String name = String.join("/", names);
+                    if (name.equals(match.string(depth + 1))) {
+                        return name;
+                    }
+                }
+            }
+        }
         final List<XPathNode> fields = ReadShapes.FIELDS.getOrDefault(kind, List.of());
         for (int depth = 1; depth <= fields.size(); depth++) {
             final XPathMatch match = unify(fields.get(depth - 1), node);
@@ -430,7 +447,7 @@ final class ReadIdioms {
                     final String format = shape.startsWith("epoch") || shape.startsWith("windows_filetime")
                             ? shape.split(",")[0]
                             : match.string(1);
-                    final String zone = "time, zone".equals(shape) || "time, ms".equals(shape)
+                    final String zone = shape.startsWith("time, zone") || "time, ms".equals(shape)
                             ? match.string(2)
                             : null;
                     final Map<String, Object> out = new LinkedHashMap<>(inner);

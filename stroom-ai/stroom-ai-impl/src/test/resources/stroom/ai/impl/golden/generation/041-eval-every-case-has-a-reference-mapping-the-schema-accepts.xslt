@@ -86,7 +86,7 @@
     <xsl:if test="(System/TimeCreated/@SystemTime)[normalize-space(.)]">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date((System/TimeCreated/@SystemTime)[1], 'yyyy-MM-dd''T''HH:mm:ss.SSSX')"/>
+          <xsl:value-of select="stroom:format-date(replace((System/TimeCreated/@SystemTime)[1], '^\s+|\s+$', ''), 'yyyy-MM-dd''T''HH:mm:ss.SSSX')"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>

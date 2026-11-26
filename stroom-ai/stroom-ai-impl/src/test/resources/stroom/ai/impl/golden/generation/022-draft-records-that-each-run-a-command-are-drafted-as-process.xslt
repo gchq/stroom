@@ -32,7 +32,7 @@
       <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
         <EventTime>
           <TimeCreated>
-            <xsl:value-of select="stroom:format-date((data[@name='time']/@value)[1], 'MMM dd HH:mm:ss', 'UTC')"/>
+            <xsl:value-of select="stroom:format-date(replace((data[@name='time']/@value)[1], '^\s+|\s+$', ''), 'MMM dd HH:mm:ss', 'UTC')"/>
           </TimeCreated>
         </EventTime>
       </xsl:if>

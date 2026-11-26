@@ -96,10 +96,11 @@
   </xsl:template>
   <!-- event_time: shared by the rules 'logon', 'other' -->
   <xsl:template match="node()" mode="event_time">
-    <xsl:if test="data[@name='time']/@value[normalize-space(.)]">
+    <xsl:variable name="time" select="data[@name='time']/@value[normalize-space(.)]"/>
+    <xsl:if test="$time">
       <EventTime>
         <TimeCreated>
-          <xsl:value-of select="stroom:format-date(string(xs:integer(floor(xs:decimal((data[@name='time']/@value)[1]) * 1000))))"/>
+          <xsl:value-of select="stroom:format-date(string(xs:integer(floor((if (replace($time[1], '^\s+|\s+$', '') castable as xs:decimal) then xs:decimal(replace($time[1], '^\s+|\s+$', '')) else if (matches(replace($time[1], '^\s+|\s+$', ''), '^-?[0-9]+(\.[0-9]+)?[eE][+-]?[0-9]{1,2}$')) then xs:double(replace($time[1], '^\s+|\s+$', '')) else ()) * 1000))))"/>
         </TimeCreated>
       </EventTime>
     </xsl:if>

@@ -101,6 +101,11 @@ public final class SourceNotes {
     /// there by the draft's tool from the build's latest mapping ([#withExistingRules]); never in the user's
     /// documentation.
     public static final String EXISTING_RULES = "existing_rules";
+    /// The notes' key for the build's existing mapping's own `drop_when` entries: neither the catalogue's
+    /// ([#DROPPED_REASON]) nor a format's (a header line's, [VariantDrafts#HEADER_LINE_REASON]), which a draft writes
+    /// again itself. A re-draft from the catalogue keeps them ([CatalogueTranslation]). Put there by the draft's tool
+    /// with [#EXISTING_RULES]; never in the user's documentation.
+    public static final String EXISTING_DROPS = "existing_drops";
     private static final String EVENT_DETAIL = "EventDetail/";
 
     private SourceNotes() {
@@ -430,12 +435,13 @@ public final class SourceNotes {
         applied.put(CATALOGUED, true);
         applied.putAll(CatalogueTranslation.apply(mapping, names, values, catalogue, catchAllReason(notes, catalogue),
                 detailFields, detailCheck, records, matches, changeSides(notes),
-                JsonValues.maps(notes.get(EXISTING_RULES))));
+                JsonValues.maps(notes.get(EXISTING_RULES)), JsonValues.maps(notes.get(EXISTING_DROPS))));
         return applied;
     }
 
-    /// The source notes with the build's existing mapping's rules ([#EXISTING_RULES]), for a draft from the
-    /// catalogue to keep the names of the rules the build already has.
+    /// The source notes with the build's existing mapping's rules ([#EXISTING_RULES]) and own drops
+    /// ([#EXISTING_DROPS]), for a draft from the catalogue to keep the names of the rules the build already has, and
+    /// what it drops.
     ///
     /// @param notes    The source notes, or null.
     /// @param existing The build's existing mapping, or null where it has none.
@@ -445,13 +451,24 @@ public final class SourceNotes {
         final List<Map<String, Object>> rules = existing == null
                 ? List.of()
                 : JsonValues.maps(existing.get("events"));
-        if (rules.isEmpty()) {
+        final List<Map<String, Object>> drops = existing == null
+                ? List.of()
+                : JsonValues.maps(existing.get("drop_when")).stream()
+                        .filter(drop -> !ToolText.str(drop.get("reason")).startsWith(DROPPED_REASON)
+                                        && !VariantDrafts.HEADER_LINE_REASON.equals(drop.get("reason")))
+                        .toList();
+        if (rules.isEmpty() && drops.isEmpty()) {
             return notes;
         }
         final Map<String, Object> out = notes == null
                 ? new LinkedHashMap<>()
                 : new LinkedHashMap<>(notes);
-        out.put(EXISTING_RULES, List.copyOf(rules));
+        if (!rules.isEmpty()) {
+            out.put(EXISTING_RULES, List.copyOf(rules));
+        }
+        if (!drops.isEmpty()) {
+            out.put(EXISTING_DROPS, List.copyOf(drops));
+        }
         return out;
     }
 

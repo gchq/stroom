@@ -48,12 +48,12 @@ class TestSourceTypeReading {
     }
 
     @Test
-    void anObjectDeeperThanTheFlatteningIsReadByItsPath() {
-        // Flattened four levels deep, `a.b.c.d` holds the object with `e` in it.
+    void anObjectDeeplyNestedIsReadByItsPath() {
+        // Flattened to its leaves, however deep (no longer kept whole at four levels: the audit of 2026-11-26).
         final Map<String, Object> record = SampleProfiler.flatten(ToolJson.loads(
                 "{\"a\": {\"b\": {\"c\": {\"d\": {\"e\": {\"f\": \"deep\"}}}}}}"));
 
-        assertThat(record).containsKey("a.b.c.d");
+        assertThat(record).containsOnlyKeys("a.b.c.d.e.f");
         assertThat(SourceTypeFields.valueOf(record, "a.b.c.d.e.f")).isEqualTo("deep");
         assertThat(SourceTypeFields.valueOf(record, "a.b.c.d.e")).isNull();
         assertThat(SourceTypeFields.valueOf(record, "a.b.c.d.x")).isNull();

@@ -1197,8 +1197,8 @@ public final class XsltGenerator {
         if (isSet(format) && entry.zoneSource() != null) {
             // The zone read record by record (asked for by the user): from a field or the stream's meta, mapped,
             // normalised and defaulted by mcp:zone.
-            expression = "stroom:format-date(" + one + ", " + XPathText.literal(format) + ", " + zoneText(
-                    entry.zoneSource()) + ")";
+            expression = "stroom:format-date(" + XPathText.trimmedText(one) + ", " + XPathText.literal(format) + ", "
+                         + zoneText(entry.zoneSource()) + ")";
         } else if (isSet(format) && ownFunctions.containsKey(Conversion.time(format, zone))) {
             expression = "mcp:" + ownFunctions.get(Conversion.time(format, zone)) + "(" + one + ")";
         } else if (isSet(format)) {
@@ -1826,7 +1826,7 @@ public final class XsltGenerator {
     /// @param values A JSON input.
     /// @return Its members: an array's, or one object (not in an array) as one.
     static String jsonMembers(final String values) {
-        return "(" + values + ")/(if (self::array) then * else .)";
+        return "(" + values + ")/(if (self::*:array) then * else .)";
     }
 
     // Where a source's field is read: the record (a group in none, or scope record) or an item. Elements: a Data

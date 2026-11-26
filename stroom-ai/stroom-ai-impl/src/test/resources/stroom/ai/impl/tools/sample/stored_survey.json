@@ -919,7 +919,7 @@
   "split_format": "json lines",
   "split_records": 2,
   "shapes": {
-   "fields:a.b.c.d,x": 1,
+   "fields:a.b.c.d.e,x": 1,
    "fields:a.b,x": 1
   }
  },
@@ -3148,7 +3148,7 @@
   "split_format": "json lines",
   "split_records": 1,
   "shapes": {
-   "fields:a.b.c.d,x": 1
+   "fields:a.b.c.d.e,x": 1
   }
  },
  "extra:nested_json:third:head": {
@@ -3163,7 +3163,7 @@
   "split_format": "json lines",
   "split_records": 1,
   "shapes": {
-   "fields:a.b.c.d,x": 1
+   "fields:a.b.c.d.e,x": 1
   }
  }
 }

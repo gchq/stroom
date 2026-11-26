@@ -48,7 +48,7 @@ public final class ToolJson {
     /// @return Its value.
     /// @throws JsonDecodeException if it isn't one JSON value, with what is wrong and where.
     public static Object loads(final String text) {
-        return loads(text, false);
+        return loads(text, false, false);
     }
 
     /// Reads a JSON text as JSON itself has it, not as `json.loads` does: `NaN`, `Infinity` and `-Infinity` are no
@@ -60,14 +60,35 @@ public final class ToolJson {
     /// @return Its value, its numbers [NumberText].
     /// @throws JsonDecodeException if it isn't one JSON value, with what is wrong and where.
     public static Object loadsStrict(final String text) {
-        return loads(text, true);
+        return loads(text, true, false);
     }
 
-    private static Object loads(final String text, final boolean strict) {
+    /// Reads a JSON text as Stroom's parsers present it to the XSLT: as [#loadsStrict(String)] does (no `NaN` or
+    /// `Infinity`, numbers as written), and a key given more than once kept each time, its values one [Repeated]
+    /// in the order written. Stroom's JSONParser and `json-to-xml()` write an element for each, so `*[@key='a']`
+    /// selects them all: a condition holds on any, and `$a[1]` writes the first (found in the audit of 2026-11-26: the
+    /// tools kept the last, as `json.loads` does). What a mapping's check reads records and held JSON with.
+    ///
+    /// @param text The text.
+    /// @return Its value, its numbers [NumberText], a repeated key's values [Repeated].
+    /// @throws JsonDecodeException if it isn't one JSON value, with what is wrong and where.
+    public static Object loadsAsWritten(final String text) {
+        return loads(text, true, true);
+    }
+
+    /// @param value A value read by [#loadsAsWritten(String)], or a record's field.
+    /// @return Its first value where it is [Repeated], else it as it is: the value the XSLT writes (`$field[1]`).
+    public static Object first(final Object value) {
+        return value instanceof final Repeated repeated
+                ? repeated.first()
+                : value;
+    }
+
+    private static Object loads(final String text, final boolean strict, final boolean keepRepeated) {
         if (text.startsWith("﻿")) {
             throw new JsonDecodeException("Unexpected UTF-8 BOM (decode using utf-8-sig)", text, 0);
         }
-        final Decoder decoder = new Decoder(text, strict);
+        final Decoder decoder = new Decoder(text, strict, keepRepeated);
         final Decoded decoded = decoder.rawDecode(decoder.skipWhitespace(0));
         final int end = decoder.skipWhitespace(decoded.end());
         if (end != text.length()) {
@@ -83,7 +104,7 @@ public final class ToolJson {
     /// @return The value and where it ends.
     /// @throws JsonDecodeException if no JSON value starts there.
     public static Decoded rawDecode(final String text, final int at) {
-        return new Decoder(text, false).rawDecode(at);
+        return new Decoder(text, false, false).rawDecode(at);
     }
 
     /// @param value A value read by [#loads(String)], or made of the same types.
@@ -167,6 +188,10 @@ public final class ToolJson {
                     : "false");
         } else if (value instanceof final String text) {
             writeString(out, text, ensureAscii);
+        } else if (value instanceof final NumberText number) {
+            out.append(number.text());
+        } else if (value instanceof final Repeated repeated) {
+            write(out, repeated.first(), indent, level, ensureAscii);
         } else if (value instanceof final Double number) {
             out.append(floatText(number));
         } else if (value instanceof final Float number) {
@@ -209,7 +234,10 @@ public final class ToolJson {
             out.append(']');
         } else if (value instanceof final String text) {
             writeString(out, text, false);
-        } else if (value == null || value instanceof Boolean || value instanceof Number) {
+        } else if (value instanceof final Repeated repeated) {
+            writeCompact(out, repeated.first());
+        } else if (value == null || value instanceof Boolean || value instanceof Number
+                   || value instanceof NumberText) {
             write(out, value, -1, 0, false);
         } else {
             writeString(out, String.valueOf(value), false);
@@ -326,7 +354,7 @@ public final class ToolJson {
 
     }
 
-    /// A JSON number as written, read by [#loadsStrict(String)].
+    /// A JSON number as written, read by [#loadsStrict(String)]; written back as it is, a number.
     ///
     /// @param text The number's text, e.g. `2.10` or `1e10`.
     public record NumberText(String text) {
@@ -334,6 +362,23 @@ public final class ToolJson {
         @Override
         public String toString() {
             return text;
+        }
+    }
+
+    /// The values of a key an object gives more than once, in the order written, read by
+    /// [#loadsAsWritten(String)]; written back as its first ([#first(Object)]), as the XSLT writes it.
+    ///
+    /// @param values Its values, two or more.
+    public record Repeated(List<Object> values) {
+
+        /// @return The first value.
+        public Object first() {
+            return values.getFirst();
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(first());
         }
     }
 
@@ -381,11 +426,14 @@ public final class ToolJson {
         private final int length;
         // JSON itself: no NaN or Infinity, numbers kept as written.
         private final boolean strict;
+        // A key given twice kept both times (Repeated), rather than the last value only.
+        private final boolean keepRepeated;
 
-        Decoder(final String s, final boolean strict) {
+        Decoder(final String s, final boolean strict, final boolean keepRepeated) {
             this.s = s;
             this.length = s.length();
             this.strict = strict;
+            this.keepRepeated = keepRepeated;
         }
 
         int skipWhitespace(final int from) {
@@ -588,7 +636,7 @@ public final class ToolJson {
                 if (value == null) {
                     throw new JsonDecodeException("Expecting value", s, idx);
                 }
-                map.put((String) key.value(), value.value());
+                put(map, (String) key.value(), value.value());
                 idx = skipWhitespace(value.end());
                 if (idx < length && s.charAt(idx) == '}') {
                     return new Decoded(map, idx + 1);
@@ -598,6 +646,23 @@ public final class ToolJson {
                 }
                 idx = skipWhitespace(idx + 1);
             }
+        }
+
+        // A member put in its object: a key given again replacing the value, or with keepRepeated, kept as well.
+        private void put(final Map<String, Object> map, final String key, final Object value) {
+            if (!keepRepeated || !map.containsKey(key)) {
+                map.put(key, value);
+                return;
+            }
+            final Object existing = map.get(key);
+            if (existing instanceof final Repeated repeated) {
+                repeated.values().add(value);
+                return;
+            }
+            final List<Object> values = new ArrayList<>();
+            values.add(existing);
+            values.add(value);
+            map.put(key, new Repeated(values));
         }
 
         private Decoded parseArray(final int start) {

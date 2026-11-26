@@ -231,10 +231,15 @@ public final class LocalCheck {
             return null;
         }
         try {
-            // JSON encoded twice (a JSON string holding it) read again, as the XSLT's mcp:json-to-xml does.
-            return SampleProfiler.loadsDecoded(value == null
+            // JSON encoded twice (a JSON string holding it) read again, as the XSLT's mcp:json-to-xml does; read as
+            // json-to-xml() reads it: numbers as written, a repeated key's first value written.
+            final String text = value == null
                     ? ""
-                    : (String) value);
+                    : (String) value;
+            final String inner = SampleProfiler.decodedString(text);
+            return ToolJson.loadsAsWritten(inner == null
+                    ? text
+                    : inner);
         } catch (final ToolJson.JsonDecodeException e) {
             return null;
         }
@@ -400,9 +405,17 @@ public final class LocalCheck {
                                                             + "here (give splitter, from build_data_splitter)");
             }
             final List<Object> records = new ArrayList<>();
-            // Every record, as the draft reads them: a rule's Data a few records hold is in the sample.
-            SplitterDryRun.dryRunEvery(splitter, text).records().forEach(r -> records.add(new LinkedHashMap<>(r)));
-            return new SampleRecords(records, null);
+            // Every record, as the draft reads them: a rule's Data a few records hold is in the sample. A name the
+            // heading gives twice holds each cell's value (ToolJson.Repeated), as Stroom writes a data element for
+            // each: a condition holds on any, a value written is the first.
+            final SplitterDryRun.DryRun run = SplitterDryRun.dryRunEvery(splitter, text);
+            for (int n = 0; n < run.records().size(); n++) {
+                final Map<String, Object> record = new LinkedHashMap<>(run.records().get(n));
+                run.repeatsOf(n).forEach((name, values) -> record.put(name,
+                        new ToolJson.Repeated(new ArrayList<>(values))));
+                records.add(record);
+            }
+            return new SampleRecords(records, SplitterDryRun.quotesInsideNote(splitter, text));
         }
         if ("json".equals(mapping.input())) {
             return jsonRecords(text, cut);
@@ -410,29 +423,43 @@ public final class LocalCheck {
         return xmlRecords(mapping, text);
     }
 
+    // The records read as Stroom's JSONParser presents them (ToolJson.loadsAsWritten): numbers as written, a key
+    // given twice kept twice. A record holding NaN or Infinity, which json.loads reads and the JSONParser refuses
+    // (failing the stream), is named in the note, with no records read.
     private static SampleRecords jsonRecords(final String text, final int cut) {
         final List<Object> values = new ArrayList<>();
         if (text.startsWith("{") && !jsonLines(text) && SampleProfiler.wrappedRecords(text) != null) {
             // One object wrapping the records (CloudTrail): the parser's one record; for_each reads its items.
-            values.add(ToolJson.loads(text));
+            try {
+                values.add(ToolJson.loadsAsWritten(text));
+            } catch (final ToolJson.JsonDecodeException e) {
+                if (!parsesLeniently(text)) {
+                    throw e;
+                }
+                return new SampleRecords(new ArrayList<>(), nonJsonNumbers("the sample's record"));
+            }
         } else if (text.startsWith("[")) {
             try {
-                if (ToolJson.loads(text) instanceof final List<?> list) {
+                if (ToolJson.loadsAsWritten(text) instanceof final List<?> list) {
                     list.stream().filter(Map.class::isInstance).forEach(values::add);
                 }
             } catch (final ToolJson.JsonDecodeException e) {
-                return new SampleRecords(new ArrayList<>(), "the sample is not a JSON array");
+                return new SampleRecords(new ArrayList<>(), arrayNote(text));
             }
         } else {
+            int n = 0;
             for (final String line : ToolText.splitlines(text)) {
                 if (ToolText.isBlank(line)) {
                     continue;
                 }
+                n++;
                 final Object value;
                 try {
-                    value = ToolJson.loads(line);
+                    value = ToolJson.loadsAsWritten(line);
                 } catch (final ToolJson.JsonDecodeException e) {
-                    return new SampleRecords(new ArrayList<>(), "the sample is neither a JSON array nor JSON lines");
+                    return new SampleRecords(new ArrayList<>(), parsesLeniently(line)
+                            ? nonJsonNumbers("record " + n + " (" + shown(line) + ")")
+                            : "the sample is neither a JSON array nor JSON lines");
                 }
                 if (value instanceof Map) {
                     values.add(value);
@@ -444,6 +471,56 @@ public final class LocalCheck {
                 ? cutStrings(value, cut)
                 : value)));
         return new SampleRecords(records, null);
+    }
+
+    // The note for a JSON array that isn't JSON itself: the first record holding NaN or Infinity named, where that is
+    // why.
+    private static String arrayNote(final String text) {
+        try {
+            if (ToolJson.loads(text) instanceof final List<?> list) {
+                for (int n = 0; n < list.size(); n++) {
+                    if (nonFinite(list.get(n))) {
+                        return nonJsonNumbers("record " + (n + 1) + " (" + shown(ToolJson.dumps(list.get(n))) + ")");
+                    }
+                }
+            }
+        } catch (final ToolJson.JsonDecodeException e) {
+            // Not JSON to json.loads either.
+        }
+        return "the sample is not a JSON array";
+    }
+
+    // A record's text as a note shows it: its start, quoted.
+    private static String shown(final String text) {
+        final String head = ToolText.head(text, 80);
+        return ToolText.repr(head.length() < text.length()
+                ? head + "..."
+                : head);
+    }
+
+    private static String nonJsonNumbers(final String record) {
+        return record + " holds NaN or Infinity, which isn't JSON: Stroom's JSONParser refuses it, failing the "
+               + "stream";
+    }
+
+    // Whether a text is JSON to json.loads, which reads NaN and Infinity.
+    private static boolean parsesLeniently(final String text) {
+        try {
+            ToolJson.loads(text);
+            return true;
+        } catch (final ToolJson.JsonDecodeException e) {
+            return false;
+        }
+    }
+
+    // Whether a value read by json.loads holds NaN or an infinity.
+    private static boolean nonFinite(final Object value) {
+        return switch (value) {
+            case final Double number -> number.isNaN() || number.isInfinite();
+            case final Map<?, ?> map -> map.values().stream().anyMatch(LocalCheck::nonFinite);
+            case final List<?> list -> list.stream().anyMatch(LocalCheck::nonFinite);
+            case null, default -> false;
+        };
     }
 
     // Whether a text is JSON lines: its first line is a whole JSON object and another line follows. Its lines are
@@ -472,6 +549,11 @@ public final class LocalCheck {
             final List<Object> out = new ArrayList<>();
             list.forEach(inner -> out.add(cutStrings(inner, cut)));
             return out;
+        }
+        if (value instanceof final ToolJson.Repeated repeated) {
+            final List<Object> out = new ArrayList<>();
+            repeated.values().forEach(inner -> out.add(cutStrings(inner, cut)));
+            return new ToolJson.Repeated(out);
         }
         return value instanceof final String text && text.length() > cut
                 ? text.substring(0, cut)
