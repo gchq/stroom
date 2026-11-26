@@ -158,7 +158,9 @@
   "ok": true,
   "problems": [],
   "warnings": [
+   "[user access] 'result' is written as EventDetail/Authenticate/Outcome/Success and as Data 'result' (EventDetail/Authenticate/Data): the element holds it, so the Data entry says it again. Remove the Data entry, unless it is kept on purpose (the same Data across event types that don't all have the element).",
    "[user access] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
+   "[device access] 'result' is written as EventDetail/Authenticate/Outcome/Success and as Data 'result' (EventDetail/Authenticate/Data): the element holds it, so the Data entry says it again. Remove the Data entry, unless it is kept on purpose (the same Data across event types that don't all have the element).",
    "[device access] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [

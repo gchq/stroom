@@ -176,6 +176,8 @@ public final class InstructionRules {
     public static final String EVENT_TYPES_SECTION = "Event types";
     /// The heading of the section of the sources tools read by default.
     public static final String SOURCES_SECTION = "Sources";
+    /// The heading of the section of what an activity timeline leaves out (the same section in a skill).
+    public static final String EXCLUSIONS_SECTION = "Exclusions";
     /// The `## Sources` key of an activity timeline's default sources.
     public static final String TIMELINE_SOURCES = "timeline";
 
@@ -235,6 +237,8 @@ public final class InstructionRules {
     private static final Pattern EVENT_TYPES_HEADING = Pattern.compile("^#{1,6}\\s*event types\\s*$",
             Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
     private static final Pattern SOURCES_HEADING = Pattern.compile("^#{1,6}\\s*sources\\s*$",
+            Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+    private static final Pattern EXCLUSIONS_HEADING = Pattern.compile("^#{1,6}\\s*exclusions\\s*$",
             Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
     /// The keys a `## Sources` line may have.
     static final Set<String> SOURCES_KEYS = Set.of(TIMELINE_SOURCES);
@@ -379,6 +383,45 @@ public final class InstructionRules {
         return out;
     }
 
+    /// What an activity timeline leaves out of an index's events, by the applicable AGENTS docs' `## Exclusions`
+    /// sections: every doc's lines, most general first.
+    ///
+    /// @param applying The docs that apply, most general first.
+    /// @return Each line's event type and object (exact, or a prefix ending `*`), with the folder of the doc giving it.
+    public static List<ExclusionRule> exclusions(final List<InstructionDoc> applying) {
+        final List<ExclusionRule> out = new ArrayList<>();
+        for (final InstructionDoc doc : NullSafe.list(applying)) {
+            exclusionLines(doc.text()).forEach(line -> out.add(new ExclusionRule(line.type(), line.object(),
+                    doc.folder())));
+        }
+        return out;
+    }
+
+    /// @param text A doc's text (an AGENTS doc's, or a skill's `## Exclusions` section's own lines).
+    /// @return Its `## Exclusions` lines, `- <event type>: <object>`, each an event type and an object, exact or a
+    /// prefix ending `*`; a line naming no object is left out (a whole type is an `## Event types` line's `ignore`).
+    public static List<ExclusionRule> exclusionLines(final String text) {
+        return exclusionsIn(section(text, EXCLUSIONS_HEADING).orElse(""));
+    }
+
+    /// @param lines A section's lines, below its heading.
+    /// @return Each bullet's event type and object, exact or a prefix ending `*`, with no folder.
+    public static List<ExclusionRule> exclusionsIn(final String lines) {
+        final List<ExclusionRule> out = new ArrayList<>();
+        for (final String line : NullSafe.string(lines).split("\\R")) {
+            final Matcher bullet = BULLET.matcher(line);
+            if (!bullet.matches()) {
+                continue;
+            }
+            final String type = stripChars(bullet.group(1).strip(), "`*").strip();
+            final String object = stripChars(bullet.group(2).strip(), "`").strip();
+            if (!type.isEmpty() && !object.isEmpty() && !"*".equals(object)) {
+                out.add(new ExclusionRule(type, object, null));
+            }
+        }
+        return out;
+    }
+
     /// The sources a tool reads by default, by the applicable AGENTS docs' `## Sources` section: the most specific
     /// doc's line for the key.
     ///
@@ -487,6 +530,14 @@ public final class InstructionRules {
                         + String.join(", ", TimelineRoles.ASKED_ROLES) + "), so it would be left out");
             }
         }
+        for (final String line : section(text, EXCLUSIONS_HEADING).orElse("").split("\\R")) {
+            final Matcher bullet = BULLET.matcher(line);
+            if (bullet.matches() && exclusionsIn(line).isEmpty()) {
+                out.add("'## " + EXCLUSIONS_SECTION + "' line '" + line.strip() + "' names no object (an event "
+                        + "type's whole events are an '## " + EVENT_TYPES_SECTION + "' line's ignore), so it would "
+                        + "be left out");
+            }
+        }
         for (final String line : section(text, DOCUMENTATION_HEADING).orElse("").split("\\R")) {
             final Matcher bullet = LAYOUT_BULLET.matcher(line);
             if (bullet.matches()
@@ -546,6 +597,8 @@ public final class InstructionRules {
             return EVENT_TYPES_SECTION;
         } else if (SOURCES_HEADING.matcher(text).matches()) {
             return SOURCES_SECTION;
+        } else if (EXCLUSIONS_HEADING.matcher(text).matches()) {
+            return EXCLUSIONS_SECTION;
         }
         return null;
     }
@@ -671,6 +724,30 @@ public final class InstructionRules {
         /// @param from The folder of the AGENTS doc that gives it.
         public TypeRoleRule(final TimelineRole role, final String from) {
             this(role, from, null);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// What an activity timeline leaves out: an `## Exclusions` line of an AGENTS doc or a skill.
+    ///
+    /// @param type   The event type, as the timeline names it (its code or TypeId), compared whatever its case.
+    /// @param object The object, exact, or a prefix where it ends `*`.
+    /// @param from   The folder of the AGENTS doc that gives it; null for a skill's.
+    public record ExclusionRule(String type, String object, String from) {
+
+        /// @param eventType   An event's type.
+        /// @param eventObject Its object, or null.
+        /// @return True if the event is one this leaves out.
+        public boolean matches(final String eventType, final String eventObject) {
+            if (!type.equalsIgnoreCase(NullSafe.string(eventType)) || eventObject == null) {
+                return false;
+            }
+            return object.endsWith("*")
+                    ? eventObject.startsWith(object.substring(0, object.length() - 1))
+                    : object.equals(eventObject);
         }
     }
 

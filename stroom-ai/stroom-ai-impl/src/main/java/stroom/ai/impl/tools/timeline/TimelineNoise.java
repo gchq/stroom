@@ -53,9 +53,10 @@ import java.util.Set;
 /// kinds of signal (repeats and background requests are one kind), one of them saying its events are alike or not
 /// the person's: repeats, a service account, or many hosts at once. Rate and regularity alone never are: a script
 /// downloading many different documents at a steady pace is just what an analyst needs to see. Noise is proposed
-/// to the user, never dropped unasked; an exclusion the user agreed to is kept ([Exclusion], [#FILE]) and applied in
-/// both views on every run before the sessions, the spans and any model call; the result says what was left out and
-/// how many.
+/// to the user, never dropped unasked; an exclusion the user agreed to is kept for the chat ([Exclusion], [#FILE], in
+/// the chat's own workspace: decided by the user 2026-11-27) and applied in both views on every run before the
+/// sessions, the spans and any model call; the result says what was left out and how many. An `## Exclusions` line
+/// of the AGENTS doc where an index is, or of the skill in use, is applied with no form, first, and never proposed.
 final class TimelineNoise {
 
     /// The fewest events a pattern needs to be noise.
@@ -76,7 +77,7 @@ final class TimelineNoise {
     static final int MAX_PROPOSED = 8;
     /// The examples given of each.
     static final int EXAMPLES = 3;
-    /// The file the exclusions are kept in, in the user's own workspace where there is one.
+    /// The file the exclusions the user chose are kept in, in the chat's workspace.
     static final String FILE = "/outputs/timelines/exclusions.json";
 
     private static final long HOUR_MS = 3_600_000L;
@@ -179,7 +180,7 @@ final class TimelineNoise {
         return new Applied(kept, left);
     }
 
-    /// @param workspace The workspace they are kept in (the user's own where there is one), or null.
+    /// @param workspace The workspace they are kept in (the chat's), or null.
     /// @return The exclusions decided, in order; empty where there are none or they can't be read.
     static List<Exclusion> kept(final SessionWorkspace workspace) {
         final WorkspacePath path = WorkspacePath.parse(FILE);
@@ -517,7 +518,7 @@ final class TimelineNoise {
         }
 
         boolean sameAs(final Exclusion exclusion) {
-            return exclusion.source().equals(source) && exclusion.type().equals(type)
+            return Objects.equals(exclusion.source(), source) && exclusion.type().equals(type)
                    && Objects.equals(exclusion.object(), object);
         }
     }
@@ -526,29 +527,67 @@ final class TimelineNoise {
     // --------------------------------------------------------------------------------
 
 
-    /// A pattern the user decided on: left out of every timeline, or kept (so not proposed again).
+    /// A pattern decided on: by the user in the chat's form (left out of the chat's timelines, or kept, so not
+    /// proposed again), or written in an AGENTS doc or a skill (left out).
     ///
-    /// @param source   Its source's name.
-    /// @param type     Its event type.
-    /// @param object   The one object it is at, or null for the whole type.
-    /// @param excluded True if its events are left out.
-    /// @param why      The signals it was proposed for.
-    record Exclusion(String source, String type, String object, boolean excluded, String why) {
+    /// @param source    Its source's name; null for any (a skill's line).
+    /// @param type      Its event type.
+    /// @param object    The one object it is at (a written one's may be a prefix ending `*`), or null for the whole
+    ///                  type.
+    /// @param excluded  True if its events are left out.
+    /// @param why       The signals it was proposed for.
+    /// @param writtenIn Where a written one is written, e.g. `the AGENTS doc in /Feeds`; null for the user's.
+    record Exclusion(String source, String type, String object, boolean excluded, String why, String writtenIn) {
+
+        /// The user's choice in the chat's form.
+        ///
+        /// @param source   The source's name.
+        /// @param type     The event type.
+        /// @param object   The object, or null for the type as a whole.
+        /// @param excluded True if left out, false if kept.
+        /// @param why      Why it looked like noise.
+        Exclusion(final String source, final String type, final String object, final boolean excluded,
+                  final String why) {
+            this(source, type, object, excluded, why, null);
+        }
+
+        /// An `## Exclusions` line of an AGENTS doc or a skill, applied with no form.
+        ///
+        /// @param source    The source's name, or null for any source (a skill's).
+        /// @param type      The event type, compared whatever its case.
+        /// @param object    The object, exact, or a prefix ending `*`.
+        /// @param writtenIn Where it is written, e.g. `the AGENTS doc in /Feeds`.
+        /// @return It as an exclusion agreed to.
+        static Exclusion written(final String source, final String type, final String object,
+                                 final String writtenIn) {
+            return new Exclusion(source, type, object, true, "", writtenIn);
+        }
 
         /// @param eventSource An event's source's name.
         /// @param eventType   Its type ([TimelineNoise#typeOf]).
         /// @param eventObject Its object, or null.
-        /// @return True if the event is of the pattern.
+        /// @return True if the event is of the pattern (a written one's type whatever its case, its object a
+        /// prefix where it ends `*`).
         boolean matches(final String eventSource, final String eventType, final String eventObject) {
-            return source.equals(eventSource) && type.equals(eventType) && (object == null
-                                                                            || object.equals(eventObject));
+            if (writtenIn == null) {
+                return source.equals(eventSource) && type.equals(eventType) && (object == null
+                                                                                || object.equals(eventObject));
+            }
+            return (source == null || source.equals(eventSource)) && type.equalsIgnoreCase(eventType)
+                   && eventObject != null && (object.endsWith("*")
+                    ? eventObject.startsWith(object.substring(0, object.length() - 1))
+                    : object.equals(eventObject));
         }
 
-        /// @return It in words, e.g. `Proxy: View at https://x/ping`.
+        /// @return It in words, e.g. `Proxy: View at https://x/ping`, a written one's with where it is written.
         String said() {
-            return source + ": " + type + (object == null
+            return (source == null
                     ? ""
-                    : " at " + object);
+                    : source + ": ") + type + (object == null
+                    ? ""
+                    : " at " + object) + (writtenIn == null
+                    ? ""
+                    : " (" + writtenIn + ")");
         }
     }
 

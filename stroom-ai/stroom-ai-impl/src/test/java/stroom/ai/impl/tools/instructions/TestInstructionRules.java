@@ -192,6 +192,34 @@ class TestInstructionRules {
     }
 
     @Test
+    void theExclusionsSectionGivesEachTypeAndObjectExactOrAPrefixFromEveryDoc() {
+        final List<InstructionRules.ExclusionRule> found = InstructionRules.exclusions(List.of(
+                doc("/", """
+                        ## Exclusions
+                        - web.get: https://telemetry.example.net/*
+                        - `process.start`: `C:\\ops\\inventory.ps1`
+                        - doc.edit:
+                        - web.get: *
+                        Prose is left to the agent.
+                        """),
+                doc("/Indexes", "## Exclusions\n- Beacon: ping\n")));
+
+        assertThat(found).containsExactly(
+                new InstructionRules.ExclusionRule("web.get", "https://telemetry.example.net/*", "/"),
+                new InstructionRules.ExclusionRule("process.start", "C:\\ops\\inventory.ps1", "/"),
+                new InstructionRules.ExclusionRule("Beacon", "ping", "/Indexes"));
+        final InstructionRules.ExclusionRule prefix = found.getFirst();
+        assertThat(prefix.matches("WEB.GET", "https://telemetry.example.net/v1/beacon")).isTrue();
+        assertThat(prefix.matches("web.get", "https://supplier.example.com/")).isFalse();
+        assertThat(prefix.matches("web.get", null)).isFalse();
+        assertThat(found.get(1).matches("process.start", "C:\\ops\\inventory.ps1 -x")).isFalse();
+        // A whole type is an Event types line's ignore, so a line naming no object is left out and said.
+        assertThat(InstructionRules.problems("## Exclusions\n- web.get: *\n")).singleElement().asString()
+                .startsWith("'## Exclusions' line '- web.get: *' names no object");
+        assertThat(InstructionRules.typedSection("## Exclusions")).isEqualTo(InstructionRules.EXCLUSIONS_SECTION);
+    }
+
+    @Test
     void anEventTypesLineGivesAPeriodRoleWithItsKindAndOneWithNoKindIsAProblem() {
         final Map<String, TypeRoleRule> found = InstructionRules.eventTypes(List.of(doc("/", """
                 ## Event types

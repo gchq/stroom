@@ -2386,9 +2386,15 @@ keeps the finer ones underneath, each naming its parent.
   steady scripted download of many documents, the planted exfiltration, was proposed while regularity sufficed).
   Proposed, never dropped unasked: in a chat, one short form, every pattern ticked by default (one click leaves
   them all out, or the user unticks some), each with its count, share, signals and examples; over MCP, or with no
-  form, listed in the result (`noise_proposed`), not left out. The user's answer is kept, either way, in the
-  user's own workspace (`/outputs/timelines/exclusions.json`, as event-code classifications are), so later runs
-  start decluttered and ask nothing again; the result says what was left out and how many (`excluded`).
+  form, listed in the result (`noise_proposed`), not left out. The user's answer is kept, either way, for the
+  chat (`/outputs/timelines/exclusions.json` in the chat's workspace: decided by the user 2026-11-27, another chat
+  is asked afresh), so the chat's later runs start decluttered and ask nothing again; the result says what was left
+  out and how many (`excluded`). Exclusions shared by everyone are written as `## Exclusions` lines
+  (`- <event type>: <object>`, the object exact or a prefix ending `*`) in the AGENTS doc where an index is (that
+  index's timelines) or in a skill (every source of its runs): applied first with no form, never proposed as noise,
+  each said with the doc or skill it is written in; check_instructions points out a line naming no object (a whole
+  type is an `## Event types` line's `ignore`). Accepted noise isn't offered for recording there (the user's
+  choice, 2026-11-27).
   *Judged in the build:* the exclusion is kept as a timeline-level filter, not written into the catalogue as the
   event type's `ignore` role: the timeline doesn't write source notes, and a role given there would hide the type
   from every timeline of every user; the user's own `ignore` in the catalogue (or an AGENTS line) does that.
@@ -4744,7 +4750,10 @@ agreeing to event types, so it is accepted only in its form, never from the chat
 the user's words, taken from the form's text or the chat; the agent proposes them (`op: change`, or add and remove),
 and the set is put to the user again; dropping only on the user's word. A form put aside by a message is answered as
 forms are (reply first). A client that can't show forms confirms through `needs_review` and its `review_id`, as now.
-The catch-all is confirmed last, named "uncatalogued records", with their count and shapes (those the build's mapping's
+The catch-all is confirmed last, named "uncatalogued records", with their count and shapes (kept with it, as
+records per shape, `caught`: a later change to the event types leaving no shape with more records uncatalogued than
+it was confirmed for keeps it confirmed; a new shape, or more of one, puts it to the user again; decided by the user
+2026-11-27, seen in eval case 112: asked at 300, 119 and 28 records) (those the build's mapping's
 own drop rules drop counted apart from those that become Unknown, and the records the drop rules take said), and its agreement
 (`catch_all: {allow_unknown}`, given on any confirm call, used at its turn). **Declined** (decided 2026-11-20): the
 user wants something else for those records, so the agent asks them in the chat and calls again with their answer:

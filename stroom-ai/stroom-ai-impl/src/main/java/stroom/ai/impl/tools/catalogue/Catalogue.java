@@ -21,6 +21,7 @@ import stroom.ai.impl.tools.generation.MappingValidationException;
 import stroom.ai.impl.tools.generation.ModelReader;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -174,16 +175,52 @@ public record Catalogue(List<EventType> eventTypes, CatchAll catchAll, Scope sco
     /// @param translation  `translation`: what the catch-all writes instead of Unknown, when a hand-written last
     ///                     rule taking every remaining record wrote a real event (read back by rebuild_mapping);
     ///                     null for Unknown.
-    public record CatchAll(String status, String allowUnknown, Translation translation) {
+    /// @param caught       `caught`: the uncatalogued records the user confirmed it for, by their shape's signature, so
+    ///                     a change to the event types that leaves only some of them uncatalogued keeps it confirmed,
+    ///                     and one leaving more of a shape, or another shape, uncatalogued puts it to them again
+    ///                     (decided by the user 2026-11-27); null where they weren't kept (it is put to them again on
+    ///                     any change).
+    public record CatchAll(String status, String allowUnknown, Translation translation, Map<String, Integer> caught) {
 
         /// The catch-all not yet confirmed.
         public static final CatchAll PROPOSED = new CatchAll(EventType.PROPOSED);
         /// The catch-all confirmed by the user.
         public static final CatchAll CONFIRMED = new CatchAll(EventType.CONFIRMED);
 
+        /// Copies the map.
+        public CatchAll {
+            caught = caught == null
+                    ? null
+                    : Collections.unmodifiableMap(new LinkedHashMap<>(caught));
+        }
+
         /// @param status `proposed` or `confirmed`.
         public CatchAll(final String status) {
             this(status, null, null);
+        }
+
+        /// One with no shapes kept.
+        ///
+        /// @param status       `proposed` or `confirmed`.
+        /// @param allowUnknown The user's reason for the uncatalogued records' Unknown, or null.
+        /// @param translation  What it writes instead of Unknown, or null.
+        public CatchAll(final String status, final String allowUnknown, final Translation translation) {
+            this(status, allowUnknown, translation, null);
+        }
+
+        /// @param shapes The uncatalogued records the user confirmed it for, by their shape's signature.
+        /// @return It with those kept.
+        public CatchAll caughtFor(final Map<String, Integer> shapes) {
+            return new CatchAll(status, allowUnknown, translation, shapes);
+        }
+
+        /// @param shapes The uncatalogued records now, by their shape's signature.
+        /// @return True if it was confirmed for them all (no shape new, none with more records); false where what it
+        /// was confirmed for wasn't kept.
+        public boolean covers(final Map<String, Integer> shapes) {
+            return caught != null && shapes.entrySet().stream().allMatch(shape -> caught.containsKey(shape.getKey())
+                                                                                   && shape.getValue()
+                                                                                      <= caught.get(shape.getKey()));
         }
 
         /// Reads one from JSON-like values, laxly, every error collected.
@@ -201,9 +238,24 @@ public record Catalogue(List<EventType> eventTypes, CatchAll catchAll, Scope sco
             final String allowUnknown = fields.optionalString("allow_unknown");
             final Translation translation = fields.optionalModel("translation",
                     (value, at) -> Translation.read(reader, value, at));
+            final Map<String, Integer> caught = caught(fields.input().get("caught"));
             return fields.ok()
-                    ? new CatchAll(status, allowUnknown, translation)
+                    ? new CatchAll(status, allowUnknown, translation, caught)
                     : null;
+        }
+
+        // The records confirmed for, by shape, as kept; null where not kept or not readable.
+        private static Map<String, Integer> caught(final Object value) {
+            if (!(value instanceof final Map<?, ?> map)) {
+                return null;
+            }
+            final Map<String, Integer> out = new LinkedHashMap<>();
+            map.forEach((key, records) -> {
+                if (key != null && records instanceof final Number number) {
+                    out.put(String.valueOf(key), number.intValue());
+                }
+            });
+            return out;
         }
 
         /// @return It confirmed.
@@ -220,6 +272,9 @@ public record Catalogue(List<EventType> eventTypes, CatchAll catchAll, Scope sco
             }
             if (translation != null) {
                 out.put("translation", translation.toJson());
+            }
+            if (caught != null) {
+                out.put("caught", caught);
             }
             return out;
         }

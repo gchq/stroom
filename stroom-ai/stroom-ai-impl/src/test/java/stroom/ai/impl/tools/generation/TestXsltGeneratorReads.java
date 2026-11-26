@@ -269,6 +269,62 @@ class TestXsltGeneratorReads extends XsltRuns {
                 .isTrue();
     }
 
+    // Only a placement that loses the value keeps its Data copy (decided by the user 2026-11-27): a transform, or a
+    // lossy map (several values to one, or a default); a time format, a lookup, a default alone or a one-to-one map
+    // gives the field in the element's terms and takes the copy, in changes= and in the catalogue alike.
+    @Test
+    void onlyAPlacementThatLosesTheValueKeepsItsDataCopy() {
+        assertThat(keptByBoth(Map.of("transform", "upper"))).as("a transform").containsExactly(true, true);
+        assertThat(keptByBoth(Map.of("map", Map.of("rpt-17", "A", "rpt-18", "A")))).as("several values to one")
+                .containsExactly(true, true);
+        assertThat(keptByBoth(Map.of("map", Map.of("rpt-17", "A"), "default", "B"))).as("a map with a default")
+                .containsExactly(true, true);
+        assertThat(keptByBoth(Map.of("map", Map.of("rpt-17", "A", "rpt-18", "B")))).as("a one-to-one map")
+                .containsExactly(false, false);
+        assertThat(keptByBoth(Map.of("default", "none"))).as("a default alone").containsExactly(false, false);
+        assertThat(MappingFacts.keepsOriginal(Map.of("path", "EventTime/TimeCreated", "field", "ts", "time_format",
+                "yyyy-MM-dd"))).as("a time format").isFalse();
+    }
+
+    // Whether changes= and the catalogue each keep the Data copy of a field placed with the given conversion.
+    private static List<Boolean> keptByBoth(final Map<String, Object> conversion) {
+        final Map<String, Object> placed = new LinkedHashMap<>(Map.of("path", "EventDetail/View/Document/Id",
+                "field", "ref"));
+        placed.putAll(conversion);
+        final Map<String, Object> merged = new LinkedHashMap<>();
+        merged.put("common", new ArrayList<>());
+        merged.put("events", new ArrayList<>(List.of(new LinkedHashMap<>(Map.of("name", "logon", "fields",
+                new ArrayList<>(List.of(placed, Map.of("path", "EventDetail/View/Data", "data_name", "ref",
+                        "field", "ref"))))))));
+        PlacedCopies.afterChanges(merged, Map.of("events", List.of(Map.of("name", "logon", "fields",
+                List.of(placed)))));
+        final boolean keptByChanges = JsonValues.maps(JsonValues.maps(merged.get("events")).getFirst()
+                .get("fields")).stream().anyMatch(field -> "ref".equals(field.get("data_name")));
+        final Map<String, Object> placement = new LinkedHashMap<>(Map.of("path", "Document/Id", "field", "ref"));
+        placement.putAll(conversion);
+        final Map<String, Object> type = new LinkedHashMap<>();
+        type.put("type_id", "View-Report");
+        type.put("title", "Report viewed");
+        type.put("event_detail", "View");
+        type.put("recognised_by", List.of(Map.of("when", List.of(Map.of("field", "evt", "equals", "4624")),
+                "names", List.of())));
+        type.put("basis", "documentation");
+        type.put("confidence", "high");
+        type.put("status", "confirmed");
+        type.put("placements", List.of(placement));
+        final Map<String, Object> notes = new LinkedHashMap<>();
+        notes.put("source", "App");
+        notes.put("fields", new ArrayList<>());
+        notes.put("event_types", List.of(type));
+        notes.put("catch_all", Map.of("status", "confirmed"));
+        final String csv = "ts,evt,ref\n2026-10-01T08:00:00Z,4624,rpt-17\n2026-10-01T08:05:00Z,4624,rpt-18\n";
+        final Map<String, Object> rule = JsonValues.maps(mapOf(DraftMapping.draft(List.of(csv), "App", "App",
+                "Test", notes, null, null).get("mapping")).get("events")).getFirst();
+        final boolean keptByCatalogue = JsonValues.maps(rule.get("fields")).stream()
+                .anyMatch(field -> "ref".equals(field.get("data_name")));
+        return List.of(keptByChanges, keptByCatalogue);
+    }
+
     // --------------------------------------------------------------------------------
 
 

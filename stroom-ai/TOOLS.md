@@ -2040,8 +2040,10 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
   line, its key named, no times), given to the characterisation as `during`.
 * Noise (`TimelineNoise`, both views, before any span or model call): proposed in one form, all ticked
   (`exclude`), or listed as `noise_proposed` over MCP (and in the chat after the form was declined, saying a call
-  again asks again); the answer kept in `/outputs/timelines/exclusions.json`
-  (the user's own workspace) and applied every run; `excluded` says what was left out.
+  again asks again); the answer kept for the chat in `/outputs/timelines/exclusions.json` (the chat's
+  workspace) and applied on the chat's every run; `## Exclusions` lines (`- <event type>: <object>`, a prefix ending
+  `*`) in the AGENTS doc where the index is, or in the skill in use, applied first with no form and never proposed;
+  `excluded` says what was left out, a written line with its doc or skill.
 * Activities view: `activity-levels.csv` (`ThematicSpans`), levels 1 to 3 with `id`, `parent`, `how` and
   `events` (an activity of loose items alone a level-1 row over its items' times); merged in code by a fetched
   `*category` field (not `event.category`), runs of point events including a fetched command-line field's commands;
@@ -4973,7 +4975,8 @@ form's (decided
 it means, how it is recognised, why it is grouped so) it answers in the chat from `explain=` and puts the set to the
 user again (`confirm: true`; after words in the form, `confirm: true answered: true`, which only shows the set again,
 never accepts it); only a change asked for is proposed; if it can't tell, it asks the user. Last, the catch-all: the uncatalogued records' count
-and shapes shown, then a form to keep them as Unknown events, their fields kept as Data, with the agreement given as
+and shapes shown (kept with it once confirmed, as records per shape, `caught`; a later change that leaves no shape
+with more records uncatalogued keeps it confirmed, a new shape or more of one puts it to the user again), then a form to keep them as Unknown events, their fields kept as Data, with the agreement given as
 `catch_all: {allow_unknown: <why>}` on any confirm call (used at its turn). Declined, the result says the user wants
 something else for those records: the agent asks them in the chat, then proposes event types for them (`op: add`,
 `drop: true` where they say to drop them) or another event for all of them (`catch_all: {translation: {type_id,
@@ -6442,8 +6445,11 @@ records in the sample (severity, names, addresses kept), then takes what the cat
   write it), the user authenticating for Authenticate; then the fields left over that the way's own records
   hold, as Data of the action element. Each field once: the draft rule's entries below the action element reading a
   placed field are taken out, and a placed field is Data too only with `also_data` (each field it reads: by `field`,
-  `any_of` or `xpath`) or where the placement converts the value (a `transform`, `map`, `time_format`, `default` or
-  `lookup`: `MappingFacts.convertsValue`, as a mapping change decides it, 2026-11-27). The fields an entry reads are
+  `any_of` or `xpath`) or where the placement loses the value on the way (a `transform`, or a
+  lossy `map`: several values to one, or a `default` for those it doesn't name; `MappingFacts.keepsOriginal`, as a
+  mapping change and the written-twice warning decide it; a `time_format`, `lookup`, `dictionary`, `default` alone or
+  a one-to-one `map` gives the field in the element's terms and takes its Data copy's place, decided by the user
+  2026-11-27). The fields an entry reads are
   `Placement.reads`'s, for a common entry and a draft rule's too: a `join`'s, a lookup's key (or `key_fields`), a
   group's array, not kept as Data beside it. A placement's (or a common
   entry's) `xpath` reads the fields it names as the records spell them (`XPathFieldReads`, 2026-11-26: a JSON key

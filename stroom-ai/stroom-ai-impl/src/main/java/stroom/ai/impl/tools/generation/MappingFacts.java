@@ -72,9 +72,10 @@ public final class MappingFacts {
             Pattern.UNICODE_CHARACTER_CLASS);
     private static final Set<String> OPERATORS = Set.of("and", "or", "return", "then", "else", "in", "satisfies",
             "eq", "ne", "lt", "le", "gt", "ge", "is", "union", "intersect", "except", "to", "div", "mod");
-    // The fields entry's keys converting the value it reads ([#convertsValue(Map)]).
-    private static final List<String> VALUE_CONVERSIONS = List.of("transform", "map", "time_format", "lookup",
-            "dictionary", "default");
+    // The fields entry's keys that may lose the value it reads ([#keepsOriginal(Map)]).
+    private static final String TRANSFORM = "transform";
+    private static final String MAP = "map";
+    private static final String DEFAULT = "default";
     private static final Pattern CALL_START = Pattern.compile("[\\w:.-]+\\(", Pattern.UNICODE_CHARACTER_CLASS);
     // Pattern letters of Java's SimpleDateFormat and DateTimeFormatter; any other letter must be quoted.
     private static final String PATTERN_LETTERS = "GuyDMLdQqYwWEecFaHkKhmsSAnNVzOXxZp";
@@ -362,32 +363,38 @@ public final class MappingFacts {
         return String.join("/", steps);
     }
 
-    /// Whether an entry converts the value it reads (a transform, a map, a time format, a lookup, a dictionary or a
-    /// default between the input and the element), so the element doesn't hold the field as it is: the field's Data
-    /// copy is then no copy, and is kept beside it (decided by the user for a transform: in a mapping change and in
-    /// the catalogue's placements alike). One written as it is takes its Data copy's place.
+    /// Whether an entry loses the value it reads on the way to the element, so the field's Data copy is no copy and
+    /// is kept beside it: a transform, or a lossy map (several values to one, or a default for the values it doesn't
+    /// name: e.g. allow/deny/drop to Permitted true/false). Decided by the user 2026-11-27, in a mapping change, the
+    /// catalogue's placements and the written-twice warnings alike: a time format, a lookup, a dictionary, a default
+    /// alone or a one-to-one map gives the field's value in the element's terms, and takes its Data copy's place, as
+    /// an entry written as it is does.
     ///
     /// @param entry A translation mapping's fields entry (or a catalogue placement), as JSON-like values.
-    /// @return True if it converts the value.
-    public static boolean convertsValue(final Map<String, ?> entry) {
-        return VALUE_CONVERSIONS.stream().anyMatch(key -> {
-            final Object given = entry.get(key);
-            return given != null && !(given instanceof final String text && text.isBlank())
-                   && !(given instanceof final Map<?, ?> map && map.isEmpty());
-        });
+    /// @return True if the element doesn't keep the value whole.
+    public static boolean keepsOriginal(final Map<String, ?> entry) {
+        final Object given = entry.get(TRANSFORM);
+        final boolean transforms = given != null && !(given instanceof final String text && text.isBlank())
+                                   && !(given instanceof final Map<?, ?> map && map.isEmpty());
+        if (transforms) {
+            return true;
+        }
+        if (!(entry.get(MAP) instanceof final Map<?, ?> map) || map.isEmpty()) {
+            return false;
+        }
+        return entry.get(DEFAULT) != null || new HashSet<>(map.values()).size() < map.size();
     }
 
-    /// As [#convertsValue(Map)], for an entry read.
+    /// As [#keepsOriginal(Map)], for an entry read.
     ///
     /// @param entry A translation mapping's fields entry.
-    /// @return True if it converts the value.
-    public static boolean convertsValue(final FieldMapping entry) {
-        return entry.transform() != null || entry.hasMap() || nonEmpty(entry.timeFormat()) || entry.lookup() != null
-               || nonEmpty(entry.dictionary()) || entry.defaultValue() != null;
-    }
-
-    private static boolean nonEmpty(final String text) {
-        return text != null && !text.isEmpty();
+    /// @return True if the element doesn't keep the value whole.
+    public static boolean keepsOriginal(final FieldMapping entry) {
+        if (entry.transform() != null) {
+            return true;
+        }
+        return entry.hasMap() && (entry.defaultValue() != null
+                                  || new HashSet<>(entry.map().values()).size() < entry.map().size());
     }
 
     /// @param jsonFields The mapping's json_fields.

@@ -954,9 +954,17 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     private Map<String, Object> proposed(final Calling calling, final List<Map<?, ?>> proposals) {
         final CatalogueReading.Records read = read(calling);
         final CatalogueProposals.Applied proposed = CatalogueProposals.apply(calling.catalogue(), proposals);
-        final CatalogueProposals.Applied applied = new CatalogueProposals.Applied(withLeaves(proposed.catalogue(),
+        final CatalogueProposals.Applied reopened = new CatalogueProposals.Applied(withLeaves(proposed.catalogue(),
                 notes.schemaOrNull(calling.context(), calling.build())), proposed.refused());
-        final CatalogueCheckResult check = check(calling, applied.catalogue(), read);
+        final CatalogueCheckResult check = check(calling, reopened.catalogue(), read);
+        // The catch-all the user confirmed stays confirmed where the change leaves no shape uncatalogued that it
+        // wasn't confirmed for (decided by the user 2026-11-27: seen in eval case 112, the form asked at 300, 119 and
+        // 28 records as event types were added); one new uncatalogued shape puts it to them again.
+        final Catalogue.CatchAll was = calling.catalogue().catchAll();
+        final CatalogueProposals.Applied applied = was.confirmed() && !reopened.catalogue().catchAll().confirmed()
+                                                   && was.covers(signatures(check))
+                ? new CatalogueProposals.Applied(reopened.catalogue().withCatchAll(was), reopened.refused())
+                : reopened;
         // Problems the proposals bring are refused, not those the catalogue had already.
         final Set<String> before = new LinkedHashSet<>();
         if (!calling.catalogue().eventTypes().isEmpty()) {
@@ -1208,6 +1216,20 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
     }
 
 
+    // The catch-all confirmed for the shapes uncatalogued now, kept so a later change that leaves only some of them
+    // uncatalogued doesn't ask again.
+    private static Catalogue caught(final Catalogue confirmed, final CatalogueCheckResult check) {
+        return confirmed.withCatchAll(confirmed.catchAll().caughtFor(signatures(check)));
+    }
+
+    // The records the check found uncatalogued, by their shape's signature, every shape.
+    private static Map<String, Integer> signatures(final CatalogueCheckResult check) {
+        final Map<String, Integer> out = new LinkedHashMap<>();
+        check.uncatalogued().shapes().forEach(shape -> out.merge(shape.signature(), shape.records(), Integer::sum));
+        return out;
+    }
+
+
     // --------------------------------------------------------------------------------
     // Confirmation
 
@@ -1221,7 +1243,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             throw new ToolRefusal(notConfirmable(check));
         }
         if (catchAllSettles(catalogue, check)) {
-            final Catalogue settled = catalogue.withCatchAllConfirmedByUser();
+            final Catalogue settled = caught(catalogue.withCatchAllConfirmedByUser(), check);
             notes.recordCatalogue(calling.context(), calling.build(), calling.source(), settled,
                     withoutMarks(confirming));
             return done(calling, settled, check, List.of(), true);
@@ -1284,9 +1306,9 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                 throw e;
             }
             // Left untranslated as the existing pipeline leaves them: no reason for Unknown kept.
-            now = untranslatedBy == null
+            now = caught(untranslatedBy == null
                     ? catalogue.withCatchAllConfirmedByUser(catchAllForms.catchAllReason(calling))
-                    : catalogue.withCatchAllConfirmedByUser();
+                    : catalogue.withCatchAllConfirmedByUser(), check);
         } else {
             // A drop rule is no event type: counted apart (seen in testing: "How is Drop-PEGAOperational an event
             // type, sounds like a rule").
@@ -1338,7 +1360,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
                                                 final List<String> confirmedNow,
                                                 final Map<String, Object> confirming) {
         if (catchAllSettles(now, check)) {
-            final Catalogue settled = now.withCatchAllConfirmedByUser();
+            final Catalogue settled = caught(now.withCatchAllConfirmedByUser(), check);
             notes.recordCatalogue(calling.context(), calling.build(), calling.source(), settled, confirming);
             return done(calling, settled, check, confirmedNow, true);
         }
@@ -1499,7 +1521,7 @@ class CatalogueEventTypesTool extends AbstractBuiltInTool {
             return result;
         }
         final Catalogue now = set.isEmpty()
-                ? catalogue.withCatchAllConfirmedByUser(catchAllForms.catchAllReason(calling))
+                ? caught(catalogue.withCatchAllConfirmedByUser(catchAllForms.catchAllReason(calling)), check)
                 : catalogue.confirmedByUser(typeIds(set));
         return afterConfirming(calling, now, check, set.isEmpty()
                 ? List.of()

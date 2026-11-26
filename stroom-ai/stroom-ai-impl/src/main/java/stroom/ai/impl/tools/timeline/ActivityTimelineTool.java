@@ -718,7 +718,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final Options options = new Options(capMs, period.toMs(), now, zone.zone(), names, withOpen);
         // Noise found in code before anything else is worked out, proposed to the user, and the exclusions they
         // agreed to (now or on an earlier run) applied in both views, before any span or model call.
-        final TimelineNoise.Outcome noise = noise(request, context, workspace, classification, names, capMs);
+        final TimelineNoise.Outcome noise = noise(request, context, workspace, classification, names, capMs,
+                writtenExclusions(context, sources, skill));
         final List<Event> kept = noise.applied().kept();
         final Timeline timeline = TimelineSessions.build(kept, options);
         final Map<String, Event> byId = new LinkedHashMap<>();
@@ -2275,32 +2276,64 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     // ------------------------------------------------------------------------------------------------
     // Noise
 
-    // The noisy patterns found, proposed in a chat's form (all ticked, so one click leaves them all out) and decided
-    // there, kept with the user's exclusions; over MCP, or with no form, only listed. The exclusions agreed to, now
-    // or before, applied.
+    // The exclusions written in the AGENTS docs where each source's index is, and in the skill in use (for any
+    // source), applied with no form (decided by the user 2026-11-27).
+    private List<TimelineNoise.Exclusion> writtenExclusions(final ToolCallContext context,
+                                                            final List<Source> sources,
+                                                            final SkillInUse skill) {
+        final List<TimelineNoise.Exclusion> out = new ArrayList<>();
+        for (final Source source : sources) {
+            for (final InstructionRules.ExclusionRule rule : NullSafe.list(agentInstructions.exclusionsRuled(
+                    context.session(), source.doc()))) {
+                out.add(TimelineNoise.Exclusion.written(source.name(), rule.type(), rule.object(), "the AGENTS doc "
+                                                                                                   + "in "
+                                                                                                   + rule.from()));
+            }
+        }
+        if (skill != null && skill.listed() != null) {
+            final String section = skill.listed().skill().sections().get(
+                    InstructionRules.EXCLUSIONS_SECTION.toLowerCase(Locale.ROOT));
+            for (final InstructionRules.ExclusionRule rule : InstructionRules.exclusionsIn(section)) {
+                out.add(TimelineNoise.Exclusion.written(null, rule.type(), rule.object(), "the skill '"
+                                                                                          + skill.name() + "'"));
+            }
+        }
+        return out;
+    }
+
+    // The exclusions written in an AGENTS doc or the skill applied first, with no form; then the noisy patterns
+    // found in what is left, proposed in a chat's form (all ticked, so one click leaves them all out) and decided
+    // there, kept for the chat (decided by the user 2026-11-27: another chat is asked afresh); over MCP, or with no
+    // form, only listed. The exclusions agreed to, now or before in the chat, applied.
     private static TimelineNoise.Outcome noise(final ToolCall request,
                                                final ToolCallContext context,
                                                final SessionWorkspace workspace,
                                                final TimelineClassification.Result classification,
                                                final List<String> names,
-                                               final long capMs) {
-        final SessionWorkspace keptIn = context.userWorkspace().orElse(workspace);
-        final List<TimelineNoise.Exclusion> decided = new ArrayList<>(TimelineNoise.kept(keptIn));
-        List<TimelineNoise.Noise> proposed = TimelineNoise.find(classification.events(), classification.byId(),
+                                               final long capMs,
+                                               final List<TimelineNoise.Exclusion> written) {
+        final TimelineNoise.Applied byWritten = TimelineNoise.apply(classification.events(),
+                classification.byId(), names, written);
+        final List<TimelineNoise.Exclusion> decided = new ArrayList<>(TimelineNoise.kept(workspace));
+        List<TimelineNoise.Noise> proposed = TimelineNoise.find(byWritten.kept(), classification.byId(),
                 names, decided, capMs);
         boolean declined = false;
         if (!proposed.isEmpty() && context.session().isChat() && context.userQuestions().canAsk()) {
             final List<String> picked = askNoise(request, context, proposed);
             if (picked != null) {
                 proposed.forEach(found -> decided.add(found.decided(picked.contains(found.id()))));
-                TimelineNoise.keep(keptIn, decided);
+                TimelineNoise.keep(workspace, decided);
                 proposed = List.of();
             } else {
                 declined = true;
             }
         }
-        return new TimelineNoise.Outcome(proposed, TimelineNoise.apply(classification.events(),
-                classification.byId(), names, decided), TimelineNoise.FILE, declined);
+        final TimelineNoise.Applied byChoice = TimelineNoise.apply(byWritten.kept(), classification.byId(), names,
+                decided);
+        final Map<TimelineNoise.Exclusion, Integer> left = new LinkedHashMap<>(byWritten.left());
+        left.putAll(byChoice.left());
+        return new TimelineNoise.Outcome(proposed, new TimelineNoise.Applied(byChoice.kept(), left),
+                TimelineNoise.FILE, declined);
     }
 
     // The noise the user picks to leave out, by id; null if they couldn't be asked or didn't answer.

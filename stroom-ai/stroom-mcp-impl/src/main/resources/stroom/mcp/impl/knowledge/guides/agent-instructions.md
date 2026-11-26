@@ -74,12 +74,14 @@ type its TypeId or element and Action, e.g. `Process/Execute`; the role `focus`,
 `action` or `ignore`). `activity_timeline` reads them after the call's, a skill's and the translation's catalogue,
 before the schema's table, and offers the lines for the types it had to classify itself. A `## Sources` section's
 `- timeline: <index>, <index>` line, in an AGENTS doc at the top of the tree, names the indexes an
-`activity_timeline` call with no sources reads where no form can ask.
+`activity_timeline` call with no sources reads where no form can ask. An `## Exclusions` section's
+`- web.get: https://telemetry.example.net/*` lines (an event type and an object, exact or a prefix ending `*`; the same
+section in a skill applies to every source it reads) are left out of that index's timelines with no form, and said.
 
 ## What the tools read exactly
 
 The tools apply these sections themselves: `## Fields`, `## Required imports`, `## Component templates`,
-`## Documentation`, `## Event types` and `## Sources`, each a heading of its own (any level) and its `- key: value` bullets, up to the next heading;
+`## Documentation`, `## Event types`, `## Sources` and `## Exclusions`, each a heading of its own (any level) and its `- key: value` bullets, up to the next heading;
 and `## Ignore`, the folders searches leave out. Only the first section of each name is read. A bullet whose key the tools don't know, a field no index
 there has, or a field line under another heading (e.g. `## Notes`) is left out without a word. Everything else in a
 doc, including prose in those sections, guides the agent only, and no format is asked of it.

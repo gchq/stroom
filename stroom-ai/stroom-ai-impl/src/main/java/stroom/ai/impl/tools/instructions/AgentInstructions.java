@@ -282,6 +282,19 @@ public class AgentInstructions {
         }
     }
 
+    /// @param session    The session, e.g. the chat.
+    /// @param dataSource An index.
+    /// @return What the AGENTS docs that apply where it is leave out of its activity timelines (see
+    /// [InstructionRules#exclusions]); empty if none do, or they can't be read.
+    public List<InstructionRules.ExclusionRule> exclusionsRuled(final ToolSession session, final DocRef dataSource) {
+        try {
+            return InstructionRules.exclusions(applyingWhere(session, dataSource, "the timeline's exclusions"));
+        } catch (final RuntimeException e) {
+            LOGGER.debug("Unable to read the timeline's exclusions for {}", dataSource, e);
+            return List.of();
+        }
+    }
+
     /// @param session The session, e.g. the chat.
     /// @param key     The tool's `## Sources` key, e.g. [InstructionRules#TIMELINE_SOURCES].
     /// @return The default sources the AGENTS docs at the top of the tree name for it (see

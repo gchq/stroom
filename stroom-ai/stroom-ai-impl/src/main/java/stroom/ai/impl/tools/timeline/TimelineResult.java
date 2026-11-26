@@ -1046,7 +1046,8 @@ final class TimelineResult {
         if (noise.applied().leftOut() > 0) {
             final List<String> left = new ArrayList<>();
             noise.applied().left().forEach((exclusion, count) -> left.add(exclusion.said() + " " + count));
-            sb.append("\nLeft out as noise, as the user chose (kept in ").append(noise.file()).append("): ")
+            sb.append("\nLeft out as noise (the user's choices kept for this chat in ").append(noise.file())
+                    .append("; an ## Exclusions line names its AGENTS doc or skill): ")
                     .append(noise.applied().leftOut()).append(" event(s): ").append(String.join("; ", left))
                     .append(".\n");
         }

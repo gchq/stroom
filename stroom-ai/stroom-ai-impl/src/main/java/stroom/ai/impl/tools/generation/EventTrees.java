@@ -595,7 +595,7 @@ final class EventTrees {
         for (int i = 0; i < entries.size(); i++) {
             final FieldMapping entry = entries.get(i);
             final String read = plainRead(entry);
-            if (!isSet(entry.dataName()) && read != null && !MappingFacts.convertsValue(entry)
+            if (!isSet(entry.dataName()) && read != null && !MappingFacts.keepsOriginal(entry)
                 && !"EventDetail/TypeId".equals(entry.strippedPath())) {
                 elements.putIfAbsent(read, entry.strippedPath() + (isSet(entry.field())
                         ? ""
@@ -609,7 +609,7 @@ final class EventTrees {
             final FieldMapping entry = entries.get(i);
             final boolean commonData = i < common.size();
             final String read = plainRead(entry);
-            if (isSet(entry.dataName()) && read != null && !MappingFacts.convertsValue(entry)
+            if (isSet(entry.dataName()) && read != null && !MappingFacts.keepsOriginal(entry)
                 && elements.containsKey(read) && (!commonData || byRule.contains(read))) {
                 note(warnings, "[" + rule.name() + "] '" + read + "' is written as "
                                + elements.get(read) + " and as Data '" + entry.dataKey() + "' ("

@@ -377,7 +377,8 @@ class TestActivityTimelineAnySource {
                 .findFirst().orElseThrow();
         assertThat((List<String>) ((Map<String, Object>) ((Map<String, Object>) noiseForm.get("properties"))
                 .get(ActivityTimelineTool.EXCLUDE)).get("default")).containsExactly("noise-1");
-        assertThat(text).contains("Left out as noise, as the user chose (kept in " + TimelineNoise.FILE + "): 240 "
+        assertThat(text).contains("Left out as noise (the user's choices kept for this chat in " + TimelineNoise.FILE
+                                  + "; an ## Exclusions line names its AGENTS doc or skill): 240 "
                                   + "event(s): Events: View at https://telemetry.example.net/ping 240.");
         assertThat(items(asked)).isLessThan(itemsBefore);
         assertThat(files.content(FOLDER + ActivityTimelineTool.EVENTS_FILE).orElseThrow())
@@ -389,6 +390,59 @@ class TestActivityTimelineAnySource {
         assertThat((Map<String, Object>) again.get("excluded")).containsEntry("events", 240L);
         assertThat(again).doesNotContainKey("noise_proposed");
         assertThat(questions.forms).hasSize(forms);
+    }
+
+    @Test
+    void anAgentsDocsExclusionsAreLeftOutWithNoFormSayingWhereAndAreNeverProposed() {
+        week();
+        for (int i = 0; i < 240; i++) {
+            web(at("12:00") + i * 30_000L, "pat", "https://telemetry.example.net/ping?n=" + (i % 3));
+        }
+        web(at("13:00"), "pat", "https://supplier.example.com/catalogue");
+        Mockito.when(agentInstructions.exclusionsRuled(Mockito.any(), Mockito.eq(EVENTS))).thenReturn(List.of(
+                new InstructionRules.ExclusionRule("view", "https://telemetry.example.net/*", "/Indexes")));
+        final Questions questions = new Questions(Map.of(ActivityTimelineTool.BEYOND_FORM,
+                ActivityTimelineTool.CLASSIFY));
+
+        final String text = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
+                arguments(Map.of("view", "activities")), false)), chat(questions, model(new ArrayList<>(), "[]")))
+                .text();
+
+        // Applied first, with no noise form, said with the doc it is written in; the person's own visit kept.
+        assertThat(questions.forms).noneMatch(form -> ((Map<String, Object>) form.get("properties"))
+                .containsKey(ActivityTimelineTool.EXCLUDE));
+        assertThat(text).contains("Events: view at https://telemetry.example.net/* (the AGENTS doc in /Indexes) 240")
+                .doesNotContain("Looks like noise");
+        final String eventsCsv = files.content(FOLDER + ActivityTimelineTool.EVENTS_FILE).orElseThrow();
+        assertThat(eventsCsv).doesNotContain("telemetry.example.net").contains("supplier.example.com");
+    }
+
+    @Test
+    void aSkillsExclusionsApplyToEverySource() {
+        week();
+        for (int i = 0; i < 240; i++) {
+            web(at("12:00") + i * 30_000L, "pat", "https://telemetry.example.net/ping");
+        }
+        skill("""
+                # User activity timeline
+
+                Builds a timeline.
+
+                ## Exclusions
+
+                - View: https://telemetry.example.net/ping
+
+                ## Steps
+
+                1. Build it.
+                """);
+
+        final Map<String, Object> result = json(mcp(), arguments(Map.of("skill", "User activity timeline")));
+
+        assertThat((Map<String, Object>) result.get("excluded")).containsEntry("events", 240L);
+        assertThat(result).doesNotContainKey("noise_proposed");
+        assertThat(String.valueOf(((Map<String, Object>) result.get("excluded")).get("patterns")))
+                .contains("View at https://telemetry.example.net/ping (the skill 'User activity timeline')");
     }
 
     @Test

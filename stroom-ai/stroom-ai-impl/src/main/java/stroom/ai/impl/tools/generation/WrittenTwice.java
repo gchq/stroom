@@ -161,7 +161,7 @@ final class WrittenTwice {
     private static boolean elementAndData(final Placed first, final Placed second) {
         final FieldMapping e = first.entry();
         return first.topLevel() && second.topLevel() && first.data() != second.data() && e.field() != null
-               && !e.field().isEmpty() && !MappingFacts.convertsValue(e);
+               && !e.field().isEmpty() && !MappingFacts.keepsOriginal(e);
     }
 
     private static String message(final EventRule rule,

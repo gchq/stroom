@@ -92,6 +92,7 @@
   "ok": true,
   "problems": [],
   "warnings": [
+   "[web request] 'action' is written as EventDetail/Network/Open/Outcome/Permitted and as Data 'action' (EventDetail/Network/Open/Data): the element holds it, so the Data entry says it again. Remove the Data entry, unless it is kept on purpose (the same Data across event types that don't all have the element).",
    "[web request] required ['EventTime', 'EventSource/Generator', 'EventSource/Device', 'EventDetail/Network/Open/Source'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [

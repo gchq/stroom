@@ -605,7 +605,9 @@ class TestCatalogueEventTypesTool {
         assertThat(kept.eventType("Delete-Records").basis()).isEqualTo("user_confirmed");
         assertThat(kept.eventType("Export-Report").basis()).isEqualTo("agent_knowledge");
         assertThat(kept.catchAll()).isEqualTo(new Catalogue.CatchAll("confirmed",
-                "The user keeps the rest as Unknown", null));
+                "The user keeps the rest as Unknown", null).caughtFor(kept.catchAll().caught()));
+        // Kept with the records it was confirmed for, by shape.
+        assertThat(kept.catchAll().caught()).isNotEmpty();
     }
 
     @Test
@@ -959,6 +961,34 @@ class TestCatalogueEventTypesTool {
     }
 
     @Test
+    void aConfirmedCatchAllStaysConfirmedWhenAChangeLeavesFewerUncataloguedAndIsAskedAgainForANewShape() {
+        // Seen in eval case 112 (2026-11-27): the catch-all's form asked at 300, 119 and 28 records as event types
+        // were added; asked again only where a record it wasn't confirmed for becomes uncatalogued.
+        propose(List.of(type("Authenticate-Logon", "Authenticate", "high", "login"),
+                type("Authenticate-Logoff", "Authenticate", "high", "logout")));
+        final BuildToolCalls.FormUser user = user(McpAnswers.ACCEPT);
+        call(Map.of("build", BUILD, "confirm", true), user.context());
+        call(Map.of("build", BUILD, "confirm", true), user.context());
+        assertThat(call(Map.of("build", BUILD, "confirm", true), user.context())).containsEntry("status",
+                "confirmed");
+        assertThat(SourceNotes.catalogue(notes()).catchAll().caught()).isNotEmpty();
+        final int asked = user.shown().size();
+
+        // The export record catalogued: fewer uncatalogued, the catch-all kept, only the new type put to the user.
+        propose(List.of(type("Export-Report", "Export", "high", "export")));
+        assertThat(SourceNotes.catalogue(notes()).catchAll().confirmed()).isTrue();
+        call(Map.of("build", BUILD, "confirm", true), user.context());
+        assertThat(call(Map.of("build", BUILD, "confirm", true), user.context())).containsEntry("status",
+                "confirmed");
+        assertThat(user.shown()).hasSize(asked + 1);
+        assertThat(user.shown().getLast()).doesNotContain("uncatalogued records");
+
+        // The logon type removed: more records uncatalogued than the catch-all was confirmed for.
+        propose(List.of(Map.of("op", "remove", "type_id", "Authenticate-Logon")));
+        assertThat(SourceNotes.catalogue(notes()).catchAll().confirmed()).isFalse();
+    }
+
+    @Test
     void aDeclinedCatchAllTellsTheAgentToAskTheUserAndTheirAnswerIsPutToThemInItsForm() {
         propose(List.of(type("Authenticate-Logon", "Authenticate", "high", "login")));
         final BuildToolCalls.FormUser accepting = user(McpAnswers.ACCEPT);
@@ -984,8 +1014,10 @@ class TestCatalogueEventTypesTool {
 
         assertThat(done).containsEntry("status", "confirmed");
         assertThat(accepting.shown().getLast()).contains("Process-Records events (Process)");
-        assertThat(SourceNotes.catalogue(notes()).catchAll()).isEqualTo(new Catalogue.CatchAll("confirmed", null,
-                new Catalogue.CatchAll.Translation("Process-Records", "Process", null, "Other records processed")));
+        final Catalogue.CatchAll kept = SourceNotes.catalogue(notes()).catchAll();
+        assertThat(kept).isEqualTo(new Catalogue.CatchAll("confirmed", null,
+                new Catalogue.CatchAll.Translation("Process-Records", "Process", null, "Other records processed"))
+                .caughtFor(kept.caught()));
     }
 
     // Seen in testing: a drop proposed as an event type ('Drop-PEGAOperational', "sounds like a rule"), and the

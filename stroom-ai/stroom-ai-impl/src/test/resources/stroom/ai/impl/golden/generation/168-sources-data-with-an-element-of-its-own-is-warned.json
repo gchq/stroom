@@ -104,8 +104,11 @@
   "problems": [],
   "warnings": [
    "[vip] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[vip] 'user' is written as EventSource/User/Name and as Data 'u' (EventDetail/Unknown/Data): the element holds it, so the Data entry says it again. Remove the Data entry, unless it is kept on purpose (the same Data across event types that don't all have the element).",
    "[vip] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[other] EventTime/TimeCreated: TimeCreated is a date-time; give time_format (from profile_sample) unless the input is already yyyy-MM-ddTHH:mm:ss.SSSZ",
+   "[other] 'user' is written as EventSource/User/Name and as Data 'u' (EventDetail/Unknown/Data): the element holds it, so the Data entry says it again. Remove the Data entry, unless it is kept on purpose (the same Data across event types that don't all have the element).",
+   "[other] 'user' is written as EventSource/User/Name and as Data 'source_ip' (EventDetail/Unknown/Data): the element holds it, so the Data entry says it again. Remove the Data entry, unless it is kept on purpose (the same Data across event types that don't all have the element).",
    "[other] the same input is written twice: 'user' as EventDetail/Unknown/Data[@Name='u'] and as EventDetail/Unknown/Data[@Name='source_ip'], so each event holds it twice. Remove one, e.g. changes={\"events\": [{\"name\": \"other\", \"fields\": [{\"path\": \"EventDetail/Unknown/Data\", \"data_name\": \"source_ip\", \"remove\": true}]}]}",
    "[other] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them.",
    "[other] Data 'source_ip' looks like EventSource/Client/IPAddress, which the schema has: map it there (Data is for what has no element of its own), or keep it as Data if it means something else.",

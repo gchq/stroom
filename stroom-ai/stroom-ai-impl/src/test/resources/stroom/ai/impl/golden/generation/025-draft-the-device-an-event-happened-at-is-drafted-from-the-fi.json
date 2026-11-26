@@ -62,6 +62,7 @@
   "ok": true,
   "problems": [],
   "warnings": [
+   "[other] 'time' is written as EventTime/TimeCreated and as Data 'time' (EventDetail/Unknown/Data): the element holds it, so the Data entry says it again. Remove the Data entry, unless it is kept on purpose (the same Data across event types that don't all have the element).",
    "[other] required ['EventTime', 'EventSource/Device'] are left out when their input fields are empty, which makes the event invalid. Fine if those fields are always filled; otherwise give the mapping a default. Given the sample, the sample check counts the records that leave each empty: no need to count them."
   ],
   "events": [

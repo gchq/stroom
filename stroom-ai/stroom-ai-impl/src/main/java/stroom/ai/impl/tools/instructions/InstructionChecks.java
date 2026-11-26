@@ -257,6 +257,10 @@ public final class InstructionChecks {
                 eventTypeLine(i, line, findings);
                 continue;
             }
+            if (InstructionRules.EXCLUSIONS_SECTION.equals(name)) {
+                exclusionLine(line, findings);
+                continue;
+            }
             final Matcher bullet = InstructionRules.BULLET.matcher(line);
             if (!bullet.matches()) {
                 continue;
@@ -291,6 +295,18 @@ public final class InstructionChecks {
     }
 
     // An '## Event types' line: its key is the source's own type, so only its role is checked.
+    // An `## Exclusions` line: an event type and the object left out, exact or a prefix ending `*`.
+    private static void exclusionLine(final String line, final List<Finding> findings) {
+        if (line.isBlank() || !InstructionRules.exclusionsIn(line).isEmpty()) {
+            return;
+        }
+        findings.add(Finding.problem("unknown_exclusion", "'## " + InstructionRules.EXCLUSIONS_SECTION + "' line '"
+                                                          + line.strip() + "' isn't '- <event type>: <object>', so "
+                                                          + "the timeline leaves it out.",
+                "write the event type and the object (a prefix ending *); a whole type is an '## "
+                + InstructionRules.EVENT_TYPES_SECTION + "' line's ignore.", List.of(), List.of()));
+    }
+
     private static void eventTypeLine(final int index, final String line, final List<Finding> findings) {
         final Matcher bullet = InstructionRules.BULLET.matcher(line);
         if (!bullet.matches()) {
@@ -740,6 +756,9 @@ public final class InstructionChecks {
         }
         if (InstructionRules.EVENT_TYPES_SECTION.equals(section)) {
             return InstructionRules.BULLET.matcher(line).matches();
+        }
+        if (InstructionRules.EXCLUSIONS_SECTION.equals(section)) {
+            return !InstructionRules.exclusionsIn(line).isEmpty();
         }
         final Matcher bullet = InstructionRules.BULLET.matcher(line);
         return bullet.matches() && InstructionRules.keysOf(section)

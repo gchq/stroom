@@ -42,7 +42,8 @@ import java.util.Objects;
 /// its form. An event type proposed or changed is the agent's until
 /// the user confirms it in a form: its status is `proposed` whatever the proposal says. The event types are kept in
 /// the catalogue's order, more specific first ([CatalogueOrder]); a catalogue whose event types change has its
-/// catch-all put to the user again, as what it takes has changed.
+/// catch-all put to the user again, as what it takes has changed, unless the check finds no record shape uncatalogued
+/// it wasn't confirmed for (kept confirmed by catalogue_event_types: decided by the user 2026-11-27).
 final class CatalogueProposals {
 
     /// A proposal's operation.

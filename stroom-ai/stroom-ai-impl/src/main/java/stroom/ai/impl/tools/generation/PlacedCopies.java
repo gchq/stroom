@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /// A field written as it is to an element of the event (`EventSource/Device/HostName` from `host`) that a rule also
 /// carries as Data, named after it: the Data a copy of what the element holds. The draft carries each field it
@@ -33,12 +35,12 @@ import java.util.Set;
 /// takes the field's Data copies with it: those of the rules it reaches (a common entry reaches every rule that
 /// doesn't write the element from another field, a rule's entry its own rule), and the common ones for a common
 /// entry.
-/// Only plain entries count, the field read as it is: a placement that changes the value (a format, a map, a
-/// default, a transform: [MappingFacts#convertsValue(Map)], as the catalogue's placements decide it) leaves the
-/// original worth keeping, and a Data entry given in the same changes is kept on purpose. An xpath giving one field
-/// as it is ([XPathFieldReads#plainField(String)], a key of the JSON a field holds) places that field. A copy is a
-/// Data entry reading the same field, whatever its Data is named (the data_names styling, or a vendor code's short
-/// name).
+/// Only plain entries count: the field read as it is, or given in the element's terms (a time format, a lookup, a
+/// dictionary, a default or a one-to-one map); a transform or a lossy map ([MappingFacts#keepsOriginal(Map)], as the
+/// catalogue's placements decide it) leaves the original worth keeping, and a Data entry given in the same changes is
+/// kept on purpose. An xpath giving one field as it is ([XPathFieldReads#plainField(String)], a key of the JSON a field
+/// holds) places that field. A copy is a Data entry reading the same field, whatever its Data is named (the data_names
+/// styling, or a vendor code's short name).
 final class PlacedCopies {
 
     private static final String COMMON = "common";
@@ -51,8 +53,14 @@ final class PlacedCopies {
     private static final String DATA_NAME = "data_name";
     private static final String TYPE_ID = "EventDetail/TypeId";
     private static final String XPATH = "xpath";
-    private static final Set<String> PLACEMENT_KEYS = Set.of(PATH, FIELD);
-    private static final Set<String> XPATH_PLACEMENT_KEYS = Set.of(PATH, XPATH);
+    // The conversions that may give the field in the element's terms: they take its Data copy's place as a plain
+    // read does, unless the value is lost on the way (a lossy map, [MappingFacts#keepsOriginal(Map)]; decided by the
+    // user 2026-11-27).
+    private static final Set<String> CONVERSIONS = Set.of("map", "time_format", "lookup", "dictionary", "default");
+    private static final Set<String> PLACEMENT_KEYS = Stream.concat(Stream.of(PATH, FIELD), CONVERSIONS.stream())
+            .collect(Collectors.toUnmodifiableSet());
+    private static final Set<String> XPATH_PLACEMENT_KEYS = Stream.concat(Stream.of(PATH, XPATH),
+            CONVERSIONS.stream()).collect(Collectors.toUnmodifiableSet());
     private static final Set<String> COPY_KEYS = Set.of(PATH, FIELD, DATA_NAME, "data_parent");
 
     private PlacedCopies() {
@@ -172,7 +180,7 @@ final class PlacedCopies {
     private static boolean plainPlacement(final Map<String, Object> entry, final Set<String> keys) {
         final String path = stripped(entry);
         return !JsonValues.truthy(entry.get(DATA_NAME)) && !path.isEmpty() && !path.endsWith("/Data")
-               && !TYPE_ID.equals(path) && !MappingFacts.convertsValue(entry) && keys.containsAll(entry.keySet());
+               && !TYPE_ID.equals(path) && !MappingFacts.keepsOriginal(entry) && keys.containsAll(entry.keySet());
     }
 
     // A Data entry reading the field as it is, whatever its Data is named (the draft's data_names styling, or a
