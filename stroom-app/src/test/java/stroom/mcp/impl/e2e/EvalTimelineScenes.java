@@ -45,13 +45,17 @@ import java.util.Map;
 /// * `message_command_runs` (case 115, dmorgan, 19 November 2026): a chat thread (`chat.message`, its text in
 ///   `Text`, its thread in `Thread`) whose first six messages are about the weekend on-call rota and the next six
 ///   about renewing the VPN certificate, with no gap between the topics; and a PowerShell session's commands
-///   (`process.start`, each command line in `Text`, its session in `Thread`) that list directory users, export them
-///   to a CSV, zip it and copy the zip to a share.
+///   (`process.start`, each command line in `Command`, no `Text`, its session in `Thread`) that list directory
+///   users, export them to a CSV, zip it and copy the zip to a share.
 /// * `background_noise` (case 116, sward, 17 November 2026): a telemetry beacon every 30 seconds through the
 ///   working day to one URL with no page (`web.get`, the same `Object` each time), and a scheduled script run every
 ///   5 minutes by a scheduler on the person's workstation (`process.start`, the same `Object` and `Command`, its
 ///   `AccountType` `service`); beside them the person's real activity: research on a supplier's site, and edits of a
 ///   tender document.
+/// * `empty_sources_web` (case 117, rpatel, 20 November 2026): web requests to a supplier's site in the morning
+///   and edits of a purchase order in the afternoon (`web.get`, `doc.edit`, `Object` the URL or document), beside
+///   another person's; and `empty_sources_badges`, the same day's badge events (`badge.enter`, `badge.leave`) of
+///   other people only, so their index holds documents in the period but none of rpatel's.
 final class EvalTimelineScenes {
 
     /// The scene of case 113.
@@ -62,6 +66,10 @@ final class EvalTimelineScenes {
     static final String MESSAGE_COMMAND_RUNS = "message_command_runs";
     /// The scene of case 116.
     static final String BACKGROUND_NOISE = "background_noise";
+    /// The scene of case 117's index holding the person's events.
+    static final String EMPTY_SOURCES_WEB = "empty_sources_web";
+    /// The scene of case 117's index holding other people's events only.
+    static final String EMPTY_SOURCES_BADGES = "empty_sources_badges";
 
     private static final DateTimeFormatter ISO_MILLIS = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
             .withZone(ZoneOffset.UTC);
@@ -90,8 +98,8 @@ final class EvalTimelineScenes {
 
     /// Makes a scene's records.
     ///
-    /// @param scene  The scene: [#PHYSICAL_ACCESS], [#PROPERTY_SITES], [#MESSAGE_COMMAND_RUNS] or
-    ///               [#BACKGROUND_NOISE].
+    /// @param scene  The scene: [#PHYSICAL_ACCESS], [#PROPERTY_SITES], [#MESSAGE_COMMAND_RUNS],
+    ///               [#BACKGROUND_NOISE], [#EMPTY_SOURCES_WEB] or [#EMPTY_SOURCES_BADGES].
     /// @param random The seeded random numbers.
     /// @return The records, each its values by column, in time order.
     static List<Map<String, String>> generate(final String scene, final SeededRandom random) {
@@ -100,6 +108,8 @@ final class EvalTimelineScenes {
             case PROPERTY_SITES -> propertySites(random);
             case MESSAGE_COMMAND_RUNS -> messageCommandRuns(random);
             case BACKGROUND_NOISE -> backgroundNoise(random);
+            case EMPTY_SOURCES_WEB -> emptySourcesWeb(random);
+            case EMPTY_SOURCES_BADGES -> emptySourcesBadges(random);
             default -> throw new IllegalArgumentException("No timeline scene " + scene);
         };
         records.sort(Comparator.comparing((Map<String, String> record) -> record.get("EventTime"))
@@ -309,7 +319,7 @@ final class EvalTimelineScenes {
             record.put("EventCode", "process.start");
             record.put("Thread", "pwsh:5120");
             record.put("Process", "powershell.exe");
-            record.put("Text", command);
+            record.put("Command", command);
             out.add(record);
             time += random.randint(60, 180) * 1_000L;
         }
@@ -362,6 +372,53 @@ final class EvalTimelineScenes {
         for (int i = 0; i < 8; i++) {
             doc(out, user, host, time, "\\\\fs01\\bids\\Tender response 2027.docx");
             time += random.randint(5, 9) * 60_000L;
+        }
+        return out;
+    }
+
+    // ------------------------------------------------------------------------------------------------
+    // Case 117
+
+    private static List<Map<String, String>> emptySourcesWeb(final SeededRandom random) {
+        final List<Map<String, String>> out = new ArrayList<>();
+        final String user = "rpatel";
+        final String host = "ws-rpatel-01";
+        long time = at("2026-11-20", 9, random.randint(0, 5));
+        for (int i = 0; i < 8; i++) {
+            final Map<String, String> record = record(time, "proxy", user, host);
+            record.put("EventCode", "web.get");
+            record.put("Object", "https://www.supplier.example.com/catalogue/" + random.randint(100, 999));
+            out.add(record);
+            time += random.randint(60, 150) * 1_000L;
+        }
+        time = at("2026-11-20", 13, random.randint(0, 5));
+        for (int i = 0; i < 6; i++) {
+            doc(out, user, host, time, "\\\\fs01\\purchasing\\PO-2291 office chairs.xlsx");
+            time += random.randint(5, 9) * 60_000L;
+        }
+        // Another person's browsing.
+        for (int i = 0; i < 3; i++) {
+            final Map<String, String> record = record(at("2026-11-20", 10, 4 * i), "proxy", "jlee", "ws-jlee-01");
+            record.put("EventCode", "web.get");
+            record.put("Object", "https://news.example.org/story/" + random.randint(100, 999));
+            out.add(record);
+        }
+        return out;
+    }
+
+    private static List<Map<String, String>> emptySourcesBadges(final SeededRandom random) {
+        final List<Map<String, String>> out = new ArrayList<>();
+        for (final String user : List.of("jlee", "tnguyen")) {
+            final Map<String, String> enter = record(at("2026-11-20", 8, random.randint(0, 20)), "badge", user, "");
+            enter.remove("Host");
+            enter.put("EventCode", "badge.enter");
+            enter.put("Site", HQ);
+            out.add(enter);
+            final Map<String, String> leave = record(at("2026-11-20", 17, random.randint(0, 20)), "badge", user, "");
+            leave.remove("Host");
+            leave.put("EventCode", "badge.leave");
+            leave.put("Site", HQ);
+            out.add(leave);
         }
         return out;
     }

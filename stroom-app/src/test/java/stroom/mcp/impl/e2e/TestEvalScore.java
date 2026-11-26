@@ -2260,6 +2260,20 @@ class TestEvalScore {
                 "events.csv", events)));
         assertThat(shortAnswer.summary()).contains("a table call returned 2 event(s), 1 of t1's missing and 0 not "
                                                    + "of it");
+
+        // Made by the model where it was to be merged in code by a category.
+        final Map<String, Object> byCode = timelineCase(Map.of("theme", Map.of("matches",
+                "homes\\.example|rentals\\.example", "exactly", true, "how", "^code: sharing category")));
+        final EvalScore byModel = new EvalScore("t");
+        byModel.scoreTimeline(byCode, timelineRun(List.of(), Map.of("activity-levels.csv", levels, "events.csv",
+                events)));
+        assertThat(byModel.passed()).isFalse();
+        assertThat(byModel.summary()).contains("t1 was made 'model (high): example.com.au', expected ^code: sharing "
+                                               + "category");
+        final EvalScore byCategory = new EvalScore("t");
+        byCategory.scoreTimeline(byCode, timelineRun(List.of(), Map.of("activity-levels.csv", levels.replace(
+                "model (high): example.com.au", "code: sharing category real estate"), "events.csv", events)));
+        assertThat(byCategory.passed()).as(byCategory.summary()).isTrue();
     }
 
     @Test
@@ -2341,8 +2355,8 @@ class TestEvalScore {
         final Map<String, Object> schema = Map.of("type", "object", "properties", Map.of("exclude", Map.of("type",
                 "array", "items", Map.of("type", "string", "anyOf", List.of(Map.of("const", "noise-1"),
                         Map.of("const", "noise-2"))))));
-        final EvalTimelineScore.Form accepted = new EvalTimelineScore.Form("activity_timeline", schema, "ACCEPTED",
-                Map.of("exclude", List.of("noise-1", "noise-2")));
+        final EvalTimelineScore.Form accepted = new EvalTimelineScore.Form("activity_timeline", null, schema,
+                "ACCEPTED", Map.of("exclude", List.of("noise-1", "noise-2")));
         final EvalScore.ToolUse first = new EvalScore.ToolUse("activity_timeline", false, Map.of(),
                 "Left out as noise, as the user chose (kept in /outputs/timelines/exclusions.json): 120 event(s): "
                 + "web.get at telemetry 100; process.start 20.");
@@ -2362,7 +2376,7 @@ class TestEvalScore {
         assertThat(score.passed()).as(score.summary()).isTrue();
 
         // Unticked, the beacon kept, asked again on the re-run; and no baseline to compare with.
-        final EvalTimelineScore.Form unticked = new EvalTimelineScore.Form("activity_timeline", schema,
+        final EvalTimelineScore.Form unticked = new EvalTimelineScore.Form("activity_timeline", null, schema,
                 "ACCEPTED", Map.of("exclude", List.of("noise-2")));
         final EvalScore.ToolUse kept = new EvalScore.ToolUse("activity_timeline", false, Map.of(), "No noise.");
         final Map<String, String> noisy = Map.of("events.csv", baseline);
@@ -2385,6 +2399,60 @@ class TestEvalScore {
                 : null, List.of(accepted)));
         assertThat(once.passed()).as(once.summary()).isTrue();
         assertThat(once.summary()).contains("not re-run, so remembering wasn't checked");
+    }
+
+    @Test
+    void theSourcesAreScoredByWhatTheFormsOfferedWhatTheyLeftOutAndWhyAndWhatWasRead() {
+        final Map<String, Object> evalCase = timelineCase(Map.of("sources", Map.of(
+                "offered", List.of("Web proxy events", "Badge events"),
+                "not_offered", List.of("Old proxy events", "Legacy events"),
+                "left_out", Map.of("Old proxy events", "holding none"),
+                "read", List.of("Web proxy events"))));
+        final Map<String, Object> choose = Map.of("type", "object", "properties", Map.of("sources", Map.of("type",
+                "string", "enum", List.of("All supported data sources", "Other (say which)"))));
+        final EvalTimelineScore.Form sources = new EvalTimelineScore.Form("activity_timeline", "Which data sources "
+                + "should the timeline read? Supported: the 2 Elastic Index(es) you can use holding documents in the "
+                + "period. Left out, holding none: Old proxy events.", choose, "ACCEPTED", Map.of());
+        final EvalTimelineScore.Form confirm = new EvalTimelineScore.Form("activity_timeline", "Read these?",
+                indexes(List.of("Web proxy events", "Badge events")), "ACCEPTED", Map.of());
+        final String events = """
+                time,source,StreamId,EventId
+                2026-11-20T09:00:00Z,Web proxy events,1,1
+                2026-11-20T09:02:00Z,Web proxy events,1,2
+                """;
+
+        final EvalScore score = new EvalScore("t");
+        score.scoreTimeline(evalCase, new EvalTimelineScore.Run(List.of(), path -> path.endsWith("events.csv")
+                ? events
+                : null, null, List.of(sources, confirm)));
+        assertThat(score.passed()).as(score.summary()).isTrue();
+
+        // The empty index offered, nothing said of it, and the badge index's events read too.
+        final EvalTimelineScore.Form offeringAll = new EvalTimelineScore.Form("activity_timeline", "Read these?",
+                indexes(List.of("Web proxy events", "Badge events", "Old proxy events")), "ACCEPTED", Map.of());
+        final String both = events + "2026-11-20T08:00:00Z,Badge events,2,1\n";
+        final EvalScore wrong = new EvalScore("t");
+        wrong.scoreTimeline(evalCase, new EvalTimelineScore.Run(List.of(), path -> path.endsWith("events.csv")
+                ? both
+                : null, null, List.of(offeringAll)));
+        assertThat(wrong.passed()).isFalse();
+        assertThat(wrong.summary()).contains("the forms offered [Web proxy events, Badge events, Old proxy events]")
+                .contains("Old proxy events was offered in a form")
+                .contains("no form or result names Old proxy events with why (holding none)")
+                .contains("3 event(s) from [Web proxy events, Badge events], expected events from "
+                          + "[Web proxy events]");
+
+        // No form at all.
+        final EvalScore unasked = new EvalScore("t");
+        unasked.scoreTimeline(evalCase, timelineRun(List.of(), Map.of()));
+        assertThat(unasked.summary()).contains("no form asked which data sources to read")
+                .contains("no events.csv was written");
+    }
+
+    // A confirming form listing data sources.
+    private static Map<String, Object> indexes(final List<String> names) {
+        return Map.of("type", "object", "properties", Map.of("indexes", Map.of("type", "array", "items",
+                Map.of("type", "string", "enum", names))));
     }
 
     @Test

@@ -1597,11 +1597,18 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         return spanBy(spec).stream().filter(mapping::containsKey).toList();
     }
 
-    // The index fields fetched so they are keys of a source's events: those its spanBy names, and those a period's
-    // key may name (a part of its typeRoles' keys, or of a well-known kind's default key, that is a field of the
-    // index), so a flat index's periods pair by them (`by Site, Zone`).
+    // The index fields fetched so they are keys of a source's events: those its spanBy names, those a period's key
+    // may name (a part of its typeRoles' keys, or of a well-known kind's default key, that is a field of the index),
+    // so a flat index's periods pair by them (`by Site, Zone`); its category fields, so its spans merge by category
+    // (a thematic span, [ThematicSpans]); and its command-line field, a command's text.
     private static List<String> keyFields(final Map<?, ?> spec, final Map<String, ElasticEql.Field> mapping) {
         final List<String> out = new ArrayList<>(spanFields(spec, mapping));
+        categoryFields(mapping).stream().filter(field -> !out.contains(field)).forEach(out::add);
+        NullSafe.consume(commandField(mapping), field -> {
+            if (!out.contains(field)) {
+                out.add(field);
+            }
+        });
         final List<String> keys = new ArrayList<>();
         TimelinePeriod.KINDS.forEach(kind -> keys.add(TimelinePeriod.defaultKey(kind)));
         if (spec.get(TYPE_ROLES_KEY) instanceof final Map<?, ?> given) {
@@ -1617,6 +1624,35 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             }
         }
         return out;
+    }
+
+    /// @param mapping An index's fields.
+    /// @return Its fields naming a category (`Category`, `url.category`: their last part, as [ThematicSpans] reads a
+    /// key), in the mapping's order; never those under `event.`, the Elastic Common Schema's own kinds of event.
+    static List<String> categoryFields(final Map<String, ElasticEql.Field> mapping) {
+        return mapping.keySet().stream()
+                .filter(field -> !field.toLowerCase(Locale.ROOT).startsWith("event."))
+                .filter(field -> "category".equals(lastPart(field)))
+                .toList();
+    }
+
+    /// @param mapping An index's fields.
+    /// @return Its field holding a process's command line (its last part `command` or `command line`, in any case
+    /// and separated or not: `Command`, `CommandLine`, `process.command_line`), the first in the mapping's order;
+    /// null for none.
+    static String commandField(final Map<String, ElasticEql.Field> mapping) {
+        return mapping.keySet().stream()
+                .filter(field -> {
+                    final String last = lastPart(field).replaceAll("[_\\-\\s]", "");
+                    return "command".equals(last) || "commandline".equals(last);
+                })
+                .findFirst()
+                .orElse(null);
+    }
+
+    // A field's name's last part, lower case: after its last dot or slash.
+    private static String lastPart(final String field) {
+        return field.toLowerCase(Locale.ROOT).replaceAll(".*[/.]", "");
     }
 
     private static List<String> spanBy(final Map<?, ?> spec) {
@@ -3123,9 +3159,14 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         }
 
         Fields fields(final String detectedElement) {
+            // The command line's field, unless it is the text's already.
+            final String command = commandField(mapping);
             return new Fields(element != null
                     ? element
-                    : detectedElement, action, eventType, fieldOf(mapped, TimelineFields.PROCESS_ID));
+                    : detectedElement, action, eventType, fieldOf(mapped, TimelineFields.PROCESS_ID),
+                    command == null || command.equals(described.text())
+                            ? null
+                            : command);
         }
     }
 

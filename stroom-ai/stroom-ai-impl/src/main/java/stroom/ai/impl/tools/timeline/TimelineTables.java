@@ -19,6 +19,7 @@ package stroom.ai.impl.tools.timeline;
 import stroom.ai.impl.tools.ToolTables;
 import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Activity;
 import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Characterised;
+import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Item;
 import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Part;
 import stroom.ai.impl.tools.timeline.ActivityCharacterisation.Placement;
 import stroom.ai.impl.tools.timeline.EventXmlClassifier.Classified;
@@ -345,7 +346,74 @@ final class TimelineTables {
             }
         });
         rows.addAll(minorMarkers(byActivity, characterised, labels, zone));
+        rows.addAll(looseRows(byActivity.keySet(), characterised, labels, evidence, capMs, zone));
         rows.sort(Comparator.comparingLong(ActivityRow::start).thenComparing(ActivityRow::activity));
+        return rows;
+    }
+
+    // The rows of each activity made of loose items alone (messages, commands: in no span of it), so it has a bar
+    // and a level-1 row as one of spans has, its runs' parent (found building eval case 115, 2026-11-27): its items
+    // following each other within the idle cap make one interval, from the first's time to the last's, split at
+    // midnight; its evidence the activity's, else its first items' text.
+    private static List<ActivityRow> looseRows(final Set<String> withSpans,
+                                               final Characterised characterised,
+                                               final Map<String, String> labels,
+                                               final Map<String, List<String>> evidence,
+                                               final long capMs,
+                                               final ZoneId zone) {
+        final Map<String, List<Item>> byActivity = new LinkedHashMap<>();
+        for (final Item item : characterised.allItems()) {
+            final Placement placement = characterised.items().get(item.id());
+            if (placement != null && NullSafe.string(placement.activity()).startsWith("a")
+                && !withSpans.contains(placement.activity())) {
+                byActivity.computeIfAbsent(placement.activity(), a -> new ArrayList<>()).add(item);
+            }
+        }
+        final List<ActivityRow> rows = new ArrayList<>();
+        byActivity.forEach((activity, items) -> {
+            items.sort(Comparator.comparingLong(Item::time).thenComparing(Item::id));
+            final List<String> shown = NullSafe.list(evidence.get(activity)).isEmpty()
+                    ? items.stream().map(item -> ActivityCharacterisation.excerpt(item.text(), 60))
+                    .filter(text -> !text.isBlank()).distinct().limit(3).toList()
+                    : evidence.get(activity);
+            List<Item> run = new ArrayList<>();
+            for (final Item item : items) {
+                if (!run.isEmpty() && item.time() - run.getLast().time() > capMs) {
+                    rows.addAll(looseDays(activity, labels, shown, run, zone));
+                    run = new ArrayList<>();
+                }
+                run.add(item);
+            }
+            rows.addAll(looseDays(activity, labels, shown, run, zone));
+        });
+        return rows;
+    }
+
+    // One interval of loose items, a row a day it covers.
+    private static List<ActivityRow> looseDays(final String activity,
+                                               final Map<String, String> labels,
+                                               final List<String> evidence,
+                                               final List<Item> run,
+                                               final ZoneId zone) {
+        final long start = run.getFirst().time();
+        final long end = run.getLast().time();
+        final String label = labels.getOrDefault(activity, activity);
+        final List<ActivityRow> rows = new ArrayList<>();
+        long from = start;
+        do {
+            final LocalDate day = Instant.ofEpochMilli(from).atZone(zone).toLocalDate();
+            final long midnight = day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli();
+            final long to = Math.min(end, midnight);
+            final long dayFrom = from;
+            final List<String> lanes = run.stream()
+                    .filter(item -> item.time() >= dayFrom && item.time() <= to)
+                    .map(item -> NullSafe.nonBlankStringElse(item.host(), NullSafe.string(item.source())))
+                    .distinct()
+                    .toList();
+            rows.add(new ActivityRow(activity, label, day, from, to, to - from, List.of(), Map.of(), lanes,
+                    evidence, null, null, label, false));
+            from = to;
+        } while (from < end);
         return rows;
     }
 
@@ -420,8 +488,10 @@ final class TimelineTables {
             final int events = row.activity().startsWith("pr")
                     ? NullSafe.list(run.periods()).stream().filter(period -> period.id().equals(row.activity()))
                     .mapToInt(period -> period.eventIds().size()).sum()
-                    : row.spans().stream().map(spansById::get).filter(Objects::nonNull)
-                    .mapToInt(span -> span.eventIds().size()).sum();
+                    : row.spans().isEmpty() && !row.marker()
+                            ? looseItems(run.characterised(), row)
+                            : row.spans().stream().map(spansById::get).filter(Objects::nonNull)
+                            .mapToInt(span -> span.eventIds().size()).sum();
             rows.add(List.of(row.activity(), String.valueOf(ThematicSpans.THEMES), "", row.activity(), row.label(),
                     row.day().toString(), iso(row.start()), row.marker()
                             ? iso(row.start())
@@ -482,6 +552,18 @@ final class TimelineTables {
         }
         rows.sort(Comparator.comparing((List<String> row) -> row.get(1)).thenComparing(row -> row.get(6)));
         return rows;
+    }
+
+    // How many loose items of a row's activity (one of loose items alone) fall in its interval.
+    private static int looseItems(final Characterised characterised, final ActivityRow row) {
+        if (characterised == null) {
+            return 0;
+        }
+        return (int) characterised.allItems().stream()
+                .filter(item -> item.time() >= row.start() && item.time() <= row.end())
+                .map(item -> characterised.items().get(item.id()))
+                .filter(placement -> placement != null && row.activity().equals(placement.activity()))
+                .count();
     }
 
     // A run's event as its marker is labelled: its text, else what it touched, else its kind, cut short.

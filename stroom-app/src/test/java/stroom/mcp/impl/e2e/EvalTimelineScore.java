@@ -50,7 +50,8 @@ import java.util.regex.Pattern;
 /// * `theme`: a row of `activity-levels.csv` at `level` (default 2) whose member events (`events.csv` rows naming it
 ///   in `merged`, or in `activity` for level 1) are the person's events whose object or title `matches`, all of them
 ///   (with `exactly: true`, none other), with at least `children_at_least` rows naming it as their `parent`, each a
-///   level finer and its members among those events;
+///   level finer and its members among those events; with `how`, a regular expression its `how` matches (e.g.
+///   `^code: sharing category`, merged in code by a category);
 /// * `members_answer`: true when an accepted `table` call on the timeline's `events.csv` returned exactly the theme's
 ///   member events (by `EventId`), as a follow-up asking which events make it up is answered from the membership
 ///   columns;
@@ -66,7 +67,11 @@ import java.util.regex.Pattern;
 ///   so many events as noise; `remembered`, a later call of the turn (if any) asking nothing and leaving them out
 ///   again; `gone`, no event of `events.csv` whose object matches; `kept`, at least `kept_at_least` (default 1)
 ///   events whose object matches; `fewer_than_baseline`, files with fewer rows than they had in the baseline (the
-///   chat's earlier turns' timeline).
+///   chat's earlier turns' timeline);
+/// * `sources`: the data sources chosen in the timeline's forms: `offered`, the data sources the forms' lists offer
+///   (the confirming form's), exactly; `not_offered`, data sources named in no form's options; `left_out`, each a data
+///   source named, with why (a regular expression, e.g. `holding none`), in a form's message or a timeline call's
+///   result; `read`, the sources `events.csv`'s events came from, exactly, with at least one event.
 final class EvalTimelineScore {
 
     /// The timeline's folder.
@@ -111,6 +116,10 @@ final class EvalTimelineScore {
         final Map<String, Object> noise = EvalCases.map(expected.get("noise"));
         if (!noise.isEmpty()) {
             scoreNoise(noise, run, tables, new Tables(run.baseline(), folder), checks);
+        }
+        final Map<String, Object> sources = EvalCases.map(expected.get("sources"));
+        if (!sources.isEmpty()) {
+            scoreSources(sources, run, tables, checks);
         }
     }
 
@@ -248,6 +257,7 @@ final class EvalTimelineScore {
         events.stream().filter(event -> matches.matcher(eventText(event)).find()).forEach(event -> target.add(
                 ref(event)));
         Unit best = null;
+        String bestHow = "";
         String closest = "no row at level " + level;
         for (final Map<String, String> row : levels) {
             if (!String.valueOf(level).equals(row.get("level"))) {
@@ -258,6 +268,7 @@ final class EvalTimelineScore {
             outside.removeAll(target);
             if (members.containsAll(target) && (!exactly || outside.isEmpty())) {
                 best = new Unit(row.get("id"), level, members);
+                bestHow = Objects.requireNonNullElse(row.get("how"), "");
                 break;
             }
             final Set<String> held = new LinkedHashSet<>(members);
@@ -297,6 +308,11 @@ final class EvalTimelineScore {
                     + (wrong.isEmpty()
                             ? ""
                             : "; not a level finer within it: " + first(wrong)));
+        }
+        if (theme.get("how") != null) {
+            final Pattern how = Pattern.compile(String.valueOf(theme.get("how")), Pattern.CASE_INSENSITIVE);
+            checks.check("theme's how", how.matcher(bestHow).find(), best.id() + " was made '" + bestHow
+                                                                    + "', expected " + theme.get("how"));
         }
         return best;
     }
@@ -572,6 +588,74 @@ final class EvalTimelineScore {
         }
     }
 
+    // ------------------------------------------------------------------------------------------------
+    // Sources
+
+    private static void scoreSources(final Map<String, Object> sources,
+                                     final Run run,
+                                     final Tables tables,
+                                     final Checks checks) {
+        final List<Form> asked = run.forms().stream().filter(form -> TIMELINE_TOOL.equals(form.tool())).toList();
+        final Set<String> offered = new LinkedHashSet<>();
+        asked.forEach(form -> properties(form.schema()).values().forEach(field -> offered.addAll(listed(
+                EvalCases.map(field)))));
+        if (sources.get("offered") != null) {
+            final Set<String> wanted = new LinkedHashSet<>(EvalCases.strings(sources.get("offered")));
+            checks.check("sources offered", offered.equals(wanted), asked.isEmpty()
+                    ? "no form asked which data sources to read"
+                    : "the forms offered " + offered + ", expected " + wanted);
+        }
+        final List<String> optionsText = asked.stream()
+                .map(form -> String.join("\n", allOptions(form.schema())))
+                .toList();
+        for (final String name : EvalCases.strings(sources.get("not_offered"))) {
+            checks.check("not offered: " + name, optionsText.stream().noneMatch(text -> text.contains(name)),
+                    name + " was offered in a form");
+        }
+        final List<String> said = new ArrayList<>();
+        asked.forEach(form -> said.add(Objects.requireNonNullElse(form.message(), "")));
+        run.calls().stream()
+                .filter(call -> TIMELINE_TOOL.equals(call.name()))
+                .forEach(call -> said.add(Objects.requireNonNullElse(call.text(), "")));
+        EvalCases.map(sources.get("left_out")).forEach((name, why) -> {
+            final Pattern reason = Pattern.compile(String.valueOf(why), Pattern.CASE_INSENSITIVE);
+            checks.check("left out, saying why: " + name, said.stream().anyMatch(text -> text.contains(name)
+                                                                                        && reason.matcher(text)
+                                                                                                .find()),
+                    "no form or result names " + name + " with why (" + why + ")");
+        });
+        if (sources.get("read") != null) {
+            final Set<String> wanted = new LinkedHashSet<>(EvalCases.strings(sources.get("read")));
+            final List<Map<String, String>> events = tables.rows(EVENTS);
+            final Set<String> read = new LinkedHashSet<>();
+            if (events != null) {
+                events.forEach(event -> read.add(event.get("source")));
+            }
+            checks.check("sources read", events != null && !events.isEmpty() && read.equals(wanted), events == null
+                    ? "no " + EVENTS + " was written"
+                    : events.size() + " event(s) from " + read + ", expected events from " + wanted);
+        }
+    }
+
+    // The values a form's field offers as a list: its items' enum (or its own enum, of a field of one value).
+    private static List<String> listed(final Map<String, Object> field) {
+        if (!"array".equals(field.get("type"))) {
+            return List.of();
+        }
+        return EvalCases.strings(EvalCases.map(field.get("items")).get("enum"));
+    }
+
+    // Every option a form's fields offer: their enums and their items' enums.
+    private static List<String> allOptions(final Map<String, Object> schema) {
+        final List<String> out = new ArrayList<>();
+        properties(schema).values().forEach(value -> {
+            final Map<String, Object> field = EvalCases.map(value);
+            out.addAll(EvalCases.strings(field.get("enum")));
+            out.addAll(EvalCases.strings(EvalCases.map(field.get("items")).get("enum")));
+        });
+        return out;
+    }
+
     // The events a timeline call said it left out as noise: its JSON's, else its chat text's; null if it says none.
     private static Long excluded(final EvalScore.ToolUse call) {
         if (call.result().get("excluded") instanceof final Map<?, ?> excluded
@@ -712,10 +796,11 @@ final class EvalTimelineScore {
     /// A form the user was asked.
     ///
     /// @param tool    The tool that asked.
+    /// @param message What it says.
     /// @param schema  Its fields, as a flat JSON schema.
     /// @param status  What became of it, e.g. `ACCEPTED`.
     /// @param content The user's answer, once accepted; else null.
-    record Form(String tool, Map<String, Object> schema, String status, Map<String, Object> content) {
+    record Form(String tool, String message, Map<String, Object> schema, String status, Map<String, Object> content) {
 
     }
 

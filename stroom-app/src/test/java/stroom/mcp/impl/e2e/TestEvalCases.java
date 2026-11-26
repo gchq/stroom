@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -84,7 +85,8 @@ class TestEvalCases {
         assertThat(instructions).hasSize(4).allSatisfy(id -> assertThat(id).matches("(98|99|100|101)_agents_.*"));
         // The timeline cases whose tool asks the user in its forms, or the chat's model in side calls.
         assertThat(chats).containsExactly("114_timeline_thematic_span_property_sites",
-                "115_timeline_message_and_command_runs", "116_timeline_noise_left_out");
+                "115_timeline_message_and_command_runs", "116_timeline_noise_left_out",
+                "117_timeline_empty_sources_left_out");
         assertThat(chats).allSatisfy(id -> assertThat(EvalCases.isSkill(EvalCases.load(id))).isTrue());
         for (final String id : java.util.stream.Stream.of(skills, instructions, chats).flatMap(List::stream)
                 .toList()) {
@@ -596,9 +598,12 @@ class TestEvalCases {
             final Pattern text = Pattern.compile(String.valueOf(run.get("matches")),
                     Pattern.CASE_INSENSITIVE);
             assertThat(dmorgan).as(String.valueOf(run.get("matches")))
-                    .filteredOn(record -> text.matcher(record.get("Text")).find()).hasSize((Integer) run.get(
-                            "events"));
+                    .filteredOn(record -> text.matcher(Objects.requireNonNullElse(record.get("Text"),
+                            record.get("Command"))).find()).hasSize((Integer) run.get("events"));
         }
+        // The commands' lines in a field of their own, as an endpoint product writes them; no text of theirs.
+        assertThat(dmorgan).filteredOn(record -> "process.start".equals(record.get("EventCode"))).hasSize(4)
+                .allSatisfy(record -> assertThat(record).containsKey("Command").doesNotContainKey("Text"));
         assertThat(dmorgan).filteredOn(record -> "chat.message".equals(record.get("EventCode")))
                 .extracting(record -> record.get("Thread")).containsOnly("chat:ops-team").hasSize(12);
     }
@@ -614,6 +619,25 @@ class TestEvalCases {
         assertThat(sward).hasSize(1080 + 108 + 18);
         assertThat(EvalCases.map(EvalCases.map(EvalCases.map(noise.get("expected")).get("timeline")).get("noise")))
                 .containsEntry("excluded_at_least", 1000).containsEntry("kept_at_least", 18);
+    }
+
+    @Test
+    void theEmptySourcesCasesIndexesAreOneOfThePersonsOneOfOthersOneEmptyAndALuceneOne() {
+        // The person's day in the web proxy index alone; the badge index holds documents in the period, none theirs;
+        // the old proxy index holds none at all; the Lucene index has no records to put in a shard.
+        final Map<String, Object> sources = EvalCases.load("117_timeline_empty_sources_left_out");
+        assertThat(records(sources, "rpatel")).hasSize(14)
+                .allSatisfy(record -> assertThat(record.get("EventTime")).startsWith("2026-11-20"));
+        final List<Map<String, Object>> more = EvalCases.maps(sources.get("more_elastic_indexes"));
+        assertThat(more).extracting(spec -> spec.get("name")).containsExactly("Badge events", "Old proxy events");
+        assertThat(EvalCases.table(more.getFirst()).records()).isNotEmpty()
+                .allSatisfy(record -> assertThat(record.get("EventTime")).startsWith("2026-11-20"))
+                .extracting(record -> record.get("UserName")).doesNotContain("rpatel");
+        assertThat(EvalCases.table(more.getLast())).isNull();
+        assertThat(EvalCases.strings(sources.get("empty_lucene_indexes"))).containsExactly("Legacy proxy events");
+        assertThat(EvalCases.map(EvalCases.map(EvalCases.map(sources.get("expected")).get("timeline"))
+                .get("sources"))).containsEntry("offered", List.of("Web proxy events", "Badge events"))
+                .containsEntry("read", List.of("Web proxy events"));
     }
 
     // A timeline case's records of one user, in time order.

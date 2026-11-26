@@ -2042,7 +2042,9 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
   (`exclude`), or listed as `noise_proposed` over MCP; the answer kept in `/outputs/timelines/exclusions.json`
   (the user's own workspace) and applied every run; `excluded` says what was left out.
 * Activities view: `activity-levels.csv` (`ThematicSpans`), levels 1 to 3 with `id`, `parent`, `how` and
-  `events`; drawn ready in the chat a level at a time (Less and More detail), on a dashboard by its level input.
+  `events` (an activity of loose items alone a level-1 row over its items' times); merged in code by a fetched
+  `*category` field (not `event.category`), runs of point events including a fetched command-line field's commands;
+  drawn ready in the chat a level at a time (Less and More detail), on a dashboard by its level input.
   `events.csv` gives each event's `span`, `merged`, `activity` and `periods` (`files.membership` says so).
 
 ### `propose_timeline_dashboard`

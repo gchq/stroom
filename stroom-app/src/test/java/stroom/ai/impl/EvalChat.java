@@ -250,7 +250,7 @@ public final class EvalChat {
         return messages.stream()
                 .filter(message -> message.getMessageType() == AiMessageType.ELICITATION)
                 .map(message -> JsonUtil.readValue(message.getMessage(), ElicitationRecord.class))
-                .map(form -> new AskedForm(form.tool(), form.schema(), form.status() == null
+                .map(form -> new AskedForm(form.tool(), form.message(), form.schema(), form.status() == null
                         ? null
                         : form.status().name(), form.content()))
                 .toList();
@@ -315,10 +315,15 @@ public final class EvalChat {
     /// A form a tool asked the user, as it ended.
     ///
     /// @param tool    The tool that asked, if known.
+    /// @param message What it says.
     /// @param schema  Its fields, as a flat JSON schema.
     /// @param status  What became of it, e.g. `ACCEPTED`.
     /// @param content The user's answer, once accepted; else null.
-    public record AskedForm(String tool, Map<String, Object> schema, String status, Map<String, Object> content) {
+    public record AskedForm(String tool,
+                            String message,
+                            Map<String, Object> schema,
+                            String status,
+                            Map<String, Object> content) {
 
     }
 

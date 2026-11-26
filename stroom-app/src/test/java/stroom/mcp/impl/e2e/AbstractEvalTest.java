@@ -335,10 +335,12 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
 
     /// A question's data, in Stroom before the user asks: any of an Elasticsearch index ([#questionIndex]), a Lucene
     /// index of the case's records (`lucene_index`: `name`, `events`, `fields`, [EvalCases#table]), and data
-    /// connections of the case's CSV records (`data_connections`: each its `name`, `csv` and `columns`), each
-    /// document beside the standard templates; and the site's standing instructions for them (`agents`: Markdown,
-    /// e.g. a `## Fields` section naming the person field), a Documentation doc named AGENTS in the same folder,
-    /// as a site would keep one beside its indexes, removed once the case is done.
+    /// connections of the case's CSV records (`data_connections`: each its `name`, `csv` and `columns`), more
+    /// Elastic Indexes ([#moreElasticIndex]: `more_elastic_indexes`) and Lucene indexes with no shards
+    /// (`empty_lucene_indexes`, their names), each document beside the standard templates; and the site's standing
+    /// instructions for them (`agents`: Markdown, e.g. a `## Fields` section naming the person field), a
+    /// Documentation doc named AGENTS in the same folder, as a site would keep one beside its indexes, removed once
+    /// the case is done.
     ///
     /// @param evalCase The case.
     /// @return What to remove once the case is done.
@@ -367,9 +369,50 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                 List.of())) {
             sources.add(questionDataConnection(EvalCases.table(spec)));
         }
-        return new QuestionData(elastic, sources, docs.stream()
+        final List<Runnable> removals = new ArrayList<>(docs.stream()
                 .<Runnable>map(doc -> () -> delete(doc))
                 .toList());
+        for (final Map<String, Object> spec : EvalCases.maps(evalCase.get("more_elastic_indexes"))) {
+            final QuestionIndex more = moreElasticIndex(evalCase, spec, sources.size());
+            sources.add(more.doc());
+            sources.add(more.cluster());
+            removals.add(() -> more.node().deleteIndices(more.indexName()));
+        }
+        for (final String name : EvalCases.strings(evalCase.get("empty_lucene_indexes"))) {
+            sources.add(create(LuceneIndexDoc.TYPE, name, templateFolder()).getDocRef());
+        }
+        return new QuestionData(elastic, sources, removals);
+    }
+
+    // Another Elastic Index of a question (`more_elastic_indexes`, each as an `elastic_index` is, its records in
+    // `events` or `generate`), in an Elasticsearch index of its own; one with only `fields` holds no documents at
+    // all, as a site's retired index may.
+    private QuestionIndex moreElasticIndex(final Map<String, Object> evalCase,
+                                           final Map<String, Object> spec,
+                                           final int place) {
+        final ElasticTestNode node = ElasticTestNode.getOrSkip();
+        final EvalCases.QuestionTable given = EvalCases.table(spec);
+        final EvalCases.QuestionTable table;
+        if (given != null) {
+            table = given;
+        } else {
+            final Map<String, String> types = new LinkedHashMap<>();
+            EvalCases.map(spec.get("fields")).forEach((field, type) -> types.put(field, String.valueOf(type)));
+            table = new EvalCases.QuestionTable(String.valueOf(spec.get("name")), types, List.of());
+        }
+        final String indexName = ElasticTestNode.createIndexName("eval-" + String.valueOf(evalCase.get("id"))
+                .split("_", 2)[0] + "-more-" + place);
+        seedElastic(node, indexName, table, questionStreams(indexName, 1).getFirst());
+        final DocRef cluster = liveElasticCluster(node, "Eval cluster " + indexName);
+        final ExplorerNode created = create(ElasticIndexDoc.TYPE, String.valueOf(spec.get("name")),
+                templateFolder());
+        asUser(admin, () -> elasticIndexStore.writeDocument(elasticIndexStore.readDocument(created.getDocRef())
+                .copy()
+                .clusterRef(cluster)
+                .indexName(indexName)
+                .timeField(table.timeField())
+                .build()));
+        return new QuestionIndex(node, indexName, created.getDocRef(), cluster, null);
     }
 
     /// A question's Elasticsearch data, indexed before the user asks (`elastic_index`): the case's records
@@ -804,7 +847,8 @@ abstract class AbstractEvalTest extends AbstractE2eTest {
                         : new EvalScore.ToolUse(call.tool(), call.error(), Map.of(), call.text()))
                 .toList();
         final List<EvalTimelineScore.Form> forms = EvalChat.forms(messages).stream()
-                .map(form -> new EvalTimelineScore.Form(form.tool(), form.schema(), form.status(), form.content()))
+                .map(form -> new EvalTimelineScore.Form(form.tool(), form.message(), form.schema(), form.status(),
+                        form.content()))
                 .toList();
         score.scoreTimeline(evalCase, new EvalTimelineScore.Run(uses, path -> chatFile(setup, path),
                 setup.baseline()::get, forms));

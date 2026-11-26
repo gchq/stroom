@@ -5,9 +5,10 @@ capabilities: [timeline, elasticsearch, levels, characterise]
 # EvalTimelineScenes (scene property_sites): in the afternoon, web requests (EventCode web.get, Object the URL,
 # Category the proxy's category) to three property listing sites visited by turns; in the morning and late
 # afternoon, edits (doc.edit) of a budget workbook and a board report. Run in Stroom's chat, where the levels'
-# side calls go to the chat's model (scripted in the reference, side_answers): code merges each site's visits by
-# its domain, and the model joins the three sites' chain as one theme. Scored on activity-levels.csv and events.csv:
-# a level-2 thematic span holding exactly the visits' requests, the visits (a span each) its children; and the
+# side calls go to the chat's model (scripted in the reference, side_answers): code merges the three sites' visits
+# as one theme by their category (Category, a field the timeline fetches by its name), so the model has no chain
+# of theirs to join. Scored on activity-levels.csv and events.csv: a level-2 thematic span made in code by the
+# category, holding exactly the visits' requests, the visits (a span each) its children; and the
 # follow-up, which events make it up (asked in the request: the harness's follow_up is said only in a question's
 # run over MCP, which has no side calls), answered from events.csv's membership columns (merged): exactly them.
 # The traps: three sites read as three things done, the document work taken into the theme, the other person's
@@ -32,7 +33,7 @@ expected:
   timeline:
     entity: lchen
     theme: {matches: 'homes\.example\.com\.au|propertyfinder\.example\.net|rentals\.example\.org', level: 2,
-            exactly: true, children_at_least: 9}
+            exactly: true, children_at_least: 9, how: '^code: sharing category real estate'}
     members_answer: true
 reference:
   calls:
@@ -47,17 +48,22 @@ reference:
         sources:
           - {index: Web and documents, user: UserName, host: Host, object: Object, eventTypeField: EventCode,
              typeRoles: {web.get: action, doc.edit: action}}
+    # The theme code merged by the category: its id from activity-levels.csv, then its events by membership.
+    - tool: table
+      arguments:
+        path: /outputs/timelines/lchen/activity-levels.csv
+        where: [{column: level, op: '=', value: '2'}, {column: how, op: starts_with, value: 'code: sharing category'}]
+        select: [id, bar_label, how]
     - tool: table
       arguments:
         path: /outputs/timelines/lchen/events.csv
-        where: [{column: merged, op: '=', value: t1}]
+        where: [{column: merged, op: '=', value: '<result:\|\s*(m\d+)\s*\|>'}]
         select: [time, object, StreamId, EventId]
   side_answers:
+    # Only the document work's chain is asked: the sites' visits are one theme in code, by their category.
     - contains: [You group a user's timeline]
       answer: >-
-        [{"id": "c1", "answer": "separate", "confidence": "high", "evidence": ["q4 budget forecast"]},
-        {"id": "c2", "answer": "one", "description": "viewed property listing sites", "confidence": "high",
-        "evidence": ["example.com.au", "example.net", "example.org"]}]
+        [{"id": "c1", "answer": "separate", "confidence": "high", "evidence": ["q4 budget forecast"]}]
   answer: >-
     lchen worked on the Q4 budget forecast and the November board report in the morning, and in the afternoon
     browsed three property listing sites by turns (one theme); the events making it up are listed above.

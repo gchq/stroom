@@ -145,8 +145,11 @@ class TestActivityTimelineAnySource {
         final Map<String, String> eventsMapping = Map.of("EventTime", "date", "UserId", "keyword", "HostName",
                 "keyword", "SchemaAction", "keyword", "event.action", "keyword", "StreamId", "long", "EventId",
                 "long", "TypeId", "keyword", "host.name", "keyword", "url", "keyword");
-        final Map<String, String> codesMapping = Map.of("@timestamp", "date", "user", "keyword", "code", "keyword",
-                "client", "keyword", "staff", "keyword", "Site", "keyword", "Zone", "keyword", "Door", "keyword");
+        final Map<String, String> codesMapping = Map.ofEntries(Map.entry("@timestamp", "date"),
+                Map.entry("user", "keyword"), Map.entry("code", "keyword"), Map.entry("client", "keyword"),
+                Map.entry("staff", "keyword"), Map.entry("Site", "keyword"), Map.entry("Zone", "keyword"),
+                Map.entry("Door", "keyword"), Map.entry("Url", "keyword"), Map.entry("Category", "keyword"),
+                Map.entry("process.command_line", "keyword"));
         Mockito.when(queryService.findFields(Mockito.any())).thenAnswer(invocation -> {
             final DocRef doc = invocation.<FindFieldCriteria>getArgument(0).getDataSourceRef();
             final List<QueryField> fields = new ArrayList<>();
@@ -286,6 +289,58 @@ class TestActivityTimelineAnySource {
                                 "2026-11-10T10:00:00Z"),
                         org.assertj.core.groups.Tuple.tuple("Depot, Yard", "2026-11-10T09:00:00Z",
                                 "2026-11-10T11:00:00Z"));
+    }
+
+    @Test
+    void aFlatIndexsCategoryFieldIsFetchedSoItsSitesVisitsMergeByCategoryInCode() {
+        // Eval case 114: three listing sites visited by turns, each request of the proxy's category, in an index not
+        // built from Events.
+        final List<String> sites = List.of("https://homes.example.com.au/l/", "https://finder.example.net/b/",
+                "https://rentals.example.org/p/");
+        for (int i = 0; i < 9; i++) {
+            codes.add(new LinkedHashMap<>(Map.of("@timestamp", at("13:00") + i * 3 * 60_000L, "user", "pat",
+                    "code", "web.get", "Url", sites.get(i % 3) + i, "Category", "Real Estate")));
+        }
+        final Map<String, Object> source = Map.of("index", "Codes", "user", "user", "object", "Url",
+                "eventTypeField", "code", "typeRoles", Map.of("web.get", "action"));
+
+        json(mcp(), arguments(Map.of("sources", List.of(source), "view", "activities")));
+
+        // One thematic span of the three sites, merged in code by their category, holding every visit.
+        final List<Map<String, String>> levels = csv(files.content(FOLDER + ActivityTimelineTool.LEVELS_FILE)
+                .orElseThrow());
+        assertThat(levels).filteredOn(row -> "2".equals(row.get("level"))).singleElement().satisfies(row -> {
+            assertThat(row.get("how")).isEqualTo("code: sharing category real estate");
+            assertThat(row.get("events")).isEqualTo("9");
+        });
+    }
+
+    @Test
+    void aFlatIndexsCommandLineFieldIsFetchedAsItsEventsTextSoTheyRunAsCommands() {
+        // Eval case 115: a shell session's commands, their command lines in a field of their own, no text field.
+        final List<String> commands = List.of("Get-ADUser -Filter *", "Export-Csv C:\\Temp\\users.csv",
+                "Compress-Archive -Path C:\\Temp\\users.csv", "Copy-Item C:\\Temp\\users.zip");
+        for (int i = 0; i < commands.size(); i++) {
+            codes.add(new LinkedHashMap<>(Map.of("@timestamp", at("14:00") + i * 2 * 60_000L, "user", "pat",
+                    "code", "process.start", "process.command_line", commands.get(i))));
+        }
+        final Map<String, Object> source = Map.of("index", "Codes", "user", "user", "eventTypeField", "code",
+                "typeRoles", Map.of("process.start", "action"));
+
+        json(mcp(), arguments(Map.of("sources", List.of(source), "view", "activities")));
+
+        // One run of the four commands, each a level-3 row labelled by its command line.
+        final List<Map<String, String>> levels = csv(files.content(FOLDER + ActivityTimelineTool.LEVELS_FILE)
+                .orElseThrow());
+        final Map<String, String> run = levels.stream()
+                .filter(row -> "2".equals(row.get("level")) && row.get("how").startsWith("code: a run"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No run: " + levels));
+        assertThat(run.get("events")).isEqualTo("4");
+        assertThat(levels).filteredOn(row -> run.get("id").equals(row.get("parent")))
+                .extracting(row -> row.get("bar_label"))
+                .containsExactly("Get-ADUser -Filter *", "Export-Csv C:\\Temp\\users.csv",
+                        "Compress-Archive -Path C:\\Temp\\users.csv", "Copy-Item C:\\Temp\\users.zip");
     }
 
     @Test

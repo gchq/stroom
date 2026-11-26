@@ -43,6 +43,9 @@ import java.util.Set;
 /// The user and the time are the index's, never the XML's.
 final class TimelineClassification {
 
+    /// The key a process's command line is held by, the schema's name for it (`EventDetail/Process/Command`).
+    static final String COMMAND_KEY = "Command";
+
     private TimelineClassification() {
         // Static only.
     }
@@ -92,7 +95,7 @@ final class TimelineClassification {
                 continue;
             }
             byId.put(event.id(), classified);
-            out.add(asEvent(event, classified));
+            out.add(asEvent(withCommand(event, sourceFields, extra), classified));
         }
         return new Result(out, byId, routes, ignored, roles.origins());
     }
@@ -206,9 +209,13 @@ final class TimelineClassification {
         if (fields.processId() != null) {
             putKey(keys, "ProcessId", extra.get(fields.processId()));
         }
+        // A process's command line the index holds, by the schema's name, as its Events XML gives it.
+        if (fields.command() != null) {
+            putKey(keys, COMMAND_KEY, extra.get(fields.command()));
+        }
         final Set<String> typeFields = new HashSet<>();
         for (final String field : new String[]{fields.element(), fields.action(), fields.eventType(),
-                fields.processId(), source.userField(), source.hostField()}) {
+                fields.processId(), fields.command(), source.userField(), source.hostField()}) {
             if (field != null) {
                 typeFields.add(field);
             }
@@ -219,6 +226,20 @@ final class TimelineClassification {
             }
         });
         return keys;
+    }
+
+    // The event with the command line the index holds as its text, where it has no text of its own: a command run
+    // is a point event of its own content, as a message is (its run's events, their labels, the model's items).
+    private static Event withCommand(final Event event, final Fields fields, final Map<String, String> extra) {
+        final String command = fields.command() == null
+                ? null
+                : extra.get(fields.command());
+        if (NullSafe.isBlankString(command) || !NullSafe.isBlankString(event.text())) {
+            return event;
+        }
+        return new Event(event.time(), event.source(), event.id(), event.role(), event.kind(), event.host(),
+                event.process(), event.title(), event.window(), event.object(), command, event.streamId(),
+                event.eventId());
     }
 
     private static void putKey(final Map<String, String> keys, final String field, final String value) {
@@ -264,16 +285,18 @@ final class TimelineClassification {
     /// @param action    The field holding its Action, or null.
     /// @param eventType The field holding the source's own event code, or null.
     /// @param processId The field holding a process's id (the schema's `EventDetail/Process/ProcessId`), or null.
-    record Fields(String element, String action, String eventType, String processId) {
+    /// @param command   The field holding a process's command line (the schema's `EventDetail/Process/Command`), or
+    ///                  null: an event's text where it has none of its own, and its `Command` key.
+    record Fields(String element, String action, String eventType, String processId, String command) {
 
         /// No fields.
-        static final Fields NONE = new Fields(null, null, null, null);
+        static final Fields NONE = new Fields(null, null, null, null, null);
 
         /// @param element   The field holding the EventDetail element, or null.
         /// @param action    The field holding its Action, or null.
         /// @param eventType The field holding the source's own event code, or null.
         Fields(final String element, final String action, final String eventType) {
-            this(element, action, eventType, null);
+            this(element, action, eventType, null, null);
         }
 
         /// @return True if the index holds what an event's type is (its element or event code), so its Events XML

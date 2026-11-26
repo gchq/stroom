@@ -2326,8 +2326,10 @@ keeps the finer ones underneath, each naming its parent.
   sites, one document's sessions); 3, the finest spans and sessions, as today. A level-2 span's parent is the
   activity most of its time is in; a level-3 span's is its thematic span, else its activity.
 * **Merged in code** (`ThematicSpans`) where spans on one lane, each within the idle cap of the group so far
-  (interleaved with others allowed), share a fact: the same category (the source's `## Fields` `category` field, as
-  compare_activity finds it, read from the events' keys), the same registrable domain (`www.` and `m.` and other
+  (interleaved with others allowed), share a fact: the same category (an event key whose last part is `category`:
+  an index field so named, e.g. `Category` or `url.category` but never ECS's `event.category`, is fetched with the
+  events; found building eval case 114, 2026-11-27: it wasn't, so only the model could join the sites), the same
+  registrable domain (`www.` and `m.` and other
   subdomains dropped; a two-letter country suffix under a short second level, e.g. `com.au`, kept whole: format
   knowledge, no list of sites), the same document (an artifact of its titles, as the characterisation normalises
   them), or two or more shared significant terms of their titles or search terms. A group of two or more is a
@@ -2343,7 +2345,10 @@ keeps the finer ones underneath, each naming its parent.
   and runs at 2, the finest spans and point events at 3), each with its `id`, `level` and `parent`, labelled by its
   own label (`bar_label`), laned and coloured by its activity's label, with how its members were chosen (`how`:
   code's rule, or the model's confidence and evidence) and its event count; `activities.csv` unchanged (level 1).
-  The result counts each level. Both open at level 1 (the user, 2026-11-26).
+  An activity of loose items alone (messages, commands: in no span of it) has its level-1 row and its
+  `activities.csv` bar from its items' times (those within the idle cap of each other one interval, split at
+  midnight), its evidence its items' text where it has no artifacts, so its runs' parent is a row (found building
+  eval case 115, 2026-11-27). The result counts each level. Both open at level 1 (the user, 2026-11-26).
 * **Traceable** (the user, 2026-11-26): every span at every level, and every period, has a stable id and a parent;
   `events.csv` gives each event's spans (`span`), its thematic span or run (`merged`), its activity (`activity`)
   and the periods it fell in (`periods`), with its StreamId and EventId, so "which events make up the span about
@@ -2364,7 +2369,9 @@ keeps the finer ones underneath, each naming its parent.
   of the run) and join runs into themes across sources (level 1); the text is data, excerpts cut to the
   characterisation's cap, every description citing its evidence (event ids of the run), checked in code; a split
   run's parts each keep their own evidence in `how` (found building eval case 115, 2026-11-27: each part carried
-  the whole run's).
+  the whole run's). A flat index's command-line field (its last part `command` or `command line`, e.g. `Command`,
+  `process.command_line`) is fetched with the events: the event's `Command` key, as the Events XML's
+  `Process/Command`, and its text where it has none of its own, so commands run as messages do (eval case 115).
 * **Noise** (the user, 2026-11-26; both views, to declutter the timeline and to spare the model): right after the
   events are read and classified, before the sessions, spans or any model call, event types (or a type at one
   object, where the type is at others too) that are very noisy are found in code (`TimelineNoise`) by statistical
