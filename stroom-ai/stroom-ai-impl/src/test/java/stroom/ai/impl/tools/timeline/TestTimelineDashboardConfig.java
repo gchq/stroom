@@ -70,7 +70,7 @@ class TestTimelineDashboardConfig {
     @Test
     void theActivitiesAreLanedByDayOrActivity() {
         assertThat(TimelineDashboardConfig.mappings(TimelineDataConnection.ACTIVITIES, null, true))
-                .isEqualTo(Map.of("start", "start", "end", "end", "label", "activity_label", "lane", "day",
+                .isEqualTo(Map.of("start", "start", "end", "end", "label", "bar_label", "lane", "day",
                         "colour", "activity_label"));
         assertThat(TimelineDashboardConfig.mappings(TimelineDataConnection.ACTIVITIES, "activity", true))
                 .containsEntry("lane", "activity_label");

@@ -199,11 +199,12 @@ final class TimelineTables {
                 : rollUp(run.built().spans(), characterised, labels, run.capMs(), run.zone().zone());
         final List<List<String>> activityRows = new ArrayList<>();
         for (final ActivityRow row : rolledUp) {
-            // A minor part's marker has no end (gantt_chart draws a row without one as a marker), and its own bar
-            // label; the activity's label still names its lane and colour.
+            // A minor part's marker ends as it starts (gantt_chart and the dashboard's timeline chart both draw such
+            // a row as a marker; the dashboard's leaves out a row with no end), with its own bar label; the
+            // activity's label still names its lane and colour.
             activityRows.add(List.of(row.activity(), row.label(), row.day().toString(), iso(row.start()),
                     row.marker()
-                            ? ""
+                            ? iso(row.start())
                             : iso(row.end()), minutes(row.activeMs()), String.join(" ", row.spans()),
                     TimelineSpans.typesText(row.actions()), String.join("; ", row.lanes()),
                     String.join("; ", row.evidence()), NullSafe.string(row.startEvent()),

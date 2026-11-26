@@ -108,7 +108,8 @@ public final class TimelineDashboardConfig {
                     ? "activity_label"
                     : "kind");
         } else {
-            mappings.put("label", "activity_label");
+            // Its bars by the activity's label, a minor part's marker by its own (bar_label); coloured by activity.
+            mappings.put("label", "bar_label");
             mappings.put("lane", "activity".equals(lanes)
                     ? "activity_label"
                     : "day");
