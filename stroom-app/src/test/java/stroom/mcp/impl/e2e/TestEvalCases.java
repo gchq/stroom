@@ -86,7 +86,8 @@ class TestEvalCases {
         // The timeline cases whose tool asks the user in its forms, or the chat's model in side calls.
         assertThat(chats).containsExactly("114_timeline_thematic_span_property_sites",
                 "115_timeline_message_and_command_runs", "116_timeline_noise_left_out",
-                "117_timeline_empty_sources_left_out");
+                "117_timeline_empty_sources_left_out", "118_timeline_index_plan_property_sites",
+                "119_timeline_index_plan_periods");
         assertThat(chats).allSatisfy(id -> assertThat(EvalCases.isSkill(EvalCases.load(id))).isTrue());
         for (final String id : java.util.stream.Stream.of(skills, instructions, chats).flatMap(List::stream)
                 .toList()) {
