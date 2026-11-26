@@ -273,6 +273,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
     static final String DONT_CLASSIFY = "Don't call the model";
     /// The form's key for the user fields no way found.
     static final String USER_FIELDS_FORM = "timeline-user-fields";
+    /// The form's key for the fields a later call in a chat still couldn't map.
+    static final String HINTED_FIELDS_FORM = "timeline-hinted-fields";
     static final String LEAVE_OUT = "Leave it out";
     /// The form's key for confirming an index's event codes' classification.
     static final String CODES_FORM = "timeline-event-codes";
@@ -1112,6 +1114,14 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             }
         }
         askUserFields(request, context, prepared);
+        askHintedFields(request, context, prepared);
+        // The things the result names as unmapped, kept for the chat: a later call still leaving them asks.
+        for (final Prepared one : prepared) {
+            if (one.automatic() != null && !one.automatic().hints().isEmpty()) {
+                TimelineFieldHints.keep(sessionWorkspace(context), one.automatic().doc().getUuid(),
+                        one.automatic().hints().keySet(), Map.of());
+            }
+        }
         final Map<Integer, Fields> fields = new LinkedHashMap<>();
         final List<Map<?, ?>> kept = new ArrayList<>();
         for (final Prepared one : prepared) {
@@ -1126,8 +1136,8 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             if (automatic.user() == null) {
                 notes.add(new SourceNote(automatic.name(), automatic.doc().getName(), null, null, null,
                         who.person() == null
-                                ? "no field holding the user was found (give sources [{index, user}], or a ## Fields "
-                                  + "line in the AGENTS doc where it is)"
+                                ? "no field holding the user was found (" + likelyUser(automatic) + "give "
+                                  + "sources [{index, user}], or a ## Fields line in the AGENTS doc where it is)"
                                 : automatic.leftOut(), null, null, List.of()));
                 continue;
             }
@@ -1171,9 +1181,13 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             fields.put(sources.size() - 1, found);
             NullSafe.consume(fieldOf(automatic.mapped(), InstructionRules.SESSION_FIELD), field ->
                     sessions.put(sources.size() - 1, field));
+            // The things still unmapped, without the fields the probe or the command line took after all.
+            final List<String> used = new ArrayList<>(extra);
+            NullSafe.consume(found.command(), used::add);
             notes.add(new SourceNote(automatic.name(), automatic.doc().getName(), automatic.user().field(),
                     automatic.user().from(), transformNote(automatic.transforms()), null, automatic.by(), null,
-                    automatic.suggestions()));
+                    automatic.suggestions(), TimelineFieldHints.said(TimelineFieldHints.without(automatic.hints(),
+                    used))));
         }
         // Every supported index taken with no form to ask: only those holding the user's events are read, and past
         // about ten the calling model chooses (decided with the user 2026-11-25).
@@ -1284,13 +1298,35 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         givenBy.put(TimelineFields.PROCESS_ID, null);
         givenBy.forEach((thing, given) -> NullSafe.consume(mapped(context, doc, thing, given, mapping, types,
                 suggestions), found -> mapped.put(thing, found)));
-        if (user != null) {
-            mapped.put(InstructionRules.USER_FIELD, user);
+        // The fields the user gave earlier in the chat, for things nothing else names.
+        final Map<String, String> answered = TimelineFieldHints.answered(sessionWorkspace(context), doc.getUuid());
+        Found userNow = user;
+        if (userNow == null && answered.containsKey(InstructionRules.USER_FIELD)
+            && userKey(answered.get(InstructionRules.USER_FIELD), mapping) != null) {
+            userNow = new Found(answered.get(InstructionRules.USER_FIELD), TimelineFields.Origin.ASKED, null);
         }
-        final Automatic automatic = new Automatic(name, doc, mapping, types, user == null
+        answered.forEach((thing, field) -> {
+            if (!InstructionRules.USER_FIELD.equals(thing) && !mapped.containsKey(thing)
+                && has(field, mapping, types)) {
+                mapped.put(thing, new Found(field, TimelineFields.Origin.ASKED, null));
+            }
+        });
+        if (userNow != null) {
+            mapped.put(InstructionRules.USER_FIELD, userNow);
+        }
+        // The things still unmapped, with the fields whose names have their words, for the calling model (and,
+        // asked again in a chat, the user) to give.
+        final Set<String> skip = new LinkedHashSet<>(List.of(EqlSequenceResults.STREAM_ID,
+                EqlSequenceResults.EVENT_ID));
+        NullSafe.consume(target.timeField(), skip::add);
+        final List<String> names = new ArrayList<>(mapping.isEmpty()
+                ? types.keySet()
+                : mapping.keySet());
+        final Map<String, List<String>> hints = TimelineFieldHints.unmapped(mapped, names, skip);
+        final Automatic automatic = new Automatic(name, doc, mapping, types, userNow == null
                 ? null
-                : new Found(userKey(user.field(), mapping), user.origin(), user.detail(), user.suggestion(),
-                        user.byPipeline()),
+                : new Found(userKey(userNow.field(), mapping), userNow.origin(), userNow.detail(),
+                        userNow.suggestion(), userNow.byPipeline()),
                 fieldOf(mapped, InstructionRules.HOST_FIELD), fieldOf(mapped, InstructionRules.ELEMENT_FIELD),
                 fieldOf(mapped, InstructionRules.ACTION_FIELD), fieldOf(mapped, InstructionRules.EVENT_TYPE_FIELD),
                 fieldOf(mapped, InstructionRules.OBJECT_FIELD),
@@ -1301,7 +1337,7 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                         ? scope.by()
                         : PersonScope.By.LOGON, scope.usable()
                         ? scope.values()
-                        : who.logons(), scope.leftOut(), List.copyOf(suggestions), mapped);
+                        : who.logons(), scope.leftOut(), List.copyOf(suggestions), mapped, hints);
         return new Prepared(spec, null, automatic);
     }
 
@@ -1408,12 +1444,16 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
         final Map<String, Integer> byKey = new LinkedHashMap<>();
         for (final int i : missing) {
             final Automatic automatic = prepared.get(i).automatic();
-            final List<String> choices = new ArrayList<>(automatic.mapping().values().stream()
+            // The fields whose names have the word first (TimelineFieldHints), then the rest.
+            final List<String> choices = new ArrayList<>(NullSafe.list(automatic.hints().get(
+                    InstructionRules.USER_FIELD)));
+            automatic.mapping().values().stream()
                     .filter(field -> KEYWORD_TYPES.contains(field.nativeType()))
                     .map(ElasticEql.Field::name)
                     .sorted()
+                    .filter(name -> !choices.contains(name))
                     .limit(PROBE_FIELDS)
-                    .toList());
+                    .forEach(choices::add);
             choices.add(LEAVE_OUT);
             final String key = "index_" + (i + 1);
             byKey.put(key, i);
@@ -1436,8 +1476,102 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                     : String.valueOf(content.get(key));
             final Automatic automatic = prepared.get(i).automatic();
             if (field != null && !LEAVE_OUT.equals(field) && userKey(field, automatic.mapping()) != null) {
-                prepared.set(i, new Prepared(prepared.get(i).spec(), null, automatic.withUser(new Found(
-                        userKey(field, automatic.mapping()), TimelineFields.Origin.ASKED, null))));
+                prepared.set(i, new Prepared(prepared.get(i).spec(), null, automatic.withUser(asked(automatic,
+                        InstructionRules.USER_FIELD, userKey(field, automatic.mapping()), context))));
+            }
+        });
+    }
+
+    // The likely user fields of a source with none mapped, e.g. "maybe UserName; ", or nothing.
+    private static String likelyUser(final Automatic automatic) {
+        final List<String> likely = NullSafe.list(automatic.hints().get(InstructionRules.USER_FIELD));
+        return likely.isEmpty()
+                ? ""
+                : "maybe " + String.join(" or ", likely) + "; ";
+    }
+
+    // A field the user gave in a form: kept for the chat's later calls, with the ## Fields line to offer.
+    private Found asked(final Automatic automatic,
+                        final String thing,
+                        final String field,
+                        final ToolCallContext context) {
+        TimelineFieldHints.keep(sessionWorkspace(context), automatic.doc().getUuid(), List.of(),
+                Map.of(thing, field));
+        final Found found = new Found(field, TimelineFields.Origin.ASKED, null);
+        String folder = null;
+        try {
+            folder = agentInstructions.folderOf(automatic.doc());
+        } catch (final RuntimeException e) {
+            LOGGER.debug(() -> "Unable to find the folder of " + automatic.doc(), e);
+        }
+        return found.withSuggestion(TimelineFields.suggestion(thing, found, folder));
+    }
+
+    // A later call in a chat that still leaves an automatic source's user or event type field unmapped, after the
+    // result named the likely fields (TimelineFieldHints): those fields put to the user in one form (decided by the
+    // user 2026-11-27); over MCP, or with no form, the result names them again.
+    private void askHintedFields(final ToolCall request,
+                                 final ToolCallContext context,
+                                 final List<Prepared> prepared) {
+        if (!context.session().isChat()) {
+            return;
+        }
+        final SessionWorkspace workspace = sessionWorkspace(context);
+        final Map<String, Object> properties = new LinkedHashMap<>();
+        final Map<String, int[]> byKey = new LinkedHashMap<>();
+        final Map<String, String> thingOf = new LinkedHashMap<>();
+        for (int i = 0; i < prepared.size(); i++) {
+            final Automatic automatic = prepared.get(i).automatic();
+            if (automatic == null) {
+                continue;
+            }
+            final Set<String> hinted = TimelineFieldHints.hinted(workspace, automatic.doc().getUuid());
+            for (final String thing : TimelineFieldHints.ASKED) {
+                final List<String> likely = NullSafe.list(automatic.hints().get(thing));
+                if (likely.isEmpty() || !hinted.contains(thing)
+                    || (InstructionRules.USER_FIELD.equals(thing) && automatic.user() != null)) {
+                    continue;
+                }
+                final List<String> choices = new ArrayList<>(likely);
+                choices.add(LEAVE_OUT);
+                final String key = "index_" + (i + 1) + "_" + thing.replace(' ', '_');
+                byKey.put(key, new int[]{i});
+                thingOf.put(key, thing);
+                properties.put(key, Map.of("type", "string", "title", automatic.doc().getName() + ": the field "
+                                                                    + "holding the " + thing, "enum", choices,
+                        "default", likely.getFirst()));
+            }
+        }
+        if (properties.isEmpty() || !context.userQuestions().canAsk()) {
+            return;
+        }
+        final ElicitResult answer = context.userQuestions().ask(NAME, UserQuestions.formCallId(request.id(),
+                HINTED_FIELDS_FORM), "Nothing names these fields (the call, an AGENTS doc's ## Fields, an index "
+                                     + "plan, the index's documentation or a convention). Which are they?",
+                Map.of("type", "object", "properties", properties));
+        McpElicitations.unlessSentInstead(answer, "Which fields hold these", NAME, "");
+        if (answer.action() != ElicitResult.Action.ACCEPT) {
+            return;
+        }
+        final Map<String, Object> content = NullSafe.map(answer.content());
+        byKey.forEach((key, at) -> {
+            final Object given = content.get(key);
+            final String field = given == null
+                    ? null
+                    : String.valueOf(given);
+            final Automatic automatic = prepared.get(at[0]).automatic();
+            if (field == null || LEAVE_OUT.equals(field)) {
+                return;
+            }
+            final String thing = thingOf.get(key);
+            if (InstructionRules.USER_FIELD.equals(thing)) {
+                if (userKey(field, automatic.mapping()) != null) {
+                    prepared.set(at[0], new Prepared(prepared.get(at[0]).spec(), null, automatic.withUser(asked(
+                            automatic, thing, userKey(field, automatic.mapping()), context))));
+                }
+            } else if (has(field, automatic.mapping(), automatic.types())) {
+                prepared.set(at[0], new Prepared(prepared.get(at[0]).spec(), null, automatic.withEventType(asked(
+                        automatic, thing, field, context))));
             }
         });
     }
@@ -3129,13 +3263,33 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
                              List<String> values,
                              String leftOut,
                              List<String> suggestions,
-                             Map<String, Found> mapped) {
+                             Map<String, Found> mapped,
+                             Map<String, List<String>> hints) {
 
         Automatic withUser(final Found found) {
             final Map<String, Found> withIt = new LinkedHashMap<>(mapped);
             withIt.put(InstructionRules.USER_FIELD, found);
+            final Map<String, List<String>> hinted = new LinkedHashMap<>(hints);
+            hinted.remove(InstructionRules.USER_FIELD);
             return new Automatic(name, doc, mapping, types, found, host, element, action, eventType, object,
-                    described, transforms, by, values, leftOut, suggestions, withIt);
+                    described, transforms, by, values, leftOut, withSuggestion(found), withIt, hinted);
+        }
+
+        // It with the field the user gave for its event type.
+        Automatic withEventType(final Found found) {
+            final Map<String, Found> withIt = new LinkedHashMap<>(mapped);
+            withIt.put(InstructionRules.EVENT_TYPE_FIELD, found);
+            final Map<String, List<String>> hinted = new LinkedHashMap<>(hints);
+            hinted.remove(InstructionRules.EVENT_TYPE_FIELD);
+            return new Automatic(name, doc, mapping, types, user, host, element, action, found.field(), object,
+                    described, transforms, by, values, leftOut, withSuggestion(found), withIt, hinted);
+        }
+
+        // The ## Fields lines to offer, with the one of a field found by a guess or given by the user.
+        private List<String> withSuggestion(final Found found) {
+            final List<String> out = new ArrayList<>(suggestions);
+            NullSafe.consume(found.suggestion(), out::add);
+            return List.copyOf(out);
         }
 
         // The application, title, window and text are the call's or those mapped for the index ([TimelineFields]):

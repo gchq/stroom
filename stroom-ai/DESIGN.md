@@ -2395,6 +2395,15 @@ keeps the finer ones underneath, each naming its parent.
   each said with the doc or skill it is written in; check_instructions points out a line naming no object (a whole
   type is an `## Event types` line's `ignore`). Accepted noise isn't offered for recording there (the user's
   choice, 2026-11-27).
+* **Unmapped fields** (`TimelineFieldHints`, decided by the user 2026-11-27; seen in eval cases 113 to 115 on Haiku
+  and Sonnet: `UserName`, `Host`, `Object` and `EventCode` unread, the first call refused, the codes unclassified):
+  where nothing names a thing's field (the call, `## Fields`, an index plan, the index's documentation, a
+  convention), the fields whose names have its own words and at most one more (`UserName` for user, `EventCode` for
+  event code; the time, StreamId and EventId fields and those already read left out; never a list of vendors'
+  names) are named for the calling model (`not_mapped`, and in the no-user refusal), never used unasked. A later
+  call in the same chat that still leaves the user's or the event type's field unmapped puts them to the user in
+  one form; the answer is used, kept for the chat (`/outputs/timelines/field-hints.json`) and offered as `## Fields`
+  lines. Over MCP, the names only.
   *Judged in the build:* the exclusion is kept as a timeline-level filter, not written into the catalogue as the
   event type's `ignore` role: the timeline doesn't write source notes, and a role given there would hide the type
   from every timeline of every user; the user's own `ignore` in the catalogue (or an AGENTS line) does that.

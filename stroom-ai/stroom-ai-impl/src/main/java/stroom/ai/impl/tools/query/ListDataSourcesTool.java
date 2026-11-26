@@ -32,6 +32,8 @@ import stroom.ai.impl.tools.instructions.AgentInstructions.Standing;
 import stroom.ai.impl.workspace.ChatWorkspace;
 import stroom.ai.shared.AiToolCategory;
 import stroom.docref.DocRef;
+import stroom.index.shared.LuceneIndexDoc;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.NullSafe;
 
@@ -66,20 +68,25 @@ public class ListDataSourcesTool extends AbstractWorkspaceTool {
     static final int MAX_WITH_DOCUMENTATION = 25;
     /// The most of each data source's documentation given.
     static final int DOCUMENTATION_CHARS = 200;
+    /// The most Elastic and Lucene indexes checked for data in one call; past them, listed unchecked.
+    static final int MAX_CHECKED = 50;
 
     private final DataSourceAccess dataSourceAccess;
     private final AgentInstructions agentInstructions;
     private final AiAuditLog auditLog;
+    private final IndexDataCheck indexDataCheck;
 
     @Inject
     ListDataSourcesTool(final ChatWorkspace workspace,
                         final DataSourceAccess dataSourceAccess,
                         final AgentInstructions agentInstructions,
-                        final AiAuditLog auditLog) {
+                        final AiAuditLog auditLog,
+                        final IndexDataCheck indexDataCheck) {
         super(workspace);
         this.dataSourceAccess = dataSourceAccess;
         this.agentInstructions = agentInstructions;
         this.auditLog = auditLog;
+        this.indexDataCheck = indexDataCheck;
     }
 
     @Override
@@ -106,8 +113,9 @@ public class ListDataSourcesTool extends AbstractWorkspaceTool {
                         .general(" If more than one could hold what the user asked for, ask them which to use")
                         .chatOnly(" with ask_user")
                         .general(" rather than choosing one yourself. Data sources in folders an AGENTS doc says to "
-                                 + "ignore (e.g. an Archive) are left out, and the AGENTS docs that apply to those "
-                                 + "listed are given, e.g. which fields to query for what.")
+                                 + "ignore (e.g. an Archive), and indexes holding no data, are left out, and the "
+                                 + "AGENTS docs that apply to those listed are given, e.g. which fields to query for "
+                                 + "what.")
                         .build())
                 .parameters(ObjectSchema.builder()
                         .addStringProperty(FILTER_ARG, "Optional. Only data sources whose name or type contains "
@@ -148,10 +156,26 @@ public class ListDataSourcesTool extends AbstractWorkspaceTool {
                 : "\n" + ignored + " data source(s) in folders an " + AgentInstructions.DOC_NAME + " doc says to "
                   + "ignore were left out: " + String.join(", ", ignoredBy) + ". Pass " + INCLUDE_IGNORED_ARG
                   + " only if the user asks for those.";
+        // Indexes holding no data left out, said (decided by the user 2026-11-27: seen in eval case 117 on Haiku and
+        // Sonnet, an empty index offered or chosen from this list); views and other sources, and those that can't
+        // be checked, kept.
+        final List<IndexDataCheck.Holding> empty = emptyIndexes(matching, context);
+        if (!empty.isEmpty()) {
+            final Set<DocRef> out = new LinkedHashSet<>();
+            empty.forEach(holding -> out.add(holding.doc()));
+            matching.removeIf(out::contains);
+        }
+        final String emptyNote = empty.isEmpty()
+                ? ""
+                : empty.size() + " index(es) holding no data were left out: " + IndexDataCheck.describe(empty)
+                  + ".";
         if (matching.isEmpty()) {
             return ToolResult.text((filter == null
                     ? "There are no data sources you can use."
-                    : "There are no data sources you can use matching '" + filter + "'.") + ignoredNote);
+                    : "There are no data sources you can use matching '" + filter + "'.") + ignoredNote
+                                   + (emptyNote.isEmpty()
+                    ? ""
+                    : "\n" + emptyNote));
         }
         final List<DocRef> listed = matching.subList(0, Math.min(matching.size(), MAX_LISTED));
         auditLog.documentsViewed(context.session(), listed, "Listed by the " + NAME + " tool");
@@ -174,12 +198,30 @@ public class ListDataSourcesTool extends AbstractWorkspaceTool {
         if (ignored > 0) {
             sb.append(ignoredNote.strip()).append('\n');
         }
+        if (!emptyNote.isEmpty()) {
+            sb.append(emptyNote).append('\n');
+        }
         if (matching.size() > 1) {
             sb.append(CHOOSE_NOTE).append('\n');
         }
         sb.append(standing.note(context.links(),
                 listed.stream().map(agentInstructions::folderOf).collect(Collectors.toSet())));
         return ToolResult.text(sb.toString().stripTrailing());
+    }
+
+    // The Elastic and Lucene indexes of those found that hold no data at all, the first [#MAX_CHECKED] checked.
+    private List<IndexDataCheck.Holding> emptyIndexes(final List<DocRef> found, final ToolCallContext context) {
+        if (indexDataCheck == null) {
+            return List.of();
+        }
+        final List<DocRef> indexes = found.stream()
+                .filter(doc -> ElasticIndexDoc.TYPE.equals(doc.getType()) || LuceneIndexDoc.TYPE.equals(doc.getType()))
+                .limit(MAX_CHECKED)
+                .toList();
+        if (indexes.isEmpty()) {
+            return List.of();
+        }
+        return indexDataCheck.checkAll(indexes, null, null, context.stopped()).empty();
     }
 
     /// @return The first line of a data source's documentation that has text, cut short if long.

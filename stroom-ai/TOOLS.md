@@ -1281,7 +1281,11 @@ are listed, each also gets the first line of its documentation (cut at 200 chara
 past that the result says how many more there are and to give a filter.
 
 Data sources in folders an AGENTS doc says to ignore (e.g. an Archive) are left out unless `includeIgnored` is
-given. The result counts what was left out and names the AGENTS docs that ignore it. The AGENTS docs that apply to
+given. The result counts what was left out and names the AGENTS docs that ignore it. Elastic and Lucene indexes
+holding no data at all (`IndexDataCheck`: an ES|QL count, a Lucene index's shards; the first 50 checked) are left
+out too, each named with why (decided by the user 2026-11-27: in eval case 117 both Haiku and Sonnet chose a source
+from this list, so the timeline's own form, which leaves out empty indexes, never ran); one that can't be checked is
+listed. The AGENTS docs that apply to
 the folders of the listed data sources are appended (e.g. which fields to query for what). When more than one is
 listed, the model is told to ask the user which to use rather than choose one.
 
@@ -2044,6 +2048,11 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
   workspace) and applied on the chat's every run; `## Exclusions` lines (`- <event type>: <object>`, a prefix ending
   `*`) in the AGENTS doc where the index is, or in the skill in use, applied first with no form and never proposed;
   `excluded` says what was left out, a written line with its doc or skill.
+* Unmapped fields (`TimelineFieldHints`): a thing nothing names a field for is named with the index's fields whose
+  names have its own words and at most one more (`not_mapped`, e.g. `event type (maybe EventCode)`; in the
+  no-user refusal `maybe UserName`), never used unasked; a later call in the chat still leaving the user or event
+  type unmapped asks in one form (`timeline-hinted-fields`), the answer kept for the chat
+  (`/outputs/timelines/field-hints.json`) and offered as a `## Fields` line.
 * Activities view: `activity-levels.csv` (`ThematicSpans`), levels 1 to 3 with `id`, `parent`, `how` and
   `events` (an activity of loose items alone a level-1 row over its items' times); merged in code by a fetched
   `*category` field (not `event.category`), runs of point events including a fetched command-line field's commands;

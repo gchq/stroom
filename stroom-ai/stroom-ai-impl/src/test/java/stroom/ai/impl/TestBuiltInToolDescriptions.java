@@ -112,8 +112,8 @@ class TestBuiltInToolDescriptions {
                            + "and Solr indexes and so on): name, type and uuid, with a line of their documentation "
                            + "for a short list. If more than one could hold what the user asked for, ask them which "
                            + "to use rather than choosing one yourself. Data sources in folders an AGENTS doc says "
-                           + "to ignore (e.g. an Archive) are left out, and the AGENTS docs that apply to those "
-                           + "listed are given, e.g. which fields to query for what.");
+                           + "to ignore (e.g. an Archive), and indexes holding no data, are left out, and the AGENTS "
+                           + "docs that apply to those listed are given, e.g. which fields to query for what.");
         assertThat(general.get("read_document").description())
                 .isEqualTo("Reads the content of a Stroom document given its UUID: the code of an XSLT, text "
                            + "converter or script, the words of a dictionary (combined with the dictionaries it "

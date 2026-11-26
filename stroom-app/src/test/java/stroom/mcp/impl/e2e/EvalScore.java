@@ -16,7 +16,6 @@
 
 package stroom.mcp.impl.e2e;
 
-import stroom.ai.impl.tools.catalogue.TimelineRoles;
 import stroom.ai.impl.tools.catalogue.TypeIds;
 import stroom.ai.impl.tools.cef.CefPlan;
 import stroom.ai.impl.tools.indexing.FeedIndexes;
@@ -126,11 +125,6 @@ final class EvalScore {
     // The catalogue's own: a verb and one or more parts of its object (seen in eval case 69: Raise-Malware-Alert,
     // which the catalogue takes, scored not Verb-Object).
     private static final Pattern VERB_OBJECT_ID = TypeIds.VERB_OBJECT;
-    // What a drop rule's label's words are split by.
-    private static final Pattern LABEL_WORDS = Pattern.compile("[-\\s_]+");
-    // The words naming an action on records, which a drop rule's plain label doesn't start with (Drop-OperationalLogs).
-    private static final Set<String> DROP_ACTIONS = Set.of("drop", "ignore", "exclude", "skip", "filter", "discard",
-            "remove", "suppress", "omit");
     // What a build case is scored on when it doesn't say: TypeIds of this pattern, and whether every event (but
     // the catch-all's Unknown ones) must have a Description: not unless the case says so (a description is optional,
     // decided by the user 2026-11-20; a case whose records say what happened asks for one on every event).
@@ -766,9 +760,8 @@ final class EvalScore {
     /// - `event_types_at_least`: the catalogue has at least so many event types that aren't dropped (one that grew
     ///   from a promoted build's, say).
     /// - `drop_rules`: the catalogue's drop rules (event types with `drop: true`): `count`, exactly so many (one rule
-    ///   for what the user drops, not one per logger, say); `plain_label: true`, each labelled plainly, not as
-    ///   an action, as a drop rule writes no event ([#plainDropLabel]; seen in the tester's chat, 2026-11-26:
-    ///   Drop-OperationalLogs).
+    ///   for what the user drops, not one per logger, say). A drop rule's label is the model's (decided by the
+    ///   user 2026-11-27: `Drop-TomcatOperational` allowed, as the catalogue takes it), so not scored.
     ///   Whether a drop rule reads what processing reads (a field outside a cut held JSON field, or the long values
     ///   kept whole) shows in the Events, a case's `records` and `values` and `forbidden_values`, not here.
     ///
@@ -862,7 +855,7 @@ final class EvalScore {
         }
     }
 
-    // drop_rules: how many drop rules there are, and that each is labelled plainly, not as an action.
+    // drop_rules: how many drop rules there are.
     private void scoreDropRules(final Map<String, Object> expected, final List<Map<String, Object>> types) {
         if (expected.isEmpty()) {
             return;
@@ -877,33 +870,6 @@ final class EvalScore {
                                                                                      + "rule(s) " + drops
                                                                                      + ", expected " + count);
         }
-        if (Boolean.TRUE.equals(expected.get("plain_label"))) {
-            final List<String> notPlain = drops.stream()
-                    .filter(label -> !plainDropLabel(label))
-                    .toList();
-            catalogueCheck("drop rules labelled plainly", notPlain.isEmpty(), "drop rules labelled as an action, "
-                                                                              + "not plainly: " + notPlain);
-        }
-    }
-
-    /// Whether a drop rule's label is plain: one the catalogue takes ([TypeIds#dropProblem]) that doesn't read as an
-    /// action. It reads as one when its first word is an action on the records (`Drop-OperationalLogs`, seen in the
-    /// tester's chat, 2026-11-26), or when it is shaped Verb-Object with an event-logging EventDetail element as the
-    /// verb, as an event type's TypeId is (`Process-Heartbeat`). A hyphenated label naming the records is plain
-    /// (`Tomcat-Operational`, seen in eval case 112 on Haiku, 2026-11-26, scored not plain by the Verb-Object shape
-    /// alone).
-    ///
-    /// @param label The drop rule's label (its `type_id`), or null.
-    /// @return True if it is plain.
-    static boolean plainDropLabel(final String label) {
-        if (label == null || TypeIds.dropProblem(label) != null) {
-            return false;
-        }
-        final String first = LABEL_WORDS.split(label.strip(), 2)[0];
-        if (DROP_ACTIONS.contains(first.toLowerCase(Locale.ROOT))) {
-            return false;
-        }
-        return !(VERB_OBJECT_ID.matcher(label).matches() && TimelineRoles.ELEMENTS.contains(first));
     }
 
     // documentation_only: the event types named (or at least so many) from the documentation, with no record in the

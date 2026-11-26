@@ -142,8 +142,24 @@ record TimelineRun(String entity,
     /// @param suggestions The `## Fields` lines that would make the fields found for it by a guess (a convention or
     ///                    the index's documentation) the site's ([TimelineFields.Found#suggestion]); empty for none.
     record SourceNote(String name, String index, String userField, String userFrom, String transform,
-                      String leftOut, PersonScope.By by, String hint, List<String> suggestions) {
+                      String leftOut, PersonScope.By by, String hint, List<String> suggestions, String unmapped) {
 
+        /// A source with nothing unmapped to name.
+        ///
+        /// @param name        The source's name.
+        /// @param index       Its index's name.
+        /// @param userField   Its user field, or null.
+        /// @param userFrom    Where the user field came from, or null.
+        /// @param transform   How the user was matched, or null.
+        /// @param leftOut     Why it was left out, or null.
+        /// @param by          By person or logon id.
+        /// @param hint        A hint for it, or null.
+        /// @param suggestions The ## Fields lines to offer.
+        SourceNote(final String name, final String index, final String userField, final String userFrom,
+                   final String transform, final String leftOut, final PersonScope.By by, final String hint,
+                   final List<String> suggestions) {
+            this(name, index, userField, userFrom, transform, leftOut, by, hint, suggestions, null);
+        }
     }
 
 

@@ -2138,7 +2138,7 @@ offered in modes: AGENT, ASK, PLAN
 
 ### Description
 
-Lists the data sources the user can run StroomQL queries on (views, indexes, Elastic and Solr indexes and so on): name, type and uuid, with a line of their documentation for a short list. Use describe_data_source for a data source's fields before writing a query. If more than one could hold what the user asked for, ask them which to use with ask_user rather than choosing one yourself. Data sources in folders an AGENTS doc says to ignore (e.g. an Archive) are left out, and the AGENTS docs that apply to those listed are given, e.g. which fields to query for what.
+Lists the data sources the user can run StroomQL queries on (views, indexes, Elastic and Solr indexes and so on): name, type and uuid, with a line of their documentation for a short list. Use describe_data_source for a data source's fields before writing a query. If more than one could hold what the user asked for, ask them which to use with ask_user rather than choosing one yourself. Data sources in folders an AGENTS doc says to ignore (e.g. an Archive), and indexes holding no data, are left out, and the AGENTS docs that apply to those listed are given, e.g. which fields to query for what.
 
 ### Parameters
 

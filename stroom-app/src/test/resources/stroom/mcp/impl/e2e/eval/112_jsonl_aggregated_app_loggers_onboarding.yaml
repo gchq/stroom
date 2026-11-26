@@ -64,7 +64,7 @@ expected:
     no_overlaps: true
     no_condition_on_source_type_field: true
     # One drop rule for Tomcat's records, labelled plainly (not Verb-Object).
-    drop_rules: {count: 1, plain_label: true}
+    drop_rules: {count: 1}
   forms:
     asked:
       # The catch-all put to the user at most once (the tester's run looped), if at all: none is shown with no

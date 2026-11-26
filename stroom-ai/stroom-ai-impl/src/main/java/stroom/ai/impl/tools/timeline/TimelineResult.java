@@ -115,6 +115,7 @@ final class TimelineResult {
                 NullSafe.consume(note.userFrom(), from -> source.put("user_field_from", from));
                 NullSafe.consume(note.transform(), transform -> source.put("user_transform", transform));
                 NullSafe.consume(note.hint(), hint -> source.put("hint", hint));
+                NullSafe.consume(note.unmapped(), unmapped -> source.put("not_mapped", unmapped));
             }
             final Map<String, Object> routes = new LinkedHashMap<>();
             run.classification().routes().getOrDefault(i, Map.of()).forEach((route, count) ->
@@ -828,6 +829,9 @@ final class TimelineResult {
         run.notes().stream().filter(note -> note.leftOut() == null && note.hint() != null)
                 .forEach(note -> sb.append("- ").append(note.name()).append(": nothing as given. ")
                         .append(note.hint()).append(".\n"));
+        run.notes().stream().filter(note -> note.leftOut() == null && note.unmapped() != null)
+                .forEach(note -> sb.append("- ").append(note.name()).append(": ").append(note.unmapped())
+                        .append(".\n"));
         final List<String> suggested = suggestions(run.notes());
         if (!suggested.isEmpty()) {
             sb.append("Fields found by a convention or the documentation (offer to make them the site's): ")

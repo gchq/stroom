@@ -96,6 +96,8 @@ class TestActivityTimelineAnySource {
     private static final long STREAM = 9;
     private static final DocRef EVENTS = new DocRef(ElasticIndexDoc.TYPE, "events-uuid", "Events");
     private static final DocRef CODES = new DocRef(ElasticIndexDoc.TYPE, "codes-uuid", "Codes");
+    // An index Stroom didn't build: flat field names no convention, plan or AGENTS line gives.
+    private static final DocRef FLAT = new DocRef(ElasticIndexDoc.TYPE, "flat-uuid", "Flat");
     private static final DocRef SKILLS = new DocRef(DocumentationDoc.TYPE, "skills-uuid", "SKILLS");
     private static final String FOLDER = "/outputs/timelines/pat/";
     private static final String EVENTS_HINT = "If logons are written with a domain or as an email in 'Events', and "
@@ -122,6 +124,7 @@ class TestActivityTimelineAnySource {
     private ActivityTimelineTool tool;
     private List<Map<String, Object>> events;
     private List<Map<String, Object>> codes;
+    private List<Map<String, Object>> flat;
     private int eventId;
     // True to index each event's element and Action besides its XML (the index then holds its type, so its XML isn't
     // read to classify it).
@@ -135,7 +138,7 @@ class TestActivityTimelineAnySource {
                 invocation.<WorkspacePath>getArgument(1).path()).orElse("").lines().toList());
         Mockito.when(dataSourceAccess.find(Mockito.anyString())).thenAnswer(invocation -> {
             final String given = invocation.getArgument(0);
-            return List.of(EVENTS, CODES).stream()
+            return List.of(EVENTS, CODES, FLAT).stream()
                     .filter(doc -> doc.getUuid().equals(given) || doc.getName().equals(given))
                     .toList();
         });
@@ -150,12 +153,17 @@ class TestActivityTimelineAnySource {
                 Map.entry("staff", "keyword"), Map.entry("Site", "keyword"), Map.entry("Zone", "keyword"),
                 Map.entry("Door", "keyword"), Map.entry("Url", "keyword"), Map.entry("Category", "keyword"),
                 Map.entry("process.command_line", "keyword"));
+        final Map<String, String> flatMapping = Map.of("EventTime", "date", "UserName", "keyword", "Host",
+                "keyword", "EventTypeName", "keyword", "Object", "keyword", "StreamId", "long", "EventId", "long",
+                "Element", "keyword");
         Mockito.when(queryService.findFields(Mockito.any())).thenAnswer(invocation -> {
             final DocRef doc = invocation.<FindFieldCriteria>getArgument(0).getDataSourceRef();
             final List<QueryField> fields = new ArrayList<>();
             (EVENTS.equals(doc)
                     ? eventsMapping
-                    : codesMapping).forEach((name, type) -> fields.add("date".equals(type)
+                    : FLAT.equals(doc)
+                            ? flatMapping
+                            : codesMapping).forEach((name, type) -> fields.add("date".equals(type)
                     ? QueryField.createDate(name)
                     : "long".equals(type)
                             ? QueryField.createId(name)
@@ -164,6 +172,7 @@ class TestActivityTimelineAnySource {
         });
         events = streams.add(EVENTS, "EventTime", eventsMapping);
         codes = streams.add(CODES, "@timestamp", codesMapping);
+        flat = streams.add(FLAT, "EventTime", flatMapping);
         Mockito.when(eventXml.read(Mockito.any(), Mockito.any(), Mockito.anyInt(), Mockito.any(), Mockito.any()))
                 .thenAnswer(invocation -> {
                     final Map<Long, List<Long>> ids = invocation.getArgument(1);
@@ -443,6 +452,62 @@ class TestActivityTimelineAnySource {
         assertThat(result).doesNotContainKey("noise_proposed");
         assertThat(String.valueOf(((Map<String, Object>) result.get("excluded")).get("patterns")))
                 .contains("View at https://telemetry.example.net/ping (the skill 'User activity timeline')");
+    }
+
+    @Test
+    void aFlatIndexsUnmappedFieldsAreNamedThenAskedForInALaterCallAndOfferedAsFieldsLines() {
+        for (int i = 0; i < 6; i++) {
+            final Map<String, Object> doc = new LinkedHashMap<>();
+            doc.put("EventTime", at("09:0" + i));
+            doc.put("UserName", "pat");
+            doc.put("Host", "ws-09");
+            doc.put("EventTypeName", i % 2 == 0
+                    ? "logon"
+                    : "logoff");
+            doc.put("Object", "app");
+            // Its schema element, so the probe reads it, not the codes, as the events' element.
+            doc.put("Element", "Authenticate");
+            doc.put("StreamId", STREAM);
+            doc.put("EventId", (long) ++eventId);
+            flat.add(doc);
+        }
+        final Map<String, Object> sources = Map.of("sources", List.of(Map.of("index", "Flat")), "userField",
+                "nobody");
+
+        // In the chat, with the user given: the rest named for the calling model, nothing asked yet.
+        final Questions questions = new Questions(Map.of("index_1_event_type", "EventTypeName",
+                ActivityTimelineTool.BEYOND_FORM, ActivityTimelineTool.CLASSIFY));
+        final Map<String, Object> given = Map.of("sources", List.of(Map.of("index", "Flat", "user", "UserName")));
+        final String first = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
+                arguments(given), false)), chat(questions, model(new ArrayList<>(), "{}"))).text();
+        assertThat(first).contains("Flat: not mapped: event type (maybe EventTypeName), host (maybe Host), object "
+                                   + "(maybe Object); give them in the call's sources ({index, eventTypeField, host, "
+                                   + "object})");
+        assertThat(questions.forms).noneMatch(form -> ((Map<String, Object>) form.get("properties"))
+                .containsKey("index_1_event_type"));
+
+        // A later call still leaving the event type unmapped: the likely field put to the user, used, and offered.
+        final String second = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
+                arguments(given), false)), chat(questions, model(new ArrayList<>(), "{}"))).text();
+        final Map<String, Object> asked = questions.forms.stream()
+                .filter(form -> ((Map<String, Object>) form.get("properties")).containsKey("index_1_event_type"))
+                .findFirst().orElseThrow();
+        assertThat((Map<String, Object>) ((Map<String, Object>) asked.get("properties")).get("index_1_event_type"))
+                .containsEntry("default", "EventTypeName");
+        assertThat(second).contains("`- event type: EventTypeName`").doesNotContain("event type (maybe EventTypeName)");
+
+        // Kept for the chat: the next call uses it and asks nothing.
+        final int forms = questions.forms.size();
+        tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(arguments(given),
+                false)), chat(questions, model(new ArrayList<>(), "{}")));
+        assertThat(questions.forms.stream().filter(form -> ((Map<String, Object>) form.get("properties"))
+                .containsKey("index_1_event_type"))).hasSize(1);
+        assertThat(questions.forms.size()).isGreaterThanOrEqualTo(forms);
+
+        // Over MCP, no user field: refused, naming the likely one.
+        assertThat(tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
+                arguments(sources), false)), mcp()).text()).contains("no field holding the user was found (maybe "
+                                                                      + "UserName;");
     }
 
     @Test

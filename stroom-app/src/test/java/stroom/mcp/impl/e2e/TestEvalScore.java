@@ -663,71 +663,24 @@ class TestEvalScore {
     }
 
     @Test
-    void theDropRulesAreCountedAndEachMustBeLabelledPlainly() {
-        // The fixture's one drop rule, Process-Heartbeat, is labelled Verb-Object.
-        final EvalScore verbObject = new EvalScore("c");
-        verbObject.scoreCatalogue(expecting(Map.of("catalogue", Map.of("drop_rules", Map.of("count", 1,
-                "plain_label", true)))), catalogue(), check(List.of()));
-        assertThat((List<String>) verbObject.toMap().get("problems"))
-                .containsExactly("drop rules labelled as an action, not plainly: [Process-Heartbeat]");
-
-        final Map<String, Object> plain = catalogue();
-        final List<Map<String, Object>> types = new ArrayList<>((List<Map<String, Object>>) plain.get("event_types"));
-        types.removeLast();
-        types.add(eventType("Tomcat operational logging", "dropped", List.of(
-                Map.of("field", "event.logger_name", "matches", "^org\\.apache\\.")), "user_confirmed", true));
-        plain.put("event_types", types);
-        final EvalScore labelled = new EvalScore("c");
-        labelled.scoreCatalogue(expecting(Map.of("catalogue", Map.of("drop_rules", Map.of("count", 1,
-                "plain_label", true)))), plain, check(List.of()));
-        assertThat((List<String>) labelled.toMap().get("problems")).isEmpty();
-
-        // A hyphenated label naming the records is plain too (eval case 112 on Haiku, 2026-11-26).
-        final Map<String, Object> hyphenated = catalogue();
-        final List<Map<String, Object>> named = new ArrayList<>(
-                (List<Map<String, Object>>) hyphenated.get("event_types"));
-        named.removeLast();
-        named.add(eventType("Tomcat-Operational", "dropped", List.of(
-                Map.of("field", "event.logger_name", "matches", "^org\\.apache\\.")), "user_confirmed", true));
-        hyphenated.put("event_types", named);
-        final EvalScore hyphen = new EvalScore("c");
-        hyphen.scoreCatalogue(expecting(Map.of("catalogue", Map.of("drop_rules", Map.of("count", 1,
-                "plain_label", true)))), hyphenated, check(List.of()));
-        assertThat((List<String>) hyphen.toMap().get("problems")).isEmpty();
+    void theDropRulesAreCountedAndTheirLabelsAreTheModels() {
+        // Any label the catalogue takes, Verb-Object shaped too (decided by the user 2026-11-27).
+        final EvalScore one = new EvalScore("c");
+        one.scoreCatalogue(expecting(Map.of("catalogue", Map.of("drop_rules", Map.of("count", 1)))), catalogue(),
+                check(List.of()));
+        assertThat((List<String>) one.toMap().get("problems")).isEmpty();
 
         // A rule per logger, where the user asked for one.
+        final Map<String, Object> plain = catalogue();
+        final List<Map<String, Object>> types = new ArrayList<>((List<Map<String, Object>>) plain.get("event_types"));
         types.add(eventType("Tomcat access log", "dropped", List.of(
                 Map.of("field", "event.logger_name", "equals", "AccessLogValve")), "user_confirmed", true));
+        plain.put("event_types", types);
         final EvalScore two = new EvalScore("c");
         two.scoreCatalogue(expecting(Map.of("catalogue", Map.of("drop_rules", Map.of("count", 1)))), plain,
                 check(List.of()));
         assertThat((List<String>) two.toMap().get("problems")).containsExactly(
-                "the catalogue has 2 drop rule(s) [Tomcat operational logging, Tomcat access log], expected 1");
-    }
-
-    @Test
-    void aDropLabelIsPlainUnlessItReadsAsAnAction() {
-        // Seen in eval case 112 on Haiku (2026-11-26): Tomcat-Operational, a hyphenated label naming the records,
-        // scored not plain by the Verb-Object shape alone.
-        assertThat(EvalScore.plainDropLabel("Tomcat-Operational")).isTrue();
-        assertThat(EvalScore.plainDropLabel("Tomcat operational logging")).isTrue();
-        assertThat(EvalScore.plainDropLabel("Dropped records")).isTrue();
-        assertThat(EvalScore.plainDropLabel("Heartbeats")).isTrue();
-        // An action on the records (the tester's chat, 2026-11-26), whatever its shape.
-        assertThat(EvalScore.plainDropLabel("Drop-PEGAOperational")).isFalse();
-        assertThat(EvalScore.plainDropLabel("Drop-OperationalLogs")).isFalse();
-        assertThat(EvalScore.plainDropLabel("Ignore Tomcat logs")).isFalse();
-        assertThat(EvalScore.plainDropLabel("exclude_heartbeats")).isFalse();
-        assertThat(EvalScore.plainDropLabel("Skip-Noise")).isFalse();
-        assertThat(EvalScore.plainDropLabel("Filter-Health")).isFalse();
-        // Shaped as an event type's TypeId, an EventDetail element its verb.
-        assertThat(EvalScore.plainDropLabel("Process-Heartbeat")).isFalse();
-        assertThat(EvalScore.plainDropLabel("Authenticate-Logon")).isFalse();
-        // A label the catalogue doesn't take, or none.
-        assertThat(EvalScore.plainDropLabel("Unknown")).isFalse();
-        assertThat(EvalScore.plainDropLabel("--")).isFalse();
-        assertThat(EvalScore.plainDropLabel("")).isFalse();
-        assertThat(EvalScore.plainDropLabel(null)).isFalse();
+                "the catalogue has 2 drop rule(s) [Process-Heartbeat, Tomcat access log], expected 1");
     }
 
     @Test

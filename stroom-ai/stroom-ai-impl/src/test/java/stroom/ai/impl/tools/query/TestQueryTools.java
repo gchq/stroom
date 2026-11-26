@@ -80,6 +80,8 @@ class TestQueryTools {
     private static final DocRef WINDOWS = new DocRef("View", "windows-uuid", "Windows events");
     private static final DocRef SECRET = new DocRef("Index", "secret-uuid", "Secret events");
     private static final DocRef LINUX = new DocRef("Index", "linux-uuid", "Linux events");
+
+    private IndexDataCheck indexDataCheck = IndexDataChecks.allHoldData();
     private static final String QUERY = "from \"Windows events\" select User";
 
     private final DataSourceProviderRegistry registry = Mockito.mock(DataSourceProviderRegistry.class);
@@ -133,6 +135,21 @@ class TestQueryTools {
         Mockito.verify(auditLog).documentsViewed(Mockito.eq(ToolSession.chat(CHAT)), logged.capture(),
                 Mockito.contains(ListDataSourcesTool.NAME));
         assertThat(logged.getValue()).containsExactly(LINUX, WINDOWS);
+    }
+
+    @Test
+    void anIndexHoldingNoDataIsLeftOutOfTheListSayingWhy() {
+        // Seen in eval case 117 on Haiku and Sonnet: an empty index offered or chosen from this list.
+        indexDataCheck = IndexDataChecks.holding(Map.of(LINUX, "no shards"));
+
+        assertThat(run(listTool(), "{}"))
+                .contains("Data sources you can use (1)", "View 'Windows events'",
+                        "1 index(es) holding no data were left out: Linux events (no shards).")
+                .doesNotContain("Index 'Linux events'")
+                .doesNotContain(ListDataSourcesTool.CHOOSE_NOTE);
+        assertThat(run(listTool(), "{\"filter\":\"linux\"}"))
+                .isEqualTo("There are no data sources you can use matching 'linux'.\n1 index(es) holding no data "
+                           + "were left out: Linux events (no shards).");
     }
 
     @Test
@@ -500,7 +517,7 @@ class TestQueryTools {
     }
 
     private ListDataSourcesTool listTool() {
-        return new ListDataSourcesTool(workspace, dataSourceAccess, agentInstructions, auditLog);
+        return new ListDataSourcesTool(workspace, dataSourceAccess, agentInstructions, auditLog, indexDataCheck);
     }
 
     private DescribeDataSourceTool describeTool() {
