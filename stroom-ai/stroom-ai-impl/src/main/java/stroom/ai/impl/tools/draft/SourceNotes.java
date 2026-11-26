@@ -96,6 +96,11 @@ public final class SourceNotes {
     /// change (2026-11-23): the list's name ([NameValueLists#nestedName] for a list inside an array's items) to its
     /// key. Put there by the draft's tool from the build's record; never in the user's documentation.
     public static final String CHANGE_SIDES = "change_sides";
+    /// The notes' key for the `events` rules of the build's existing mapping, whose names a re-draft from the
+    /// catalogue keeps for the rules the build already has ([KeptRuleNames], decided by the user 2026-11-26). Put
+    /// there by the draft's tool from the build's latest mapping ([#withExistingRules]); never in the user's
+    /// documentation.
+    public static final String EXISTING_RULES = "existing_rules";
     private static final String EVENT_DETAIL = "EventDetail/";
 
     private SourceNotes() {
@@ -424,8 +429,30 @@ public final class SourceNotes {
         }
         applied.put(CATALOGUED, true);
         applied.putAll(CatalogueTranslation.apply(mapping, names, values, catalogue, catchAllReason(notes, catalogue),
-                detailFields, detailCheck, records, matches, changeSides(notes)));
+                detailFields, detailCheck, records, matches, changeSides(notes),
+                JsonValues.maps(notes.get(EXISTING_RULES))));
         return applied;
+    }
+
+    /// The source notes with the build's existing mapping's rules ([#EXISTING_RULES]), for a draft from the
+    /// catalogue to keep the names of the rules the build already has.
+    ///
+    /// @param notes    The source notes, or null.
+    /// @param existing The build's existing mapping, or null where it has none.
+    /// @return The notes as they are where there is no existing mapping or it has no rules; else a copy with them.
+    public static Map<String, Object> withExistingRules(final Map<String, Object> notes,
+                                                        final Map<String, Object> existing) {
+        final List<Map<String, Object>> rules = existing == null
+                ? List.of()
+                : JsonValues.maps(existing.get("events"));
+        if (rules.isEmpty()) {
+            return notes;
+        }
+        final Map<String, Object> out = notes == null
+                ? new LinkedHashMap<>()
+                : new LinkedHashMap<>(notes);
+        out.put(EXISTING_RULES, List.copyOf(rules));
+        return out;
     }
 
     /// @param notes The source notes, or null.

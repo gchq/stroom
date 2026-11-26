@@ -109,6 +109,12 @@ final class CatalogueTranslation {
     private final List<String> unread = new ArrayList<>();
     // The user's answers of which key of each old/new list holds the value before the change, by the list.
     private final Map<String, String> changeSides;
+    // The build's existing mapping's rules, whose names a rule it already has keeps.
+    private final List<Map<String, Object>> existingRules;
+    // The names no rule new to the build is given: those kept, and the catch-all's.
+    private final Set<String> reserved = new HashSet<>();
+    // The catch-all's name: the existing mapping's, else the default.
+    private String catchAllName = CATCH_ALL_NAME;
 
     @SuppressWarnings("checkstyle:ParameterNumber")
     private CatalogueTranslation(final Map<String, Object> mapping,
@@ -119,9 +125,11 @@ final class CatalogueTranslation {
                                  final Function<String, String> detailCheck,
                                  final List<Map<String, Object>> records,
                                  final PairMatches matches,
-                                 final Map<String, String> changeSides) {
+                                 final Map<String, String> changeSides,
+                                 final List<Map<String, Object>> existingRules) {
         this.mapping = mapping;
         this.changeSides = Map.copyOf(changeSides);
+        this.existingRules = NullSafe.list(existingRules);
         this.names = new ArrayList<>(names);
         this.values = new LinkedHashMap<>(values);
         this.catalogue = catalogue;
@@ -148,6 +156,8 @@ final class CatalogueTranslation {
     /// @param matches        The call's regex matches, each regex's first in a text found once.
     /// @param changeSides    The user's answers of which key of each old/new list holds the value before the change,
     ///                       by the list ([SourceNotes#CHANGE_SIDES]); none where none were given.
+    /// @param existingRules  The build's existing mapping's `events` rules ([SourceNotes#EXISTING_RULES]): a rule
+    ///                       the build already has keeps its name there ([KeptRuleNames]); none for a new build.
     /// @return What was done: `events` (each rule, said), `not_in_sample` (TypeIds no sampled record has),
     /// `uncatalogued` (how many sampled records no event type recognises), `dropped` and `unread_fields`.
     @SuppressWarnings("checkstyle:ParameterNumber")
@@ -160,9 +170,10 @@ final class CatalogueTranslation {
                                      final Function<String, String> detailCheck,
                                      final List<Map<String, Object>> records,
                                      final PairMatches matches,
-                                     final Map<String, String> changeSides) {
+                                     final Map<String, String> changeSides,
+                                     final List<Map<String, Object>> existingRules) {
         return new CatalogueTranslation(mapping, names, values, catalogue, detailFields, detailCheck, records,
-                matches, changeSides)
+                matches, changeSides, existingRules)
                 .apply(catchAllReason);
     }
 
@@ -205,7 +216,10 @@ final class CatalogueTranslation {
         final Set<Map<String, Object>> recognised = Collections.newSetFromMap(new IdentityHashMap<>());
         boolean sole = false;
         final Set<String> seenTypes = new LinkedHashSet<>();
-        for (final CatalogueOrder.WayOf wayOf : ways()) {
+        final List<CatalogueOrder.WayOf> ways = ways();
+        final List<CatalogueOrder.WayOf> written = ways.stream().filter(wayOf -> !wayOf.type().drop()).toList();
+        final KeptRuleNames kept = keptNames(written);
+        for (final CatalogueOrder.WayOf wayOf : ways) {
             final EventType type = wayOf.type();
             final String typeId = typeId(type);
             final List<Map<String, Object>> own = check.recognised(wayOf.way().when(), records);
@@ -226,7 +240,7 @@ final class CatalogueTranslation {
                 continue;
             }
             final Map<String, Object> rule = rule(type, typeId, wayOf.way(), own, common, rest);
-            rule.put(NAME, unique(ruleName(typeId, type, wayOf.index(), ruleNames), ruleNames));
+            rule.put(NAME, name(kept.nameOf(written.indexOf(wayOf)), typeId, wayOf, ruleNames));
             if (wayOf.way().when().isEmpty()) {
                 sole = true;
                 rule.remove(WHEN);
@@ -453,7 +467,7 @@ final class CatalogueTranslation {
             fields.add(entry(PATH, data, DATA_NAME, names.getFirst(), FIELD, names.getFirst()));
         }
         final Map<String, Object> rule = new LinkedHashMap<>();
-        rule.put(NAME, CATCH_ALL_NAME);
+        rule.put(NAME, catchAllName);
         rule.put(FIELDS, fields);
         if (reason != null && UNKNOWN.equals(detail)) {
             rule.put("allow_unknown", reason);
@@ -881,9 +895,41 @@ final class CatalogueTranslation {
         return ToolText.strip(NOT_NAME.matcher(words).replaceAll("_"), "_").toLowerCase(Locale.ROOT);
     }
 
-    private static String unique(final String name, final Set<String> taken) {
+    // The names the build's existing mapping gives the rules written, matched by what each is for; every one kept,
+    // and the catch-all's, kept from the rules new to the build.
+    private KeptRuleNames keptNames(final List<CatalogueOrder.WayOf> written) {
+        reserved.add(CATCH_ALL_NAME);
+        if (existingRules.isEmpty()) {
+            return KeptRuleNames.none();
+        }
+        final KeptRuleNames kept = KeptRuleNames.of(existingRules, written.stream()
+                .map(wayOf -> new KeptRuleNames.Wanted(typeId(wayOf.type()), wayOf.way().when()))
+                .toList());
+        if (kept.catchAll() != null) {
+            catchAllName = kept.catchAll();
+        }
+        reserved.addAll(kept.all());
+        return kept;
+    }
+
+    // A rule's name: the one the build's existing mapping gives it, where it has one no rule named so far has; else
+    // as new to the build ([#ruleName]), never a name kept for another rule.
+    private String name(final String kept,
+                        final String typeId,
+                        final CatalogueOrder.WayOf wayOf,
+                        final Set<String> ruleNames) {
+        if (kept != null && !ruleNames.contains(kept) && !kept.equals(catchAllName)) {
+            ruleNames.add(kept);
+            return kept;
+        }
+        final Set<String> taken = new HashSet<>(ruleNames);
+        taken.addAll(reserved);
+        return unique(ruleName(typeId, wayOf.type(), wayOf.index(), taken), ruleNames);
+    }
+
+    private String unique(final String name, final Set<String> taken) {
         String out = name;
-        while (taken.contains(out) || CATCH_ALL_NAME.equals(out)) {
+        while (taken.contains(out) || reserved.contains(out) || catchAllName.equals(out)) {
             out = out + "_";
         }
         taken.add(out);

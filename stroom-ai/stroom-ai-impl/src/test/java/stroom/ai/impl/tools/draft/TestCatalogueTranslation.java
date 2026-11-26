@@ -736,7 +736,7 @@ class TestCatalogueTranslation extends DraftFixtures {
 
         final Map<String, Object> applied = CatalogueTranslation.apply(mapping, List.of("evt", "usr"),
                 Map.of("evt", List.of("4624", "1102", "7777"), "usr", List.of("alice")), catalogue, null, List.of(),
-                CHECK, records, PairMatches.create(), Map.of());
+                CHECK, records, PairMatches.create(), Map.of(), List.of());
 
         // Three dropped by the mapping's own drop rule, one left to the catch-all as Unknown.
         assertThat(applied).containsEntry("uncatalogued", 1).containsEntry("uncatalogued_dropped", 3);
@@ -761,7 +761,7 @@ class TestCatalogueTranslation extends DraftFixtures {
 
         final Map<String, Object> applied = CatalogueTranslation.apply(mapping, List.of("evt", "usr"),
                 Map.of("evt", List.of("4624", "1102", "7777"), "usr", List.of("alice")), catalogue, null, List.of(),
-                CHECK, records, PairMatches.create(), Map.of());
+                CHECK, records, PairMatches.create(), Map.of(), List.of());
 
         assertThat(applied).containsEntry("uncatalogued", 1).containsEntry("uncatalogued_dropped", 2);
         final List<Map<String, Object>> events = JsonValues.maps(mapping.get("events"));
@@ -830,6 +830,115 @@ class TestCatalogueTranslation extends DraftFixtures {
         assertThat(CatalogueTranslation.slug("HTTPRequest")).isEqualTo("http_request");
         assertThat(CatalogueTranslation.slug("Win32Process")).isEqualTo("win32_process");
         assertThat(CatalogueTranslation.slug("search_query")).isEqualTo("search_query");
+    }
+
+    // Decided by the user (2026-11-26): an existing build drafted again keeps its rules' names, old style too.
+    @Test
+    void aBuildDraftedAgainKeepsTheNamesItsExistingMappingGivesItsRules() {
+        final Map<String, Object> notes = withExisting(notes(List.of(searchWays(eq("env", "QA"))), true),
+                existing("searchquery", "SearchQuery", eq("action", "search"), eq("env", "prod")),
+                existing("searchquery_2", "SearchQuery", eq("action", "search"), eq("env", "QA")),
+                existing("searchquery_3", "SearchQuery", eq("action", "search"),
+                        Map.of("field", "env", "matches", "^dev")),
+                existing("other", "Unknown"));
+
+        final Map<String, Object> draft = draft(searches(), notes);
+
+        assertThat(rules(draft).keySet()).containsExactly("searchquery", "searchquery_2", "searchquery_3", "other");
+        // The templates follow the rules' names.
+        final Map<String, Object> mapping = mappingOf(draft);
+        // The sample names no device: the one the schema requires given.
+        final List<Object> common = new ArrayList<>(JsonValues.listOrEmpty(mapping.get("common")));
+        common.add(Map.of("path", "EventSource/Device/HostName", "value", "search01"));
+        mapping.put("common", common);
+        final XsltGenerator.Generated generated = generate(mapping);
+        assertThat(generated.problems()).as("generates").isEmpty();
+        assertThat(generated.xslt()).contains("searchquery_2").doesNotContain("search_query_qa");
+    }
+
+    @Test
+    void aWayOrEventTypeNewToTheBuildIsNamedAfresh() {
+        final Map<String, Object> search = searchWays(eq("env", "QA"));
+        final List<Map<String, Object>> ways = new ArrayList<>(JsonValues.maps(search.get("recognised_by")));
+        ways.add(way(eq("action", "search"), eq("env", "staging")));
+        search.put("recognised_by", ways);
+        final Map<String, Object> notes = withExisting(notes(List.of(search, type("Authenticate-Logon", "Logon",
+                        "Authenticate", "Logon", "true", way(eq("action", "login")))), true),
+                existing("searchquery", "SearchQuery", eq("action", "search"), eq("env", "prod")),
+                existing("searchquery_2", "SearchQuery", eq("action", "search"), eq("env", "QA")),
+                existing("searchquery_3", "SearchQuery", eq("action", "search"),
+                        Map.of("field", "env", "matches", "^dev")),
+                existing("uncatalogued", "Unknown"));
+
+        final Map<String, Object> draft = draft(searches(), notes);
+
+        assertThat(rules(draft).keySet()).containsExactlyInAnyOrder("searchquery", "searchquery_2", "searchquery_3",
+                "search_query_staging", "authenticate_logon", "uncatalogued");
+    }
+
+    @Test
+    void aWayWhoseConditionsChangedKeepsItsNameWhereTheMatchIsUnambiguous() {
+        final List<Map<String, Object>> rules = List.of(
+                existing("searchquery", "SearchQuery", eq("action", "search"), eq("env", "prod")),
+                existing("searchquery_2", "SearchQuery", eq("action", "search"), eq("env", "QA")),
+                existing("searchquery_3", "SearchQuery", eq("action", "search"),
+                        Map.of("field", "env", "matches", "^dev")),
+                existing("uncatalogued", "Unknown"));
+
+        // QA renamed UAT: the type's second rule, its only one changed.
+        final Map<String, Object> changed = draft(searches(), withExisting(notes(List.of(searchWays(eq("env",
+                "UAT"))), true), rules.toArray(Map[]::new)));
+        assertThat(rules(changed).keySet()).containsExactly("searchquery", "searchquery_2", "searchquery_3",
+                "uncatalogued");
+
+        // Changed and another way added: which is which can't be told, so both are named afresh.
+        final Map<String, Object> search = searchWays(eq("env", "UAT"));
+        final List<Map<String, Object>> ways = new ArrayList<>(JsonValues.maps(search.get("recognised_by")));
+        ways.add(way(eq("action", "search"), eq("env", "staging")));
+        search.put("recognised_by", ways);
+        final Map<String, Object> ambiguous = draft(searches(), withExisting(notes(List.of(search), true),
+                rules.toArray(Map[]::new)));
+        assertThat(rules(ambiguous).keySet()).containsExactlyInAnyOrder("searchquery", "searchquery_3",
+                "search_query_uat", "search_query_staging", "uncatalogued");
+    }
+
+    @Test
+    void aKeptNameIsNeverGivenToARuleNewToTheBuild() {
+        // The existing mapping names its prod rule what the new naming would call the QA one.
+        final Map<String, Object> draft = draft(searches(), withExisting(notes(List.of(searchWays(eq("env",
+                        "QA"))), true),
+                existing("search_query_qa", "SearchQuery", eq("action", "search"), eq("env", "prod"))));
+
+        assertThat(rules(draft).keySet()).containsExactly("search_query_qa", "search_query_2", "search_query_3",
+                "uncatalogued");
+    }
+
+    // SearchQuery recognised three ways: prod, the second way's env (QA, say), and dev.
+    private static Map<String, Object> searchWays(final Map<String, Object> second) {
+        return type("SearchQuery", "Search", "Search", null, null,
+                way(eq("action", "search"), eq("env", "prod")),
+                way(eq("action", "search"), second),
+                way(eq("action", "search"), Map.of("field", "env", "matches", "^dev")));
+    }
+
+    // A rule of a build's existing mapping, writing the TypeId, taking the records the conditions hold for.
+    @SafeVarargs
+    private static Map<String, Object> existing(final String name,
+                                                final String typeId,
+                                                final Map<String, Object>... when) {
+        final Map<String, Object> rule = new LinkedHashMap<>();
+        rule.put("name", name);
+        if (when.length > 0) {
+            rule.put("when", List.of(when));
+        }
+        rule.put("fields", List.of(Map.of("path", "EventDetail/TypeId", "value", typeId)));
+        return rule;
+    }
+
+    @SafeVarargs
+    private static Map<String, Object> withExisting(final Map<String, Object> notes,
+                                                    final Map<String, Object>... rules) {
+        return SourceNotes.withExistingRules(notes, Map.of("events", List.of(rules)));
     }
 
     // JSON lines: event.original JSON text holding details as JSON text again.

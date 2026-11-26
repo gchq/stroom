@@ -286,10 +286,16 @@ class DraftTranslationMappingTool extends AbstractBuiltInTool {
         if (samples.isEmpty()) {
             throw new ToolRefusal("Give the samples' text, or stream_ids of the uploaded sample streams");
         }
-        final Map<String, Object> sourceNotes = build == null
+        final Map<String, Object> notesInBuild = build == null
                 ? null
                 : builds.notesInBuild(build);
-        awaitingConfirmation(sourceNotes);
+        awaitingConfirmation(notesInBuild);
+        // Drafted again from the catalogue, the rules the build already has keep their names in its existing mapping
+        // (and so their templates' and documentation's); only rules new to the build are named afresh (decided by
+        // the user 2026-11-26).
+        final Map<String, Object> sourceNotes = SourceNotes.catalogue(notesInBuild) == null
+                ? notesInBuild
+                : SourceNotes.withExistingRules(notesInBuild, builds.latestMapping(context, build).orElse(null));
         final SystemGiven system = system(call, build, groupScope);
         final Map<String, String> bySourceType = SourceTypeSystemNames.of(system.systemName(), groupScope);
         // The spec given, else the build's saved Data Splitter, as catalogue_event_types and the sample check read

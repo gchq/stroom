@@ -6378,8 +6378,12 @@ takes every record; an event type the user dropped is a `drop_when` rule per way
 XSLT follows from it. Each rule is named after its TypeId in snake case (`SearchQuery` is `search_query`); a second or
 later way of an event type adds what tells it apart, the values of its `equals`/`one_of` conditions no other way of the
 type tests (`search_query_qa`), else its number (`search_query_3`) (2026-11-26: a rule `searchquery_2`, named nowhere
-else, read as an event type of its own). A kept mapping keeps its rules' names: its rules are matched to event types by
-the records they take (`CatalogueKept`), never by name. Each rule starts from the draft's rule that took the way's
+else, read as an event type of its own). That naming is for rules new to the build: drafted again, a build keeps the
+names its latest mapping (`TranslationBuilds.latestMapping`) gives its rules, old style too (`searchquery_2`), the
+catch-all's included (`KeptRuleNames`, user 2026-11-26). A rule is matched by the same TypeId and conditions, else, its
+conditions changed, by its place among the type's rules where nothing was added or taken away; never by name. A kept
+mapping keeps its rules' names: its rules are matched to event types by the records they take (`CatalogueKept`), never
+by name. Each rule starts from the draft's rule that took the way's
 records in the sample (severity, names, addresses kept), then takes what the catalogue says:
 
 * **TypeId** fixed: the event type's (Verb-Object), else the default (`TypeIds.defaultTypeId`).
