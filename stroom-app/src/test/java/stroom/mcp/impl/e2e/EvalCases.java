@@ -85,7 +85,7 @@ final class EvalCases {
             "107_json_describe_in_place_shared_two_feeds", "108_json_describe_in_place_users_text_kept",
             "109_json_describe_in_place_timeline_roles", "110_cef_forwarder_two_stages",
             "111_compare_screen_population", "112_jsonl_aggregated_app_loggers_onboarding",
-            "113_timeline_badges_logons_vpn_periods");
+            "113_timeline_badges_logons_vpn_periods", "114_timeline_thematic_span_property_sites");
 
     // The types of a question's columns ([#table]).
     private static final List<String> QUESTION_TYPES = List.of("text", "long", "date");

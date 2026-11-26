@@ -1,0 +1,63 @@
+name: A day of interleaved visits to property sites beside document work, its thematic span and the events that make it up (a chat)
+kind: chat
+capabilities: [timeline, elasticsearch, levels, characterise]
+# One person's day (lchen, 18 November 2026) in one Elasticsearch index "Web and documents", made by
+# EvalTimelineScenes (scene property_sites): in the afternoon, web requests (EventCode web.get, Object the URL,
+# Category the proxy's category) to three property listing sites visited by turns; in the morning and late
+# afternoon, edits (doc.edit) of a budget workbook and a board report. Run in Stroom's chat, where the levels'
+# side calls go to the chat's model (scripted in the reference, side_answers): code merges each site's visits by
+# its domain, and the model joins the three sites' chain as one theme. Scored on activity-levels.csv and events.csv:
+# a level-2 thematic span holding exactly the visits' requests, the visits (a span each) its children; and the
+# follow-up, which events make it up (asked in the request: the harness's follow_up is said only in a question's
+# run over MCP, which has no side calls), answered from events.csv's membership columns (merged): exactly them.
+# The traps: three sites read as three things done, the document work taken into the theme, the other person's
+# visits, and listing the afternoon's events by time rather than by membership. Skipped without an Elasticsearch
+# node.
+elastic_index:
+  name: Web and documents
+  generate: {kind: timeline_scenes, scene: property_sites, seed: 114}
+  fields: {EventTime: date, Source: text, UserName: text, Host: text, EventCode: text, Object: text,
+           Category: text}
+request: >
+  What was lchen doing on 18 November 2026? Build their activity timeline from the "Web and documents"
+  Elasticsearch index, with what they were working on. Then list exactly the events that make up their real-estate
+  browsing, with each one's StreamId and EventId.
+user_knows: >
+  Source says which product wrote each event: proxy (EventCode web.get, Object the URL, Category the proxy's
+  category) and endpoint (EventCode doc.edit, Object the document). The day is 18 November 2026 00:00 UTC up to,
+  not including, 19 November 2026. Characterise with the model.
+expected:
+  tools_used: [activity_timeline]
+  # Scored on activity-levels.csv and events.csv (EvalTimelineScore), never on the model's wording.
+  timeline:
+    entity: lchen
+    theme: {matches: 'homes\.example\.com\.au|propertyfinder\.example\.net|rentals\.example\.org', level: 2,
+            exactly: true, children_at_least: 9}
+    members_answer: true
+reference:
+  calls:
+    - {tool: activate_timelines, arguments: {}}
+    - tool: activity_timeline
+      arguments:
+        entity: lchen
+        timeFrom: '2026-11-18T00:00:00.000Z'
+        timeTo: '2026-11-19T00:00:00.000Z'
+        timeZone: UTC
+        view: activities
+        sources:
+          - {index: Web and documents, user: UserName, host: Host, object: Object, eventTypeField: EventCode,
+             typeRoles: {web.get: action, doc.edit: action}}
+    - tool: table
+      arguments:
+        path: /outputs/timelines/lchen/events.csv
+        where: [{column: merged, op: '=', value: t1}]
+        select: [time, object, StreamId, EventId]
+  side_answers:
+    - contains: [You group a user's timeline]
+      answer: >-
+        [{"id": "c1", "answer": "separate", "confidence": "high", "evidence": ["q4 budget forecast"]},
+        {"id": "c2", "answer": "one", "description": "viewed property listing sites", "confidence": "high",
+        "evidence": ["example.com.au", "example.net", "example.org"]}]
+  answer: >-
+    lchen worked on the Q4 budget forecast and the November board report in the morning, and in the afternoon
+    browsed three property listing sites by turns (one theme); the events making it up are listed above.

@@ -82,8 +82,8 @@ class TestEvalCases {
 
         assertThat(skills).hasSize(9).allSatisfy(id -> assertThat(id).matches("(8[89]|9[0-6])_skill_.*"));
         assertThat(instructions).hasSize(4).allSatisfy(id -> assertThat(id).matches("(98|99|100|101)_agents_.*"));
-        // The cases whose tool asks the user in its forms, or the chat's model in side calls.
-        assertThat(chats).isEmpty();
+        // The timeline cases whose tool asks the user in its forms, or the chat's model in side calls.
+        assertThat(chats).containsExactly("114_timeline_thematic_span_property_sites");
         assertThat(chats).allSatisfy(id -> assertThat(EvalCases.isSkill(EvalCases.load(id))).isTrue());
         for (final String id : java.util.stream.Stream.of(skills, instructions, chats).flatMap(List::stream)
                 .toList()) {
@@ -571,6 +571,18 @@ class TestEvalCases {
         assertThat(records).filteredOn(record -> "badge".equals(record.get("Source")))
                 .extracting(record -> record.get("Door")).contains("HQ-L2-North", "HQ-L2-South", "HQ-L2-East",
                         "DEP-W1", "DEP-W3");
+    }
+
+    @Test
+    void theThemeCasesSitesAreTheGeneratorsInterleavedVisits() {
+        // The theme's events: three sites by turns, three requests a visit.
+        final Map<String, Object> themes = EvalCases.load("114_timeline_thematic_span_property_sites");
+        final Map<String, Object> theme = EvalCases.map(EvalCases.map(EvalCases.map(themes.get("expected"))
+                .get("timeline")).get("theme"));
+        final Pattern sites = Pattern.compile(String.valueOf(theme.get("matches")));
+        assertThat(records(themes, "lchen")).filteredOn(record -> sites.matcher(record.get("Object")).find())
+                .hasSize(27).extracting(record -> record.get("Category")).containsOnly("Real Estate");
+        assertThat(theme).containsEntry("children_at_least", 9);
     }
 
     // A timeline case's records of one user, in time order.
