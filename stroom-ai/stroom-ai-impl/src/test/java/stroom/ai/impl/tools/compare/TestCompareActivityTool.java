@@ -35,6 +35,8 @@ import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.query.DataSourceDocumentation;
+import stroom.ai.impl.tools.query.IndexDataCheck;
+import stroom.ai.impl.tools.query.IndexDataChecks;
 import stroom.ai.impl.tools.streams.StreamProvenance;
 import stroom.ai.impl.tools.time.ToolTimeZone;
 import stroom.ai.impl.tools.timeline.PersonScope;
@@ -42,9 +44,11 @@ import stroom.ai.impl.tools.timeline.TimelineEventXml;
 import stroom.ai.impl.tools.timeline.TimelineFields;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.docref.DocRef;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResultPage;
 
@@ -93,6 +97,7 @@ class TestCompareActivityTool {
     private FakeTabWorkspace files;
     private CompareFixtures fixtures;
     private final StreamProvenance streamProvenance = Mockito.mock(StreamProvenance.class);
+    private final Map<DocRef, String> emptyIndexes = new LinkedHashMap<>();
     private CompareActivityTool tool;
 
     @BeforeEach
@@ -117,7 +122,7 @@ class TestCompareActivityTool {
         tool = new CompareActivityTool(files.workspace(), dataSourceAccess, () -> queryService,
                 fixtures.aggregates(), new TimelineFields(agentInstructions, dataSourceAccess, Optional.empty(),
                     () -> Mockito.mock(DataSourceDocumentation.class)),
-                new PeerGroups(eventXml), auditLog, streamProvenance);
+                new PeerGroups(eventXml), auditLog, streamProvenance, IndexDataChecks.holding(emptyIndexes));
 
         for (int i = 0; i < 10; i++) {
             fixtures.workdays("other" + i, FROM, WINDOW_TO, 9, 17, date -> 5, date -> Map.of("host.name", "h"));
@@ -155,6 +160,47 @@ class TestCompareActivityTool {
                 .contains("2026-05-12,Proxy,scored,160,8,09:05,16:52,1,0");
         Mockito.verify(auditLog).searched(Mockito.any(), Mockito.eq(CompareFixtures.PROXY), Mockito.contains(
                 "more aggregates"), Mockito.anyLong(), Mockito.contains("by the compare_activity tool"));
+    }
+
+    @Test
+    void theDefaultIndexesHoldingNoDocumentsInThePeriodAreLeftOutWithWhy() {
+        final DocRef emptyElastic = new DocRef(ElasticIndexDoc.TYPE, "empty-uuid", "Empty");
+        final DocRef emptyLucene = new DocRef(LuceneIndexDoc.TYPE, "lucene-uuid", "Old events");
+        Mockito.when(dataSourceAccess.listUsable()).thenReturn(List.of(emptyElastic, emptyLucene,
+                CompareFixtures.PROXY));
+        emptyIndexes.put(emptyElastic, IndexDataCheck.NO_DOCUMENTS_IN_PERIOD);
+        emptyIndexes.put(emptyLucene, IndexDataCheck.NO_SHARDS);
+
+        final Map<String, Object> json = json(mcp(), arguments());
+
+        // Left out before their fields are read, each saying why; the one holding documents compared.
+        assertThat(sources(json)).extracting(source -> source.get("index"))
+                .containsExactly("Empty", "Old events", "Proxy");
+        assertThat(sources(json).get(0)).containsEntry("left_out", IndexDataCheck.NO_DOCUMENTS_IN_PERIOD);
+        assertThat(sources(json).get(1)).containsEntry("left_out", IndexDataCheck.NO_SHARDS);
+        assertThat(sources(json).get(2)).doesNotContainKey("left_out");
+        Mockito.verify(queryService, Mockito.never()).findFields(Mockito.argThat(criteria ->
+                emptyElastic.equals(criteria.getDataSourceRef()) || emptyLucene.equals(criteria.getDataSourceRef())));
+    }
+
+    @Test
+    void whenNoDefaultIndexHoldsDocumentsInThePeriodNothingIsComparedAndItSaysWhy() {
+        emptyIndexes.put(CompareFixtures.PROXY, IndexDataCheck.NO_DOCUMENTS_IN_PERIOD);
+
+        assertThat(error(arguments())).contains("None of the 1 Elastic and Lucene index(es) you can use holds "
+                                                + "documents in the period")
+                .contains("Proxy (no documents in the period)");
+    }
+
+    @Test
+    void namedSourcesAreNotChecked() {
+        emptyIndexes.put(CompareFixtures.PROXY, IndexDataCheck.NO_DOCUMENTS_IN_PERIOD);
+        final Map<String, Object> arguments = arguments();
+        arguments.put(CompareActivityTool.SOURCES_ARG, List.of("Proxy"));
+
+        final Map<String, Object> json = json(mcp(), arguments);
+
+        assertThat(sources(json).getFirst()).containsEntry("index", "Proxy").doesNotContainKey("left_out");
     }
 
     @Test

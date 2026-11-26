@@ -2009,6 +2009,12 @@ skills"). Group `timelines`; offered to a user who can use an Elastic Index.
   "pick days" next step; sources matched by a script or several user fields aren't counted.
 * Sources over MCP with no form: a root AGENTS doc's `## Sources` line `- timeline: A, B`; else the supported
   indexes holding the user's events; past 10, refused with the list for the calling model to choose.
+* Supported (2026-11-27, `IndexDataCheck`): the Elastic Indexes the user can use holding documents in the period, by
+  one ES|QL `COUNT(*)` each on the time field (an index name standing for nothing on the cluster holds none). Those
+  holding none are left out of the forms' choices, the confirming list, the dashboard choice and "all", named in the
+  form and in `sources_chosen`; none left is refused without a form. A count that fails keeps the index, "couldn't
+  check" in `sources_chosen`. A Lucene index is checked by its shards (none, or none in the period by partition
+  times, or all empty: no data), as the processing user, since listing shards needs Manage Index Shards.
 
 **Evening additions (2026-11-25).** All fallbacks after the call/skill and AGENTS `## Fields`:
 * Where feeding pipelines' plans differ: each Events stream traced once to its indexing pipeline (`IndexingTrace`,
@@ -2124,7 +2130,9 @@ of its own: the tool policies decide who may compare a person's activity.
   the day before, said in the notes (models pass the window's start as the baseline's end). The baseline ends by the
   window's start, and the two together are at most 3 × 366 days. `unit` (`day`, `week`, the default, or `month`) is what the window is compared in. Days and hours
   are in `timeZone` (the person's).
-* **Sources**: `sources` (names or uuids), default every Elastic and Lucene index the user can use; each one with no
+* **Sources**: `sources` (names or uuids), default every Elastic and Lucene index the user can use holding documents
+  from the baseline's start to the window's end (`IndexDataCheck`, 2026-11-27: one holding none is left out, "no
+  documents in the period", "no shards"; one that can't be checked is read, said in the notes); each one with no
   time field, or with no person or user field for the person, is listed as left out with why, and refused only if
   none is left. `sumFields` are numeric fields summed a day (bytes sent); `breadthFields` are fields whose distinct
   and new values are counted a day (default the host, application and object fields `TimelineFields` finds, by the

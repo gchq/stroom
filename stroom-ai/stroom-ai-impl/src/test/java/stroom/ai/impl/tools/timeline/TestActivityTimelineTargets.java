@@ -33,6 +33,7 @@ import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.query.DataSourceDocumentation;
+import stroom.ai.impl.tools.query.IndexDataChecks;
 import stroom.ai.impl.tools.sequence.InMemoryKeyStreams;
 import stroom.ai.impl.tools.skills.SkillCatalogue;
 import stroom.ai.impl.tools.streams.IndexingTrace;
@@ -122,7 +123,7 @@ class TestActivityTimelineTargets {
                 Optional.empty(),
                 () -> Mockito.mock(DataSourceDocumentation.class));
         final TimelineSourceChoice sourceChoice = new TimelineSourceChoice(dataSourceAccess,
-                () -> Mockito.mock(TabSnapshots.class));
+                () -> Mockito.mock(TabSnapshots.class), IndexDataChecks.allHoldData());
         tool = new ActivityTimelineTool(files.workspace(), () -> streams, dataSourceAccess, () -> queryService,
                 Mockito.mock(AiAuditLog.class), Mockito.mock(TimelineEventXml.class), timelineFields, sourceChoice,
                 () -> Mockito.mock(SkillCatalogue.class), Mockito.mock(DocumentAccess.class), agentInstructions,

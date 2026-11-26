@@ -34,6 +34,7 @@ import stroom.ai.impl.tools.documents.DocumentAccess;
 import stroom.ai.impl.tools.instructions.AgentInstructions;
 import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.query.DataSourceDocumentation;
+import stroom.ai.impl.tools.query.IndexDataChecks;
 import stroom.ai.impl.tools.sequence.InMemoryKeyStreams;
 import stroom.ai.impl.tools.skills.SkillCatalogue;
 import stroom.ai.impl.tools.streams.IndexingTrace;
@@ -146,7 +147,8 @@ class TestActivityTimelineTool {
         tool = new ActivityTimelineTool(files.workspace(), () -> streams, dataSourceAccess, () -> queryService,
                 auditLog, eventXml, new TimelineFields(agentInstructions, dataSourceAccess, Optional.empty(),
                     () -> Mockito.mock(DataSourceDocumentation.class)),
-                new TimelineSourceChoice(dataSourceAccess, () -> tabSnapshots), () -> skillCatalogue, documentAccess,
+                new TimelineSourceChoice(dataSourceAccess, () -> tabSnapshots, IndexDataChecks.allHoldData()),
+                () -> skillCatalogue, documentAccess,
                 agentInstructions, () -> Mockito.mock(ElasticEsql.class), () -> documentation, () -> streamProvenance,
                 () -> Mockito.mock(IndexingTrace.class));
 

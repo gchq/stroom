@@ -32,6 +32,7 @@ import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.query.DataSourceDocumentation;
+import stroom.ai.impl.tools.query.IndexDataChecks;
 import stroom.ai.impl.tools.streams.StreamProvenance;
 import stroom.ai.impl.tools.timeline.TimelineEventXml;
 import stroom.ai.impl.tools.timeline.TimelineFields;
@@ -108,7 +109,7 @@ class TestCompareActivityTargets {
                 fixtures.aggregates(), new TimelineFields(agentInstructions, dataSourceAccess, Optional.empty(),
                     () -> Mockito.mock(DataSourceDocumentation.class)),
                 new PeerGroups(Mockito.mock(TimelineEventXml.class)), Mockito.mock(AiAuditLog.class),
-                Mockito.mock(StreamProvenance.class));
+                Mockito.mock(StreamProvenance.class), IndexDataChecks.allHoldData());
         for (int i = 0; i < 6; i++) {
             fixtures.workdays("other" + i, FROM, WINDOW_TO, 9, 17, date -> 4, date -> Map.of("host.name", "h",
                     "event.action", "View"));

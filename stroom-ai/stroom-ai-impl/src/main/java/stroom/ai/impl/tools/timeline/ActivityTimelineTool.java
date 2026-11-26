@@ -48,6 +48,7 @@ import stroom.ai.impl.tools.instructions.InstructionRules.TypeRoleRule;
 import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.query.DataSourceDocumentation;
 import stroom.ai.impl.tools.query.EsqlQueryTool;
+import stroom.ai.impl.tools.query.IndexDataCheck;
 import stroom.ai.impl.tools.query.StroomQlDatePoints;
 import stroom.ai.impl.tools.sequence.EqlQueryWriter.Filter;
 import stroom.ai.impl.tools.sequence.EqlSequenceResults;
@@ -1034,10 +1035,16 @@ public class ActivityTimelineTool extends AbstractWorkspaceTool {
             ruled.indexes().forEach(doc -> specs.add(Map.of(INDEX_KEY, doc.getUuid())));
             chosen = ruled.how();
         } else if (ask || (given instanceof final String text && ALL_SOURCES.equalsIgnoreCase(text.strip()))) {
-            final TimelineSourceChoice.Chosen choice = ask
-                    ? sourceChoice.choose(request, context, NAME)
-                    : new TimelineSourceChoice.Chosen(sourceChoice.supported(), true, "all supported data sources, "
-                                                                                     + "as the call asked");
+            final Instant from = Instant.ofEpochMilli(period.fromMs());
+            final Instant to = Instant.ofEpochMilli(period.toMs());
+            final TimelineSourceChoice.Chosen choice;
+            if (ask) {
+                choice = sourceChoice.choose(request, context, NAME, from, to);
+            } else {
+                final IndexDataCheck.Checked checked = sourceChoice.supported(from, to, context);
+                choice = new TimelineSourceChoice.Chosen(checked.kept(), true, "all supported data sources, as the "
+                                                                               + "call asked" + checked.notes());
+            }
             if (choice.indexes().isEmpty()) {
                 throw new WorkspaceException("You can't use any Elastic Index, so there is nothing to build a "
                                              + "timeline from.");

@@ -33,14 +33,18 @@ import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.instructions.InstructionRules.FieldRule;
 import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.query.DataSourceDocumentation;
+import stroom.ai.impl.tools.query.IndexDataCheck;
+import stroom.ai.impl.tools.query.IndexDataChecks;
 import stroom.ai.impl.tools.streams.StreamProvenance;
 import stroom.ai.impl.tools.timeline.TimelineEventXml;
 import stroom.ai.impl.tools.timeline.TimelineFields;
 import stroom.ai.impl.workspace.SessionWorkspace;
 import stroom.docref.DocRef;
+import stroom.index.shared.LuceneIndexDoc;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.impl.QueryService;
+import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResultPage;
 
@@ -89,6 +93,7 @@ class TestCompareActivityScreen {
             QueryField.createId("StreamId"), QueryField.createId("EventId")));
     private FakeTabWorkspace files;
     private CompareFixtures fixtures;
+    private final Map<DocRef, String> emptyIndexes = new LinkedHashMap<>();
     private CompareActivityTool tool;
 
     @BeforeEach
@@ -108,7 +113,7 @@ class TestCompareActivityScreen {
                 Optional.empty(), () -> Mockito.mock(DataSourceDocumentation.class));
         tool = new CompareActivityTool(files.workspace(), dataSourceAccess, () -> queryService,
                 fixtures.aggregates(), timelineFields, new PeerGroups(eventXml), Mockito.mock(AiAuditLog.class),
-                Mockito.mock(StreamProvenance.class));
+                Mockito.mock(StreamProvenance.class), IndexDataChecks.holding(emptyIndexes));
 
         for (int i = 0; i < 10; i++) {
             fixtures.workdays("other" + i, FROM, WINDOW_TO, 9, 17, date -> 5, date -> Map.of("host.name", "h",
@@ -159,6 +164,23 @@ class TestCompareActivityScreen {
                 .doesNotContain("row limit");
         // No rare field: the fields that could be screened for one (none here has many values).
         assertThat(json).doesNotContainKey("rare");
+    }
+
+    @Test
+    void theScreensDefaultIndexesHoldingNoDocumentsInThePeriodAreLeftOutWithWhy() {
+        final DocRef emptyElastic = new DocRef(ElasticIndexDoc.TYPE, "empty-uuid", "Empty");
+        final DocRef emptyLucene = new DocRef(LuceneIndexDoc.TYPE, "lucene-uuid", "Old events");
+        Mockito.when(dataSourceAccess.listUsable()).thenReturn(List.of(CompareFixtures.PROXY, emptyElastic,
+                emptyLucene));
+        emptyIndexes.put(emptyElastic, IndexDataCheck.NO_DOCUMENTS_IN_PERIOD);
+        emptyIndexes.put(emptyLucene, IndexDataCheck.NO_SHARDS);
+
+        final Map<String, Object> json = json(mcp(), arguments());
+
+        assertThat(people(json)).containsExactlyInAnyOrder("riser", "nightowl");
+        final List<Map<String, Object>> sources = (List<Map<String, Object>>) json.get("sources");
+        assertThat(sources).extracting(source -> source.get("left_out"))
+                .containsExactly(null, IndexDataCheck.NO_DOCUMENTS_IN_PERIOD, IndexDataCheck.NO_SHARDS);
     }
 
     @Test

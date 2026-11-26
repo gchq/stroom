@@ -95,6 +95,7 @@ class TestE2eCompareActivity extends AbstractE2eTest {
 
     private ElasticTestNode node;
     private String indexName;
+    private String emptyName;
 
     @BeforeEach
     void setUpNode() {
@@ -107,6 +108,43 @@ class TestE2eCompareActivity extends AbstractE2eTest {
         if (node != null && indexName != null) {
             node.deleteIndices(indexName);
         }
+        if (node != null && emptyName != null) {
+            node.deleteIndices(emptyName);
+        }
+    }
+
+    @Test
+    void theDefaultSourcesHoldingNoDocumentsInThePeriodAreLeftOutSayingWhy() {
+        // Seen in user testing (2026-11-27): indexes holding no data at all were offered as sources.
+        final DocRef held = elasticIndex(events(), stream());
+        emptyName = ElasticTestNode.createIndexName("compare-activity-empty");
+        node.createIndex(emptyName, """
+                {"mappings": {"properties": {
+                  "@timestamp": {"type": "date"},
+                  "user": {"properties": {"id": {"type": "keyword"}}}}}}""");
+        final DocRef cluster = liveElasticCluster(node, "E2E compare empty cluster " + emptyName);
+        final ExplorerNode empty = create(ElasticIndexDoc.TYPE, "E2E compare empty " + emptyName, templateFolder());
+        asUser(admin, () -> elasticIndexStore.writeDocument(elasticIndexStore.readDocument(empty.getDocRef())
+                .copy()
+                .clusterRef(cluster)
+                .indexName(emptyName)
+                .timeField("@timestamp")
+                .build()));
+        final ExplorerNode lucene = create(LuceneIndexDoc.TYPE, "E2E compare lucene empty", templateFolder());
+
+        final Map<String, Object> result = json("compare_activity", args("person", "p1", "personField", "user.id",
+                "breadthFields", List.of("destination.domain"), "windowFrom", WINDOW_FROM.toString(), "windowTo",
+                WINDOW_TO.minusDays(1).toString(), "baselineFrom", FROM.toString(), "timeZone", ZONE.getId(),
+                "peers", false));
+        LOGGER.info(() -> "compare_activity, empty defaults: " + JsonUtil.writeValueAsString(result, true));
+
+        final List<Map<String, Object>> sources = (List<Map<String, Object>>) result.get("sources");
+        final Map<String, Object> byName = new TreeMap<>();
+        sources.forEach(source -> byName.put(String.valueOf(source.get("index")), source.get("left_out")));
+        assertThat(byName).containsEntry(held.getName(), null)
+                .containsEntry(empty.getDocRef().getName(), "no documents in the period")
+                .containsEntry(lucene.getDocRef().getName(), "no shards");
+        assertThat((List<Map<String, Object>>) result.get("findings")).isNotEmpty();
     }
 
     @Test

@@ -43,6 +43,7 @@ import stroom.ai.impl.tools.instructions.InstructionRules.SourcesRule;
 import stroom.ai.impl.tools.instructions.InstructionRules.TypeRoleRule;
 import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.query.DataSourceDocumentation;
+import stroom.ai.impl.tools.query.IndexDataChecks;
 import stroom.ai.impl.tools.sequence.InMemoryKeyStreams;
 import stroom.ai.impl.tools.skills.SkillCatalogue;
 import stroom.ai.impl.tools.skills.SkillCatalogue.Listed;
@@ -180,7 +181,8 @@ class TestActivityTimelineAnySource {
         tool = new ActivityTimelineTool(files.workspace(), () -> streams, dataSourceAccess, () -> queryService,
                 Mockito.mock(AiAuditLog.class), eventXml, new TimelineFields(agentInstructions, dataSourceAccess,
                 Optional.empty(), () -> plans),
-                new TimelineSourceChoice(dataSourceAccess, () -> Mockito.mock(TabSnapshots.class)),
+                new TimelineSourceChoice(dataSourceAccess, () -> Mockito.mock(TabSnapshots.class),
+                        IndexDataChecks.allHoldData()),
                 () -> skillCatalogue, documentAccess, agentInstructions, () -> elasticEsql,
                 () -> plans, () -> streamProvenance, () -> indexingTrace);
     }
@@ -811,7 +813,8 @@ class TestActivityTimelineAnySource {
         final Map<String, Object> result = json(mcp(), arguments);
 
         assertThat((String) result.get("sources_chosen")).startsWith("all supported data sources (2 Elastic "
-                                                                     + "Index(es) you can use)");
+                                                                     + "Index(es) you can use holding documents in "
+                                                                     + "the period)");
         assertThat((List<Map<String, Object>>) result.get("sources")).extracting(source -> source.get("index"))
                 .containsExactly("Events");
         assertThat((List<Map<String, Object>>) result.get("left_out")).singleElement().satisfies(left ->

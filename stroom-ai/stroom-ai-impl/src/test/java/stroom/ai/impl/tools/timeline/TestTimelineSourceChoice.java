@@ -26,6 +26,8 @@ import stroom.ai.impl.tools.ToolRefusal;
 import stroom.ai.impl.tools.ToolSession;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.query.DataSourceAccess;
+import stroom.ai.impl.tools.query.IndexDataCheck;
+import stroom.ai.impl.tools.query.IndexDataChecks;
 import stroom.ai.impl.tools.timeline.TimelineSourceChoice.Chosen;
 import stroom.ai.impl.tools.timeline.TimelineSourceChoice.Matched;
 import stroom.ai.impl.workspace.WorkspaceException;
@@ -42,7 +44,9 @@ import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -60,10 +64,14 @@ class TestTimelineSourceChoice {
     private static final DocRef ENDPOINT = new DocRef(ElasticIndexDoc.TYPE, "endpoint-uuid", "Endpoint events");
     private static final DocRef LUCENE = new DocRef(LuceneIndexDoc.TYPE, "lucene-uuid", "Old events");
     private static final DocRef DASHBOARD = new DocRef(DashboardDoc.TYPE, "dashboard-uuid", "Proxy dashboard");
+    private static final Instant FROM = Instant.parse("2026-11-01T00:00:00Z");
+    private static final Instant TO = Instant.parse("2026-11-08T00:00:00Z");
 
     private final DataSourceAccess dataSourceAccess = Mockito.mock(DataSourceAccess.class);
     private final TabSnapshots tabSnapshots = Mockito.mock(TabSnapshots.class);
-    private final TimelineSourceChoice choice = new TimelineSourceChoice(dataSourceAccess, () -> tabSnapshots);
+    private final Map<DocRef, String> empty = new LinkedHashMap<>();
+    private final TimelineSourceChoice choice = new TimelineSourceChoice(dataSourceAccess, () -> tabSnapshots,
+            IndexDataChecks.holding(empty));
 
     @Test
     void withADashboardAttachedItsDataSourceIsTheFirstChoice() {
@@ -76,7 +84,7 @@ class TestTimelineSourceChoice {
                 DASHBOARD, "/", "Proxy dashboard", null, false, null, null, 0L, List.of(), List.of(search), null)));
         final Answers answers = new Answers(Map.of("sources", TimelineSourceChoice.DASHBOARD + " (Web proxy)"));
 
-        final Chosen chosen = choice.choose(ToolCalls.call("activity_timeline", "{}"), chat(answers), "t");
+        final Chosen chosen = choice.choose(ToolCalls.call("activity_timeline", "{}"), chat(answers), "t", FROM, TO);
 
         assertThat(enumOf(answers.forms.getFirst(), "sources")).containsExactly(TimelineSourceChoice.DASHBOARD
                                                                                 + " (Web proxy)",
@@ -90,7 +98,7 @@ class TestTimelineSourceChoice {
         supported();
         final Answers answers = new Answers(Map.of("sources", TimelineSourceChoice.ALL));
 
-        final Chosen chosen = choice.choose(ToolCalls.call("activity_timeline", "{}"), chat(answers), "t");
+        final Chosen chosen = choice.choose(ToolCalls.call("activity_timeline", "{}"), chat(answers), "t", FROM, TO);
 
         final Map<String, Object> sources = (Map<String, Object>) ((Map<String, Object>) answers.forms.getFirst()
                 .get("properties")).get("sources");
@@ -123,7 +131,7 @@ class TestTimelineSourceChoice {
         final Answers answers = new Answers(Map.of("sources", TimelineSourceChoice.OWN_WORDS, "other",
                 "windows", "indexes", List.of("Windows events")));
 
-        final Chosen chosen = choice.choose(ToolCalls.call("activity_timeline", "{}"), chat(answers), "t");
+        final Chosen chosen = choice.choose(ToolCalls.call("activity_timeline", "{}"), chat(answers), "t", FROM, TO);
 
         assertThat(enumOf(answers.forms.get(1), "indexes")).containsExactly("Windows events");
         assertThat(chosen.indexes()).containsExactly(WINDOWS);
@@ -134,7 +142,8 @@ class TestTimelineSourceChoice {
     void whereNoFormCanAskEverySupportedIndexIsTakenAndADeclineBuildsNothing() {
         supported();
 
-        final Chosen all = choice.choose(ToolCalls.call("activity_timeline", "{}"), chat(UserQuestions.NONE), "t");
+        final Chosen all = choice.choose(ToolCalls.call("activity_timeline", "{}"), chat(UserQuestions.NONE), "t", FROM,
+                TO);
         assertThat(all.indexes()).hasSize(3);
         assertThat(all.how()).contains("no form could ask which");
 
@@ -145,7 +154,8 @@ class TestTimelineSourceChoice {
                 return new ElicitResult(ElicitResult.Action.DECLINE, null);
             }
         };
-        assertThatThrownBy(() -> choice.choose(ToolCalls.call("activity_timeline", "{}"), chat(declining), "t"))
+        assertThatThrownBy(() -> choice.choose(ToolCalls.call("activity_timeline", "{}"), chat(declining), "t", FROM,
+                TO))
                 .isInstanceOf(WorkspaceException.class).hasMessageContaining("didn't choose");
     }
 
@@ -154,7 +164,7 @@ class TestTimelineSourceChoice {
         // Seen in chat 197: a tool took a form put aside by the user's message as their answer.
         supported();
         assertThatThrownBy(() -> choice.choose(ToolCalls.call("activity_timeline", "{}"),
-                chat(FormAnswers.sendingInstead("Just the proxy")), "t"))
+                chat(FormAnswers.sendingInstead("Just the proxy")), "t", FROM, TO))
                 .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("The user sent a message instead of answering 'Which data sources should the "
                                       + "timeline read?': \"Just the proxy\". Nothing was done.");
@@ -174,9 +184,92 @@ class TestTimelineSourceChoice {
             }
         };
         assertThatThrownBy(() -> choice.choose(ToolCalls.call("activity_timeline", "{}"), chat(confirmingInstead),
-                "t"))
+                "t", FROM, TO))
                 .isInstanceOf(ToolRefusal.class)
                 .hasMessageContaining("'Read these data sources?': \"And the endpoint\"");
+    }
+
+    @Test
+    void indexesHoldingNoDocumentsInThePeriodAreNeitherChoicesNorReadAndTheFormSaysSo() {
+        // Seen in testing: the form offered indexes with no data at all.
+        supported();
+        empty.put(WINDOWS, IndexDataCheck.NO_DOCUMENTS_IN_PERIOD);
+        final List<String> intros = new ArrayList<>();
+        final Answers answers = new Answers(Map.of("sources", TimelineSourceChoice.ALL)) {
+            @Override
+            public ElicitResult ask(final String toolName, final String callId, final String intro,
+                                    final Map<String, Object> form) {
+                intros.add(intro);
+                return super.ask(toolName, callId, intro, form);
+            }
+        };
+
+        final Chosen chosen = choice.choose(ToolCalls.call("activity_timeline", "{}"), chat(answers), "t", FROM, TO);
+
+        assertThat(intros.getFirst()).contains("Supported: the 2 Elastic Index(es) you can use holding documents "
+                                               + "in the period. Left out, holding none: Windows events.");
+        assertThat(chosen.indexes()).containsExactly(PROXY, ENDPOINT);
+        assertThat(chosen.how()).contains("left out, holding no data: Windows events (no documents in the period)");
+    }
+
+    @Test
+    void theConfirmingFormListsOnlyIndexesHoldingDocuments() {
+        supported();
+        empty.put(WINDOWS, IndexDataCheck.NO_DOCUMENTS_IN_PERIOD);
+        // Words matching nothing list every supported index: the empty one isn't among them.
+        final Answers answers = new Answers(Map.of("sources", TimelineSourceChoice.OWN_WORDS, "other",
+                "mainframe", "indexes", List.of("Web proxy")));
+
+        final Chosen chosen = choice.choose(ToolCalls.call("activity_timeline", "{}"), chat(answers), "t", FROM, TO);
+
+        assertThat(enumOf(answers.forms.get(1), "indexes")).containsExactly("Web proxy", "Endpoint events");
+        assertThat(chosen.indexes()).containsExactly(PROXY);
+    }
+
+    @Test
+    void anAttachedDashboardsEmptyIndexIsNotOffered() {
+        supported();
+        empty.put(PROXY, IndexDataCheck.NO_INDEX);
+        Mockito.when(dataSourceAccess.canUse(PROXY)).thenReturn(true);
+        final AiTabSearch search = new AiTabSearch("Requests", "table-1", new DashboardTableContext("d", null,
+                DashboardSearchRequest.builder().search(Search.builder().dataSourceRef(PROXY).build()).build()),
+                null, List.of(), null, false);
+        Mockito.when(tabSnapshots.forLatestQuestion(1)).thenReturn(Optional.of(new StoredTabSnapshot(1, 1,
+                DASHBOARD, "/", "Proxy dashboard", null, false, null, null, 0L, List.of(), List.of(search), null)));
+        final Answers answers = new Answers(Map.of("sources", TimelineSourceChoice.ALL));
+
+        choice.choose(ToolCalls.call("activity_timeline", "{}"), chat(answers), "t", FROM, TO);
+
+        assertThat(enumOf(answers.forms.getFirst(), "sources")).containsExactly(TimelineSourceChoice.ALL,
+                TimelineSourceChoice.OWN_WORDS);
+    }
+
+    @Test
+    void whenNoIndexHoldsDocumentsInThePeriodNoFormIsShownAndItSaysWhy() {
+        supported();
+        empty.put(PROXY, IndexDataCheck.NO_DOCUMENTS_IN_PERIOD);
+        empty.put(WINDOWS, IndexDataCheck.NO_INDEX);
+        empty.put(ENDPOINT, IndexDataCheck.NO_DOCUMENTS_IN_PERIOD);
+        final Answers answers = new Answers(Map.of("sources", TimelineSourceChoice.ALL));
+
+        assertThatThrownBy(() -> choice.choose(ToolCalls.call("activity_timeline", "{}"), chat(answers), "t", FROM,
+                TO))
+                .isInstanceOf(WorkspaceException.class)
+                .hasMessageContaining("None of the 3 Elastic Index(es) you can use holds documents in the period")
+                .hasMessageContaining("Windows events (" + IndexDataCheck.NO_INDEX + ")");
+        assertThat(answers.forms).isEmpty();
+    }
+
+    @Test
+    void whereNoFormCanAskOnlyIndexesHoldingDocumentsAreTakenSaidInTheResult() {
+        supported();
+        empty.put(ENDPOINT, IndexDataCheck.NO_DOCUMENTS_IN_PERIOD);
+
+        final Chosen all = choice.choose(ToolCalls.call("activity_timeline", "{}"), chat(UserQuestions.NONE), "t",
+                FROM, TO);
+
+        assertThat(all.indexes()).containsExactly(PROXY, WINDOWS);
+        assertThat(all.how()).contains("Endpoint events (no documents in the period)");
     }
 
     private void supported() {

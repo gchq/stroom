@@ -23,6 +23,7 @@ import stroom.ai.impl.tools.ToolCall;
 import stroom.ai.impl.tools.ToolCallContext;
 import stroom.ai.impl.tools.UserQuestions;
 import stroom.ai.impl.tools.query.DataSourceAccess;
+import stroom.ai.impl.tools.query.IndexDataCheck;
 import stroom.ai.impl.tools.query.ResultsRequests;
 import stroom.ai.impl.workspace.WorkspaceException;
 import stroom.ai.shared.AiTabSearch;
@@ -35,6 +36,7 @@ import io.modelcontextprotocol.spec.McpSchema.ElicitResult;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -50,7 +52,9 @@ import java.util.regex.Pattern;
 /// Which data sources an activity timeline reads when neither the call nor a skill names them: asked in a chat's
 /// form (with a dashboard attached, only its data source, all supported data sources, or the user's own words;
 /// without one, all supported by default, or the user's own words, matched to the indexes and shown to confirm);
-/// over MCP, with no form, all supported, said in the result. Supported: every Elastic Index the user can use.
+/// over MCP, with no form, all supported, said in the result. Supported: every Elastic Index the user can use that
+/// holds documents in the period (or couldn't be checked); those holding none are left out, said in the form and the
+/// result.
 class TimelineSourceChoice {
 
     /// The form's key.
@@ -67,20 +71,49 @@ class TimelineSourceChoice {
 
     private final DataSourceAccess dataSourceAccess;
     private final Provider<TabSnapshots> tabSnapshotsProvider;
+    private final IndexDataCheck indexDataCheck;
 
     /// @param dataSourceAccess     Lists the Elastic Indexes the user can use.
     /// @param tabSnapshotsProvider Gives the dashboard attached to the chat's question.
+    /// @param indexDataCheck       Says which of them hold documents in the period.
     @Inject
-    TimelineSourceChoice(final DataSourceAccess dataSourceAccess, final Provider<TabSnapshots> tabSnapshotsProvider) {
+    TimelineSourceChoice(final DataSourceAccess dataSourceAccess,
+                         final Provider<TabSnapshots> tabSnapshotsProvider,
+                         final IndexDataCheck indexDataCheck) {
         this.dataSourceAccess = dataSourceAccess;
         this.tabSnapshotsProvider = tabSnapshotsProvider;
+        this.indexDataCheck = indexDataCheck;
     }
 
     /// @return Every Elastic Index the user can use, by name.
-    List<DocRef> supported() {
+    List<DocRef> usable() {
         return dataSourceAccess.listUsable().stream()
                 .filter(doc -> ElasticIndexDoc.TYPE.equals(doc.getType()))
                 .toList();
+    }
+
+    /// The supported indexes: every Elastic Index the user can use that holds documents in the period, or couldn't
+    /// be checked.
+    ///
+    /// @param from    The period's start.
+    /// @param to      The period's end.
+    /// @param context The call's context, for its progress and stop.
+    /// @return Those supported, and those left out or not checked.
+    /// @throws WorkspaceException if the user can use none, or none holds documents in the period.
+    IndexDataCheck.Checked supported(final Instant from, final Instant to, final ToolCallContext context) {
+        final List<DocRef> usable = usable();
+        if (usable.isEmpty()) {
+            throw new WorkspaceException("You can't use any Elastic Index, so there is nothing to build a timeline "
+                                         + "from.");
+        }
+        context.progress().report("Checking " + usable.size() + " Elastic Index(es) for documents in the period");
+        final IndexDataCheck.Checked checked = indexDataCheck.checkAll(usable, from, to, context.stopped());
+        if (checked.kept().isEmpty()) {
+            throw new WorkspaceException("None of the " + usable.size() + " Elastic Index(es) you can use holds "
+                                         + "documents in the period, so there is nothing to build a timeline from: "
+                                         + IndexDataCheck.describe(checked.empty()) + ".");
+        }
+        return checked;
     }
 
     /// Asks the user which sources to read, or takes them all where they can't be asked.
@@ -88,18 +121,25 @@ class TimelineSourceChoice {
     /// @param request  The call.
     /// @param context  The call's context.
     /// @param toolName The tool asking.
+    /// @param from     The period's start.
+    /// @param to       The period's end.
     /// @return The indexes chosen and how.
-    Chosen choose(final ToolCall request, final ToolCallContext context, final String toolName) {
-        final List<DocRef> supported = supported();
-        if (supported.isEmpty()) {
-            throw new WorkspaceException("You can't use any Elastic Index, so there is nothing to build a timeline "
-                                         + "from.");
-        }
+    Chosen choose(final ToolCall request,
+                  final ToolCallContext context,
+                  final String toolName,
+                  final Instant from,
+                  final Instant to) {
+        final IndexDataCheck.Checked checked = supported(from, to, context);
+        final List<DocRef> supported = checked.kept();
+        final String notes = checked.notes();
         if (!context.session().isChat() || !context.userQuestions().canAsk()) {
             return new Chosen(supported, true, "all supported data sources (" + supported.size() + " Elastic "
-                                               + "Index(es) you can use): no form could ask which");
+                                               + "Index(es) you can use holding documents in the period): no form "
+                                               + "could ask which" + notes);
         }
-        final List<DocRef> dashboard = dashboardSources(context);
+        final List<DocRef> dashboard = dashboardSources(context).stream()
+                .filter(supported::contains)
+                .toList();
         final List<String> choices = new ArrayList<>();
         if (!dashboard.isEmpty()) {
             choices.add(DASHBOARD + " (" + String.join(", ", dashboard.stream().map(DocRef::getName).toList())
@@ -118,7 +158,10 @@ class TimelineSourceChoice {
         form.put("required", List.of(CHOICE));
         final ElicitResult answer = context.userQuestions().ask(toolName, UserQuestions.formCallId(request.id(),
                 FORM), "Which data sources should the timeline read? Supported: the " + supported.size()
-                       + " Elastic Index(es) you can use.", form);
+                       + " Elastic Index(es) you can use holding documents in the period." + (checked.empty().isEmpty()
+                ? ""
+                : " Left out, holding none: " + String.join(", ", checked.empty().stream()
+                        .map(holding -> holding.doc().getName()).toList()) + "."), form);
         McpElicitations.unlessSentInstead(answer, "Which data sources should the timeline read?", toolName, "");
         if (answer.action() != ElicitResult.Action.ACCEPT) {
             throw new WorkspaceException("The user didn't choose the data sources, so no timeline was built: ask "
@@ -130,10 +173,10 @@ class TimelineSourceChoice {
             return new Chosen(dashboard, false, "the attached dashboard's data source, as the user chose");
         }
         if (ALL.equals(choice)) {
-            return new Chosen(supported, true, "all supported data sources, as the user chose");
+            return new Chosen(supported, true, "all supported data sources, as the user chose" + notes);
         }
         final String words = String.valueOf(Objects.requireNonNullElse(content.get(OTHER), "")).strip();
-        return confirm(request, context, toolName, words, supported);
+        return confirm(request, context, toolName, words, supported, notes);
     }
 
     // The indexes the user's words name, shown to confirm.
@@ -141,7 +184,8 @@ class TimelineSourceChoice {
                            final ToolCallContext context,
                            final String toolName,
                            final String words,
-                           final List<DocRef> supported) {
+                           final List<DocRef> supported,
+                           final String notes) {
         final Matched matched = match(words, supported, this::documentation);
         final Map<String, DocRef> byLabel = labels(matched.listed().isEmpty()
                 ? supported
@@ -178,7 +222,7 @@ class TimelineSourceChoice {
             throw new WorkspaceException("The user chose no data source, so no timeline was built.");
         }
         return new Chosen(chosen, false, "the data sources matching the user's words '" + words + "', as they "
-                                         + "confirmed");
+                                         + "confirmed" + notes);
     }
 
     private String documentation(final DocRef doc) {

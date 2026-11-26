@@ -46,6 +46,7 @@ import stroom.ai.impl.tools.compare.AggregateRunner.Table;
 import stroom.ai.impl.tools.instructions.InstructionRules;
 import stroom.ai.impl.tools.query.DataSourceAccess;
 import stroom.ai.impl.tools.query.EsqlQueryTool;
+import stroom.ai.impl.tools.query.IndexDataCheck;
 import stroom.ai.impl.tools.query.StroomQlDatePoints;
 import stroom.ai.impl.tools.sequence.EqlSequenceResults;
 import stroom.ai.impl.tools.streams.StreamProvenance;
@@ -203,6 +204,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     private final PeerGroups peerGroups;
     private final AiAuditLog auditLog;
     private final Provider<StreamProvenance> streamProvenanceProvider;
+    private final IndexDataCheck indexDataCheck;
 
     /// @param workspace            The chats' workspaces.
     /// @param dataSourceAccess     Finds the indexes the user can use.
@@ -212,6 +214,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     /// @param peerGroups           Reads the peers' groups.
     /// @param auditLog             Audits what each index was searched for.
     /// @param streamProvenanceProvider Gives each stream's feed, to tell a source's feeds apart.
+    /// @param indexDataCheck       Leaves the default indexes holding no documents in the period out.
     @Inject
     CompareActivityTool(final ChatWorkspace workspace,
                         final DataSourceAccess dataSourceAccess,
@@ -220,8 +223,10 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                         final TimelineFields timelineFields,
                         final PeerGroups peerGroups,
                         final AiAuditLog auditLog,
-                        final Provider<StreamProvenance> streamProvenanceProvider) {
+                        final Provider<StreamProvenance> streamProvenanceProvider,
+                        final IndexDataCheck indexDataCheck) {
         super(workspace);
+        this.indexDataCheck = indexDataCheck;
         this.streamProvenanceProvider = streamProvenanceProvider;
         this.dataSourceAccess = dataSourceAccess;
         this.queryServiceProvider = queryServiceProvider;
@@ -241,6 +246,7 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
     /// @param peerGroups           Reads the peers' groups.
     /// @param auditLog             Audits what each index was searched for.
     /// @param streamProvenance     Gives each stream's feed.
+    /// @param indexDataCheck       Leaves the default indexes holding no documents in the period out.
     CompareActivityTool(final ChatWorkspace workspace,
                         final DataSourceAccess dataSourceAccess,
                         final Provider<QueryService> queryServiceProvider,
@@ -248,8 +254,10 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                         final TimelineFields timelineFields,
                         final PeerGroups peerGroups,
                         final AiAuditLog auditLog,
-                        final StreamProvenance streamProvenance) {
+                        final StreamProvenance streamProvenance,
+                        final IndexDataCheck indexDataCheck) {
         super(workspace);
+        this.indexDataCheck = indexDataCheck;
         this.streamProvenanceProvider = () -> streamProvenance;
         this.dataSourceAccess = dataSourceAccess;
         this.queryServiceProvider = queryServiceProvider;
@@ -492,7 +500,8 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
             notes.add("Peers not compared: peers: true compares them with the others of their " + element + ".");
         }
         final List<Planned> planned = plan(request, context, person, logonIds, targets, categoriesAsked,
-                locationAsked);
+                locationAsked, new Sources(periods.baselineFrom().atStartOfDay(zone.zone()).toInstant(),
+                        periods.windowTo().atStartOfDay(zone.zone()).toInstant(), notes));
         planned.stream().filter(Planned::usable).forEach(source -> notes.addAll(source.defaults()));
         final String folder = FOLDER + safe(NullSafe.isBlankString(person)
                 ? String.join("_", logonIds)
@@ -784,7 +793,9 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         final List<String> notes = new ArrayList<>(periods.notes());
         unscreened(request, notes);
         final List<Planned> planned = planScreen(request, context, where.keySet(), rare,
-                optionalBooleanArg(request, CATEGORIES_ARG), optionalBooleanArg(request, LOCATION_ARG), notes);
+                optionalBooleanArg(request, CATEGORIES_ARG), optionalBooleanArg(request, LOCATION_ARG), notes,
+                new Sources(periods.baselineFrom().atStartOfDay(zone.zone()).toInstant(),
+                        periods.windowTo().atStartOfDay(zone.zone()).toInstant(), notes));
         final List<Planned> usable = planned.stream().filter(Planned::usable).toList();
         usable.forEach(source -> notes.addAll(source.defaults()));
         final String folder = FOLDER + POPULATION + "/" + (conditions.isEmpty()
@@ -1155,8 +1166,10 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                      final String rare,
                                      final Boolean categoriesAsked,
                                      final Boolean locationAsked,
-                                     final List<String> notes) {
-        final List<DocRef> docs = sourceDocs(request);
+                                     final List<String> notes,
+                                     final Sources period) {
+        final Defaults sources = sourceDocs(request, context, period);
+        final List<DocRef> docs = sources.docs();
         final List<String> personFields = optionalList(stringArg(request, PERSON_FIELD_ARG));
         final List<String> userFields = optionalList(stringArg(request, USER_FIELD_ARG));
         final List<String> sums = NullSafe.list(stringListArg(request, SUM_FIELDS_ARG));
@@ -1165,6 +1178,10 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         final List<String> countryFields = optionalList(stringArg(request, COUNTRY_FIELD_ARG));
         final List<Planned> planned = new ArrayList<>();
         for (final DocRef doc : docs) {
+            if (sources.empty().containsKey(doc)) {
+                planned.add(Planned.leftOut(doc, sources.empty().get(doc)));
+                continue;
+            }
             final Optional<QueryField> time = dataSourceAccess.timeField(doc);
             final boolean elastic = ElasticIndexDoc.TYPE.equals(doc.getType());
             final Map<String, QueryField> fields = new LinkedHashMap<>();
@@ -1250,15 +1267,27 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         return planned;
     }
 
-    // The indexes given, else every Elastic and Lucene index the user can use.
-    private List<DocRef> sourceDocs(final ToolCall request) {
+    // The indexes given, else every Elastic and Lucene index the user can use, those holding no documents in the
+    // period to be left out, with why (and those that couldn't be checked said in the notes).
+    private Defaults sourceDocs(final ToolCall request, final ToolCallContext context, final Sources period) {
         final List<String> given = NullSafe.list(stringListArg(request, SOURCES_ARG));
         final List<DocRef> docs = new ArrayList<>();
+        final Map<DocRef, String> empty = new LinkedHashMap<>();
         if (given.isEmpty()) {
             dataSourceAccess.listUsable().stream()
                     .filter(doc -> ElasticIndexDoc.TYPE.equals(doc.getType())
                                    || LuceneIndexDoc.TYPE.equals(doc.getType()))
                     .forEach(docs::add);
+            if (!docs.isEmpty()) {
+                context.progress().report("Checking " + docs.size() + " index(es) for documents in the period");
+                final IndexDataCheck.Checked checked = indexDataCheck.checkAll(docs, period.from(), period.to(),
+                        context.stopped());
+                checked.empty().forEach(holding -> empty.put(holding.doc(), holding.why()));
+                if (!checked.unchecked().isEmpty()) {
+                    period.notes().add("Couldn't check for documents in the period, so read: "
+                                       + IndexDataCheck.describe(checked.unchecked()) + ".");
+                }
+            }
         } else {
             for (final String name : given) {
                 final List<DocRef> found = dataSourceAccess.find(name);
@@ -1272,7 +1301,14 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         if (docs.isEmpty()) {
             throw new WorkspaceException("You can't use any Elastic or Lucene index, so there is nothing to compare.");
         }
-        return docs;
+        if (empty.size() == docs.size()) {
+            throw new WorkspaceException("None of the " + docs.size() + " Elastic and Lucene index(es) you can use "
+                                         + "holds documents in the period, so there is nothing to compare: "
+                                         + String.join("; ", empty.entrySet().stream()
+                    .map(entry -> entry.getKey().getName() + " (" + entry.getValue() + ")")
+                    .toList()) + ".");
+        }
+        return new Defaults(docs, empty);
     }
 
     /// Reads a screen's `where`: a list of `{field, condition, value}` (or one), each EQUALS (exact) or IN (values
@@ -1442,27 +1478,10 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
                                final List<String> logonIds,
                                final boolean targets,
                                final Boolean categoriesAsked,
-                               final Boolean locationAsked) {
-        final List<String> given = NullSafe.list(stringListArg(request, SOURCES_ARG));
-        final List<DocRef> docs = new ArrayList<>();
-        if (given.isEmpty()) {
-            dataSourceAccess.listUsable().stream()
-                    .filter(doc -> ElasticIndexDoc.TYPE.equals(doc.getType())
-                                   || LuceneIndexDoc.TYPE.equals(doc.getType()))
-                    .forEach(docs::add);
-        } else {
-            for (final String name : given) {
-                final List<DocRef> found = dataSourceAccess.find(name);
-                if (found.isEmpty()) {
-                    throw new WorkspaceException("No index you can use is called '" + name + "': list_data_sources "
-                                                 + "gives them.");
-                }
-                docs.add(found.getFirst());
-            }
-        }
-        if (docs.isEmpty()) {
-            throw new WorkspaceException("You can't use any Elastic or Lucene index, so there is nothing to compare.");
-        }
+                               final Boolean locationAsked,
+                               final Sources period) {
+        final Defaults sources = sourceDocs(request, context, period);
+        final List<DocRef> docs = sources.docs();
         final List<String> personFields = optionalList(stringArg(request, PERSON_FIELD_ARG));
         final List<String> userFields = optionalList(stringArg(request, USER_FIELD_ARG));
         final List<Transform> logonForms = PersonScope.logonForms(argsMap(request).get(LOGON_FORMS_ARG));
@@ -1473,6 +1492,10 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
         final List<String> countryFields = optionalList(stringArg(request, COUNTRY_FIELD_ARG));
         final List<Planned> planned = new ArrayList<>();
         for (final DocRef doc : docs) {
+            if (sources.empty().containsKey(doc)) {
+                planned.add(Planned.leftOut(doc, sources.empty().get(doc)));
+                continue;
+            }
             final Optional<QueryField> time = dataSourceAccess.timeField(doc);
             final boolean elastic = ElasticIndexDoc.TYPE.equals(doc.getType());
             final Map<String, QueryField> fields = new LinkedHashMap<>();
@@ -2348,5 +2371,30 @@ public class CompareActivityTool extends AbstractWorkspaceTool {
             return new Spec(periods.baselineFrom(), periods.baselineTo(), periods.windowFrom(), periods.windowTo(),
                     unit, theirLeave, zone, theirExceptions);
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The period the default sources are checked for documents in, and the notes to say any that couldn't be.
+    ///
+    /// @param from  The period's start.
+    /// @param to    The period's end.
+    /// @param notes The result's notes, added to.
+    record Sources(Instant from, Instant to, List<String> notes) {
+
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The sources to read.
+    ///
+    /// @param docs  The indexes given, else the defaults.
+    /// @param empty Those of the defaults holding no documents in the period, each with why, to be left out.
+    record Defaults(List<DocRef> docs, Map<DocRef, String> empty) {
+
     }
 }
