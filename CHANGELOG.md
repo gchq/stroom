@@ -13,6 +13,29 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Feature **#6079** : Add XSLT sandbox.
+
+* Bug **#6077** : Fix StroomQL rules that are run on a schedule with a `window` clause never judging a window that reads, with `lag()`, a window before the rule's time range. A rule now judges each window in the run whose time range holds the end of the window, or of the last window it reads with `lead()`, and searches back as far as it needs to.
+
+* Bug **#6077** : Stop StroomQL queries with a `window` clause reading through every stored row on each poll while results arrive from other nodes. Each payload now carries the first and last windows that the sending node holds rows for.
+
+* Bug **#6082** : Fix `http-call` and `fetch-json` ignoring Apache HTTP client config properties such as `proxy` and `followRedirects`. The deprecated OkHttp format is now only used when the config has an OkHttp-only property, and a config mixing the two formats is rejected. Any config without an OkHttp-only property, including `{}`, is now read in the Apache format, so its unset connection timeouts default to 3 minutes rather than 500ms.
+
+* Bug **#5917** : Fix `floorTime` and `roundTime` returning the wrong bucket for times before 1970.
+
+* Bug **#5917** : Make `floorTime`, `ceilingTime` and `roundTime` count multiples of the duration from midnight in the query's time zone rather than in UTC, as `floorDay` and the like already do.
+
+* Bug **#5917** : Make `floorTime`, `ceilingTime` and `roundTime` reject a duration that is negative or under a millisecond, and make `roundTime` round exactly halfway up for odd durations.
+
+* Bug **#6042** : Fix claiming processor tasks opening a second connection to the processor database inside the claim's transaction when the processor filter isn't cached.
+
+* Feature **#6078** : Remove index shard leases, takeover and stream recovery. An index shard on a shared index volume is now written to, retained and deleted only by the node that created it, and can still be searched by any node. As before v7.14-beta.19, documents a node has not committed are lost if it stops abruptly or a commit fails, and an indexing failure part way through a stream leaves the stream part indexed with its task complete and a fatal error. The job `Index Shard Stream Recovery` is removed. As nothing now stops an old process from writing to a shard, make sure a node's old process has stopped before starting another with the same node name, e.g. after force deleting a Kubernetes pod, or index shards on shared volumes could be corrupted.
+
+* Feature **#6078** : Upgrade note for v7.14-beta.19: stop all nodes before upgrading any of them, as nodes on that version expect others to hold index shard leases. Remove `shardLeaseDuration`, `shardLeaseRenewInterval` and `shardLeaseTakeoverGrace` from `appConfig.index.writer` in the configuration file if they are set there, as Stroom will not start with them. Before stopping the nodes, disable the processor filters of indexing pipelines and wait until the `index_shard_pending_stream` table has no rows other than those with a `state` of 6, as its rows are deleted by the upgrade. The streams of any other rows still in it may be missing from the index or indexed twice.
+
+* Bug **#6127** : Fix the internal sign-in redirect when Stroom's public URL explicitly includes the default HTTP or HTTPS port.
+
+
 ## [v7.14-beta.19-parallel-pathways] - 2026-11-23
 
 * Bug : Fix the clean up of temporary files created by the the FS stream store during path validation.
