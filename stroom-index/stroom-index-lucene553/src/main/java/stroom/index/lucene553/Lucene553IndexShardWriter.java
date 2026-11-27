@@ -469,9 +469,14 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
 
     @Override
     public void deleteStreams(final Collection<Long> streamIds) throws IndexException {
-        if (!open.get() || closing || leaseLost || !leaseHeld.getAsBoolean()) {
+        if (leaseLost || !leaseHeld.getAsBoolean()) {
             throw new IndexException("Unable to delete streams from index shard " + indexShardId
-                                     + " as its writer is closing or no longer holds the lease on it");
+                                     + " as this node no longer holds the lease on it");
+        }
+        if (!open.get() || closing) {
+            // The shard is fine, so it is opened again by whoever tries next.
+            throw new WriterClosingException("Unable to delete streams from index shard " + indexShardId
+                                             + " as its writer is closing");
         }
         try {
             // The stream id is indexed as a number in all but the oldest indexes, where it is a term. Each
@@ -519,6 +524,15 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
         // Lucene throws the exception that broke its writer from the call that broke it. Later calls throw an
         // exception of their own that only has it as the cause.
         return e != null && e == indexWriter.getTragicException();
+    }
+
+    @Override
+    public boolean isFieldTypeClash(final Throwable e) {
+        // Lucene 5.5.3 refuses only a change of a field's DocValues type, and makes do with other changes.
+        // Deleted documents leave their field types behind.
+        return e instanceof IllegalArgumentException
+               && e.getMessage() != null
+               && e.getMessage().startsWith("cannot change ");
     }
 
     @Override

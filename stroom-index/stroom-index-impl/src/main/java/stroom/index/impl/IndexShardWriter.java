@@ -53,7 +53,8 @@ public interface IndexShardWriter {
     /// are kept.
     ///
     /// @param streamIds The ids of the streams.
-    /// @throws IndexException If the writer can't delete, e.g. as it is closed or has lost its lease.
+    /// @throws IndexException          If the writer can't delete, e.g. as it has lost its lease.
+    /// @throws WriterClosingException If the writer is closed or closing, which leaves the shard fine.
     default void deleteStreams(final Collection<Long> streamIds) throws IndexException {
         throw new IndexException("This index shard writer can't delete streams");
     }
@@ -101,6 +102,16 @@ public interface IndexShardWriter {
     /// @param e The exception thrown while adding a document.
     /// @return True if the document broke the writer.
     default boolean isBrokenBy(final Throwable e) {
+        return false;
+    }
+
+    /// Says whether an exception thrown by [#addDocument(IndexDocument)] means that a field of the document
+    /// has a different type from the same field in documents the shard holds or has held, e.g. as the type
+    /// of the index field has been changed since. A new shard would take the document.
+    ///
+    /// @param e The exception thrown while adding a document.
+    /// @return True if the document clashes with the shard's fields.
+    default boolean isFieldTypeClash(final Throwable e) {
         return false;
     }
 

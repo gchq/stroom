@@ -106,6 +106,40 @@ class TestTaskIndexRunTracker {
     }
 
     @Test
+    void testTaskNoLongerThisRuns_rowItSavedIsRemoved() {
+        // Completed by the run that replaced this one, whose rows are gone. Left, the row saved here would
+        // later become a purge of what that run wrote.
+        stateIs(TaskStatus.COMPLETE, RUN + 1);
+
+        assertThatThrownBy(() -> tracker.beforeAdd(SHARD, writer)).isInstanceOf(RunStoppedException.class);
+
+        Mockito.verify(taskDao).delete(row(RUN, WRITER, IndexShardTaskState.WRITING));
+        assertThat(tracker.hasWrittenTo(SHARD)).isFalse();
+        Mockito.verify(purger, Mockito.never()).purgeBeforeWriting(anyLong(), anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void testPurgeBeforeWritingFails_rowIsPutBackAsItWas() {
+        final IndexShardTaskRow committed = row(RUN, OTHER_WRITER, IndexShardTaskState.COMMITTED);
+        final IndexShardTaskRow writing = row(RUN, WRITER, IndexShardTaskState.WRITING);
+        Mockito.when(taskDao.fetch(TASK, SHARD)).thenReturn(Optional.of(committed));
+        Mockito.when(taskDao.update(committed, RUN, WRITER, IndexShardTaskState.WRITING))
+                .thenReturn(Optional.of(writing));
+        Mockito.doThrow(new WriterClosingException("closing"))
+                .when(purger).purgeBeforeWriting(SHARD, STREAM, TASK, writer);
+
+        assertThatThrownBy(() -> tracker.beforeAdd(SHARD, writer)).isInstanceOf(WriterClosingException.class);
+
+        Mockito.verify(taskDao).update(writing, RUN, OTHER_WRITER, IndexShardTaskState.COMMITTED);
+        assertThat(tracker.hasWrittenTo(SHARD)).isFalse();
+        // The next writer saves it again.
+        Mockito.when(taskDao.fetch(TASK, SHARD)).thenReturn(Optional.empty());
+        Mockito.doNothing().when(purger).purgeBeforeWriting(SHARD, STREAM, TASK, otherWriter);
+        tracker.beforeAdd(SHARD, otherWriter);
+        Mockito.verify(taskDao).insertWriting(TASK, SHARD, STREAM, RUN, OTHER_WRITER);
+    }
+
+    @Test
     void testRowOfALaterRun_runIsStopped() {
         Mockito.when(taskDao.fetch(TASK, SHARD))
                 .thenReturn(Optional.of(row(RUN + 1, OTHER_WRITER, IndexShardTaskState.WRITING)));

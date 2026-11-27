@@ -21,6 +21,7 @@ import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.IndexShardWriter;
+import stroom.index.impl.WriterClosingException;
 import stroom.index.shared.IndexConstants;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
@@ -52,6 +53,8 @@ import org.apache.lucene.store.NoLockFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 
 import java.io.IOException;
@@ -67,6 +70,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -499,7 +503,39 @@ class TestIndexShardIO extends StroomUnitTest {
         writer.addDocument(buildStreamDocument(1));
         writer.close();
 
-        assertThatThrownBy(() -> writer.deleteStreams(List.of(1L))).isInstanceOf(IndexException.class);
+        assertThatThrownBy(() -> writer.deleteStreams(List.of(1L))).isInstanceOf(WriterClosingException.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testIsFieldTypeClash_fieldTypeChangedSinceTheShardHadIt(final boolean flushed) throws IOException {
+        final IndexShardWriter writer = createWriter(createShardOn(VolumeType.LOCAL));
+        final IndexDocument number = new IndexDocument();
+        number.add(new FieldValue(LuceneIndexField.createIdField("Changed"), ValLong.create(1)));
+        writer.addDocument(number);
+        if (flushed) {
+            writer.flush();
+        }
+        final IndexDocument text = new IndexDocument();
+        text.add(new FieldValue(LuceneIndexField.createField("Changed"), ValString.create("text")));
+
+        final Throwable thrown = catchThrowable(() -> writer.addDocument(text));
+
+        assertThat(thrown).isNotNull();
+        assertThat(writer.isFieldTypeClash(thrown)).isTrue();
+        assertThat(writer.isUnusable()).isFalse();
+        writer.close();
+    }
+
+    @Test
+    void testIsFieldTypeClash_notForOtherRefusals() throws IOException {
+        final IndexShardWriter writer = createWriter(createShardOn(VolumeType.LOCAL));
+
+        assertThat(writer.isFieldTypeClash(new IllegalArgumentException(
+                "Document contains at least one immense term in field=\"Test\""))).isFalse();
+        assertThat(writer.isFieldTypeClash(new IllegalStateException("cannot change field"))).isFalse();
+        assertThat(writer.isFieldTypeClash(new IllegalArgumentException())).isFalse();
+        writer.close();
     }
 
     private IndexDocument buildStreamDocument(final long streamId) {

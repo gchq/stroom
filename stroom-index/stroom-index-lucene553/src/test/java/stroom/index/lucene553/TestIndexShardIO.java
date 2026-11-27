@@ -21,6 +21,7 @@ import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.IndexShardWriter;
+import stroom.index.impl.WriterClosingException;
 import stroom.index.shared.IndexConstants;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
@@ -498,7 +499,7 @@ class TestIndexShardIO extends StroomUnitTest {
         writer.addDocument(buildStreamDocument(1));
         writer.close();
 
-        assertThatThrownBy(() -> writer.deleteStreams(List.of(1L))).isInstanceOf(IndexException.class);
+        assertThatThrownBy(() -> writer.deleteStreams(List.of(1L))).isInstanceOf(WriterClosingException.class);
     }
 
     private IndexDocument buildStreamDocument(final long streamId) {

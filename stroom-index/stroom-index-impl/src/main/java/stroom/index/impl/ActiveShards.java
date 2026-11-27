@@ -123,9 +123,9 @@ public class ActiveShards {
                 success = addDocument(document, tracker, refusals, false);
                 if (!success) {
                     throwIfNewShardRefused(newShardId, refusals);
-                    // If we weren't successful then try adding a shard. A shard that refuses the document
-                    // while its writer is fine may hold a field of a type that has since been changed, which a
-                    // new shard will take.
+                    // If we weren't successful then try adding a shard. A shard that refused the document as it
+                    // holds a field of a type that has since been changed is passed over, and a new shard will
+                    // take the document.
                     newShardId = addActiveShard(indexShardKey);
                 }
             }
@@ -150,14 +150,14 @@ public class ActiveShards {
         }
     }
 
-    // Only a refusal by a new, empty shard is the document's fault. One by an older shard may be because the
-    // type of a field has changed since it was made.
+    // A field type clash with a shard made for this document, e.g. as other documents of the old type have
+    // gone into it meanwhile, is not tried in yet another shard.
     private static void throwIfNewShardRefused(final Long newShardId, final Map<Long, RuntimeException> refusals) {
         final RuntimeException refusal = newShardId == null
                 ? null
                 : refusals.get(newShardId);
         if (refusal != null) {
-            // Even a new, empty shard refused it, so no more shards are made for it.
+            // Even the new shard refused it, so no more shards are made for it.
             throw new DocumentRefusedException("Unable to index a document: " + refusal.getMessage(), refusal);
         }
     }
@@ -194,8 +194,22 @@ public class ActiveShards {
         try {
             final IndexShardWriter indexShardWriter = indexShardWriterCache.getOrOpenWriter(indexShard.getId());
             // Recorded first, so that the shard never holds documents of the run that the record does not
-            // know about.
-            beforeAdd(tracker, indexShard, indexShardWriter);
+            // know about. The tracker puts back what it saved if this fails.
+            try {
+                beforeAdd(tracker, indexShard, indexShardWriter);
+            } catch (final WriterClosingException e) {
+                // The purge before writing found the writer closing. The next attempt opens the shard again.
+                LOGGER.debug(e::getMessage, e);
+                return false;
+            } catch (final RunStoppedException | DocumentRefusedException e) {
+                throw e;
+            } catch (final IndexException e) {
+                // The purge before writing found that the writer has lost its lease on the shard.
+                LOGGER.debug(e::getMessage, e);
+                removeActiveShard(indexShard);
+                indexShardWriterCache.close(indexShardWriter);
+                return false;
+            }
             try {
                 indexShardWriter.addDocument(document);
                 tracker.added(indexShard.getId(), indexShardWriter.getWriterId());
@@ -216,14 +230,14 @@ public class ActiveShards {
             } catch (final RuntimeException e) {
                 tracker.addFailed(indexShard.getId(), indexShardWriter.getWriterId());
                 if (!indexShardWriter.isUnusable()) {
-                    // Lucene refused the document and its writer is fine. The fault is in the document, or in
-                    // the shard if the type of a field has changed since it was made.
+                    // Lucene refused the document and its writer is fine.
                     LOGGER.debug(e::getMessage, e);
-                    if (indexShardWriter.getDocumentCount() == 0) {
-                        // An empty shard holds no fields to differ from, so the fault is in the document, and
-                        // no other shard is made for it.
+                    if (!indexShardWriter.isFieldTypeClash(e)) {
+                        // The fault is in the document, e.g. a term that is too long, so no other shard would
+                        // take it either, and none is made for it.
                         throw new DocumentRefusedException("Unable to index a document: " + e.getMessage(), e);
                     }
+                    // The type of a field has changed since the shard was made, which another shard may take.
                     refusals.put(indexShard.getId(), e);
                     return false;
                 }
@@ -264,7 +278,8 @@ public class ActiveShards {
                                   final IndexShardWriter indexShardWriter) {
         try {
             tracker.beforeAdd(indexShard.getId(), indexShardWriter);
-        } catch (final RunStoppedException e) {
+        } catch (final WriterClosingException | IndexException e) {
+            // Includes a stop of the run.
             throw e;
         } catch (final RuntimeException e) {
             throw new IndexRunTrackingException("Unable to record that index shard " + indexShard.getId()

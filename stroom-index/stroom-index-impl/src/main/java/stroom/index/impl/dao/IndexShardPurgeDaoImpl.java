@@ -38,6 +38,9 @@ class IndexShardPurgeDaoImpl implements IndexShardPurgeDao {
 
     private final IndexDbConnProvider indexDbConnProvider;
 
+    /// Creates the DAO.
+    ///
+    /// @param indexDbConnProvider Gives connections to the index database.
     @Inject
     IndexShardPurgeDaoImpl(final IndexDbConnProvider indexDbConnProvider) {
         this.indexDbConnProvider = indexDbConnProvider;

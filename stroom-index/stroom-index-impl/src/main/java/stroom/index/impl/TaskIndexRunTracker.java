@@ -31,7 +31,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.LockSupport;
 
 /// Keeps the rows of `index_shard_task` for one run of a processor task. The node remembers which shards and
 /// writers the run has rows for, so it saves one row for each shard, not one for each document.
@@ -43,6 +45,8 @@ class TaskIndexRunTracker implements IndexRunTracker {
     private static final int MAX_TRIES = 5;
     // The longest a stop waits for a document being added.
     private static final long STOP_WAIT_MS = 30_000;
+    // How often a stop looks again at whether the document being added has gone in.
+    private static final long STOP_POLL_NANOS = TimeUnit.MILLISECONDS.toNanos(5);
 
     private final IndexShardTaskDao taskDao;
     private final HeldProcessorTaskService heldProcessorTaskService;
@@ -65,6 +69,14 @@ class TaskIndexRunTracker implements IndexRunTracker {
     private final Map<Long, Saved> saved = new ConcurrentHashMap<>();
     private boolean written;
 
+    /// Creates the tracker for one run of a task.
+    ///
+    /// @param taskDao                  Saves the run's rows.
+    /// @param heldProcessorTaskService Reads whether the task is still on this run.
+    /// @param securityContext          Runs the database calls as the processing user.
+    /// @param task                     The task, on the run being tracked.
+    /// @param runIndexing              Told when documents of the run are lost.
+    /// @param purger                   Purges the task's stream from a shard before the run writes to it.
     TaskIndexRunTracker(final IndexShardTaskDao taskDao,
                         final HeldProcessorTaskService heldProcessorTaskService,
                         final SecurityContext securityContext,
@@ -117,13 +129,27 @@ class TaskIndexRunTracker implements IndexRunTracker {
             return;
         }
         securityContext.asProcessingUser(() -> {
-            saved.put(indexShardId, save(indexShardId, writerId));
-            // The task may have been taken from this run since it started, e.g. by the reaper, and run again
-            // elsewhere, which turned this run's rows into purges. A row saved now would then be missed.
-            checkStillThisRuns();
-            // Looked for only once the row is saved, as a purge made in between would otherwise later delete
-            // what this run writes.
-            purger.purgeBeforeWriting(indexShardId, streamId, taskId, writer);
+            final Saved newlySaved = save(indexShardId, writerId);
+            saved.put(indexShardId, newlySaved);
+            try {
+                // The task may have been taken from this run since it started, e.g. by the reaper, and run
+                // again elsewhere, which turned this run's rows into purges. A row saved now would then be
+                // missed.
+                checkStillThisRuns();
+                // Looked for only once the row is saved, as a purge made in between would otherwise later
+                // delete what this run writes.
+                purger.purgeBeforeWriting(indexShardId, streamId, taskId, writer);
+            } catch (final RuntimeException e) {
+                // Nothing is given to the writer, so the row must not say that it was. Left, it might later
+                // become a purge that deletes what the run that replaced this one wrote.
+                if (current == null) {
+                    saved.remove(indexShardId);
+                } else {
+                    saved.put(indexShardId, current);
+                }
+                undo(indexShardId, newlySaved);
+                throw e;
+            }
         });
     }
 
@@ -134,7 +160,8 @@ class TaskIndexRunTracker implements IndexRunTracker {
         stopped = true;
         final long giveUpAtMs = System.currentTimeMillis() + STOP_WAIT_MS;
         while (adding.get() > 0 && !saving && System.currentTimeMillis() < giveUpAtMs) {
-            Thread.onSpinWait();
+            // Sleeps rather than spins, as the caller may hold the writer's lock for a while.
+            LockSupport.parkNanos(STOP_POLL_NANOS);
         }
         LOGGER.info("Stopped run {} of processor task {} as it has been replaced", run, taskId);
     }
@@ -259,6 +286,11 @@ class TaskIndexRunTracker implements IndexRunTracker {
         // otherwise be taken for lost documents, or a row for documents that were committed earlier might be
         // thrown away.
         saved.remove(indexShardId);
+        undo(indexShardId, current);
+    }
+
+    // Puts a row back as it was before this run saved it.
+    private void undo(final long indexShardId, final Saved current) {
         try {
             securityContext.asProcessingUser(() -> {
                 final IndexShardTaskRow row = current.row();
@@ -270,7 +302,6 @@ class TaskIndexRunTracker implements IndexRunTracker {
                 }
             });
         } catch (final RuntimeException e) {
-            // Left as it is, the row can only cause the task to be run again for nothing.
             LOGGER.error(() -> LogUtil.message("Unable to put back the row of processor task {} for index shard "
                                                + "{}: {}", taskId, indexShardId, LogUtil.exceptionMessage(e)), e);
         }

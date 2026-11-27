@@ -37,6 +37,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import static stroom.index.impl.db.jooq.tables.IndexShard.INDEX_SHARD;
 import static stroom.index.impl.db.jooq.tables.IndexShardPurge.INDEX_SHARD_PURGE;
@@ -49,6 +52,9 @@ class IndexShardTaskDaoImpl implements IndexShardTaskDao {
 
     private final IndexDbConnProvider indexDbConnProvider;
 
+    /// Creates the DAO.
+    ///
+    /// @param indexDbConnProvider Gives connections to the index database.
     @Inject
     IndexShardTaskDaoImpl(final IndexDbConnProvider indexDbConnProvider) {
         this.indexDbConnProvider = indexDbConnProvider;
@@ -243,6 +249,18 @@ class IndexShardTaskDaoImpl implements IndexShardTaskDao {
             return List.of();
         }
         return JooqUtil.transactionResult(indexDbConnProvider, context -> {
+            // The shards are locked first, in order, as a commit or close does, so that the two can't each hold
+            // a lock the other waits for.
+            final Set<Long> indexShardIds = rows.stream()
+                    .map(IndexShardTaskRow::indexShardId)
+                    .collect(Collectors.toCollection(TreeSet::new));
+            context.select(INDEX_SHARD.ID)
+                    .from(INDEX_SHARD)
+                    .where(INDEX_SHARD.ID.in(indexShardIds))
+                    .orderBy(INDEX_SHARD.ID)
+                    .forUpdate()
+                    .fetch();
+
             final long nowMs = getDatabaseTimeMs(context);
             final List<IndexShardTaskRow> purged = new ArrayList<>();
             for (final IndexShardTaskRow row : rows) {
