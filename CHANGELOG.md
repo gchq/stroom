@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.21-parallel-pathways] - 2026-11-27
+
 * Bug **#6130** : Disable Dashboard _Process_ button when no datasource is selected.
 
 
@@ -3016,7 +3018,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.20-parallel-pathways...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.21-parallel-pathways...HEAD
+[v7.14-beta.21-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.20-parallel-pathways...v7.14-beta.21-parallel-pathways
 [v7.14-beta.20-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.19-parallel-pathways...v7.14-beta.20-parallel-pathways
 [v7.14-beta.19-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.18-parallel-pathways...v7.14-beta.19-parallel-pathways
 [v7.14-beta.18-parallel-pathways]: https://github.com/gchq/stroom/compare/v7.14-beta.17-parallel-pathways...v7.14-beta.18-parallel-pathways
