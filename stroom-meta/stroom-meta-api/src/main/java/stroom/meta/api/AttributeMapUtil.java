@@ -104,7 +104,9 @@ public class AttributeMapUtil {
     static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
     public static AttributeMap cloneAllowable(final AttributeMap in) {
-        final AttributeMap attributeMap = new AttributeMap();
+        // Keep the override flag so values set by the caller, e.g. the feed chosen in the
+        // upload dialog, still win over the values in embedded .meta/.manifest entries.
+        final AttributeMap attributeMap = new AttributeMap(in.isOverrideEmbeddedMeta());
         attributeMap.putAll(in);
         attributeMap.removeAll(StandardHeaderArguments.HEADER_CLONE_EXCLUDE_SET);
         return attributeMap;

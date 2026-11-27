@@ -18,6 +18,9 @@ package stroom.data.store.upload;
 
 
 import stroom.data.shared.StreamTypeNames;
+import stroom.data.shared.UploadDataRequest;
+import stroom.data.shared.UploadFeedSource;
+import stroom.data.store.api.DataService;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.Source;
@@ -28,17 +31,20 @@ import stroom.data.store.impl.DataDownloadTaskHandler;
 import stroom.data.store.impl.DataUploadTaskHandler;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
+import stroom.feed.api.FeedStore;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.Status;
+import stroom.resource.api.ResourceStore;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.ResourceKey;
 import stroom.util.string.StringIdUtil;
 
 import jakarta.inject.Inject;
@@ -48,9 +54,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
 
@@ -66,6 +74,12 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
     private DataUploadTaskHandler dataUploadTaskHandler;
     @Inject
     private DataDownloadTaskHandler dataDownloadTaskHandler;
+    @Inject
+    private DataService dataService;
+    @Inject
+    private FeedStore feedStore;
+    @Inject
+    private ResourceStore resourceStore;
 
     @Test
     void testDownload() throws IOException {
@@ -101,7 +115,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         }
 
         dataUploadTaskHandler.uploadData("test.zip", file, feedName,
-                StreamTypeNames.RAW_EVENTS, null, null);
+                StreamTypeNames.RAW_EVENTS, null, null, UploadFeedSource.SELECTED_FEED);
 
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(entryCount + 1);
     }
@@ -116,7 +130,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         Files.write(file, "TEST".getBytes());
 
         dataUploadTaskHandler.uploadData("test.dat", file, feedName,
-                StreamTypeNames.RAW_EVENTS, null, "Foo:One\nBar:Two\n");
+                StreamTypeNames.RAW_EVENTS, null, "Foo:One\nBar:Two\n", UploadFeedSource.SELECTED_FEED);
 
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(1);
     }
@@ -175,7 +189,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         final String extraMeta = "Z:ALL\n";
 
         dataUploadTaskHandler.uploadData("test.zip", file, feedName,
-                StreamTypeNames.RAW_EVENTS, null, extraMeta);
+                StreamTypeNames.RAW_EVENTS, null, extraMeta, UploadFeedSource.SELECTED_FEED);
 
         final List<Meta> streamList = metaService.find(findMetaCriteria).getValues();
 
@@ -205,6 +219,142 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
                 }
             }
         }
+    }
+
+    /// Uploading a zip exported from one feed into another, letting the selected feed win.
+    /// Every stream should go into the selected feed, even though the zip's manifests name
+    /// the feed it was exported from.
+    @Test
+    void testUploadToDifferentFeed_selectedFeed() throws IOException {
+        final String exportFeedName = FileSystemTestUtil.getUniqueTestString();
+        final String uploadFeedName = FileSystemTestUtil.getUniqueTestString();
+        final Path zip = exportFeed(exportFeedName, 2);
+
+        dataUploadTaskHandler.uploadData("test.zip", zip, uploadFeedName,
+                StreamTypeNames.RAW_EVENTS, null, null, UploadFeedSource.SELECTED_FEED);
+
+        assertThat(countStreams(exportFeedName))
+                .isEqualTo(2);
+        assertThat(countStreams(uploadFeedName))
+                .isEqualTo(1);
+    }
+
+    /// Uploading a zip exported from one feed into another, letting the zip's feeds win.
+    /// Every stream should go back into the feed it was exported from.
+    @Test
+    void testUploadToDifferentFeed_zipFeeds() throws IOException {
+        final String exportFeedName = FileSystemTestUtil.getUniqueTestString();
+        final String uploadFeedName = FileSystemTestUtil.getUniqueTestString();
+        final Path zip = exportFeed(exportFeedName, 2);
+
+        dataUploadTaskHandler.uploadData("test.zip", zip, uploadFeedName,
+                StreamTypeNames.RAW_EVENTS, null, null, UploadFeedSource.ZIP_FEEDS);
+
+        assertThat(countStreams(exportFeedName))
+                .isEqualTo(3);
+        assertThat(countStreams(uploadFeedName))
+                .isZero();
+    }
+
+    /// The same as [#testUploadToDifferentFeed_selectedFeed()] but going through
+    /// [DataService], which checks the feeds exist.
+    @Test
+    void testUploadThroughDataService_selectedFeed() throws IOException {
+        final String exportFeedName = FileSystemTestUtil.getUniqueTestString();
+        final String uploadFeedName = FileSystemTestUtil.getUniqueTestString();
+        feedStore.createDocument(exportFeedName);
+        feedStore.createDocument(uploadFeedName);
+        final Path zip = exportFeed(exportFeedName, 2);
+
+        dataService.upload(createUploadRequest(zip, uploadFeedName, UploadFeedSource.SELECTED_FEED));
+
+        assertThat(countStreams(exportFeedName))
+                .isEqualTo(2);
+        assertThat(countStreams(uploadFeedName))
+                .isEqualTo(1);
+    }
+
+    /// The same as [#testUploadToDifferentFeed_zipFeeds()] but going through
+    /// [DataService], which checks the feeds exist.
+    @Test
+    void testUploadThroughDataService_zipFeeds() throws IOException {
+        final String exportFeedName = FileSystemTestUtil.getUniqueTestString();
+        final String uploadFeedName = FileSystemTestUtil.getUniqueTestString();
+        feedStore.createDocument(exportFeedName);
+        feedStore.createDocument(uploadFeedName);
+        final Path zip = exportFeed(exportFeedName, 2);
+
+        dataService.upload(createUploadRequest(zip, uploadFeedName, UploadFeedSource.ZIP_FEEDS));
+
+        assertThat(countStreams(exportFeedName))
+                .isEqualTo(3);
+        assertThat(countStreams(uploadFeedName))
+                .isZero();
+    }
+
+    /// Letting the zip's feeds win, when the zip names a feed that doesn't exist, should
+    /// reject the upload without writing anything.
+    @Test
+    void testUploadThroughDataService_zipFeedMissing() throws IOException {
+        // No feed document is created for the export feed.
+        final String exportFeedName = FileSystemTestUtil.getUniqueTestString();
+        final String uploadFeedName = FileSystemTestUtil.getUniqueTestString();
+        feedStore.createDocument(uploadFeedName);
+        final Path zip = exportFeed(exportFeedName, 2);
+        final UploadDataRequest request = createUploadRequest(zip, uploadFeedName, UploadFeedSource.ZIP_FEEDS);
+
+        assertThatThrownBy(() -> dataService.upload(request))
+                .hasMessageContaining("The zip names 1 feed that doesn't exist on this system: '"
+                                      + exportFeedName + "'");
+
+        assertThat(countStreams(exportFeedName))
+                .isEqualTo(2);
+        assertThat(countStreams(uploadFeedName))
+                .isZero();
+    }
+
+    /// Creates streams in a feed then exports them all to a zip.
+    private Path exportFeed(final String feedName, final int streamCount) throws IOException {
+        for (int i = 1; i <= streamCount; i++) {
+            commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
+        }
+        assertThat(countStreams(feedName))
+                .isEqualTo(streamCount);
+
+        final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".zip");
+        String format = file.getFileName().toString();
+        format = format.substring(0, format.indexOf("."));
+        dataDownloadTaskHandler.downloadData(
+                createFeedCriteria(feedName),
+                getCurrentTestDir(),
+                format,
+                new DataDownloadSettings());
+        return file;
+    }
+
+    private UploadDataRequest createUploadRequest(final Path zip,
+                                                  final String feedName,
+                                                  final UploadFeedSource feedSource) throws IOException {
+        final ResourceKey resourceKey = resourceStore.createTempFile("test.zip");
+        Files.copy(zip, resourceStore.getTempFile(resourceKey), StandardCopyOption.REPLACE_EXISTING);
+        return new UploadDataRequest(
+                resourceKey,
+                feedName,
+                StreamTypeNames.RAW_EVENTS,
+                null,
+                null,
+                "test.zip",
+                feedSource);
+    }
+
+    private int countStreams(final String feedName) {
+        return metaService.find(createFeedCriteria(feedName)).size();
+    }
+
+    private FindMetaCriteria createFeedCriteria(final String feedName) {
+        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
+        findMetaCriteria.setExpression(MetaExpressionUtil.createFeedExpression(feedName));
+        return findMetaCriteria;
     }
 
     private void assertContains(final String str, final String... testList) {
