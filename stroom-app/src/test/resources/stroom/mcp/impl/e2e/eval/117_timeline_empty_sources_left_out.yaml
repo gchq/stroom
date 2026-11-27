@@ -53,7 +53,7 @@ expected:
     sources:
       offered: [Web proxy events, Badge events]
       not_offered: [Old proxy events, Legacy proxy events]
-      left_out: {Old proxy events: holding none}
+      left_out: {Old proxy events: 'holding (none|no data)'}
       read: [Web proxy events]
 reference:
   calls:

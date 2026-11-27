@@ -115,7 +115,7 @@ final class TimelineResult {
                 NullSafe.consume(note.userFrom(), from -> source.put("user_field_from", from));
                 NullSafe.consume(note.transform(), transform -> source.put("user_transform", transform));
                 NullSafe.consume(note.hint(), hint -> source.put("hint", hint));
-                NullSafe.consume(note.unmapped(), unmapped -> source.put("not_mapped", unmapped));
+                NullSafe.consume(unmappedText(run, i, note), unmapped -> source.put("not_mapped", unmapped));
             }
             final Map<String, Object> routes = new LinkedHashMap<>();
             run.classification().routes().getOrDefault(i, Map.of()).forEach((route, count) ->
@@ -829,9 +829,15 @@ final class TimelineResult {
         run.notes().stream().filter(note -> note.leftOut() == null && note.hint() != null)
                 .forEach(note -> sb.append("- ").append(note.name()).append(": nothing as given. ")
                         .append(note.hint()).append(".\n"));
-        run.notes().stream().filter(note -> note.leftOut() == null && note.unmapped() != null)
-                .forEach(note -> sb.append("- ").append(note.name()).append(": ").append(note.unmapped())
-                        .append(".\n"));
+        for (int i = 0; i < run.sources().size(); i++) {
+            final SourceNote note = note(run, run.sources().get(i).name());
+            final String unmapped = note == null || note.leftOut() != null
+                    ? null
+                    : unmappedText(run, i, note);
+            if (unmapped != null) {
+                sb.append("- ").append(note.name()).append(": ").append(unmapped).append(".\n");
+            }
+        }
         final List<String> suggested = suggestions(run.notes());
         if (!suggested.isEmpty()) {
             sb.append("Fields found by a convention or the documentation (offer to make them the site's): ")
@@ -1062,6 +1068,24 @@ final class TimelineResult {
             noise.proposed().forEach(found -> sb.append("- ").append(found.said()).append('\n'));
         }
         return sb.toString();
+    }
+
+    // A source's things not mapped, with what is lost where the event type is among them: its events nothing
+    // classified (seen in eval case 113 on Sonnet, 2026-11-27: the hint for the event type passed over, 162 of 174
+    // events unclassified and no periods). Null where the source has nothing unmapped.
+    private static String unmappedText(final TimelineRun run, final int i, final SourceNote note) {
+        if (note.unmapped() == null) {
+            return null;
+        }
+        final long unclassified = run.classification().routes().getOrDefault(i, Map.of())
+                .getOrDefault(EventXmlClassifier.Route.NONE, 0);
+        final long events = i < run.read().counts().size()
+                ? run.read().counts().get(i)
+                : 0L;
+        return unclassified > 0 && note.unmapped().contains(InstructionRules.EVENT_TYPE_FIELD + " (")
+                ? note.unmapped() + " (without the event type, " + unclassified + " of " + events + " event(s) are "
+                  + "unclassified: no role, so no session or period of them)"
+                : note.unmapped();
     }
 
     // The periods' count by kind, in order of first seen.

@@ -558,6 +558,19 @@ final class ActivityCharacterisation {
                     event.host(), source(sourceNames, event.source()), session, before(byStart, session,
                     event.time())));
         }
+        // What the user started with words of its own (a command line), as runs take it (ThematicSpans#isPoint): an
+        // item too, though not an action (seen in eval case 115 on Sonnet, 2026-11-27: process starts classified
+        // 'open', never characterised, their run with no activity).
+        final Set<String> asItems = new LinkedHashSet<>();
+        items.forEach(item -> asItems.add(item.id()));
+        for (final Event event : events.values()) {
+            if (event.role() == TimelineSessions.Role.OPEN && !NullSafe.isBlankString(event.text())
+                && asItems.add(event.id())) {
+                items.add(new Item(event.id(), excerpt(event.text(), settings.excerptChars()), event.time(),
+                        event.host(), source(sourceNames, event.source()), null, before(byStart, null,
+                        event.time())));
+            }
+        }
         // The sessions the graph left out that have words to go by.
         for (final Session session : timeline.sessions()) {
             final SessionWords sessionWords = words.get(session.id());

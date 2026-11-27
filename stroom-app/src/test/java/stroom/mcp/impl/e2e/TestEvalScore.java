@@ -2118,6 +2118,21 @@ class TestEvalScore {
     }
 
     @Test
+    void aPeriodWhoseEndWasntSeenMayEndAtTheWindowsEndAfterTheOneGiven() {
+        // Case 119 on Haiku and Sonnet (2026-11-27): Friday's enter with no leave runs to the end of the window the
+        // model asked for (16 to 22 November), past the case's 21 November.
+        final Map<String, Object> open = Map.of("kind", "on_site", "end", "2026-11-21T00:00", "end_seen",
+                "end not seen");
+        assertThat(EvalTimelineScore.periodMatches(open, Map.of("kind", "on_site", "end", "2026-11-23T00:00:00Z",
+                "end_seen", "end not seen"))).isTrue();
+        assertThat(EvalTimelineScore.periodMatches(open, Map.of("kind", "on_site", "end", "2026-11-20T17:00:00Z",
+                "end_seen", "end not seen"))).isFalse();
+        // A seen end matches only its own time.
+        assertThat(EvalTimelineScore.periodMatches(Map.of("end", "2026-11-21T00:00", "end_seen", "seen"),
+                Map.of("end", "2026-11-23T00:00:00Z", "end_seen", "seen"))).isFalse();
+    }
+
+    @Test
     void aTimelinesPeriodsAreScoredByKindKeyTimesAndEndsSeenAndImplyNoActivity() {
         final Map<String, Object> evalCase = timelineCase(Map.of(
                 "periods", List.of(
@@ -2359,7 +2374,7 @@ class TestEvalScore {
         final Map<String, Object> evalCase = timelineCase(Map.of("sources", Map.of(
                 "offered", List.of("Web proxy events", "Badge events"),
                 "not_offered", List.of("Old proxy events", "Legacy events"),
-                "left_out", Map.of("Old proxy events", "holding none"),
+                "left_out", Map.of("Old proxy events", "holding (none|no data)"),
                 "read", List.of("Web proxy events"))));
         final Map<String, Object> choose = Map.of("type", "object", "properties", Map.of("sources", Map.of("type",
                 "string", "enum", List.of("All supported data sources", "Other (say which)"))));
@@ -2389,11 +2404,26 @@ class TestEvalScore {
                 ? both
                 : null, null, List.of(offeringAll)));
         assertThat(wrong.passed()).isFalse();
-        assertThat(wrong.summary()).contains("the forms offered [Web proxy events, Badge events, Old proxy events]")
-                .contains("Old proxy events was offered in a form")
-                .contains("no form or result names Old proxy events with why (holding none)")
+        assertThat(wrong.summary()).contains("the forms (or the list) offered [Web proxy events, Badge events, Old "
+                                             + "proxy events]")
+                .contains("Old proxy events was offered in a form or listed")
+                .contains("no form or result names Old proxy events with why (holding (none|no data))")
                 .contains("3 event(s) from [Web proxy events, Badge events], expected events from "
                           + "[Web proxy events]");
+
+        // No form: chosen from list_data_sources, which left the empty index out, saying so (case 117 on Haiku and
+        // Sonnet, 2026-11-27).
+        final EvalScore.ToolUse list = new EvalScore.ToolUse("list_data_sources", false, null, """
+                Data sources you can use (3):
+                - Analytics 'Analytics' (uuid Analytics)
+                - ElasticIndex 'Badge events' (uuid b-1)
+                - ElasticIndex 'Web proxy events' (uuid w-1)
+                1 index(es) holding no data were left out: Old proxy events (no documents).""");
+        final EvalScore listed = new EvalScore("t");
+        listed.scoreTimeline(evalCase, new EvalTimelineScore.Run(List.of(list), path -> path.endsWith("events.csv")
+                ? events
+                : null, null, List.of()));
+        assertThat(listed.passed()).as(listed.summary()).isTrue();
 
         // No form at all.
         final EvalScore unasked = new EvalScore("t");

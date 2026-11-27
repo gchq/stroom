@@ -365,6 +365,60 @@ class TestActivityTimelineAnySource {
     }
 
     @Test
+    void commandsOfAnOpenRoleAreCharacterisedSoTheirRunHasAnActivity() {
+        // Eval case 115 on Sonnet (2026-11-27): process.start classified 'open', as a process's start is, so the
+        // commands weren't actions, never sent to be characterised, and their run had no activity.
+        final List<String> commands = List.of("Get-ADUser -Filter *", "Export-Csv C:\\Temp\\users.csv",
+                "Compress-Archive -Path C:\\Temp\\users.csv", "Copy-Item C:\\Temp\\users.zip");
+        for (int i = 0; i < commands.size(); i++) {
+            codes.add(new LinkedHashMap<>(Map.of("@timestamp", at("14:00") + i * 2 * 60_000L, "user", "pat",
+                    "code", "process.start", "process.command_line", commands.get(i))));
+        }
+        final Map<String, Object> source = Map.of("index", "Codes", "user", "user", "eventTypeField", "code",
+                "typeRoles", Map.of("process.start", "open"));
+        final List<String> asked = new ArrayList<>();
+        final ModelSideCalls model = new ModelSideCalls() {
+            @Override
+            public boolean available() {
+                return true;
+            }
+
+            @Override
+            public String via() {
+                return "a stub";
+            }
+
+            @Override
+            public Answer ask(final Question question) {
+                asked.add(question.user());
+                // Every item asked about one new activity.
+                final java.util.regex.Matcher items = java.util.regex.Pattern.compile("\"item\":\\s*\"([^\"]+)\"")
+                        .matcher(question.user());
+                final List<String> placed = new ArrayList<>();
+                while (items.find()) {
+                    placed.add("{\"item\": \"" + items.group(1) + "\", \"activity\": \"new\", \"name\": "
+                               + "\"AD user export\", \"confidence\": \"high\", \"reason\": \"exports users\"}");
+                }
+                return new Answer("[" + String.join(", ", placed) + "]", 1, 1);
+            }
+        };
+
+        json(mcpWith(model), arguments(Map.of("sources", List.of(source), "view", "activities",
+                ActivityTimelineTool.RUN_ANYWAY_ARG, true)));
+
+        final List<Map<String, String>> levels = csv(files.content(FOLDER + ActivityTimelineTool.LEVELS_FILE)
+                .orElseThrow());
+        final Map<String, String> run = levels.stream()
+                .filter(row -> "2".equals(row.get("level")) && row.get("how").startsWith("code: a run"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No run: " + levels));
+        assertThat(asked).anySatisfy(question -> assertThat(question).contains("Get-ADUser"));
+        assertThat(run.get("parent")).as("the run's activity").isNotBlank();
+        assertThat(levels).anySatisfy(row -> assertThat(row).containsEntry("level", "1")
+                .containsEntry("id", run.get("parent")));
+    }
+
+    @Test
     void aFlatIndexsCommandLineFieldIsFetchedAsItsEventsTextSoTheyRunAsCommands() {
         // Eval case 115: a shell session's commands, their command lines in a field of their own, no text field.
         final List<String> commands = List.of("Get-ADUser -Filter *", "Export-Csv C:\\Temp\\users.csv",
@@ -548,6 +602,29 @@ class TestActivityTimelineAnySource {
         assertThat(tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
                 arguments(sources), false)), mcp()).text()).contains("no field holding the user was found (maybe "
                                                                       + "UserName;");
+    }
+
+    @Test
+    void anUnmappedEventTypeSaysHowManyEventsAreUnclassifiedWithoutIt() {
+        // Eval case 113 on Sonnet (2026-11-27): the user, host and object given as the hint said, the event type
+        // passed over, and most events unclassified with no periods.
+        for (int i = 0; i < 4; i++) {
+            final Map<String, Object> doc = new LinkedHashMap<>();
+            doc.put("EventTime", at("09:0" + i));
+            doc.put("UserName", "pat");
+            doc.put("EventTypeName", "badge.enter");
+            doc.put("StreamId", STREAM);
+            doc.put("EventId", (long) ++eventId);
+            flat.add(doc);
+        }
+
+        final String text = tool.execute(ToolCalls.call(ActivityTimelineTool.NAME, JsonUtil.writeValueAsString(
+                arguments(Map.of("sources", List.of(Map.of("index", "Flat", "user", "UserName", "host", "Host",
+                        "object", "Object")))), false)), mcp()).text();
+
+        assertThat(text).contains("event type (maybe EventTypeName)", "(without the event type, 4 of 4 event(s) are "
+                                                                       + "unclassified: no role, so no session or "
+                                                                       + "period of them)");
     }
 
     @Test

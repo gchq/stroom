@@ -39,7 +39,9 @@ import java.util.regex.Pattern;
 /// * `entity`: whose timeline: its files are in `/outputs/timelines/<entity>/`;
 /// * `periods`: periods each a row of `periods.csv`, each row matched once: its `kind` and `key` exactly, its
 ///   `start` and `end` as the start of the row's (`2026-11-16T08:2` matches `2026-11-16T08:23:00Z`), its
-///   `start_seen` and `end_seen` exactly; only the keys given are compared;
+///   `start_seen` and `end_seen` exactly, except that a period whose end wasn't seen may end at or after its `end`
+///   (it runs to the end of the window the model asked for: both models asked for 16 to 22 November in case 119);
+///   only the keys given are compared;
 /// * `periods_by_kind`: how many periods of each kind, exactly, and of no other kind;
 /// * `periods_imply_no_activity`: true when every event that starts or ends a period (`events.csv` role
 ///   `period_start` or `period_end`) is in no span, thematic span, run or activity, and in its period;
@@ -86,6 +88,10 @@ final class EvalTimelineScore {
     static final String NOISE_FIELD = "exclude";
     /// The tool whose calls are scored.
     static final String TIMELINE_TOOL = "activity_timeline";
+    /// The tool listing the data sources, which leaves out indexes holding no data.
+    static final String LIST_TOOL = "list_data_sources";
+    // A data source a list_data_sources result lists.
+    private static final Pattern LISTED = Pattern.compile("(?m)^- [A-Za-z]+ '([^']+)' \\(uuid ");
 
     private static final Pattern CITED = Pattern.compile("\\be(\\d+)\\b");
     // The activity of a level's row in none.
@@ -212,18 +218,36 @@ final class EvalTimelineScore {
         }
     }
 
-    private static boolean periodMatches(final Map<String, Object> wanted, final Map<String, String> row) {
+    static boolean periodMatches(final Map<String, Object> wanted, final Map<String, String> row) {
+        final boolean openEnd = "end not seen".equals(String.valueOf(wanted.get("end_seen")));
         for (final Map.Entry<String, Object> entry : wanted.entrySet()) {
             final String value = String.valueOf(entry.getValue());
             final String actual = Objects.requireNonNullElse(row.get(entry.getKey()), "");
             final boolean time = "start".equals(entry.getKey()) || "end".equals(entry.getKey());
-            if (time
-                    ? !actual.startsWith(value)
-                    : !actual.equals(value)) {
+            final boolean matched;
+            if ("end".equals(entry.getKey()) && openEnd) {
+                // Its end the window's: at or after the one given.
+                matched = actual.startsWith(value) || actual.compareTo(value) >= 0;
+            } else {
+                matched = time
+                        ? actual.startsWith(value)
+                        : actual.equals(value);
+            }
+            if (!matched) {
                 return false;
             }
         }
         return true;
+    }
+
+    // The data sources a list_data_sources result lists, by name (`- ElasticIndex 'Badge events' (uuid ...)`).
+    static List<String> listedSources(final String text) {
+        final List<String> out = new ArrayList<>();
+        final java.util.regex.Matcher matcher = LISTED.matcher(text);
+        while (matcher.find()) {
+            out.add(matcher.group(1));
+        }
+        return out;
     }
 
     private static String periodsText(final List<Map<String, String>> periods) {
@@ -599,21 +623,40 @@ final class EvalTimelineScore {
         final Set<String> offered = new LinkedHashSet<>();
         asked.forEach(form -> properties(form.schema()).values().forEach(field -> offered.addAll(listed(
                 EvalCases.map(field)))));
+        // With no form, the model chose from list_data_sources, which leaves out indexes holding no data: the case's
+        // sources it lists are those offered (seen in case 117 on Haiku and Sonnet, 2026-11-27).
+        final String list = asked.isEmpty()
+                ? run.calls().stream()
+                        .filter(call -> LIST_TOOL.equals(call.name()))
+                        .map(call -> Objects.requireNonNullElse(call.text(), ""))
+                        .reduce((first, second) -> second)
+                        .orElse(null)
+                : null;
+        final Set<String> named = new LinkedHashSet<>(EvalCases.strings(sources.get("offered")));
+        named.addAll(EvalCases.strings(sources.get("not_offered")));
+        named.addAll(EvalCases.map(sources.get("left_out")).keySet());
+        if (list != null) {
+            listedSources(list).stream().filter(named::contains).forEach(offered::add);
+        }
         if (sources.get("offered") != null) {
             final Set<String> wanted = new LinkedHashSet<>(EvalCases.strings(sources.get("offered")));
-            checks.check("sources offered", offered.equals(wanted), asked.isEmpty()
+            checks.check("sources offered", offered.equals(wanted), asked.isEmpty() && list == null
                     ? "no form asked which data sources to read"
-                    : "the forms offered " + offered + ", expected " + wanted);
+                    : "the forms (or the list) offered " + offered + ", expected " + wanted);
         }
         final List<String> optionsText = asked.stream()
                 .map(form -> String.join("\n", allOptions(form.schema())))
                 .toList();
         for (final String name : EvalCases.strings(sources.get("not_offered"))) {
-            checks.check("not offered: " + name, optionsText.stream().noneMatch(text -> text.contains(name)),
-                    name + " was offered in a form");
+            checks.check("not offered: " + name, optionsText.stream().noneMatch(text -> text.contains(name))
+                                                 && (list == null || !listedSources(list).contains(name)),
+                    name + " was offered in a form or listed");
         }
         final List<String> said = new ArrayList<>();
         asked.forEach(form -> said.add(Objects.requireNonNullElse(form.message(), "")));
+        if (list != null) {
+            said.add(list);
+        }
         run.calls().stream()
                 .filter(call -> TIMELINE_TOOL.equals(call.name()))
                 .forEach(call -> said.add(Objects.requireNonNullElse(call.text(), "")));
