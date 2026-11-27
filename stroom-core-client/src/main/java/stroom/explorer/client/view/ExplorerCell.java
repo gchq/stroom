@@ -20,6 +20,7 @@ import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
+import stroom.explorer.client.presenter.ExplorerDragDropRules;
 import stroom.explorer.client.presenter.TickBoxSelectionModel;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
@@ -39,16 +40,20 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.view.client.SelectionModel;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
     private static final String DESCENDANT_ISSUES_MSG = "Descendants have issues";
+    // The most items listed in the drag image before the rest are summarised as "and N more".
+    private static final int MAX_DRAG_IMAGE_ITEMS = 5;
 
     private static Template template;
     private final SelectionModel<ExplorerNode> selectionModel;
     private TickBoxCell tickBoxCell;
     private boolean showAlerts;
+    private boolean draggable;
 
     public ExplorerCell(final SelectionModel<ExplorerNode> selectionModel, final boolean showAlerts) {
         this.selectionModel = selectionModel;
@@ -77,6 +82,14 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
     public void setShowAlerts(final boolean showAlerts) {
         this.showAlerts = showAlerts;
+    }
+
+    /// Sets whether rendered nodes can be dragged with HTML drag and drop. Nodes that
+    /// [ExplorerDragDropRules] says cannot be dragged (e.g. the root nodes) are never draggable.
+    ///
+    /// @param draggable True to render draggable nodes.
+    public void setDraggable(final boolean draggable) {
+        this.draggable = draggable;
     }
 
     @Override
@@ -121,34 +134,8 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                 content.append(tickBoxHtml);
             }
 
-            final DocumentType documentType = DocumentTypeRegistry.get(node.getType());
-            if (documentType != null && documentType.getIcon() != null) {
-                // Add icon
-                final SafeHtml iconSafeHtml = SvgImageUtil.toSafeHtml(
-                        documentType.getDisplayType(),
-                        documentType.getIcon(),
-                        getCellClassName() + "-icon");
-                final SafeHtmlBuilder builder = new SafeHtmlBuilder().append(iconSafeHtml);
-
-                if (showAlerts) {
-                    if (node.hasDescendantNodeInfo()) {
-                        builder.append(SvgImageUtil.toSafeHtml(
-                                buildAlertText(node),
-                                SvgImage.ALERT_SIMPLE,
-                                "svgIcon", "small", getCellClassName() + "-alert-icon"));
-                    }
-                }
-
-                content.append(template.div(
-                        getCellClassName() + "-icon-wrapper",
-                        builder.toSafeHtml()));
-            }
-
-            if (node.getDisplayValue() != null) {
-                // Add text
-                final SafeHtml text = SafeHtmlUtils.fromString(node.getDisplayValue());
-                content.append(template.text(getCellClassName() + "-text", text.asString(), text));
-            }
+            appendIcon(content, node, showAlerts);
+            appendText(content, node);
 
             // If the item is a favourite and not part of the Favourites node, display a star next to it
             if (node.hasNodeFlag(NodeFlag.FAVOURITE) && node.getRootNodeUuid() != null &&
@@ -169,7 +156,69 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                 filterMatchClass = "";
             }
 
-            sb.append(template.outer(filterMatchClass, content.toSafeHtml()));
+            if (draggable && ExplorerDragDropRules.isDraggable(node)) {
+                sb.append(template.outerDraggable(filterMatchClass, content.toSafeHtml()));
+            } else {
+                sb.append(template.outer(filterMatchClass, content.toSafeHtml()));
+            }
+        }
+    }
+
+    /// Renders the image shown under the pointer while `nodes` are dragged: just their icons and names,
+    /// without the expanders and indentation of the tree rows. Long lists are truncated.
+    ///
+    /// @param nodes The nodes being dragged.
+    /// @return The drag image HTML.
+    public SafeHtml renderDragImage(final List<ExplorerNode> nodes) {
+        final SafeHtmlBuilder items = new SafeHtmlBuilder();
+        final int shownCount = Math.min(nodes.size(), MAX_DRAG_IMAGE_ITEMS);
+        for (int i = 0; i < shownCount; i++) {
+            final SafeHtmlBuilder item = new SafeHtmlBuilder();
+            appendIcon(item, nodes.get(i), false);
+            appendText(item, nodes.get(i));
+            items.append(template.div(getCellClassName(), item.toSafeHtml()));
+        }
+        final int hiddenCount = nodes.size() - shownCount;
+        if (hiddenCount > 0) {
+            items.append(template.div(
+                    getCellClassName() + "-dragImageMore",
+                    SafeHtmlUtils.fromString("and " + hiddenCount + " more")));
+        }
+        return template.div(
+                getCellClassName() + "-dragImage",
+                template.div(getCellClassName() + "-dragImageBox", items.toSafeHtml()));
+    }
+
+    private void appendIcon(final SafeHtmlBuilder content,
+                            final ExplorerNode node,
+                            final boolean includeAlert) {
+        final DocumentType documentType = DocumentTypeRegistry.get(node.getType());
+        if (documentType != null && documentType.getIcon() != null) {
+            // Add icon
+            final SafeHtml iconSafeHtml = SvgImageUtil.toSafeHtml(
+                    documentType.getDisplayType(),
+                    documentType.getIcon(),
+                    getCellClassName() + "-icon");
+            final SafeHtmlBuilder builder = new SafeHtmlBuilder().append(iconSafeHtml);
+
+            if (includeAlert && node.hasDescendantNodeInfo()) {
+                builder.append(SvgImageUtil.toSafeHtml(
+                        buildAlertText(node),
+                        SvgImage.ALERT_SIMPLE,
+                        "svgIcon", "small", getCellClassName() + "-alert-icon"));
+            }
+
+            content.append(template.div(
+                    getCellClassName() + "-icon-wrapper",
+                    builder.toSafeHtml()));
+        }
+    }
+
+    private void appendText(final SafeHtmlBuilder content, final ExplorerNode node) {
+        if (node.getDisplayValue() != null) {
+            // Add text
+            final SafeHtml text = SafeHtmlUtils.fromString(node.getDisplayValue());
+            content.append(template.text(getCellClassName() + "-text", text.asString(), text));
         }
     }
 
@@ -225,5 +274,8 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
         @Template("<div class=\"explorerCell {0}\">{1}</div>")
         SafeHtml outer(String extraClassName, SafeHtml content);
+
+        @Template("<div class=\"explorerCell {0}\" draggable=\"true\">{1}</div>")
+        SafeHtml outerDraggable(String extraClassName, SafeHtml content);
     }
 }
