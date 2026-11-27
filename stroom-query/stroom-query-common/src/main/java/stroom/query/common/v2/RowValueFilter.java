@@ -25,12 +25,14 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.ExpressionUtil;
+import stroom.query.api.Format;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactory;
 import stroom.query.language.filter.SimpleStringExpressionParser;
 import stroom.query.language.filter.SingleFieldProvider;
 import stroom.query.language.functions.Values;
+import stroom.util.shared.NullSafe;
 
 import java.util.HashMap;
 import java.util.List;
@@ -91,6 +93,7 @@ public class RowValueFilter {
 
             final ColumnValueSelection columnValueSelection = column.getColumnValueSelection();
             if (columnValueSelection != null && columnValueSelection.isEnabled()) {
+                final boolean exact = isExact(column);
                 if (columnValueSelection.isInvert()) {
                     final List<ExpressionTerm> terms = columnValueSelection
                             .getValues()
@@ -98,8 +101,12 @@ public class RowValueFilter {
                             .map(value -> ExpressionTerm
                                     .builder()
                                     .field(column.getId())
-                                    .condition(Condition.NOT_EQUALS)
-                                    .value(value)
+                                    .condition(exact
+                                            ? Condition.NOT_EQUALS_CASE_SENSITIVE
+                                            : Condition.NOT_EQUALS)
+                                    .value(exact
+                                            ? escapeWildcards(value)
+                                            : value)
                                     .build())
                             .toList();
                     final ExpressionOperator expressionOperator = ExpressionOperator
@@ -116,8 +123,12 @@ public class RowValueFilter {
                             .map(value -> ExpressionTerm
                                     .builder()
                                     .field(column.getId())
-                                    .condition(Condition.EQUALS)
-                                    .value(value)
+                                    .condition(exact
+                                            ? Condition.EQUALS_CASE_SENSITIVE
+                                            : Condition.EQUALS)
+                                    .value(exact
+                                            ? escapeWildcards(value)
+                                            : value)
                                     .build())
                             .toList();
                     final ExpressionOperator expressionOperator = ExpressionOperator
@@ -135,5 +146,17 @@ public class RowValueFilter {
         }
 
         return Optional.of(valueFilter);
+    }
+
+    // Values that are the same duration, such as 1h and 60m, are ticked separately, so they mustn't be matched as
+    // durations.
+    private static boolean isExact(final Column column) {
+        return Format.Type.DURATION.equals(NullSafe.get(column.getFormat(), Format::getType));
+    }
+
+    private static String escapeWildcards(final String value) {
+        return value
+                .replace("*", "\\*")
+                .replace("?", "\\?");
     }
 }

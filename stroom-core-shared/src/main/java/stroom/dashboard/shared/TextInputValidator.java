@@ -30,16 +30,17 @@ public final class TextInputValidator {
     private static final String NUMBER_REGEX = "[+-]?(\\d+(\\.\\d*)?|\\.\\d+)([eE][+-]?\\d+)?";
 
     // An absolute ISO 8601 date-time, with optional seconds, fraction and offset, e.g.
-    // 2026-01-31T13:45:00.000Z or 2026-01-31T13:45:00.000+10:00. The server can't parse an
-    // offset without a colon, e.g. +1000
+    // 2026-01-31T13:45:00.000Z or 2026-01-31T13:45:00.000+10:00. An offset can also have no colon, as
+    // the formatDate() function writes it, e.g. +1000, or no minutes, e.g. +10
     private static final String ISO_DATE_TIME_REGEX =
-            "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}:\\d{2})?";
+            "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d{1,9})?)?(Z|[+-]\\d{2}(:?\\d{2})?)?";
 
     // The date point functions understood by the server side date expression parser.
     private static final String DATE_POINT_REGEX = "(now|second|minute|hour|day|week|month|year)\\(\\)";
 
-    // One or more signed durations, e.g. -1d, + 2h30m
-    private static final String DURATIONS_REGEX = "(\\s*[+-]\\s*(\\d+[smhdwMy])+)*";
+    // One or more signed durations, e.g. -1d, + 2h30m. The server only takes nanoseconds that make whole
+    // milliseconds, e.g. 5000000ns
+    private static final String DURATIONS_REGEX = "(\\s*[+-]\\s*(\\d+(ms|[smhdwMy])|\\d*0{6}ns)+)*";
 
     private static final String DATE_TIME_REGEX = "\\s*("
                                                   + ISO_DATE_TIME_REGEX

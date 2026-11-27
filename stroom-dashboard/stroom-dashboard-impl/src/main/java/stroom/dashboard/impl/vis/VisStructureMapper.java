@@ -187,6 +187,7 @@ public final class VisStructureMapper {
         return switch (type) {
             case NUMBER -> Format.NUMBER;
             case DATE_TIME -> Format.DATE_TIME;
+            case DURATION -> Format.DURATION;
             case TEXT -> Format.TEXT;
             case GENERAL -> Format.GENERAL;
         };

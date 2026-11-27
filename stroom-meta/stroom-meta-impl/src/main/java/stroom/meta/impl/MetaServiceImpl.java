@@ -48,6 +48,7 @@ import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.common.v2.DateTermResolver;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
@@ -93,6 +94,13 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaServiceImpl.class);
 
+    // The parent fields are not fields that the data source lists, but a search can have terms on them.
+    private static final List<QueryField> DATE_FIELDS = List.of(
+            MetaFields.CREATE_TIME,
+            MetaFields.EFFECTIVE_TIME,
+            MetaFields.STATUS_TIME,
+            MetaFields.PARENT_CREATE_TIME,
+            MetaFields.PARENT_EFFECTIVE_TIME);
     private static final List<String> FEED_FIELDS = List.of(MetaFields.FIELD_FEED);
     private static final List<String> ALL_FEED_FIELDS = List.of(MetaFields.FIELD_FEED, MetaFields.FIELD_PARENT_FEED);
 
@@ -376,7 +384,7 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
             final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),
                     DocumentPermission.VIEW,
                     FEED_FIELDS);
-            criteria.setExpression(expression);
+            criteria.setExpression(DateTermResolver.resolve(expression, DATE_FIELDS, dateTimeSettings));
             metaDao.search(criteria, fieldIndex, valuesConsumer);
         }, "Searching meta");
     }

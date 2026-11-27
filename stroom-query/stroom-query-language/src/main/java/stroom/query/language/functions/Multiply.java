@@ -21,11 +21,11 @@ package stroom.query.language.functions;
         name = Multiply.NAME,
         aliases = Multiply.ALIAS,
         commonCategory = FunctionCategory.MATHEMATICS,
-        commonReturnType = ValNumber.class,
+        commonReturnType = Val.class,
         commonReturnDescription = "The value of arg1 multiplied by arg2.",
         commonDescription = "The value of arg1 multiplied by arg2. If more than two arguments are supplied then " +
                 "it will multiply by each argument in turn, e.g. multiply(10, 5, 2) returns 100. Can be expressed as " +
-                "'${field1}*${field2}'.",
+                "'${field1}*${field2}'. A duration can be multiplied by a number and a period by a whole number.",
         signatures = @FunctionSignature(
                 args = @FunctionArg(
                         name = "arg",
@@ -49,6 +49,21 @@ class Multiply extends NumericFunction {
     }
 
     static class Calc extends Calculator {
+
+        @Override
+        Val calc(final Val current, final Val value) {
+            if (!current.type().isValue() || !value.type().isValue()) {
+                return super.calc(current, value);
+            }
+            try {
+                final Val result = DateArithmetic.multiply(current, value);
+                return result != null
+                        ? result
+                        : super.calc(current, value);
+            } catch (final RuntimeException e) {
+                return ValErr.create(e.getMessage());
+            }
+        }
 
         @Override
         double op(final double cur, final double val) {

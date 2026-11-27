@@ -80,8 +80,11 @@ public enum FieldType implements HasDisplayValue, HasPrimitiveValue {
             "\n" +
             "Accepts a text-based date, in ISO8601 date/time format: yyyy-MM-ddTHH:mm:ss[.SSS][Z].\n" +
             "Relative values are supported, including: now(), year(), month(), day().\n" +
+            "Dates with no offset, and relative values, are in the time zone of the query if it has one, or UTC.\n" +
+            "Units are case-sensitive: ms, s, m (minutes), h, d, w, M (months) and y.\n" +
             "\n" +
             "Examples (omit quotes):\n" +
+            " * Midnight a month ago: 'day() - 1M'\n" +
             " * Current time plus 2 days: 'now() + 2d'\n" +
             " * Current time minus 1 hour: 'now() - 1h'\n" +
             " * Current time plus 2 weeks, minus 1 day 10 hours: 'now() + 2w - 1d10h'",

@@ -16,7 +16,9 @@
 
 package stroom.query.language.functions;
 
-import java.time.ZonedDateTime;
+import stroom.query.language.functions.TimeRounder.Mode;
+
+import java.time.Duration;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -26,11 +28,13 @@ import java.time.ZonedDateTime;
         commonReturnType = ValDate.class,
         commonReturnDescription = "The result date and time.",
         signatures = @FunctionSignature(
-                description = "Rounds the supplied time up to the start of the next hour.",
+                description = "Rounds the supplied time up to the start of the next hour, unless it is the start of " +
+                        "one, in the time zone of the query.",
                 args = {
                         @FunctionArg(
                                 name = "time",
-                                description = "The time to round.",
+                                description = "The date, a number of milliseconds since the epoch (1 Jan 1970), or " +
+                                        "text of either. Text that is not a date gives a null.",
                                 argType = Val.class)}))
 class CeilingHour extends AbstractRoundDateTime {
 
@@ -42,12 +46,7 @@ class CeilingHour extends AbstractRoundDateTime {
 
     @Override
     protected DateTimeAdjuster getAdjuster() {
-        return zonedDateTime -> {
-            ZonedDateTime result = FloorHour.floor(zonedDateTime);
-            if (zonedDateTime.isAfter(result)) {
-                result = result.plusHours(1);
-            }
-            return result;
-        };
+        final TimeRounder timeRounder = TimeRounder.ofDuration(Mode.CEILING, Duration.ofHours(1).toMillis(), null);
+        return timeRounder::round;
     }
 }

@@ -25,9 +25,9 @@ import java.time.temporal.ChronoUnit;
         commonCategory = FunctionCategory.DATE,
         commonSubCategories = "Variable",
         commonReturnType = ValDate.class,
-        commonReturnDescription = "The current date and time to the nearest minute.",
+        commonReturnDescription = "The current date and time truncated to the start of the minute.",
         signatures = @FunctionSignature(
-                description = "Returns the current date and time to the nearest minute.",
+                description = "Returns the current date and time truncated to the start of the minute.",
                 args = {}))
 class Minute extends AbstractCurrentDateTimeFunction {
 

@@ -34,10 +34,12 @@ import java.util.Objects;
 @Schema(description = "Describes the formatting that will be applied to values in a field")
 public class Format {
 
-    public static final List<Type> TYPES = Arrays.asList(Type.GENERAL, Type.NUMBER, Type.DATE_TIME, Type.TEXT);
+    public static final List<Type> TYPES = Arrays.asList(
+            Type.GENERAL, Type.NUMBER, Type.DATE_TIME, Type.DURATION, Type.TEXT);
     public static final Format GENERAL = new Builder().type(Type.GENERAL).build();
     public static final Format NUMBER = new Builder().type(Type.NUMBER).build();
     public static final Format DATE_TIME = new Builder().type(Type.DATE_TIME).build();
+    public static final Format DURATION = new Builder().type(Type.DURATION).build();
     public static final Format TEXT = new Builder().type(Type.TEXT).build();
 
     @Schema(description = "The formatting type to apply",
@@ -167,6 +169,7 @@ public class Format {
         GENERAL("General"),
         NUMBER("Number"),
         DATE_TIME("Date Time"),
+        DURATION("Duration"),
         TEXT("Text");
 
         private final String displayValue;

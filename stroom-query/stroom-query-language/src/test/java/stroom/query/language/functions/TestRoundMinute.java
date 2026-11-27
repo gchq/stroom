@@ -37,7 +37,7 @@ class TestRoundMinute extends AbstractFunctionTest<RoundMinute> {
         final Instant truncatedUp = time.truncatedTo(ChronoUnit.MINUTES)
                 .plus(1, ChronoUnit.MINUTES);
 
-        final Instant timeT = LocalDateTime.of(2025, 4, 7, 10, 30, 30)
+        final Instant timeT = LocalDateTime.of(2025, 4, 7, 10, 30, 29)
                 .toInstant(ZoneOffset.UTC);
 
         final Instant truncated = time.truncatedTo(ChronoUnit.MINUTES);

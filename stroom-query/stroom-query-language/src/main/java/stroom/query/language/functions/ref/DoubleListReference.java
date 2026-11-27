@@ -43,20 +43,45 @@ public class DoubleListReference implements ValueReference<List<Double>> {
         storedValues.set(index, value);
     }
 
+    /// Records that at least one of the numbers was a duration.
+    ///
+    /// @param storedValues The values that have the list, which must have been set.
+    public void setHasDuration(final StoredValues storedValues) {
+        final List<Double> list = get(storedValues);
+        if (!(list instanceof DurationList)) {
+            set(storedValues, new DurationList(list));
+        }
+    }
+
+    /// Tells whether at least one of the numbers was a duration.
+    ///
+    /// @param storedValues The values that have the list.
+    /// @return True if one was.
+    public boolean hasDuration(final StoredValues storedValues) {
+        return get(storedValues) instanceof DurationList;
+    }
+
     @Override
     public void read(final StoredValues storedValues, final DataReader reader) {
+        // The length is negative if there was a duration. Table builder rules keep what is written here, so it must
+        // always be possible to read what was written before there was such a thing.
         final int length = reader.readInt();
-        final List<Double> list = new ArrayList<>(length);
-        for (int i = 0; i < length; i++) {
+        final List<Double> list = new ArrayList<>(Math.abs(length));
+        for (int i = 0; i < Math.abs(length); i++) {
             list.add(reader.readDouble());
         }
         set(storedValues, list);
+        if (length < 0) {
+            setHasDuration(storedValues);
+        }
     }
 
     @Override
     public void write(final StoredValues storedValues, final DataWriter writer) {
         final List<Double> list = get(storedValues);
-        writer.writeInt(list.size());
+        writer.writeInt(hasDuration(storedValues)
+                ? -list.size()
+                : list.size());
         for (final Double d : list) {
             writer.writeDouble(d);
         }
@@ -65,5 +90,17 @@ public class DoubleListReference implements ValueReference<List<Double>> {
     @Override
     public String toString() {
         return name;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    // A list that at least one duration has been added to.
+    private static final class DurationList extends ArrayList<Double> {
+
+        private DurationList(final List<Double> list) {
+            super(list);
+        }
     }
 }

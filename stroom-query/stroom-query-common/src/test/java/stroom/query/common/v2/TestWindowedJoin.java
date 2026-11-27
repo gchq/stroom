@@ -17,6 +17,7 @@
 package stroom.query.common.v2;
 
 import stroom.query.api.JoinKey;
+import stroom.query.api.JoinWindow;
 import stroom.query.api.Query;
 import stroom.query.api.QueryJoin;
 import stroom.query.api.SearchRequest;
@@ -168,6 +169,22 @@ class TestWindowedJoin extends AbstractJoinSearchTest {
                 query, new FieldIndex(), ExpressionContext.builder().build(), Map.of(), "EventTime"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("can't name a field of 'export', as 'export.File' does");
+    }
+
+    @Test
+    void badWindowDurationIsRefused() {
+        // The parser refuses such a window; this is the plan's own check.
+        final Query parsed = parse(JOIN.formatted("join", "after", ANCHOR_AND_FILE)).getQuery();
+        final QueryJoin join = parsed.getJoins().getFirst();
+        final Query query = parsed.copy()
+                .joins(List.of(new QueryJoin(join.getType(), join.getAlias(), join.getQuery(), null,
+                        join.getKeys(), new JoinWindow("1H", true, "logon.EventTime"))))
+                .build();
+
+        assertThatThrownBy(() -> WindowedJoin.create(
+                query, new FieldIndex(), ExpressionContext.builder().build(), Map.of(), "EventTime"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("must be a duration such as 10m, not '1H': Unknown unit 'H'");
     }
 
     @Test

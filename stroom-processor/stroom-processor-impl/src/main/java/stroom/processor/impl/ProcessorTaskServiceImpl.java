@@ -27,6 +27,7 @@ import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.common.v2.DateTermResolver;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
@@ -98,8 +99,11 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
                        final DateTimeSettings dateTimeSettings,
                        final ValuesConsumer valuesConsumer,
                        final ErrorConsumer errorConsumer) {
-        securityContext.secure(PERMISSION, () ->
-                processorTaskDao.search(criteria, fieldIndex, valuesConsumer));
+        securityContext.secure(PERMISSION, () -> {
+            criteria.setExpression(DateTermResolver.resolve(
+                    criteria.getExpression(), ProcessorTaskFields.getFields(), dateTimeSettings));
+            processorTaskDao.search(criteria, fieldIndex, valuesConsumer);
+        });
     }
 
     @Override

@@ -33,10 +33,17 @@ abstract class AbstractEqualityFunction extends AbstractManyChildFunction {
 
     @Override
     protected Generator createGenerator(final Generator[] childGenerators) {
-        return new Gen(childGenerators, createEvaluator());
+        return new Gen(childGenerators, createEvaluator(), isOrdering());
     }
 
     abstract Evaluator createEvaluator();
+
+    /// Tells whether the function tests which value is the greater, rather than whether they are equal.
+    ///
+    /// @return True if it does.
+    boolean isOrdering() {
+        return true;
+    }
 
     @Override
     public void appendString(final StringBuilder sb) {
@@ -71,10 +78,12 @@ abstract class AbstractEqualityFunction extends AbstractManyChildFunction {
     private static final class Gen extends AbstractManyChildGenerator {
 
         private final Evaluator evaluator;
+        private final boolean ordering;
 
-        Gen(final Generator[] childGenerators, final Evaluator evaluator) {
+        Gen(final Generator[] childGenerators, final Evaluator evaluator, final boolean ordering) {
             super(childGenerators);
             this.evaluator = evaluator;
+            this.ordering = ordering;
         }
 
         @Override
@@ -96,6 +105,14 @@ abstract class AbstractEqualityFunction extends AbstractManyChildFunction {
                 values[i] = val;
             }
 
+            values[0] = DateArithmetic.readPeriodFor(values[1], values[0]);
+            values[1] = DateArithmetic.readPeriodFor(values[0], values[1]);
+            final ValErr notComparable = ordering
+                    ? DateArithmetic.checkOrder(values[0], values[1])
+                    : DateArithmetic.checkEquality(values[0], values[1]);
+            if (notComparable != null) {
+                return notComparable;
+            }
             return evaluator.evaluate(values[0], values[1]);
         }
     }

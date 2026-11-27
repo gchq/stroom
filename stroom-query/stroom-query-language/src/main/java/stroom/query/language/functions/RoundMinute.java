@@ -26,10 +26,12 @@ import java.time.ZonedDateTime;
         commonReturnType = ValDate.class,
         commonReturnDescription = "The result date and time.",
         signatures = @FunctionSignature(
-                description = "Rounds the supplied time up or down to the nearest start of a minute.",
+                description = "Rounds the supplied time up or down to the nearest start of a minute. Halfway is " +
+                        "rounded up.",
                 args = @FunctionArg(
                         name = "time",
-                        description = "The time to round.",
+                        description = "The date, a number of milliseconds since the epoch (1 Jan 1970), or text of " +
+                                "either. Text that is not a date gives a null.",
                         argType = Val.class)))
 class RoundMinute extends AbstractRoundDateTime {
 
@@ -42,11 +44,8 @@ class RoundMinute extends AbstractRoundDateTime {
     @Override
     protected DateTimeAdjuster getAdjuster() {
         return zonedDateTime -> {
-            ZonedDateTime result = FloorMinute.floor(zonedDateTime);
-            if (zonedDateTime.isAfter(result.plusSeconds(30))) {
-                result = result.plusMinutes(1);
-            }
-            return result;
+            final ZonedDateTime floor = FloorMinute.floor(zonedDateTime);
+            return TimeRounder.nearest(zonedDateTime, floor, floor.plusMinutes(1));
         };
     }
 }

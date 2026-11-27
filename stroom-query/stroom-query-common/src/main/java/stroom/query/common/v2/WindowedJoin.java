@@ -27,6 +27,7 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ref.ErrorConsumer;
+import stroom.query.language.token.TimeLiteral;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
@@ -185,10 +186,10 @@ public final class WindowedJoin {
 
     private static SimpleDuration parseDuration(final JoinWindow window) {
         try {
-            return SimpleDuration.parse(window.getDuration());
+            return TimeLiteral.parse(window.getDuration());
         } catch (final RuntimeException e) {
             throw new IllegalArgumentException("The window of a join must be a duration such as 10m, not '"
-                                               + window.getDuration() + "'", e);
+                                               + window.getDuration() + "': " + e.getMessage(), e);
         }
     }
 

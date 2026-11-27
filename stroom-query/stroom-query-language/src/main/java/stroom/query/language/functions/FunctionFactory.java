@@ -111,9 +111,9 @@ public class FunctionFactory {
                         .getConstructor(ExpressionContext.class, String.class);
                 try {
                     return constructor.newInstance(expressionContext, functionName);
-                } catch (final InvocationTargetException
-                               | InstantiationException
-                               | IllegalAccessException e) {
+                } catch (final InvocationTargetException e) {
+                    throw toRuntimeException(e);
+                } catch (final InstantiationException | IllegalAccessException e) {
                     throw new RuntimeException(e.getMessage(), e);
                 }
             } catch (final NoSuchMethodException e) {
@@ -124,9 +124,9 @@ public class FunctionFactory {
                 return clazz
                         .getConstructor(String.class)
                         .newInstance(functionName);
-            } catch (final InvocationTargetException
-                           | InstantiationException
-                           | IllegalAccessException e) {
+            } catch (final InvocationTargetException e) {
+                throw toRuntimeException(e);
+            } catch (final InstantiationException | IllegalAccessException e) {
                 throw new RuntimeException(e.getMessage(), e);
             } catch (final NoSuchMethodException e) {
                 throw new RuntimeException(LogUtil.message(
@@ -139,6 +139,13 @@ public class FunctionFactory {
         }
 
         return null;
+    }
+
+    // The exception itself has no message.
+    private static RuntimeException toRuntimeException(final InvocationTargetException e) {
+        return e.getCause() instanceof final RuntimeException cause
+                ? cause
+                : new RuntimeException(e.getCause().getMessage(), e.getCause());
     }
 
     public static Optional<FunctionDef> getFunctionDefinition(final Class<? extends Function> clazz) {

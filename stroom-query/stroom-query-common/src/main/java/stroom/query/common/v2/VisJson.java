@@ -18,15 +18,18 @@ package stroom.query.common.v2;
 
 import stroom.query.api.Column;
 import stroom.query.api.FlatResult;
+import stroom.query.api.Format;
 import stroom.query.api.Format.Type;
 import stroom.query.api.VisResult.Store;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 public class VisJson {
     public String createJson(final FlatResult result) {
@@ -46,7 +49,10 @@ public class VisJson {
                 } else {
                     String type = Type.GENERAL.name();
                     if (column.getFormat() != null && column.getFormat().getType() != null) {
-                        type = column.getFormat().getType().name();
+                        // Visualisations are given durations as numbers of milliseconds.
+                        type = column.getFormat().getType() == Type.DURATION
+                                ? Type.NUMBER.name()
+                                : column.getFormat().getType().name();
                     }
                     typeMap.computeIfAbsent(column.getGroup(), k -> new ArrayList<>()).add(type);
 
@@ -98,10 +104,37 @@ public class VisJson {
                 map.computeIfAbsent(row.get(0), k -> new ArrayList<>()).add(row);
             }
 
+            // The groups of a column of durations are only numbers if all of them are, as text of one is kept as text.
+            for (int group = 0; group < maxDepth; group++) {
+                if (isDuration(columns, group) && !hasOnlyNumbers(result, group)) {
+                    types[group][0] = Type.TEXT.name();
+                }
+            }
+
             final Store store = getStore(null, map, types, sortDirections, valueCount, maxDepth, 0);
             json = JsonUtil.writeValueAsString(store, false);
         }
         return json;
+    }
+
+    // The type of a group is that of its first column.
+    private static boolean isDuration(final List<Column> columns, final int group) {
+        return columns.stream()
+                .filter(column -> Objects.equals(column.getGroup(), group))
+                .findFirst()
+                .filter(column -> Type.DURATION.equals(NullSafe.get(column.getFormat(), Format::getType)))
+                .isPresent();
+    }
+
+    private static boolean hasOnlyNumbers(final FlatResult result, final int group) {
+        return result.getValues().stream()
+                .map(row -> row.get(1))
+                .filter(key -> key instanceof final List<?> parts
+                               && parts.size() > group
+                               && parts.get(group) != null
+                               && !(parts.get(group) instanceof Number))
+                .findAny()
+                .isEmpty();
     }
 
     private Store getStore(final Object key,

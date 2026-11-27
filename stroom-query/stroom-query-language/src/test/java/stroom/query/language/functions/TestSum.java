@@ -135,7 +135,7 @@ class TestSum extends AbstractFunctionTest<Sum> {
 
     @Test
     void mergeKeepsTheError() throws ParseException {
-        final Sum sum = new Sum(Sum.NAME);
+        final Sum sum = new Sum(ExpressionContext.builder().build(), Sum.NAME);
         sum.setParams(new Param[]{new Ref("${val}", 0)});
         final ValueReferenceIndex valueReferenceIndex = new ValueReferenceIndex();
         sum.addValueReferences(valueReferenceIndex);

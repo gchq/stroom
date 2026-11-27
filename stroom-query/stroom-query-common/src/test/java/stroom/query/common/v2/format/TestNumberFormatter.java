@@ -26,6 +26,7 @@ import org.junit.jupiter.api.TestFactory;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.Period;
 import java.util.stream.Stream;
 
 class TestNumberFormatter {
@@ -54,6 +55,8 @@ class TestNumberFormatter {
                 .addCase(Val.create(1.23456789D), "1.23456789")
                 .addCase(Val.create(1.23456789F), "1.2345678806304932")
                 .addCase(Val.create(Duration.ofSeconds(5)), "5000")
+                .addCase(Val.create(Period.ofDays(1)), "86400000")
+                .addCase(Val.create(Period.ofMonths(1)), "")
                 .addCase(Val.create(INSTANT), "" + INSTANT_MS)
                 .build();
     }

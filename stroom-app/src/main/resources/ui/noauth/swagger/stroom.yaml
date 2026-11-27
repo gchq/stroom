@@ -14248,6 +14248,24 @@ components:
           type: boolean
         suppressDuplicateNotifications:
           type: boolean
+    DurationFormatSettings:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/FormatSettings"
+      - type: object
+        properties:
+          pattern:
+            type: string
+            description: "The pattern to use if the style is PATTERN, such as d.hh:mm:ss,\
+              \ of the units d, h, m, s and f (fractions of a second)"
+          style:
+            type: string
+            description: How the duration is written. Defaults to EXACT
+            enum:
+            - EXACT
+            - ISO
+            - PATTERN
+      description: The string formatting to apply to a duration value
     DurationSetting:
       type: object
       properties:
@@ -16311,6 +16329,7 @@ components:
           - GENERAL
           - NUMBER
           - DATE_TIME
+          - DURATION
           - TEXT
           example: NUMBER
         wrap:
@@ -16342,6 +16361,7 @@ components:
       discriminator:
         mapping:
           date: "#/components/schemas/DateTimeFormatSettings"
+          duration: "#/components/schemas/DurationFormatSettings"
           number: "#/components/schemas/NumberFormatSettings"
         propertyName: type
       properties:
@@ -24136,6 +24156,7 @@ components:
           long: "#/components/schemas/ValLong"
           "null": "#/components/schemas/ValNull"
           number: "#/components/schemas/ValNumber"
+          period: "#/components/schemas/ValPeriod"
           short: "#/components/schemas/ValShort"
           string: "#/components/schemas/ValString"
           xml: "#/components/schemas/ValXml"
@@ -24232,6 +24253,21 @@ components:
       type: object
       allOf:
       - $ref: "#/components/schemas/Val"
+    ValPeriod:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Val"
+      - type: object
+        properties:
+          days:
+            type: integer
+            format: int32
+          months:
+            type: integer
+            format: int32
+          years:
+            type: integer
+            format: int32
     ValShort:
       type: object
       allOf:

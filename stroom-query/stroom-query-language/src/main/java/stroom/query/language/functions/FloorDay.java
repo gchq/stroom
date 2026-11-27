@@ -16,7 +16,9 @@
 
 package stroom.query.language.functions;
 
-import java.time.ZonedDateTime;
+import stroom.query.language.functions.TimeRounder.Mode;
+
+import java.time.Period;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -26,10 +28,11 @@ import java.time.ZonedDateTime;
         commonReturnType = ValDate.class,
         commonReturnDescription = "The result date and time.",
         signatures = @FunctionSignature(
-                description = "Rounds the supplied time down to the start of the current day.",
+                description = "Rounds the supplied time down to the start of its day, in the time zone of the query.",
                 args = @FunctionArg(
                         name = "time",
-                        description = "The time to round.",
+                        description = "The date, a number of milliseconds since the epoch (1 Jan 1970), or text of " +
+                                "either. Text that is not a date gives a null.",
                         argType = Val.class)))
 class FloorDay extends AbstractRoundDateTime {
 
@@ -41,14 +44,7 @@ class FloorDay extends AbstractRoundDateTime {
 
     @Override
     protected DateTimeAdjuster getAdjuster() {
-        return FloorDay::floor;
-    }
-
-    public static ZonedDateTime floor(final ZonedDateTime zonedDateTime) {
-        return zonedDateTime
-                .withHour(0)
-                .withMinute(0)
-                .withSecond(0)
-                .withNano(0);
+        final TimeRounder timeRounder = TimeRounder.ofPeriod(Mode.FLOOR, Period.ofDays(1), null);
+        return timeRounder::round;
     }
 }

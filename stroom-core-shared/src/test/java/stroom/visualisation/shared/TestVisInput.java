@@ -41,6 +41,9 @@ class TestVisInput {
         assertThat(numbers.accepts(Format.Type.NUMBER)).isTrue();
         assertThat(numbers.accepts(Format.Type.TEXT)).isFalse();
         assertThat(numbers.accepts(Format.Type.DATE_TIME)).isFalse();
+        // A duration is given as its milliseconds
+        assertThat(numbers.accepts(Format.Type.DURATION)).isTrue();
+        assertThat(input("DATE_TIME").accepts(Format.Type.DURATION)).isFalse();
         // A general column's type isn't known until its values are seen
         assertThat(numbers.accepts(Format.Type.GENERAL)).isTrue();
         assertThat(numbers.accepts(null)).isTrue();
@@ -68,6 +71,10 @@ class TestVisInput {
         assertThat(input("NUMBER").conversionFor(Format.Type.GENERAL)).isEqualTo(Format.Type.NUMBER);
         assertThat(input("NUMBER").conversionFor(null)).isEqualTo(Format.Type.NUMBER);
         assertThat(input("TEXT").conversionFor(Format.Type.DATE_TIME)).isEqualTo(Format.Type.TEXT);
+        // A number is read from a duration as a duration, so that text of one is milliseconds too
+        assertThat(input("NUMBER").conversionFor(Format.Type.DURATION)).isNull();
+        assertThat(input("TEXT", "NUMBER").conversionFor(Format.Type.DURATION)).isNull();
+        assertThat(input("TEXT").conversionFor(Format.Type.DURATION)).isEqualTo(Format.Type.TEXT);
         // An input of several types leaves a general column to be judged by its values
         assertThat(input("TEXT", "NUMBER", "DATE_TIME").conversionFor(Format.Type.GENERAL)).isNull();
         assertThat(new VisInput("x", null, null, null, null, null).conversionFor(Format.Type.TEXT)).isNull();

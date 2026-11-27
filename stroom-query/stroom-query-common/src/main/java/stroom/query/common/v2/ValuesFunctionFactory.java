@@ -22,9 +22,12 @@ import stroom.query.api.datasource.FieldType;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactory;
 import stroom.query.language.functions.Type;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDurationUtil;
 import stroom.query.language.functions.Values;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.NullSafe;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 public class ValuesFunctionFactory implements ValueFunctionFactory<Values> {
@@ -58,9 +61,8 @@ public class ValuesFunctionFactory implements ValueFunctionFactory<Values> {
                 if (string != null) {
                     try {
                         return DateUtil.parseNormalDateTimeString(string);
-                    } catch (final NumberFormatException e) {
-//                        throw new MatchException(
-//                                "Unable to parse a date/time from value \"" + string + "\"");
+                    } catch (final IllegalArgumentException e) {
+                        return null;
                     }
                 }
             }
@@ -81,10 +83,19 @@ public class ValuesFunctionFactory implements ValueFunctionFactory<Values> {
     }
 
     @Override
+    public Optional<Function<Values, Long>> createDurationExtractor() {
+        return Format.Type.DURATION.equals(NullSafe.get(column.getFormat(), Format::getType))
+                ? Optional.of(item -> ValDurationUtil.toMillis(item.getValue(index)))
+                : Optional.empty();
+    }
+
+    @Override
     public FieldType getFieldType() {
         FieldType fieldType = FieldType.TEXT;
         if (column.getFormat() != null) {
-            if (Format.Type.NUMBER.equals(column.getFormat().getType())) {
+            // The number of a duration is its milliseconds.
+            if (Format.Type.NUMBER.equals(column.getFormat().getType())
+                || Format.Type.DURATION.equals(column.getFormat().getType())) {
                 fieldType = FieldType.LONG;
             } else if (Format.Type.DATE_TIME.equals(column.getFormat().getType())) {
                 fieldType = FieldType.DATE;

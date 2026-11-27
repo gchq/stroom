@@ -28,6 +28,7 @@ import stroom.query.language.functions.ValFloat;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.ValPeriod;
 import stroom.query.language.functions.ValShort;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValXml;
@@ -69,6 +70,7 @@ class TestUniqueValHasher {
                 Arguments.of(ValString.create("x".repeat(5_000)), 0xf72e5f3be4232107L),
                 Arguments.of(ValErr.create("bad"), 0x7e9aa180a808cdccL),
                 Arguments.of(ValDuration.create(1_000L), 0x8da8ce49a815e469L),
+                Arguments.of(ValPeriod.create(1, 2, 3), 0x21b5cad474393b16L),
                 Arguments.of(ValByte.create((byte) 1), 0x75860af25bb3501bL),
                 Arguments.of(ValShort.create((short) 1), 0x78eef5bc1f3ad3f9L),
                 Arguments.of(ValXml.create(new byte[]{1, 2, 3}), 0xe9f3dcfa643c8824L));
@@ -189,6 +191,12 @@ class TestUniqueValHasher {
                 ValDouble.create(Double.NaN),
                 ValDate.create(1L),
                 ValDuration.create(1L),
+                ValPeriod.create(0, 0, 0),
+                ValPeriod.create(0, 0, 1),
+                ValPeriod.create(0, 1, 0),
+                ValPeriod.create(0, 12, 0),
+                ValPeriod.create(1, 0, 0),
+                ValPeriod.create(-1, 0, 0),
                 ValString.create(""),
                 ValString.create("1"),
                 ValString.create("a"),

@@ -20,10 +20,10 @@ package stroom.query.language.functions;
 @FunctionDef(
         name = Negate.NAME,
         commonCategory = FunctionCategory.MATHEMATICS,
-        commonReturnType = ValDouble.class,
+        commonReturnType = Val.class,
         commonReturnDescription = "The result of multiplying the supplied number by -1",
         signatures = @FunctionSignature(
-                description = "Multiplies the supplied value by -1",
+                description = "Multiplies the supplied value by -1. The value can be a duration or period.",
                 args = {
                         @FunctionArg(
                                 name = "value",
@@ -58,6 +58,14 @@ class Negate extends NumericFunction {
 
         @Override
         Val calc(final Val current, final Val value) {
+            try {
+                final Val result = DateArithmetic.negate(value);
+                if (result != null) {
+                    return result;
+                }
+            } catch (final RuntimeException e) {
+                return ValErr.create(e.getMessage());
+            }
             // super.calc does a null check
             return super.calc(MINUS_ONE, value);
         }

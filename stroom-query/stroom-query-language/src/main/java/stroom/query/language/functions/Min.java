@@ -53,8 +53,9 @@ class Min extends AbstractAggregateFunction {
     static class Calc extends Calculator {
 
         @Override
-        Val calc(final Val current, final Val value) {
+        Val calc(final Val current, final Val nextValue) {
             try {
+                final Val value = DateArithmetic.toOrdered(nextValue);
                 if (value.type().isError() ||
                         current.type().isNull()) {
                     return value;

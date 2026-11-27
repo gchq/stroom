@@ -30,7 +30,7 @@ public class TestRoundYear extends AbstractFunctionTest<RoundYear> {
 
     @Override
     Stream<TestCase> getTestCases() {
-        final Instant time = LocalDateTime.of(2025, 7, 1, 0, 0, 1)
+        final Instant time = LocalDateTime.of(2025, 7, 2, 12, 0, 1)
                 .toInstant(ZoneOffset.UTC);
 
         final Instant truncatedUp = LocalDateTime.ofInstant(time, ZoneOffset.UTC)
@@ -43,7 +43,7 @@ public class TestRoundYear extends AbstractFunctionTest<RoundYear> {
                 .withNano(0)
                 .toInstant(ZoneOffset.UTC);
 
-        final Instant timeT = LocalDateTime.of(2025, 7, 1, 0, 0, 0)
+        final Instant timeT = LocalDateTime.of(2025, 7, 2, 11, 59, 59)
                 .toInstant(ZoneOffset.UTC);
 
         final Instant truncated = LocalDateTime.ofInstant(time, ZoneOffset.UTC)
@@ -55,7 +55,7 @@ public class TestRoundYear extends AbstractFunctionTest<RoundYear> {
                 .withNano(0)
                 .toInstant(ZoneOffset.UTC);
 
-        final Instant timeWithZone = LocalDateTime.of(2025, 7, 1, 0, 0, 1)
+        final Instant timeWithZone = LocalDateTime.of(2025, 7, 2, 12, 0, 1)
                 .toInstant(ZoneOffset.ofHours(-2));
 
         final Instant truncatedUpWithZone = LocalDateTime.ofInstant(timeWithZone, ZoneOffset.ofHours(2))

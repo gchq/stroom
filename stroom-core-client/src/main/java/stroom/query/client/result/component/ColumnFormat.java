@@ -17,13 +17,17 @@
 package stroom.query.client.result.component;
 
 import stroom.preferences.client.JavaDateTimePattern;
+import stroom.query.api.DurationFormatSettings.Style;
+import stroom.query.api.DurationPattern;
 import stroom.query.api.Format.Type;
 import stroom.query.api.UserTimeZone.Use;
+import stroom.util.shared.NullSafe;
 import stroom.widget.component.client.Component;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.form.client.InvalidInputs;
 import stroom.widget.form.client.TextBox;
 import stroom.widget.selection.client.SelectionBox;
+import stroom.widget.selection.client.SuggestionBox;
 import stroom.widget.tickbox.client.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -36,8 +40,8 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.Arrays;
 import java.util.List;
 
-/// The Format dialog's content, for a table column: the type of its values and, for numbers and
-/// dates, how they are shown, and whether long values wrap. Only the settings of the type chosen
+/// The Format dialog's content, for a table column: the type of its values and, for numbers, dates
+/// and durations, how they are shown, and whether long values wrap. Only the settings of the type chosen
 /// are shown.
 public class ColumnFormat extends Component {
 
@@ -57,6 +61,15 @@ public class ColumnFormat extends Component {
                     "dd/MM/yy",
                     "MM/dd/yyyy",
                     "d MMM yyyy");
+
+    /// The duration patterns suggested, the first being the default.
+    public static final List<String> STANDARD_DURATION_PATTERNS = Arrays
+            .asList("d.hh:mm:ss",
+                    "d.hh:mm:ss.fff",
+                    "hh:mm:ss",
+                    "hh:mm:ss.fff",
+                    "hh:mm",
+                    "d 'days' h 'hours'");
 
     private static final Binder BINDER = GWT.create(Binder.class);
 
@@ -80,6 +93,11 @@ public class ColumnFormat extends Component {
     FormGroup formatTimeZoneOffset;
 
     @UiField
+    FormGroup formatDurationStyle;
+    @UiField
+    FormGroup formatDurationPattern;
+
+    @UiField
     SelectionBox<Type> type;
     @UiField
     ValueSpinner decimalPlaces;
@@ -101,6 +119,10 @@ public class ColumnFormat extends Component {
     ValueSpinner timeZoneOffsetHours;
     @UiField
     ValueSpinner timeZoneOffsetMinutes;
+    @UiField
+    SelectionBox<Style> durationStyle;
+    @UiField
+    SuggestionBox durationPattern;
     @UiField
     TickBox wrap;
 
@@ -129,6 +151,13 @@ public class ColumnFormat extends Component {
         timeZoneUse.addItem(Use.UTC);
         timeZoneUse.addItem(Use.ID);
         timeZoneUse.addItem(Use.OFFSET);
+        durationStyle.addValueChangeHandler(this::onDurationStyle);
+        durationStyle.addItem(Style.EXACT);
+        durationStyle.addItem(Style.ISO);
+        durationStyle.addItem(Style.PATTERN);
+        // All of them, as the text is a whole pattern and not the start of one
+        durationPattern.setSource((text, consumer) -> consumer.accept(STANDARD_DURATION_PATTERNS));
+        durationPattern.setInvalidReason(ColumnFormat::getInvalidDurationPatternReason);
         updateEnabledState();
     }
 
@@ -265,6 +294,43 @@ public class ColumnFormat extends Component {
                 : timeZoneOffsetMinutes);
     }
 
+    /// @return How durations are written.
+    public Style getDurationStyle() {
+        return durationStyle.getValue();
+    }
+
+    /// @param style How durations are written.
+    public void setDurationStyle(final Style style) {
+        durationStyle.setValue(style);
+        showSettings();
+    }
+
+    /// @return The pattern that durations are written with, if that is their style.
+    public String getDurationPattern() {
+        return durationPattern.getText().trim();
+    }
+
+    /// @param pattern The pattern that durations are written with, or null or blank for the first
+    ///                standard one.
+    public void setDurationPattern(final String pattern) {
+        durationPattern.setText(NullSafe.isBlankString(pattern)
+                ? STANDARD_DURATION_PATTERNS.get(0)
+                : pattern);
+    }
+
+    /// Says what is wrong with a duration pattern.
+    ///
+    /// @param pattern The pattern.
+    /// @return Why it can't be used, or null if it can.
+    static String getInvalidDurationPatternReason(final String pattern) {
+        try {
+            DurationPattern.parse(pattern);
+            return null;
+        } catch (final IllegalArgumentException e) {
+            return e.getMessage();
+        }
+    }
+
     /// @return Whether long values wrap.
     public boolean isWrap() {
         return wrap.getValue();
@@ -295,6 +361,9 @@ public class ColumnFormat extends Component {
         formatTimeZone.setVisible(dateTime);
         formatTimeZoneId.setVisible(dateTime && Use.ID.equals(timeZoneUse.getValue()));
         formatTimeZoneOffset.setVisible(dateTime && Use.OFFSET.equals(timeZoneUse.getValue()));
+        final boolean duration = Type.DURATION.equals(type);
+        formatDurationStyle.setVisible(duration);
+        formatDurationPattern.setVisible(duration && Style.PATTERN.equals(durationStyle.getValue()));
     }
 
     // The date and time settings are ignored when the user's preferences are used, and the custom
@@ -318,6 +387,10 @@ public class ColumnFormat extends Component {
 
     private void onFormat(final ValueChangeEvent<String> event) {
         setPattern(format.getValue());
+    }
+
+    private void onDurationStyle(final ValueChangeEvent<Style> event) {
+        showSettings();
     }
 
     private void onTimeZoneUse(final ValueChangeEvent<Use> event) {

@@ -26,7 +26,8 @@ import java.time.ZonedDateTime;
         commonReturnType = ValDate.class,
         commonReturnDescription = "The current date and time truncated to the start of the year.",
         signatures = @FunctionSignature(
-                description = "Returns the current date and time truncated to the start of the year.",
+                description = "Returns the current date and time truncated to the start of the year, in the time " +
+                        "zone of the query.",
                 args = {}))
 class Year extends AbstractCurrentDateTimeFunction {
 

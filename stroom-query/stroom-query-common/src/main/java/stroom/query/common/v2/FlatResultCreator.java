@@ -35,7 +35,13 @@ import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDate;
+import stroom.query.language.functions.ValDuration;
+import stroom.query.language.functions.ValDurationUtil;
+import stroom.query.language.functions.ValInteger;
+import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.ValNumber;
 import stroom.query.language.functions.Values;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.concurrent.UncheckedInterruptedException;
@@ -134,7 +140,7 @@ public class FlatResultCreator implements ResultCreator {
                         column = columns.getFirst();
                     }
 
-                    result.add(convert(column, val));
+                    result.add(convertGroup(column, val));
                 }
 
             } else {
@@ -361,16 +367,50 @@ public class FlatResultCreator implements ResultCreator {
         return result;
     }
 
-    private Object convert(final Column column, final Val val) {
+    /// Converts a value to what a visualisation is given for a column.
+    ///
+    /// @param column The column.
+    /// @param val    The value.
+    /// @return The text or number, or the value itself if the column's format doesn't say which.
+    static Object convert(final Column column, final Val val) {
         final Format format = NullSafe.getOrElse(column, Column::getFormat, Format.GENERAL);
         final Type type = NullSafe.getOrElse(format, Format::getType, Type.GENERAL);
         if (Type.NUMBER.equals(type) || Type.DATE_TIME.equals(type)) {
             return val.toDouble();
+        } else if (Type.DURATION.equals(type)) {
+            // The same values as are shown as durations, in milliseconds.
+            final Long millis = ValDurationUtil.toMillis(val);
+            return millis == null
+                    ? null
+                    : millis.doubleValue();
         } else if (Type.TEXT.equals(type)) {
             return val.toString();
         }
 
         return val.unwrap();
+    }
+
+    /// Converts the value of a group to what a visualisation is given for it. It must be different for each group.
+    ///
+    /// @param column The column that is grouped by, or null.
+    /// @param val    The value.
+    /// @return The text or number, or the value itself if the column's format doesn't say which.
+    static Object convertGroup(final Column column, final Val val) {
+        final Type type = NullSafe.get(column, Column::getFormat, Format::getType);
+        if (Type.DURATION.equals(type)) {
+            // Text such as 1h and 60m, or numbers such as 1.2 and 1.7, are different groups that have the same
+            // milliseconds.
+            return switch (val) {
+                case final ValDuration duration -> duration.toDouble();
+                case final ValLong number -> number.toDouble();
+                case final ValInteger number -> number.toDouble();
+                // Its number would be a long duration.
+                case final ValDate date -> date.toString();
+                case final ValNumber number -> number.unwrap();
+                default -> val.toString();
+            };
+        }
+        return convert(column, val);
     }
 
 

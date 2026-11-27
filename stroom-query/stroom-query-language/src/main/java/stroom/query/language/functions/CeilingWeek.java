@@ -16,7 +16,9 @@
 
 package stroom.query.language.functions;
 
-import java.time.ZonedDateTime;
+import stroom.query.language.functions.TimeRounder.Mode;
+
+import java.time.Period;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
@@ -26,10 +28,12 @@ import java.time.ZonedDateTime;
         commonReturnType = ValDate.class,
         commonReturnDescription = "The result date and time.",
         signatures = @FunctionSignature(
-                description = "Rounds the supplied time up to the end of the current week.",
+                description = "Rounds the supplied time up to the start of the next week, unless it is the start of " +
+                        "one, in the time zone of the query. Weeks start on a Monday.",
                 args = @FunctionArg(
                         name = "time",
-                        description = "The time to round.",
+                        description = "The date, a number of milliseconds since the epoch (1 Jan 1970), or text of " +
+                                "either. Text that is not a date gives a null.",
                         argType = Val.class)))
 class CeilingWeek extends AbstractRoundDateTime {
 
@@ -41,12 +45,7 @@ class CeilingWeek extends AbstractRoundDateTime {
 
     @Override
     protected DateTimeAdjuster getAdjuster() {
-        return zonedDateTime -> {
-            ZonedDateTime result = FloorWeek.floor(zonedDateTime);
-            if (zonedDateTime.isAfter(result)) {
-                result = result.plusWeeks(1);
-            }
-            return result;
-        };
+        final TimeRounder timeRounder = TimeRounder.ofPeriod(Mode.CEILING, Period.ofWeeks(1), null);
+        return timeRounder::round;
     }
 }

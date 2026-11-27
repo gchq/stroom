@@ -36,7 +36,7 @@ class TestRoundHour extends AbstractFunctionTest<RoundHour> {
 
         final Instant truncatedUp = time.truncatedTo(ChronoUnit.HOURS).plus(1, ChronoUnit.HOURS);
 
-        final Instant timeT = LocalDateTime.of(2025, 4, 7, 12, 30, 0)
+        final Instant timeT = LocalDateTime.of(2025, 4, 7, 12, 29, 59)
                 .toInstant(ZoneOffset.UTC);
 
         final Instant truncated = time.truncatedTo(ChronoUnit.HOURS);

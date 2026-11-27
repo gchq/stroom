@@ -19,6 +19,7 @@ package stroom.query.common.v2.format;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeFormatSettings;
 import stroom.query.api.DateTimeSettings;
+import stroom.query.api.DurationFormatSettings;
 import stroom.query.api.Format.Type;
 import stroom.query.api.NumberFormatSettings;
 
@@ -43,7 +44,8 @@ public class FormatterFactory {
             case NUMBER -> NumberFormatter.create((NumberFormatSettings) column.getFormat().getSettings());
             case DATE_TIME -> DateTimeFormatter.create((DateTimeFormatSettings) column.getFormat().getSettings(),
                     dateTimeSettings);
-            default -> Unformatted.create();
+            case DURATION -> DurationFormatter.create((DurationFormatSettings) column.getFormat().getSettings());
+            case GENERAL -> Unformatted.create();
         };
     }
 }

@@ -39,7 +39,7 @@ public class TestRoundSecond extends AbstractFunctionTest<RoundSecond> {
 
         final String formattedInput = DateUtil.createNormalDateTimeString(inputMillis);
 
-        final LocalDateTime inputDown = LocalDateTime.of(2025, 4, 7, 10, 30, 30, 500_000_000);
+        final LocalDateTime inputDown = LocalDateTime.of(2025, 4, 7, 10, 30, 30, 499_000_000);
         final LocalDateTime flooredDown = inputDown.withNano(0);
 
         final long inputMillisDown = inputDown.atZone(ZoneOffset.UTC).toInstant().toEpochMilli();

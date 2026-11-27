@@ -16,9 +16,12 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.api.HoppingWindow;
 import stroom.util.shared.time.SimpleDuration;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -571,6 +574,49 @@ class TestTimeWindows {
         assertThatThrownBy(() -> windows("1s", "100ns", null, UTC))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("nanoseconds");
+    }
+
+    @Test
+    void hoppingWindowSizesAreRead() {
+        final TimeWindows windows = TimeWindows.create(new HoppingWindow("EventTime", "1d", "6h", "-1h", "UTC"));
+
+        assertThat(windows.getWindowsPerTime()).isEqualTo(4);
+        assertThat(starts(windows, "2026-03-10T23:30:00Z")).containsExactlyInAnyOrder(
+                "2026-03-10T05:00:00Z",
+                "2026-03-10T11:00:00Z",
+                "2026-03-10T17:00:00Z",
+                "2026-03-10T23:00:00Z");
+    }
+
+    @Test
+    void hoppingWindowMinutesAndMonthsDiffer() {
+        assertThat(starts(TimeWindows.create(new HoppingWindow("EventTime", "1m", null, null, "UTC")),
+                "2026-03-10T10:25:30Z")).containsExactly("2026-03-10T10:25:00Z");
+        assertThat(starts(TimeWindows.create(new HoppingWindow("EventTime", "1M", null, null, "UTC")),
+                "2026-03-10T10:25:30Z")).containsExactly("2026-03-01T00:00:00Z");
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "1H,Unknown unit 'H'",
+            "1D,Unknown unit 'D'",
+            "1W,Unknown unit 'W'",
+            "1Y,Unknown unit 'Y'",
+            "99999999999999999999s,too large"})
+    void badHoppingWindowDurationsGiveTheReason(final String duration, final String reason) {
+        assertThatThrownBy(() -> TimeWindows.create(new HoppingWindow("EventTime", duration, null, null, "UTC")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("The window size '" + duration + "' is not a duration")
+                .hasMessageContaining(reason);
+        assertThatThrownBy(() -> TimeWindows.create(new HoppingWindow("EventTime", "1d", duration, null, "UTC")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("The advance '" + duration + "' is not a duration")
+                .hasMessageContaining(reason);
+        assertThatThrownBy(() -> TimeWindows.create(
+                new HoppingWindow("EventTime", "1d", null, "-" + duration, "UTC")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("The offset '" + duration + "' is not a duration")
+                .hasMessageContaining(reason);
     }
 
     private static TimeWindows windows(final String size,

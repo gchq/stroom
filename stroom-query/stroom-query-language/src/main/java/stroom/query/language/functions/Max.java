@@ -54,12 +54,14 @@ class Max extends AbstractAggregateFunction {
     static class Calc extends Calculator {
 
         @Override
-        Val calc(final Val current, final Val value) {
+        Val calc(final Val current, final Val nextValue) {
             try {
+                final Val value = DateArithmetic.toOrdered(nextValue);
                 if (value.type().isError() ||
                         current.type().isNull()) {
                     return value;
-                } else if (current.type().isError()) {
+                } else if (current.type().isError() || value.type().isNull()) {
+                    // A null sorts after everything else, but it is not the largest value.
                     return current;
                 }
 

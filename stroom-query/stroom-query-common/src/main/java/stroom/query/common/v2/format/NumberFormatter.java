@@ -20,6 +20,7 @@ import stroom.query.api.NumberFormatSettings;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValDuration;
+import stroom.query.language.functions.ValPeriod;
 import stroom.util.shared.NullSafe;
 
 import java.text.DecimalFormat;
@@ -63,6 +64,7 @@ public class NumberFormatter implements Formatter {
         Objects.requireNonNull(val);
         return switch (val) {
             case final ValDuration valDuration -> String.valueOf(valDuration.toLong());
+            case final ValPeriod valPeriod -> String.valueOf(valPeriod.toLong());
             case final ValDate valDate -> String.valueOf(valDate.toLong());
             default -> val.toString();
         };

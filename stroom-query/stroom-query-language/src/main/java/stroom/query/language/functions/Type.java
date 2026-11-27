@@ -32,7 +32,8 @@ public enum Type implements HasPrimitiveValue {
     DURATION("duration", 10, true, true, false, false),
     BYTE("byte", 11, true, true, false, false),
     SHORT("short", 12, true, true, false, false),
-    XML("xml", 13, true, false, false, false);
+    XML("xml", 13, true, false, false, false),
+    PERIOD("period", 14, true, false, false, false);
 
     private final String name;
     private final byte id;

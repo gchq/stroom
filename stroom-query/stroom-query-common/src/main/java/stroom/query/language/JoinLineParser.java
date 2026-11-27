@@ -23,7 +23,9 @@ import stroom.query.api.token.AbstractToken;
 import stroom.query.api.token.AbstractTokenGroup;
 import stroom.query.api.token.TokenException;
 import stroom.query.api.token.TokenType;
+import stroom.query.language.token.TimeLiteral;
 
+import java.time.DateTimeException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -222,6 +224,11 @@ final class JoinLineParser {
         final AbstractToken duration = tokens.get(1);
         if (!TokenType.DURATION.equals(duration.getTokenType())) {
             throw new TokenException(duration, "Expected a duration such as 10m, " + example);
+        }
+        try {
+            TimeLiteral.parse(duration.getText());
+        } catch (final DateTimeException e) {
+            throw new TokenException(duration, e.getMessage());
         }
         final AbstractToken direction = tokens.get(2);
         final String directionText = direction.getText().toLowerCase(Locale.ROOT);

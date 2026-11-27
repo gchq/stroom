@@ -647,6 +647,10 @@ class TestSearchRequestFactoryJoin {
         assertThatThrownBy(() -> create("from events join x on UserId = x.U within 10m during T select UserId"))
                 .isInstanceOf(TokenException.class)
                 .hasMessageContaining("Expected after or before");
+        assertThatThrownBy(() -> create("from events join x on UserId = x.U within 1H after T select UserId"))
+                .isInstanceOfSatisfying(TokenException.class, e ->
+                        assertThat(e.getToken().getText()).isEqualTo("1H"))
+                .hasMessageContaining("Unknown unit 'H'");
     }
 
     @Test

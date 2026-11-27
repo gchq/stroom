@@ -52,6 +52,11 @@ public class Tokeniser {
     private static final String JOIN_PATTERN = createJoinPattern();
     // 'as' at the end of plain text, which makes the next word an alias.
     private static final Pattern ENDS_WITH_AS = Pattern.compile("(?:^|\\s)as\\s+$", Pattern.CASE_INSENSITIVE);
+    // An ISO 8601 date and time with optional fractional seconds and offset. The digits of an offset with no
+    // colon can't go on to be something else, such as the '0100s' of a duration or the year of another date.
+    private static final String DATE_TIME_PATTERN =
+            "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{1,9})?"
+            + "(?:Z|[+-](?:0\\d|1[0-8])(?::?\\d{2})?(?![\\w.:]|-\\d{2}-))?";
 
     // A number with an exponent, e.g. '1.5e-3', that is not part of a longer word such as 'host:1e5'.
     private static final String EXPONENT_NUMBER_PATTERN =
@@ -113,7 +118,7 @@ public class Tokeniser {
         tokens = split("\\s+", 0, TokenType.WHITESPACE, tokens);
 
         // Tag dates.
-        tokens = split("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z?", 0, TokenType.DATE_TIME, tokens);
+        tokens = split(DATE_TIME_PATTERN, 0, TokenType.DATE_TIME, tokens);
 
         // Tag numbers with exponents before their signs can be taken for operators.
         tokens = split(EXPONENT_NUMBER_PATTERN, 0, TokenType.NUMBER, tokens);
@@ -133,7 +138,8 @@ public class Tokeniser {
         tokens = split("=", 0, TokenType.EQUALS, tokens);
 
         // Tag durations.
-        tokens = split("(^|\\s|\\))(\\d+(ns|ms|s|m|h|d|w|M|y))", 2, TokenType.DURATION, tokens);
+        // Patterns here ignore case, so a unit in the wrong case is tagged too, and is refused when it is read.
+        tokens = split("(^|\\s|\\))(" + TimeLiteral.COMPOUND_REGEX + ")", 2, TokenType.DURATION, tokens);
         // Tag numbers.
         tokens = split("(^|\\s|\\))(\\d+(\\.\\d+)?)", 2, TokenType.NUMBER, tokens);
 

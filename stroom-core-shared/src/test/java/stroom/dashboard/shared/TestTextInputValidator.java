@@ -85,6 +85,11 @@ class TestTextInputValidator {
             "2026-01-31T13:45:00.123456789Z|true",
             "2026-01-31T13:45:00.000+10:00|true",
             "2026-01-31T13:45:00.000-05:30|true",
+            // As formatDate() writes an offset
+            "2026-01-31T13:45:00.000+1000|true",
+            "2026-01-31T13:45:00.000+1000-1d|true",
+            "2026-01-31T13:45:00.000+10|true",
+            "2026-01-31T13:45:00.000+10d|true",
             // No offset is read in the user's time zone
             "2026-01-31T13:45:00|true",
             // Relative expressions
@@ -100,13 +105,17 @@ class TestTextInputValidator {
             "now() - 1d|true",
             "day()+2h30m|true",
             "now()-1w+3d-12h|true",
+            "now()-5ms|true",
+            "now() + 1s500ms|true",
+            "now()-5000000ns|true",
+            "now()-1h5000000ns|true",
             "month()-1M|true",
             "year()-1y|true",
             "2026-01-31T13:45:00.000Z-1d|true",
             " now()-1d |true",
             // Invalid
-            // The server can't parse an offset without a colon
-            "2026-01-31T13:45:00.000+1000|false",
+            "2026-01-31T13:45:00.000+1|false",
+            "2026-01-31T13:45:00.000+100|false",
             "yesterday|false",
             "2026-01-31|false",
             "31/01/2026 13:45|false",
@@ -114,6 +123,12 @@ class TestTextInputValidator {
             "now|false",
             "now()-1|false",
             "now()-1x|false",
+            // Units are case-sensitive
+            "now()-1H|false",
+            "now()-5MS|false",
+            // The server refuses anything finer than a millisecond
+            "now()-1ns|false",
+            "now()-1500000ns|false",
             "now()1d|false",
             "-1d|false",
             "now()now()|false",
@@ -189,7 +204,7 @@ class TestTextInputValidator {
             "NUMBER|NULL|abc|Must be a number",
             "DATE_TIME|NULL|yesterday|Must be a date and time, e.g. 2026-01-31T13:45:00.000Z, "
             + "or an expression such as now()-1d",
-            "DATE_TIME|NULL|2026-01-31T13:45:00.000+1000|Must be a date and time, e.g. 2026-01-31T13:45:00.000Z, "
+            "DATE_TIME|NULL|2026-01-31T13:45:00.000+1|Must be a date and time, e.g. 2026-01-31T13:45:00.000Z, "
             + "or an expression such as now()-1d",
             "PATTERN|[a-z]+|123|Must match the pattern [a-z]+",
             "PATTERN|[unclosed|abc|The pattern in the settings isn't a valid regular expression",

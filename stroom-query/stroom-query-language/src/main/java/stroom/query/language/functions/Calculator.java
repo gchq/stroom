@@ -30,11 +30,14 @@ abstract class Calculator {
 
             final Double cur = current.toDouble();
             final Double val = value.toDouble();
-            if (val == null) {
+            if (val == null && !Type.PERIOD.equals(value.type())) {
                 return current;
             }
-            if (cur == null) {
+            if (cur == null && !Type.PERIOD.equals(current.type())) {
                 return value;
+            }
+            if (cur == null || val == null) {
+                return ValErr.create("A period of months or years can't be used as a number");
             }
             return ValDouble.create(op(cur, val));
 

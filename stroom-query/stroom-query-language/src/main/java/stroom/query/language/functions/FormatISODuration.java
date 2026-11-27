@@ -30,11 +30,13 @@ import java.util.function.Supplier;
         commonReturnDescription = "A duration formatted as an ISO 8601 string.",
         signatures = {
                 @FunctionSignature(
-                        description = "Formats the supplied duration as an ISO 8601 string",
+                        description = "Formats the supplied duration as an ISO 8601 string, e.g. 'PT49H30M'. Days " +
+                                "are shown as 24 hours.",
                         args = @FunctionArg(
                                 name = "value",
                                 argType = ValString.class,
-                                description = "The duration as an ISO 8601 string."))
+                                description = "The duration, a number of milliseconds or text that parseDuration can " +
+                                        "read."))
         })
 class FormatISODuration extends AbstractFunction {
 
@@ -57,8 +59,7 @@ class FormatISODuration extends AbstractFunction {
             function = (Function) param;
             hasAggregate = function.hasAggregate();
         } else {
-            final String durationString = param.toString();
-            gen = new StaticValueFunction(ValDurationUtil.formatISODuration(durationString)).createGenerator();
+            gen = new StaticValueFunction(ValDurationUtil.formatISODuration((Val) param)).createGenerator();
         }
     }
 

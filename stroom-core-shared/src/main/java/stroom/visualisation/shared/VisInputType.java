@@ -45,7 +45,8 @@ public enum VisInputType {
         if (columnType == null || columnType == Format.Type.GENERAL || this == TEXT) {
             return true;
         }
-        return columnType == formatType;
+        // A duration is given as its milliseconds.
+        return columnType == formatType || (this == NUMBER && columnType == Format.Type.DURATION);
     }
 
     /// @param name A type's name as a visualisation's settings give it, e.g. `NUMBER`.

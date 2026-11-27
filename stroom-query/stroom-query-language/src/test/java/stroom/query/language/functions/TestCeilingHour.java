@@ -16,6 +16,12 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.UserTimeZone;
+
+import org.junit.jupiter.api.Test;
+
+import java.text.ParseException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -23,6 +29,8 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TestCeilingHour extends AbstractFunctionTest<CeilingHour> {
 
@@ -74,5 +82,22 @@ class TestCeilingHour extends AbstractFunctionTest<CeilingHour> {
                         ValDate.create(truncatedTokyo.toEpochMilli()),
                         ValLong.create(timeTokyo.toEpochMilli()))
         );
+    }
+
+    @Test
+    void clocksThatChangeByHalfAnHour() throws ParseException {
+        // On 7 April 2024 the clocks on Lord Howe Island went from 02:00 back to 01:30. This is 01:45 the second time.
+        final ExpressionContext lordHowe = ExpressionContext.builder()
+                .dateTimeSettings(DateTimeSettings.builder()
+                        .timeZone(UserTimeZone.fromId("Australia/Lord_Howe"))
+                        .build())
+                .build();
+        final Val time = ValDate.create(Instant.parse("2024-04-06T15:15:00Z").toEpochMilli());
+        final Val one = ValDate.create(Instant.parse("2024-04-06T14:00:00Z").toEpochMilli());
+        final Val two = ValDate.create(Instant.parse("2024-04-06T15:30:00Z").toEpochMilli());
+
+        assertThat(DateFunctionTestUtil.eval(lordHowe, "floorHour(${field})", time)).isEqualTo(one);
+        assertThat(DateFunctionTestUtil.eval(lordHowe, "ceilingHour(${field})", time)).isEqualTo(two);
+        assertThat(DateFunctionTestUtil.eval(lordHowe, "roundHour(${field})", time)).isEqualTo(two);
     }
 }

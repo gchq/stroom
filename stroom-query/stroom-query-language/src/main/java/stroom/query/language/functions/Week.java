@@ -30,7 +30,8 @@ import java.util.Locale;
         commonReturnType = ValDate.class,
         commonReturnDescription = "The current date and time truncated to the start of the week.",
         signatures = @FunctionSignature(
-                description = "Returns the current date and time truncated to the start of the week.",
+                description = "Returns the current date and time truncated to the start of the week, in the time " +
+                        "zone of the query. Weeks start on a Monday.",
                 args = {}))
 class Week extends AbstractCurrentDateTimeFunction {
 

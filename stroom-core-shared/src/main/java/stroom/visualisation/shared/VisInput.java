@@ -150,7 +150,9 @@ public final class VisInput {
             return null;
         }
         for (final VisInputType type : inputTypes) {
-            if (type.getFormatType() == columnType) {
+            // A duration is already given as a number, its milliseconds
+            if (type.getFormatType() == columnType
+                || (type == VisInputType.NUMBER && columnType == Format.Type.DURATION)) {
                 return null;
             }
         }

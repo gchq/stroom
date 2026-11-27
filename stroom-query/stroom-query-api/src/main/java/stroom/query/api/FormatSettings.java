@@ -27,14 +27,17 @@ import io.swagger.v3.oas.annotations.media.Schema;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = NumberFormatSettings.class, name = "number"),
-        @JsonSubTypes.Type(value = DateTimeFormatSettings.class, name = "date")
+        @JsonSubTypes.Type(value = DateTimeFormatSettings.class, name = "date"),
+        @JsonSubTypes.Type(value = DurationFormatSettings.class, name = "duration")
 })
 @Schema(
         discriminatorProperty = "type",
         discriminatorMapping = {
                 @DiscriminatorMapping(value = "number", schema = NumberFormatSettings.class),
-                @DiscriminatorMapping(value = "date", schema = DateTimeFormatSettings.class)})
-public sealed interface FormatSettings permits NumberFormatSettings, DateTimeFormatSettings {
+                @DiscriminatorMapping(value = "date", schema = DateTimeFormatSettings.class),
+                @DiscriminatorMapping(value = "duration", schema = DurationFormatSettings.class)})
+public sealed interface FormatSettings permits NumberFormatSettings, DateTimeFormatSettings,
+        DurationFormatSettings {
 
     boolean isDefault();
 }

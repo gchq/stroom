@@ -45,8 +45,8 @@ class Sum extends AbstractAggregateFunction {
 
     static final String NAME = "sum";
 
-    public Sum(final String name) {
-        super(name, new Calc());
+    public Sum(final ExpressionContext expressionContext, final String name) {
+        super(name, new Calc(expressionContext));
     }
 
 
@@ -54,6 +54,10 @@ class Sum extends AbstractAggregateFunction {
 
 
     private static final class Calc extends Add.Calc {
+
+        private Calc(final ExpressionContext expressionContext) {
+            super(new QueryZone(expressionContext), true);
+        }
 
         @Override
         Val calc(final Val current, final Val value) {

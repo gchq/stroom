@@ -23,15 +23,16 @@ import stroom.query.api.token.AbstractToken;
 import stroom.query.api.token.TokenException;
 import stroom.query.api.token.TokenType;
 import stroom.query.language.functions.UserTimeZoneUtil;
+import stroom.query.language.token.TimeLiteral;
+import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.time.SimpleDuration;
 
 import java.time.DateTimeException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
@@ -50,12 +51,15 @@ public class DateExpressionParser {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DateExpressionParser.class);
 
-    // The inner digit run is possessive (\d++): a duration digit run is always terminated by a unit letter
-    // ([smhdwMy], disjoint from \d), so no backtracking into the digits is ever needed. This avoids O(n^2)
-    // scanning (ReDoS) on a long run of digits with no trailing unit.
-    private static final Pattern DURATION_PATTERN = Pattern.compile("[+\\- ]*(?:\\d++[smhdwMy])+");
+    // The digit run of a literal is possessive: it is always terminated by a unit letter, so no backtracking
+    // into the digits is ever needed. This avoids O(n^2) scanning (ReDoS) on a long run of digits with no
+    // trailing unit.
+    private static final Pattern DURATION_PATTERN = Pattern.compile("[+\\- ]*" + TimeLiteral.COMPOUND_REGEX);
+    // A signed run of numbers and letters, whether or not the letters are units, but not the day and hour of
+    // a date.
+    private static final Pattern SIGNED_PATTERN =
+            Pattern.compile("[+-]\\s*+(?!\\d{2}[Tt]\\d)((?:\\d++[A-Za-z]++)++)");
     private static final Pattern WHITESPACE = Pattern.compile("\\s");
-    private static final ZoneId DEFAULT_TIME_ZONE = ZoneId.of("Z");
 
     private DateExpressionParser() {
     }
@@ -88,14 +92,19 @@ public class DateExpressionParser {
         try {
             return parse(value, dateTimeSettings)
                     .map(dt -> dt.toInstant().toEpochMilli())
-                    .orElseThrow();
+                    .orElseThrow(() -> new DateTimeException("There is no date"));
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
+            // Only these say what is wrong with the value in words that are fit for its author.
+            final String reason = e instanceof DateTimeException || e instanceof ArithmeticException
+                    ? ": " + e.getMessage()
+                    : "";
             throw new RuntimeException("Expected a standard date value for field \"" +
                     fieldName +
                     "\" but was given string \"" +
                     value +
-                    "\"");
+                    "\"" +
+                    reason, e);
         }
     }
 
@@ -126,7 +135,7 @@ public class DateExpressionParser {
                 ZonedDateTime dateTime = null;
                 for (final DatePoint datePoint : DatePoint.values()) {
                     if (datePoint.getFunction().equals(function)) {
-                        dateTime = convertDatePoint(datePoint, fromEpochMillis(referenceTime));
+                        dateTime = convertDatePoint(datePoint, fromEpochMillis(referenceTime, dateTimeSettings));
                         break;
                     }
                 }
@@ -145,11 +154,15 @@ public class DateExpressionParser {
                 if (operator == null) {
                     throw new TokenException(token, "Unexpected duration without operator");
                 }
-                final TimeFunction function = parseDuration(token.getUnescapedText(),
-                        operator == TokenType.PLUS
-                                ? '+'
-                                : '-');
-                computedDateTime = function.apply(computedDateTime);
+                try {
+                    final TimeFunction function = parseDuration(token.getUnescapedText(),
+                            operator == TokenType.PLUS
+                                    ? '+'
+                                    : '-');
+                    computedDateTime = function.apply(computedDateTime);
+                } catch (final DateTimeException | ArithmeticException e) {
+                    throw new TokenException(token, e.getMessage());
+                }
                 operator = null;
 
             } else if (TokenType.NUMBER.equals(token.getTokenType())) {
@@ -161,7 +174,7 @@ public class DateExpressionParser {
                 }
 
                 if (computedDateTime == null) {
-                    computedDateTime = fromEpochMillis(millis);
+                    computedDateTime = fromEpochMillis(millis, dateTimeSettings);
 
                 } else {
                     if (operator == null) {
@@ -197,8 +210,8 @@ public class DateExpressionParser {
                 } else {
                     try {
                         computedDateTime = parseTimeString(token.getUnescapedText(), dateTimeSettings);
-                    } catch (final RuntimeException e) {
-                        throw new TokenException(token, "Unexpected token");
+                    } catch (final DateTimeException e) {
+                        throw new TokenException(token, e.getMessage());
                     }
                 }
             }
@@ -215,7 +228,7 @@ public class DateExpressionParser {
         final Part[] parts = new Part[chars.length];
         final long referenceTime = Objects
                 .requireNonNullElseGet(dateTimeSettings.getReferenceTime(), System::currentTimeMillis);
-        parseConstants(chars, parts, referenceTime);
+        parseConstants(chars, parts, referenceTime, dateTimeSettings);
         parseDurations(chars, parts);
 
         // Find index of any remaining date.
@@ -228,8 +241,14 @@ public class DateExpressionParser {
 
         if (index != -1) {
             final String trimmed = new String(chars).trim();
-            final ZonedDateTime time = parseTimeString(trimmed, dateTimeSettings);
-            parts[index] = new Part(trimmed, time);
+            try {
+                final ZonedDateTime time = parseTimeString(trimmed, dateTimeSettings);
+                parts[index] = new Part(trimmed, time);
+            } catch (final DateTimeParseException e) {
+                // If this is down to a duration that can't be read then say so.
+                checkDurations(expression);
+                throw e;
+            }
         }
 
         // Now validate and try and perform date calculation.
@@ -259,8 +278,18 @@ public class DateExpressionParser {
         return Optional.ofNullable(time);
     }
 
-    private static void parseConstants(final char[] chars, final Part[] parts, final long nowEpochMilli) {
-        final ZonedDateTime now = ZonedDateTime.ofInstant(Instant.ofEpochMilli(nowEpochMilli), ZoneOffset.UTC);
+    // Throws an exception that says what is wrong with the first duration that can't be read, if there is one.
+    private static void checkDurations(final String expression) {
+        final Matcher matcher = SIGNED_PATTERN.matcher(expression);
+        while (matcher.find()) {
+            TimeLiteral.parseCompound(matcher.group(1));
+        }
+    }
+
+    private static void parseConstants(final char[] chars,
+                                       final Part[] parts,
+                                       final long nowEpochMilli,
+                                       final DateTimeSettings dateTimeSettings) {
         final String expression = new String(chars);
         for (final DatePoint datePoint : DatePoint.values()) {
             final String function = datePoint.getFunction();
@@ -272,7 +301,8 @@ public class DateExpressionParser {
                 // Obliterate the matched part of the expression, so it can't be matched by any other matcher.
                 Arrays.fill(chars, start, end, ' ');
 
-                final ZonedDateTime time = convertDatePoint(datePoint, now);
+                final ZonedDateTime time = convertDatePoint(
+                        datePoint, fromEpochMillis(nowEpochMilli, dateTimeSettings));
                 parts[start] = new Part(function, time);
 
                 start = expression.indexOf(function, end);
@@ -287,15 +317,34 @@ public class DateExpressionParser {
             // Assume a timezone is specified on the string.
             return ZonedDateTime.parse(trimmed);
         } catch (final DateTimeParseException e) {
+            final ZonedDateTime dateTime;
             try {
-                final ZoneId zoneId = UserTimeZoneUtil.getZoneId(dateTimeSettings);
-                return LocalDateTime.parse(trimmed).atZone(zoneId);
-            } catch (final RuntimeException ex) {
-                // Ignore error
+                // The offset may have no colon, as formatDate() writes it.
+                dateTime = ZonedDateTime.parse(trimmed, DateUtil.DEFAULT_ISO_PARSER);
+            } catch (final DateTimeParseException ex) {
+                // If no time zone was specified then try and parse as a local datetime.
+                return parseLocal(trimmed, e, ex).atZone(UserTimeZoneUtil.getZoneId(dateTimeSettings));
             }
+            DateUtil.checkDay(trimmed, DateUtil.DEFAULT_ISO_PARSER, dateTime.toLocalDate());
+            return dateTime;
+        }
+    }
 
-            // If no time zone was specified then try and parse as a local datetime.
-            return LocalDateTime.parse(trimmed).atZone(DEFAULT_TIME_ZONE);
+    private static LocalDateTime parseLocal(final String trimmed,
+                                            final DateTimeParseException... zonedExceptions) {
+        try {
+            return LocalDateTime.parse(trimmed);
+        } catch (final DateTimeParseException e) {
+            // If there is more text after a local datetime then it is meant to have a time zone, so say what is wrong
+            // with its values.
+            if (e.getErrorIndex() > 0) {
+                for (final DateTimeParseException zonedException : zonedExceptions) {
+                    if (zonedException.getCause() != null) {
+                        throw zonedException;
+                    }
+                }
+            }
+            throw e;
         }
     }
 
@@ -325,8 +374,10 @@ public class DateExpressionParser {
         }
     }
 
-    private static ZonedDateTime fromEpochMillis(final long nowEpochMilli) {
-        return ZonedDateTime.ofInstant(Instant.ofEpochMilli(nowEpochMilli), ZoneOffset.UTC);
+    private static ZonedDateTime fromEpochMillis(final long epochMillis, final DateTimeSettings dateTimeSettings) {
+        return ZonedDateTime.ofInstant(
+                Instant.ofEpochMilli(epochMillis),
+                UserTimeZoneUtil.getZoneId(dateTimeSettings));
     }
 
     private static void parseDurations(final char[] chars, final Part[] parts) {
@@ -378,23 +429,9 @@ public class DateExpressionParser {
         // Strip out spaces.
         final String expression = WHITESPACE.matcher(string).replaceAll("");
 
-        int start = 0;
-        final char[] chars = expression.toCharArray();
-
         TimeFunction lastFunction = null;
-        while (start < chars.length) {
-            // Get digits.
-            final int numStart = start;
-            while (Character.isDigit(chars[start])) {
-                start++;
-            }
-            final long num = Long.parseLong(new String(chars, numStart, start - numStart));
-
-            // Get duration type.
-            final char type = chars[start++];
-
-            // Create my duration.
-            final TimeFunction function = createFunction(sign, type, num);
+        for (final SimpleDuration duration : TimeLiteral.parseCompound(expression)) {
+            final TimeFunction function = createFunction(sign, duration);
             if (lastFunction != null) {
                 final TimeFunction innerFunction = lastFunction;
                 lastFunction = time -> function.apply(innerFunction.apply(time));
@@ -405,29 +442,26 @@ public class DateExpressionParser {
         return lastFunction;
     }
 
-    private static TimeFunction createFunction(final char sign, final char type, final long value) {
-        return switch (sign) {
-            case '+' -> switch (type) {
-                case 's' -> time -> time.plusSeconds(value);
-                case 'm' -> time -> time.plusMinutes(value);
-                case 'h' -> time -> time.plusHours(value);
-                case 'd' -> time -> time.plusDays(value);
-                case 'w' -> time -> time.plusWeeks(value);
-                case 'M' -> time -> time.plusMonths(value);
-                case 'y' -> time -> time.plusYears(value);
-                default -> throw new DateTimeException("Unknown duration type '" + type + "'.");
-            };
-            case '-' -> switch (type) {
-                case 's' -> time -> time.minusSeconds(value);
-                case 'm' -> time -> time.minusMinutes(value);
-                case 'h' -> time -> time.minusHours(value);
-                case 'd' -> time -> time.minusDays(value);
-                case 'w' -> time -> time.minusWeeks(value);
-                case 'M' -> time -> time.minusMonths(value);
-                case 'y' -> time -> time.minusYears(value);
-                default -> throw new DateTimeException("Unknown duration type '" + type + "'.");
-            };
+    private static TimeFunction createFunction(final char sign, final SimpleDuration duration) {
+        final int direction = switch (sign) {
+            case '+' -> 1;
+            case '-' -> -1;
             default -> throw new DateTimeException("Unknown sign '" + sign + "'.");
+        };
+        final long value = direction * duration.getTime();
+        return switch (duration.getTimeUnit()) {
+            case NANOSECONDS, MILLISECONDS -> {
+                // Times are held to the millisecond, so anything finer is refused and not lost.
+                final long millis = direction * TimeLiteral.toExactMillis(duration);
+                yield time -> time.plus(millis, ChronoUnit.MILLIS);
+            }
+            case SECONDS -> time -> time.plusSeconds(value);
+            case MINUTES -> time -> time.plusMinutes(value);
+            case HOURS -> time -> time.plusHours(value);
+            case DAYS -> time -> time.plusDays(value);
+            case WEEKS -> time -> time.plusWeeks(value);
+            case MONTHS -> time -> time.plusMonths(value);
+            case YEARS -> time -> time.plusYears(value);
         };
     }
 

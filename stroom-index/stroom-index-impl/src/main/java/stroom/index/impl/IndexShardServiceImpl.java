@@ -24,6 +24,7 @@ import stroom.index.shared.IndexShardFields;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.common.v2.DateTermResolver;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
@@ -95,7 +96,10 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
                        final DateTimeSettings dateTimeSettings,
                        final ValuesConsumer valuesConsumer,
                        final ErrorConsumer errorConsumer) {
-        securityContext.secure(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION, () ->
-                indexShardDao.search(criteria, fieldIndex, valuesConsumer));
+        securityContext.secure(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
+            criteria.setExpression(DateTermResolver.resolve(
+                    criteria.getExpression(), IndexShardFields.getFields(), dateTimeSettings));
+            indexShardDao.search(criteria, fieldIndex, valuesConsumer);
+        });
     }
 }

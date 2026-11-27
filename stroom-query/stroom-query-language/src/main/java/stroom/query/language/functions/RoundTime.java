@@ -16,29 +16,53 @@
 
 package stroom.query.language.functions;
 
+import stroom.query.language.functions.TimeRounder.Mode;
+
 @FunctionDef(
         name = RoundTime.NAME,
         commonCategory = FunctionCategory.DATE,
         commonSubCategories = AbstractRoundDateTime.ROUND_SUB_CATEGORY,
-        commonDescription = "Rounds the supplied time to the nearest duration.",
+        commonDescription = "Rounds the supplied time to the nearest multiple of a duration or period. Halfway is " +
+                "rounded up.",
         commonReturnType = ValDate.class,
         commonReturnDescription = "The result date and time.",
-        signatures =
-        @FunctionSignature(
-                description = "Rounds the supplied time to the nearest duration.",
-                args = {
-                        @FunctionArg(
-                                name = "time",
-                                description = "The time to round.",
-                                argType = ValDate.class),
-                        @FunctionArg(
-                                name = "duration",
-                                description = "The duration to round by in ISO-8601 format " +
-                                              "(e.g., 'PT5M' for 5 minutes). Multiples of it are " +
-                                              "counted from midnight in the query's time zone.",
-                                argType = ValString.class)
-                })
-)
+        signatures = {
+                @FunctionSignature(
+                        description = "Rounds the supplied time to the nearest multiple of a duration or period. " +
+                                "Halfway is rounded up. Multiples are counted from midnight on 1 January 1970 in " +
+                                "the time zone of the query, except that whole weeks, such as 1w or 7d, start on a " +
+                                "Monday.",
+                        args = {
+                                @FunctionArg(
+                                        name = "time",
+                                        description = "The date, a number of milliseconds since the epoch (1 Jan " +
+                                                "1970), or text of either. Text that is not a date gives a null.",
+                                        argType = ValDate.class),
+                                @FunctionArg(
+                                        name = "duration",
+                                        description = "The duration or period to round by, e.g. 15m, 1d or 3M, or " +
+                                                "ISO 8601 text such as 'PT15M'. Days in ISO text are 24 hours, so " +
+                                                "'P7D' is not a week from a Monday.",
+                                        argType = Val.class)}),
+                @FunctionSignature(
+                        description = "Rounds the supplied time to the nearest multiple of a duration or period. " +
+                                "Halfway is rounded up. Multiples are counted from the origin.",
+                        args = {
+                                @FunctionArg(
+                                        name = "time",
+                                        description = "The date, a number of milliseconds since the epoch (1 Jan " +
+                                                "1970), or text of either. Text that is not a date gives a null.",
+                                        argType = ValDate.class),
+                                @FunctionArg(
+                                        name = "duration",
+                                        description = "The duration or period to round by, e.g. 15m, 1d or 3M, or " +
+                                                "ISO 8601 text such as 'PT15M'. Days in ISO text are 24 hours, so " +
+                                                "'P7D' is not a week from a Monday.",
+                                        argType = Val.class),
+                                @FunctionArg(
+                                        name = "origin",
+                                        description = "The time to count multiples from.",
+                                        argType = ValDate.class)})})
 class RoundTime extends AbstractRoundTimeToDuration {
 
     static final String NAME = "roundTime";
@@ -48,13 +72,7 @@ class RoundTime extends AbstractRoundTimeToDuration {
     }
 
     @Override
-    long adjust(final long millis, final long durationMillis) {
-        final long remainder = remainder(millis, durationMillis);
-        final long flooredMillis = millis - remainder;
-        // Rounds up when the next multiple is no further away than the one below, so halfway
-        // rounds up. Comparing with duration / 2 instead would lose the half in an odd duration.
-        return remainder >= durationMillis - remainder
-                ? flooredMillis + durationMillis
-                : flooredMillis;
+    Mode getMode() {
+        return Mode.ROUND;
     }
 }

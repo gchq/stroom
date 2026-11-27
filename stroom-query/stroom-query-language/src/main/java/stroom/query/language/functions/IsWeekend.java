@@ -16,12 +16,9 @@
 
 package stroom.query.language.functions;
 
-import stroom.query.language.functions.ref.StoredValues;
-
 import java.text.ParseException;
-import java.time.Instant;
+import java.time.DayOfWeek;
 import java.time.ZonedDateTime;
-import java.util.function.Supplier;
 
 @FunctionDef(
         name = IsWeekend.NAME,
@@ -30,10 +27,11 @@ import java.util.function.Supplier;
         commonReturnType = ValBoolean.class,
         commonReturnDescription = "Is the date a weekend day or not.",
         signatures = @FunctionSignature(
-                description = "Returns whether a date is part of the weekend or not.",
+                description = "Returns whether a date is on a Saturday or Sunday, in the time zone of the query.",
                 args = @FunctionArg(
                         name = "time",
-                        description = "The time to test.",
+                        description = "The date, a number of milliseconds since the epoch (1 Jan 1970), or text of " +
+                                "either. Text that is not a date gives a null.",
                         argType = Val.class)))
 class IsWeekend extends AbstractDateTimeFunction {
 
@@ -59,23 +57,7 @@ class IsWeekend extends AbstractDateTimeFunction {
     @Override
     public Generator createGenerator() {
         final Generator childGenerator = function.createGenerator();
-        return new Generator() {
-            public Val eval(final StoredValues storedValues,
-                            final Supplier<ChildData> childDataSupplier) {
-                final Val value = childGenerator.eval(storedValues, childDataSupplier);
-                return calc(value);
-            }
-
-            @Override
-            public void merge(final StoredValues existingValues, final StoredValues newValues) {
-
-            }
-
-            @Override
-            public void set(final Val[] values, final StoredValues storedValues) {
-                childGenerator.set(values, storedValues);
-            }
-        };
+        return new RoundGenerator(childGenerator, this::calc);
     }
 
     @Override
@@ -83,15 +65,21 @@ class IsWeekend extends AbstractDateTimeFunction {
         return function.hasAggregate();
     }
 
-    public Val calc(final Val value) {
-        final Long val = value.toLong();
-        if (val == null) {
-            return ValNull.INSTANCE;
-        }
+    @Override
+    public boolean requiresChildData() {
+        return function.requiresChildData();
+    }
 
-        final ZonedDateTime zonedDateTime = Instant.ofEpochMilli(val).atZone(zoneId);
-        final int dayOfWeek = zonedDateTime.get(java.time.temporal.ChronoField.DAY_OF_WEEK);
-        final boolean isWeekend = (dayOfWeek == 6 || dayOfWeek == 7); // Saturday or Sunday
-        return ValBoolean.create(isWeekend);
+    public Val calc(final Val value) {
+        try {
+            final ZonedDateTime dateTime = DateReader.readIfDate(value, zoneId);
+            if (dateTime == null) {
+                return ValNull.INSTANCE;
+            }
+            final DayOfWeek dayOfWeek = dateTime.getDayOfWeek();
+            return ValBoolean.create(DayOfWeek.SATURDAY.equals(dayOfWeek) || DayOfWeek.SUNDAY.equals(dayOfWeek));
+        } catch (final RuntimeException e) {
+            return ValErr.create(e.getMessage());
+        }
     }
 }

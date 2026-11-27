@@ -29,8 +29,8 @@ import java.util.function.Supplier;
 @FunctionDef(
         name = StDev.NAME,
         helpAnchor = "stdev-standard-deviation",
-        commonReturnType = ValDouble.class,
-        commonReturnDescription = "The standard deviation of all values.",
+        commonReturnType = Val.class,
+        commonReturnDescription = "The standard deviation of all values, which is a duration if they are durations.",
         signatures = {
                 @FunctionSignature(
                         category = FunctionCategory.AGGREGATE,
@@ -114,10 +114,14 @@ class StDev extends AbstractManyChildFunction implements AggregateFunction {
             childGenerator.set(values, storedValues);
 
             final List<Double> list = doubleListReference.get(storedValues);
-            final Double d = childGenerator.eval(storedValues, null).toDouble();
+            final Val val = childGenerator.eval(storedValues, null);
+            final Double d = val.toDouble();
             if (d != null) {
                 list.add(d);
                 doubleListReference.set(storedValues, list);
+                if (DateArithmetic.isAmount(val)) {
+                    doubleListReference.setHasDuration(storedValues);
+                }
             }
         }
 
@@ -128,11 +132,7 @@ class StDev extends AbstractManyChildFunction implements AggregateFunction {
                 return ValNull.INSTANCE;
             }
 
-            // Isolate list.
-            final Double[] arr = list.toArray(new Double[0]);
-
-            // calculate variance
-            return ValDouble.create(Statistics.standardDeviation(arr));
+            return DateArithmetic.standardDeviation(list, doubleListReference.hasDuration(storedValues));
         }
 
         @Override
@@ -142,6 +142,9 @@ class StDev extends AbstractManyChildFunction implements AggregateFunction {
             if (newList.size() > 0) {
                 existingList.addAll(newList);
                 doubleListReference.set(existingValues, existingList);
+                if (doubleListReference.hasDuration(newValues)) {
+                    doubleListReference.setHasDuration(existingValues);
+                }
             }
             super.merge(existingValues, newValues);
         }
@@ -156,6 +159,7 @@ class StDev extends AbstractManyChildFunction implements AggregateFunction {
         @Override
         public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
             final List<Double> list = new ArrayList<>(childGenerators.length);
+            boolean hasDuration = false;
             for (final Generator gen : childGenerators) {
                 final Val val = gen.eval(storedValues, childDataSupplier);
                 if (!val.type().isValue()) {
@@ -164,6 +168,7 @@ class StDev extends AbstractManyChildFunction implements AggregateFunction {
                 final Double value = val.toDouble();
                 if (value != null) {
                     list.add(value);
+                    hasDuration |= DateArithmetic.isAmount(val);
                 }
             }
 
@@ -171,11 +176,7 @@ class StDev extends AbstractManyChildFunction implements AggregateFunction {
                 return ValNull.INSTANCE;
             }
 
-            // Isolate list.
-            final Double[] arr = list.toArray(new Double[0]);
-
-            // calculate variance
-            return ValDouble.create(Statistics.standardDeviation(arr));
+            return DateArithmetic.standardDeviation(list, hasDuration);
         }
     }
 }

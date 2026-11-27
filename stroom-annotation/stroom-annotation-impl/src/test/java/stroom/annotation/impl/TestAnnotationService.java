@@ -17,11 +17,20 @@
 package stroom.annotation.impl;
 
 import stroom.annotation.shared.AnnotationDecorationFields;
+import stroom.annotation.shared.AnnotationFields;
 import stroom.annotation.shared.AnnotationIdentity;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.cluster.lock.mock.MockClusterLockService;
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.UserTimeZone;
+import stroom.query.api.UserTimeZone.Use;
+import stroom.query.language.functions.FieldIndex;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.entityevent.EntityAction;
@@ -29,6 +38,7 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBatch;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.shared.HasId;
+import stroom.util.shared.UserRef;
 import stroom.util.time.StroomDuration;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -44,6 +54,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.LongStream;
 
@@ -63,11 +74,46 @@ class TestAnnotationService {
     @Mock
     private EntityEventBus mockEntityEventBus;
     @Captor
+    private ArgumentCaptor<ExpressionCriteria> criteriaCaptor;
+    @Captor
     private ArgumentCaptor<EntityEventBatch> entityEventBatchArgumentCaptor;
     @Captor
     private ArgumentCaptor<EntityEvent> entityEventArgumentCaptor;
 
     private ClusterLockService clusterLockService = new MockClusterLockService();
+
+    @Test
+    void searchUsesTheTimeZoneOfTheQuery() {
+        Mockito.when(mockSecurityContext.hasAppPermission(Mockito.any())).thenReturn(true);
+        Mockito.when(mockSecurityContext.isAdmin()).thenReturn(true);
+        Mockito.when(mockSecurityContext.getUserRef()).thenReturn(UserRef.builder().uuid("uuid").build());
+        final ExpressionCriteria criteria = new ExpressionCriteria(ExpressionOperator.builder()
+                .addTerm(AnnotationFields.CREATED_ON, Condition.GREATER_THAN, "day()")
+                .addTerm(AnnotationDecorationFields.ANNOTATION_UPDATED_ON, Condition.LESS_THAN, "day()")
+                .build());
+        final DateTimeSettings dateTimeSettings = DateTimeSettings.builder()
+                .referenceTime(Instant.parse("2024-07-01T09:00:00Z").toEpochMilli())
+                .timeZone(UserTimeZone.builder().use(Use.ID).id("Europe/London").build())
+                .build();
+
+        new AnnotationService(
+                mockAnnotationDao,
+                null,
+                mockSecurityContext,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                clusterLockService)
+                .search(criteria, new FieldIndex(), dateTimeSettings, null, null);
+
+        Mockito.verify(mockAnnotationDao).search(
+                criteriaCaptor.capture(), Mockito.any(), Mockito.any(), Mockito.any());
+        assertThat(ExpressionUtil.values(criteriaCaptor.getValue().getExpression()))
+                .containsExactly("2024-06-30T23:00:00.000Z", "2024-06-30T23:00:00.000Z");
+    }
 
     @Test
     void performDataRetention() {

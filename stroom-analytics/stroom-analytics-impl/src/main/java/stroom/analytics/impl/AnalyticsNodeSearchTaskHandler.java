@@ -273,7 +273,8 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                                  " extractions");
     }
 
-    private static class TableResultConsumer implements TableResultBuilder {
+    // Not private so that it can be tested.
+    static class TableResultConsumer implements TableResultBuilder {
 
         private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TableResultConsumer.class);
 
@@ -330,7 +331,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                 Long time = null;
                 final int timeFieldIndex = fieldIndex.getTimeFieldIndex();
                 if (timeFieldIndex != -1) {
-                    time = DateUtil.parseNormalDateTimeString(row.getValues().get(timeFieldIndex));
+                    time = readTime(row.getValues().get(timeFieldIndex));
                 }
 
                 // Get value.
@@ -383,6 +384,16 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
             }
 
             return this;
+        }
+
+        // A row may have no time, or text that is not a date, but is still a result.
+        private Long readTime(final String value) {
+            try {
+                return DateUtil.parseNormalDateTimeString(value);
+            } catch (final IllegalArgumentException e) {
+                LOGGER.debug(e::getMessage, e);
+                return null;
+            }
         }
 
         @Override

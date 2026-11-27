@@ -19,6 +19,7 @@ package stroom.query.common.v2;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.FlatResult;
+import stroom.query.api.Format;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.Query;
 import stroom.query.api.QueryKey;
@@ -30,6 +31,16 @@ import stroom.query.api.TableSettings;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValBoolean;
+import stroom.query.language.functions.ValDate;
+import stroom.query.language.functions.ValDouble;
+import stroom.query.language.functions.ValDuration;
+import stroom.query.language.functions.ValErr;
+import stroom.query.language.functions.ValFloat;
+import stroom.query.language.functions.ValInteger;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.ValPeriod;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.shared.Severity;
@@ -37,6 +48,7 @@ import stroom.util.shared.Severity;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -50,6 +62,61 @@ class TestFlatResultCreator {
     private final ExpressionContext expressionContext = new ExpressionContext();
     private final TableSettings parent = table();
     private final TableSettings child = table();
+
+    @Test
+    void durationsAreMilliseconds() {
+        final Column column = Column.builder().format(Format.DURATION).build();
+        assertThat(FlatResultCreator.convert(column, ValDuration.create(1_500L))).isEqualTo(1_500D);
+        assertThat(FlatResultCreator.convert(column, ValLong.create(1_500L))).isEqualTo(1_500D);
+        assertThat(FlatResultCreator.convert(column, ValString.create("-1.5s"))).isEqualTo(-1_500D);
+        assertThat(FlatResultCreator.convert(column, ValPeriod.create(0, 0, 1))).isEqualTo(86_400_000D);
+        assertThat(FlatResultCreator.convert(column, ValString.create("soon"))).isNull();
+        assertThat(FlatResultCreator.convert(column, ValNull.INSTANCE)).isNull();
+        assertThat(FlatResultCreator.convert(column, ValErr.create("bad"))).isNull();
+    }
+
+    // Those that are different must stay so, or their rows would be added together.
+    @Test
+    void durationGroups() {
+        final Column column = Column.builder().format(Format.DURATION).build();
+        assertThat(FlatResultCreator.convertGroup(column, ValDuration.create(1_500L))).isEqualTo(1_500D);
+        assertThat(FlatResultCreator.convertGroup(column, ValLong.create(1_500L))).isEqualTo(1_500D);
+        assertThat(FlatResultCreator.convertGroup(column, ValInteger.create(1_500))).isEqualTo(1_500D);
+        assertThat(FlatResultCreator.convertGroup(column, ValDouble.create(1_500))).isEqualTo(1_500D);
+        assertThat(FlatResultCreator.convertGroup(column, ValDouble.create(1.2))).isEqualTo(1.2);
+        assertThat(FlatResultCreator.convertGroup(column, ValDouble.create(1e300))).isEqualTo(1e300);
+        assertThat(FlatResultCreator.convertGroup(column, ValFloat.create(1.5F))).isEqualTo(1.5F);
+        // Not a number, which would be a long duration.
+        assertThat(FlatResultCreator.convertGroup(column, ValDate.create(5))).isEqualTo("1970-01-01T00:00:00.005Z");
+        assertThat(FlatResultCreator.convertGroup(column, ValBoolean.create(true))).isEqualTo("true");
+        assertThat(FlatResultCreator.convertGroup(column, ValErr.create("bad"))).isEqualTo("ERR: bad");
+        for (final String text : List.of("1h", "60m", "soon", "later", "1500")) {
+            assertThat(FlatResultCreator.convertGroup(column, ValString.create(text))).isEqualTo(text);
+        }
+        assertThat(FlatResultCreator.convertGroup(column, ValPeriod.create(0, 0, 1))).isEqualTo("P1D");
+        assertThat(FlatResultCreator.convertGroup(column, ValNull.INSTANCE)).isNull();
+    }
+
+    @Test
+    void groupsOfOtherFormats() {
+        assertThat(FlatResultCreator.convertGroup(
+                Column.builder().format(Format.NUMBER).build(), ValString.create("60m"))).isEqualTo(3_600_000D);
+        assertThat(FlatResultCreator.convertGroup(
+                Column.builder().format(Format.TEXT).build(), ValLong.create(5))).isEqualTo("5");
+        assertThat(FlatResultCreator.convertGroup(null, ValLong.create(5))).isEqualTo(5L);
+    }
+
+    @Test
+    void otherFormats() {
+        assertThat(FlatResultCreator.convert(
+                Column.builder().format(Format.NUMBER).build(), ValDouble.create(1.5))).isEqualTo(1.5);
+        assertThat(FlatResultCreator.convert(
+                Column.builder().format(Format.TEXT).build(), ValDuration.create(1_500L))).isEqualTo("1s500ms");
+        assertThat(FlatResultCreator.convert(
+                Column.builder().format(Format.GENERAL).build(), ValDuration.create(1_500L))).isEqualTo(1_500L);
+        assertThat(FlatResultCreator.convert(
+                Column.builder().build(), ValString.create("1.5s"))).isEqualTo("1.5s");
+    }
 
     // The same creator is used each time the result is asked for.
     @Test

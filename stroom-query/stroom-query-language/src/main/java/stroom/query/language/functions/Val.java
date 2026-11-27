@@ -26,6 +26,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.Period;
 import java.util.Comparator;
 import java.util.Objects;
 
@@ -47,7 +48,8 @@ import java.util.Objects;
         @JsonSubTypes.Type(value = ValFloat.class, name = "float"),
         @JsonSubTypes.Type(value = ValDouble.class, name = "double"),
         @JsonSubTypes.Type(value = ValDate.class, name = "date"),
-        @JsonSubTypes.Type(value = ValDuration.class, name = "duration")
+        @JsonSubTypes.Type(value = ValDuration.class, name = "duration"),
+        @JsonSubTypes.Type(value = ValPeriod.class, name = "period")
 })
 @Schema(
         discriminatorProperty = "type",
@@ -65,10 +67,11 @@ import java.util.Objects;
                 @DiscriminatorMapping(value = "float", schema = ValFloat.class),
                 @DiscriminatorMapping(value = "double", schema = ValDouble.class),
                 @DiscriminatorMapping(value = "date", schema = ValDate.class),
-                @DiscriminatorMapping(value = "duration", schema = ValDuration.class)})
+                @DiscriminatorMapping(value = "duration", schema = ValDuration.class),
+                @DiscriminatorMapping(value = "period", schema = ValPeriod.class)})
 public sealed interface Val
         extends Param, Appendable, Comparable<Val>
-        permits ValNumber, ValString, ValErr, ValNull, ValBoolean, ValXml {
+        permits ValNumber, ValString, ValErr, ValNull, ValBoolean, ValXml, ValPeriod {
 
     Val[] EMPTY_VALUES = new Val[0];
     double FLOATING_POINT_EQUALITY_TOLERANCE = 0.00001;
@@ -216,6 +219,7 @@ public sealed interface Val
      * {@link Long} => {@link ValLong},
      * {@link Instant} => {@link ValDate},
      * {@link Duration} => {@link ValDuration},
+     * {@link Period} => {@link ValPeriod},
      * {@link Throwable} => {@link ValErr},
      * null => {@link ValNull},
      * etc
@@ -231,6 +235,7 @@ public sealed interface Val
             case final Instant val -> ValDate.create(val.toEpochMilli());
             case final Integer val -> ValInteger.create(val);
             case final Long val -> ValLong.create(val);
+            case final Period val -> ValPeriod.create(val);
             case final String val -> ValString.create(val);
             case final StroomDuration val -> ValDuration.create(val.toMillis());
             case final Throwable val -> ValErr.create(val.getMessage());

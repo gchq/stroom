@@ -239,6 +239,22 @@ class Structures {
                         A blank key never matches, so `not in` keeps a row whose field is blank, and a
                         blank value in the other data source doesn't stop any row from being kept. This
                         differs from SQL, where `not in` gives no rows once the other query holds a null.
+
+                        Compare dates with a date, or with a time relative to now, e.g.
+                        ```stroomql
+                        where EventTime >= 2024-07-03T09:00:00Z
+                        and EventTime < now() - 1h
+                        ```
+                        ```stroomql
+                        where EventTime >= day() - 1w
+                        and EventTime < day()
+                        ```
+
+                        A date must have a time. One with no offset, such as `2024-07-03T09:00:00`, and times
+                        such as `day()` are in the time zone of the query. Times can be moved by numbers with the units `ms`, `s`, `m`
+                        (minutes), `h`, `d`, `w`, `M` (months) and `y`, e.g. `now() - 1d2h`. Units are
+                        case-sensitive. Days, weeks, months and years follow the calendar, so `day() - 1d` is
+                        midnight yesterday even when the clocks have changed.
                         """,
                 "where ${1:field} ${2:=} ${3:value}\n$0");
         add(list, name(TokenType.EVAL),
@@ -288,6 +304,25 @@ class Structures {
                         where user = "bob"
                         and (feed = "my feed" or feed = "other feed")
                         ```
+
+                        Dates can be moved, compared and rounded, e.g.
+                        ```stroomql
+                        eval Expires = EventTime + 1M
+                        eval Elapsed = LogoffTime - LogonTime
+                        eval Quarter = floor(EventTime, 3M)
+                        eval Late = timeOfDay(EventTime) > 18h
+                        ```
+
+                        A number with a unit is an exact duration (`ms`, `s`, `m` for minutes, and `h`) or a
+                        period on the calendar (`d`, `w`, `M` for months, and `y`). Units are case-sensitive.
+                        `EventTime + 1d` is the same local time on the next day, and `EventTime + 24h` is
+                        exactly 24 hours later. Where a length is needed, as in `Elapsed > 1d`, a day is 24
+                        hours, but months and years have no fixed length so can't be used. Write `1d + 2h`
+                        rather than `1d2h`.
+
+                        A date is written with its time, e.g. `2024-07-03T09:00:00Z`. With no offset it is in
+                        the time zone of the query. Put a date with no time in quotes, as in
+                        `toDate('2024-07-03')`, because `2024-07-03` without them is 2024 minus 7 minus 3.
                         """,
                 "eval ${1:variable_name} = ${2:value}\n$0");
         add(list, name(TokenType.WINDOW),
@@ -420,6 +455,12 @@ class Structures {
                         A row is kept only if the comparison is true, so a row with nothing to compare
                         with is left out. To keep the first window, give `lag` a value to use, as in
                         `lag(count(), 1, 0)`.
+
+                        To compare an expression with a duration use `parseDuration`, as a value can't be
+                        a duration such as `1h`, e.g.
+                        ```stroomql
+                        having max(Elapsed) > parseDuration('1h')
+                        ```
                         """,
                 "having ${1:field} ${2:=} ${3:value}\n$0");
         add(list, name(TokenType.LIMIT),

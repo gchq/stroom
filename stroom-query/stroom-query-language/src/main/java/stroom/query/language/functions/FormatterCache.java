@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
+import java.time.DateTimeException;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -27,10 +28,13 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 final class FormatterCache {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FormatterCache.class);
+
+    private static final Pattern UTC_MARKER_PATTERN = Pattern.compile("(?<![A-Za-z])(?:Z|UTC|GMT)'\\s*$");
 
     // Create cache
     private static final int MAX_ENTRIES = 1000;
@@ -73,14 +77,6 @@ final class FormatterCache {
         // Utility
     }
 
-    static long parse(final String value, final String pattern, final String timeZone) {
-        return DateUtil.parse(value, getFormatter(pattern, Mode.PARSE), getZoneId(timeZone));
-    }
-
-    static String format(final Long value, final String pattern, final String timeZone) {
-        return DateUtil.format(value, getFormatter(pattern, Mode.FORMAT), getZoneId(timeZone));
-    }
-
     static DateTimeFormatter getFormatter(final String pattern, final Mode mode) {
         // DEFAULT_ISO_PARSER copes with different ISO 8601 forms so can't be used for formatting
         switch (mode) {
@@ -113,6 +109,15 @@ final class FormatterCache {
         return cachedFormatter.formatter;
     }
 
+    /// Tells whether a pattern ends with text, rather than a field, that says the time is in UTC, as in
+    /// `yyyy-MM-dd'T'HH:mm:ss'Z'`.
+    ///
+    /// @param pattern The pattern.
+    /// @return True if it does.
+    static boolean isMarkedUtc(final String pattern) {
+        return UTC_MARKER_PATTERN.matcher(pattern).find();
+    }
+
     static ZoneId getZoneId(final String timeZone) {
         if (timeZone == null) {
             return ZoneOffset.UTC;
@@ -126,7 +131,7 @@ final class FormatterCache {
             try {
                 return new CachedZoneId(DateUtil.getTimeZone(k));
             } catch (final ParseException e) {
-                return new CachedZoneId(new RuntimeException(e.getMessage(), e));
+                return new CachedZoneId(new DateTimeException(e.getMessage(), e));
             } catch (final RuntimeException e) {
                 return new CachedZoneId(e);
             }

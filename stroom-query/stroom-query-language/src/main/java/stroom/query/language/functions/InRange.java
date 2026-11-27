@@ -18,6 +18,9 @@ package stroom.query.language.functions;
 
 import stroom.query.language.functions.ref.StoredValues;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
@@ -25,11 +28,13 @@ import java.util.function.Supplier;
         name = InRange.NAME,
         commonCategory = FunctionCategory.LOGIC,
         commonDescription = "Returns true if the value is between the lower and upper bounds, inclusive. " +
-                "All parameters must be either numbers or ISO date strings.",
+                "All parameters must be either numbers, dates, durations or text of them, or ISO date strings with " +
+                "no time.",
         commonReturnType = ValBoolean.class,
         signatures = @FunctionSignature(
                 description = "Returns true if the value is between lower and upper (inclusive). " +
-                              "All parameters must be either numbers or ISO date strings.",
+                              "All parameters must be either numbers, dates, durations or text of them, or ISO date " +
+                              "strings with no time.",
                 args = {
                         @FunctionArg(name = "value", argType = Val.class, description = "The value to test."),
                         @FunctionArg(name = "lower", argType = Val.class, description = "The lower bound."),
@@ -37,7 +42,7 @@ import java.util.function.Supplier;
                 }
         )
 )
-public class InRange extends AbstractFunction {
+public class InRange extends AbstractManyChildFunction {
 
     static final String NAME = "inRange";
 
@@ -50,73 +55,87 @@ public class InRange extends AbstractFunction {
     }
 
     @Override
-    public Generator createGenerator() {
-        final Param valueParam = params[0];
-        final Param lowerParam = params[1];
-        final Param upperParam = params[2];
+    protected Generator createGenerator(final Generator[] childGenerators) {
+        return new Gen(childGenerators);
+    }
 
-        return new Generator() {
-            @Override
-            public void set(final Val[] values, final StoredValues storedValues) {
-                // No-op
+
+    // --------------------------------------------------------------------------------
+
+
+    private static final class Gen extends AbstractManyChildGenerator {
+
+        private static final String TYPES_MESSAGE =
+                "Parameters must be all numeric or all ISO date strings for between function";
+
+        Gen(final Generator[] childGenerators) {
+            super(childGenerators);
+        }
+
+        @Override
+        public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
+            final Val value = childGenerators[0].eval(storedValues, childDataSupplier);
+            final Val lower = childGenerators[1].eval(storedValues, childDataSupplier);
+            final Val upper = childGenerators[2].eval(storedValues, childDataSupplier);
+
+            if (Val.isNull(value) || Val.isNull(lower) || Val.isNull(upper)) {
+                return ValErr.create("Null parameter in between function");
             }
 
-            @Override
-            public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
-                final Val value = valueParam instanceof Function
-                        ? ((Function) valueParam).createGenerator().eval(storedValues, childDataSupplier)
-                        : (Val) valueParam;
-                final Val lower = lowerParam instanceof Function
-                        ? ((Function) lowerParam).createGenerator().eval(storedValues, childDataSupplier)
-                        : (Val) lowerParam;
-                final Val upper = upperParam instanceof Function
-                        ? ((Function) upperParam).createGenerator().eval(storedValues, childDataSupplier)
-                        : (Val) upperParam;
-
-                if (value == null || lower == null || upper == null
-                    || value == ValNull.INSTANCE
-                    || lower == ValNull.INSTANCE
-                    || upper == ValNull.INSTANCE) {
-                    return ValErr.create("Null parameter in between function");
-                }
-
-                // Check if all are date strings
-                if (value instanceof ValString && lower instanceof ValString && upper instanceof ValString) {
-                    try {
-                        final java.time.LocalDate v = java.time.LocalDate.parse(value.toString());
-                        final java.time.LocalDate l = java.time.LocalDate.parse(lower.toString());
-                        final java.time.LocalDate u = java.time.LocalDate.parse(upper.toString());
-                        return ValBoolean.create((!v.isBefore(l)) && (!v.isAfter(u)));
-                    } catch (final Exception e) {
+            // Check if all are date strings
+            if (value instanceof ValString && lower instanceof ValString && upper instanceof ValString) {
+                try {
+                    final LocalDate v = LocalDate.parse(value.toString());
+                    final LocalDate l = LocalDate.parse(lower.toString());
+                    final LocalDate u = LocalDate.parse(upper.toString());
+                    return ValBoolean.create((!v.isBefore(l)) && (!v.isAfter(u)));
+                } catch (final DateTimeParseException e) {
+                    if (!hasNumericValues(value, lower, upper)) {
                         return ValErr.create("Parameters must be valid ISO date strings for between function");
                     }
                 }
+            }
 
-                // Check if all are numeric
-                if (value instanceof ValNumber && lower instanceof ValNumber && upper instanceof ValNumber) {
-                    try {
-                        final double v = value.toDouble();
-                        final double l = lower.toDouble();
-                        final double u = upper.toDouble();
-                        return ValBoolean.create(l <= v && v <= u);
-                    } catch (final Exception e) {
-                        return ValErr.create(
-                                "Parameters must be all numeric or all ISO date strings for between function");
-                    }
+            ValErr notComparable = DateArithmetic.checkOrder(value, lower);
+            if (notComparable == null) {
+                notComparable = DateArithmetic.checkOrder(value, upper);
+            }
+            if (notComparable != null) {
+                return notComparable;
+            }
+
+            // Check if all are numeric
+            if (isNumeric(value) && isNumeric(lower) && isNumeric(upper)) {
+                try {
+                    final double v = value.toDouble();
+                    final double l = lower.toDouble();
+                    final double u = upper.toDouble();
+                    return ValBoolean.create(l <= v && v <= u);
+                } catch (final Exception e) {
+                    return ValErr.create(TYPES_MESSAGE);
                 }
-
-                return ValErr.create("Parameters must be all numeric or all ISO date strings for between function");
             }
 
-            @Override
-            public void merge(final StoredValues existingValues, final StoredValues newValues) {
-                // No-op
+            // Text of dates, durations and numbers is read as it is by the comparison operators.
+            if (hasNumericValues(value, lower, upper)) {
+                return ValBoolean.create(compare(value, lower) >= 0 && compare(value, upper) <= 0);
             }
-        };
-    }
 
-    @Override
-    public boolean hasAggregate() {
-        return false;
+            return ValErr.create(TYPES_MESSAGE);
+        }
+
+        private static boolean hasNumericValues(final Val... vals) {
+            return Arrays.stream(vals).allMatch(val ->
+                    isNumeric(val) || (val instanceof ValString && val.hasNumericValue()));
+        }
+
+        private static int compare(final Val val1, final Val val2) {
+            return ValComparators.GENERIC_CASE_SENSITIVE_COMPARATOR.compare(val1, val2);
+        }
+
+        private static boolean isNumeric(final Val val) {
+            return val instanceof ValNumber
+                   || (val instanceof final ValPeriod period && period.hasOnlyDays());
+        }
     }
 }

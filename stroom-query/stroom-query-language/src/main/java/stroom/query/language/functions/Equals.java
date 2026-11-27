@@ -53,6 +53,11 @@ class Equals extends AbstractEqualityFunction {
         return EVALUATOR;
     }
 
+    @Override
+    boolean isOrdering() {
+        return false;
+    }
+
 
     // --------------------------------------------------------------------------------
 

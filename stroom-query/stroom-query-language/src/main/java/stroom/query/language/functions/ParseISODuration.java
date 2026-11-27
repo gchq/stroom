@@ -30,7 +30,8 @@ import java.util.function.Supplier;
         commonReturnDescription = "The parsed ISO duration.",
         signatures = {
                 @FunctionSignature(
-                        description = "Parses the supplied value as an ISO duration, e.g. PTH3",
+                        description = "Parses the supplied value as an ISO 8601 duration, e.g. 'PT3H' or 'P1DT2H'. A " +
+                                "day is 24 hours. Use parsePeriod for days, weeks, months and years on the calendar.",
                         args = @FunctionArg(
                                 name = "value",
                                 argType = ValString.class,
@@ -57,8 +58,11 @@ class ParseISODuration extends AbstractFunction {
             function = (Function) param;
             hasAggregate = function.hasAggregate();
         } else {
-            final String durationString = param.toString();
-            gen = new StaticValueFunction(ValDurationUtil.parseISODuration(durationString)).createGenerator();
+            // A number that is written is text that isn't in ISO format, as it always has been.
+            final Val val = param instanceof ValNumber && !(param instanceof ValDuration)
+                    ? ValString.create(param.toString())
+                    : (Val) param;
+            gen = new StaticValueFunction(ValDurationUtil.parseISODuration(val)).createGenerator();
         }
     }
 

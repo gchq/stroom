@@ -16,23 +16,40 @@
 
 package stroom.query.common.v2;
 
+import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
+import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.Format;
 import stroom.query.api.UserTimeZone;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.api.token.TokenException;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
+import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactory;
 import stroom.query.language.filter.FieldProviderImpl;
 import stroom.query.language.filter.SimpleStringExpressionParser.FieldProvider;
 import stroom.query.language.filter.SingleFieldProvider;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValDate;
+import stroom.query.language.functions.ValDuration;
+import stroom.query.language.functions.ValLong;
+import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.ValPeriod;
+import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.Values;
 import stroom.util.date.DateUtil;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,13 +59,16 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestExpressionPredicateFactory {
 
@@ -72,6 +92,195 @@ class TestExpressionPredicateFactory {
             new FieldProviderImpl(List.of(TEST_FIELD), List.of(TEST_FIELD));
     private static final ValueFunctionFactories<String> TEST_VFF =
             StringValueFunctionFactory.create(TEST_FIELD);
+
+    // --------------------------------------------------------------------------------
+    // A column that has the Duration format.
+
+    private static final List<Val> DURATIONS = List.of(
+            ValDuration.create(3_600_000L),
+            ValDuration.create(178_205_000L),
+            ValLong.create(5_000L),
+            ValString.create("1.5h 30m"),
+            ValString.create("-1.5h"),
+            ValPeriod.create(0, 0, 1),
+            ValString.create("1M"),
+            ValString.create("soon"),
+            ValDate.create(0),
+            ValNull.INSTANCE);
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "EQUALS|1h|1h",
+            "NOT_EQUALS|1h|2d1h30m5s;5000;1.5h 30m;-1.5h;P1D;1M;soon;1970-01-01T00:00:00.000Z;null",
+            "BETWEEN|1h, 1d|1h;1.5h 30m;P1D",
+            "IN|1h, 1h 60m, soon, so|1h;1.5h 30m;soon",
+            "IN|1h 60m|1.5h 30m",
+            "IN|nothing|",
+            // As in a text column, words are exact, and blanks are left out.
+            "IN|*|",
+            "IN|so?n|",
+            "IN|Soon|",
+            "IN|1h,,2h, |1h;1.5h 30m",
+            "IN|,|",
+            "IN|''|",
+            // As in a text column, these can have wildcards, and ignore case.
+            "EQUALS|So*|soon",
+            "EQUALS_CASE_SENSITIVE|soon|soon",
+            "EQUALS_CASE_SENSITIVE|Soon|",
+            "CONTAINS|h|1h;2d1h30m5s;1.5h 30m;-1.5h",
+            "STARTS_WITH|s|soon"})
+    void durationConditions(final Condition condition, final String value, final String expected) {
+        assertDurations(durationTerm(condition, value), expected);
+    }
+
+    @Test
+    void durationInDictionary() {
+        final DocRef docRef = new DocRef("Dictionary", "uuid");
+        final WordListProvider wordListProvider = Mockito.mock(WordListProvider.class);
+        Mockito.when(wordListProvider.findByUuid("uuid")).thenReturn(Optional.of(docRef));
+        Mockito.when(wordListProvider.getWords(docRef)).thenReturn(new String[]{"60m", "", "soon"});
+        final ExpressionTerm byName = ExpressionTerm.builder()
+                .field("c").condition(Condition.IN_DICTIONARY).value("uuid").build();
+        final ExpressionTerm byDocRef = ExpressionTerm.builder()
+                .field("c").condition(Condition.IN_DICTIONARY).docRef(docRef).build();
+
+        assertDurations(durationFilter(wordListProvider, byName), "1h;soon");
+        assertDurations(durationFilter(wordListProvider, byDocRef), "1h;soon");
+        Mockito.when(wordListProvider.getWords(docRef)).thenReturn(new String[]{});
+        assertDurations(durationFilter(wordListProvider, byDocRef), null);
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "GREATER_THAN|1H|Expected a duration for field \"c\" but was given string \"1H\": Unknown unit 'H'",
+            "LESS_THAN|soon|Expected a duration for field \"c\" but was given string \"soon\"",
+            "GREATER_THAN|''|Expected a duration for field \"c\" but was given string \"\"",
+            "BETWEEN|1h|2 durations needed for between query",
+            "BETWEEN|2h, 1h|From duration must be lower than to duration",
+            "BETWEEN|1h, soon|Expected a duration for field"})
+    void durationMistakes(final Condition condition, final String value, final String message) {
+        assertThatThrownBy(() -> durationTerm(condition, value)).hasMessageContaining(message);
+    }
+
+    @Test
+    void durationNullTerm() {
+        assertThat(durationTerm(Condition.EQUALS, null)).isEmpty();
+        assertThat(durationTerm(Condition.NOT_EQUALS, null)).isEmpty();
+        assertThat(durationTerm(Condition.GREATER_THAN, null)).isEmpty();
+        assertThat(durationTerm(Condition.BETWEEN, null)).isEmpty();
+        assertThat(durationTerm(Condition.IN, null)).isEmpty();
+        assertThat(durationFilter(null, ExpressionTerm.builder()
+                .field("c")
+                .condition(Condition.EQUALS)
+                .docRef(new DocRef("Dictionary", "uuid"))
+                .build())).isEmpty();
+    }
+
+    // They are as they were.
+    @Test
+    void durationsInOtherFormats() {
+        for (final Format format : List.of(Format.GENERAL, Format.TEXT)) {
+            assertDurations(durationFilter(format, null, ExpressionTerm.builder()
+                    .field("c").condition(Condition.EQUALS).value("1h").build()), "1h");
+        }
+        assertThatThrownBy(() -> durationFilter(Format.NUMBER, null, ExpressionTerm.builder()
+                .field("c").condition(Condition.EQUALS).value("1h").build()))
+                .hasMessageContaining("Expected a numeric value");
+    }
+
+    // What is not a duration is compared as it is in a text column.
+    @Test
+    void textInADurationColumn() {
+        final List<Val> values = List.of(
+                ValString.create("soon"),
+                ValString.create("Soon"),
+                ValString.create(" soon "),
+                ValString.create("so on"),
+                ValString.create(""),
+                ValString.create(" "),
+                ValString.create("*"),
+                ValString.create("n?a"),
+                ValString.create("nba"),
+                ValNull.INSTANCE);
+        for (final Condition condition : List.of(
+                Condition.EQUALS, Condition.NOT_EQUALS, Condition.EQUALS_CASE_SENSITIVE,
+                Condition.NOT_EQUALS_CASE_SENSITIVE, Condition.CONTAINS, Condition.STARTS_WITH, Condition.ENDS_WITH,
+                Condition.IN, Condition.IN_DICTIONARY)) {
+            for (final String text : List.of(
+                    "soon", "Soon", " soon ", "*", "n?a", "\\*", "", " ", "soon,nba", "soon, ,nba", "none")) {
+                if (condition == Condition.IN_DICTIONARY && text.isBlank()) {
+                    // A text column can't be filtered by a dictionary that is blank.
+                    continue;
+                }
+                final ExpressionTerm term = ExpressionTerm.builder()
+                        .field("c").condition(condition).value(text).build();
+                final WordListProvider words = Mockito.mock(WordListProvider.class);
+                final DocRef docRef = new DocRef("Dictionary", text);
+                Mockito.when(words.findByUuid(text)).thenReturn(Optional.of(docRef));
+                Mockito.when(words.getWords(docRef)).thenReturn(text.split(","));
+                final Optional<Predicate<Values>> expected = durationFilter(Format.TEXT, words, term);
+                final Optional<Predicate<Values>> actual = durationFilter(Format.DURATION, words, term);
+                assertThat(actual.isPresent()).isEqualTo(expected.isPresent());
+                for (final Val val : values) {
+                    assertThat(actual.map(predicate -> predicate.test(Values.of(val))))
+                            .as(term + " of '" + val + "'")
+                            .isEqualTo(expected.map(predicate -> predicate.test(Values.of(val))));
+                }
+            }
+        }
+    }
+
+    // Reading text as a duration is slow, so it mustn't be done for each word.
+    @Test
+    void durationIsReadOnceForAllWords() {
+        final AtomicInteger reads = new AtomicInteger();
+        final ValueFunctionFactory<Val> factory = new ValFunctionFactory(
+                Column.builder().format(Format.DURATION).build()) {
+            @Override
+            public Optional<Function<Val, Long>> createDurationExtractor() {
+                return super.createDurationExtractor().map(extractor -> val -> {
+                    reads.incrementAndGet();
+                    return extractor.apply(val);
+                });
+            }
+        };
+        final Predicate<Val> predicate = new ExpressionPredicateFactory().createOptional(
+                ExpressionOperator.builder().addTerm(ExpressionTerm.builder()
+                        .field("c").condition(Condition.IN).value("1h,2h,3h,soon,later").build()).build(),
+                name -> factory,
+                DateTimeSettings.builder().build()).orElseThrow();
+        assertThat(predicate.test(ValString.create("N/A"))).isFalse();
+        assertThat(reads.get()).isEqualTo(1);
+    }
+
+    private static Optional<Predicate<Values>> durationTerm(final Condition condition, final String value) {
+        return durationFilter(null, ExpressionTerm.builder().field("c").condition(condition).value(value).build());
+    }
+
+    private static Optional<Predicate<Values>> durationFilter(final WordListProvider wordListProvider,
+                                                      final ExpressionTerm term) {
+        return durationFilter(Format.DURATION, wordListProvider, term);
+    }
+
+    private static Optional<Predicate<Values>> durationFilter(final Format format,
+                                                      final WordListProvider wordListProvider,
+                                                      final ExpressionTerm term) {
+        final Column column = Column.builder().id("c").name("c").format(format).build();
+        return new ExpressionPredicateFactory(wordListProvider).createOptional(
+                ExpressionOperator.builder().addTerm(term).build(),
+                RowUtil.createColumnNameValExtractor(List.of(column)),
+                DateTimeSettings.builder().build());
+    }
+
+    private static void assertDurations(final Optional<Predicate<Values>> predicate, final String expected) {
+        assertThat(DURATIONS.stream()
+                .filter(val -> predicate.orElseThrow().test(Values.of(val)))
+                .map(String::valueOf)
+                .collect(Collectors.joining(";")))
+                .isEqualTo(expected == null
+                        ? ""
+                        : expected);
+    }
 
     @Test
     void testErrorConsumer_isNotifiedAndStillMatchesNothing() {
@@ -731,6 +940,26 @@ class TestExpressionPredicateFactory {
                     .orElseThrow();
 
             assertThat(predicate).as(values).accepts("a", "b").rejects("c", "a,", "a, b", "");
+        }
+    }
+
+    @Test
+    void badDateTermNamesItsField() {
+        for (final String value : List.of("now()-99999999999999999999d", "now()-1ns", "yesterday",
+                "now()+9223372036854775807w")) {
+            final ExpressionOperator expression = ExpressionOperator.builder()
+                    .addTerm(ExpressionTerm.builder()
+                            .field("test")
+                            .condition(ExpressionTerm.Condition.GREATER_THAN)
+                            .value(value)
+                            .build())
+                    .build();
+
+            assertThatThrownBy(() -> new ExpressionPredicateFactory()
+                    .createOptional(expression, DATE_VALUE_FUNCTION_FACTORIES, DateTimeSettings.builder().build()))
+                    .as(value)
+                    .hasMessageStartingWith("Unable to parse a date/time from value for field \"test\" but was given "
+                                            + "string \"" + value + "\": ");
         }
     }
 

@@ -808,6 +808,84 @@ public final class QueryEditorStories {
                     play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
                     DocumentEditors.expectNoProblems(play);
                 })
+                // A duration's pattern is shown only for that style, and can be one that is suggested
+                .story("FormatDuration", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = openDurationFormat(play);
+                    play.waitFor(() -> play.expect(dialog.getByText("Style")).toBeVisible());
+                    play.expect(dialog.queryByRole("combobox", "Pattern")).toBeNull();
+                    chooseDurationPattern(play, dialog);
+                    final Query pattern = dialog.findByRole("combobox", "Pattern");
+                    play.expect(pattern).toHaveValue("d.hh:mm:ss");
+                    play.click(pattern);
+                    play.click(screen.findByRole("option", "hh:mm"));
+                    play.waitFor(() -> play.expect(pattern).toHaveValue("hh:mm"));
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    expectSearchWith(play, "{\"queryTablePreferences\": {\"columns\": "
+                                           + "[{\"name\": \"Name\", \"format\": {\"type\": \"DURATION\", "
+                                           + "\"settings\": {\"type\": \"duration\", \"style\": \"PATTERN\", "
+                                           + "\"pattern\": \"hh:mm\"}}}, {}, {}, {}]}}");
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // A pattern that can't be used is refused, saying why under it, until it is put right
+                .story("FormatDurationPatternRefused", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = openDurationFormat(play);
+                    chooseDurationPattern(play, dialog);
+                    final Query pattern = dialog.findByRole("combobox", "Pattern");
+                    play.clear(pattern);
+                    play.type(pattern, "HH:mm");
+                    play.keyboard("{Escape}");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(pattern).toHaveAttribute("aria-invalid", "true"));
+                    play.expect(dialog.getByText(TextMatch.containing("has a letter 'H' that is not a unit")))
+                            .toBeInTheDocument();
+                    play.expect(pattern).toHaveFocus();
+                    // A suggestion puts it right
+                    play.click(pattern);
+                    play.click(screen.findByRole("option", "hh:mm:ss"));
+                    play.waitFor(() -> play.expect(pattern).not().toHaveAttribute("aria-invalid", "true"));
+                    // The pattern isn't checked while it isn't used
+                    play.clear(pattern);
+                    play.click(dialog.getByLabelText("Style"));
+                    play.click(screen.findByText("ISO 8601", ".selection-popup *"));
+                    play.waitFor(() -> play.expect(dialog.queryByRole("combobox", "Pattern")).toBeNull());
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    expectSearchWith(play, "{\"queryTablePreferences\": {\"columns\": "
+                                           + "[{\"name\": \"Name\", \"format\": {\"type\": \"DURATION\", "
+                                           + "\"settings\": {\"type\": \"duration\", \"style\": \"ISO\"}}}, "
+                                           + "{}, {}, {}]}}");
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // Left open with a refused pattern and the patterns suggested (the screenshot shows it)
+                .story("FormatDurationOpen", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = openDurationFormat(play);
+                    chooseDurationPattern(play, dialog);
+                    final Query pattern = dialog.findByRole("combobox", "Pattern");
+                    play.clear(pattern);
+                    play.type(pattern, "HH:mm");
+                    play.keyboard("{Escape}");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(pattern).toHaveAttribute("aria-invalid", "true"));
+                    play.keyboard("{ArrowDown}");
+                    play.waitFor(() -> play.expect(screen.getByRole("option", "d 'days' h 'hours'"))
+                            .toBeInTheDocument());
+                })
+                // Cancel keeps the column's format
+                .story("FormatDurationCancel", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    final Play dialog = openDurationFormat(play);
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(play.screen().queryByText("Format 'Name'")).toBeNull());
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            QueryFixtures.SEARCH.withJsonBodyContaining("{\"queryTablePreferences\": {\"columns\": "
+                                    + "[{\"format\": {\"type\": \"DURATION\"}}, {}, {}, {}]}}").toSpyMatcher());
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // OK refuses a custom date format Java can't use, which the server failed on, and choosing
                 // the standard format the list last showed leaves Custom and clears the error
                 .story("FormatInvalidCustom", context -> render(context, FIXTURES))
@@ -1388,6 +1466,22 @@ public final class QueryEditorStories {
                 RequestMatcher.post(BATCH_CHANGE_PATH).withJsonBodyContaining(
                         "{\"annotationIdList\": [55], \"change\": {\"type\": \"assignedTo\", "
                         + "\"userRef\": {\"uuid\": \"admin-uuid\"}}}").toSpyMatcher()));
+    }
+
+    // Opens the Format dialog of the Name column and chooses Duration
+    private static Play openDurationFormat(final Play play) {
+        final Play screen = play.screen();
+        executeAndOpenColumnMenu(play, "Name");
+        play.click(screen.findByText("Format", StroomDom.MENU_ITEM_TEXT));
+        final Play dialog = dialog(screen, "Format 'Name'");
+        play.click(dialog.querySelector(StroomDom.SELECTION_BOX));
+        play.click(screen.findByText("Duration", ".selection-popup *"));
+        return dialog;
+    }
+
+    private static void chooseDurationPattern(final Play play, final Play dialog) {
+        play.click(dialog.findByLabelText("Style"));
+        play.click(play.screen().findByText("Pattern", ".selection-popup *"));
     }
 
     private static void expectSearchWith(final Play play, final String json) {

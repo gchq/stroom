@@ -20,12 +20,18 @@ import stroom.test.common.TestUtil;
 import stroom.util.date.DateUtil;
 
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvFileSource;
 
 import java.math.BigDecimal;
+import java.text.ParseException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TestValString {
 
@@ -225,5 +231,34 @@ class TestValString {
                         ValString.create(duration.toString()),
                         false)
                 .build();
+    }
+
+    // Any text can be compared with a number or used in a sum, so what is read as a number can't be changed without
+    // changing queries that have nothing to do with it. These were recorded before durations could be read exactly.
+    @ParameterizedTest
+    @CsvFileSource(resources = "TestValString_numbers.csv", nullValues = "null", emptyValue = "",
+            ignoreLeadingAndTrailingWhitespace = false)
+    void testTextThatIsANumber(final String text,
+                               final Long expectedLong,
+                               final Double expectedDouble,
+                               final boolean expectedNumeric) {
+        final ValString val = ValString.create(text);
+        assertThat(val.toLong()).isEqualTo(expectedLong);
+        assertThat(val.toDouble()).isEqualTo(expectedDouble);
+        assertThat(val.hasNumericValue()).isEqualTo(expectedNumeric);
+    }
+
+    // Such as an ID.
+    @Test
+    void testWholeNumberThatIsTooLargeForALong() throws ParseException {
+        final ValString text = ValString.create("12345678901234567890");
+        assertThat(text.hasNumericValue()).isTrue();
+        assertThat(text.hasFractionalPart()).isFalse();
+        assertThat(text.toLong()).isEqualTo(Long.MAX_VALUE);
+        assertThat(text.toDouble()).isEqualTo(12345678901234567890d);
+        assertThat(text.toNumber()).isEqualTo(Long.MAX_VALUE);
+        assertThat(DateFunctionTestUtil.eval(
+                DateFunctionTestUtil.LONDON, "${field} = 12345678901234567890", text))
+                .isEqualTo(ValBoolean.TRUE);
     }
 }
