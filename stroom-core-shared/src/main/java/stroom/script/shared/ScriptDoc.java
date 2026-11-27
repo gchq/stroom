@@ -32,10 +32,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.List;
 import java.util.Objects;
 
-@Description(
-        "Contains a Javascript script that is used as the source for a " +
-        "[visualisation]({{< relref \"#visualisation\" >}}) Document.\n" +
-        "Scripts can have dependencies on other Script Documents, e.g. to allow re-use of common code.")
+@Description("""
+        Contains a Javascript script that is used as the source for a _Visualisation_ Document.
+        Scripts can have dependencies on other _Script_ Documents, e.g. to allow re-use of common code.""")
 @JsonPropertyOrder({
         "type",
         "uuid",

@@ -32,21 +32,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@Description(
-        "A Text Converter Document defines the specification for splitting text data into records/fields using " +
-        "[Data Splitter]({{< relref \"docs/user-guide/data-splitter\" >}}) or for wrapping fragment XML " +
-        "with a {{< pipe-elm \"XMLFragmentParser\" >}} pipeline element.\n" +
-        "The content of the Document is either XML in the `data-splitter:3` namespace or a fragment parser " +
-        "specification (see " +
-        "[Pipeline Recipies]" +
-        "({{< relref \"docs/user-guide/pipelines/recipies#xml-fragments-to-normalised-xml\" >}})).\n" +
-        "\n" +
-        "This Document is used by the following pipeline elements:\n" +
-        "\n" +
-        "* {{< pipe-elm \"DSParser\" >}}\n" +
-        "* {{< pipe-elm \"XMLFragmentParser\" >}}\n" +
-        "* {{< pipe-elm \"CombinedParser\" >}}"
-)
+@Description("""
+        A Text Converter Document defines the specification for splitting text data into records/fields using \
+        Data Splitter or for wrapping fragment XML with a XMLFragmentParser pipeline element.
+        The content of the Document is either XML in the `data-splitter:3` namespace or a fragment parser \
+        specification.""")
 @JsonPropertyOrder({
         "type",
         "uuid",

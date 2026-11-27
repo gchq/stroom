@@ -37,14 +37,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-@Description(
-        "Defines an index that exists within an Elasticsearch cluster.\n" +
-        "This Document is used in the configuration of the {{< pipe-elm \"ElasticIndexingFilter\" >}} " +
-        "pipeline element.\n" +
-        "\n" +
-        "{{% see-also %}}" +
-        "[Elasticsearch]({{< relref \"docs/user-guide/indexing/elasticsearch\" >}})" +
-        "{{% /see-also %}}")
+@Description("""
+        Defines an index that exists within an Elasticsearch cluster.
+        This Document is used in the configuration of the _ElasticIndexingFilter_ pipeline element.""")
 @JsonPropertyOrder({
         "uuid",
         "name",
