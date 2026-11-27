@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13.13] - 2026-11-27
+
+* Bug **#6130** : Disable Dashboard _Process_ button when no datasource is selected.
+
+
 ## [v7.13.12] - 2026-11-26
 
 * Bug **#6127** : Fix the internal sign-in redirect when Stroom's public URL explicitly includes the default HTTP or HTTPS port.
@@ -2689,7 +2694,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.12...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.13...HEAD
+[v7.13.13]: https://github.com/gchq/stroom/compare/v7.13.12...v7.13.13
 [v7.13.12]: https://github.com/gchq/stroom/compare/v7.13.11...v7.13.12
 [v7.13.11]: https://github.com/gchq/stroom/compare/v7.13.10...v7.13.11
 [v7.13.10]: https://github.com/gchq/stroom/compare/v7.13.9...v7.13.10
