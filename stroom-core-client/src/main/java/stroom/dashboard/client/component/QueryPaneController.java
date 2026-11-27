@@ -237,7 +237,7 @@ public class QueryPaneController
         favourites.show(
                 getId(),
                 getDashboardContext().getDashboardDocRef().getUuid(),
-                getQuerySettings().getDataSource(),
+                getDataSource(),
                 root,
                 this::setExpression);
     }
@@ -297,13 +297,21 @@ public class QueryPaneController
     private void setButtonsEnabled() {
         final stroom.query.client.Item selectedItem = getSelectedItem();
 
-        view.setItemActionsEnabled(selectedItem != null, getEnableDisableText() + " Selected Expression Item");
-        view.setDownloadEnabled(getQuerySettings().getDataSource() != null);
+        view.setItemActionsEnabled(
+                selectedItem != null,
+                getEnableDisableText() + " Selected Expression Item");
+        final boolean isDataSourcePresent = getDataSource() != null;
+        view.setDownloadEnabled(isDataSourcePresent);
+        view.setProcessEnabled(isDataSourcePresent);
     }
 
     private void loadDataSource(final DocRef dataSourceRef) {
         searchModel.getIndexLoader().loadDataSource(dataSourceRef);
         setButtonsEnabled();
+    }
+
+    private DocRef getDataSource() {
+        return getQuerySettings().getDataSource();
     }
 
     private void loadedDataSource(final DocRef dataSourceRef) {
@@ -322,7 +330,7 @@ public class QueryPaneController
             }
         }), taskMonitor());
 
-        if (!Objects.equals(getQuerySettings().getDataSource(), dataSourceRef)) {
+        if (!Objects.equals(getDataSource(), dataSourceRef)) {
             setSettings(getQuerySettings()
                     .copy()
                     .dataSource(dataSourceRef)
@@ -366,7 +374,7 @@ public class QueryPaneController
     }
 
     private void addTerm() {
-        final DocRef dataSourceRef = getQuerySettings().getDataSource();
+        final DocRef dataSourceRef = getDataSource();
 
         if (dataSourceRef == null) {
             warnNoDataSource();
@@ -394,24 +402,29 @@ public class QueryPaneController
         final ExpressionOperator root = expressionTree.write();
 
         final DashboardContext dashboardContext = getDashboardContext();
-        final QueryData queryData = QueryData
-                .builder()
-                .dataSource(getQuerySettings().getDataSource())
-                .expression(root)
-                .params(dashboardContext.getParams())
-                .timeRange(dashboardContext.getResolvedTimeRange())
-                .build();
+        final DocRef dataSource = getDataSource();
+        if (dataSource == null) {
+            warnNoDataSource();
+        } else {
+            final QueryData queryData = QueryData
+                    .builder()
+                    .dataSource(dataSource)
+                    .expression(root)
+                    .params(dashboardContext.getParams())
+                    .timeRange(dashboardContext.getResolvedTimeRange())
+                    .build();
 
-        final DocumentChooserController chooser = pipelineSelection.get();
-        chooser.setIncludeNullSelection(false);
-        chooser.setCaption("Choose Pipeline To Process Results With");
-        chooser.setIncludedTypes(PipelineDoc.TYPE);
-        chooser.setRequiredPermissions(DocumentPermission.USE);
-        chooser.showOnce(this, pipeline -> {
-            if (pipeline != null) {
-                setProcessorLimits(queryData, pipeline);
-            }
-        });
+            final DocumentChooserController chooser = pipelineSelection.get();
+            chooser.setIncludeNullSelection(false);
+            chooser.setCaption("Choose Pipeline To Process Results With");
+            chooser.setIncludedTypes(PipelineDoc.TYPE);
+            chooser.setRequiredPermissions(DocumentPermission.USE);
+            chooser.showOnce(this, pipeline -> {
+                if (pipeline != null) {
+                    setProcessorLimits(queryData, pipeline);
+                }
+            });
+        }
     }
 
     private void setProcessorLimits(final QueryData queryData, final DocRef pipeline) {
@@ -544,7 +557,7 @@ public class QueryPaneController
     private void run(final boolean incremental,
                      final boolean storeHistory,
                      final ExpressionOperator expressionDecorator) {
-        final DocRef dataSourceRef = getQuerySettings().getDataSource();
+        final DocRef dataSourceRef = getDataSource();
 
         if (dataSourceRef == null) {
             warnNoDataSource();
@@ -576,7 +589,7 @@ public class QueryPaneController
 
     private void resume(final String node,
                         final QueryKey queryKey) {
-        final DocRef dataSourceRef = getQuerySettings().getDataSource();
+        final DocRef dataSourceRef = getDataSource();
 
         if (dataSourceRef == null) {
             warnNoDataSource();
@@ -634,7 +647,7 @@ public class QueryPaneController
         searchModel.init(dashboardDocRef, componentConfig.getId());
 
         // Read data source.
-        loadDataSource(getQuerySettings().getDataSource());
+        loadDataSource(getDataSource());
 
         // Read expression.
         ExpressionOperator root = getQuerySettings().getExpression();
@@ -688,7 +701,7 @@ public class QueryPaneController
     @Override
     public void changeSettings() {
         super.changeSettings();
-        loadDataSource(getQuerySettings().getDataSource());
+        loadDataSource(getDataSource());
     }
 
     @Override
@@ -814,8 +827,7 @@ public class QueryPaneController
     }
 
     private void downloadQuery() {
-        if (getQuerySettings().getDataSource() != null) {
-
+        if (getDataSource() != null) {
             final DashboardContext dashboardContext = getDashboardContext();
             final DashboardSearchRequest searchRequest = searchModel.createDownloadQueryRequest(
                     expressionTree.write(),

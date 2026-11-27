@@ -35,6 +35,8 @@ import java.util.function.Consumer;
 public class QueryPane extends Component {
 
     private static final Binder BINDER = GWT.create(Binder.class);
+    private static final String DOWNLOAD_QUERY_TITLE = "Download Query";
+    private static final String PROCESS_QUERY_TITLE = "Process Query with Pipeline";
 
     @UiField
     ToolbarButton addTerm;
@@ -97,18 +99,28 @@ public class QueryPane extends Component {
         deleteItem.setEnabled(enabled);
     }
 
+    private String makeDataSourceDependantTitle(final String title, final boolean enabled) {
+        // The title is the button's name, so it stays, and says why the button is disabled
+        return enabled
+                ? title
+                : title + " (choose a data source first)";
+    }
+
     /// @param enabled Whether the query can be downloaded, i.e. it has a data source.
     public void setDownloadEnabled(final boolean enabled) {
         downloadQuery.setEnabled(enabled);
-        // The title is the button's name, so it stays, and says why the button is disabled
-        downloadQuery.setTitle(enabled
-                ? "Download Query"
-                : "Download Query (choose a data source first)");
+        downloadQuery.setTitle(makeDataSourceDependantTitle(DOWNLOAD_QUERY_TITLE, enabled));
     }
 
     /// @param visible Whether the user may process the query with a pipeline.
     public void setProcessVisible(final boolean visible) {
         process.setVisible(visible);
+    }
+
+    /// @param enabled Whether the user may process the query with a pipeline.
+    public void setProcessEnabled(final boolean enabled) {
+        process.setEnabled(enabled);
+        process.setTitle(makeDataSourceDependantTitle(PROCESS_QUERY_TITLE, enabled));
     }
 
     /// Shows the messages button when the query has messages, as their most severe kind.

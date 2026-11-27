@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Bug **#6130** : Disable Dashboard _Process_ button when no datasource is selected.
+
 * Feature **#6079** : Add XSLT sandbox.
 
 * Bug **#6077** : Fix StroomQL rules that are run on a schedule with a `window` clause never judging a window that reads, with `lag()`, a window before the rule's time range. A rule now judges each window in the run whose time range holds the end of the window, or of the last window it reads with `lead()`, and searches back as far as it needs to.
