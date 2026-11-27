@@ -1856,6 +1856,10 @@ public class FlexLayout extends Composite {
             maximised = false;
 
             layoutConfigContainer.restore();
+            // Maximising added every visible tab to a temporary pane, which made it each tab's parent, so give each
+            // tab back the pane it is in. Otherwise removing a tab removes it from the temporary pane only, leaving
+            // it in the layout without its component, and adding a component next to a tab finds no pane for it.
+            LayoutTabParents.reparentTabs(layoutConfigContainer.get());
 
             clear();
             refresh();
