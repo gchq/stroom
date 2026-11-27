@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.21] - 2026-11-27
+
 * Bug **#6130** : Disable Dashboard _Process_ button when no datasource is selected.
 
 
@@ -3000,7 +3002,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.20...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.21...HEAD
+[v7.14-beta.21]: https://github.com/gchq/stroom/compare/v7.14-beta.20...v7.14-beta.21
 [v7.14-beta.20]: https://github.com/gchq/stroom/compare/v7.14-beta.19...v7.14-beta.20
 [v7.14-beta.19]: https://github.com/gchq/stroom/compare/v7.14-beta.18...v7.14-beta.19
 [v7.14-beta.18]: https://github.com/gchq/stroom/compare/v7.14-beta.17...v7.14-beta.18
