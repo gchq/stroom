@@ -416,6 +416,15 @@ public class QueryPresenter
             downloadQueryButton.setEnabled(true);
             downloadQueryButton.setTitle("Download Query");
         }
+        if (processButton != null) {
+            if (dataSourceRef == null) {
+                processButton.setEnabled(false);
+                processButton.setTitle("");
+            } else {
+                processButton.setEnabled(true);
+                processButton.setTitle(SvgPresets.PROCESS.getTitle());
+            }
+        }
     }
 
     private void loadDataSource(final DocRef dataSourceRef) {
@@ -483,23 +492,28 @@ public class QueryPresenter
         final ExpressionOperator root = expressionPresenter.write();
 
         final DashboardContext dashboardContext = getDashboardContext();
-        final QueryData queryData = QueryData
-                .builder()
-                .dataSource(getQuerySettings().getDataSource())
-                .expression(root)
-                .params(dashboardContext.getParams())
-                .timeRange(dashboardContext.getResolvedTimeRange())
-                .build();
+        final DocRef dataSource = getQuerySettings().getDataSource();
+        if (dataSource == null) {
+            warnNoDataSource();
+        } else {
+            final QueryData queryData = QueryData
+                    .builder()
+                    .dataSource(dataSource)
+                    .expression(root)
+                    .params(dashboardContext.getParams())
+                    .timeRange(dashboardContext.getResolvedTimeRange())
+                    .build();
 
-        final DocSelectionPopup chooser = pipelineSelection.get();
-        chooser.setCaption("Choose Pipeline To Process Results With");
-        chooser.setIncludedTypes(PipelineDoc.TYPE);
-        chooser.setRequiredPermissions(DocumentPermission.USE);
-        chooser.show(pipeline -> {
-            if (pipeline != null) {
-                setProcessorLimits(queryData, pipeline);
-            }
-        });
+            final DocSelectionPopup chooser = pipelineSelection.get();
+            chooser.setCaption("Choose Pipeline To Process Results With");
+            chooser.setIncludedTypes(PipelineDoc.TYPE);
+            chooser.setRequiredPermissions(DocumentPermission.USE);
+            chooser.show(pipeline -> {
+                if (pipeline != null) {
+                    setProcessorLimits(queryData, pipeline);
+                }
+            });
+        }
     }
 
     private void setProcessorLimits(final QueryData queryData, final DocRef pipeline) {
