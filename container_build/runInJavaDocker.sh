@@ -115,6 +115,7 @@ if [[ $# -lt 1 ]]; then
   echo -e "Commands/scripts with args must be quoted as a whole."
   exit 1
 else
+  func="$1"
   if [[ $# -eq 1 ]] && [[ "$1" = "bash" ]]; then
 
     run_cmd=( "bash" )
@@ -203,7 +204,7 @@ docker_login
 # for an example of how to hash the build context so we can pull or push
 # depending on whether there is already an image for the hash.
 
-echo "::group::Building Building image ${image_tag}"
+echo "::group::Building docker image ${image_tag}"
 echo -e "${GREEN}Building image ${BLUE}${image_tag}${NC}"
 docker build \
   --tag "${image_tag}" \
@@ -217,6 +218,18 @@ echo "::endgroup::"
 
 
   #--workdir "${dest_dir}" \
+
+# Mount the whole repo into the container so we can run the build
+# The mount src is on the host file system
+# group-add gives the permission to interact with the docker cli
+# docker.sock allows use to interact with the docker cli
+# Need :exec on /tmp else LMDB complains with link errors
+# Need to pass in docker creds in case the container needs to do authenticated
+# pulls/pushes with dockerhub
+# shellcheck disable=SC2145
+echo "::group::Running docker image ${image_tag} for function ${func}"
+echo -e "${GREEN}Running image ${BLUE}${image_tag}${NC} with command" \
+  "${BLUE}${run_cmd[*]}${NC}"
 
 if [ -t 1 ]; then
   # In a terminal
@@ -239,17 +252,6 @@ if [[ -n "${GRADLE_BUILD_CACHE_DIR:-}" ]]; then
   )
 fi
 
-# Mount the whole repo into the container so we can run the build
-# The mount src is on the host file system
-# group-add gives the permission to interact with the docker cli
-# docker.sock allows use to interact with the docker cli
-# Need :exec on /tmp else LMDB complains with link errors
-# Need to pass in docker creds in case the container needs to do authenticated
-# pulls/pushes with dockerhub
-# shellcheck disable=SC2145
-echo -e "${GREEN}Running image ${BLUE}${image_tag}${NC} with command" \
-  "${BLUE}${run_cmd[@]}${NC}"
-
 docker run \
   "${tty_args[@]+"${tty_args[@]}"}" \
   --rm \
@@ -268,3 +270,4 @@ docker run \
   "${image_tag}" \
   "${run_cmd[@]}"
 
+echo "::endgroup::"
